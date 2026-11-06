@@ -23,12 +23,22 @@ setTimeout(()=>window.__qa(), 2500);
 </script>
 """
 
+def chrome_bin():
+    """System Chrome if present, else Playwright's bundled Chromium (the worker image), else whatever is on PATH."""
+    for c in (os.environ.get('CHROME_PATH'), '/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser'):
+        if c and os.path.exists(c): return c
+    try:
+        out = subprocess.run(['node', '-e', "console.log(require('playwright').chromium.executablePath())"], capture_output=True, text=True, timeout=20, cwd=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))).stdout.strip()
+        if out and os.path.exists(out): return out
+    except Exception: pass
+    return 'google-chrome'
+
 def run(path, w, h):
     src = open(path).read()
     src = src.replace('document.getElementById(\'sw-start\').onclick=()=>go(false);', 'document.getElementById("sw-start").onclick=()=>go(false);setTimeout(()=>go(true),200);')
     src = src.replace('</body>', PROBE + '</body>')
     tmp = tempfile.NamedTemporaryFile('w', suffix='.html', delete=False, dir='/tmp'); tmp.write(src); tmp.close()
-    dom = subprocess.run(['google-chrome', '--headless=new', '--no-sandbox', '--disable-gpu', '--hide-scrollbars', f'--window-size={w},{h}',
+    dom = subprocess.run([chrome_bin(), '--headless=new', '--no-sandbox', '--disable-gpu', '--hide-scrollbars', f'--window-size={w},{h}',
                           '--virtual-time-budget=9000', '--dump-dom', 'file://' + tmp.name], capture_output=True, text=True, timeout=90).stdout
     m = re.search(r'<pre id="__qa">(.*?)</pre>', dom, re.S)
     os.unlink(tmp.name)
