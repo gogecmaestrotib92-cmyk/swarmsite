@@ -3,10 +3,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends python3 python3
  && pip3 install --break-system-packages --no-cache-dir anthropic pillow
 WORKDIR /srv
 COPY server/package.json server/
-RUN cd server && npm install --omit=dev
+RUN cd server && npm install --omit=dev && ln -s /srv/server/node_modules /srv/node_modules
 COPY lib lib
 COPY swarm.js swarm.js
 COPY server server
-ENV NODE_ENV=production PORT=8080 CHROME_PATH=/ms-playwright/chromium-*/chrome-linux/chrome
+ENV NODE_ENV=production PORT=8080
 EXPOSE 8080
 CMD ["node","server/index.mjs"]
