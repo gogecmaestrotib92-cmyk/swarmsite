@@ -47,16 +47,51 @@ def load(slug_dir):
     imgs_meta = [{k: v for k, v in i.items() if k != 'data'} for i in (images or [])]
     return inv, assets, imgs_meta, audit
 
+TOOL = {
+    "name": "write_direction",
+    "description": "Write the direction.json beats document for the renderer. Follow the SCHEMA in the prompt exactly.",
+    "input_schema": {
+        "type": "object",
+        "required": ["kind", "concept", "mode", "voice", "brand", "nav", "hero", "beats", "ending", "audit_notes"],
+        "properties": {
+            "kind": {"type": "string", "enum": ["place", "service", "product", "software"]},
+            "concept": {"type": "string"}, "mode": {"type": "string", "enum": ["light", "dark"]}, "voice": {"type": "string", "enum": ["serif", "sans"]},
+            "brand": {"type": "object", "properties": {"name": {"type": "string"}, "badge": {"type": "string"}, "keep_font": {"type": "boolean"}, "font_hint": {"type": "string"}, "accent": {"type": "string"}, "paper": {"type": "string"}, "ink": {"type": "string"}}, "required": ["name"]},
+            "nav": {"type": "object", "properties": {"links": {"type": "array", "items": {"type": "array", "items": {"type": "string"}}}, "cta": {"type": "string"}}},
+            "hero": {"type": "object", "required": ["category", "fact", "h1", "lede", "cta"], "properties": {"category": {"type": "string"}, "fact": {"type": "string"}, "h1": {"type": "string"}, "lede": {"type": "string"}, "cta": {"type": "string"}, "cta2": {"type": "string"}, "media": {"type": "string"}}},
+            "beats": {"type": "array", "minItems": 3, "maxItems": 7, "items": {"type": "object", "required": ["id", "type"], "properties": {"id": {"type": "string"}, "type": {"type": "string", "enum": ["quote", "photo", "ledger", "facts", "cells", "steps", "form", "faq"]}}, "additionalProperties": True}},
+            "ending": {"type": "object", "additionalProperties": True},
+            "audit_notes": {"type": "array", "items": {"type": "string"}}
+        }
+    }
+}
+
+def validate(doc):
+    errs = []
+    if not 3 <= len(doc.get('beats', [])) <= 7: errs.append('beats must be 4-6')
+    h1 = re.sub(r'<[^>]+>', '', str(doc.get('hero', {}).get('h1', '')))
+    if len(h1.split()) > 8: errs.append(f'h1 too long ({len(h1.split())} words): "{h1}"')
+    ids = [b.get('id') for b in doc.get('beats', [])]
+    if len(set(ids)) != len(ids): errs.append('beat ids must be unique')
+    return errs
+
 def direct(slug_dir, model='claude-sonnet-5-5'):
     import anthropic
     inv, assets, imgs, audit = load(slug_dir)
     rules = '\n\n'.join(f'### {r}\n' + open(os.path.join(ROOT, r)).read() for r in RULES)
-    user = f"""RULES\n{rules}\n\nSCHEMA\n{SCHEMA}\n\nINVENTORY (what the site HAS)\n{json.dumps(inv, ensure_ascii=False)[:60000]}\n\nBRAND ASSETS\n{json.dumps({k: v for k, v in (assets or {}).items() if k != 'logo'}, ensure_ascii=False)[:6000]}\n\nIMAGES (ids you may use)\n{json.dumps(imgs, ensure_ascii=False)[:6000]}\n\nAUDIT\n{json.dumps(audit, ensure_ascii=False)[:8000] if audit else 'n/a'}\n\nWrite direction.json now."""
+    user = f"""RULES\n{rules}\n\nSCHEMA\n{SCHEMA}\n\nINVENTORY (what the site HAS)\n{json.dumps(inv, ensure_ascii=False)[:60000]}\n\nBRAND ASSETS\n{json.dumps({k: v for k, v in (assets or {}).items() if k != 'logo'}, ensure_ascii=False)[:6000]}\n\nIMAGES (ids you may use)\n{json.dumps(imgs, ensure_ascii=False)[:6000]}\n\nAUDIT\n{json.dumps(audit, ensure_ascii=False)[:8000] if audit else 'n/a'}\n\nCall write_direction with the complete document."""
     client = anthropic.Anthropic()
-    msg = client.messages.create(model=model, max_tokens=8000, system=SYSTEM, messages=[{"role": "user", "content": user}])
-    text = ''.join(b.text for b in msg.content if getattr(b, 'type', '') == 'text')
-    m = re.search(r'\{.*\}', text, re.S)
-    doc = json.loads(m.group(0))
+    messages = [{"role": "user", "content": user}]
+    doc, last = None, None
+    for attempt in range(3):
+        msg = client.messages.create(model=model, max_tokens=8000, system=SYSTEM, messages=messages, tools=[TOOL], tool_choice={"type": "tool", "name": "write_direction"})
+        call = next((b for b in msg.content if getattr(b, 'type', '') == 'tool_use'), None)
+        if call is None: last = 'no tool call'; continue
+        doc = call.input; errs = validate(doc)
+        if not errs: break
+        last = '; '.join(errs)
+        messages += [{"role": "assistant", "content": msg.content}, {"role": "user", "content": [{"type": "tool_result", "tool_use_id": call.id, "content": f"Rejected: {last}. Call write_direction again with a corrected document."}]}]
+    if doc is None: raise SystemExit(f'direct: no document ({last})')
     out = os.path.join(slug_dir, 'direction.json'); json.dump(doc, open(out, 'w'), indent=1, ensure_ascii=False)
     return doc
 
