@@ -21,6 +21,7 @@ def build(slug_dir, video_path=None):
     assets = json.load(open(os.path.join(slug_dir, 'assets.json'))) if os.path.exists(os.path.join(slug_dir, 'assets.json')) else {}
     logo = (assets.get('logo') or {}).get('data') or (open(os.path.join(slug_dir, 'logo.txt')).read() if os.path.exists(os.path.join(slug_dir, 'logo.txt')) else '')
     moves = open(os.path.join(ROOT, 'lib/motion/moves.js')).read()
+    swarm = open(os.path.join(ROOT, 'web/js/swarm.js')).read()
     used = set()
     def pick_best(prefer_hero=True):
         pool = [i for i in images.values() if i.get('data') and i.get('id', '') not in used] or [i for i in images.values() if i.get('data')]
@@ -174,6 +175,9 @@ h1,h2,h3{{font-family:var(--serif);font-weight:{'400' if serif else '500'};line-
 <div class="bp" id="bp"><button class="x" id="bpx" aria-label="close">×</button><div class="row"><span class="t">Font</span>{fonts_ui}</div><div class="row"><span class="t">Boje</span>{worlds_ui}</div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script><script src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js"></script>
 <script>{moves}</script>
+<script>{swarm}</script>
+<script>/* Preview mode: the swarm visibly builds this page (inside the Swarmsite app, or with ?swarm). The kit itself loads normally. */
+addEventListener('load',()=>{{ try{{ if((self!==top||/[?&]swarm/.test(location.search))&&!matchMedia('(prefers-reduced-motion:reduce)').matches) new Swarm({{agents:innerWidth<900?8:18,speed:1,hud:true,sectionSelector:'section,.band,footer',boxSel:'.btn,.photo,.bigimg,.cells>div,.form input,.form textarea,.form select,.menu li,.steps li,.faq details,.ledger li,.card,.fact'}}).run(); }}catch(e){{}} }});</script>
 <script>addEventListener('load',()=>{{Moves.init();const nav=document.getElementById('nav');const onS=()=>nav.classList.toggle('solid',scrollY>innerHeight*.75);onS();addEventListener('scroll',onS,{{passive:true}});
 document.querySelectorAll('#bp input').forEach(i=>i.addEventListener('change',e=>{{const h=document.documentElement;if(e.target.name==='bf'){{if(e.target.value==='brand')delete h.dataset.font;else h.dataset.font=e.target.value;}}else{{if(e.target.value==='brand')delete h.dataset.world;else h.dataset.world=e.target.value;}}}}));document.getElementById('bpx').onclick=()=>document.getElementById('bp').remove();}});</script>
 </body></html>'''

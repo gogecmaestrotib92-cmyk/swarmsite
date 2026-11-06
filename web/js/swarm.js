@@ -41,7 +41,7 @@
       this.busy = false; this.render();
     }
     render() { this.el.style.transform = `translate(${this.x}px,${this.y}px)`; }
-    setTask(t) { this.el.querySelector('.sw-task').textContent = t || ''; }
+    setTask(t) { this.el.querySelector('.sw-task').textContent = t || ''; this.el.classList.toggle('busy', !!t); }
     async moveTo(x, y, speed) {
       const sx = this.x, sy = this.y, dx = x - sx, dy = y - sy;
       const dist = Math.hypot(dx, dy); const dur = Math.min(900, 180 + dist * 0.55) / speed;
@@ -81,7 +81,7 @@
         texts.forEach(el => layers.push({ kind: 'text', el, sec, html: el.innerHTML, text: el.textContent }));
         // visual-only elements (svg/img/decorative divs with background)
         [...sec.querySelectorAll('img, svg, i')].forEach(el => layers.push({ kind: 'img', el, sec }));
-        return { el: sec, name: sec.getAttribute('data-agent') || sec.tagName, layers };
+        const lab = sec.querySelector('.lab, h2, h1'); const nm = sec.getAttribute('data-agent') || (lab && lab.textContent.trim().slice(0, 24)) || sec.id || sec.tagName.toLowerCase(); return { el: sec, name: nm, layers };
       });
       this.total = this.sections.reduce((n, s) => n + s.layers.length, 0);
     }
@@ -233,7 +233,8 @@
   const CSS = `
   .sw-layer{position:absolute;inset:0 auto auto 0;width:100%;height:0;pointer-events:none;z-index:9000}
   .sw-cursor{position:fixed;left:0;top:0;pointer-events:none;z-index:9001;will-change:transform;transition:opacity .4s}
-  .sw-cursor .sw-tag{position:absolute;left:18px;top:18px;color:#fff;font:600 11px/1 system-ui,sans-serif;padding:4px 7px;border-radius:4px;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+  .sw-cursor:not(.busy) .sw-tag{opacity:0;transform:translateY(-3px)}
+  .sw-cursor .sw-tag{transition:opacity .25s,transform .25s;position:absolute;left:18px;top:18px;color:#fff;font:600 11px/1 system-ui,sans-serif;padding:4px 7px;border-radius:4px;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,.2)}
   .sw-cursor .sw-task{position:absolute;left:18px;top:40px;color:#111;background:#fff;font:500 10.5px/1 system-ui,sans-serif;padding:3px 6px;border-radius:3px;white-space:nowrap;opacity:.9;border:1px solid rgba(0,0,0,.08)}
   .sw-cursor .sw-task:empty{display:none}
   .sw-sel{position:absolute;border:1.5px solid;box-sizing:border-box;z-index:8999;pointer-events:none;transition:opacity .2s;background:rgba(59,130,246,.04)}
