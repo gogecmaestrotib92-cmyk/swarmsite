@@ -91,6 +91,13 @@ def build(slug_dir, video_path=None):
     links = ''.join(f'<a href="{e(u)}">{e(l)}</a>' for u, l in nav.get('links', [])[:4])
     cols = ''.join(f'<div><h5>{e(t)}</h5><ul>{"".join("<li>" + e(x) + "</li>" for x in items)}</ul></div>' for t, items in en.get('cols', []))
     lg = assets.get('logo') or {}; lr = (lg.get('w') or 0) / (lg.get('h') or 1) if lg.get('w') and lg.get('h') else 0
+    if not lr and logo.startswith('data:image/'):
+        try:
+            import base64, io
+            from PIL import Image
+            raw = base64.b64decode(logo.split(',', 1)[1]); im = Image.open(io.BytesIO(raw)); lr = im.width / max(1, im.height)
+        except Exception:
+            lr = 0
     lh = 44 if lr >= 1.2 else 62; lw = min(200, max(44, round(lh * lr))) if lr else (44 if not lr else 160)
     mark = f'<span class="mark" style="width:{lw}px;height:{lh}px;-webkit-mask-image:url(\'{logo}\');mask-image:url(\'{logo}\')"></span>' if logo else f'<span class="wordmark">{e(b["name"])}</span>'
     beats = '\n'.join(beat_html(bt) for bt in d['beats'])
@@ -177,8 +184,9 @@ h1,h2,h3{{font-family:var(--serif);font-weight:{'400' if serif else '500'};line-
 <script>{moves}</script>
 <script>{swarm}</script>
 <script>/* Preview mode: the swarm visibly builds this page (inside the Swarmsite app, or with ?swarm). The kit itself loads normally. */
-addEventListener('load',()=>{{ try{{ if((self!==top||/[?&]swarm/.test(location.search))&&!matchMedia('(prefers-reduced-motion:reduce)').matches) new Swarm({{agents:innerWidth<900?8:18,speed:1,hud:true,sectionSelector:'section,.band,footer',boxSel:'.btn,.photo,.bigimg,.cells>div,.form input,.form textarea,.form select,.menu li,.steps li,.faq details,.ledger li,.card,.fact'}}).run(); }}catch(e){{}} }});</script>
-<script>addEventListener('load',()=>{{Moves.init();const nav=document.getElementById('nav');const onS=()=>nav.classList.toggle('solid',scrollY>innerHeight*.75);onS();addEventListener('scroll',onS,{{passive:true}});
+addEventListener('load',()=>{{ try{{ if(PREVIEW) new Swarm({{agents:innerWidth<900?8:18,speed:1,hud:true,sectionSelector:'section,.band,footer',boxSel:'.btn,.photo,.bigimg,.cells>div,.form input,.form textarea,.form select,.menu li,.steps li,.faq details,.ledger li,.card,.fact',onDone:()=>{{ try{{ scrollTo(0,0); Moves.init(); }}catch(e){{}} }}}}).run(); }}catch(e){{ try{{Moves.init();}}catch(_){{}} }} }});</script>
+<script>const PREVIEW=(self!==top||/[?&]swarm/.test(location.search))&&!matchMedia('(prefers-reduced-motion:reduce)').matches;
+addEventListener('load',()=>{{if(!PREVIEW)Moves.init();const nav=document.getElementById('nav');const onS=()=>nav.classList.toggle('solid',scrollY>innerHeight*.75);onS();addEventListener('scroll',onS,{{passive:true}});
 document.querySelectorAll('#bp input').forEach(i=>i.addEventListener('change',e=>{{const h=document.documentElement;if(e.target.name==='bf'){{if(e.target.value==='brand')delete h.dataset.font;else h.dataset.font=e.target.value;}}else{{if(e.target.value==='brand')delete h.dataset.world;else h.dataset.world=e.target.value;}}}}));document.getElementById('bpx').onclick=()=>document.getElementById('bp').remove();}});</script>
 </body></html>'''
     out = os.path.join(slug_dir, 'index.html'); open(out, 'w').write(html); return out, len(html)
