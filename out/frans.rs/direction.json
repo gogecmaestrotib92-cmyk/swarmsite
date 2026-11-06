@@ -1,0 +1,196 @@
+{
+ "lang": "sr",
+ "kind": "place",
+ "concept": "C8",
+ "mode": "light",
+ "voice": "serif",
+ "brand": {
+  "name": "Franš",
+  "badge": "",
+  "keep_font": true,
+  "font_hint": "Cormorant Garamond",
+  "accent": "#0F2A14",
+  "paper": "#F4EFE3",
+  "ink": "#0F2A14"
+ },
+ "nav": {
+  "links": [
+   [
+    "#basta",
+    "Bašta"
+   ],
+   [
+    "#jelovnik",
+    "Jelovnik"
+   ],
+   [
+    "#proslave",
+    "Proslave"
+   ],
+   [
+    "#kontakt",
+    "Kontakt"
+   ]
+  ],
+  "cta": "Rezervišite sto"
+ },
+ "hero": {
+  "category": "Restoran Franš · Bulevar oslobođenja, Beograd",
+  "fact": "Pon–Sub · 9–00h",
+  "h1": "Bašta u kojoj Beograd <em>slavi</em> od 1982.",
+  "lede": "Tradicija i elegancija pod starim stablima: jelovnik koji se ne menja po modi, sto koji vas čeka i konobar koji zna šta pijete.",
+  "cta": "Rezervišite sto",
+  "cta2": "Jelovnik",
+  "media": "waiter"
+ },
+ "beats": [
+  {
+   "id": "o-nama",
+   "type": "quote",
+   "label": "Iz Beograda, za Beograd",
+   "big": "Franš je izlazak.",
+   "body": "Idemo, lutamo, istražujemo novitete, ali mu se ipak uvek vraćamo. I on nas čeka, na starom mestu — uvek bolji, svežiji, lepši. Kad je bilo najgore, u Franšu nam je bilo bolje. A kad nam je bilo dobro, gde smo to slavili, ako ne u Franšu?",
+   "who": "Mirjana Bobić Mojsilović"
+  },
+  {
+   "id": "basta",
+   "type": "photo",
+   "label": "Bašta i restoran",
+   "h2": "Hlad, beli stolnjaci i dug sto za sve vas.",
+   "lede": "Bašta pod starim stablima leti, restoran zimi. Isti stolnjaci, iste čaše, isti ljudi koji vas dočekuju.",
+   "image": "long-table",
+   "cap": [
+    "Bašta · dugi sto pod stablima",
+    "Proslave · rođendani · večere do ponoći"
+   ]
+  },
+  {
+   "id": "jelovnik",
+   "type": "ledger",
+   "label": "Jelovnik",
+   "h2": "Tartufi, biftek i ono što se ne menja.",
+   "lede": "Pola porcije se naplaćuje 65% od cene. Cene su sa porezom, u dinarima.",
+   "image": "octopus",
+   "items": [
+    [
+     "Biftek u sosu od belih tartufa",
+     "7 400"
+    ],
+    [
+     "Guščija džigerica, sos od šljiva i krušaka",
+     "6 800"
+    ],
+    [
+     "Čudesni tanjir za dve osobe",
+     "6 000"
+    ],
+    [
+     "Rižoto sa crnim tartufima",
+     "2 400"
+    ],
+    [
+     "Karađorđeva šnicla, teleća",
+     "3 600"
+    ],
+    [
+     "Jagnjeći kotleti, grilovani",
+     "4 400"
+    ],
+    [
+     "Brancin svež, fileti",
+     "3 500"
+    ],
+    [
+     "Karpaćo od bifteka, rukola, pinjoli",
+     "3 200"
+    ]
+   ],
+   "cta": "Ceo jelovnik",
+   "cta_href": "https://frans.rs/menu/jelovnik/",
+   "cta2": "Vinska karta",
+   "cta2_href": "https://frans.rs/bela-vina/"
+  },
+  {
+   "id": "proslave",
+   "type": "facts",
+   "image": "basta-table",
+   "facts": [
+    [
+     "1982",
+     "Otvoren na Bulevaru oslobođenja"
+    ],
+    [
+     "44",
+     "Godine sa vama · rasli smo zajedno"
+    ],
+    [
+     "9–00",
+     "Ponedeljak – subota · parking čuvan"
+    ]
+   ]
+  },
+  {
+   "id": "rezervacija",
+   "type": "form",
+   "label": "Rezervacija",
+   "h2": "Vaš sto, upisan.",
+   "fields": [
+    "Ime i prezime",
+    "Telefon",
+    "Broj gostiju",
+    "Datum",
+    "Vreme",
+    "Napomena"
+   ],
+   "cta": "Pošaljite rezervaciju",
+   "alt": [
+    "SMS · WhatsApp · Viber: +381 65 26 41 944",
+    "Fiksni: +381 11 26 41 944"
+   ],
+   "image": "reservation-book"
+  }
+ ],
+ "ending": {
+  "tag": "",
+  "cols": [
+   [
+    "Restoran Franš",
+    [
+     "Bulevar oslobođenja 18G, Beograd",
+     "Ponedeljak – subota, 9–00h",
+     "Nedeljom ne radimo"
+    ]
+   ],
+   [
+    "Jelovnik",
+    [
+     "Jelovnik",
+     "Deserti",
+     "Vina"
+    ]
+   ],
+   [
+    "Proslave",
+    [
+     "Proslave",
+     "Torte",
+     "360° tura"
+    ]
+   ],
+   [
+    "Kontakt",
+    [
+     "pr@frans.rs",
+     "+381 11 26 41 944",
+     "Rezervacije"
+    ]
+   ]
+  ],
+  "next": "Sledeće: rezervišite sto →",
+  "legal": "© 2026 Restoran Franš · Beograd"
+ },
+ "audit_notes": [
+  "Video na sajtu je 854×480 — tražiti originalni fajl.",
+  "Nedeljom ne radi — potvrditi radno vreme praznicima."
+ ]
+}

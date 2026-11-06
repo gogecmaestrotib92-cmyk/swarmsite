@@ -1,0 +1,132 @@
+{
+ "url": "https://frans.rs/",
+ "industry": "ecommerce",
+ "industryScores": {
+  "data_product": 0,
+  "saas": 0,
+  "restaurant": 0,
+  "agency": 0,
+  "ecommerce": 1,
+  "services": 0,
+  "nonprofit": 0
+ },
+ "designScore": 88,
+ "findings": [
+  {
+   "severity": "med",
+   "code": "nav_overload",
+   "message": "58 nav links; winners ≤ 5 + 1 CTA",
+   "evidence": [
+    "NASLOVNA",
+    "GALERIJA",
+    "BAŠTA / RESTORAN",
+    "NAŠI SPECIJALITETI",
+    "360 TURA",
+    "MENI",
+    "JELOVNIK",
+    "DESERTI",
+    "KARTA PIĆA",
+    "VINA",
+    "BELA VINA",
+    "ŠAMPANJCI",
+    "CRVENA VINA",
+    "ROZE VINA",
+    "DESERTNA VINA",
+    "VINA NA ČAŠU – PREPORUKE",
+    "TORTE",
+    "KONTAKT",
+    "REZERVACIJE",
+    "PRIČE",
+    "SHOP",
+    "PROSLAVE"
+   ]
+  },
+  {
+   "severity": "low",
+   "code": "no_label_system",
+   "message": "No small uppercase label layer (winners use 10–13px uppercase/mono labels for meta)",
+   "evidence": null
+  },
+  {
+   "severity": "low",
+   "code": "footer_link_dump",
+   "message": "27 footer links; winners make the footer a brand moment",
+   "evidence": null
+  }
+ ],
+ "keep": {
+  "numbers": [
+   "44"
+  ],
+  "h1": null,
+  "logo": "https://frans.rs/wp-content/uploads/2019/09/logo-beli.png",
+  "brandButtonColour": null,
+  "fonts": [
+   "Cormorant Garamond"
+  ],
+  "nav": [
+   "NASLOVNA",
+   "GALERIJA",
+   "BAŠTA / RESTORAN",
+   "NAŠI SPECIJALITETI",
+   "360 TURA",
+   "MENI",
+   "JELOVNIK",
+   "DESERTI",
+   "KARTA PIĆA",
+   "VINA",
+   "BELA VINA",
+   "ŠAMPANJCI",
+   "CRVENA VINA",
+   "ROZE VINA",
+   "DESERTNA VINA",
+   "VINA NA ČAŠU – PREPORUKE",
+   "TORTE",
+   "KONTAKT",
+   "REZERVACIJE",
+   "PRIČE",
+   "SHOP",
+   "PROSLAVE"
+  ],
+  "bigImages": []
+ },
+ "conceptCandidates": [
+  "C3 flat-colour",
+  "C6 black-luxury",
+  "C4 pastel-editorial"
+ ],
+ "plan": [
+  {
+   "op": "add",
+   "target": "labels",
+   "to": "mono 11–12px uppercase layer",
+   "how": "section numbers, eyebrows, table headers, captions"
+  },
+  {
+   "op": "cut",
+   "target": "nav",
+   "to": "≤ 4 links + 1 CTA",
+   "how": "rest into a Menu"
+  },
+  {
+   "op": "rebuild",
+   "target": "footer",
+   "to": "giant wordmark + 4-6 links + forward pointer",
+   "how": "legal in one line"
+  }
+ ],
+ "beats_proposal": [
+  {
+   "beat": "hero/artefact",
+   "from": 1,
+   "heading": null,
+   "words": 16
+  },
+  {
+   "beat": "ending",
+   "from": null,
+   "heading": "giant wordmark + forward pointer",
+   "words": 20
+  }
+ ]
+}

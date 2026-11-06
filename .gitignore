@@ -4,3 +4,7 @@ out/*/img-*.png
 out/*/hero-src.mp4
 *.zip
 __pycache__/
+server/node_modules/
+out/*/images.json
+out/*/index.html
+out/*/hero.mp4

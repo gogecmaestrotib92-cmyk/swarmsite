@@ -31,7 +31,23 @@ CONCEPTS_BY_INDUSTRY = {
 }
 
 
+def _norm(inv):
+    inv.setdefault("copy", {}); c = inv["copy"]; c.setdefault("text", ""); c.setdefault("totalWords", 0); c.setdefault("h1Words", 0); c.setdefault("h1", None); c.setdefault("buttons", []); c.setdefault("headings", [])
+    inv.setdefault("typography", {}); t = inv["typography"]; t.setdefault("fonts", []); t.setdefault("h1", None); t.setdefault("samples", [])
+    if t["h1"] and "size" not in t["h1"]: t["h1"] = None
+    inv.setdefault("colors", {}); col = inv["colors"]
+    for k in ("bg", "text", "buttons"):
+        col.setdefault(k, []); col[k] = [({"c": x, "n": 1} if isinstance(x, str) else x) for x in col[k]]
+    inv.setdefault("brand", {}); b = inv["brand"]; b.setdefault("nav", []); b.setdefault("navCount", len(b["nav"])); b.setdefault("footerLinks", 0); b.setdefault("logo", None); b.setdefault("hasFooter", True); b.setdefault("footerWords", 0)
+    inv.setdefault("media", {}); m = inv["media"]; m.setdefault("bigImgs", []); m.setdefault("imgCount", 0); m.setdefault("video", len(m.get("videos", [])) if isinstance(m.get("videos"), list) else 0)
+    inv.setdefault("url", ""); inv.setdefault("sections", []); inv.setdefault("sectionCount", len(inv["sections"]))
+    for s in inv["sections"]:
+        for k, v in (("heading", None), ("words", 0), ("numbers", []), ("ctas", []), ("images", 0), ("bg", ""), ("i", 0)): s.setdefault(k, v)
+    inv.setdefault("tech", {"libs": [], "anim": {}}); inv["tech"].setdefault("anim", {}); inv["tech"].setdefault("libs", [])
+    return inv
+
 def classify(inv):
+    inv = _norm(inv)
     text = (inv["copy"]["text"] + " " + " ".join(inv["brand"]["nav"])).lower()
     scores = {k: sum(text.count(w) for w in ws) for k, ws in INDUSTRY_HINTS.items()}
     best = max(scores, key=scores.get)
@@ -39,6 +55,7 @@ def classify(inv):
 
 
 def diagnose(inv):
+    inv = _norm(inv)
     f = []  # findings: (severity, code, message, evidence)
     plan = []  # transformation operations
     c = inv["copy"]; t = inv["typography"]; col = inv["colors"]; b = inv["brand"]; m = inv["media"]; secs = inv["sections"]
@@ -59,7 +76,7 @@ def diagnose(inv):
     if c["h1Words"] > 8:
         f.append(("med", "long_h1", f'H1 has {c["h1Words"]} words; winners ≤ 8 (often 2–4).', c["h1"]))
         plan.append({"op": "rewrite", "target": "h1", "to": "≤ 6 words, concrete", "how": "lead with the artefact or the promise; move explanation to sub"})
-    long_heads = [h for h in c["headings"] if h["words"] > 8]
+    long_heads = [h for h in c["headings"] if (h.get("words") or len(str(h.get("text","")).split())) > 8]
     if long_heads: f.append(("low", "long_headings", f'{len(long_heads)} headings over 8 words', [h["text"] for h in long_heads[:5]]))
 
     # --- copy hygiene ---
@@ -107,7 +124,7 @@ def diagnose(inv):
     if len(set(prices)) > 2: f.append(("high", "price_conflict", "Different monthly prices stated on the same page — must be resolved before redesign", sorted(set(prices), key=float))); plan.append({"op": "ask", "target": "pricing", "to": "one source of truth", "how": f"page states $/month: {sorted(set(prices), key=float)}"})
 
     # --- assets to keep (never lose) ---
-    keep = {"numbers": sorted({n for s in secs for n in s["numbers"]})[:40], "h1": c["h1"], "logo": b["logo"] or ("svg" if b["logoSvg"] else None), "brandButtonColour": btn[0]["c"] if btn else None, "fonts": t["fonts"], "nav": b["nav"], "bigImages": [x["src"] for x in m["bigImgs"][:8]]}
+    keep = {"numbers": sorted({n for s in secs for n in s["numbers"]})[:40], "h1": c["h1"], "logo": b["logo"] or ("svg" if b.get("logoSvg") else None), "brandButtonColour": btn[0]["c"] if btn else None, "fonts": t["fonts"], "nav": b["nav"], "bigImages": [x.get("src") for x in m["bigImgs"][:8]]}
 
     industry, scores = classify(inv)
     concepts = CONCEPTS_BY_INDUSTRY.get(industry, CONCEPTS_BY_INDUSTRY["unknown"])
