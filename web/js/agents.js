@@ -4,7 +4,8 @@
   'use strict';
   const ROLES = [
     ['Audit', '#10B981'], ['Concept', '#E63946'], ['Copy', '#1D5CFF'], ['Type', '#FDCB40'],
-    ['Photos', '#A8FFCB'], ['Motion', '#FF2E8A'], ['QA', '#F4F4F4'], ['Ending', '#B89B62']
+    ['Photos', '#A8FFCB'], ['Motion', '#FF2E8A'], ['QA', '#F4F4F4'], ['Ending', '#B89B62'],
+    ['Reader', '#7C3AED'], ['UX', '#0EA5E9'], ['UI', '#F97316'], ['Visual', '#22C55E'], ['Critic', '#FF6B6B'], ['Render', '#94A3B8']
   ];
   const NAMES = ['atlas', 'birch', 'cobalt', 'dune', 'ember', 'fjord', 'gale', 'halo', 'iris', 'juno', 'kite', 'lumen', 'mica', 'nova', 'onyx', 'pike'];
   // What each role says while a given pipeline step runs. Short, specific, never generic.

@@ -99,8 +99,10 @@ def build(slug_dir, bp_id, out_path=None):
     cta_html = lambda light=False: f'<a class="btn{" light" if light else ""}" href="#{e(form_id)}">{e(h.get("cta") or d.get("nav", {}).get("cta") or "Contact")} <span class="ar">→</span></a>'
     lab = lambda t, light=False: f'<span class="lab{" light" if light else ""}">{e(t)}</span>' if t else ''
 
-    def head_style(sec, key='head'):
-        hd = sec.get(key) or {}; px_ = hd.get('px') or H2.get('px'); st = [f'font-size:{clampf(px_)}']
+    def band_of(sec, bt=None):
+        return (bt or {}).get('band') or sec.get('band') or 'paper'
+    def head_style(sec, key='head', bt=None):
+        hd = sec.get(key) or {}; px_ = ((bt or {}).get('ui') or {}).get('h2_px') or hd.get('px') or H2.get('px'); st = [f'font-size:{clampf(px_)}']
         if hd.get('lh'): st.append(f'line-height:{hd["lh"]}')
         if hd.get('tt') == 'uppercase': st.append('text-transform:uppercase')
         if hd.get('it'): st.append('font-style:italic')
@@ -120,11 +122,12 @@ def build(slug_dir, bp_id, out_path=None):
         else: m = ''
         hd = bp['sections'][0].get('head') or D
         y = hd.get('y'); place = 'end' if (y or .6) > .5 else 'start'
-        al = 'center' if hd.get('al') == 'center' else 'start'
+        al = (h.get('ui') or {}).get('align') or ('center' if hd.get('al') == 'center' else 'start')
         h1 = e(h['h1']).replace('&lt;em&gt;', '<em>').replace('&lt;/em&gt;', '</em>')
         nw = len(re.sub(r'<[^>]+>', '', h['h1']).split()); hpx = hd.get('px') or D.get('px', 72)
         if nw >= 6: hpx = min(hpx, 84)
         if nw >= 8: hpx = min(hpx, 68)
+        hui = h.get('ui') or {}; hpx = round(hpx * {'S': .72, 'M': .88, 'L': 1}.get(hui.get('size', ''), 1))
         hsty = head_style(bp['sections'][0]); hsty = re.sub(r'font-size:[^;]+', f'font-size:{clampf(hpx)}', hsty); hsty = re.sub(r'max-width:[^;]+', 'max-width:14ch', hsty) + ';text-wrap:balance'
         cat = f'<div class="cat">{lab(h.get("category"), light)}{lab(h.get("fact"), light)}</div>'
         shot = (not media) and d.get('kind') == 'software' and src
@@ -141,7 +144,7 @@ def build(slug_dir, bp_id, out_path=None):
         inner = f'{lab(bt.get("label"))}<h2 class="h2" style="{head_style(sec)}">{e(big)}</h2>' if big and px_ >= 40 else lab(bt.get('label'))
         body_px = (sec.get('body') or {}).get('px') or BO['px']
         centered = (hd.get('al') == 'center')
-        return f'<section class="sec statement band-{sec.get("band") or "paper"}" id="{e(bt["id"])}" style="min-height:{min(1.2, max(.5, sec.get("screens", .8))) * 100}svh"><div class="wrap{" center" if centered else ""}" style="{col_style(sec)}">{inner}<p class="big-p" style="font-size:{clampf(max(body_px, 22), .7)}{";margin-left:auto;margin-right:auto" if centered else ""}">{e(text)}</p>{who}</div></section>'
+        return f'<section class="sec statement band-{band_of(sec, bt)}" id="{e(bt["id"])}" style="min-height:{min(1.2, max(.5, sec.get("screens", .8))) * 100}svh"><div class="wrap{" center" if centered else ""}" style="{col_style(sec)}">{inner}<p class="big-p" style="font-size:{clampf(max(body_px, 22), .7)}{";margin-left:auto;margin-right:auto" if centered else ""}">{e(text)}</p>{who}</div></section>'
 
     def photo_sec(sec, bt=None):
         ms = sec_media(sec) or [{'ar': 1.6, 'wf': 1, 'bleed': True}]
@@ -157,19 +160,23 @@ def build(slug_dir, bp_id, out_path=None):
 
     def ghead(sec, bt, light=False):
         if not bt.get('h2'): return lab(bt.get('label'))
-        st = re.sub(r'max-width:[^;]+;?', '', head_style(sec))
+        st = re.sub(r'max-width:[^;]+;?', '', head_style(sec, bt=bt)); hm = (bt.get('ui') or {}).get('head')
+        if hm == 'center': return f'<div class="gh one center">{lab(bt.get("label"), light)}<h2 class="h2" style="{st}">{e(bt.get("h2"))}</h2>{("<p class=\"lede\">" + e(bt.get("lede")) + "</p>") if bt.get("lede") else ""}</div>'
+        if hm == 'left': return f'<div class="gh one">{lab(bt.get("label"), light)}<h2 class="h2" style="{st}">{e(bt.get("h2"))}</h2>{("<p class=\"lede\">" + e(bt.get("lede")) + "</p>") if bt.get("lede") else ""}</div>'
         return f'<div class="gh"><div>{lab(bt.get("label"), light)}<h2 class="h2" style="{st}">{e(bt.get("h2"))}</h2></div>{("<p class=\"lede\">" + e(bt.get("lede")) + "</p>") if bt.get("lede") else "<div></div>"}</div>'
 
     def faq(sec, bt):
         rows = ''.join(f'<details><summary>{e(q)}</summary><p>{e(a)}</p></details>' for q, a in bt.get('items', [])[:8])
         bt = dict(bt); bt.setdefault('h2', 'Questions'); bt['h2'] = bt['h2'] or 'Questions'
-        return f'<section class="sec faq band-{sec.get("band") or "paper"}" id="{e(bt["id"])}"><div class="wrap two"><div>{lab(bt.get("label"))}<h2 class="h2" style="{re.sub(r"max-width:[^;]+;?", "", head_style(sec))}">{e(bt["h2"])}</h2>{("<p class=\"lede\">" + e(bt["lede"]) + "</p>") if bt.get("lede") else ""}</div><div class="qa">{rows}</div></div></section>'
+        return f'<section class="sec faq band-{band_of(sec, bt)}" id="{e(bt["id"])}"><div class="wrap two"><div>{lab(bt.get("label"))}<h2 class="h2" style="{re.sub(r"max-width:[^;]+;?", "", head_style(sec))}">{e(bt["h2"])}</h2>{("<p class=\"lede\">" + e(bt["lede"]) + "</p>") if bt.get("lede") else ""}</div><div class="qa">{rows}</div></div></section>'
 
     def cards(sec, bt):
         if bt['type'] == 'faq': return faq(sec, bt)
         ms = sec_media(sec); n = max(2, min(4, len(ms) or 3)); ar = (ms[0]['ar'] if ms else 0.82)
-        lead = ''
-        if bt['type'] == 'facts' and [i for i in images.values() if i.get('data') and not i.get('shot') and i.get('id') not in used and (i.get('w', 0) >= 600)]:
+        lead = ''; ui_ = bt.get('ui') or {}
+        if ui_.get('lead') and images.get(ui_['lead']): lead = f'<figure class="lead" style="aspect-ratio:{max(1.3, min(2.4, images[ui_["lead"]].get("w", 16) / max(1, images[ui_["lead"]].get("h", 9))))}"><img src="{img(ui_["lead"])}" alt=""></figure>'
+        elif ui_.get('lead') == '': pass
+        elif bt['type'] == 'facts' and [i for i in images.values() if i.get('data') and not i.get('shot') and i.get('id') not in used and (i.get('w', 0) >= 600)]:
             lead = f'<figure class="lead" style="aspect-ratio:2.2"><img src="{img(want_shot=False)}" alt=""></figure>'
         elif bt['type'] == 'steps' and soft and [i for i in images.values() if i.get('shot') and i.get('id') not in used]:
             lead = f'<figure class="lead" style="aspect-ratio:1.9"><img src="{img(want_shot=True)}" alt=""></figure>'
@@ -177,6 +184,7 @@ def build(slug_dir, bp_id, out_path=None):
         if k in (3, 6, 9): n = 3
         elif k in (2, 4) and n > 2: n = 2 if k == 2 else 4
         elif k == 5: n = 3
+        n = ui_.get('cols') or n
         items = []
         if bt['type'] == 'features': items = [(f.get('title'), f.get('body'), True) for f in bt.get('features', [])]
         elif bt['type'] == 'cells': items = [(c[0], c[2] if len(c) > 2 else '', c[1]) for c in bt.get('cells', [])]
@@ -190,24 +198,26 @@ def build(slug_dir, bp_id, out_path=None):
             pic = f'<figure style="aspect-ratio:{ar}"><img src="{img(want_shot=False)}" alt=""></figure>' if with_img and i < len(images) else ''
             big = f'<b class="num">{e(num)}</b>' if isinstance(num, str) and re.search(r'\d', num) else ''
             cells += f'<div class="card">{pic}{lab(f"0{i + 1}") if not big and bt["type"] != "steps" else ""}{big}<h3 class="h3">{e(t)}</h3><p>{e(body_)}</p></div>'
-        return f'<section class="sec cards band-{sec.get("band") or "paper"}" id="{e(bt["id"])}"><div class="wrap">{ghead(sec, bt)}{lead}<div class="grid" style="--n:{n}">{cells}</div></div></section>'
+        return f'<section class="sec cards band-{band_of(sec, bt)}{" compact" if ui_.get("compact") else ""}" id="{e(bt["id"])}"><div class="wrap">{ghead(sec, bt)}{lead}<div class="grid" style="--n:{n}">{cells}</div></div></section>'
 
     def ledger(sec, bt):
         its = list(bt.get('items', []))
         pri = [x for x in its if re.search(r'\d', str(x[1]))]; rest = [x for x in its if x not in pri]
         its = (pri + rest)[:5]
         rows = ''.join(f'<li{" class=\"big\"" if i == 0 and re.search(r"\d", str(p)) else ""}><span>{e(a)}</span><i></i><b>{e(p)}</b></li>' for i, (a, p) in enumerate(its))
-        return f'<section class="sec ledger band-{sec.get("band") or "paper"}" id="{e(bt["id"])}"><div class="wrap two"><div>{lab(bt.get("label"))}<h2 class="h2" style="{head_style(sec)}">{e(bt.get("h2"))}</h2><p class="lede">{e(bt.get("lede"))}</p></div><div><ul class="rows">{rows}</ul><div class="ctas">{cta_html()}</div></div></div></section>'
+        return f'<section class="sec ledger band-{band_of(sec, bt)}" id="{e(bt["id"])}"><div class="wrap two"><div>{lab(bt.get("label"))}<h2 class="h2" style="{head_style(sec)}">{e(bt.get("h2"))}</h2><p class="lede">{e(bt.get("lede"))}</p></div><div><ul class="rows">{rows}</ul><div class="ctas">{cta_html()}</div></div></div></section>'
 
     def two_col(sec, bt):
         if bt['type'] == 'steps': cols_ = [(f'0{i + 1}', s) for i, s in enumerate(bt.get('steps', []))][:3]
         elif bt['type'] == 'features': cols_ = [(f.get('title'), f.get('body')) for f in bt.get('features', [])][:2]
         else: cols_ = [(c[0], c[2] if len(c) > 2 else '') for c in bt.get('cells', [])][:2]
         inner = ''.join(f'<div><h3 class="h2" style="{head_style(sec)}">{e(t)}</h3><p class="big-p" style="font-size:{clampf(BO["px"] + 2, .8)}">{e(x)}</p></div>' for t, x in cols_)
-        lead = ''
-        if bt['type'] == 'steps' and soft and [i for i in images.values() if i.get('shot') and i.get('id') not in used]:
+        lead = ''; ui_ = bt.get('ui') or {}
+        if ui_.get('lead') and images.get(ui_['lead']): lead = f'<figure class="lead" style="aspect-ratio:{max(1.3, min(2.4, images[ui_["lead"]].get("w", 16) / max(1, images[ui_["lead"]].get("h", 9))))}"><img src="{img(ui_["lead"])}" alt=""></figure>'
+        elif ui_.get('lead') == '': pass
+        elif bt['type'] == 'steps' and soft and [i for i in images.values() if i.get('shot') and i.get('id') not in used]:
             lead = f'<figure class="lead" style="aspect-ratio:1.9"><img src="{img(want_shot=True)}" alt=""></figure>'
-        return f'<section class="sec twocol band-{sec.get("band") or "paper"}" id="{e(bt["id"])}"><div class="wrap">{ghead(sec, bt) if bt["type"] != "features" else lab(bt.get("label"))}{lead}<div class="cols" style="--n:{len(cols_)}">{inner}</div></div></section>'
+        return f'<section class="sec twocol band-{band_of(sec, bt)}{" compact" if (bt.get("ui") or {}).get("compact") else ""}" id="{e(bt["id"])}"><div class="wrap">{ghead(sec, bt) if bt["type"] != "features" else lab(bt.get("label"))}{lead}<div class="cols" style="--n:{len(cols_)}">{inner}</div></div></section>'
 
     def cta(sec, bt=None):
         title = (bt or {}).get('h2') or en.get('tag') or h.get('cta') or b['name']
@@ -288,6 +298,7 @@ img,video{{display:block;max-width:100%}}a{{color:inherit;text-decoration:none}}
 .statement .who{{margin-top:22px}}.statement .wrap.center{{text-align:center;display:grid;justify-items:center}}
 .photos .pair{{display:flex;gap:var(--gutter);align-items:flex-start}}.photos figure{{overflow:hidden;border-radius:var(--radius)}}.photos figure img,.photo figure img{{width:100%;height:100%;object-fit:cover}}.photo figure{{position:relative;margin:0}}.photo.bleed{{padding:0}}.photo .over{{position:absolute;inset:auto 0 0 0;padding-bottom:clamp(28px,4vw,56px);color:var(--on-photo)}}.h2.light{{color:var(--on-photo)}}.cap{{margin-top:14px;max-width:var(--body-max);color:var(--muted)}}.caps{{display:flex;gap:24px;align-items:baseline;flex-wrap:wrap;padding-top:14px}}
 .gh{{display:grid;grid-template-columns:1.1fr .9fr;gap:var(--gutter);align-items:end;margin-bottom:clamp(28px,4vw,48px)}}.gh .h2{{text-align:left!important;margin-left:0!important;margin-top:14px;max-width:18ch;text-wrap:balance}}.gh .lede{{margin-top:0}}
+.sec.compact{{padding:clamp(40px,5vw,72px) 0;min-height:auto!important}}.gh.one{{display:block;max-width:var(--body-max)}}.gh.one .h2{{max-width:none}}.gh.one.center{{text-align:center;margin-left:auto;margin-right:auto}}.gh.one.center .h2{{text-align:center!important;margin-left:auto!important;margin-right:auto}}.gh.one .lede{{margin-top:16px}}.gh.one.center .lede{{margin-left:auto;margin-right:auto}}
 figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4vw,48px);border:1px solid var(--line)}}figure.lead img{{width:100%;height:100%;object-fit:cover;object-position:top}}
 .faq .two{{display:grid;grid-template-columns:.8fr 1.2fr;gap:var(--gutter)}}.qa details{{border-top:1px solid var(--line);padding:16px 0}}.qa details:last-child{{border-bottom:1px solid var(--line)}}.qa summary{{cursor:pointer;list-style:none;font-family:var(--display);font-weight:var(--h3-w);font-size:min(var(--h3),24px);display:flex;justify-content:space-between;gap:16px}}.qa summary::after{{content:"+";font-weight:300}}.qa details[open] summary::after{{content:"–"}}.qa details p{{margin-top:10px;color:var(--muted);max-width:60ch}}
 .grid{{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:var(--gutter)}}.card figure{{overflow:hidden;border-radius:var(--radius);margin-bottom:16px}}.card figure img{{width:100%;height:100%;object-fit:cover}}.card .h3{{margin-top:8px;font-size:min(var(--h3),28px)}}.card p{{margin-top:10px;color:var(--muted);max-width:34ch}}.card .num{{display:block;font-family:var(--display);font-weight:var(--h2-w);font-size:var(--h2);line-height:1;letter-spacing:-.02em}}

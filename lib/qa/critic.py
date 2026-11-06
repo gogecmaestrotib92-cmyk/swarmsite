@@ -10,13 +10,15 @@ TOOL = {"name": "report_fixes", "description": "Report concrete visual defects a
         "input_schema": {"type": "object", "required": ["score", "fixes"], "properties": {
             "score": {"type": "integer", "minimum": 0, "maximum": 100},
             "verdict": {"type": "string"},
-            "fixes": {"type": "array", "maxItems": 8, "items": {"type": "object", "required": ["op", "reason"], "properties": {
-                "op": {"type": "string", "enum": ["drop_beat", "shorten", "swap_image", "hero_image", "hero_h1", "band"]},
+            "fixes": {"type": "array", "maxItems": 10, "items": {"type": "object", "required": ["op", "reason"], "properties": {
+                "op": {"type": "string", "enum": ["drop_beat", "shorten", "swap_image", "hero_image", "hero_h1", "band", "layout", "reorder", "note"]},
+                "agent": {"type": "string", "enum": ["copy", "ui", "visual", "ux"], "description": "who owns the fix: copy = words; ui = columns/bands/sizes/spacing/empty screens; visual = which image, crops, missing visuals; ux = order of sections, CTAs, nav"},
                 "beat": {"type": "string"}, "field": {"type": "string"}, "max_words": {"type": "integer"}, "image": {"type": "string"}, "value": {"type": "string"}, "reason": {"type": "string"}}}}}}}
 
 SYSTEM = """You are the creative director reviewing screenshots of a page your studio just built. Be hard but concrete.
 Look for: text clipped or overlapping, invisible text (same colour as background), empty or near-empty screens, images that are wrong for their slot (a UI screenshot stretched as a photo, a logo as a hero, a text-heavy crop), a hero that does not read in 3 seconds, sections that repeat the same idea, too many words on one screen, broken grids on the phone.
-Report only what you can SEE. Every fix must name the beat id (from the direction) and the reason. Prefer dropping a weak section over padding it. Score 0–100 against award-level work (90+ = ship)."""
+Report only what you can SEE. Every fix must name the beat id (from the direction), the agent who owns it, and the reason — written so that agent can act without seeing the screenshot (say which element, where, how big, what it should become).
+Ops: shorten/hero_h1 → copy; swap_image/hero_image → visual (name the image id); band/layout → ui (columns, lead visual, compact, h2 size, head alignment); drop_beat/reorder → ux; note → anything else, to the right agent. Prefer dropping a weak section over padding it. Score 0–100 against award-level work (90+ = ship)."""
 
 def shots(html, outdir):
     os.makedirs(outdir, exist_ok=True)

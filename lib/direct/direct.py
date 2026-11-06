@@ -105,7 +105,8 @@ def direct(slug_dir, model='claude-sonnet-5-5'):
     inv, assets, imgs, audit = load(slug_dir)
     bp = os.path.join(slug_dir, 'brief.json'); brief = json.load(open(bp)) if os.path.exists(bp) else {}
     rules = '\n\n'.join(f'### {r}\n' + open(os.path.join(ROOT, r)).read() for r in RULES)
-    user = f"""RULES\n{rules}\n\nSCHEMA\n{SCHEMA}\n\nINVENTORY (what the site HAS)\n{json.dumps(inv, ensure_ascii=False)[:60000]}\n\nBRAND ASSETS\n{json.dumps({k: v for k, v in (assets or {}).items() if k != 'logo'}, ensure_ascii=False)[:6000]}\n\nIMAGES (ids you may use)\n{json.dumps(imgs, ensure_ascii=False)[:6000]}\n\nAUDIT\n{json.dumps(audit, ensure_ascii=False)[:8000] if audit else 'n/a'}\n\nOWNER'S BRIEF (hard constraints, override everything above)\n{brief_text(brief)}\n\nCall write_direction with the complete document."""
+    fsp = os.path.join(slug_dir, 'factsheet.json'); factsheet = open(fsp).read()[:8000] if os.path.exists(fsp) else 'n/a'
+    user = f"""RULES\n{rules}\n\nSCHEMA\n{SCHEMA}\n\nFACT SHEET (verified by the reader — prefer these words and figures)\n{factsheet}\n\nINVENTORY (what the site HAS)\n{json.dumps(inv, ensure_ascii=False)[:60000]}\n\nBRAND ASSETS\n{json.dumps({k: v for k, v in (assets or {}).items() if k != 'logo'}, ensure_ascii=False)[:6000]}\n\nIMAGES (ids you may use)\n{json.dumps(imgs, ensure_ascii=False)[:6000]}\n\nAUDIT\n{json.dumps(audit, ensure_ascii=False)[:8000] if audit else 'n/a'}\n\nOWNER'S BRIEF (hard constraints, override everything above)\n{brief_text(brief)}\n\nCall write_direction with the complete document."""
     client = anthropic.Anthropic()
     import base64, glob
     bps = []

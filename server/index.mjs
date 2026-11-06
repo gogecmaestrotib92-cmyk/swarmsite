@@ -52,7 +52,7 @@ app.listen(process.env.PORT || 8080, () => console.log('api on', process.env.POR
 // ---------- worker ----------
 const run = (cmd, args, opts = {}) => new Promise((resolve, reject) => {
   const p = spawn(cmd, args, { cwd: ROOT, env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' }, ...opts }); let out = '', err = '';
-  p.stdout.on('data', d => out += d); p.stderr.on('data', d => err += d);
+  let buf = ''; p.stdout.on('data', d => { out += d; if (opts.onLine) { buf += d; const lines = buf.split('\n'); buf = lines.pop(); lines.forEach(l => { try { opts.onLine(l); } catch {} }); } }); p.stderr.on('data', d => err += d);
   const t = setTimeout(() => { p.kill('SIGKILL'); reject(new Error(cmd + ' timeout')); }, opts.timeoutMs || 300000);
   p.on('close', c => { clearTimeout(t); c === 0 ? resolve(out) : reject(new Error(`${cmd} ${args[0]} exit ${c}: ${err.slice(-800)}`)); });
 });
@@ -102,7 +102,7 @@ function eventsRender(dir) { const html = (() => { try { return fs.readFileSync(
   return ev; }
 function eventsQA(qa) { return String(qa || '').split('\n').filter(Boolean).slice(0, 8).map(l => ({ role: 'QA', text: l.replace(/^\[(high|med|low)\]\s*/, '').slice(0, 70) })); }
 
-const ARTS = ['brief.json', 'critic.json', 'inventory.json', 'assets.json', 'images.json', 'geometry.json', 'audit.json', 'direction.json', 'mobile.json', 'index.html'];
+const ARTS = ['brief.json', 'critic.json', 'factsheet.json', 'swarm.json', 'inventory.json', 'assets.json', 'images.json', 'geometry.json', 'audit.json', 'direction.json', 'mobile.json', 'index.html'];
 async function uploadArtefacts(job, dir) { for (const f of ARTS) { const fp = path.join(dir, f); if (fs.existsSync(fp)) { try { await upload(fp, `${job.id}/art/${f}`, f.endsWith('.html') ? 'text/html' : 'application/json'); } catch (e) { console.warn('art', f, e.message); } } } }
 const BP = { software: ['cerebrium', 'butter', 'deepbook'], place: ['tengile', 'white-desert', 'belgrade-arbor'], service: ['lpas', 'aino', 'butter'], product: ['crav', 'butter', 'tengile'] };
 async function process_(job) {
@@ -115,7 +115,8 @@ async function process_(job) {
   });
   await timed('diagnose', async () => { const out = await run('python3', ['-I', 'lib/audit/diagnose.py', path.join(dir, 'inventory.json')]); fs.writeFileSync(path.join(dir, 'audit.json'), out); }); await emit(job, eventsDiagnose(dir));
   fs.writeFileSync(path.join(dir, 'brief.json'), JSON.stringify(job.options || {}));
-  await timed('direct', () => run('python3', ['lib/direct/direct.py', dir, process.env.DIRECT_MODEL || 'claude-sonnet-5-5'], { timeoutMs: 240000 })); await emit(job, eventsDirect(dir));
+  await timed('direct', async () => { try { await run('python3', ['-c', 'import sys; sys.path.insert(0, "lib/swarm"); import agents, json; f = agents.reader(sys.argv[1]) or {}; print(json.dumps({"what": f.get("what", ""), "n": len(f.get("facts", []))}))', dir], { timeoutMs: 180000 }).then(async o => { const f = JSON.parse(o.trim().split('\n').pop()); await emit(job, [{ role: 'Reader', text: String(f.what || '').slice(0, 120) }, { role: 'Reader', text: `${f.n} verified facts` }]); }); } catch (e) { console.warn('reader', e.message.slice(0, 200)); }
+    return run('python3', ['lib/direct/direct.py', dir, process.env.DIRECT_MODEL || 'claude-sonnet-5-5'], { timeoutMs: 240000 }); }); await emit(job, eventsDirect(dir));
   await timed('render', async () => {
     await run('python3', ['lib/render/render_beats.py', dir]);
     // blueprint variants: the winner's measured form + this client's content (2 per class)
@@ -124,11 +125,14 @@ async function process_(job) {
     const picks = [...new Set([chosen, ...(BP[kind] || BP.service)])].filter(b => have.has(b)).slice(0, 2);
     job._bps = [];
     for (const bp of picks) { try { await run('python3', ['lib/render/render_bp.py', dir, bp, path.join(dir, `bp-${bp}.html`)], { timeoutMs: 120000 }); job._bps.push(bp); } catch (e) { console.warn('bp', bp, e.message.slice(0, 200)); } }
-    // visual loop on the primary variant: the critic looks at every screen, applies bounded fixes, we render once more
-    if (job._bps[0]) { try { const o = await run('python3', ['lib/qa/critic.py', dir, path.join(dir, `bp-${job._bps[0]}.html`), process.env.DIRECT_MODEL || 'claude-sonnet-5-5'], { timeoutMs: 240000 }); const rep = JSON.parse(o.trim().split('\n').pop());
-        job._critic = rep; await emit(job, [{ role: 'QA', text: `critic: ${rep.score}/100 · ${rep.fixes} fixes · ${String(rep.verdict || '').slice(0, 70)}` }]);
-        if (rep.applied > 0) { await run('python3', ['lib/render/render_bp.py', dir, job._bps[0], path.join(dir, `bp-${job._bps[0]}.html`)], { timeoutMs: 120000 }); await emit(job, [{ role: 'QA', text: `re-rendered after ${rep.applied} fixes` }]); }
-      } catch (e) { console.warn('critic', e.message.slice(0, 300)); } }
+    // the swarm: Reader → UX → Copy → UI → Visual shape the document, then Critic ↔ owners loop until the score passes
+    if (job._bps[0]) { try {
+        const out = path.join(dir, `bp-${job._bps[0]}.html`);
+        const o = await run('python3', ['lib/swarm/run.py', dir, job._bps[0], '--out', out, '--rounds', process.env.SWARM_ROUNDS || '3', '--target', process.env.SWARM_TARGET || '80'], { timeoutMs: 900000, onLine: async l => { try { const j = JSON.parse(l); if (j.event) await emit(job, [j.event]); } catch {} } });
+        const last = o.trim().split('\n').map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
+        const done = last.find(j => j.done)?.done; const crit = J(path.join(dir, 'critic.json'));
+        job._critic = crit ? { score: crit.best ?? crit.score, fixes: (crit.fixes || []).length, verdict: crit.verdict, rounds: done?.rounds } : null;
+      } catch (e) { console.warn('swarm', e.message.slice(0, 300)); await emit(job, [{ role: 'QA', text: 'swarm loop failed: ' + e.message.slice(0, 80) }]); } }
   }); await emit(job, eventsRender(dir)); if (job._bps?.length) await emit(job, job._bps.map(b => ({ role: 'Concept', text: `blueprint variant: ${b}` })));
   let qa = null; await timed('qa', async () => { try { const o = await run('python3', ['lib/qa/check.py', path.join(dir, 'index.html')], { timeoutMs: 240000 }); qa = o.split('\n').filter(l => /QA score|\[(high|med|low)/.test(l)).join('\n'); } catch (e) { qa = 'qa skipped: ' + e.message.slice(0, 200); } }); await emit(job, eventsQA(qa));
   const result = await timed('upload', async () => {
