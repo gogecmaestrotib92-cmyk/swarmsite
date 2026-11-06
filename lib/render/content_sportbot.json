@@ -1,0 +1,470 @@
+{
+  "site": "sportbotai.com",
+  "brand": {
+    "name": "SportBot",
+    "badge": "AI",
+    "accent": "#10B981",
+    "display_font": "Barlow Condensed",
+    "font_link": "Barlow+Condensed:wght@600;700;800"
+  },
+  "audit": {
+    "score": 28,
+    "words": 2400,
+    "sections": 17,
+    "notes": [
+      "Audit note: the live site states $18.99 / $39.99 in its FAQ. One source of truth is required before publishing."
+    ]
+  },
+  "nav": {
+    "links": [
+      [
+        "#record",
+        "Record"
+      ],
+      [
+        "#ways",
+        "How it works"
+      ],
+      [
+        "#price",
+        "Price check"
+      ],
+      [
+        "#plans",
+        "Plans"
+      ]
+    ],
+    "cta": "Check a bet"
+  },
+  "hero": {
+    "label": "Source-labelled inputs · public record",
+    "counter": {
+      "n": "28,139",
+      "t": "analyses completed"
+    },
+    "h1": [
+      "Never take a ",
+      "bad number",
+      " again."
+    ],
+    "lede": "Check any bet against the pros' price before you stake it: the fair price, the best book, and a stake your bankroll supports. Free, once a day.",
+    "cta": "Check my next bet — free",
+    "cta2": "See the public record",
+    "artefact": {
+      "tl": "Fix. 0421 · Premier League",
+      "tr": "T−20h 53m",
+      "bl": "Inputs: 14 · all present",
+      "br": "Rev. 06 Nov 2026",
+      "top": [
+        "Match analysis",
+        "Under 2.5"
+      ],
+      "teams": [
+        "Leeds United",
+        "Tottenham Hotspur"
+      ],
+      "rows": [
+        [
+          "The bet",
+          "1.86",
+          "price at analysis"
+        ],
+        [
+          "Market price, margin removed",
+          "1.96",
+          "= 51%"
+        ],
+        [
+          "Model's number · in test",
+          "1.69",
+          "= 59%"
+        ]
+      ],
+      "verdict": "The model's number sits above the market price. That gap is the edge — an opinion, in test.",
+      "verdict_strong": "Worth backing — moderate edge · +8.0pp"
+    },
+    "category": "Odds analytics for sports bettors",
+    "img": "gen-stadium"
+  },
+  "marquee": [
+    "Premier League",
+    "NBA",
+    "NFL",
+    "NHL",
+    "EuroLeague",
+    "Tennis",
+    "MLB",
+    "Esports",
+    "34 books priced per fixture"
+  ],
+  "record": {
+    "label": "01 — The public record · since 29 Sept 2026",
+    "h2": "Wins and losses, settled in public.",
+    "lede": "Every settled pick as it landed, losses included. The model's number is logged beside each one, as an opinion in test.",
+    "cells": [
+      [
+        "Picks · ROI",
+        "+3.3%",
+        "640 closes",
+        "pos"
+      ],
+      [
+        "Units",
+        "+13.46u",
+        "664 settled · ±9.7 luck",
+        ""
+      ],
+      [
+        "Hit rate",
+        "43%",
+        "1.80 avg odds",
+        ""
+      ],
+      [
+        "Model · in test",
+        "−4.1%",
+        "on 466 qualifying picks",
+        "neg"
+      ],
+      [
+        "Won – lost",
+        "251–215",
+        "1 unit each",
+        ""
+      ]
+    ],
+    "ink": {
+      "label": "Full ledgers",
+      "h3": "Time-stamped, with the closing line.",
+      "link": "See the full record"
+    },
+    "foot": "Past results do not promise the next one.",
+    "curve": [
+      0.0,
+      1.42,
+      0.28,
+      1.58,
+      2.46,
+      3.85,
+      4.41,
+      3.49,
+      4.1,
+      3.51,
+      2.86,
+      3.99,
+      2.56,
+      1.48,
+      2.94,
+      3.99,
+      4.79,
+      5.84,
+      5.01,
+      5.64,
+      4.51,
+      5.13,
+      6.2,
+      5.46,
+      4.54,
+      5.5,
+      4.63,
+      5.9,
+      6.52,
+      7.54,
+      8.76,
+      9.87,
+      10.51,
+      9.81,
+      10.5,
+      9.56,
+      10.82,
+      9.55,
+      10.4,
+      11.48,
+      10.2,
+      11.52,
+      12.5,
+      13.1,
+      14.23,
+      13.43,
+      12.07,
+      12.62,
+      11.76,
+      11.11,
+      11.86,
+      12.51,
+      13.42,
+      12.81,
+      11.9,
+      13.26,
+      11.91,
+      13.11,
+      14.27,
+      12.85,
+      13.46
+    ],
+    "curve_label": "+13.46u",
+    "curve_note": "Shape drawn from the settled ledger; the pipeline reads the public record page."
+  },
+  "ways": {
+    "label": "02 — Three ways in",
+    "steps": [
+      "Go deep on one match.",
+      "Have the whole slate scanned.",
+      "Check a bet you already like."
+    ],
+    "note": "Probabilities for each outcome, the pros' price beside them, the best book and, on Pro, the stake your bankroll supports.",
+    "panels": [
+      {
+        "top": [
+          "ATP Paris Masters · Winner",
+          "1h 41m"
+        ],
+        "teams": [
+          "Taylor Fritz",
+          "Carlos Alcaraz"
+        ],
+        "rows": [
+          [
+            "Our pick · Fritz to win",
+            "3.80"
+          ],
+          [
+            "Bet $10",
+            "→ $38"
+          ]
+        ],
+        "verdict": "11 picks open now.",
+        "strong": "Why this pick →"
+      },
+      {
+        "top": [
+          "Today's model picks · in test",
+          "refresh 4–6h"
+        ],
+        "rows": [
+          [
+            "Birmingham – Swansea · Under 2.5",
+            "+12.6%"
+          ],
+          [
+            "Nacional – Académico · Under 2.5",
+            "+11.1%"
+          ],
+          [
+            "Leeds – Tottenham · Under 2.5",
+            "+8.0%"
+          ]
+        ],
+        "verdict": "Removed 30 min before kickoff.",
+        "strong": "See today's picks →"
+      },
+      {
+        "top": [
+          "Price check · your bet",
+          "34 books"
+        ],
+        "rows": [
+          [
+            "1xBet",
+            "1.98",
+            "best"
+          ],
+          [
+            "Betfair",
+            "1.97"
+          ],
+          [
+            "DraftKings",
+            "1.95"
+          ],
+          [
+            "Unibet (FR)",
+            "1.70"
+          ]
+        ],
+        "verdict": "Cost of taking the lowest listed price",
+        "strong": "−14.1%"
+      }
+    ],
+    "h2": "Three ways to use it"
+  },
+  "price": {
+    "label": "03 — Price check",
+    "h2": "The same bet at a better price",
+    "body": "The same selection is not paid the same everywhere. We line up 34 books, mark the best one, and show what a worse number costs.",
+    "cells": [
+      [
+        "Books that quoted this selection",
+        "34",
+        "Brighton · match result",
+        ""
+      ],
+      [
+        "Best price at analysis",
+        "1.98",
+        "1xBet",
+        "pos"
+      ],
+      [
+        "Cost of the lowest listed price",
+        "−14.1%",
+        "Unibet (FR) 1.70",
+        "neg"
+      ]
+    ],
+    "ladder": [
+      {
+        "name": "1xBet",
+        "v": 1.98
+      },
+      {
+        "name": "Betfair",
+        "v": 1.97
+      },
+      {
+        "name": "DraftKings",
+        "v": 1.95
+      },
+      {
+        "name": "Unibet (FR)",
+        "v": 1.7
+      }
+    ],
+    "ladder_note": "and 30 more books priced on this selection",
+    "gap": {
+      "a": 1.86,
+      "b": 1.96,
+      "la": "Your price · the bet",
+      "lb": "Fair price · margin removed",
+      "verb": "gap"
+    }
+  },
+  "trust": {
+    "label": "04 — Method, record, rules",
+    "rows": [
+      [
+        "A",
+        "Methodology",
+        "How a pick is made, what the model's number is, how edge is measured, how the record is kept."
+      ],
+      [
+        "B",
+        "Public track record",
+        "Every pick is logged with outcome, odds and the closing line."
+      ],
+      [
+        "C",
+        "Responsible use",
+        "Educational analytics only. No guaranteed outcomes, no bookmaker activity. 18+."
+      ]
+    ],
+    "h2": "Built to be audited"
+  },
+  "plans": {
+    "label": "05 — Plans",
+    "h2": "Two plans, no contract",
+    "lede": "One bad price costs more than a year of Pro. Start free; move up when the tool finds something you would have missed.",
+    "tiers": [
+      {
+        "name": "Pro",
+        "price": "$4.99",
+        "per": "/ month",
+        "items": [
+          "Every pick the moment it drops: side, price, book, why",
+          "10 matches a day analysed",
+          "25 price checks and 50 AI Desk questions a day"
+        ],
+        "cta": "Start with Pro",
+        "primary": true
+      },
+      {
+        "name": "Premium",
+        "price": "$9.99",
+        "per": "/ month",
+        "items": [
+          "Everything in Pro, no daily limits",
+          "Line-move, sure-bet and own-model alerts",
+          "Unlimited AI chat and full research history"
+        ],
+        "cta": "Go Premium",
+        "primary": false
+      }
+    ],
+    "lifetime": {
+      "label": "Pay once",
+      "h3": "Lifetime — no recurring fee.",
+      "items": [
+        [
+          "$299",
+          "Lifetime Pro · 250 analyses + 1,000 chats / month"
+        ],
+        [
+          "$999",
+          "Lifetime Premium · unlimited"
+        ]
+      ]
+    },
+    "foot": "Free account: 1 pick, 1 analysis, 1 price check a day · no card needed"
+  },
+  "faq": {
+    "label": "06 — Questions",
+    "items": [
+      [
+        "Is SportBot AI a tipster service?",
+        "No. A tipster sells a side and asks for trust. SportBot publishes rule-based picks against the pros' price, and every settled pick stays on the public record, losses included."
+      ],
+      [
+        "How do the predictions work?",
+        "Two numbers sit on every match: the pros' price (Pinnacle, margin removed) and the model's number, in test. Where a licensed book pays more than the pros' price, that gap is the edge."
+      ],
+      [
+        "What is free?",
+        "One pick a day, one match analysis, one price check and three AI questions a week. The record and the methodology are open to everyone."
+      ],
+      [
+        "What sports are covered?",
+        "Major soccer competitions, NBA, EuroLeague, NFL, NHL, tennis, MLB with player props, and esports. A match without usable inputs is left out."
+      ]
+    ]
+  },
+  "ending": {
+    "tag": "Source-labelled inputs, a public record, and the pros' price beside every pick.",
+    "cta": "Check my next bet — free",
+    "cols": [
+      [
+        "Product",
+        [
+          "Picks",
+          "Analyze",
+          "Price check",
+          "Props"
+        ]
+      ],
+      [
+        "Company",
+        [
+          "Methodology",
+          "Public record",
+          "Pricing",
+          "Contact"
+        ]
+      ],
+      [
+        "Apps",
+        [
+          "iOS",
+          "Android"
+        ]
+      ]
+    ],
+    "next": "Next: today's picks → refresh every 4–6h",
+    "responsible": "Bet responsibly · 18+ · BeGambleAware.org",
+    "legal": "© 2026 SportBot AI · educational analytics only · no guaranteed outcomes"
+  },
+  "band": {
+    "n": "34",
+    "label": "books priced on every fixture",
+    "sub": "28,139 analyses · public record since 29 Sept 2026",
+    "img": "roof-gantry"
+  }
+}

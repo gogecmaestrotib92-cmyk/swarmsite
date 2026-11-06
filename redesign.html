@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SportBot AI — Check any bet against the pros' price</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --base:#F4F2EE; --base-2:#ECE9E3; --ink:#1C1B19; --ink-55:rgba(28,27,25,.55); --ink-12:rgba(28,27,25,.12);
+  --accent:#10B981; --accent-ink:#0B8A5F;
+  --display:'Barlow Condensed',system-ui,sans-serif; --body:'Instrument Sans',system-ui,sans-serif;
+  --gutter:clamp(24px,5vw,64px); --max:1360px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--base);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.55;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:var(--max);margin:0 auto;padding:0 var(--gutter)}
+.label{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-55);font-weight:600}
+.display{font-family:var(--display);font-weight:800;letter-spacing:-.02em;line-height:.92;text-transform:uppercase}
+h2.display{font-size:clamp(44px,6vw,84px)}
+.lede{font-size:clamp(17px,1.3vw,20px);max-width:62ch;color:var(--ink);opacity:.85}
+.hair{border-top:1px solid var(--ink-12)}
+section{padding:clamp(80px,10vw,150px) 0}
+.sec-head{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:end;margin-bottom:64px}
+.sec-head .num{font-family:var(--display);font-size:14px;letter-spacing:.2em;color:var(--ink-55);margin-bottom:14px;display:block}
+.btn{display:inline-flex;align-items:center;gap:12px;font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:.04em;text-transform:uppercase;padding:16px 26px;border:1px solid var(--ink);border-radius:2px;transition:background .25s,color .25s}
+.btn:hover{background:var(--ink);color:var(--base)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#06281C}
+.btn.primary:hover{background:var(--ink);border-color:var(--ink);color:var(--base)}
+.link{font-weight:600;border-bottom:1px solid var(--ink);padding-bottom:2px;transition:border-color .2s,color .2s}
+.link:hover{color:var(--accent-ink);border-color:var(--accent-ink)}
+.arrow::after{content:"→";margin-left:10px}
+/* nav */
+nav{position:sticky;top:0;z-index:50;background:rgba(244,242,238,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--ink-12)}
+nav .wrap{display:flex;align-items:center;justify-content:space-between;height:64px}
+.wordmark{font-family:var(--display);font-weight:800;font-size:24px;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
+.wordmark i{width:26px;height:26px;border-radius:50%;background:var(--ink);display:inline-grid;place-items:center;color:var(--accent);font-style:normal;font-size:16px}
+.wordmark em{font-style:normal;font-size:11px;letter-spacing:.14em;background:var(--accent);color:#06281C;padding:3px 6px;border-radius:2px;margin-left:2px}
+nav ul{display:flex;gap:32px;list-style:none}
+nav ul a{font-size:14px;font-weight:500;color:var(--ink-55)}
+nav ul a:hover{color:var(--ink)}
+nav .btn{padding:10px 18px;font-size:15px}
+/* hero */
+.hero{padding:clamp(72px,9vw,120px) 0 clamp(56px,6vw,80px)}
+.hero .wrap{display:grid;grid-template-columns:7fr 5fr;gap:64px;align-items:center}
+.hero h1{font-size:clamp(56px,8vw,112px)}
+.hero h1 span{color:var(--accent-ink)}
+.hero .meta{display:flex;gap:28px;margin-bottom:28px;flex-wrap:wrap}
+.hero .meta b{font-weight:600}
+.hero .meta span::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-right:8px;vertical-align:middle}
+.hero .lede{margin:28px 0 36px}
+.hero .ctas{display:flex;gap:28px;align-items:center;flex-wrap:wrap}
+.hero .ticks{display:flex;gap:24px;margin-top:40px;font-size:13.5px;color:var(--ink-55);flex-wrap:wrap}
+.hero .ticks span::before{content:"✓";color:var(--accent-ink);margin-right:6px;font-weight:700}
+/* analysis card */
+.card{background:#fff;border:1px solid var(--ink-12);border-radius:4px;padding:28px;font-size:14px}
+.card .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.card .teams{font-family:var(--display);font-size:22px;font-weight:700;text-transform:uppercase;line-height:1.15}
+.card .row{display:flex;justify-content:space-between;align-items:baseline;padding:12px 0;border-top:1px solid var(--ink-12)}
+.card .row b{font-family:var(--display);font-size:26px;font-weight:700}
+.card .row small{color:var(--ink-55);font-size:12px;margin-left:6px}
+.card .verdict{margin-top:16px;padding:14px 16px;background:var(--base);border-left:3px solid var(--accent);font-size:13.5px}
+.card .verdict strong{display:block;font-family:var(--display);font-size:17px;letter-spacing:.04em;text-transform:uppercase;margin-top:6px}
+/* stats */
+.stats{padding:0 0 clamp(56px,6vw,80px)}
+.stats .grid{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--ink-12)}
+.stats .grid div{padding:32px 24px 32px 0;border-right:1px solid var(--ink-12)}
+.stats .grid div:last-child{border-right:0}
+.stats .grid div + div{padding-left:24px}
+.stats b{display:block;font-family:var(--display);font-size:clamp(40px,4.5vw,64px);font-weight:800;line-height:1;letter-spacing:-.02em}
+.stats span{display:block;margin-top:10px}
+/* two-col */
+.two{display:grid;grid-template-columns:5fr 7fr;gap:64px;align-items:start}
+.two.rev{grid-template-columns:7fr 5fr}
+/* price list */
+.pricelist{list-style:none;border-top:1px solid var(--ink-12)}
+.pricelist li{display:grid;grid-template-columns:1fr auto;align-items:center;padding:16px 0 16px 16px;border-bottom:1px solid var(--ink-12);font-size:15px}
+.pricelist li b{font-family:var(--display);font-size:24px;font-weight:700}
+.pricelist li.best{border-left:3px solid var(--accent);background:#fff}
+.pricelist li.best::after{content:"best";grid-column:1;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-ink);font-weight:700}
+.note{font-size:13px;color:var(--ink-55);margin-top:14px}
+/* record */
+.record{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid var(--ink-12);border-bottom:1px solid var(--ink-12)}
+.record div{padding:28px 24px 28px 0}
+.record div + div{padding-left:24px;border-left:1px solid var(--ink-12)}
+.record b{display:block;font-family:var(--display);font-size:clamp(44px,5vw,72px);font-weight:800;line-height:1;letter-spacing:-.02em}
+.record b.neg{color:#B4442A}
+.record b.pos{color:var(--accent-ink)}
+.record span{display:block;margin-top:8px;font-size:14px;color:var(--ink-55)}
+/* rows list */
+.rows{list-style:none;border-top:1px solid var(--ink-12)}
+.rows li{display:grid;grid-template-columns:72px 1fr 2fr;gap:32px;padding:28px 0;border-bottom:1px solid var(--ink-12);align-items:start}
+.rows li .n{font-family:var(--display);font-size:14px;letter-spacing:.2em;color:var(--ink-55);padding-top:6px}
+.rows li h3{font-family:var(--display);font-size:28px;font-weight:700;text-transform:uppercase;line-height:1.05}
+.rows li p{font-size:16px;color:var(--ink);opacity:.8}
+.rows li .tag{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-ink);font-weight:700;margin-left:8px;vertical-align:middle}
+/* ways */
+.ways{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid var(--ink-12)}
+.ways div{padding:36px 32px 36px 0;border-right:1px solid var(--ink-12)}
+.ways div:last-child{border-right:0}
+.ways div + div{padding-left:32px}
+.ways h3{font-family:var(--display);font-size:32px;font-weight:700;text-transform:uppercase;line-height:1;margin:18px 0 14px}
+.ways p{font-size:15.5px;opacity:.8;margin-bottom:20px}
+/* pricing */
+.plans{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid var(--ink-12)}
+.plans > div{padding:48px 48px 48px 0}
+.plans > div + div{padding-left:48px;border-left:1px solid var(--ink-12)}
+.plans h3{font-family:var(--display);font-size:28px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.plans .price{font-family:var(--display);font-size:clamp(64px,7vw,96px);font-weight:800;line-height:1;letter-spacing:-.03em;margin:20px 0 4px}
+.plans .price small{font-size:20px;letter-spacing:.06em;margin-left:6px;color:var(--ink-55)}
+.plans .per{color:var(--ink-55);font-size:14px;margin-bottom:24px}
+.plans ul{list-style:none;margin:24px 0 32px}
+.plans li{padding:11px 0;border-top:1px solid var(--ink-12);font-size:15.5px}
+.plans li::before{content:"—";color:var(--accent-ink);margin-right:12px}
+.lifetime{margin-top:56px;background:#fff;border:1px solid var(--ink-12);padding:40px 48px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:48px;align-items:center}
+.lifetime h4{font-family:var(--display);font-size:30px;font-weight:700;text-transform:uppercase;line-height:1}
+.lifetime .p{font-family:var(--display);font-size:52px;font-weight:800;letter-spacing:-.02em;line-height:1}
+.lifetime p{font-size:14px;color:var(--ink-55);margin-top:8px}
+/* faq */
+.faq{border-top:1px solid var(--ink-12);max-width:900px}
+.faq details{border-bottom:1px solid var(--ink-12)}
+.faq summary{list-style:none;cursor:pointer;font-family:var(--display);font-size:26px;font-weight:700;text-transform:uppercase;line-height:1.1;padding:26px 56px 26px 0;position:relative}
+.faq summary::after{content:"+";position:absolute;right:0;top:22px;font-weight:400;font-size:32px;color:var(--ink-55);transition:transform .3s}
+.faq details[open] summary::after{transform:rotate(45deg)}
+.faq details p{padding:0 0 28px;max-width:70ch;opacity:.85}
+/* cta band */
+.band{background:var(--ink);color:var(--base);padding:clamp(80px,10vw,140px) 0}
+.band h2{font-size:clamp(56px,8vw,120px);margin:16px 0 24px}
+.band .btn{border-color:var(--base);color:var(--base)}
+.band .btn.primary{color:#06281C}
+.band p{max-width:56ch;opacity:.75;font-size:18px;margin-bottom:40px}
+/* apps */
+.apps .wrap{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center}
+.apps h2{font-size:clamp(40px,5vw,64px)}
+.stores{display:flex;gap:16px;margin-top:28px}
+.stores a{border:1px solid var(--ink);padding:14px 20px;font-size:14px;font-weight:600;display:flex;flex-direction:column;line-height:1.15}
+.stores a small{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-55)}
+/* footer */
+footer{border-top:1px solid var(--ink-12);padding:64px 0 40px}
+footer .cols{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:48px;margin-bottom:48px}
+footer .wordmark{font-size:40px}
+footer h5{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-55);margin-bottom:16px}
+footer ul{list-style:none}
+footer li{margin-bottom:10px;font-size:15px}
+.rg{border:1px solid var(--ink);padding:24px 28px;font-size:14px;display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:center}
+.rg b{font-family:var(--display);font-size:22px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+footer .legal{display:flex;justify-content:space-between;margin-top:32px;font-size:12.5px;color:var(--ink-55)}
+/* reveal */
+.rv{opacity:0;transform:translateY(12px);transition:opacity .6s ease-out,transform .6s ease-out}
+.rv.in{opacity:1;transform:none}
+@media(max-width:900px){
+  .hero .wrap,.two,.two.rev,.apps .wrap,.sec-head,.plans,.lifetime{grid-template-columns:1fr}
+  .stats .grid,.record,.ways{grid-template-columns:1fr 1fr}
+  .ways div{border-right:0;padding-left:0!important}
+  .rows li{grid-template-columns:48px 1fr}
+  .rows li p{grid-column:2}
+  .plans > div + div{padding-left:0;border-left:0;border-top:1px solid var(--ink-12)}
+  nav ul{display:none}
+  footer .cols{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<nav data-agent="Navigation">
+  <div class="wrap">
+    <a class="wordmark" href="#"><i>S</i>SPORTBOT<em>AI</em></a>
+    <ul><li><a href="#record">Performance</a></li><li><a href="#picks">Picks</a></li><li><a href="#">Sim</a></li><li><a href="#">Models</a></li><li><a href="#">Analyze</a></li><li><a href="#pricing">Pricing</a></li></ul>
+    <a class="btn" href="#">Check a bet</a>
+  </div>
+</nav>
+
+<section class="hero" data-agent="Hero">
+  <div class="wrap">
+    <div>
+      <div class="meta label"><span>Source-labelled inputs · public record</span><span><b>28,139</b> analyses completed</span></div>
+      <h1 class="display">AI sports match <span>analysis</span></h1>
+      <p class="lede">Never place a bad-priced bet again — check any bet against the pros' price before you stake it. The pros' price, the best book, and a stake your bankroll supports. Free to try, once a day.</p>
+      <div class="ctas"><a class="btn primary arrow" href="#">Check my next bet — free</a><a class="link arrow" href="#record">Our track record</a></div>
+      <div class="ticks"><span>No credit card needed</span><span>Source-labelled data</span><span>Public performance record</span><span>Free to start</span></div>
+    </div>
+    <div class="card">
+      <div class="top"><span class="label">Premier League</span><span class="label">20h 53m</span></div>
+      <div class="teams">Leeds United<br>Tottenham Hotspur</div>
+      <div class="row" style="margin-top:18px"><span>The bet · Under 2.5</span><b>1.86<small>price at analysis</small></b></div>
+      <div class="row"><span>Market price, margin removed</span><b>1.96<small>= 51% chance</small></b></div>
+      <div class="row"><span>Model's number · in test</span><b style="color:var(--accent-ink)">1.69<small>= 59% chance</small></b></div>
+      <div class="verdict">The model's number sits above the market price. That gap is the model's edge — an opinion, in test.<strong>Worth backing — moderate edge · +8.0pp</strong></div>
+    </div>
+  </div>
+</section>
+
+<section class="stats" data-agent="Stats">
+  <div class="wrap">
+    <div class="grid">
+      <div><b>28,139</b><span class="label">Analyses completed</span></div>
+      <div><b>34</b><span class="label">Books priced per fixture</span></div>
+      <div><b>664</b><span class="label">Picks settled in public</span></div>
+      <div><b>1 / day</b><span class="label">Free, no card needed</span></div>
+    </div>
+  </div>
+</section>
+
+<section data-agent="Fair price">
+  <div class="wrap">
+    <div class="sec-head">
+      <div><span class="num">01 — Before you stake it</span><h2 class="display">Know the fair<br>price first.</h2></div>
+      <p class="lede">Every price carries the book's margin. Strip it out of the pros' line and you get the pros' price. When a licensed book pays more than that, the gap is the edge — and that is the only reason to take the bet. The model's number sits beside it, as an opinion, in test.</p>
+    </div>
+    <div class="two">
+      <div class="card">
+        <div class="top"><span class="label">Dutch Eredivisie · 1X2</span><span class="label">3h 24m</span></div>
+        <div class="teams">Willem II<br>FC Zwolle</div>
+        <div class="row" style="margin-top:18px"><span>Our pick · FC Zwolle to win</span><b>2.38</b></div>
+        <div class="row"><span>Bet $10</span><b>→ $23.80</b></div>
+        <div class="verdict">9 picks open now.<strong>Why this pick →</strong></div>
+      </div>
+      <div><p class="lede" style="margin-bottom:28px">Rule-based picks against the pros' price: the side, the price, the book, and the lowest price still worth taking. One a day free; all of them on Pro.</p><a class="btn arrow" href="#picks">See today's picks</a></div>
+    </div>
+  </div>
+</section>
+
+<section style="background:var(--base-2)" data-agent="Price compare">
+  <div class="wrap">
+    <div class="sec-head">
+      <div><span class="num">02 — The same bet, a better number</span><h2 class="display">Same bet.<br>Better price.</h2></div>
+      <p class="lede">The same selection is not paid the same everywhere, and the gap is value most people never collect. We line the books up, mark the best one, and show what taking a worse number actually costs.</p>
+    </div>
+    <div class="two rev">
+      <div>
+        <div class="label" style="margin-bottom:12px">Premier League · Match result · Brighton and Hove Albion · book prices at analysis</div>
+        <ul class="pricelist">
+          <li class="best"><span>1xBet</span><b>1.98</b></li>
+          <li><span>Betfair</span><b>1.97</b></li>
+          <li><span>DraftKings</span><b>1.95</b></li>
+          <li><span>PMU (FR)</span><b>1.80</b></li>
+          <li><span>Betclic (FR)</span><b>1.79</b></li>
+          <li><span>Unibet (FR)</span><b>1.70</b></li>
+        </ul>
+        <p class="note">Highest and lowest 3 of 34 books pricing this fixture. 28 rows between them are not shown.</p>
+      </div>
+      <div class="record" style="border:0;grid-template-columns:1fr">
+        <div style="border-left:0;padding-left:0"><b>34</b><span>Books that quoted this selection</span></div>
+        <div style="border-left:0;padding-left:0;border-top:1px solid var(--ink-12)"><b>1.98</b><span>Best price at analysis</span></div>
+        <div style="border-left:0;padding-left:0;border-top:1px solid var(--ink-12)"><b class="neg">−14.1%</b><span>Cost of taking the lowest listed price</span></div>
+        <div style="border-left:0;padding-left:0;padding-top:8px"><a class="link arrow" href="#">Compare a live match</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="record" data-agent="Public record">
+  <div class="wrap">
+    <div class="sec-head">
+      <div><span class="num">03 — Public record</span><h2 class="display">Wins and losses,<br>settled in public.</h2></div>
+      <p class="lede">Picks first, the model beside them. Every settled pick as it landed; losses stay on the page. The full ledgers, with the time each pick was published, are on the record page.</p>
+    </div>
+    <div class="label" style="margin-bottom:12px">Picks · live since 29 Sept 2026 · 1 unit each</div>
+    <div class="record">
+      <div><b class="pos">+3.3%</b><span>ROI · 640 closes</span></div>
+      <div><b>+13.46u</b><span>664 settled · ±9.7 luck</span></div>
+      <div><b>43%</b><span>Hit rate · 1.80 avg odds</span></div>
+    </div>
+    <div class="label" style="margin:40px 0 12px">Model · in test</div>
+    <div class="record">
+      <div><b class="neg">−4.1%</b><span>On 466 qualifying picks</span></div>
+      <div><b>251–215</b><span>Won – lost</span></div>
+      <div><b>1.80</b><span>Average odds</span></div>
+    </div>
+    <p class="note" style="margin-top:20px">Past results do not promise the next one. <a class="link arrow" href="#">See the full record</a></p>
+  </div>
+</section>
+
+<section style="padding-top:0" data-agent="Methodology">
+  <div class="wrap">
+    <div class="label" style="margin-bottom:24px">Trust &amp; methodology — built for auditability, not blind picks</div>
+    <ul class="rows">
+      <li><span class="n">A</span><h3>Prediction methodology</h3><p>How a pick is made, what the model's number is (in test), how edge is measured, and how the record is kept.</p></li>
+      <li><span class="n">B</span><h3>Public track record</h3><p>Every pick and every qualifying model pick is logged with outcome, odds and the closing line.</p></li>
+      <li><span class="n">C</span><h3>Responsible use</h3><p>Educational analytics only. No guaranteed outcomes, no bookmaker activity, and 18+ responsible-use guidance.</p></li>
+    </ul>
+  </div>
+</section>
+
+<section style="background:var(--base-2)" data-agent="Features">
+  <div class="wrap">
+    <div class="sec-head">
+      <div><span class="num">04 — What you get</span><h2 class="display">Everything,<br>in one place.</h2></div>
+      <p class="lede">A workbench, not a feed of tips: the pros' price for any bet, the best book for it, rule-based picks with the why, and a record of how every call landed.</p>
+    </div>
+    <ul class="rows">
+      <li><span class="n">01</span><h3>Picks, with the why</h3><p>Rule-based picks against the pros' price: side, price, book, the lowest price still worth taking. 1 a day free; all on Pro.</p></li>
+      <li><span class="n">02</span><h3>Check a bet before you place it</h3><p>Paste any selection and see the pros' price. The best book and a Kelly stake come with Pro.</p></li>
+      <li><span class="n">03</span><h3>Shop the price across the books</h3><p>The same selection priced at every book that quoted it, with the best number marked.</p></li>
+      <li><span class="n">04</span><h3>The whole slate, analysed daily</h3><p>The model's number against the no-vig market for the day's fixtures, inputs shown — model · in test.</p></li>
+      <li><span class="n">05</span><h3>Player props, researched<span class="tag">Premium</span></h3><p>Player props on one board with L5, L10 and L20 hit rates, streaks and matchup splits.</p></li>
+      <li><span class="n">06</span><h3>Alerts the moment a pick drops</h3><p>Pick alerts with the side, the price and the book on Pro and Premium. Premium adds line-move alerts on your own logged bets.</p></li>
+      <li><span class="n">07</span><h3>Your own record, kept honestly</h3><p>Log and settle every bet in the bankroll tracker, then read it back the way we read ours.</p></li>
+    </ul>
+    <p style="margin-top:40px"><a class="btn arrow" href="#">Analyse your first match — free</a></p>
+  </div>
+</section>
+
+<section id="picks" data-agent="Three ways">
+  <div class="wrap">
+    <div class="sec-head">
+      <div><span class="num">05 — However you play</span><h2 class="display">Three ways in.<br>Pick yours.</h2></div>
+      <p class="lede">Some people work one match at a time. Some want the whole day scanned. Some have already chosen the bet and only want to know whether the price is any good. The tool answers all three.</p>
+    </div>
+    <div class="ways">
+      <div><span class="label">One match</span><h3>Go deep on a single fixture</h3><p>Full analysis of one match: probabilities for each outcome, the pros' price beside them, form, and the totals line if the data supports one.</p><a class="link arrow" href="#">Pick a match</a></div>
+      <div><span class="label">The whole slate</span><h3>Have the day scanned for you</h3><p>The day's picks, each with the price, the book and the why — and the model's opinion beside it, in test.</p><a class="link arrow" href="#">See today's picks</a></div>
+      <div><span class="label">Your own bet</span><h3>Check a bet you have already chosen</h3><p>You picked it yourself. Paste it in and find out what it is worth: the pros' price, the best book, and — on Pro — the stake your bankroll supports.</p><a class="link arrow" href="#">Run a check</a></div>
+    </div>
+  </div>
+</section>
+
+<section id="pricing" style="background:var(--base-2)" data-agent="Pricing">
+  <div class="wrap">
+    <div class="sec-head">
+      <div><span class="num">06 — Membership</span><h2 class="display">Two plans.<br>No contract, either way.</h2></div>
+      <p class="lede">One bad price costs more than a year of Pro. Start on the free tier, move up when you have seen the tool find something you would have missed.</p>
+    </div>
+    <div class="plans">
+      <div>
+        <h3>Pro</h3>
+        <div class="price">$0.16<small>/ day</small></div>
+        <div class="per">$4.99 / month · A full weekend slate, priced properly.</div>
+        <ul>
+          <li>Every pick the moment it drops — side, price, book and the why</li>
+          <li>10 matches a day analysed for you — enough to cover a full weekend</li>
+          <li>Ask the AI Desk anything about any match, 50 questions a day</li>
+          <li>Check 25 of your own bets a day against the pros' price</li>
+          <li>Log every bet and settle it, so your own record is as honest as ours</li>
+        </ul>
+        <a class="btn primary arrow" href="#">Start with Pro</a>
+      </div>
+      <div>
+        <h3>Premium</h3>
+        <div class="price">$0.33<small>/ day</small></div>
+        <div class="per">$9.99 / month · No cap on anything, and it tells you when a line moves.</div>
+        <ul>
+          <li>Everything in Pro, including every pick with alerts</li>
+          <li>Analyse as many matches as you want, with no daily limit</li>
+          <li>Line-move alerts on your own logged bets, sure-bet alerts, and an alert when your own model fires</li>
+          <li>Unlimited AI chat for deep dives on a match, a team or a player</li>
+          <li>Your complete research history, kept for as long as you have the plan</li>
+        </ul>
+        <a class="btn arrow" href="#">Go Premium</a>
+      </div>
+    </div>
+    <p class="note" style="margin-top:24px">A free account gets one full pick a day of your choice, one match analysis a day, three AI questions a week and one price check a day. No card needed. Cancel any time, no contract, no fee.</p>
+    <div class="lifetime">
+      <div><span class="label">Pay once</span><h4 style="margin-top:10px">Lifetime — no recurring fee, ever.</h4><p>One-time payment · credits reset every month · same tool, no subscription</p></div>
+      <div><div class="p">$299</div><p><b>Lifetime Pro</b> — every pick with alerts, 250 analyses + 1,000 AI chats a month, Sure Bets scanner, weekly AI Coach report.</p></div>
+      <div><div class="p">$999</div><p><b>Lifetime Premium</b> — unlimited analyses and chats, surebet calculator, bankroll growth projection.</p><a class="link arrow" href="#" style="display:inline-block;margin-top:12px">See the lifetime deal</a></div>
+    </div>
+  </div>
+</section>
+
+<section data-agent="FAQ">
+  <div class="wrap">
+    <div class="sec-head">
+      <div><span class="num">07 — Good questions</span><h2 class="display">Answers,<br>not marketing.</h2></div>
+    </div>
+    <div class="faq">
+      <details open><summary>What is the best AI for sports betting?</summary><p>There is no single best one, and any tool that claims to be is selling you something. A tool that prints a pick asks for trust — unless it prints the price it was taken at, the pros' price beside it, and how it settled. SportBot AI is built the second way: picks carry the price, the book and the why; the model's number is shown as an opinion, in test; and the settled record — wins and losses — is public.</p></details>
+      <details><summary>How do AI sports predictions work?</summary><p>Two numbers sit on every match. The pros' price — Pinnacle with the margin removed — is what the picks and the price check are measured against: where a licensed book pays more than it, that gap is the edge. The model's number is a probability estimate from the inputs listed on the page, shown as the model's opinion, in test. SportBot AI requires all of those inputs to exist before it publishes anything — a missing input is shown as unavailable rather than filled with a guess.</p></details>
+      <details><summary>Are AI sports betting predictions free?</summary><p>Partly. A free account gets one full pick a day of your choice, one match analysis a day, three AI questions a week and one price check a day. No card needed. Settled picks, the public record and the methodology are open to everyone.</p></details>
+      <details><summary>Is SportBot AI a tipster service?</summary><p>No. A tipster sells you a side and asks for trust. SportBot publishes rule-based picks against the pros' price: the side, the price, the book, the lowest price still worth taking and the why. Every settled pick stays on the public record, losses included.</p></details>
+      <details><summary>What sports does SportBot AI cover?</summary><p>Major soccer competitions, NBA and EuroLeague basketball, NFL, NHL, tennis, MLB including player props, and esports. A match without usable inputs is left out rather than analysed thinly.</p></details>
+    </div>
+  </div>
+</section>
+
+<section class="band" data-agent="Closing CTA">
+  <div class="wrap">
+    <span class="label" style="color:rgba(244,242,238,.55)">One last thing</span>
+    <h2 class="display">Never take a bad<br>number again.</h2>
+    <p>You do not need another source of tips. You need to know what the bet you already want is actually worth — before your money is on it.</p>
+    <a class="btn primary arrow" href="#">Check my next bet — free</a>
+  </div>
+</section>
+
+<section class="apps" data-agent="Apps">
+  <div class="wrap">
+    <div><span class="label">Now on iOS &amp; Android</span><h2 class="display" style="margin-top:14px">Take SportBot AI everywhere</h2><p class="lede" style="margin-top:18px">Predictions, edge alerts and your bankroll tracker — in your pocket.</p>
+      <div class="stores"><a href="#"><small>Download on the</small>App Store</a><a href="#"><small>Get it on</small>Google Play</a></div></div>
+    <div class="card" style="text-align:center;padding:48px"><div class="label">Scan to install</div><div style="width:160px;height:160px;margin:20px auto;border:1px solid var(--ink);display:grid;place-items:center;font-family:var(--display);font-size:28px;font-weight:800;letter-spacing:.1em">QR</div><p class="note">Opens the right store automatically</p></div>
+  </div>
+</section>
+
+<footer data-agent="Footer">
+  <div class="wrap">
+    <div class="cols">
+      <div><a class="wordmark" href="#"><i>S</i>SPORTBOT<em>AI</em></a><p class="note" style="max-width:34ch;margin-top:16px">Source-labelled inputs, a public record, and the pros' price beside every pick.</p></div>
+      <div><h5>Product</h5><ul><li>Performance</li><li>Picks</li><li>Sim</li><li>Models</li><li>Analyze</li><li>Props</li></ul></div>
+      <div><h5>Company</h5><ul><li>Pricing</li><li>Methodology</li><li>Public record</li><li>Contact</li></ul></div>
+      <div><h5>Legal</h5><ul><li>Terms</li><li>Privacy</li><li>Responsible gambling guide</li></ul></div>
+    </div>
+    <div class="rg"><b>Bet responsibly</b><span>Sports betting should be entertainment, not a source of income. Set limits, stick to your budget, and never chase losses. 18+ only. Need help? BeGambleAware.org</span></div>
+    <div class="legal"><span>© 2026 SportBot AI</span><span>Educational analytics only · no guaranteed outcomes</span></div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  const els=document.querySelectorAll('section > .wrap > *, footer .cols, footer .rg');
+  els.forEach((e,i)=>{e.classList.add('rv')});
+  const io=new IntersectionObserver(en=>en.forEach(x=>{if(x.isIntersecting){x.target.classList.add('in');io.unobserve(x.target)}}),{threshold:.12});
+  els.forEach(e=>io.observe(e));
+})();
+</script>
+</body>
+</html>

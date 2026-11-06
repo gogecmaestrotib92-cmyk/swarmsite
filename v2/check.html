@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SportBot AI — Never take a bad number</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#0E1014; --ink:#F2F1EC; --muted:#8E9196;
+  --line:rgba(255,255,255,.14); --grid:rgba(255,255,255,.07);
+  --panel:color-mix(in srgb,#0E1014 85%,#F2F1EC);
+  --accent:#10B981; --accent-ink:#10B981; --accent-contrast:#0B0B0B; --mv-highlight:#10B981;
+  --font-display:'Barlow Condensed',system-ui,sans-serif; --font-body:'Instrument Sans',system-ui,sans-serif; --font-mono:'JetBrains Mono',ui-monospace,monospace;
+  --display-weight:600; --h1:clamp(56px, 8vw, 120px); --h1-lh:0.95; --h1-tt:uppercase; --h2:clamp(40px, 5vw, 72px);
+  --label-size:11px; --radius:2px; --grain:0.04;
+  --gutter:clamp(20px,4vw,56px); --max:1360px;
+}
+/* COMPONENT LIBRARY — concept-agnostic. Driven entirely by tokens (CSS vars) emitted per concept.
+   Tokens: --paper --ink --muted --line --accent --accent-ink --panel --grid --radius
+           --font-display --font-body --font-mono --h1 --h1-lh --h1-tt --h2 --label-size --gutter --max */
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:auto}
+body{background:var(--paper);color:var(--ink);font-family:var(--font-body);font-size:17px;line-height:1.45;-webkit-font-smoothing:antialiased;position:relative}
+a{color:inherit;text-decoration:none}
+img,video{max-width:100%;display:block}
+.wrap{max-width:var(--max,1360px);margin:0 auto;padding:0 var(--gutter,clamp(20px,4vw,56px))}
+section{position:relative}
+.sec{padding:clamp(72px,9vw,140px) 0}
+.sec.tight{padding:clamp(40px,5vw,72px) 0}
+
+/* ---------- type ---------- */
+.display{font-family:var(--font-display);font-weight:var(--display-weight,600);letter-spacing:-.03em;line-height:var(--h1-lh,.95);text-transform:var(--h1-tt,none)}
+.h1{font-size:var(--h1)}
+.h2{font-size:var(--h2);line-height:1.0}
+.h3{font-family:var(--font-display);font-weight:var(--display-weight,600);font-size:clamp(22px,2vw,30px);line-height:1.1;letter-spacing:-.01em}
+.lede{font-size:clamp(17px,1.3vw,20px);max-width:56ch;color:var(--ink)}
+.big-body{font-size:clamp(20px,1.9vw,28px);line-height:1.3;max-width:34ch;letter-spacing:-.01em}
+.muted{color:var(--muted)}
+.label{font-family:var(--font-mono);font-size:var(--label-size,11px);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.label.ink{color:var(--ink)}
+.label .sq::before{content:"■";font-size:7px;margin-right:8px;vertical-align:middle}
+.accent{color:var(--accent-ink,var(--accent))}
+.num{font-family:var(--font-display);font-weight:var(--display-weight,600);font-variant-numeric:tabular-nums;letter-spacing:-.03em;line-height:1}
+
+/* ---------- textures (concept toggles) ---------- */
+.tx-grid{background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:var(--grid-size,48px) var(--grid-size,48px)}
+.tx-dots{background-image:radial-gradient(var(--grid) 1px,transparent 1px);background-size:28px 28px}
+.tx-grain::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9;opacity:var(--grain,.04);background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");mix-blend-mode:multiply}
+.tx-guides{position:relative}
+.tx-guides::before{content:"";position:absolute;inset:0;pointer-events:none;background-image:repeating-linear-gradient(90deg,transparent 0 calc(25% - 1px),var(--line) calc(25% - 1px) 25%);opacity:.6;background-size:100% 100%;mask-image:linear-gradient(transparent,#000 10%,#000 90%,transparent)}
+.dashed-v{position:absolute;top:0;bottom:0;width:0;border-left:1px dashed var(--line);pointer-events:none}
+
+/* ---------- frames & marks ---------- */
+.frame{position:relative;border:1px solid var(--line);border-radius:var(--radius,2px)}
+.marks::before,.marks::after,.marks>i.m::before,.marks>i.m::after{content:"";position:absolute;width:6px;height:6px;background:var(--ink);opacity:.8}
+.marks::before{left:-3px;top:-3px}.marks::after{right:-3px;top:-3px}.marks>i.m::before{left:-3px;bottom:-3px}.marks>i.m::after{right:-3px;bottom:-3px}
+.marks>i.m{position:absolute;inset:0;pointer-events:none}
+.corner-meta{position:absolute;font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+.corner-meta.tl{top:10px;left:12px}.corner-meta.tr{top:10px;right:12px}.corner-meta.bl{bottom:10px;left:12px}.corner-meta.br{bottom:10px;right:12px}
+.hair{border-top:1px solid var(--line)}
+
+/* ---------- nav variants ---------- */
+.nav{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--paper) 86%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;height:64px;gap:24px}
+.nav .links{display:flex;gap:6px}
+.nav .links a{font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding:8px 12px;border:1px solid transparent;border-radius:999px;color:var(--muted)}
+.nav .links a:hover{border-color:var(--line);color:var(--ink)}
+.wordmark{font-family:var(--font-display);font-weight:700;font-size:22px;letter-spacing:-.02em;display:flex;align-items:center;gap:10px;text-transform:uppercase}
+.wordmark i{width:24px;height:24px;border-radius:50%;background:var(--ink);color:var(--accent);display:inline-grid;place-items:center;font-style:normal;font-size:14px;font-weight:800}
+.wordmark em{font-style:normal;font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;background:var(--accent);color:var(--accent-contrast,#06281C);padding:3px 6px;border-radius:2px}
+.nav-cells{position:sticky;top:0;z-index:50;background:var(--paper);border-bottom:1px solid var(--line);display:grid;grid-template-columns:64px 1fr auto auto 180px;height:60px}
+.nav-cells>*{display:flex;align-items:center;padding:0 20px;border-right:1px solid var(--line)}
+.nav-cells>*:last-child{border-right:0;background:var(--ink);color:var(--paper);justify-content:space-between}
+.pillbar{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:60;background:color-mix(in srgb,var(--paper) 92%,transparent);border:1px solid var(--line);border-radius:999px;padding:6px;display:flex;gap:4px;backdrop-filter:blur(12px)}
+.pillbar a{padding:10px 16px;border-radius:999px;font-size:14px;font-weight:500}
+.pillbar a.ink{background:var(--ink);color:var(--paper)}.pillbar a.acc{background:var(--accent);color:var(--accent-contrast,#06281C)}
+
+/* ---------- buttons ---------- */
+.btn{display:inline-flex;align-items:center;gap:12px;font-family:var(--font-mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;padding:14px 20px;border:1px solid var(--ink);border-radius:var(--radius,2px);transition:background .2s,color .2s}
+.btn:hover{background:var(--ink);color:var(--paper)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-contrast,#06281C)}
+.btn.primary:hover{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.btn.arrow::after{content:"→"}
+.btn.split{padding:0;overflow:hidden}.btn.split span{padding:14px 20px}.btn.split b{padding:14px 16px;border-left:1px solid currentColor;font-weight:400}
+.link{font-weight:500;border-bottom:1px solid var(--ink);padding-bottom:2px}
+.link.arrow::after{content:" →"}
+.pill{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:9px 12px;border-radius:6px;background:color-mix(in srgb,var(--ink) 78%,transparent);color:var(--paper);backdrop-filter:blur(6px)}
+.pill::after{content:"⊕";font-size:13px}
+
+/* ---------- hero ---------- */
+.hero{padding:clamp(56px,7vw,110px) 0 clamp(48px,5vw,72px)}
+.hero .wrap{display:grid;grid-template-columns:7fr 5fr;gap:clamp(32px,4vw,64px);align-items:end}
+.hero .meta{display:flex;gap:24px;margin-bottom:28px;flex-wrap:wrap}
+.hero .ctas{display:flex;gap:24px;align-items:center;flex-wrap:wrap;margin-top:32px}
+.hero .artefact{position:relative}
+.hero.centered .wrap{display:block;text-align:center}
+.hero.centered .lede{margin:24px auto 0}
+
+/* ---------- cells / stats ---------- */
+.cells{display:grid;grid-template-columns:repeat(var(--cols,4),1fr);border:1px solid var(--line)}
+.cells>div{padding:28px 24px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);position:relative;min-height:150px;display:flex;flex-direction:column;justify-content:space-between;gap:18px}
+.cells>div:nth-child(var(--cols,4)n){border-right:0}
+.cells>div.fill{background:var(--accent);color:var(--accent-contrast,#06281C)}
+.cells>div.ink{background:var(--ink);color:var(--paper)}
+.cells .num{font-size:clamp(40px,4.5vw,72px)}
+.cells .label{align-self:flex-end}
+.cells.flush{border:0}.cells.flush>div{border-left:0}
+
+/* ---------- data card / ledger ---------- */
+.card{background:var(--panel,color-mix(in srgb,var(--paper) 70%,#fff));border:1px solid var(--line);border-radius:var(--radius,2px);padding:24px;font-size:14px}
+.card.dark{background:var(--ink);color:var(--paper);--line:rgba(255,255,255,.14);--muted:rgba(255,255,255,.6)}
+.card .top{display:flex;justify-content:space-between;margin-bottom:16px}
+.row{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:12px 0;border-top:1px solid var(--line)}
+.row .num{font-size:24px}
+.row small{color:var(--muted);font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;margin-left:8px}
+.row.best{border-left:3px solid var(--accent);padding-left:12px;background:color-mix(in srgb,var(--accent) 8%,transparent)}
+.verdict{margin-top:16px;padding:14px 16px;border-left:3px solid var(--accent);background:color-mix(in srgb,var(--accent) 7%,transparent)}
+.verdict strong{display:block;font-family:var(--font-display);text-transform:uppercase;letter-spacing:.04em;margin-top:6px}
+.ledger{list-style:none;border-top:1px solid var(--line)}
+.ledger li{display:grid;grid-template-columns:72px 1fr auto;gap:24px;align-items:center;padding:18px 0;border-bottom:1px solid var(--line)}
+.ledger li .label{font-size:10px}
+.ledger li .t{font-family:var(--font-display);font-weight:var(--display-weight,600);font-size:clamp(20px,2.2vw,30px);letter-spacing:-.01em}
+.ledger li .r{font-family:var(--font-mono);font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+
+/* ---------- pinned list + widget ---------- */
+.pinned{display:grid;grid-template-columns:5fr 7fr;gap:clamp(32px,5vw,80px);align-items:start;min-height:70vh}
+.pinned .steps{display:flex;flex-direction:column;gap:14px}
+.pinned .steps [data-step]{font-family:var(--font-display);font-weight:var(--display-weight,600);font-size:clamp(26px,3.2vw,44px);line-height:1.05;letter-spacing:-.02em;cursor:default}
+.pinned .panels{position:relative}
+
+/* ---------- before / after ---------- */
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.ba>div{min-height:420px;padding:20px;display:flex;flex-direction:column;justify-content:space-between}
+
+/* ---------- process 01–07 ---------- */
+.process{display:flex;gap:24px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:12px;scrollbar-width:thin}
+.process>div{flex:0 0 min(420px,80vw);scroll-snap-align:start}
+.process .n{font-family:var(--font-mono);font-size:13px;color:var(--muted);display:flex;align-items:center;gap:10px}
+.process .n::after{content:"";flex:1;border-top:1px dotted var(--line)}
+.process figure{margin:12px 0;aspect-ratio:4/3;background:var(--panel,#ddd);border:1px solid var(--line);overflow:hidden}
+.process figcaption{font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+/* ---------- rows (features) ---------- */
+.rows{list-style:none;border-top:1px solid var(--line)}
+.rows li{display:grid;grid-template-columns:64px 1fr 1.6fr;gap:28px;padding:26px 0;border-bottom:1px solid var(--line);align-items:start}
+.rows li .label{padding-top:8px}
+.rows li p{color:var(--muted)}
+
+/* ---------- faq rows ---------- */
+.faq{border-top:1px solid var(--line)}
+.faq details{border-bottom:1px solid var(--line)}
+.faq summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:56px 1fr 32px;gap:16px;align-items:center;padding:22px 0;font-family:var(--font-display);font-weight:var(--display-weight,600);font-size:clamp(18px,2vw,26px);letter-spacing:-.01em}
+.faq summary .label{font-size:10px}
+.faq summary .plus{width:28px;height:28px;background:var(--ink);color:var(--paper);display:grid;place-items:center;font-weight:400;transition:transform .3s}
+.faq details[open] .plus{transform:rotate(45deg)}
+.faq details p{padding:0 0 24px 72px;max-width:70ch;color:var(--muted)}
+
+/* ---------- marquee ---------- */
+.marquee{padding:20px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.marquee span{font-family:var(--font-mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+
+/* ---------- ending ---------- */
+.ending{padding:clamp(64px,8vw,120px) 0 0;overflow:hidden}
+.ending .cols{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;padding-bottom:56px;border-bottom:1px solid var(--line)}
+.ending h5{font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+.ending ul{list-style:none}.ending li{margin-bottom:8px;font-size:15px}
+.giant{position:relative;font-family:var(--font-display);font-weight:800;text-transform:uppercase;font-size:clamp(96px,22vw,340px);line-height:.78;letter-spacing:-.04em;margin-top:40px;margin-bottom:-.12em;white-space:nowrap}
+.giant.outline{color:transparent;-webkit-text-stroke:1.5px var(--ink)}
+.giant .dim{position:absolute;font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;color:var(--muted);-webkit-text-stroke:0}
+.giant .dim::before{content:"";position:absolute;left:0;right:0;top:-6px;border-top:1px dashed var(--line)}
+.next{display:flex;justify-content:space-between;align-items:center;padding:20px 0;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+.legal{display:flex;justify-content:space-between;gap:16px;padding:16px 0 28px;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+
+/* ---------- mobile ---------- */
+@media (max-width:900px){
+  :root{--grid-size:32px}
+  .hero .wrap,.pinned,.ba,.ending .cols{grid-template-columns:1fr}
+  .cells{grid-template-columns:repeat(2,1fr)}.cells>div{min-height:120px}.cells>div:nth-child(2n){border-right:0}
+  .rows li{grid-template-columns:44px 1fr}.rows li p{grid-column:2}
+  .ledger li{grid-template-columns:56px 1fr}.ledger li .r{grid-column:2}
+  .nav .links{display:none}
+  .faq summary{grid-template-columns:44px 1fr 28px}.faq details p{padding-left:60px}
+  .giant{font-size:clamp(72px,26vw,160px);white-space:normal}
+  .btn.full{width:100%;justify-content:space-between}
+}
+
+/* page-specific */
+.hero-art{position:relative;padding:28px}
+.hero-art .card{font-size:14px}
+.teams{font-family:var(--font-display);font-size:26px;font-weight:700;text-transform:uppercase;line-height:1.05;margin:4px 0 14px}
+.record .cells>div{min-height:170px}
+.record .cells .num.pos{color:var(--accent)}
+.record .cells .num.neg{color:#E06A4A}
+.ways .panel-card{max-width:560px}
+.lead-sec{padding:clamp(56px,7vw,100px) 0}
+.price .cells>div{min-height:420px}
+.price .cells .num{font-size:clamp(56px,6vw,88px)}
+.price .cells .num small{font-family:var(--font-mono);font-size:12px;letter-spacing:.1em;margin-left:8px;color:var(--muted)}
+.price ul{list-style:none;margin:16px 0 24px}.price li{padding:9px 0;border-top:1px solid var(--line);font-size:15px}.price li::before{content:"—";color:var(--accent);margin-right:10px}
+.lifetime{margin-top:16px;display:grid;grid-template-columns:1fr 1fr 1fr;border:1px solid var(--line)}
+.lifetime>div{padding:28px 24px;border-right:1px solid var(--line)}.lifetime>div:last-child{border-right:0}
+.leagues span{padding:0 8px}
+.note-conflict{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:#E06A4A;margin-top:12px}
+.sec-head{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:end;margin-bottom:56px}
+.sec-head .label{display:block;margin-bottom:16px}
+.guides{position:absolute;inset:0;pointer-events:none}
+.guides i{position:absolute;top:0;bottom:0;border-left:1px dashed var(--line);opacity:.5}
+@media(max-width:900px){.sec-head,.lifetime{grid-template-columns:1fr}.lifetime>div{border-right:0;border-bottom:1px solid var(--line)}.price .cells{grid-template-columns:1fr}.price .cells>div{min-height:0}}
+</style>
+</head>
+<body class="tx-grid tx-grain">
+<div class="guides" aria-hidden="true"><i style="left:25%"></i><i style="left:50%"></i><i style="left:75%"></i></div>
+
+<nav class="nav" data-agent="Navigation">
+  <div class="wrap">
+    <a class="wordmark" href="#"><i>S</i>SportBot<em>AI</em></a>
+    <div class="links"><a href="#record">Record</a><a href="#ways">How it works</a><a href="#price">Price check</a><a href="#plans">Plans</a></div>
+    <a class="btn primary arrow" href="#">Check my next bet</a>
+  </div>
+</nav>
+
+<section class="hero" data-agent="Hero · artefact">
+  <div class="wrap">
+    <div>
+      <div class="meta"><span class="label"><span class="sq"></span>Source-labelled inputs · public record</span><span class="label ink"><b class="num" style="font-size:14px" data-move="number-scramble">28,139</b> analyses completed</span></div>
+      <h1 class="display h1" data-move="masked-line-reveal">Never take a <span class="accent">bad number</span> again.</h1>
+      <p class="lede" style="margin-top:28px">Check any bet against the pros' price before you stake it — the fair price, the best book, and a stake your bankroll supports. Free, once a day.</p>
+      <div class="ctas"><a class="btn primary arrow" href="#">Check my next bet — free</a><a class="link arrow" href="#record">The public record</a></div>
+    </div>
+    <div class="artefact frame marks hero-art"><i class="m"></i>
+      <span class="corner-meta tl">Fix. 0421 · Premier League</span><span class="corner-meta tr">T−20h 53m</span>
+      <div class="card dark" data-move="fade-rise">
+        <div class="top"><span class="label">Match analysis</span><span class="label">Under 2.5</span></div>
+        <div class="teams">Leeds United<br>Tottenham Hotspur</div>
+        <div class="row"><span>The bet</span><b class="num">1.86<small>price at analysis</small></b></div>
+        <div class="row"><span>Market price, margin removed</span><b class="num">1.96<small>= 51%</small></b></div>
+        <div class="row"><span>Model's number · in test</span><b class="num accent">1.69<small>= 59%</small></b></div>
+        <div class="verdict">The model's number sits above the market price. That gap is the edge — an opinion, in test.<strong>Worth backing — moderate edge · +8.0pp</strong></div>
+      </div>
+      <span class="corner-meta bl">Inputs: 14 · all present</span><span class="corner-meta br">Rev. 06 Nov 2026</span>
+    </div>
+  </div>
+</section>
+
+<div class="marquee" data-move="marquee" data-duration="55" data-agent="Coverage"><div class="leagues"><span>Premier League</span><span>·</span><span>NBA</span><span>·</span><span>NFL</span><span>·</span><span>NHL</span><span>·</span><span>EuroLeague</span><span>·</span><span>Tennis</span><span>·</span><span>MLB</span><span>·</span><span>Esports</span><span>·</span><span>34 books priced per fixture</span><span>·</span></div></div>
+
+<section class="sec record" id="record" data-agent="Public record">
+  <div class="wrap">
+    <div class="sec-head">
+      <div><span class="label"><span class="sq"></span>01 — Public record · live since 29 Sept 2026</span><h2 class="display h2" data-move="masked-line-reveal">Wins and losses, settled in public.</h2></div>
+      <p class="lede muted">Every settled pick as it landed. Losses stay on the page. The model's number is logged beside every pick — as an opinion, in test.</p>
+    </div>
+    <div class="cells" style="--cols:3">
+      <div><span class="label">Picks · ROI</span><b class="num pos" data-move="number-scramble">+3.3%</b><span class="label">640 closes</span></div>
+      <div><span class="label">Units</span><b class="num" data-move="number-scramble">+13.46u</b><span class="label">664 settled · ±9.7 luck</span></div>
+      <div><span class="label">Hit rate</span><b class="num" data-move="number-scramble">43%</b><span class="label">1.80 avg odds</span></div>
+      <div><span class="label">Model · in test</span><b class="num neg" data-move="number-scramble">−4.1%</b><span class="label">on 466 qualifying picks</span></div>
+      <div><span class="label">Won – lost</span><b class="num" data-move="number-scramble">251–215</b><span class="label">1 unit each</span></div>
+      <div class="ink"><span class="label" style="color:rgba(255,255,255,.6)">Full ledgers</span><span class="h3">Time-stamped, with the closing line.</span><a class="link arrow" href="#" style="border-color:currentColor">See the full record</a></div>
+    </div>
+    <p class="label" style="margin-top:14px">Past results do not promise the next one.</p>
+  </div>
+</section>
+
+<section class="sec ways" id="ways" data-agent="Three ways in">
+  <div class="wrap">
+    <span class="label"><span class="sq"></span>02 — However you play</span>
+    <div class="pinned" data-move="pinned-steps" style="margin-top:24px">
+      <div class="steps">
+        <div data-step>Go deep on one match.</div>
+        <div data-step>Have the whole slate scanned.</div>
+        <div data-step>Check a bet you already like.</div>
+        <p class="muted" style="margin-top:20px;max-width:40ch">Probabilities for each outcome, the pros' price beside them, the best book, and — on Pro — the stake your bankroll supports.</p>
+      </div>
+      <div class="panels">
+        <div data-panel class="panel-card frame marks" style="padding:20px"><i class="m"></i><div class="card dark"><div class="top"><span class="label">ATP Paris Masters · Winner</span><span class="label">1h 41m</span></div><div class="teams">Taylor Fritz<br>Carlos Alcaraz</div><div class="row"><span>Our pick · Fritz to win</span><b class="num">3.80</b></div><div class="row"><span>Bet $10</span><b class="num">→ $38</b></div><div class="verdict">11 picks open now.<strong>Why this pick →</strong></div></div></div>
+        <div data-panel class="panel-card frame marks" style="padding:20px"><i class="m"></i><div class="card dark"><div class="top"><span class="label">Today's model picks · in test</span><span class="label">refresh 4–6h</span></div><div class="row"><span>Birmingham – Swansea · Under 2.5</span><b class="num accent">+12.6%</b></div><div class="row"><span>Nacional – Académico · Under 2.5</span><b class="num accent">+11.1%</b></div><div class="row"><span>Leeds – Tottenham · Under 2.5</span><b class="num accent">+8.0%</b></div><div class="verdict">Removed 30 min before kickoff.<strong>See today's picks →</strong></div></div></div>
+        <div data-panel class="panel-card frame marks" style="padding:20px"><i class="m"></i><div class="card dark"><div class="top"><span class="label">Price check · your bet</span><span class="label">34 books</span></div><div class="row best"><span>1xBet</span><b class="num">1.98</b></div><div class="row"><span>Betfair</span><b class="num">1.97</b></div><div class="row"><span>DraftKings</span><b class="num">1.95</b></div><div class="row"><span>Unibet (FR)</span><b class="num">1.70</b></div><div class="verdict">Cost of taking the lowest listed price<strong>−14.1%</strong></div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="price" data-agent="Same bet, better price">
+  <div class="wrap">
+    <div class="sec-head">
+      <div><span class="label"><span class="sq"></span>03 — The same bet, a better number</span><h2 class="display h2" data-move="masked-line-reveal">Same bet. Better price.</h2></div>
+      <p class="big-body" data-move="text-scrub">The same selection is not paid the same everywhere. We line the books up, mark the best one, and show what taking a worse number actually costs.</p>
+    </div>
+    <div class="cells" style="--cols:3">
+      <div><span class="label">Books that quoted this selection</span><b class="num" data-move="number-scramble">34</b><span class="label">Brighton · match result</span></div>
+      <div><span class="label">Best price at analysis</span><b class="num pos accent" data-move="number-scramble">1.98</b><span class="label">1xBet</span></div>
+      <div><span class="label">Cost of the lowest listed price</span><b class="num" style="color:#E06A4A" data-move="number-scramble">−14.1%</b><span class="label">Unibet (FR) 1.70</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec tight" data-agent="Trust">
+  <div class="wrap">
+    <span class="label"><span class="sq"></span>04 — Built for auditability, not blind picks</span>
+    <ul class="rows" style="margin-top:20px">
+      <li><span class="label">A</span><span class="h3">Methodology</span><p>How a pick is made, what the model's number is (in test), how edge is measured, how the record is kept.</p></li>
+      <li><span class="label">B</span><span class="h3">Public track record</span><p>Every pick and every qualifying model pick is logged with outcome, odds and the closing line.</p></li>
+      <li><span class="label">C</span><span class="h3">Responsible use</span><p>Educational analytics only. No guaranteed outcomes, no bookmaker activity. 18+.</p></li>
+    </ul>
+  </div>
+</section>
+
+<section class="sec price" id="plans" data-agent="Plans">
+  <div class="wrap">
+    <div class="sec-head">
+      <div><span class="label"><span class="sq"></span>05 — Membership</span><h2 class="display h2" data-move="masked-line-reveal">Two plans. No contract.</h2></div>
+      <p class="lede muted">One bad price costs more than a year of Pro. Start free; move up when the tool finds something you would have missed.</p>
+    </div>
+    <div class="cells" style="--cols:2">
+      <div><div><span class="label">Pro</span><b class="num" style="display:block;margin-top:14px" data-move="number-scramble">$4.99<small>/ month</small></b><ul><li>Every pick the moment it drops — side, price, book, why</li><li>10 matches a day analysed</li><li>25 price checks, 50 AI Desk questions a day</li><li>Log and settle every bet</li></ul></div><a class="btn primary arrow" href="#">Start with Pro</a></div>
+      <div><div><span class="label">Premium</span><b class="num" style="display:block;margin-top:14px" data-move="number-scramble">$9.99<small>/ month</small></b><ul><li>Everything in Pro, no daily limits</li><li>Line-move, sure-bet and own-model alerts</li><li>Unlimited AI chat</li><li>Complete research history</li></ul></div><a class="btn arrow" href="#">Go Premium</a></div>
+    </div>
+    <div class="lifetime">
+      <div><span class="label">Pay once</span><p class="h3" style="margin-top:10px">Lifetime — no recurring fee.</p></div>
+      <div><b class="num" style="font-size:44px" data-move="number-scramble">$299</b><p class="muted" style="margin-top:8px;font-size:14px">Lifetime Pro · 250 analyses + 1,000 chats / month</p></div>
+      <div><b class="num" style="font-size:44px" data-move="number-scramble">$999</b><p class="muted" style="margin-top:8px;font-size:14px">Lifetime Premium · unlimited</p></div>
+    </div>
+    <p class="label" style="margin-top:14px">Free account: 1 pick, 1 analysis, 1 price check a day · no card needed</p>
+    <p class="note-conflict">Audit note: the live site states $18.99 / $39.99 in its FAQ. One source of truth is required before publishing.</p>
+  </div>
+</section>
+
+<section class="sec tight" data-agent="Questions">
+  <div class="wrap">
+    <span class="label"><span class="sq"></span>06 — Good questions</span>
+    <div class="faq" style="margin-top:20px">
+      <details open><summary><span class="label">■ 01</span>Is SportBot AI a tipster service?<span class="plus">+</span></summary><p>No. A tipster sells you a side and asks for trust. SportBot publishes rule-based picks against the pros' price — side, price, book, the lowest price still worth taking, and the why. Every settled pick stays on the public record, losses included.</p></details>
+      <details><summary><span class="label">■ 02</span>How do the predictions work?<span class="plus">+</span></summary><p>Two numbers sit on every match: the pros' price (Pinnacle with the margin removed) and the model's number, shown as an opinion, in test. Where a licensed book pays more than the pros' price, that gap is the edge. Missing inputs are shown as unavailable, never guessed.</p></details>
+      <details><summary><span class="label">■ 03</span>What is free?<span class="plus">+</span></summary><p>One full pick a day of your choice, one match analysis, one price check, three AI questions a week. The public record and the methodology are open to everyone.</p></details>
+      <details><summary><span class="label">■ 04</span>What sports are covered?<span class="plus">+</span></summary><p>Major soccer competitions, NBA and EuroLeague, NFL, NHL, tennis, MLB including player props, and esports. A match without usable inputs is left out rather than analysed thinly.</p></details>
+    </div>
+  </div>
+</section>
+
+<footer class="ending" data-agent="Ending">
+  <div class="wrap">
+    <div class="cols">
+      <div><a class="wordmark" href="#"><i>S</i>SportBot<em>AI</em></a><p class="muted" style="margin-top:14px;max-width:32ch">Source-labelled inputs, a public record, and the pros' price beside every pick.</p><div class="ctas" style="margin-top:20px"><a class="btn primary arrow" href="#">Check my next bet — free</a></div></div>
+      <div><h5>Product</h5><ul><li>Picks</li><li>Analyze</li><li>Sim</li><li>Props</li></ul></div>
+      <div><h5>Company</h5><ul><li>Methodology</li><li>Public record</li><li>Pricing</li><li>Contact</li></ul></div>
+      <div><h5>Apps</h5><ul><li>iOS</li><li>Android</li><li>API &amp; data access</li></ul></div>
+    </div>
+    <div class="giant outline" aria-hidden="true">SportBot<span class="dim" style="left:0;top:-28px;width:38%">w 1,124.00</span><span class="dim" style="right:0;top:-28px;width:22%">x 0.78 lh</span></div>
+    <div class="next"><span>Next: today's picks → refresh every 4–6h</span><span>Bet responsibly · 18+ · BeGambleAware.org</span></div>
+    <div class="legal"><span>© 2026 SportBot AI · educational analytics only · no guaranteed outcomes</span><span>Concept C1 · Blueprint</span></div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>/* MOTION VOCABULARY — 15 moves observed across the DNA set, implemented once.
+   Requires GSAP + ScrollTrigger (cdnjs). Optional Lenis for smooth scroll.
+   Usage: add data-move="<name>" to an element; call Moves.init() after DOM is ready.
+   Names: masked-line-reveal, word-blur-in, letter-reveal, highlight-swipe, text-scrub, number-scramble,
+          pinned-steps, pinned-zoom, card-deck-peel, draw-on-scroll, marquee, mask-switch, rotating-headline,
+          hotspot-pills, fade-rise. */
+(function (global) {
+  'use strict';
+  const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const splitWords = el => { if (el.dataset.split) return; const words = el.textContent.split(/(\s+)/); el.innerHTML = words.map(w => /\s+/.test(w) ? w : `<span class="mv-w">${w}</span>`).join(''); el.dataset.split = 'w'; };
+  const splitLines = el => {
+    if (el.dataset.split) return; splitWords(el);
+    // group words into lines by offsetTop
+    const ws = [...el.querySelectorAll('.mv-w')]; let lines = [], cur = [], top = null;
+    ws.forEach(w => { if (top === null || Math.abs(w.offsetTop - top) < 4) { cur.push(w); top = w.offsetTop; } else { lines.push(cur); cur = [w]; top = w.offsetTop; } });
+    if (cur.length) lines.push(cur);
+    el.innerHTML = ''; lines.forEach(l => { const wrap = document.createElement('span'); wrap.className = 'mv-line'; const inner = document.createElement('span'); inner.className = 'mv-line-in'; l.forEach((w, i) => { inner.appendChild(w); if (i < l.length - 1) inner.appendChild(document.createTextNode(' ')); }); wrap.appendChild(inner); el.appendChild(wrap); el.appendChild(document.createTextNode(' ')); });
+    el.dataset.split = 'l';
+  };
+  const splitChars = el => { if (el.dataset.split) return; el.innerHTML = el.textContent.split('').map(c => c === ' ' ? ' ' : `<span class="mv-c">${c}</span>`).join(''); el.dataset.split = 'c'; };
+  const ST = () => global.ScrollTrigger;
+  const g = () => global.gsap;
+
+  const moves = {
+    // 1. Aspen/Heron: lines slide up inside clipped containers
+    'masked-line-reveal'(el) { splitLines(el); g().from(el.querySelectorAll('.mv-line-in'), { yPercent: 110, duration: .9, ease: 'power3.out', stagger: .08, scrollTrigger: { trigger: el, start: 'top 85%', once: true } }); },
+    // 2. Butter: each word sharpens from blur
+    'word-blur-in'(el) { splitWords(el); g().fromTo(el.querySelectorAll('.mv-w'), { opacity: 0, filter: 'blur(14px)', y: 8 }, { opacity: 1, filter: 'blur(0px)', y: 0, duration: .8, ease: 'power2.out', stagger: .05, scrollTrigger: { trigger: el, start: 'top 85%', once: true } }); },
+    // 3. Sharplink: letters fade in one by one
+    'letter-reveal'(el) { splitChars(el); g().from(el.querySelectorAll('.mv-c'), { opacity: 0, duration: .5, stagger: .025, ease: 'none', scrollTrigger: { trigger: el, start: 'top 85%', once: true } }); },
+    // 4. Wembi: highlighter block grows left→right behind the key phrase (wrap phrase in <mark>)
+    'highlight-swipe'(el) { const marks = el.querySelectorAll('mark'); marks.forEach(m => { m.classList.add('mv-mark'); g().fromTo(m, { '--mv-sw': '0%' }, { '--mv-sw': '100%', duration: .8, ease: 'power3.inOut', scrollTrigger: { trigger: m, start: 'top 80%', once: true } }); }); },
+    // 5. Wembi/ICOMAT: words colour in as you scroll (scrubbed)
+    'text-scrub'(el) { splitWords(el); const ws = el.querySelectorAll('.mv-w'); g().set(ws, { opacity: .22 }); g().to(ws, { opacity: 1, stagger: .02, ease: 'none', scrollTrigger: { trigger: el, start: 'top 75%', end: 'bottom 45%', scrub: true } }); },
+    // 6. DeepBook: numbers scramble then settle (keeps prefix/suffix like $, %, +)
+    'number-scramble'(el) {
+      const final = el.textContent.trim(); const m = final.match(/^([^\d-]*)(-?[\d.,]+)(.*)$/); if (!m) return; const [_, pre, num, suf] = m; const digits = num.replace(/[^\d]/g, '').length;
+      const chars = '0123456789'; let frame = 0; const total = 28;
+      const tick = () => { frame++; if (frame > total) { el.textContent = final; return; } const prog = frame / total; let out = ''; for (let i = 0, d = 0; i < num.length; i++) { const ch = num[i]; if (/\d/.test(ch)) { out += (d / digits) < prog ? ch : chars[Math.floor(Math.random() * 10)]; d++; } else out += ch; } el.textContent = pre + out + suf; requestAnimationFrame(() => setTimeout(tick, 28)); };
+      ST().create({ trigger: el, start: 'top 85%', once: true, onEnter: tick });
+    },
+    // 7. Heron/Cerebrium: pin a section, step through items; [data-step] items, [data-panel] panels
+    'pinned-steps'(el) {
+      const steps = [...el.querySelectorAll('[data-step]')], panels = [...el.querySelectorAll('[data-panel]')]; if (!steps.length) return;
+      const n = steps.length; const setActive = i => { steps.forEach((s, j) => s.classList.toggle('is-active', j === i)); panels.forEach((p, j) => p.classList.toggle('is-active', j === i)); };
+      setActive(0);
+      ST().create({ trigger: el, start: 'top top+=64', end: () => '+=' + (n * 70) + '%', pin: true, scrub: true, onUpdate: s => setActive(Math.min(n - 1, Math.floor(s.progress * n))) });
+    },
+    // 8. Illoca: pin an image and dolly/zoom into it; [data-zoom="2.2"] [data-origin="60% 40%"]
+    'pinned-zoom'(el) { const img = el.querySelector('img, video, .mv-zoom-target') || el; g().set(img, { transformOrigin: el.dataset.origin || '50% 50%' }); g().to(img, { scale: +(el.dataset.zoom || 1.8), ease: 'none', scrollTrigger: { trigger: el, start: 'top top', end: '+=120%', pin: true, scrub: true } }); },
+    // 9. Maxima: stacked cards, each rotated, peel off on scroll; children are the cards
+    'card-deck-peel'(el) {
+      const cards = [...el.children]; cards.forEach((c, i) => g().set(c, { rotate: (i % 2 ? 1 : -1) * (3 + i * 2), zIndex: cards.length - i, position: 'absolute', inset: 0 }));
+      el.style.position = 'relative'; const tl = g().timeline({ scrollTrigger: { trigger: el, start: 'top top+=80', end: () => '+=' + (cards.length * 60) + '%', pin: true, scrub: true } });
+      cards.slice(0, -1).forEach((c, i) => tl.to(c, { yPercent: -130, rotate: (i % 2 ? 1 : -1) * 18, opacity: 0, ease: 'power1.in' }));
+    },
+    // 10. Heron: SVG strokes draw themselves as you scroll (paths need stroke)
+    'draw-on-scroll'(el) { const paths = el.querySelectorAll('path, line, polyline, circle, rect'); paths.forEach(p => { const L = p.getTotalLength ? p.getTotalLength() : 1000; g().set(p, { strokeDasharray: L, strokeDashoffset: L }); }); g().to(paths, { strokeDashoffset: 0, ease: 'none', stagger: .05, scrollTrigger: { trigger: el, start: 'top 80%', end: 'bottom 40%', scrub: true } }); },
+    // 11. Cerebrium/Butter: slow marquee (duplicate content once)
+    'marquee'(el) { const track = el.firstElementChild; if (!track) return; track.innerHTML += track.innerHTML; const dur = +(el.dataset.duration || 40); g().to(track, { xPercent: -50, duration: dur, ease: 'none', repeat: -1 }); },
+    // 12. Moto/Shader: circular or page mask reveal of the next world
+    'mask-switch'(el) { g().fromTo(el, { clipPath: 'circle(0% at 50% 50%)' }, { clipPath: 'circle(140% at 50% 50%)', ease: 'none', scrollTrigger: { trigger: el, start: 'top 90%', end: 'top 20%', scrub: true } }); },
+    // 13. DeepBook: headline alternates between phrases; [data-phrases='["a","b"]']
+    'rotating-headline'(el) { const ph = JSON.parse(el.dataset.phrases || '[]'); if (!ph.length) return; let i = 0; el.style.display = 'inline-block'; el.style.overflow = 'hidden'; setInterval(() => { i = (i + 1) % ph.length; g().to(el, { yPercent: -100, opacity: 0, duration: .35, ease: 'power2.in', onComplete: () => { el.textContent = ph[i]; g().fromTo(el, { yPercent: 100, opacity: 0 }, { yPercent: 0, opacity: 1, duration: .45, ease: 'power3.out' }); } }); }, +(el.dataset.every || 2800)); },
+    // 14. ICOMAT/Moto: hotspot pills pop in over an image; children .pill
+    'hotspot-pills'(el) { g().from(el.querySelectorAll('.pill'), { scale: .6, opacity: 0, duration: .5, ease: 'back.out(1.8)', stagger: .15, scrollTrigger: { trigger: el, start: 'top 70%', once: true } }); },
+    // 15. universal: fade + 12px rise
+    'fade-rise'(el) { g().from(el, { opacity: 0, y: 14, duration: .7, ease: 'power2.out', scrollTrigger: { trigger: el, start: 'top 88%', once: true } }); }
+  };
+
+  const CSS = `.mv-line{display:block;overflow:hidden;line-height:inherit}.mv-line-in{display:block}.mv-w,.mv-c{display:inline-block}
+  mark.mv-mark{background:none;color:inherit;position:relative;padding:0 .08em;margin:0 -.08em;z-index:0}
+  mark.mv-mark::before{content:"";position:absolute;inset:0;width:var(--mv-sw,0%);background:var(--mv-highlight,#BEFF8B);z-index:-1;border-radius:.08em}
+  [data-move="pinned-steps"] [data-step]{opacity:.28;transition:opacity .3s}[data-move="pinned-steps"] [data-step].is-active{opacity:1}
+  [data-move="pinned-steps"] [data-panel]{display:none}[data-move="pinned-steps"] [data-panel].is-active{display:block}
+  [data-move="marquee"]{overflow:hidden;white-space:nowrap}[data-move="marquee"]>*{display:inline-flex;gap:64px;will-change:transform}`;
+
+  const Moves = {
+    init(root = document) {
+      if (!g()) { console.warn('Moves: gsap missing'); return; }
+      if (ST() && g().registerPlugin) g().registerPlugin(ST());
+      if (!document.getElementById('mv-css')) { const s = document.createElement('style'); s.id = 'mv-css'; s.textContent = CSS; document.head.appendChild(s); }
+      if (prefersReduced) return; // respect user setting: no motion
+      root.querySelectorAll('[data-move]').forEach(el => { el.dataset.move.split(/\s+/).forEach(name => { const fn = moves[name]; if (fn) { try { fn(el); } catch (e) { console.warn('move failed', name, e); } } }); });
+      if (global.Lenis && !global.__lenis) { const lenis = new global.Lenis({ lerp: .09 }); global.__lenis = lenis; lenis.on('scroll', () => ST() && ST().update()); g().ticker.add(t => lenis.raf(t * 1000)); g().ticker.lagSmoothing(0); }
+    },
+    list: Object.keys(moves)
+  };
+  global.Moves = Moves;
+})(window);
+</script>
+<script>/* Swarm Rebuild engine — original implementation (c) 2026, written from scratch for the live-redesign demo.
+   Snapshots the page into "layers" (boxes + text), blanks it, then animated agent cursors rebuild it
+   section by section while the viewport tours along. No external deps. */
+(function (global) {
+  'use strict';
+
+  const ROLES = [
+    { name: 'Layout',     color: '#3B82F6' },
+    { name: 'Typography', color: '#A855F7' },
+    { name: 'Copy',       color: '#F59E0B' },
+    { name: 'Color',      color: '#EF4444' },
+    { name: 'Motion',     color: '#10B981' },
+    { name: 'QA',         color: '#06B6D4' },
+    { name: 'Layout',     color: '#2563EB' },
+    { name: 'Copy',       color: '#D97706' },
+  ];
+  const NAMES = ['atlas','birch','cobalt','dune','ember','fjord','gale','halo','iris','juno','kite','lumen','mica','nova','onyx','pike','quill','reed','sol','tide','umber','vale','wren','xeno','yarrow','zinc','arc','bloom','crest'];
+
+  const TEXT_TAGS = new Set(['H1','H2','H3','H4','H5','P','A','SPAN','B','SMALL','LI','SUMMARY','EM','I','STRONG','DIV','LABEL']);
+  const BOX_SEL = '.card, .cells > div, .frame, .rows li, .lifetime > div, .faq details, .btn, .nav, .marquee, .pillbar';
+
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const easeOut = t => 1 - Math.pow(1 - t, 3);
+
+  function isLeafText(el) {
+    if (!TEXT_TAGS.has(el.tagName)) return false;
+    // element carries its own text node(s) (children may also carry text; those become their own layers)
+    for (const n of el.childNodes) if (n.nodeType === 3 && n.textContent.trim()) return true;
+    return false;
+  }
+
+  class Cursor {
+    constructor(role, idx, layer) {
+      this.role = role; this.name = NAMES[idx % NAMES.length];
+      this.x = rnd(100, innerWidth - 100); this.y = rnd(-80, -20);
+      this.el = document.createElement('div');
+      this.el.className = 'sw-cursor';
+      this.el.innerHTML = `<svg width="22" height="26" viewBox="0 0 22 26"><path d="M2 2 L2 20 L7 15.5 L10.5 23 L14 21.5 L10.5 14 L17 14 Z" fill="${role.color}" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg><span class="sw-tag" style="background:${role.color}">${this.name} · ${role.name}</span><span class="sw-task"></span>`;
+      layer.appendChild(this.el);
+      this.busy = false; this.render();
+    }
+    render() { this.el.style.transform = `translate(${this.x}px,${this.y}px)`; }
+    setTask(t) { this.el.querySelector('.sw-task').textContent = t || ''; }
+    async moveTo(x, y, speed) {
+      const sx = this.x, sy = this.y, dx = x - sx, dy = y - sy;
+      const dist = Math.hypot(dx, dy); const dur = Math.min(900, 180 + dist * 0.55) / speed;
+      // slight curve: control point offset
+      const cx = sx + dx * 0.5 + rnd(-40, 40), cy = sy + dy * 0.5 + rnd(-40, 40);
+      const t0 = performance.now();
+      return new Promise(res => {
+        const step = now => {
+          let t = Math.min(1, (now - t0) / dur); const e = easeOut(t);
+          this.x = (1 - e) * (1 - e) * sx + 2 * (1 - e) * e * cx + e * e * x;
+          this.y = (1 - e) * (1 - e) * sy + 2 * (1 - e) * e * cy + e * e * y;
+          this.render();
+          if (t < 1) requestAnimationFrame(step); else res();
+        };
+        requestAnimationFrame(step);
+      });
+    }
+    async idle() {
+      if (this.busy) return;
+      await this.moveTo(this.x + rnd(-30, 30), this.y + rnd(-20, 20), 0.6);
+    }
+  }
+
+  class Swarm {
+    constructor(opts) {
+      this.opts = Object.assign({ agents: 24, speed: 1, sectionSelector: '[data-agent]', onProgress: null, onDone: null, hud: true }, opts);
+      this.layers = []; this.done = 0; this.agentsUsed = new Set();
+    }
+
+    snapshot() {
+      const sections = [...document.querySelectorAll(this.opts.sectionSelector)];
+      this.sections = sections.map(sec => {
+        const boxes = [...sec.querySelectorAll(BOX_SEL)].concat(sec.matches(BOX_SEL) ? [sec] : []);
+        const texts = [...sec.querySelectorAll('*')].filter(isLeafText);
+        const layers = [];
+        boxes.forEach(el => layers.push({ kind: 'box', el, sec }));
+        texts.forEach(el => layers.push({ kind: 'text', el, sec, html: el.innerHTML, text: el.textContent }));
+        // visual-only elements (svg/img/decorative divs with background)
+        [...sec.querySelectorAll('img, svg, i')].forEach(el => layers.push({ kind: 'img', el, sec }));
+        return { el: sec, name: sec.getAttribute('data-agent') || sec.tagName, layers };
+      });
+      this.total = this.sections.reduce((n, s) => n + s.layers.length, 0);
+    }
+
+    blank() {
+      document.documentElement.classList.add('sw-building');
+      this.sections.forEach(s => {
+        s.layers.forEach(L => {
+          L.el.classList.add('sw-hidden-' + L.kind);
+          if (L.kind === 'text') { L.el.setAttribute('data-sw-text', '1'); }
+        });
+        s.el.classList.add('sw-sec-pending');
+      });
+    }
+
+    mountUI() {
+      this.layer = document.createElement('div'); this.layer.className = 'sw-layer'; document.body.appendChild(this.layer);
+      if (this.opts.hud) {
+        this.hud = document.createElement('div'); this.hud.className = 'sw-hud';
+        this.hud.innerHTML = `<div class="sw-dots"></div><b class="sw-agents">0</b><span>agents</span><b class="sw-count">0</b><span class="sw-total">/ ${this.total} layers</span><div class="sw-bar"><i></i></div><span class="sw-sec">Touring</span><button class="sw-speed">1×</button><button class="sw-skip">Skip</button>`;
+        document.body.appendChild(this.hud);
+        this.hud.querySelector('.sw-speed').onclick = () => { this.opts.speed = this.opts.speed >= 4 ? 1 : this.opts.speed * 2; this.hud.querySelector('.sw-speed').textContent = this.opts.speed + '×'; };
+        this.hud.querySelector('.sw-skip').onclick = () => { this.skip = true; };
+      }
+      const n = this.opts.agents;
+      this.cursors = Array.from({ length: n }, (_, i) => new Cursor(ROLES[i % ROLES.length], i, this.layer));
+      if (this.hud) this.hud.querySelector('.sw-dots').innerHTML = ROLES.slice(0, 6).map(r => `<i style="background:${r.color}"></i>`).join('');
+    }
+
+    progress(secName) {
+      if (!this.hud) return;
+      this.hud.querySelector('.sw-count').textContent = this.done;
+      this.hud.querySelector('.sw-agents').textContent = this.agentsUsed.size;
+      this.hud.querySelector('.sw-bar i').style.width = (100 * this.done / this.total) + '%';
+      if (secName) this.hud.querySelector('.sw-sec').textContent = secName;
+      this.opts.onProgress && this.opts.onProgress(this.done, this.total, secName);
+    }
+
+    pageXY(el) { const r = el.getBoundingClientRect(); return { x: r.left + scrollX, y: r.top + scrollY, w: r.width, h: r.height }; }
+
+    async tour(secEl) {
+      const r = secEl.getBoundingClientRect(); const target = scrollY + r.top - Math.max(40, (innerHeight - Math.min(r.height, innerHeight)) / 2);
+      const start = scrollY, dist = target - start; const dur = Math.min(1100, 300 + Math.abs(dist) * 0.5) / this.opts.speed; const t0 = performance.now();
+      await new Promise(res => { const step = now => { const t = Math.min(1, (now - t0) / dur); scrollTo(0, start + dist * easeOut(t)); if (t < 1) requestAnimationFrame(step); else res(); }; requestAnimationFrame(step); });
+    }
+
+    async buildBox(c, L) {
+      const p = this.pageXY(L.el); const sp = this.opts.speed;
+      c.setTask('placing block');
+      await c.moveTo(p.x - scrollX + 4, p.y - scrollY + 4, sp);
+      // selection outline grows from the corner
+      const sel = document.createElement('div'); sel.className = 'sw-sel'; sel.style.borderColor = c.role.color;
+      sel.style.left = p.x + 'px'; sel.style.top = p.y + 'px'; sel.style.width = '0px'; sel.style.height = '0px';
+      const dim = document.createElement('span'); dim.className = 'sw-dim'; dim.style.background = c.role.color; dim.textContent = `${Math.round(p.w)} × ${Math.round(p.h)}`; sel.appendChild(dim);
+      this.layer.appendChild(sel);
+      await c.moveTo(p.x - scrollX + p.w - 4, p.y - scrollY + p.h - 4, sp * 1.4);
+      sel.style.transition = `width ${260 / sp}ms ease-out, height ${260 / sp}ms ease-out`;
+      sel.style.width = p.w + 'px'; sel.style.height = p.h + 'px';
+      await sleep(300 / sp);
+      L.el.classList.remove('sw-hidden-box'); L.el.classList.add('sw-pop');
+      sel.style.opacity = '0'; await sleep(220 / sp); sel.remove();
+    }
+
+    async buildText(c, L) {
+      const p = this.pageXY(L.el); const sp = this.opts.speed;
+      const len = L.text.length;
+      c.setTask(len > 80 ? 'writing paragraph' : len > 20 ? 'setting heading' : 'labelling');
+      await c.moveTo(p.x - scrollX - 6, p.y - scrollY + Math.min(p.h, 28) / 2, sp);
+      L.el.classList.remove('sw-hidden-text');
+      const simple = L.el.children.length === 0;
+      if (simple && len <= 220) {
+        // type it out
+        const caret = document.createElement('i'); caret.className = 'sw-caret'; caret.style.background = c.role.color;
+        L.el.textContent = ''; L.el.appendChild(caret);
+        const perChar = Math.max(6, Math.min(28, 900 / len)) / sp;
+        for (let i = 1; i <= len; i++) {
+          L.el.textContent = L.text.slice(0, i); L.el.appendChild(caret);
+          if (i % 2 === 0) await sleep(perChar);
+          if (i % 12 === 0) { const q = this.pageXY(L.el); c.x = Math.min(q.x + q.w, q.x + i * (q.w / len)) - scrollX; c.y = q.y - scrollY + Math.min(q.h, 28) / 2; c.render(); }
+        }
+        caret.remove(); L.el.innerHTML = L.html;
+      } else {
+        L.el.classList.add('sw-fade');
+        await sleep(240 / sp);
+      }
+    }
+
+    async buildImg(c, L) {
+      const p = this.pageXY(L.el); const sp = this.opts.speed;
+      c.setTask('placing asset');
+      await c.moveTo(p.x - scrollX + p.w / 2, p.y - scrollY + p.h / 2, sp);
+      L.el.classList.remove('sw-hidden-img'); L.el.classList.add('sw-pop');
+      await sleep(160 / sp);
+    }
+
+    async run() {
+      this.t0 = performance.now();
+      this.snapshot(); this.blank(); this.mountUI(); this.progress('Touring');
+      scrollTo(0, 0);
+      await sleep(600);
+      for (const sec of this.sections) {
+        if (this.skip) break;
+        sec.el.classList.remove('sw-sec-pending');
+        await this.tour(sec.el);
+        this.progress(sec.name);
+        // order: boxes → text (top to bottom) → imgs ; run with a pool of cursors
+        const queue = [...sec.layers.filter(l => l.kind === 'box'), ...sec.layers.filter(l => l.kind === 'text').sort((a, b) => this.pageXY(a.el).y - this.pageXY(b.el).y), ...sec.layers.filter(l => l.kind === 'img')];
+        const pool = Math.min(this.cursors.length, Math.max(3, Math.ceil(queue.length / 3)), 7);
+        const free = this.cursors.slice().sort(() => Math.random() - 0.5).slice(0, pool);
+        const worker = async c => {
+          while (queue.length && !this.skip) {
+            const L = queue.shift(); c.busy = true; this.agentsUsed.add(c.name);
+            try { if (L.kind === 'box') await this.buildBox(c, L); else if (L.kind === 'text') await this.buildText(c, L); else await this.buildImg(c, L); } catch (e) { console.warn(e); }
+            this.done++; this.progress();
+            c.setTask(''); c.busy = false;
+          }
+        };
+        await Promise.all(free.map(worker));
+        // idle agents drift around the viewport (they are position:fixed) so none sits on a stale spot
+        this.cursors.filter(c => !free.includes(c)).forEach(c => { c.setTask(Math.random() < .25 ? 'reviewing' : ''); c.moveTo(rnd(60, innerWidth - 120), rnd(90, innerHeight - 160), 0.5); });
+      }
+      if (this.skip) this.finishInstant();
+      this.finish();
+    }
+
+    finishInstant() {
+      this.sections.forEach(s => s.layers.forEach(L => { L.el.classList.remove('sw-hidden-' + L.kind); if (L.kind === 'text') L.el.innerHTML = L.html; }));
+      this.done = this.total; this.progress();
+    }
+
+    async finish() {
+      const secs = ((performance.now() - this.t0) / 1000).toFixed(1);
+      // cursors fly off
+      this.cursors.forEach(c => c.setTask(''));
+      await Promise.all(this.cursors.map(c => c.moveTo(rnd(-200, innerWidth + 200), rnd(-300, -100), 0.8)));
+      this.layer.remove();
+      document.documentElement.classList.remove('sw-building');
+      document.querySelectorAll('[data-sw-text]').forEach(e => e.removeAttribute('data-sw-text'));
+      document.querySelectorAll('.rv').forEach(e => e.classList.add('in'));
+      if (this.hud) {
+        this.hud.innerHTML = `<span>Rebuilt by <b>${this.agentsUsed.size}</b> agents in <b>${secs}s</b></span><button class="sw-replay">Replay</button><button class="sw-close">×</button>`;
+        this.hud.querySelector('.sw-replay').onclick = () => { this.hud.remove(); scrollTo(0, 0); new Swarm(this.opts).run(); };
+        this.hud.querySelector('.sw-close').onclick = () => this.hud.remove();
+      }
+      this.opts.onDone && this.opts.onDone({ agents: this.agentsUsed.size, seconds: secs, layers: this.total });
+    }
+  }
+
+  const CSS = `
+  .sw-layer{position:absolute;inset:0 auto auto 0;width:100%;height:0;pointer-events:none;z-index:9000}
+  .sw-cursor{position:fixed;left:0;top:0;pointer-events:none;z-index:9001;will-change:transform;transition:opacity .4s}
+  .sw-cursor .sw-tag{position:absolute;left:18px;top:18px;color:#fff;font:600 11px/1 system-ui,sans-serif;padding:4px 7px;border-radius:4px;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+  .sw-cursor .sw-task{position:absolute;left:18px;top:40px;color:#111;background:#fff;font:500 10.5px/1 system-ui,sans-serif;padding:3px 6px;border-radius:3px;white-space:nowrap;opacity:.9;border:1px solid rgba(0,0,0,.08)}
+  .sw-cursor .sw-task:empty{display:none}
+  .sw-sel{position:absolute;border:1.5px solid;box-sizing:border-box;z-index:8999;pointer-events:none;transition:opacity .2s;background:rgba(59,130,246,.04)}
+  .sw-sel::before,.sw-sel::after{content:"";position:absolute;width:6px;height:6px;background:#fff;border:1.5px solid inherit;border-color:inherit}
+  .sw-sel::before{left:-4px;top:-4px}.sw-sel::after{right:-4px;bottom:-4px}
+  .sw-dim{position:absolute;left:50%;bottom:-22px;transform:translateX(-50%);color:#fff;font:600 10px/1 system-ui;padding:3px 6px;border-radius:3px;white-space:nowrap}
+  .sw-hidden-box{border-color:transparent!important;background:transparent!important;box-shadow:none!important}
+  .sw-hidden-box::before,.sw-hidden-box::after{opacity:0}
+  .sw-hidden-box *{border-color:transparent!important}
+  .sw-hidden-text{visibility:hidden}
+  .sw-hidden-img{opacity:0}
+  .sw-pop{animation:sw-pop .35s ease-out}
+  @keyframes sw-pop{from{opacity:.2;transform:scale(.985)}to{opacity:1;transform:none}}
+  .sw-fade{animation:sw-fade .4s ease-out}
+  @keyframes sw-fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .sw-caret{display:inline-block;width:2px;height:.9em;vertical-align:-.1em;margin-left:1px;animation:sw-blink .7s steps(1) infinite}
+  @keyframes sw-blink{50%{opacity:0}}
+  .sw-building .rv{opacity:1!important;transform:none!important;transition:none!important}
+  .sw-hud{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:9500;background:#111;color:#fff;border-radius:999px;padding:10px 14px 10px 16px;display:flex;align-items:center;gap:10px;font:500 12.5px/1 system-ui,sans-serif;box-shadow:0 8px 30px rgba(0,0,0,.25);white-space:nowrap}
+  .sw-hud b{font-weight:700}
+  .sw-hud span{opacity:.7}
+  .sw-hud .sw-dots{display:flex}
+  .sw-hud .sw-dots i{width:10px;height:10px;border-radius:50%;border:2px solid #111;margin-right:-4px}
+  .sw-hud .sw-bar{width:110px;height:4px;background:rgba(255,255,255,.18);border-radius:2px;overflow:hidden}
+  .sw-hud .sw-bar i{display:block;height:100%;width:0;background:#3B82F6;transition:width .25s}
+  .sw-hud .sw-sec{background:#2563EB;color:#fff;opacity:1;padding:6px 10px;border-radius:999px;font-weight:600}
+  .sw-hud button{background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:999px;padding:6px 10px;font:600 12px system-ui;cursor:pointer}
+  .sw-hud button:hover{background:rgba(255,255,255,.25)}
+  .sw-hud .sw-close{padding:6px 9px}
+  `;
+  const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
+
+  global.Swarm = Swarm;
+})(window);
+</script>
+<script>
+
+document.addEventListener("DOMContentLoaded",()=>Moves.init());
+
+</script>
+</body>
+</html>

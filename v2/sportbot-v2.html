@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SportBot AI — Never take a bad number</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/*TOKENS*/
+/*COMPONENTS*/
+/* page-specific */
+.hero-art{position:relative;padding:28px}
+.hero-art .card{font-size:14px}
+.teams{font-family:var(--font-display);font-size:26px;font-weight:700;text-transform:uppercase;line-height:1.05;margin:4px 0 14px}
+.record .cells>div{min-height:170px}
+.record .cells .num.pos{color:var(--accent)}
+.record .cells .num.neg{color:#E06A4A}
+.ways .panel-card{max-width:560px}
+.lead-sec{padding:clamp(56px,7vw,100px) 0}
+.price .cells>div{min-height:420px}
+.price .cells .num{font-size:clamp(56px,6vw,88px)}
+.price .cells .num small{font-family:var(--font-mono);font-size:12px;letter-spacing:.1em;margin-left:8px;color:var(--muted)}
+.price ul{list-style:none;margin:16px 0 24px}.price li{padding:9px 0;border-top:1px solid var(--line);font-size:15px}.price li::before{content:"—";color:var(--accent);margin-right:10px}
+.lifetime{margin-top:16px;display:grid;grid-template-columns:1fr 1fr 1fr;border:1px solid var(--line)}
+.lifetime>div{padding:28px 24px;border-right:1px solid var(--line)}.lifetime>div:last-child{border-right:0}
+.leagues span{padding:0 8px}
+.note-conflict{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:#E06A4A;margin-top:12px}
+.sec-head{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:end;margin-bottom:56px}
+.sec-head .label{display:block;margin-bottom:16px}
+.guides{position:absolute;inset:0;pointer-events:none}
+.guides i{position:absolute;top:0;bottom:0;border-left:1px dashed var(--line);opacity:.5}
+@media(max-width:900px){.sec-head,.lifetime{grid-template-columns:1fr}.lifetime>div{border-right:0;border-bottom:1px solid var(--line)}.price .cells{grid-template-columns:1fr}.price .cells>div{min-height:0}}
+</style>
+</head>
+<body class="tx-grid tx-grain">
+<div class="guides" aria-hidden="true"><i style="left:25%"></i><i style="left:50%"></i><i style="left:75%"></i></div>
+
+<nav class="nav" data-agent="Navigation">
+  <div class="wrap">
+    <a class="wordmark" href="#"><img class="mark" src="{{LOGO}}" alt="SportBot AI">SportBot<em>AI</em></a>
+    <div class="links"><a href="#record">Record</a><a href="#ways">How it works</a><a href="#price">Price check</a><a href="#plans">Plans</a></div>
+    <a class="btn primary arrow" href="#">Check a bet</a>
+  </div>
+</nav>
+
+<section class="hero" data-agent="Hero · artefact">
+  <div class="wrap">
+    <div>
+      <div class="meta"><span class="label"><span class="sq"></span>Source-labelled inputs · public record</span><span class="label ink"><b class="num" style="font-size:14px" data-move="number-scramble">28,139</b> analyses completed</span></div>
+      <h1 class="display h1" data-move="masked-line-reveal">Never take a <span class="accent">bad number</span> again.</h1>
+      <p class="lede" style="margin-top:28px">Check any bet against the pros' price before you stake it — the fair price, the best book, and a stake your bankroll supports. Free, once a day.</p>
+      <div class="ctas"><a class="btn primary arrow" href="#">Check my next bet — free</a><a class="link arrow" href="#record">The public record</a></div>
+    </div>
+    <div class="artefact frame marks hero-art"><i class="m"></i>
+      <span class="corner-meta tl">Fix. 0421 · Premier League</span><span class="corner-meta tr">T−20h 53m</span>
+      <div class="card dark" data-move="fade-rise">
+        <div class="top"><span class="label">Match analysis</span><span class="label">Under 2.5</span></div>
+        <div class="teams">Leeds United<br>Tottenham Hotspur</div>
+        <div class="row"><span>The bet</span><b class="num">1.86<small>price at analysis</small></b></div>
+        <div class="row"><span>Market price, margin removed</span><b class="num">1.96<small>= 51%</small></b></div>
+        <div class="row"><span>Model's number · in test</span><b class="num accent">1.69<small>= 59%</small></b></div>
+        <div class="verdict">The model's number sits above the market price. That gap is the edge — an opinion, in test.<strong>Worth backing — moderate edge · +8.0pp</strong></div>
+      </div>
+      <span class="corner-meta bl">Inputs: 14 · all present</span><span class="corner-meta br">Rev. 06 Nov 2026</span>
+    </div>
+  </div>
+</section>
+
+<div class="marquee" data-move="marquee" data-duration="55" data-agent="Coverage"><div class="leagues"><span>Premier League</span><span>·</span><span>NBA</span><span>·</span><span>NFL</span><span>·</span><span>NHL</span><span>·</span><span>EuroLeague</span><span>·</span><span>Tennis</span><span>·</span><span>MLB</span><span>·</span><span>Esports</span><span>·</span><span>34 books priced per fixture</span><span>·</span></div></div>
+
+<section class="sec record" id="record" data-agent="Public record">
+  <div class="wrap">
+    <div class="sec-head">
+      <div><span class="label"><span class="sq"></span>01 — Public record · live since 29 Sept 2026</span><h2 class="display h2" data-move="masked-line-reveal">Wins and losses, settled in public.</h2></div>
+      <p class="lede muted">Every settled pick as it landed. Losses stay on the page. The model's number is logged beside every pick — as an opinion, in test.</p>
+    </div>
+    <div class="cells" style="--cols:3">
+      <div><span class="label">Picks · ROI</span><b class="num pos" data-move="number-scramble">+3.3%</b><span class="label">640 closes</span></div>
+      <div><span class="label">Units</span><b class="num" data-move="number-scramble">+13.46u</b><span class="label">664 settled · ±9.7 luck</span></div>
+      <div><span class="label">Hit rate</span><b class="num" data-move="number-scramble">43%</b><span class="label">1.80 avg odds</span></div>
+      <div><span class="label">Model · in test</span><b class="num neg" data-move="number-scramble">−4.1%</b><span class="label">on 466 qualifying picks</span></div>
+      <div><span class="label">Won – lost</span><b class="num" data-move="number-scramble">251–215</b><span class="label">1 unit each</span></div>
+      <div class="ink"><span class="label" style="color:rgba(255,255,255,.6)">Full ledgers</span><span class="h3">Time-stamped, with the closing line.</span><a class="link arrow" href="#" style="border-color:currentColor">See the full record</a></div>
+    </div>
+    <p class="label" style="margin-top:14px">Past results do not promise the next one.</p>
+  </div>
+</section>
+
+<section class="sec ways" id="ways" data-agent="Three ways in">
+  <div class="wrap">
+    <span class="label"><span class="sq"></span>02 — However you play</span>
+    <div class="pinned" data-move="pinned-steps" style="margin-top:24px">
+      <div class="steps">
+        <div data-step>Go deep on one match.</div>
+        <div data-step>Have the whole slate scanned.</div>
+        <div data-step>Check a bet you already like.</div>
+        <p class="muted" style="margin-top:20px;max-width:40ch">Probabilities for each outcome, the pros' price beside them, the best book, and — on Pro — the stake your bankroll supports.</p>
+      </div>
+      <div class="panels">
+        <div data-panel class="panel-card frame marks" style="padding:20px"><i class="m"></i><div class="card dark"><div class="top"><span class="label">ATP Paris Masters · Winner</span><span class="label">1h 41m</span></div><div class="teams">Taylor Fritz<br>Carlos Alcaraz</div><div class="row"><span>Our pick · Fritz to win</span><b class="num">3.80</b></div><div class="row"><span>Bet $10</span><b class="num">→ $38</b></div><div class="verdict">11 picks open now.<strong>Why this pick →</strong></div></div></div>
+        <div data-panel class="panel-card frame marks" style="padding:20px"><i class="m"></i><div class="card dark"><div class="top"><span class="label">Today's model picks · in test</span><span class="label">refresh 4–6h</span></div><div class="row"><span>Birmingham – Swansea · Under 2.5</span><b class="num accent">+12.6%</b></div><div class="row"><span>Nacional – Académico · Under 2.5</span><b class="num accent">+11.1%</b></div><div class="row"><span>Leeds – Tottenham · Under 2.5</span><b class="num accent">+8.0%</b></div><div class="verdict">Removed 30 min before kickoff.<strong>See today's picks →</strong></div></div></div>
+        <div data-panel class="panel-card frame marks" style="padding:20px"><i class="m"></i><div class="card dark"><div class="top"><span class="label">Price check · your bet</span><span class="label">34 books</span></div><div class="row best"><span>1xBet</span><b class="num">1.98</b></div><div class="row"><span>Betfair</span><b class="num">1.97</b></div><div class="row"><span>DraftKings</span><b class="num">1.95</b></div><div class="row"><span>Unibet (FR)</span><b class="num">1.70</b></div><div class="verdict">Cost of taking the lowest listed price<strong>−14.1%</strong></div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="price" data-agent="Same bet, better price">
+  <div class="wrap">
+    <div class="sec-head">
+      <div><span class="label"><span class="sq"></span>03 — The same bet, a better number</span><h2 class="display h2" data-move="masked-line-reveal">Same bet. Better price.</h2></div>
+      <p class="big-body" data-move="text-scrub">The same selection is not paid the same everywhere. We line the books up, mark the best one, and show what taking a worse number actually costs.</p>
+    </div>
+    <div class="cells" style="--cols:3">
+      <div><span class="label">Books that quoted this selection</span><b class="num" data-move="number-scramble">34</b><span class="label">Brighton · match result</span></div>
+      <div><span class="label">Best price at analysis</span><b class="num pos accent" data-move="number-scramble">1.98</b><span class="label">1xBet</span></div>
+      <div><span class="label">Cost of the lowest listed price</span><b class="num" style="color:#E06A4A" data-move="number-scramble">−14.1%</b><span class="label">Unibet (FR) 1.70</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec tight" data-agent="Trust">
+  <div class="wrap">
+    <span class="label"><span class="sq"></span>04 — Built for auditability, not blind picks</span>
+    <ul class="rows" style="margin-top:20px">
+      <li><span class="label">A</span><span class="h3">Methodology</span><p>How a pick is made, what the model's number is (in test), how edge is measured, how the record is kept.</p></li>
+      <li><span class="label">B</span><span class="h3">Public track record</span><p>Every pick and every qualifying model pick is logged with outcome, odds and the closing line.</p></li>
+      <li><span class="label">C</span><span class="h3">Responsible use</span><p>Educational analytics only. No guaranteed outcomes, no bookmaker activity. 18+.</p></li>
+    </ul>
+  </div>
+</section>
+
+<section class="sec price" id="plans" data-agent="Plans">
+  <div class="wrap">
+    <div class="sec-head">
+      <div><span class="label"><span class="sq"></span>05 — Membership</span><h2 class="display h2" data-move="masked-line-reveal">Two plans. No contract.</h2></div>
+      <p class="lede muted">One bad price costs more than a year of Pro. Start free; move up when the tool finds something you would have missed.</p>
+    </div>
+    <div class="cells" style="--cols:2">
+      <div><div><span class="label">Pro</span><b class="num" style="display:block;margin-top:14px" data-move="number-scramble">$4.99<small>/ month</small></b><ul><li>Every pick the moment it drops — side, price, book, why</li><li>10 matches a day analysed</li><li>25 price checks, 50 AI Desk questions a day</li><li>Log and settle every bet</li></ul></div><a class="btn primary arrow" href="#">Start with Pro</a></div>
+      <div><div><span class="label">Premium</span><b class="num" style="display:block;margin-top:14px" data-move="number-scramble">$9.99<small>/ month</small></b><ul><li>Everything in Pro, no daily limits</li><li>Line-move, sure-bet and own-model alerts</li><li>Unlimited AI chat</li><li>Complete research history</li></ul></div><a class="btn arrow" href="#">Go Premium</a></div>
+    </div>
+    <div class="lifetime">
+      <div><span class="label">Pay once</span><p class="h3" style="margin-top:10px">Lifetime — no recurring fee.</p></div>
+      <div><b class="num" style="font-size:44px" data-move="number-scramble">$299</b><p class="muted" style="margin-top:8px;font-size:14px">Lifetime Pro · 250 analyses + 1,000 chats / month</p></div>
+      <div><b class="num" style="font-size:44px" data-move="number-scramble">$999</b><p class="muted" style="margin-top:8px;font-size:14px">Lifetime Premium · unlimited</p></div>
+    </div>
+    <p class="label" style="margin-top:14px">Free account: 1 pick, 1 analysis, 1 price check a day · no card needed</p>
+    <p class="note-conflict">Audit note: the live site states $18.99 / $39.99 in its FAQ. One source of truth is required before publishing.</p>
+  </div>
+</section>
+
+<section class="sec tight" data-agent="Questions">
+  <div class="wrap">
+    <span class="label"><span class="sq"></span>06 — Good questions</span>
+    <div class="faq" style="margin-top:20px">
+      <details open><summary><span class="label">■ 01</span>Is SportBot AI a tipster service?<span class="plus">+</span></summary><p>No. A tipster sells you a side and asks for trust. SportBot publishes rule-based picks against the pros' price — side, price, book, the lowest price still worth taking, and the why. Every settled pick stays on the public record, losses included.</p></details>
+      <details><summary><span class="label">■ 02</span>How do the predictions work?<span class="plus">+</span></summary><p>Two numbers sit on every match: the pros' price (Pinnacle with the margin removed) and the model's number, shown as an opinion, in test. Where a licensed book pays more than the pros' price, that gap is the edge. Missing inputs are shown as unavailable, never guessed.</p></details>
+      <details><summary><span class="label">■ 03</span>What is free?<span class="plus">+</span></summary><p>One full pick a day of your choice, one match analysis, one price check, three AI questions a week. The public record and the methodology are open to everyone.</p></details>
+      <details><summary><span class="label">■ 04</span>What sports are covered?<span class="plus">+</span></summary><p>Major soccer competitions, NBA and EuroLeague, NFL, NHL, tennis, MLB including player props, and esports. A match without usable inputs is left out rather than analysed thinly.</p></details>
+    </div>
+  </div>
+</section>
+
+<footer class="ending" data-agent="Ending">
+  <div class="wrap">
+    <div class="cols">
+      <div><a class="wordmark" href="#"><img class="mark" src="{{LOGO}}" alt="SportBot AI">SportBot<em>AI</em></a><p class="muted" style="margin-top:14px;max-width:32ch">Source-labelled inputs, a public record, and the pros' price beside every pick.</p><div class="ctas" style="margin-top:20px"><a class="btn primary arrow" href="#">Check my next bet — free</a></div></div>
+      <div><h5>Product</h5><ul><li>Picks</li><li>Analyze</li><li>Sim</li><li>Props</li></ul></div>
+      <div><h5>Company</h5><ul><li>Methodology</li><li>Public record</li><li>Pricing</li><li>Contact</li></ul></div>
+      <div><h5>Apps</h5><ul><li>iOS</li><li>Android</li><li>API &amp; data access</li></ul></div>
+    </div>
+    <div class="giant outline" aria-hidden="true">SportBot<span class="dim" style="left:0;top:-28px;width:38%">w 1,124.00</span><span class="dim" style="right:0;top:-28px;width:22%">x 0.78 lh</span></div>
+    <div class="next"><span>Next: today's picks → refresh every 4–6h</span><span>Bet responsibly · 18+ · BeGambleAware.org</span></div>
+    <div class="legal"><span>© 2026 SportBot AI · educational analytics only · no guaranteed outcomes</span><span>Concept C1 · Blueprint</span></div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>/*MOVES*/</script>
+<script>/*SWARM*/</script>
+<script>
+/*INTRO*/
+</script>
+</body>
+</html>

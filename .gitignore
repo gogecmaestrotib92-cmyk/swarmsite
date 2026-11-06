@@ -1,0 +1,6 @@
+node_modules/
+shots/
+out/*/img-*.png
+out/*/hero-src.mp4
+*.zip
+__pycache__/

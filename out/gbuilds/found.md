@@ -1,0 +1,5 @@
+# /found — Can bots read your app? (19 checks in 5 groups + prompt)
+Groups: Readable HTML (4) · Titles & descriptions (4) · Let search engines find every page (4) · Give AI something to quote (3) · Get found, not just read (4). Three 5-minute tests: view-source / curl, Google cache, AI bot fetch.
+## Prompt (verbatim)
+You are a technical SEO engineer. My app is built with [framework]. Goal: search engines and AI crawlers that do NOT run JavaScript must be able to read my public pages.
+1. List public routes; leave logged-in routes alone. 2. Prerender or server-render them, simplest option; explain before changing. 3. Unique <title>, meta description, Open Graph, one <h1> per page; titles < 60 chars. 4. sitemap.xml + robots.txt. 5. Replace onClick-only navigation with real <a href>. 6. robots.txt: which AI bots blocked (GPTBot, ClaudeBot, PerplexityBot, OAI-SearchBot); allow on public pages; hosting "block AI bots" setting. 7. 5 phrases users would type; rewrite headline/title with the best; 10 blog questions. 8. Verify: raw HTML contains the headline. Do not change app logic, auth, or styling.

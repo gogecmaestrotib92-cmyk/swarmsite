@@ -1,0 +1,40 @@
+{
+  "_meta": {
+    "purpose": "Curated palettes extracted from the Awwwards winners we dissected, normalized into engine roles: paper (bg), ink (text), muted, line, panel, accent. The engine keeps the CLIENT'S brand hue as accent (from assets.js → palette.brandAccent) and picks paper/ink/panel from the concept; these palettes are the allowed 'worlds' the user curates.",
+    "rules": [
+      "1 accent per site. If the client has 2+ accents, keep the one on primary buttons (assets.js brandAccent).",
+      "Paper is never pure #FFFFFF for light concepts (use #F2F1EC, #F3EFE0, #EFE9E9, #E9DFC9) — winners always tint it. Pure white only inside panels/cards.",
+      "Dark paper is never pure #000 except C6 luxury; use #0A0A0A, #0B0B0B, #101421, #061A3A.",
+      "Ink is never pure black on light: #282828, #222222, #111, #3A3A3A.",
+      "Accent contrast against paper ≥ 3:1 for text, otherwise accent is only used on surfaces/underlines, never on type.",
+      "Pastel concept (C4): accents are surfaces (lime/lilac blocks), never text colour.",
+      "Photography-led sites (ICOMAT): accent = none; colour comes from images. Allowed when audit finds ≥3 big product shots."
+    ]
+  },
+  "palettes": [
+    {"id": "heron", "concept": "C1", "mode": "light", "paper": "#F2F1EC", "ink": "#282828", "muted": "#B3B3AF", "line": "#D8D6CF", "panel": "#FFFFFF", "accent": "#FA3600", "texture": "paper grain + grid", "source": "heron.ai"},
+    {"id": "illoca", "concept": "C1", "mode": "light", "paper": "#E9DFC9", "ink": "#3A3A3A", "muted": "#8B8470", "line": "#D9CDB3", "panel": "#F4EDDC", "accent": "#1544C8", "accent2_surface_only": "#E8522B", "texture": "blueprint grid", "source": "illoca"},
+    {"id": "cerebrium-dark", "concept": "C7", "mode": "dark", "paper": "#101421", "ink": "#FFFFFF", "muted": "#8A93A6", "line": "#232A3C", "panel": "#161B2C", "accent": "#FF2E8A", "accent_usage": "gradient on exactly one headline word", "source": "cerebrium"},
+    {"id": "cerebrium-light", "concept": "C7", "mode": "light", "paper": "#FFFFFF", "ink": "#101421", "muted": "#6B7280", "line": "#DBE5ED", "panel": "#DBE5ED", "accent": "#FF2E8A", "source": "cerebrium"},
+    {"id": "aspen", "concept": "C2", "mode": "light", "paper": "#FFFFFF", "ink": "#222222", "muted": "#7A7A7A", "line": "#D9D9D9", "panel": "#F3F3F3", "accent": "#A8FFCB", "accent_usage": "surface/highlight only (mint is too light for text)", "source": "aspen search"},
+    {"id": "maxima", "concept": "C3", "mode": "light", "paper": "#F3EFE0", "ink": "#111111", "muted": "#5B5A52", "line": "#111111", "panel": "#FFF2B7", "accent": "#FD4401", "flat_set": ["#FDCB40", "#FD4401", "#10B14B", "#1D5CFF"], "radius": "24px", "source": "maxima therapy"},
+    {"id": "wembi", "concept": "C4", "mode": "light", "paper": "#EFE9E9", "ink": "#111111", "muted": "#6E6868", "line": "#DDD5D5", "panel": "#FFFFFF", "accent": "#BEFF8B", "accent2_surface_only": "#C9B6FF", "render_bg": "#CFE0E6", "source": "wembi"},
+    {"id": "butter", "concept": "C5", "mode": "light", "paper": "#F4F4F4", "ink": "#111111", "muted": "#777777", "line": "#E2E2E2", "panel": "#141414", "accent": "#111111", "accent_usage": "monochrome; the dark panel IS the accent", "source": "butter"},
+    {"id": "deepbook", "concept": "C5", "mode": "light", "paper": "#FFFFFF", "ink": "#000000", "muted": "#6B7280", "line": "#E5E7EB", "panel": "#F6F7F9", "accent": "#1F6FEB", "source": "deepbook"},
+    {"id": "moto", "concept": "C6", "mode": "dark", "paper": "#050505", "ink": "#E6E9E8", "muted": "#8E9492", "line": "#1E2221", "panel": "#0F1211", "accent": "#E6E9E8", "accent_usage": "chrome/monochrome; one pale section #E8ECEA as a breath", "source": "moto finance"},
+    {"id": "pacome", "concept": "C6", "mode": "dark", "paper": "#0A0A0A", "ink": "#FAFAFA", "muted": "#8A8A8A", "line": "#222222", "panel": "#141414", "accent": "#FAFAFA", "source": "pacôme pertant"},
+    {"id": "icomat-dark", "concept": "C2", "mode": "dark", "paper": "#0B0B0B", "ink": "#F1F0ED", "muted": "#8C8C88", "line": "#262626", "panel": "#161616", "accent": null, "accent_usage": "photography carries colour", "source": "icomat"},
+    {"id": "sharplink", "concept": "C7", "mode": "dark", "paper": "#061A3A", "ink": "#FFFFFF", "muted": "#9CC3F0", "line": "#1B4F9E", "panel": "#0B2A55", "accent": "#1F6FEB", "source": "sharplink"},
+    {"id": "sportbot-v2", "concept": "C1", "mode": "dark", "paper": "#0B0F14", "ink": "#F2F1EC", "muted": "#8A9099", "line": "#1F262E", "panel": "#111822", "accent": "#10B981", "accent_usage": "client brand hue kept; used on 2 words + primary button + chart line", "source": "our v2"}
+  ],
+  "accent_rules_by_hue": {
+    "comment": "When the client's accent hue is X, these are the paper/ink families that proved to work with it on winners.",
+    "green (#10B981, #10B14B)": ["dark #0B0F14 / ink #F2F1EC", "cream #F3EFE0 / ink #111"],
+    "orange-red (#FA3600, #FD4401, #E8522B)": ["warm paper #F2F1EC or #E9DFC9 / ink #282828"],
+    "blue (#1544C8, #1F6FEB, #1D5CFF)": ["white or #E9DFC9 / ink #222", "deep navy #061A3A / ink white"],
+    "magenta/pink (#FF2E8A)": ["dark #101421 only, as gradient on one word"],
+    "yellow (#FDCB40)": ["cream #F3EFE0 flat set, never as text"],
+    "mint/lime (#A8FFCB, #BEFF8B)": ["white or #EFE9E9, surface only"],
+    "none/monochrome": ["C5 light #F4F4F4 with #141414 panel", "C6 dark #050505 with #E6E9E8 ink"]
+  }
+}

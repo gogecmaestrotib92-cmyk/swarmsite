@@ -1,0 +1,6 @@
+# /promise — the promise interview + Reddit research prompt (verbatim, condensed)
+## Promise interview
+You are a sharp product marketer. Help me write ONE sentence: who my app is for, what it does for them, how fast/how well. Interview me first, ONE question at a time; push back on vague answers ("everyone", "it uses AI"). Ask: 1 who has this problem most · 2 the moment it last hit them · 3 what they use today and hate · 4 what's different right after (a number) · 5 why they'd believe it · 6 where they hang out.
+Then write 5 versions under 20 words: "[App] helps [who] [do what] [how fast / how well]." No buzzwords (AI-powered, all-in-one, seamless, platform, revolutionize). For each: who it attracts/loses. Your pick and why. Pick rewritten as: landing headline (max 8 words), reel hook ("If you..."), Instagram bio line. Rule: if I'm building for "everyone", say so and make me pick ONE group.
+## Reddit research
+Find fresh posts (24h) in named subreddits describing the problem; pick best 5; draft replies (answer first, plain, max 120 words, mention app only if asked, "I built a small app for this"); read sub rules; never post. Output table: # · subreddit · post · why · draft · mentions app.

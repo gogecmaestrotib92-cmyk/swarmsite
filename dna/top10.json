@@ -1,0 +1,502 @@
+[
+ {
+  "awwwards": "https://www.awwwards.com/sites/santioni-spirits",
+  "title": "Santioni Spirits",
+  "url": "https://santionispirits.com/",
+  "score": 8.09,
+  "date": "Oct 5, 2026",
+  "colors": [
+   "#592223",
+   "#C82924"
+  ],
+  "categories": [
+   "Art & Illustration",
+   "Web & Interactive",
+   "Food & Drink"
+  ],
+  "style_tags": [
+   "Interaction Design",
+   "Storytelling",
+   "Illustration",
+   "Sound-Audio",
+   "Typography",
+   "Animation"
+  ],
+  "tech": [
+   "WebGL"
+  ],
+  "unparsed_tags": "",
+  "elements": [
+   {
+    "name": "Opening",
+    "category": "Header"
+   },
+   {
+    "name": "Flavor Selection",
+    "category": "Interaction"
+   },
+   {
+    "name": "Pouring Beverage",
+    "category": "Mouse Interaction"
+   },
+   {
+    "name": "Notturno Collection",
+    "category": "Interaction"
+   },
+   {
+    "name": "Story Introduction",
+    "category": "Transition"
+   },
+   {
+    "name": "Story Transition",
+    "category": "Transition"
+   },
+   {
+    "name": "Hand Animation",
+    "category": "Mouse Interaction"
+   },
+   {
+    "name": "Notturno Collection",
+    "category": "Products"
+   },
+   {
+    "name": "Vortex",
+    "category": "Animation"
+   }
+  ],
+  "description": "\"The Notturno Experience\" invites visitors into the illustrated universe of Santioni Spirits. An immersive, comic book-inspired journey serving as the brand's introduction to the world."
+ },
+ {
+  "awwwards": "https://www.awwwards.com/sites/pacome-pertant-portfolio",
+  "title": "Pac\u00f4me Pertant Portfolio",
+  "url": "https://pacomepertant.com/",
+  "score": 7.76,
+  "date": "Jun 9, 2026",
+  "colors": [
+   "#0a0a0a",
+   "#fafafa"
+  ],
+  "categories": [
+   "Art & Illustration",
+   "Music & Sound",
+   "Promotional"
+  ],
+  "style_tags": [
+   "Microinteractions",
+   "Transitions",
+   "Animation",
+   "Scrolling",
+   "Portfolio",
+   "3D"
+  ],
+  "tech": [
+   "Three.js",
+   "Nuxt.js",
+   "GSAP"
+  ],
+  "unparsed_tags": "",
+  "elements": [
+   {
+    "name": "Spiral View",
+    "category": "Gallery"
+   },
+   {
+    "name": "Spiral to List",
+    "category": "Transition"
+   },
+   {
+    "name": "About",
+    "category": "About Us"
+   },
+   {
+    "name": "Page transition",
+    "category": "Transition"
+   },
+   {
+    "name": "Loading",
+    "category": "Loading"
+   },
+   {
+    "name": "Footer Scroll Transition",
+    "category": "Footer"
+   },
+   {
+    "name": "Mouse trail",
+    "category": "Social Share"
+   },
+   {
+    "name": "Menu Open",
+    "category": "Menu"
+   },
+   {
+    "name": "List View",
+    "category": "Layout"
+   },
+   {
+    "name": "Video player",
+    "category": "Video"
+   }
+  ],
+  "description": "Pac\u00f4me Pertant is a motion and sound designer based in Paris. He plays with rhythm and visual storytelling across 2D and 3D canvases to create emotional content."
+ },
+ {
+  "awwwards": "https://www.awwwards.com/sites/heron-ai",
+  "title": "Heron AI",
+  "url": "https://heronaiapp.com/",
+  "score": 7.75,
+  "date": "Oct 12, 2026",
+  "colors": [
+   "#F15534",
+   "#282828"
+  ],
+  "categories": [
+   "Web & Interactive",
+   "Architecture",
+   "Technology"
+  ],
+  "style_tags": [
+   "Content architecture",
+   "Interaction Design",
+   "Footer Design",
+   "Storytelling",
+   "Animation",
+   "Scrolling"
+  ],
+  "tech": [
+   "Canvas API",
+   "Webflow",
+   "GSAP"
+  ],
+  "unparsed_tags": "",
+  "elements": [
+   {
+    "name": "Preloader",
+    "category": "Loading"
+   },
+   {
+    "name": "About us",
+    "category": "About Us"
+   },
+   {
+    "name": "Hero interaction",
+    "category": "Hero Image"
+   },
+   {
+    "name": "Featured products",
+    "category": "Products"
+   },
+   {
+    "name": "Story-telling",
+    "category": "Content"
+   }
+  ],
+  "description": "Heron AI is an agent that works inside your design tools. It watches your model as you design, suggests fixes, and makes the edits itself once you approve. Built by architects."
+ },
+ {
+  "awwwards": "https://www.awwwards.com/sites/jesper-landberg-4",
+  "title": "Jesper Landberg",
+  "url": "http://jesperlandberg.com",
+  "score": 7.73,
+  "date": "Sep 29, 2026",
+  "colors": [
+   "#000000"
+  ],
+  "categories": [
+   "Web & Interactive"
+  ],
+  "style_tags": [
+   "Infinite Scroll",
+   "Animation"
+  ],
+  "tech": [
+   "Three.js",
+   "Nuxt.js",
+   "GSAP"
+  ],
+  "unparsed_tags": "",
+  "elements": [
+   {
+    "name": "Home to project detail",
+    "category": "Transition"
+   },
+   {
+    "name": "Project to project",
+    "category": "Transition"
+   },
+   {
+    "name": "Home to profile",
+    "category": "Modal/ Popup"
+   }
+  ],
+  "description": "Swedish design engineer building visually rich, motion-driven websites."
+ },
+ {
+  "awwwards": "https://www.awwwards.com/sites/why-zero",
+  "title": "Why Zero",
+  "url": "https://why.zero.university/",
+  "score": 7.73,
+  "date": "Sep 7, 2026",
+  "colors": [
+   "#ffffff",
+   "#01C654"
+  ],
+  "categories": [
+   "Culture & Education",
+   "Technology",
+   "Startups"
+  ],
+  "style_tags": [
+   "Gestures / Interaction",
+   "Filters and Effects",
+   "Storytelling",
+   "Sound-Audio",
+   "Single page",
+   "3D"
+  ],
+  "tech": [
+   "Three.js",
+   "Blender",
+   "GSAP"
+  ],
+  "unparsed_tags": "",
+  "elements": [
+   {
+    "name": "Page Unlock",
+    "category": "Mouse Interaction"
+   }
+  ],
+  "description": "Why Zero is an immersive web experience about how Zero University is replacing the broken education system with AI-native learning by offering real projects and jobs at top companies."
+ },
+ {
+  "awwwards": "https://www.awwwards.com/sites/shader-development-studio",
+  "title": "Shader Development Studio",
+  "url": "https://www.shader.se/",
+  "score": 7.73,
+  "date": "Apr 20, 2026",
+  "colors": [
+   "#000000"
+  ],
+  "categories": [
+   "Business & Corporate",
+   "Web & Interactive"
+  ],
+  "style_tags": [
+   "Storytelling",
+   "Experimental",
+   "Portfolio",
+   "404 pages",
+   "Retro",
+   "3D"
+  ],
+  "tech": [
+   "Three.js",
+   "next.js",
+   "React",
+   "WebGL"
+  ],
+  "unparsed_tags": "",
+  "elements": [
+   {
+    "name": "The Golden Tie",
+    "category": "Animation"
+   },
+   {
+    "name": "Contact",
+    "category": "Contact"
+   },
+   {
+    "name": "Full scroll through",
+    "category": "Scroll"
+   },
+   {
+    "name": "About us",
+    "category": "About Us"
+   },
+   {
+    "name": "The Industrial Grade Paper Shredder",
+    "category": "Transition"
+   },
+   {
+    "name": "Loading page",
+    "category": "Loading"
+   },
+   {
+    "name": "Transition from Home to Projects",
+    "category": "Transition"
+   }
+  ],
+  "description": "Shader is a development studio specializing in real-time graphics and interactive experiences. Plugged into the future."
+ },
+ {
+  "awwwards": "https://www.awwwards.com/sites/maxima-therapy",
+  "title": "Maxima Therapy",
+  "url": "https://maximatherapy.com/",
+  "score": 7.73,
+  "date": "Apr 7, 2026",
+  "colors": [
+   "#FDCB40",
+   "#FD4401"
+  ],
+  "categories": [
+   "Social responsibility",
+   "Culture & Education"
+  ],
+  "style_tags": [
+   "Illustration",
+   "Transitions",
+   "Flat Design",
+   "Animation",
+   "404 pages",
+   "Colorful"
+  ],
+  "tech": [
+   "Lottie",
+   "React",
+   "GSAP"
+  ],
+  "unparsed_tags": "",
+  "elements": [
+   {
+    "name": "Product Listing Page",
+    "category": "Shopping cart"
+   },
+   {
+    "name": "Colorful About Page",
+    "category": "About Us"
+   },
+   {
+    "name": "Playful Page Transition",
+    "category": "Transition"
+   },
+   {
+    "name": "Colorful Career Page",
+    "category": "About Us"
+   },
+   {
+    "name": "Program Presentation",
+    "category": "Illustration"
+   },
+   {
+    "name": "Hero Slider Navigation",
+    "category": "Hero Image"
+   },
+   {
+    "name": "Illustrated Map",
+    "category": "Maps"
+   }
+  ],
+  "description": "Maxima Therapy is an organization dedicated to supporting neurodivergent individuals throughout their lives. Living with neurodivergence can be empowering, beautiful even!"
+ },
+ {
+  "awwwards": "https://www.awwwards.com/sites/lidar-drone-scanning",
+  "title": "Lidar Drone Scanning",
+  "url": "https://drone.riotters.com/",
+  "score": 7.68,
+  "date": "Oct 6, 2026",
+  "colors": [
+   "#dfe5e8",
+   "#28363e"
+  ],
+  "categories": [
+   "Web & Interactive",
+   "Design Agencies",
+   "Technology"
+  ],
+  "style_tags": [
+   "Gestures / Interaction",
+   "Microinteractions",
+   "Storytelling",
+   "Transitions",
+   "Animation",
+   "3D"
+  ],
+  "tech": [
+   "Three.js",
+   "Next.js",
+   "WebGL"
+  ],
+  "unparsed_tags": "",
+  "elements": [
+   {
+    "name": "Website Scroll",
+    "category": "Scroll"
+   },
+   {
+    "name": "Terrain Scan",
+    "category": "Maps"
+   },
+   {
+    "name": "Content Switcher",
+    "category": "Transition"
+   },
+   {
+    "name": "Menu Transition",
+    "category": "Menu"
+   }
+  ],
+  "description": "A Riotters R&D experiment turning raw drone LIDAR scans into a real-time 3D point cloud, rendered live in the browser with WebGL."
+ },
+ {
+  "awwwards": "https://www.awwwards.com/sites/huy-phan-vol-2",
+  "title": "Huy Phan Vol.2",
+  "url": "https://huyml.co/",
+  "score": 7.67,
+  "date": "Oct 14, 2026",
+  "colors": [
+   "#FF4949",
+   "#181818"
+  ],
+  "categories": [
+   "Web & Interactive",
+   "Promotional"
+  ],
+  "style_tags": [
+   "Filters and Effects",
+   "Illustration",
+   "Typography",
+   "About Page",
+   "Portfolio",
+   "Clean"
+  ],
+  "tech": [
+   "Three.js",
+   "Framer",
+   "GSAP"
+  ],
+  "unparsed_tags": "",
+  "elements": [],
+  "description": "Portfolio of Huy Phan (aka Huyml), an independent designer and art director, based in Ho Chi Minh city, Vietnam."
+ },
+ {
+  "awwwards": "https://www.awwwards.com/sites/gil-huybrecht",
+  "title": "Gil Huybrecht",
+  "url": "https://gilhuybrecht.com/",
+  "score": 7.66,
+  "date": "Sep 21, 2026",
+  "colors": [
+   "#0D0D0F",
+   "#FFFFFF"
+  ],
+  "categories": [
+   "Web & Interactive",
+   "Design Agencies",
+   "Promotional"
+  ],
+  "style_tags": [
+   "Microinteractions",
+   "Infinite Scroll",
+   "Typography",
+   "Portfolio",
+   "Gallery",
+   "Clean"
+  ],
+  "tech": [
+   "DatoCMS",
+   "Next.js",
+   "WebGL"
+  ],
+  "unparsed_tags": "",
+  "elements": [],
+  "description": "My new portfolio website where you'll find my latest work, availability and more information about me and my services."
+ }
+]

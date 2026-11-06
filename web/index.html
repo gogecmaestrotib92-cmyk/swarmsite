@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Relift — paste your site's URL, get it rebuilt like an award-winning studio would</title>
+<meta name="description" content="Paste the URL of your existing website. In minutes you get the same site rebuilt at studio level: real photos, real copy, premium typography and motion. Then a kit to paste into Claude, or a published site.">
+<meta property="og:title" content="Relift — your website, rebuilt at studio level"><meta property="og:description" content="Paste a URL. Watch the swarm rebuild it. Keep it.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Reference: butter.video (C5 calm light SaaS) — regular-weight big type on near-white, soft gradient paper, dark rounded panel, pill nav, blur-in words. */
+:root{--paper:#F5F5F4;--paper-2:#FAFAF9;--ink:#111111;--muted:#6B6B68;--line:rgba(17,17,17,.12);--panel:#141414;--accent:#111111;--sans:'Instrument Sans',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;--max:1240px;--gutter:clamp(20px,4vw,48px)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{overflow-x:hidden}
+body{background:linear-gradient(180deg,var(--paper) 0%,var(--paper-2) 100%);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}img{display:block;max-width:100%}
+.wrap{max-width:var(--max);margin:0 auto;padding:0 var(--gutter);width:100%;min-width:0}
+.lab{font-family:var(--mono);font-size:11.5px;letter-spacing:.02em;color:var(--muted)}
+.h1{font-weight:400;font-size:clamp(40px,6.2vw,80px);line-height:1.02;letter-spacing:-.03em}
+.h2{font-weight:400;font-size:clamp(30px,3.6vw,48px);line-height:1.08;letter-spacing:-.025em}
+.big{font-weight:400;font-size:clamp(22px,2.4vw,32px);line-height:1.25;letter-spacing:-.015em}
+.pill{display:inline-flex;align-items:center;gap:10px;border-radius:999px;padding:12px 20px;font-weight:500;font-size:15px;border:1px solid var(--line);background:#fff;transition:transform .35s cubic-bezier(.2,.8,.2,1),background .25s}
+.pill.ink{background:var(--ink);color:#fff;border-color:var(--ink)}.pill:hover{transform:translateY(-2px)}
+/* nav: two floating pills */
+.nav{position:fixed;top:16px;left:0;right:0;z-index:50;pointer-events:none}
+.nav .wrap{display:flex;justify-content:space-between;align-items:center}
+.nav .grp{pointer-events:auto;display:flex;gap:6px;align-items:center;background:rgba(255,255,255,.8);backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:999px;padding:6px}
+.nav .grp a{padding:8px 14px;border-radius:999px;font-size:14px;font-weight:500}.nav .grp a:hover{background:rgba(17,17,17,.06)}
+.nav .brand{font-weight:600;letter-spacing:-.02em;padding:8px 10px 8px 14px}
+/* hero */
+.hero{min-height:100svh;display:grid;align-content:center;padding:140px 0 60px;text-align:center}
+.hero .h1{max-width:16ch;margin:18px auto 0}
+.hero .h1 em{font-style:normal;color:var(--muted)}
+.hero p.sub{max-width:52ch;margin:22px auto 0;color:var(--muted);font-size:clamp(17px,1.4vw,20px)}
+.urlbox{margin:38px auto 0;max-width:720px;display:flex;background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 6px 6px 22px;box-shadow:0 20px 50px rgba(17,17,17,.08);align-items:center;gap:8px}
+.urlbox .pre{font-family:var(--mono);font-size:13px;color:var(--muted)}
+.urlbox input{flex:1;border:0;outline:0;font:500 18px var(--sans);background:transparent;min-width:0;color:var(--ink)}
+.urlbox input::placeholder{color:#B0B0AC}
+.urlbox button{border:0;cursor:pointer;font:inherit}
+.hero .micro{margin-top:16px;display:flex;gap:18px;justify-content:center;flex-wrap:wrap}
+/* three steps */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:64px;text-align:left}
+.step{background:#fff;border:1px solid var(--line);border-radius:22px;padding:24px;min-height:150px;display:grid;align-content:space-between}
+.step b{font-weight:500;font-size:19px;letter-spacing:-.01em}.step .lab{margin-bottom:22px}
+/* before/after */
+.sec{padding:clamp(72px,9vw,120px) 0}
+.ba{margin-top:36px;background:var(--panel);border-radius:28px;padding:clamp(16px,2.4vw,28px);box-shadow:0 40px 100px rgba(17,17,17,.18);color:#fff}
+.ba .row{display:grid;grid-template-columns:1fr 1fr;gap:clamp(12px,2vw,24px);align-items:start}
+.ba img{border-radius:14px;width:100%;aspect-ratio:16/10;object-fit:cover;object-position:top}
+.ba .cap{display:flex;justify-content:space-between;margin-top:12px;font-family:var(--mono);font-size:11.5px;color:rgba(255,255,255,.6)}
+.ba .cap b{color:#fff;font-weight:500}
+/* manifesto */
+.mani{max-width:980px}
+.mani .big{font-size:clamp(26px,3.4vw,44px)}
+/* two paths */
+.paths{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:36px}
+.path{border:1px solid var(--line);border-radius:26px;padding:28px;background:#fff;display:grid;gap:14px;align-content:start}
+.path.dark{background:var(--panel);color:#fff;border-color:var(--panel)}
+.path ul{list-style:none;display:grid;gap:8px;color:var(--muted);font-size:16px}.path.dark ul{color:rgba(255,255,255,.7)}
+.path li::before{content:"— ";}
+.path .price{font-size:clamp(28px,3vw,40px);letter-spacing:-.02em;font-weight:400}
+/* marquee */
+.marq{overflow:hidden;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:14px 0}
+.marq .t{display:flex;gap:48px;white-space:nowrap;width:max-content;font-family:var(--mono);font-size:12px;color:var(--muted)}
+/* faq */
+.faq details{border-top:1px solid var(--line);padding:18px 0}.faq details:last-child{border-bottom:1px solid var(--line)}
+.faq summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;font-size:19px;font-weight:500;letter-spacing:-.01em}
+.faq summary::after{content:"+";color:var(--muted)}.faq details[open] summary::after{content:"–"}
+.faq p{margin-top:10px;color:var(--muted);max-width:62ch}
+/* footer */
+.foot{padding:60px 0 24px}.foot .row{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+/* swarm demo stripe */
+.stripe{margin-top:36px;border-radius:22px;border:1px solid var(--line);background:#fff;padding:18px 22px;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.stripe .dots{display:flex;gap:4px}.stripe .dots i{width:8px;height:8px;border-radius:50%;background:var(--ink);opacity:.2;animation:blink 1.6s infinite}
+.stripe .dots i:nth-child(2){animation-delay:.2s}.stripe .dots i:nth-child(3){animation-delay:.4s}.stripe .dots i:nth-child(4){animation-delay:.6s}
+@keyframes blink{0%,100%{opacity:.2}50%{opacity:1}}
+.urlbox input{min-width:0}
+@media(max-width:820px){.urlbox{flex-wrap:wrap;border-radius:24px;padding:10px 10px 10px 16px}.urlbox input{width:100%;flex:1 1 100%;padding:8px 0}.urlbox button{width:100%;justify-content:center}.steps,.ba .row,.paths{grid-template-columns:1fr}.nav .links{display:none}.hero{padding-top:110px}.urlbox{padding-left:16px}.urlbox .pre{display:none}.hero .h1{font-size:clamp(36px,10vw,56px)}}
+</style>
+</head>
+<body>
+<nav class="nav"><div class="wrap"><div class="grp"><a class="brand" href="#">Relift</a><span class="links"><a href="#how">How it works</a><a href="#proof">Before / after</a><a href="#paths">Pricing</a></span></div><div class="grp"><a href="#faq">FAQ</a><a class="pill ink" href="#top" style="padding:8px 16px">Try it free</a></div></div></nav>
+
+<section class="hero" id="top" data-move="hero-intro">
+  <div class="wrap">
+    <span class="lab">your site · in · a better site · out</span>
+    <h1 class="h1" data-move="word-blur-in">Paste your website. Get it rebuilt like a <em>studio</em> would.</h1>
+    <p class="sub">Your copy, your photos, your logo — rebuilt with premium typography, real motion and a layout that reads on a phone. Watch it happen, then keep it.</p>
+    <form class="urlbox" onsubmit="go(event)"><span class="pre">https://</span><input id="url" placeholder="yourwebsite.com" autocomplete="off" inputmode="url"><button class="pill ink" type="submit">Rebuild my site →</button></form>
+    <div class="micro"><span class="lab">free preview · no signup</span><span class="lab">takes 5–15 minutes</span><span class="lab">nothing changes on your real site</span></div>
+    <div class="steps" id="how">
+      <div class="step"><span class="lab">01</span><b>Paste the URL.</b><span class="lab">We read your site: text, photos, logo, prices, colours.</span></div>
+      <div class="step"><span class="lab">02</span><b>Watch the swarm rebuild it.</b><span class="lab">Section by section, live. Concept, type, photos, motion, QA.</span></div>
+      <div class="step"><span class="lab">03</span><b>Keep it.</b><span class="lab">Publish it in one click, or take the kit and paste it into Claude.</span></div>
+    </div>
+  </div>
+</section>
+
+<div class="marq" data-move="marquee" data-duration="40"><div class="t"><span>restaurants</span><span>·</span><span>clinics</span><span>·</span><span>law firms</span><span>·</span><span>shops</span><span>·</span><span>agencies</span><span>·</span><span>SaaS</span><span>·</span><span>hotels</span><span>·</span><span>studios</span><span>·</span><span>any site with a URL</span><span>·</span></div></div>
+
+<section class="sec" id="proof">
+  <div class="wrap">
+    <span class="lab">before / after · a real site, nothing invented</span>
+    <h2 class="h2" style="margin-top:14px;max-width:18ch" data-move="masked-line-reveal">Same restaurant. Same photos. Same prices.</h2>
+    <div class="ba" data-move="scale-settle">
+      <div class="row">
+        <div><img src="before.jpg" alt="The original website"><div class="cap"><b>Before</b><span>WordPress template · 58 menu links · no headline</span></div></div>
+        <div><img src="after.jpg" alt="The rebuilt website"><div class="cap"><b>After</b><span>7 screens · hero loop from their own photo · 1 action</span></div></div>
+      </div>
+    </div>
+    <div class="stripe"><span class="dots"><i></i><i></i><i></i><i></i></span><span class="lab">agents: audit · concept · type · photos · motion · QA</span><span class="lab" style="margin-left:auto">you watch every section land</span></div>
+  </div>
+</section>
+
+<section class="sec" style="padding-top:0">
+  <div class="wrap mani">
+    <p class="big" data-move="text-scrub">We don't generate a new website. We read the one you have, keep everything true about it, and rebuild it the way an award-winning studio would — one visual idea, one voice, one action per screen, photos that lead, and motion you feel but never notice.</p>
+  </div>
+</section>
+
+<section class="sec" id="paths" style="padding-top:0">
+  <div class="wrap">
+    <span class="lab">then, two ways to keep it</span>
+    <h2 class="h2" style="margin-top:14px;max-width:20ch" data-move="masked-line-reveal">Do you use Claude? Either way, you're covered.</h2>
+    <div class="paths">
+      <div class="path"><span class="lab">if you build with Claude</span><b class="big">The kit</b><ul><li>Your rebuilt site as one file</li><li>The exact prompt + skills that made it</li><li>Paste into Claude Code, keep editing yourself</li></ul><span class="price">$29</span><a class="pill ink" href="#top">Rebuild my site →</a></div>
+      <div class="path dark"><span class="lab" style="color:rgba(255,255,255,.6)">if you just want the site</span><b class="big">Published</b><ul><li>We put it live on your domain</li><li>Change prices, hours, photos by chat</li><li>Forms land in your inbox</li></ul><span class="price">$19 / mo</span><a class="pill" href="#top" style="background:#fff;color:#111">Rebuild my site →</a></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec faq" id="faq" style="padding-top:0">
+  <div class="wrap" style="max-width:860px">
+    <h2 class="h2" style="margin-bottom:28px">Questions</h2>
+    <details open><summary>Does this change my real website?</summary><p>No. We only read it. You get a preview on our side; your site stays exactly as it is until you decide.</p></details>
+    <details><summary>What if my photos are bad?</summary><p>We use what you have and tell you which five photos would change everything. We never invent "proof" — no fake reviews, numbers or stock people.</p></details>
+    <details><summary>How long does it take?</summary><p>Five to fifteen minutes. It's real work: reading your site, choosing a concept, setting type, placing photos, checking every screen on a phone.</p></details>
+    <details><summary>I don't use Claude or any AI. Is this for me?</summary><p>Yes. Pick "Published": we host it, you change things by chatting ("make the Saturday hours 10–01"), and forms go to your email.</p></details>
+    <details><summary>Can I keep my brand font and colours?</summary><p>Yes — you choose. Keep them, or try a world we recommend; the whole site re-dyes in one click, photos included.</p></details>
+  </div>
+</section>
+
+<footer class="foot"><div class="wrap"><div class="row"><span>© 2026 Relift</span><span>Built with taste, not templates.</span><span><a href="#">Privacy</a> · <a href="#">Terms</a> · <a href="mailto:hello@relift.example">Contact</a></span></div></div></footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js"></script>
+<script src="moves.js"></script>
+<script>
+function go(e){e.preventDefault();const v=document.getElementById('url').value.trim();if(!v)return;location.href='/app?url='+encodeURIComponent(v.replace(/^https?:\/\//,''));}
+addEventListener('load',()=>Moves.init());
+</script>
+</body></html>

@@ -1,0 +1,58 @@
+{
+  "_meta": {
+    "purpose": "Curated font library for the engine. Every entry has: role, vibe tags, concepts it fits, source, license, and a tested pairing. The user vetoes/adds — this is a starting list, not the final taste.",
+    "rule": "Max 2 families per site (+ mono for labels). Never Inter/Arial/Roboto/Open Sans/Montserrat/Poppins as display. Keep the client's brand font if it has character (condensed, serif, mono, rounded).",
+    "seen_on_winners_licensed": {
+      "BT Grotesk (Heron)": "Blaze Type — paid", "Suisse Intl / Suisse Intl Mono (Cerebrium)": "Swiss Typefaces — paid", "ABC Favorit (Cerebrium)": "Dinamo — paid",
+      "ABC Diatype Rounded (Maxima)": "Dinamo — paid", "Robuck Rounded (Maxima)": "paid", "Indivisible (Pacôme)": "Lost Type — paid", "Geist Mono (Heron)": "Vercel — free (OFL)",
+      "Tiempos-like serif (Shader)": "Klim — paid", "Barlow Condensed (SportBot)": "Google — free"
+    },
+    "where_to_browse": [
+      {"name": "Fontshare", "url": "https://www.fontshare.com", "license": "free, commercial OK (ITF)", "best_for": "modern grotesks & display: Satoshi, General Sans, Clash Display, Cabinet Grotesk, Switzer, Chillax, Bespoke Serif, Sentient, Zodiak, Boska, Author"},
+      {"name": "Google Fonts", "url": "https://fonts.google.com", "license": "free OFL", "best_for": "safe hosting everywhere; use the characterful ones listed below, not the defaults"},
+      {"name": "Pangram Pangram", "url": "https://pangrampangram.com", "license": "free for personal, paid commercial", "best_for": "PP Neue Montreal, PP Editorial New, PP Mori, PP Right Grotesk — very 'Awwwards' look"},
+      {"name": "Uncut.wtf", "url": "https://uncut.wtf", "license": "free, open", "best_for": "Uncut Sans, Mori-like grotesks, odd display faces"},
+      {"name": "Collletttivo", "url": "https://www.collletttivo.it", "license": "free, open", "best_for": "Italian display faces (Mazius, Apfel Grotezk)"},
+      {"name": "Velvetyne", "url": "https://velvetyne.fr", "license": "free, open", "best_for": "experimental display"},
+      {"name": "Atipo", "url": "https://www.atipofoundry.com", "license": "pay-what-you-want", "best_for": "Geomanist, Salome, Argesta, Chaney"}
+    ]
+  },
+  "fonts": [
+    {"name": "Space Grotesk", "role": "display", "vibe": ["technical", "quirky-grotesk", "blueprint"], "concepts": ["C1", "C7"], "source": "google", "license": "OFL", "pair_body": "Instrument Sans", "pair_mono": "JetBrains Mono", "weights": "300–700", "notes": "300 at 74px = Cerebrium feel; 600 uppercase = Heron feel"},
+    {"name": "Instrument Sans", "role": "body|display", "vibe": ["neutral-but-warm", "editorial", "calm"], "concepts": ["C4", "C5", "C6"], "source": "google", "license": "OFL", "pair_body": "—", "pair_mono": "Geist Mono", "weights": "400–700", "notes": "Suisse Intl alternative; regular weight big = Wembi/Butter"},
+    {"name": "Instrument Serif", "role": "display", "vibe": ["editorial", "luxury", "italic-accent"], "concepts": ["C6", "C8", "C4"], "source": "google", "license": "OFL", "pair_body": "Instrument Sans", "pair_mono": "Geist Mono", "weights": "400 + italic", "notes": "one italic word inside a sans headline = DeepBook/Shader emphasis"},
+    {"name": "Bricolage Grotesque", "role": "display", "vibe": ["bold", "friendly", "poster"], "concepts": ["C3"], "source": "google", "license": "OFL", "pair_body": "Manrope", "pair_mono": "JetBrains Mono", "weights": "200–800, optical sizes", "notes": "Robuck/Diatype Rounded alternative at 800 uppercase lh .82"},
+    {"name": "Archivo", "role": "display|body", "vibe": ["swiss", "condensed-available", "grid"], "concepts": ["C2"], "source": "google", "license": "OFL", "pair_body": "Archivo", "pair_mono": "IBM Plex Mono", "weights": "100–900 + width axis", "notes": "width axis 62–125 → condensed giant headlines (Aspen) from one family"},
+    {"name": "Syne", "role": "display", "vibe": ["luxury", "fashion", "wide"], "concepts": ["C6"], "source": "google", "license": "OFL", "pair_body": "Instrument Sans", "pair_mono": "Geist Mono", "weights": "400–800", "notes": "800 wide uppercase = Moto 'BUILT FOR MODERN WEALTH'"},
+    {"name": "Fraunces", "role": "display", "vibe": ["period", "soft-serif", "wonky"], "concepts": ["C8"], "source": "google", "license": "OFL", "pair_body": "Instrument Sans", "pair_mono": "IBM Plex Mono", "weights": "100–900, opsz, WONK axis", "notes": "Shader/retro world; WONK=1 for personality"},
+    {"name": "Barlow Condensed", "role": "display", "vibe": ["sport", "condensed", "loud"], "concepts": ["C1", "C7", "C2"], "source": "google", "license": "OFL", "pair_body": "Instrument Sans", "pair_mono": "JetBrains Mono", "weights": "600–800", "notes": "SportBot's own; keep for sport/data brands"},
+    {"name": "Big Shoulders Display", "role": "display", "vibe": ["industrial", "condensed", "american"], "concepts": ["C1", "C2"], "source": "google", "license": "OFL", "pair_body": "Manrope", "pair_mono": "JetBrains Mono", "weights": "100–900", "notes": "ICOMAT-like industrial headlines"},
+    {"name": "Unbounded", "role": "display", "vibe": ["wide", "techno", "crypto"], "concepts": ["C7"], "source": "google", "license": "OFL", "pair_body": "Instrument Sans", "pair_mono": "JetBrains Mono", "weights": "200–900", "notes": "use sparingly, 1–2 words"},
+    {"name": "Schibsted Grotesk", "role": "body|display", "vibe": ["editorial", "news", "neutral"], "concepts": ["C2", "C5"], "source": "google", "license": "OFL", "pair_body": "—", "pair_mono": "IBM Plex Mono", "weights": "400–900", "notes": "good body for grid concept"},
+    {"name": "Manrope", "role": "body", "vibe": ["rounded-neutral", "friendly"], "concepts": ["C3", "C5"], "source": "google", "license": "OFL", "pair_body": "—", "pair_mono": "JetBrains Mono", "weights": "200–800", "notes": "body under Bricolage"},
+    {"name": "Geist Mono", "role": "mono", "vibe": ["tech", "clean-mono"], "concepts": ["C1", "C4", "C5", "C6"], "source": "google", "license": "OFL", "notes": "the label layer on Heron; also Vercel"},
+    {"name": "JetBrains Mono", "role": "mono", "vibe": ["code", "data"], "concepts": ["C1", "C3", "C7"], "source": "google", "license": "OFL", "notes": "tabular numbers for ledgers"},
+    {"name": "IBM Plex Mono", "role": "mono", "vibe": ["industrial", "swiss-mono"], "concepts": ["C2", "C8"], "source": "google", "license": "OFL", "notes": "Aspen/ICOMAT label feel"},
+    {"name": "Satoshi", "role": "body|display", "vibe": ["modern-grotesk", "startup"], "concepts": ["C5", "C7"], "source": "fontshare", "license": "free commercial", "pair_body": "—", "pair_mono": "JetBrains Mono", "weights": "300–900", "notes": "Suisse/BT Grotesk alternative; self-host in production"},
+    {"name": "General Sans", "role": "body|display", "vibe": ["neutral", "clean"], "concepts": ["C5", "C4"], "source": "fontshare", "license": "free commercial", "notes": "safest Fontshare body"},
+    {"name": "Clash Display", "role": "display", "vibe": ["wide", "fashion", "bold"], "concepts": ["C6", "C3"], "source": "fontshare", "license": "free commercial", "pair_body": "Satoshi", "notes": "Syne-like, more polished"},
+    {"name": "Cabinet Grotesk", "role": "display", "vibe": ["grotesk", "editorial"], "concepts": ["C2", "C1"], "source": "fontshare", "license": "free commercial", "pair_body": "Satoshi", "notes": "Favorit-like"},
+    {"name": "Bespoke Serif", "role": "display", "vibe": ["editorial-serif", "luxury"], "concepts": ["C6", "C8"], "source": "fontshare", "license": "free commercial", "pair_body": "General Sans", "notes": "Tiempos alternative"},
+    {"name": "Chillax", "role": "display", "vibe": ["rounded", "playful"], "concepts": ["C3"], "source": "fontshare", "license": "free commercial", "pair_body": "Satoshi", "notes": "Diatype Rounded alternative"},
+    {"name": "Sentient", "role": "display", "vibe": ["humanist-serif", "warm"], "concepts": ["C8", "C4"], "source": "fontshare", "license": "free commercial", "pair_body": "General Sans"},
+    {"name": "PP Neue Montreal", "role": "display|body", "vibe": ["the-awwwards-grotesk"], "concepts": ["C5", "C6", "C2"], "source": "pangrampangram", "license": "free personal / paid commercial", "notes": "needs licence per client site — flag in product"},
+    {"name": "PP Editorial New", "role": "display", "vibe": ["editorial-serif", "high-fashion"], "concepts": ["C6", "C8"], "source": "pangrampangram", "license": "free personal / paid commercial", "pair_body": "PP Neue Montreal"},
+    {"name": "Uncut Sans", "role": "body|display", "vibe": ["open-grotesk"], "concepts": ["C5", "C2"], "source": "uncut.wtf", "license": "free open", "notes": "self-host"}
+  ],
+  "pairings_tested": [
+    {"concept": "C1", "display": "Space Grotesk 600 uppercase", "body": "Instrument Sans 400", "mono": "JetBrains Mono", "why": "Heron"},
+    {"concept": "C1 (sport)", "display": "Barlow Condensed 800 uppercase", "body": "Instrument Sans 400", "mono": "JetBrains Mono", "why": "SportBot v2"},
+    {"concept": "C2", "display": "Archivo 800, width 70", "body": "Archivo 400", "mono": "IBM Plex Mono", "why": "Aspen"},
+    {"concept": "C3", "display": "Bricolage Grotesque 800 uppercase lh .82", "body": "Manrope 500", "mono": "JetBrains Mono", "why": "Maxima"},
+    {"concept": "C4", "display": "Instrument Sans 400 (big)", "body": "Instrument Sans 400 24px", "mono": "Geist Mono", "why": "Wembi"},
+    {"concept": "C5", "display": "Instrument Sans 500", "body": "Instrument Sans 400", "mono": "Geist Mono", "why": "Butter"},
+    {"concept": "C6", "display": "Syne 700 uppercase", "body": "Instrument Sans 400 grey", "mono": "Geist Mono", "why": "Moto"},
+    {"concept": "C7", "display": "Space Grotesk 300 + 1 accent word", "body": "Instrument Sans 400", "mono": "JetBrains Mono 13px uppercase", "why": "Cerebrium"},
+    {"concept": "C8", "display": "Fraunces 500 WONK", "body": "Instrument Sans 400", "mono": "IBM Plex Mono", "why": "Shader"}
+  ]
+}

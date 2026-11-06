@@ -1,0 +1,8 @@
+# /safe — Cloudflare security audit skill
+- Install: npx skills add https://github.com/cloudflare/security-audit-skill --skill security-audit
+- Run: "Run a full security audit of this codebase with the security-audit skill. Use the quick profile. Don't send any traffic to my live site or to paid APIs. Write the report outside this repository."
+- Read: "Read REPORT.md and NEEDS-VALIDATION.md from the security audit. For each lead, explain in plain words who could abuse it and what they would get. Rank them by real risk to my users and my money, and propose the smallest code change for the top three. Don't change anything yet."
+- Fix 1 (rate limits): "Find every API route that sends email, creates records or calls a paid API without a login. Add a limit per IP address and per email address (for example 10 per IP and 3 per address per 10 minutes) that answers 429 when exceeded, and reject unexpected field types. Tell me which hosting firewall rule would make the limit global."
+- Fix 2 (webhook): "Find my payment webhook. Make signature verification mandatory: if the signing secret is missing, refuse the request instead of skipping the check. Reject events older than 5 minutes, re-read the payment from the provider, and ignore refunded payments before granting access."
+- Fix 3 (CSV): "Find every CSV or spreadsheet export. Any cell that starts with = + - @ or a tab or carriage return must get a leading apostrophe… Add a test with the value =HYPERLINK("x")."
+- Labels: three labels in the report (verified / needs validation / thrown out); a team of agents with one that argues back.

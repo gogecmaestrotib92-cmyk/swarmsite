@@ -1,0 +1,71 @@
+{
+ "logo": {
+  "src": "https://www.sportbotai.com/favicon.svg",
+  "kind": "icon",
+  "type": "image/svg+xml",
+  "data": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdyYWQiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdHlsZT0ic3RvcC1jb2xvcjojMTBCOTgxIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3R5bGU9InN0b3AtY29sb3I6IzA1OTY2OSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgCiAgPCEtLSBCYWNrZ3JvdW5kIC0tPgogIDxyZWN0IHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgcng9IjgiIGZpbGw9IiMwZjE3MmEiLz4KICAKICA8IS0tIFN0eWxpemVkIFMgLS0+CiAgPHBhdGggZD0iTTIwIDcgCiAgICAgICAgICAgQzIwIDcgMTggNyAxNiA3IAogICAgICAgICAgIEMxMiA3IDkgOS41IDkgMTIuNSAKICAgICAgICAgICBDOSAxNS41IDEyIDE3IDE2IDE3IAogICAgICAgICAgIEMxOC41IDE3IDIwIDE3IDIxLjUgMTcKICAgICAgICAgICBDMjMuNSAxNyAyNSAxOSAyNSAyMS41CiAgICAgICAgICAgQzI1IDI0IDIyLjUgMjYuNSAxOC41IDI2LjUKICAgICAgICAgICBDMTYgMjYuNSAxMiAyNi41IDEyIDI2LjUiCiAgICAgICAgZmlsbD0ibm9uZSIgCiAgICAgICAgc3Ryb2tlPSJ1cmwoI2dyYWQpIiAKICAgICAgICBzdHJva2Utd2lkdGg9IjMuNSIgCiAgICAgICAgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIgogICAgICAgIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KICAKICA8IS0tIFNwZWVkIGxpbmUgLS0+CiAgPGxpbmUgeDE9IjciIHkxPSIxMiIgeDI9IjUiIHkyPSIxMiIgc3Ryb2tlPSIjMTBCOTgxIiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBvcGFjaXR5PSIwLjYiLz4KICAKICA8IS0tIEFJIGRvdCAtLT4KICA8Y2lyY2xlIGN4PSIyNiIgY3k9IjEwIiByPSIyIiBmaWxsPSIjMTBCOTgxIi8+Cjwvc3ZnPgo=",
+  "nw": 150,
+  "nh": 150,
+  "note": "header mark is a 34px symbol; the brand name is typeset (wordmark) \u2014 logo = symbol + typeset wordmark"
+ },
+ "wordmark": {
+  "text": "SPORTBOT AI",
+  "font": "Barlow Condensed",
+  "weight": "800",
+  "tt": "uppercase",
+  "badge": "AI"
+ },
+ "palette": {
+  "brandAccent": "#10B981",
+  "fromLogo": [
+   {
+    "c": "#10B981"
+   },
+   {
+    "c": "#059669"
+   },
+   {
+    "c": "#0F172A"
+   }
+  ],
+  "fromButtons": [
+   {
+    "c": "#10b981",
+    "n": 4
+   },
+   {
+    "c": "#7c3aed",
+    "n": 2
+   },
+   {
+    "c": "#0d9488",
+    "n": 1
+   }
+  ]
+ },
+ "fonts": {
+  "faces": [
+   "Barlow Condensed"
+  ],
+  "display": "Barlow Condensed",
+  "body": "system-ui",
+  "isSystemBody": true
+ },
+ "productShots": [
+  {
+   "src": "https://www.sportbotai.com/images/band-stadium-bowl.webp",
+   "w": 1432,
+   "h": 847
+  },
+  {
+   "src": "https://www.sportbotai.com/images/band-roof-gantry.webp",
+   "w": 1432,
+   "h": 1028
+  },
+  {
+   "src": "https://www.sportbotai.com/images/band-upper-tier.webp",
+   "w": 1432,
+   "h": 760
+  }
+ ]
+}

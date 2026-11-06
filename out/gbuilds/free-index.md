@@ -1,0 +1,11 @@
+# gbuilds.si/free — index (scraped 2026-11-06)
+- /legal — 20 checks "don't get sued": audit prompt, writes missing pages, lawyer list
+- /rules — 5 writing rules so Google/ChatGPT quote articles + rewrite prompt
+- /prompt — blog prompt (103K visitors)
+- /safe — Cloudflare free security audit skill: install, run+read prompts, 3 fix prompts
+- /design — 5 add-ons (taste-skill, Vercel guidelines, awesome-design-md, screenshot-to-code, Playwright) + one prompt running all five
+- /found — can bots read your app: 3 tests, 19 checks, 1 prompt
+- /promise — promise interview (one sentence that sells) + Reddit prompt
+- /checklist — pre-launch checklist: 30 checks (first screen, sign-up, payments, data) + master prompt
+- /google — (launch sites list by email)
+- Kit: 22 Claude Code skills, $29; course 6 steps; Goran Huskić, Jerboa Innovations LLC
