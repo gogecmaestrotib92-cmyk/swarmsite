@@ -84,9 +84,10 @@ def direct(slug_dir, model='claude-sonnet-5-5'):
     messages = [{"role": "user", "content": user}]
     doc, last = None, None
     for attempt in range(3):
-        msg = client.messages.create(model=model, max_tokens=8000, system=SYSTEM, messages=messages, tools=[TOOL], tool_choice={"type": "tool", "name": "write_direction"})
+        msg = client.messages.create(model=model, max_tokens=8000, system=SYSTEM, messages=messages, tools=[TOOL], tool_choice={"type": "auto"})
         call = next((b for b in msg.content if getattr(b, 'type', '') == 'tool_use'), None)
-        if call is None: last = 'no tool call'; continue
+        if call is None:
+            last = "no tool call"; messages += [{"role": "assistant", "content": msg.content}, {"role": "user", "content": "You must call write_direction with the document. Do it now."}]; continue
         doc = call.input; errs = validate(doc)
         if not errs: break
         last = '; '.join(errs)
