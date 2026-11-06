@@ -34,6 +34,11 @@ app.get('/jobs/:id', async (req, res) => {
 });
 // Preview page: Supabase public storage serves HTML as text/plain (XSS guard), so we proxy it with the right type.
 const SELF = process.env.PUBLIC_API || (process.env.RAILWAY_PUBLIC_DOMAIN ? 'https://' + process.env.RAILWAY_PUBLIC_DOMAIN : 'http://localhost:' + (process.env.PORT || 8080));
+app.get('/jobs/:id/art/:name', async (req, res) => {
+  if (!/^[0-9a-f-]{36}$/.test(req.params.id) || !ARTS.includes(req.params.name)) return res.status(400).end();
+  const { data, error } = await sb.storage.from(BUCKET).download(`${req.params.id}/art/${req.params.name}`); if (error || !data) return res.status(404).send('no artefact');
+  res.set({ 'content-type': req.params.name.endsWith('.html') ? 'text/plain; charset=utf-8' : 'application/json; charset=utf-8', 'access-control-allow-origin': '*' }); res.send(Buffer.from(await data.arrayBuffer()));
+});
 app.get('/p/:id', async (req, res) => {
   if (!/^[0-9a-f-]{36}$/.test(req.params.id)) return res.status(400).end();
   const { data, error } = await sb.storage.from(BUCKET).download(`${req.params.id}/index.html`);
@@ -96,6 +101,8 @@ function eventsRender(dir) { const html = (() => { try { return fs.readFileSync(
   return ev; }
 function eventsQA(qa) { return String(qa || '').split('\n').filter(Boolean).slice(0, 8).map(l => ({ role: 'QA', text: l.replace(/^\[(high|med|low)\]\s*/, '').slice(0, 70) })); }
 
+const ARTS = ['inventory.json', 'assets.json', 'images.json', 'geometry.json', 'audit.json', 'direction.json', 'mobile.json', 'index.html'];
+async function uploadArtefacts(job, dir) { for (const f of ARTS) { const fp = path.join(dir, f); if (fs.existsSync(fp)) { try { await upload(fp, `${job.id}/art/${f}`, f.endsWith('.html') ? 'text/html' : 'application/json'); } catch (e) { console.warn('art', f, e.message); } } } }
 async function process_(job) {
   const slug = slugOf(job.url); const dir = path.join(OUT, slug); fs.mkdirSync(dir, { recursive: true });
   const t0 = Date.now(); const timed = async (id, fn) => { await setStep(job, id, 'running'); const s = Date.now(); const r = await fn(); await setStep(job, id, 'done', `${Math.round((Date.now() - s) / 1000)}s`); return r; };
@@ -114,7 +121,7 @@ async function process_(job) {
     const direction = JSON.parse(fs.readFileSync(path.join(dir, 'direction.json'), 'utf8'));
     return { ...(job._result || {}), previewUrl, beforeUrl, qa, direction: { kind: direction.kind, concept: direction.concept, voice: direction.voice, brand: direction.brand, beats: direction.beats.map(b => b.type), audit_notes: direction.audit_notes }, seconds: Math.round((Date.now() - t0) / 1000) };
   });
-  await sb.from('jobs').update({ status: 'done', step: 'done', result, slug }).eq('id', job.id);
+  await sb.from('jobs').update({ status: 'done', step: 'done', result, slug }).eq('id', job.id); await uploadArtefacts(job, dir);
 }
 async function loop() {
   while (true) {
@@ -122,7 +129,7 @@ async function loop() {
       const { data: job } = await sb.from('jobs').select('*').eq('status', 'queued').order('created_at').limit(1).maybeSingle();
       if (job) {
         const { data: claimed } = await sb.from('jobs').update({ status: 'running' }).eq('id', job.id).eq('status', 'queued').select('*').maybeSingle();
-        if (claimed) { console.log('job', job.id, job.url); try { await process_(claimed); console.log('done', job.id); } catch (e) { console.error('failed', job.id, e.message); await sb.from('jobs').update({ status: 'failed', error: e.message.slice(0, 2000) }).eq('id', job.id); } }
+        if (claimed) { console.log('job', job.id, job.url); try { await process_(claimed); console.log('done', job.id); } catch (e) { console.error('failed', job.id, e.message); await sb.from('jobs').update({ status: 'failed', error: e.message.slice(0, 2000) }).eq('id', job.id); try { await uploadArtefacts(claimed, path.join(OUT, slugOf(claimed.url))); } catch {} } }
       } else await new Promise(r => setTimeout(r, 2500));
     } catch (e) { console.error('loop', e.message); await new Promise(r => setTimeout(r, 5000)); }
   }
