@@ -21,7 +21,20 @@ def build(slug_dir, video_path=None):
     assets = json.load(open(os.path.join(slug_dir, 'assets.json'))) if os.path.exists(os.path.join(slug_dir, 'assets.json')) else {}
     logo = (assets.get('logo') or {}).get('data') or (open(os.path.join(slug_dir, 'logo.txt')).read() if os.path.exists(os.path.join(slug_dir, 'logo.txt')) else '')
     moves = open(os.path.join(ROOT, 'lib/motion/moves.js')).read()
-    img = lambda k: (images.get(k) or {}).get('data', '')
+    used = set()
+    def pick_best(prefer_hero=True):
+        pool = [i for i in images.values() if i.get('data') and i.get('id', '') not in used] or [i for i in images.values() if i.get('data')]
+        if not pool: return None
+        pool.sort(key=lambda i: (not (i.get('heroGrade') if prefer_hero else True), -(i.get('w', 0) * i.get('h', 0))))
+        return pool[0]
+    def img(k, fallback=True):
+        """Resolve an image id from direction.json; tolerate wrong/missing ids (LLM) by falling back to the best unused photo."""
+        it = images.get(k) if k else None
+        if not it and k:  # director may have used the src or a loose name
+            it = next((i for i in images.values() if k in (i.get('src', ''), i.get('alt', '')) or k == str(i.get('id'))), None)
+        if not it and fallback: it = pick_best()
+        if not it: return ''
+        used.add(it.get('id', '')); return it.get('data', '')
     voice = d.get('voice', 'serif'); b = d['brand']; mode = d.get('mode', 'light'); concept = d.get('concept', 'C8')
     base_hex = b.get('accent') or b.get('ink') or '#0F2A14'
     pal = palette(base_hex, concept, mode)
@@ -42,15 +55,18 @@ def build(slug_dir, video_path=None):
             return f'<section class="sec quote" id="{e(i)}"><div class="wrap"><span class="lab">{e(bt.get("label"))}</span><h2 class="big" data-move="scale-settle">{e(bt.get("big"))}</h2><p class="body" data-move="word-blur-in">{e(bt.get("body"))}</p>{("<p class=\"who lab\">" + e(bt["who"]) + "</p>") if bt.get("who") else ""}</div></section>'
         if t == 'photo':
             cap = bt.get('cap') or ['', '']
-            return f'<section class="sec tight" id="{e(i)}"><div class="wrap"><div class="gh"><div><span class="lab">{e(bt.get("label"))}</span><h2 class="h2" style="margin-top:16px" data-move="masked-line-reveal">{e(bt.get("h2"))}</h2></div><p class="lede">{e(bt.get("lede"))}</p></div><div class="garden one"><div><div class="bigimg" data-move="clip-reveal"><img src="{img(bt.get("image"))}" alt=""></div><div class="cap"><span class="lab">{e(cap[0])}</span><span class="lab">{e(cap[1] if len(cap) > 1 else "")}</span></div></div></div></div></section>'
+            src = img(bt.get('image'))
+            return f'<section class="sec tight" id="{e(i)}"><div class="wrap"><div class="gh"><div><span class="lab">{e(bt.get("label"))}</span><h2 class="h2" style="margin-top:16px" data-move="masked-line-reveal">{e(bt.get("h2"))}</h2></div><p class="lede">{e(bt.get("lede"))}</p></div><div class="garden one"><div>{('<div class="bigimg" data-move="clip-reveal"><img src="' + src + '" alt=""></div>') if src else ''}<div class="cap"><span class="lab">{e(cap[0])}</span><span class="lab">{e(cap[1] if len(cap) > 1 else "")}</span></div></div></div></div></section>'
         if t == 'ledger':
             items = ''.join(f'<li><span class="d">{e(n)}</span><span class="dots"></span><span class="p">{e(p)}</span></li>' for n, p in bt.get('items', []))
-            photo = f'<div class="photo" data-move="clip-reveal"><img src="{img(bt["image"])}" alt=""></div>' if bt.get('image') and img(bt.get('image')) else ''
+            src = img(bt.get('image'), fallback=False) if bt.get('image') else ''
+            photo = f'<div class="photo" data-move="clip-reveal"><img src="{src}" alt=""></div>' if src else ''
             ctas = (f'<a class="btn solid" href="{e(bt.get("cta_href") or "#")}">{e(bt["cta"])} <span class="ar">→</span></a>' if bt.get('cta') else '') + (f'<a class="btn" href="{e(bt.get("cta2_href") or "#")}">{e(bt["cta2"])}</a>' if bt.get('cta2') else '')
             return f'<section class="sec" id="{e(i)}"><div class="wrap"><div class="menu"><div><span class="lab">{e(bt.get("label"))}</span><h2 class="h2" style="margin-top:16px" data-move="masked-line-reveal">{e(bt.get("h2"))}</h2><p class="lede" style="margin-top:22px">{e(bt.get("lede"))}</p>{photo}</div><div><ul class="ledger" data-move="stagger-in">{items}</ul><div style="margin-top:28px;display:flex;gap:14px;flex-wrap:wrap">{ctas}</div></div></div></div></section>'
         if t == 'facts':
             facts = ''.join(f'<div class="f"><b data-move="number-scramble">{e(n)}</b><span class="lab light">{e(l)}</span></div>' for n, l in bt.get('facts', []))
-            return f'<div class="band" id="{e(i)}" data-move="parallax" data-parallax="8"><img src="{img(bt.get("image"))}" alt=""><div class="wrap">{facts}</div></div>'
+            src = img(bt.get('image'))
+            return f'<div class="band{"" if src else " nophoto"}" id="{e(i)}" data-move="parallax" data-parallax="8">{("<img src=\"" + src + "\" alt=\"\">") if src else ""}<div class="wrap">{facts}</div></div>'
         if t == 'cells':
             cells = ''.join(f'<div><span class="lab">{e(a)}</span><b class="num" data-move="number-scramble">{e(n)}</b><span class="lab">{e(s)}</span></div>' for a, n, s in bt.get('cells', []))
             return f'<section class="sec" id="{e(i)}"><div class="wrap"><div class="gh"><div><span class="lab">{e(bt.get("label"))}</span><h2 class="h2" style="margin-top:16px" data-move="masked-line-reveal">{e(bt.get("h2"))}</h2></div><p class="lede">{e(bt.get("lede"))}</p></div><div class="cells" data-move="stagger-in">{cells}</div></div></section>'
@@ -60,7 +76,8 @@ def build(slug_dir, video_path=None):
         if t == 'form':
             fields = ''.join(f'<label><span class="lab light">{e(f)}</span><input placeholder="{e(f)}"></label>' for f in bt.get('fields', []))
             alt = ''.join(f'<span>{e(a)}</span>' for a in bt.get('alt', []))
-            photo = f'<div class="photo" data-move="clip-reveal"><img src="{img(bt["image"])}" alt=""></div>' if bt.get('image') and img(bt.get('image')) else '<div></div>'
+            src = img(bt.get('image'), fallback=False) if bt.get('image') else ''
+            photo = f'<div class="photo" data-move="clip-reveal"><img src="{src}" alt=""></div>' if src else '<div></div>'
             return f'<section class="sec res" id="{e(i)}"><div class="wrap"><div class="grid">{photo}<div><span class="lab light">{e(bt.get("label"))}</span><h2 class="h2" style="margin-top:16px" data-move="masked-line-reveal">{e(bt.get("h2"))}</h2><form class="form" onsubmit="return false">{fields}<div class="full"><a class="btn light solid" href="#">{e(bt.get("cta"))} <span class="ar">→</span></a></div></form><div class="alt">{alt}</div></div></div></div></section>'
         if t == 'faq':
             items = ''.join(f'<details{" open" if n == 0 else ""}><summary>{e(q)}</summary><p>{e(a)}</p></details>' for n, (q, a) in enumerate(bt.get('items', [])))
@@ -72,7 +89,9 @@ def build(slug_dir, video_path=None):
     h1 = e(h['h1']).replace('&lt;em&gt;', '<em class="it">').replace('&lt;/em&gt;', '</em>')
     links = ''.join(f'<a href="{e(u)}">{e(l)}</a>' for u, l in nav.get('links', [])[:4])
     cols = ''.join(f'<div><h5>{e(t)}</h5><ul>{"".join("<li>" + e(x) + "</li>" for x in items)}</ul></div>' for t, items in en.get('cols', []))
-    mark = f'<span class="mark" style="-webkit-mask-image:url(\'{logo}\');mask-image:url(\'{logo}\')"></span>' if logo else f'<span class="wordmark">{e(b["name"])}</span>'
+    lg = assets.get('logo') or {}; lr = (lg.get('w') or 0) / (lg.get('h') or 1) if lg.get('w') and lg.get('h') else 0
+    lh = 44 if lr >= 1.2 else 62; lw = min(200, max(44, round(lh * lr))) if lr else (44 if not lr else 160)
+    mark = f'<span class="mark" style="width:{lw}px;height:{lh}px;-webkit-mask-image:url(\'{logo}\');mask-image:url(\'{logo}\')"></span>' if logo else f'<span class="wordmark">{e(b["name"])}</span>'
     beats = '\n'.join(beat_html(bt) for bt in d['beats'])
     worlds_ui = ''.join(f'<label><input type="radio" name="bw" value="{n}"{" checked" if k == 0 else ""}><i style="background:{palette(hx, concept, mode)["tokens"]["ink"]};outline-color:{palette(hx, concept, mode)["tokens"]["paper"]}"></i><span>{"Njihove" if n == "brand" else n}</span></label>' for k, (n, hx) in enumerate(worlds)) + '<label><input type="radio" name="bw" value="ink"><i style="background:#F4EFE3;outline-color:#111"></i><span>Tamno</span></label>'
     fonts_ui = f'<label><input type="radio" name="bf" value="brand" checked><span>{e(display)}</span></label>' + (''.join(f'<label><input type="radio" name="bf" value="{v}"><span>{l}</span></label>' for v, l in (('fraunces', 'Fraunces'), ('instrument', 'Instrument Serif'))) if serif else ''.join(f'<label><input type="radio" name="bf" value="{v}"><span>{l}</span></label>' for v, l in (('bricolage', 'Bricolage'), ('instrument-sans', 'Instrument Sans'))))
@@ -104,7 +123,7 @@ h1,h2,h3{{font-family:var(--serif);font-weight:{'400' if serif else '500'};line-
 .nav .links{{display:flex;gap:34px;font-family:{'var(--serif)' if serif else 'var(--sans)'};font-size:{'17px' if serif else '15px'};letter-spacing:.04em}}
 .nav .links a{{position:relative;min-height:44px;display:inline-flex;align-items:center}}.nav .links a::after{{content:"";position:absolute;left:0;right:100%;bottom:6px;border-bottom:1px solid currentColor;transition:right .4s cubic-bezier(.2,.8,.2,1)}}.nav .links a:hover::after{{right:0}}
 .nav.solid{{background:color-mix(in srgb,var(--paper) 78%,transparent);backdrop-filter:blur(16px) saturate(180%);color:var(--ink);padding:14px 0;box-shadow:0 1px 0 var(--line)}}
-.nav.solid .mark{{width:34px;height:48px}}.nav.solid .btn{{color:var(--ink);border-color:var(--ink)}}
+.nav.solid .mark{{transform:scale(.8);transform-origin:left center}}.nav.solid .btn{{color:var(--ink);border-color:var(--ink)}}
 @media(prefers-reduced-transparency:reduce){{.nav.solid{{background:var(--paper);backdrop-filter:none}}}}
 .hero{{position:relative;min-height:100svh;display:grid;align-content:end;color:var(--on-photo);overflow:hidden}}
 .hero .media{{position:absolute;inset:0;z-index:0;background:var(--ink)}}.hero .media video,.hero .media img{{width:100%;height:100%;object-fit:cover;object-position:center 30%;transform:scale(1.04)}}
@@ -121,7 +140,7 @@ h1,h2,h3{{font-family:var(--serif);font-weight:{'400' if serif else '500'};line-
 .ledger{{list-style:none}}.ledger li{{display:flex;align-items:baseline;gap:10px;padding:16px 0;border-bottom:1px solid var(--line);font-family:var(--serif);font-size:clamp(19px,1.5vw,24px)}}
 .ledger .dots{{flex:1;border-bottom:1px dotted var(--line);transform:translateY(-6px)}}.ledger .p{{font-variant-numeric:tabular-nums;white-space:nowrap}}
 .menu .photo{{aspect-ratio:1;overflow:hidden;margin-top:12px}}.menu .photo img,.res .photo img{{width:100%;height:100%;object-fit:cover}}
-.band{{position:relative;min-height:78vh;display:grid;align-items:end;overflow:hidden;color:var(--on-photo)}}.band img{{position:absolute;inset:0;width:100%;height:112%;object-fit:cover}}
+.band{{position:relative;min-height:78vh;display:grid;align-items:end;overflow:hidden;color:var(--on-photo)}}.band.nophoto{{background:var(--ink);min-height:48vh}}.band img{{position:absolute;inset:0;width:100%;height:112%;object-fit:cover}}
 .band::after{{content:"";position:absolute;inset:0;background:linear-gradient(180deg,color-mix(in srgb,var(--ink) 5%,transparent),color-mix(in srgb,var(--ink) 85%,transparent))}}
 .band .wrap{{position:relative;z-index:1;padding-bottom:clamp(40px,6vw,72px);display:grid;grid-template-columns:repeat(3,1fr);gap:24px;align-items:end}}
 .band .f b{{display:block;font-family:var(--serif);font-size:clamp(48px,6vw,104px);line-height:.9;letter-spacing:-.02em;margin-bottom:10px;font-variant-numeric:tabular-nums}}
