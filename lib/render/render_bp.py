@@ -97,7 +97,7 @@ def build(slug_dir, bp_id, out_path=None):
     lists = [bt for bt in beats if bt['type'] in ('features', 'cells', 'steps', 'ledger', 'facts', 'faq')]
     photos = [bt for bt in beats if bt['type'] == 'photo']
     forms = [bt for bt in beats if bt['type'] == 'form']
-    form_id = forms[0]['id'] if forms else (beats[-1]['id'] if beats else 'end')
+    form_id = forms[0]['id'] if forms else 'contact'
     cta_html = lambda light=False: f'<a class="btn{" light" if light else ""}" href="#{e(form_id)}">{e(h.get("cta") or d.get("nav", {}).get("cta") or "Contact")} <span class="ar">→</span></a>'
     lab = lambda t, light=False: f'<span class="lab{" light" if light else ""}">{e(t)}</span>' if t else ''
 
@@ -155,6 +155,10 @@ def build(slug_dir, bp_id, out_path=None):
 
     def cards(sec, bt):
         ms = sec_media(sec); n = max(2, min(4, len(ms) or 3)); ar = (ms[0]['ar'] if ms else 0.82)
+        k = len(bt.get('features') or bt.get('cells') or bt.get('steps') or bt.get('facts') or bt.get('items') or [])
+        if k in (3, 6, 9): n = 3
+        elif k in (2, 4) and n > 2: n = 2 if k == 2 else 4
+        elif k == 5: n = 3
         items = []
         if bt['type'] == 'features': items = [(f.get('title'), f.get('body'), True) for f in bt.get('features', [])]
         elif bt['type'] == 'cells': items = [(c[0], c[2] if len(c) > 2 else '', c[1]) for c in bt.get('cells', [])]
@@ -212,7 +216,8 @@ def build(slug_dir, bp_id, out_path=None):
             while list_i < len(lists) and lists[list_i]['id'] in used_beats: list_i += 1
             if list_i >= len(lists): continue
             bt = lists[list_i]; list_i += 1; used_beats.add(bt['id'])
-            if r.startswith(('two-audiences', 'double')) or (bt['type'] == 'steps' and r.startswith('feature')): out.append(two_col(sec, bt))
+            if bt['type'] == 'ledger': out.append(ledger(sec, bt))
+            elif (r.startswith(('two-audiences', 'double')) and bt['type'] in ('steps', 'features', 'cells')) or (bt['type'] == 'steps' and r.startswith('feature')): out.append(two_col(sec, bt))
             else: out.append(cards(sec, bt))
         elif r.startswith(('cta', 'band-', 'security', 'itinerary', 'giant-title')) and not cta_done:
             if forms: out.append(cta(sec, forms[0])); used_beats.add(forms[0]['id']); cta_done = True
@@ -255,7 +260,7 @@ img,video{{display:block;max-width:100%}}a{{color:inherit;text-decoration:none}}
 .nav{{position:fixed;inset:0 0 auto 0;z-index:50;padding:18px 0;transition:background var(--slow),color var(--slow)}}.nav .wrap{{display:flex;align-items:center;justify-content:space-between;gap:24px}}.nav .links{{display:flex;gap:28px;font-size:15px}}.nav.solid{{background:color-mix(in srgb,var(--paper) 86%,transparent);backdrop-filter:blur(14px)}}.nav .logo{{height:{min(56, max(28, (bp.get('nav') or {}).get('h', 56) - 20))}px;width:auto}}.nav .wordmark{{font-family:var(--display);font-size:22px}}
 .hero{{position:relative;display:grid;align-content:end;overflow:hidden;padding-top:120px}}.hero .media{{position:absolute;inset:0;z-index:0;background:var(--ink)}}.hero .media img,.hero .media video{{width:100%;height:100%;object-fit:cover}}.hero.has-media .media::after{{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.35),rgba(0,0,0,.08) 40%,rgba(0,0,0,.55))}}
 .hero .hero-in{{position:relative;z-index:1;padding-bottom:clamp(40px,6vw,80px)}}.hero.has-media{{color:var(--on-photo)}}.hero .cat{{display:flex;gap:26px;flex-wrap:wrap;margin-bottom:22px}}.hero .al-center{{text-align:center;justify-items:center;display:grid}}.hero .place-start{{align-self:start;padding-top:40px}}.hero .ctas{{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px}}
-.hero.shot{{align-content:start;padding-top:150px}}.shotwrap{{padding-top:clamp(36px,5vw,64px);padding-bottom:0}}.shotframe{{border-radius:max(12px,var(--radius)) max(12px,var(--radius)) 0 0;overflow:hidden;border:1px solid var(--line);border-bottom:0;box-shadow:0 30px 80px color-mix(in srgb,var(--ink) 14%,transparent)}}.shotframe img{{width:100%;max-height:64vh;object-fit:cover;object-position:top}}
+.hero.shot{{align-content:start;padding-top:140px;min-height:auto!important}}.hero.shot .hero-in{{padding-bottom:0}}.shotwrap{{padding-top:clamp(28px,3.5vw,44px);padding-bottom:0}}.shotframe{{border-radius:max(12px,var(--radius)) max(12px,var(--radius)) 0 0;overflow:hidden;border:1px solid var(--line);border-bottom:0;box-shadow:0 30px 80px color-mix(in srgb,var(--ink) 14%,transparent)}}.shotframe img{{width:100%;max-height:64vh;object-fit:cover;object-position:top}}
 .sec{{padding:clamp(64px,9vw,140px) 0;display:grid;align-content:center}}.band-dark{{background:var(--band-paper);color:var(--band-ink)}}.band-dark .lab{{color:color-mix(in srgb,var(--band-ink) 62%,transparent)}}.band-dark .btn{{background:var(--band-ink);color:var(--band-paper)}}.band-alt{{background:color-mix(in srgb,var(--ink) 6%,var(--paper))}}
 .statement .who{{margin-top:22px}}.statement .wrap.center{{text-align:center;display:grid;justify-items:center}}
 .photos .pair{{display:flex;gap:var(--gutter);align-items:flex-start}}.photos figure{{overflow:hidden;border-radius:var(--radius)}}.photos figure img,.photo figure img{{width:100%;height:100%;object-fit:cover}}.photo figure{{position:relative;margin:0}}.photo.bleed{{padding:0}}.photo .over{{position:absolute;inset:auto 0 0 0;padding-bottom:clamp(28px,4vw,56px);color:var(--on-photo)}}.h2.light{{color:var(--on-photo)}}.cap{{margin-top:14px;max-width:var(--body-max);color:var(--muted)}}.caps{{display:flex;gap:24px;align-items:baseline;flex-wrap:wrap;padding-top:14px}}
