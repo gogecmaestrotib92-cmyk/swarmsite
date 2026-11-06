@@ -91,15 +91,20 @@ def build(slug_dir, video_path=None):
     links = ''.join(f'<a href="{e(u)}">{e(l)}</a>' for u, l in nav.get('links', [])[:4])
     cols = ''.join(f'<div><h5>{e(t)}</h5><ul>{"".join("<li>" + e(x) + "</li>" for x in items)}</ul></div>' for t, items in en.get('cols', []))
     lg = assets.get('logo') or {}; lr = (lg.get('w') or 0) / (lg.get('h') or 1) if lg.get('w') and lg.get('h') else 0
-    if not lr and logo.startswith('data:image/'):
+    maskable = logo.startswith('data:image/svg')  # SVG: fine as a mask. Raster: only if it has real transparency.
+    if logo.startswith('data:image/') and not logo.startswith('data:image/svg'):
         try:
             import base64, io
             from PIL import Image
-            raw = base64.b64decode(logo.split(',', 1)[1]); im = Image.open(io.BytesIO(raw)); lr = im.width / max(1, im.height)
+            raw = base64.b64decode(logo.split(',', 1)[1]); im = Image.open(io.BytesIO(raw)); lr = lr or im.width / max(1, im.height)
+            if 'A' in im.getbands():
+                a = im.getchannel('A'); hist = a.histogram(); opaque = sum(hist[128:]) / max(1, sum(hist)); maskable = 0.03 < opaque < 0.85
         except Exception:
-            lr = 0
+            maskable = False
     lh = 44 if lr >= 1.2 else 62; lw = min(200, max(44, round(lh * lr))) if lr else (44 if not lr else 160)
-    mark = f'<span class="mark" style="width:{lw}px;height:{lh}px;-webkit-mask-image:url(\'{logo}\');mask-image:url(\'{logo}\')"></span>' if logo else f'<span class="wordmark">{e(b["name"])}</span>'
+    if logo and maskable: mark = f'<span class="mark" style="width:{lw}px;height:{lh}px;-webkit-mask-image:url(\'{logo}\');mask-image:url(\'{logo}\')"></span>'
+    elif logo: mark = f'<img class="logo-img" src="{logo}" alt="{e(b["name"])}" style="height:{lh}px;width:auto;max-width:200px;display:block">'
+    else: mark = f'<span class="wordmark">{e(b["name"])}</span>'
     beats = '\n'.join(beat_html(bt) for bt in d['beats'])
     worlds_ui = ''.join(f'<label><input type="radio" name="bw" value="{n}"{" checked" if k == 0 else ""}><i style="background:{palette(hx, concept, mode)["tokens"]["ink"]};outline-color:{palette(hx, concept, mode)["tokens"]["paper"]}"></i><span>{"Njihove" if n == "brand" else n}</span></label>' for k, (n, hx) in enumerate(worlds)) + '<label><input type="radio" name="bw" value="ink"><i style="background:#F4EFE3;outline-color:#111"></i><span>Tamno</span></label>'
     fonts_ui = f'<label><input type="radio" name="bf" value="brand" checked><span>{e(display)}</span></label>' + (''.join(f'<label><input type="radio" name="bf" value="{v}"><span>{l}</span></label>' for v, l in (('fraunces', 'Fraunces'), ('instrument', 'Instrument Serif'))) if serif else ''.join(f'<label><input type="radio" name="bf" value="{v}"><span>{l}</span></label>' for v, l in (('bricolage', 'Bricolage'), ('instrument-sans', 'Instrument Sans'))))
