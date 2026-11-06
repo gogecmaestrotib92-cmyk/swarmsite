@@ -27,10 +27,8 @@ a{color:inherit;text-decoration:none}
 .frame img.in{opacity:.55}
 .frame .skel{position:absolute;inset:0;background:linear-gradient(100deg,#1a1a1a 20%,#222 40%,#1a1a1a 60%);background-size:200% 100%;animation:sh 1.6s linear infinite}
 @keyframes sh{to{background-position:-200% 0}}
-.frame .hud{position:absolute;left:0;right:0;bottom:0;padding:18px 22px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.75));color:#fff;display:flex;justify-content:space-between;align-items:end;gap:16px;text-align:left}
+.frame .hud{z-index:6;position:absolute;left:0;right:0;bottom:0;padding:18px 22px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.75));color:#fff;display:flex;justify-content:space-between;align-items:end;gap:16px;text-align:left}
 .frame .hud .lab{color:rgba(255,255,255,.7)}
-.cur{position:absolute;width:14px;height:14px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 8px rgba(0,0,0,.4);transition:left 1.2s cubic-bezier(.2,.8,.2,1),top 1.2s cubic-bezier(.2,.8,.2,1)}
-.cur::after{content:attr(data-n);position:absolute;left:18px;top:-6px;transform:rotate(45deg);font:500 10px var(--sans);color:#fff;background:rgba(0,0,0,.6);padding:2px 6px;border-radius:6px;white-space:nowrap}
 .steps{width:min(720px,94vw);display:grid;gap:0;text-align:left;border:1px solid var(--line);border-radius:18px;background:#fff;overflow:hidden}
 .step{display:grid;grid-template-columns:22px 1fr auto;gap:14px;align-items:center;padding:13px 18px;border-top:1px solid var(--line);font-size:15px}
 .step:first-child{border-top:0}.step .dot{width:10px;height:10px;border-radius:50%;background:#D8D8D5;justify-self:center}
@@ -70,21 +68,21 @@ a{color:inherit;text-decoration:none}
 </div>
 
 <script src="/config.js"></script>
+<script src="/js/agents.js"></script>
 <script>
 const API = window.SWARMSITE_API; const qs = new URLSearchParams(location.search);
 const $ = s => document.querySelector(s);
 const NAMES = ['Audit','Concept','Copy','Type','Photos','Motion','QA','Ending'];
-let cursors = [];
-function spawnCursors(){ const f = $('#frame'); NAMES.forEach((n,i)=>{ const c=document.createElement('i'); c.className='cur'; c.dataset.n=n; c.style.background=['#10B981','#E63946','#1D5CFF','#FDCB40','#A8FFCB','#FF2E8A','#F4F4F4','#B89B62'][i]; c.style.left=(10+Math.random()*80)+'%'; c.style.top=(10+Math.random()*70)+'%'; f.appendChild(c); cursors.push(c); }); setInterval(()=>cursors.forEach(c=>{ c.style.left=(6+Math.random()*86)+'%'; c.style.top=(8+Math.random()*74)+'%'; }), 1500); }
+let sw=null;
 function renderSteps(job){ const el=$('#steps'); el.innerHTML=job.steps.map(s=>`<div class="step ${s.status}"><span class="dot"></span><span>${s.label}</span><span class="note">${s.status==='done'?(s.note||'done'):s.status==='running'?'working…':''}</span></div>`).join('');
-  const done=job.steps.filter(s=>s.status==='done').length; $('#hudR').textContent=`${done} / ${job.steps.length}`; const cur=job.steps.find(s=>s.status==='running'); $('#hudL').textContent=cur?cur.label.toLowerCase():(job.status==='done'?'done':'queued'); $('#h').textContent=cur?cur.label.split(':')[0]+'…':(job.status==='queued'?'In the queue…':'Reading your site…');
+  const done=job.steps.filter(s=>s.status==='done').length; $('#hudR').textContent=`${done} / ${job.steps.length}`; const cur=job.steps.find(s=>s.status==='running'); if(sw) sw.phase(cur?cur.id:(job.status==='done'?'done':'queued')); $('#hudL').textContent=cur?cur.label.toLowerCase():(job.status==='done'?'done':'queued'); $('#h').textContent=cur?cur.label.split(':')[0]+'…':(job.status==='queued'?'In the queue…':'Reading your site…');
   if(job.result?.beforeUrl && !$('#before').src){ $('#before').src=job.result.beforeUrl; $('#before').onload=()=>{ $('#before').classList.add('in'); $('#skel').remove(); }; } }
 function showResult(job){ const r=job.result; const pv=`${window.SWARMSITE_API}/p/${job.id}`; $('#preview').src=pv; $('#openNew').href=pv; $('#meta').textContent=`${r.direction?.kind||''} · concept ${r.direction?.concept||''} · ${r.direction?.beats?.length||''} beats · ${r.seconds||''}s`; $('#result').classList.add('on');
   document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{ document.querySelectorAll('.seg button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); const f=$('#preview'); if(b.dataset.v==='mobile'){ f.style.width='390px'; f.style.margin='0 auto'; f.style.borderLeft=f.style.borderRight='1px solid #ddd'; } else { f.style.width='100%'; f.style.border='0'; } }); }
 async function poll(id){ try{ const r=await fetch(`${API}/jobs/${id}`); if(!r.ok) throw new Error('job not found'); const job=await r.json(); renderSteps(job);
-    if(job.status==='done'){ showResult(job); return; } if(job.status==='failed'){ $('#err').textContent='Something broke: '+(job.error||'unknown')+'. Try again or send us the URL.'; $('#h').textContent='That one didn’t go through.'; return; }
+    if(job.status==='done'){ if(sw) sw.stop(); showResult(job); return; } if(job.status==='failed'){ $('#err').textContent='Something broke: '+(job.error||'unknown')+'. Try again or send us the URL.'; $('#h').textContent='That one didn’t go through.'; return; }
   }catch(e){ $('#err').textContent=e.message; } setTimeout(()=>poll(id), 3000); }
-async function start(){ let id=qs.get('job'); const url=qs.get('url'); $('#urlLab').textContent=url?('https://'+url.replace(/^https?:\/\//,'')):''; spawnCursors();
+async function start(){ let id=qs.get('job'); const url=qs.get('url'); $('#urlLab').textContent=url?('https://'+url.replace(/^https?:\/\//,'')):''; sw=Agents.mount($('#frame'),{count:7,phase:'queued'});
   if(!id && url){ const r=await fetch(`${API}/jobs`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url})}); const j=await r.json(); if(!r.ok){ $('#err').textContent=j.error||'could not start'; return; } id=j.id; history.replaceState(null,'',`/app?url=${encodeURIComponent(url)}&job=${id}`); }
   if(!id){ location.href='/'; return; } poll(id); }
 start();
