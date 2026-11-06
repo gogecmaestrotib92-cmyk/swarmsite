@@ -100,7 +100,7 @@
  },
  "motion": {
   "smooth": true,
-  "ease": "cubic-bezier(0.5, 1, 0.89, 1)",
+  "ease": "cubic-bezier(0.76, 0, 0.24, 1)",
   "fast": 0.3,
   "slow": 1.0,
   "cursor": true,

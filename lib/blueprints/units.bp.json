@@ -1,0 +1,297 @@
+{
+ "id": "units",
+ "source": "https://units.gr/en/homepage/",
+ "class": "place",
+ "archetype": "coliving-pastel-cards",
+ "screens": 11,
+ "grid": {
+  "frame": 167,
+  "gutter": 24,
+  "container": 1252,
+  "col": null
+ },
+ "type": {
+  "display": {
+   "fam": "Bunch",
+   "px": 33,
+   "w": 850,
+   "ls": 0,
+   "lh": 1.05,
+   "tt": null,
+   "it": false,
+   "al": null
+  },
+  "h2": {
+   "fam": "Bunch",
+   "px": 33,
+   "w": 850,
+   "ls": 0,
+   "lh": 1.05,
+   "tt": null,
+   "it": false,
+   "al": null
+  },
+  "h3": null,
+  "body": {
+   "fam": "Aeonik Pro",
+   "px": 15,
+   "lh": 1.4,
+   "maxw": 456
+  },
+  "label": null
+ },
+ "colour": {
+  "paper": "#f4e9e1",
+  "ink": "#000000",
+  "accent": "#0072e3",
+  "mode": "light",
+  "bands": [
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "paper"
+  ],
+  "alt": "#eef1f5"
+ },
+ "media": {
+  "radius": 0,
+  "aspects": [
+   0.67,
+   0.81,
+   0.89,
+   0.95,
+   1.02,
+   1.18,
+   1.53,
+   1.77
+  ],
+  "bleed": false,
+  "video_hero": false
+ },
+ "button": {
+  "h": 48,
+  "pad": "15px 30px",
+  "radius": 37,
+  "px": 16,
+  "w": 500,
+  "tt": null,
+  "filled": true
+ },
+ "motion": {
+  "smooth": true,
+  "ease": "cubic-bezier(0.19, 1, 0.22, 1)",
+  "fast": 0.4,
+  "slow": 1.8,
+  "cursor": false,
+  "idea": "page background colour crossfades per section (1.8s), pastel bands, pill buttons, pinned 5-screen feature list with 405px photo cards sliding"
+ },
+ "nav": {
+  "pos": "fixed",
+  "h": 60,
+  "links": 9
+ },
+ "sections": [
+  {
+   "role": "hero-photo-inset",
+   "screens": 0.93,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 33,
+    "w": 850,
+    "tt": null,
+    "it": false,
+    "al": "start",
+    "lh": 1.05,
+    "x": null,
+    "y": null,
+    "wf": null,
+    "ls": 0
+   },
+   "media": [
+    {
+     "ar": 1.77,
+     "wf": 0.869,
+     "xf": 0.116,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "inset 16:9 photo card (167 frame), headline + pill over it",
+   "words": 20
+  },
+  {
+   "role": "intro-map",
+   "screens": 0.63,
+   "pad": null,
+   "band": null,
+   "body": {
+    "px": 15,
+    "lh": 1.2,
+    "maxw": 446
+   },
+   "media": [
+    {
+     "ar": 1.53,
+     "wf": 0.502,
+     "xf": 0.483,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "cols": [
+    0.139,
+    0.486
+   ],
+   "note": "15px paragraph 446 wide left, map 723x473 right, small coral pill tags"
+  },
+  {
+   "role": "pinned-cards",
+   "screens": 4.98,
+   "pad": null,
+   "band": null,
+   "media": [
+    {
+     "ar": 0.89,
+     "wf": 0.281,
+     "xf": 0.428,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 0.95,
+     "wf": 0.281,
+     "xf": 0.726,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 1.02,
+     "wf": 0.281,
+     "xf": 1.022,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "5-screen pinned: list of amenities left, 405px photo cards slide in from the right",
+   "words": 152
+  },
+  {
+   "role": "text-icons-cta",
+   "screens": 1.11,
+   "pad": null,
+   "band": null,
+   "body": {
+    "px": 15,
+    "lh": 1.4,
+    "maxw": 456
+   },
+   "cols": [
+    0.139,
+    0.486
+   ],
+   "words": 68
+  },
+  {
+   "role": "photo-text-photo",
+   "screens": 0.8,
+   "pad": null,
+   "band": null,
+   "body": {
+    "px": 15,
+    "lh": 1.4,
+    "maxw": 342
+   },
+   "media": [
+    {
+     "ar": 0.67,
+     "wf": 0.279,
+     "xf": 0.116,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 0.67,
+     "wf": 0.279,
+     "xf": 0.706,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "cols": [
+    0.417,
+    0.708
+   ],
+   "note": "portrait photo | text column 342 | portrait photo"
+  },
+  {
+   "role": "cards-3up-contained",
+   "screens": 0.68,
+   "pad": null,
+   "band": null,
+   "media": [
+    {
+     "ar": 1.18,
+     "wf": 0.237,
+     "xf": 0.137,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 1.18,
+     "wf": 0.237,
+     "xf": 0.432,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 1.18,
+     "wf": 0.237,
+     "xf": 0.727,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "three 342x289 illustration cards with text",
+   "words": 70
+  },
+  {
+   "role": "photo-marquee",
+   "screens": 0.55,
+   "pad": null,
+   "band": null,
+   "media": [
+    {
+     "ar": 0.81,
+     "wf": 0.186,
+     "xf": 0.0,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "marquee of 268x330 photos, big pill"
+  },
+  {
+   "role": "footer",
+   "screens": 0.83,
+   "pad": null,
+   "band": null,
+   "words": 24
+  }
+ ]
+}

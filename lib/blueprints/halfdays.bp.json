@@ -1,0 +1,303 @@
+{
+ "id": "halfdays",
+ "source": "https://www.halfdays.com/",
+ "class": "product",
+ "archetype": "apparel-shop-grid",
+ "screens": 4.9,
+ "grid": {
+  "frame": 20,
+  "gutter": 12,
+  "container": 1385,
+  "col": null
+ },
+ "type": {
+  "display": {
+   "fam": "SuisseIntl",
+   "px": 44,
+   "w": 500,
+   "ls": -0.045,
+   "lh": 0.9,
+   "tt": null,
+   "it": false,
+   "al": "left"
+  },
+  "h2": {
+   "fam": "SuisseIntl",
+   "px": 44,
+   "w": 500,
+   "ls": -0.045,
+   "lh": 0.9,
+   "tt": null,
+   "it": false,
+   "al": "left"
+  },
+  "h3": {
+   "fam": "SuisseIntl",
+   "px": 26,
+   "w": 500,
+   "ls": 0.0,
+   "lh": 1.0,
+   "tt": "uppercase",
+   "it": false,
+   "al": null
+  },
+  "body": {
+   "fam": "SuisseIntl",
+   "px": 16,
+   "lh": 1.35,
+   "maxw": 454
+  },
+  "label": {
+   "fam": "SuisseIntl",
+   "px": 13,
+   "ls": 0.077,
+   "tt": "uppercase"
+  }
+ },
+ "colour": {
+  "paper": "#ffffff",
+  "ink": "#121212",
+  "accent": null,
+  "mode": "light",
+  "bands": [
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "paper"
+  ],
+  "alt": "#fff9bb"
+ },
+ "media": {
+  "radius": 0,
+  "aspects": [
+   0.66,
+   0.67,
+   0.72,
+   1.05,
+   1.78
+  ],
+  "bleed": false,
+  "video_hero": false
+ },
+ "button": {
+  "h": 56,
+  "pad": "17px",
+  "radius": 0,
+  "px": 16,
+  "w": 500,
+  "tt": "uppercase",
+  "filled": true
+ },
+ "motion": {
+  "smooth": false,
+  "ease": "cubic-bezier(0.29, 0.63, 0.44, 1)",
+  "fast": 0.3,
+  "slow": 0.4,
+  "cursor": false,
+  "idea": "shop: almost no motion, product grids, 20px frame, uppercase 24–26px section titles, white page, black 56px buttons, yellow accent label"
+ },
+ "nav": {
+  "pos": "fixed",
+  "h": 92,
+  "links": 6
+ },
+ "sections": [
+  {
+   "role": "hero-photo-left",
+   "screens": 1.06,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 44,
+    "w": 500,
+    "tt": null,
+    "it": false,
+    "al": "left",
+    "lh": 0.9,
+    "x": 0.014,
+    "y": 0.115,
+    "wf": 0.32,
+    "ls": -0.045
+   },
+   "media": [
+    {
+     "ar": 1.78,
+     "wf": 0.99,
+     "xf": 0.0,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "16:9 bleed photo, 44px headline top-left (x=20,y=92 under nav) 461 wide, yellow 13px label"
+  },
+  {
+   "role": "product-row-small",
+   "screens": 0.44,
+   "pad": null,
+   "band": null,
+   "media": [
+    {
+     "ar": 0.72,
+     "wf": 0.154,
+     "xf": 0.014,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 0.72,
+     "wf": 0.154,
+     "xf": 0.175,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 0.72,
+     "wf": 0.154,
+     "xf": 0.337,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "row of 222x307 product tiles (6 across), 12px gaps"
+  },
+  {
+   "role": "photo-3up-tall",
+   "screens": 1.36,
+   "pad": null,
+   "band": null,
+   "media": [
+    {
+     "ar": 0.67,
+     "wf": 0.408,
+     "xf": 0.0,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 0.67,
+     "wf": 0.408,
+     "xf": 0.416,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 0.67,
+     "wf": 0.408,
+     "xf": 0.832,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "three 2:3 editorial photos 587 wide, edge to edge, horizontal scroll"
+  },
+  {
+   "role": "story-photos-text",
+   "screens": 0.76,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 26,
+    "w": 500,
+    "tt": "uppercase",
+    "it": false,
+    "al": "start",
+    "lh": 1.0,
+    "x": 0.66,
+    "y": 0.052,
+    "wf": 0.315,
+    "ls": 0.0
+   },
+   "body": {
+    "px": 16,
+    "lh": 1.35,
+    "maxw": 454
+   },
+   "media": [
+    {
+     "ar": 1.05,
+     "wf": 0.377,
+     "xf": 0.014,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 0.66,
+     "wf": 0.236,
+     "xf": 0.408,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "two photos left (square + portrait), 26px uppercase title + 16px paragraph right column 454 wide"
+  },
+  {
+   "role": "product-row-titled",
+   "screens": 0.61,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 24,
+    "w": 500,
+    "tt": "uppercase",
+    "it": false,
+    "al": "start",
+    "lh": 1.2,
+    "x": 0.014,
+    "y": 0.459,
+    "wf": 0.156,
+    "ls": 0.0
+   },
+   "media": [
+    {
+     "ar": 0.67,
+     "wf": 0.144,
+     "xf": 0.177,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 0.67,
+     "wf": 0.144,
+     "xf": 0.329,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 0.67,
+     "wf": 0.144,
+     "xf": 0.481,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "title column left (225), product tiles 207x311 with 14px names"
+  },
+  {
+   "role": "footer-newsletter",
+   "screens": 0.55,
+   "pad": null,
+   "band": null,
+   "body": {
+    "px": 22,
+    "lh": 1.0,
+    "maxw": 264
+   },
+   "note": "dark footer: 22px line, newsletter field + 56px white button, 10px uppercase meta",
+   "words": 82
+  }
+ ]
+}
