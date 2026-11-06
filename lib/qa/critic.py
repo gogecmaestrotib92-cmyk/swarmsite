@@ -33,10 +33,13 @@ def critique(slug_dir, html, model='claude-sonnet-5-5'):
     files = shots(html, os.path.join(slug_dir, 'critic-shots'))
     if not files: return {'score': -1, 'fixes': [], 'verdict': 'no screenshots'}
     content = [{"type": "text", "text": "DIRECTION (beat ids + copy)\n" + json.dumps({k: d[k] for k in ('hero', 'beats') if k in d}, ensure_ascii=False)[:14000] + "\n\nIMAGES available (ids)\n" + json.dumps(imgs_meta, ensure_ascii=False)[:3000]}]
-    for f in files[:14]:
-        if os.path.getsize(f) > 3_500_000: continue
+    from PIL import Image; import io
+    for f in files[:16]:
+        try:
+            im = Image.open(f).convert('RGB'); im.thumbnail((1100, 1100)); buf = io.BytesIO(); im.save(buf, 'JPEG', quality=72)
+        except Exception: continue
         content.append({"type": "text", "text": "SCREEN: " + os.path.basename(f)})
-        content.append({"type": "image", "source": {"type": "base64", "media_type": "image/png" if f.endswith('.png') else "image/jpeg", "data": base64.b64encode(open(f, 'rb').read()).decode()}})
+        content.append({"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": base64.b64encode(buf.getvalue()).decode()}})
     content.append({"type": "text", "text": "Call report_fixes."})
     client = anthropic.Anthropic()
     msg = client.messages.create(model=model, max_tokens=3000, system=SYSTEM, messages=[{"role": "user", "content": content}], tools=[TOOL], tool_choice={"type": "auto"})

@@ -98,6 +98,11 @@ def build(slug_dir, bp_id, out_path=None):
     form_id = forms[0]['id'] if forms else 'contact'
     cta_html = lambda light=False: f'<a class="btn{" light" if light else ""}" href="#{e(form_id)}">{e(h.get("cta") or d.get("nav", {}).get("cta") or "Contact")} <span class="ar">→</span></a>'
     lab = lambda t, light=False: f'<span class="lab{" light" if light else ""}">{e(t)}</span>' if t else ''
+    pos = {bt['id']: i + 1 for i, bt in enumerate(d.get('beats', []))}
+    for bt in d.get('beats', []):
+        if bt.get('label'):
+            core = re.sub(r'^\s*0?\d{1,2}\s*[/.·—–-]?\s*', '', str(bt['label'])).strip()
+            bt['label'] = f"{pos[bt['id']]:02d} — {core}" if core and re.match(r'^\s*0?\d{1,2}\b', str(bt['label'])) else (core or bt['label'])
 
     def band_of(sec, bt=None):
         return (bt or {}).get('band') or sec.get('band') or 'paper'
@@ -128,7 +133,7 @@ def build(slug_dir, bp_id, out_path=None):
         if nw >= 6: hpx = min(hpx, 84)
         if nw >= 8: hpx = min(hpx, 68)
         hui = h.get('ui') or {}; hpx = round(hpx * {'S': .72, 'M': .88, 'L': 1}.get(hui.get('size', ''), 1))
-        hsty = head_style(bp['sections'][0]); hsty = re.sub(r'font-size:[^;]+', f'font-size:{clampf(hpx)}', hsty); hsty = re.sub(r'max-width:[^;]+', 'max-width:14ch', hsty) + ';text-wrap:balance'
+        hsty = head_style(bp['sections'][0]); hsty = re.sub(r'font-size:[^;]+', f'font-size:{clampf(hpx)}', hsty); hsty = re.sub(r'max-width:[^;]+', 'max-width:14ch', hsty); hsty = re.sub(r'text-align:[^;]+;?|margin-(left|right):auto;?', '', hsty) + ';text-wrap:balance' + (';text-align:center;margin-left:auto;margin-right:auto' if al == 'center' else ';text-align:left')
         cat = f'<div class="cat">{lab(h.get("category"), light)}{lab(h.get("fact"), light)}</div>'
         shot = (not media) and d.get('kind') == 'software' and src
         body_ = f'<div class="wrap hero-in al-{al} place-{place}">{cat}<h1 class="h1" style="{hsty}">{h1}</h1><p class="lede{" light" if light else ""}">{e(h.get("lede"))}</p><div class="ctas">{cta_html(light)}{("<a class=\"btn ghost" + (" light" if light else "") + "\" href=\"#" + e(beats[0]["id"] if beats else "") + "\">" + e(h["cta2"]) + "</a>") if h.get("cta2") else ""}</div></div>'
@@ -165,6 +170,20 @@ def build(slug_dir, bp_id, out_path=None):
         if hm == 'left': return f'<div class="gh one">{lab(bt.get("label"), light)}<h2 class="h2" style="{st}">{e(bt.get("h2"))}</h2>{("<p class=\"lede\">" + e(bt.get("lede")) + "</p>") if bt.get("lede") else ""}</div>'
         return f'<div class="gh"><div>{lab(bt.get("label"), light)}<h2 class="h2" style="{st}">{e(bt.get("h2"))}</h2></div>{("<p class=\"lede\">" + e(bt.get("lede")) + "</p>") if bt.get("lede") else "<div></div>"}</div>'
 
+    def lead_fig(ui_, bt):
+        src = ''; it = None
+        if ui_.get('lead') and images.get(ui_['lead']): it = images[ui_['lead']]; src = img(ui_['lead'])
+        elif ui_.get('lead') == '': return ''
+        elif bt['type'] == 'facts':
+            pool = [i for i in images.values() if i.get('data') and not i.get('shot') and i.get('id') not in used and i.get('w', 0) >= 600]
+            if pool: it = pool[0]; src = img(it['id'])
+        elif bt['type'] == 'steps' and soft:
+            pool = [i for i in images.values() if i.get('shot') and i.get('data') and i.get('id') not in used]
+            if pool: it = max(pool, key=lambda i: i.get('w', 0) * i.get('h', 0)); src = img(it['id'])
+        if not src or not it: return ''
+        ar = max(1.3, min(2.4, it.get('w', 16) / max(1, it.get('h', 9))))
+        return f'<figure class="lead" style="aspect-ratio:{ar}"><img src="{src}" alt=""></figure>'
+
     def faq(sec, bt):
         rows = ''.join(f'<details><summary>{e(q)}</summary><p>{e(a)}</p></details>' for q, a in bt.get('items', [])[:8])
         bt = dict(bt); bt.setdefault('h2', 'Questions'); bt['h2'] = bt['h2'] or 'Questions'
@@ -174,12 +193,7 @@ def build(slug_dir, bp_id, out_path=None):
         if bt['type'] == 'faq': return faq(sec, bt)
         ms = sec_media(sec); n = max(2, min(4, len(ms) or 3)); ar = (ms[0]['ar'] if ms else 0.82)
         lead = ''; ui_ = bt.get('ui') or {}
-        if ui_.get('lead') and images.get(ui_['lead']): lead = f'<figure class="lead" style="aspect-ratio:{max(1.3, min(2.4, images[ui_["lead"]].get("w", 16) / max(1, images[ui_["lead"]].get("h", 9))))}"><img src="{img(ui_["lead"])}" alt=""></figure>'
-        elif ui_.get('lead') == '': pass
-        elif bt['type'] == 'facts' and [i for i in images.values() if i.get('data') and not i.get('shot') and i.get('id') not in used and (i.get('w', 0) >= 600)]:
-            lead = f'<figure class="lead" style="aspect-ratio:2.2"><img src="{img(want_shot=False)}" alt=""></figure>'
-        elif bt['type'] == 'steps' and soft and [i for i in images.values() if i.get('shot') and i.get('id') not in used]:
-            lead = f'<figure class="lead" style="aspect-ratio:1.9"><img src="{img(want_shot=True)}" alt=""></figure>'
+        lead = lead_fig(ui_, bt)
         k = len(bt.get('features') or bt.get('cells') or bt.get('steps') or bt.get('facts') or bt.get('items') or [])
         if k in (3, 6, 9): n = 3
         elif k in (2, 4) and n > 2: n = 2 if k == 2 else 4
@@ -212,11 +226,7 @@ def build(slug_dir, bp_id, out_path=None):
         elif bt['type'] == 'features': cols_ = [(f.get('title'), f.get('body')) for f in bt.get('features', [])][:2]
         else: cols_ = [(c[0], c[2] if len(c) > 2 else '') for c in bt.get('cells', [])][:2]
         inner = ''.join(f'<div><h3 class="h2" style="{head_style(sec)}">{e(t)}</h3><p class="big-p" style="font-size:{clampf(BO["px"] + 2, .8)}">{e(x)}</p></div>' for t, x in cols_)
-        lead = ''; ui_ = bt.get('ui') or {}
-        if ui_.get('lead') and images.get(ui_['lead']): lead = f'<figure class="lead" style="aspect-ratio:{max(1.3, min(2.4, images[ui_["lead"]].get("w", 16) / max(1, images[ui_["lead"]].get("h", 9))))}"><img src="{img(ui_["lead"])}" alt=""></figure>'
-        elif ui_.get('lead') == '': pass
-        elif bt['type'] == 'steps' and soft and [i for i in images.values() if i.get('shot') and i.get('id') not in used]:
-            lead = f'<figure class="lead" style="aspect-ratio:1.9"><img src="{img(want_shot=True)}" alt=""></figure>'
+        ui_ = bt.get('ui') or {}; lead = lead_fig(ui_, bt)
         return f'<section class="sec twocol band-{band_of(sec, bt)}{" compact" if (bt.get("ui") or {}).get("compact") else ""}" id="{e(bt["id"])}"><div class="wrap">{ghead(sec, bt) if bt["type"] != "features" else lab(bt.get("label"))}{lead}<div class="cols" style="--n:{len(cols_)}">{inner}</div></div></section>'
 
     def cta(sec, bt=None):
