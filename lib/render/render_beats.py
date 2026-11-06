@@ -26,7 +26,7 @@ def build(slug_dir, video_path=None):
     def pick_best(prefer_hero=True):
         pool = [i for i in images.values() if i.get('data') and i.get('id', '') not in used] or [i for i in images.values() if i.get('data')]
         if not pool: return None
-        pool.sort(key=lambda i: (not (i.get('heroGrade') if prefer_hero else True), -(i.get('w', 0) * i.get('h', 0))))
+        pool.sort(key=lambda i: (bool(i.get('shot')), not (i.get('heroGrade') if prefer_hero else True), -(i.get('w', 0) * i.get('h', 0))))
         return pool[0]
     def img(k, fallback=True):
         """Resolve an image id from direction.json; tolerate wrong/missing ids (LLM) by falling back to the best unused photo."""

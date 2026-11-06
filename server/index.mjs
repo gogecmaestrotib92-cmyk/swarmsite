@@ -91,7 +91,7 @@ function eventsDiagnose(dir) { const a = J(path.join(dir, 'audit.json')) || {}; 
   const keep = Array.isArray(a.keep) ? a.keep : Object.entries(a.keep || {}).filter(([k, v]) => v && (Array.isArray(v) ? v.length : true) && k !== 'nav').map(([k, v]) => k === 'logo' ? 'their logo' : Array.isArray(v) ? `${k}: ${v[0]}` : typeof v === 'string' ? v : k); keep.slice(0, 3).forEach(k => ev.push({ role: 'Concept', text: `keep: ${String(k).slice(0, 50)}` }));
   return ev; }
 function eventsDirect(dir) { const d = J(path.join(dir, 'direction.json')) || {}; const g = J(path.join(dir, 'geometry.json')) || {}; const ev = [];
-  ev.push({ role: 'Concept', text: `concept ${d.concept} · ${d.kind} · ${d.voice}` });
+  ev.push({ role: 'Concept', text: `concept ${d.concept} · ${d.kind} · ${d.voice}` }); if (d.blueprint) ev.push({ role: 'Concept', text: `blueprint: ${d.blueprint} · ${d.change || ''}` });
   if (d.brand) ev.push({ role: 'Type', text: `${d.brand.keep_font ? 'keeping' : 'replacing'} their font${d.brand.font_hint ? ' → ' + d.brand.font_hint : ''}` });
   if (d.hero) { ev.push({ role: 'Copy', text: `h1: "${String(d.hero.h1 || '').replace(/<[^>]+>/g, '')}"`, rect: g.h1?.rect }); if (d.hero.fact) ev.push({ role: 'Copy', text: `the fact: ${d.hero.fact}` }); if (d.hero.cta) ev.push({ role: 'Copy', text: `one action: ${d.hero.cta}` }); }
   (d.beats || []).forEach((b, i) => ev.push({ role: 'Concept', text: `beat ${i + 1}: ${b.type}${b.h2 ? ' — ' + b.h2.slice(0, 40) : ''}`, rect: g.sections?.[i + 1]?.rect }));
@@ -102,7 +102,7 @@ function eventsRender(dir) { const html = (() => { try { return fs.readFileSync(
   return ev; }
 function eventsQA(qa) { return String(qa || '').split('\n').filter(Boolean).slice(0, 8).map(l => ({ role: 'QA', text: l.replace(/^\[(high|med|low)\]\s*/, '').slice(0, 70) })); }
 
-const ARTS = ['brief.json', 'inventory.json', 'assets.json', 'images.json', 'geometry.json', 'audit.json', 'direction.json', 'mobile.json', 'index.html'];
+const ARTS = ['brief.json', 'critic.json', 'inventory.json', 'assets.json', 'images.json', 'geometry.json', 'audit.json', 'direction.json', 'mobile.json', 'index.html'];
 async function uploadArtefacts(job, dir) { for (const f of ARTS) { const fp = path.join(dir, f); if (fs.existsSync(fp)) { try { await upload(fp, `${job.id}/art/${f}`, f.endsWith('.html') ? 'text/html' : 'application/json'); } catch (e) { console.warn('art', f, e.message); } } } }
 const BP = { software: ['cerebrium', 'butter', 'deepbook'], place: ['tengile', 'white-desert', 'belgrade-arbor'], service: ['lpas', 'aino', 'butter'], product: ['crav', 'butter', 'tengile'] };
 async function process_(job) {
@@ -119,9 +119,16 @@ async function process_(job) {
   await timed('render', async () => {
     await run('python3', ['lib/render/render_beats.py', dir]);
     // blueprint variants: the winner's measured form + this client's content (2 per class)
-    let kind = 'service'; try { kind = JSON.parse(fs.readFileSync(path.join(dir, 'direction.json'), 'utf8')).kind || kind; } catch {}
+    let kind = 'service', chosen = ''; try { const dd = JSON.parse(fs.readFileSync(path.join(dir, 'direction.json'), 'utf8')); kind = dd.kind || kind; chosen = dd.blueprint || ''; } catch {}
+    const have = new Set(fs.readdirSync(path.join(ROOT, 'lib/blueprints')).filter(f => f.endsWith('.bp.json')).map(f => f.replace('.bp.json', '')));
+    const picks = [...new Set([chosen, ...(BP[kind] || BP.service)])].filter(b => have.has(b)).slice(0, 2);
     job._bps = [];
-    for (const bp of (BP[kind] || BP.service).slice(0, 2)) { try { await run('python3', ['lib/render/render_bp.py', dir, bp, path.join(dir, `bp-${bp}.html`)], { timeoutMs: 120000 }); job._bps.push(bp); } catch (e) { console.warn('bp', bp, e.message.slice(0, 200)); } }
+    for (const bp of picks) { try { await run('python3', ['lib/render/render_bp.py', dir, bp, path.join(dir, `bp-${bp}.html`)], { timeoutMs: 120000 }); job._bps.push(bp); } catch (e) { console.warn('bp', bp, e.message.slice(0, 200)); } }
+    // visual loop on the primary variant: the critic looks at every screen, applies bounded fixes, we render once more
+    if (job._bps[0]) { try { const o = await run('python3', ['lib/qa/critic.py', dir, path.join(dir, `bp-${job._bps[0]}.html`), process.env.DIRECT_MODEL || 'claude-sonnet-5-5'], { timeoutMs: 240000 }); const rep = JSON.parse(o.trim().split('\n').pop());
+        job._critic = rep; await emit(job, [{ role: 'QA', text: `critic: ${rep.score}/100 · ${rep.fixes} fixes · ${String(rep.verdict || '').slice(0, 70)}` }]);
+        if (rep.applied > 0) { await run('python3', ['lib/render/render_bp.py', dir, job._bps[0], path.join(dir, `bp-${job._bps[0]}.html`)], { timeoutMs: 120000 }); await emit(job, [{ role: 'QA', text: `re-rendered after ${rep.applied} fixes` }]); }
+      } catch (e) { console.warn('critic', e.message.slice(0, 300)); } }
   }); await emit(job, eventsRender(dir)); if (job._bps?.length) await emit(job, job._bps.map(b => ({ role: 'Concept', text: `blueprint variant: ${b}` })));
   let qa = null; await timed('qa', async () => { try { const o = await run('python3', ['lib/qa/check.py', path.join(dir, 'index.html')], { timeoutMs: 240000 }); qa = o.split('\n').filter(l => /QA score|\[(high|med|low)/.test(l)).join('\n'); } catch (e) { qa = 'qa skipped: ' + e.message.slice(0, 200); } }); await emit(job, eventsQA(qa));
   const result = await timed('upload', async () => {
@@ -129,7 +136,7 @@ async function process_(job) {
     for (const bp of (job._bps || [])) { try { await upload(path.join(dir, `bp-${bp}.html`), `${job.id}/bp-${bp}.html`, 'text/html'); } catch (e) { console.warn('bp upload', e.message); } }
     const beforeUrl = fs.existsSync(path.join(dir, 'before-hero.jpg')) ? await upload(path.join(dir, 'before-hero.jpg'), `${job.id}/before.jpg`, 'image/jpeg') : null;
     const direction = JSON.parse(fs.readFileSync(path.join(dir, 'direction.json'), 'utf8'));
-    return { ...(job._result || {}), previewUrl, beforeUrl, qa, blueprints: job._bps || [], direction: { kind: direction.kind, concept: direction.concept, voice: direction.voice, brand: direction.brand, beats: direction.beats.map(b => b.type), audit_notes: direction.audit_notes }, seconds: Math.round((Date.now() - t0) / 1000) };
+    return { ...(job._result || {}), previewUrl, beforeUrl, qa, blueprints: job._bps || [], critic: job._critic || null, direction: { kind: direction.kind, concept: direction.concept, voice: direction.voice, brand: direction.brand, beats: direction.beats.map(b => b.type), audit_notes: direction.audit_notes }, seconds: Math.round((Date.now() - t0) / 1000) };
   });
   await sb.from('jobs').update({ status: 'done', step: 'done', result, slug }).eq('id', job.id); await uploadArtefacts(job, dir);
 }

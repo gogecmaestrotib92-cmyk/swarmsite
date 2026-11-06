@@ -44,11 +44,15 @@ def build(slug_dir, bp_id, out_path=None):
 
     # ---- image pool (never an empty frame) ----
     used = set()
-    def img(k=None, prefer_hero=False):
+    soft = d.get('kind') in ('software', 'product')
+    def img(k=None, prefer_hero=False, want_shot=None):
         it = images.get(k) if k else None
         if not it:
             pool = [i for i in images.values() if i.get('data') and i.get('id') not in used] or [i for i in images.values() if i.get('data')]
-            pool.sort(key=lambda i: (not (i.get('heroGrade') if prefer_hero else True), -(i.get('w', 0) * i.get('h', 0)))); it = pool[0] if pool else None
+            if want_shot is True: pool = [i for i in pool if i.get('shot')] or pool
+            if want_shot is False: pool = [i for i in pool if not i.get('shot')] or pool
+            # hero: real photos first; software bodies: UI section shots first; places: photos first
+            pool.sort(key=lambda i: (bool(i.get('shot')) if (prefer_hero or not soft) else not i.get('shot'), not (i.get('heroGrade') if prefer_hero else True), -(i.get('w', 0) * i.get('h', 0)))); it = pool[0] if pool else None
         if not it: return ''
         used.add(it.get('id')); return it.get('data', '')
 

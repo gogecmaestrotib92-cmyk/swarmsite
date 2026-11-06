@@ -9,6 +9,8 @@ RULES = ['lib/rules/copy.md', 'lib/rules/rhythm.md', 'lib/rules/master-run-01-fr
 
 SCHEMA = r'''
 {
+ "blueprint": "id from the BLUEPRINTS list — the winner whose FORM fits this business best (class, mood, amount of imagery)",
+ "change": "rebuild|restructure|polish",             // rebuild = weak site, new structure; restructure = keep their sections, re-set type/rhythm; polish = already good, keep structure and copy, fix only what the audit found
  "kind": "place|service|product|software",          // taste-skill kinds: place = people come to it; service = people hire them; product = thing sold; software = app/SaaS
  "concept": "C1..C8", "mode": "light|dark",
  "voice": "serif|sans",                              // serif for place/luxury/editorial; sans for software/product
@@ -40,6 +42,8 @@ Hard rules:
 - SOFTWARE / PRODUCT: voice "sans" unless the brand's own display font is a serif. hero.media = the product screenshot (the largest UI image), shown framed, not as a photo background. Beats: features (capabilities as text) → steps (≤3, each ≤12 words) → cells ONLY if the site states real figures (prices, counts, days) → ledger for pricing (plan, price) → faq/form. No "quote" beat unless the site has a real quoted sentence with an author.
 - Headings: h2 ≤ 5 words (nouns). Steps ≤ 12 words each. Feature bodies ≤ 18 words. Never pad a grid with ordinals or placeholders; fewer, true items beat more.
 - Choose images by id from images.json: the hero gets the best 'heroGrade' landscape photo; never reuse the same image twice.
+- You SEE the site (screenshots attached). Judge it as a creative director: if it is already well designed (clear hierarchy, custom type, real photography, restraint), choose change="polish" and keep its structure, order and wording — only fix the audit findings. Average template sites get "restructure"; broken or generic sites get "rebuild". Never flatten a good site into a generic one.
+- Choose ONE blueprint from BLUEPRINTS: same class first, then the mood (dark/light, serif/sans, photo-led vs type-led) and how much imagery the site actually has. Say why in audit_notes[0].
 - Output ONLY the JSON document, no prose, matching the schema. Comments in the schema are for you, not for the output.
 """
 
@@ -55,9 +59,9 @@ TOOL = {
     "description": "Write the direction.json beats document for the renderer. Follow the SCHEMA in the prompt exactly.",
     "input_schema": {
         "type": "object",
-        "required": ["kind", "concept", "mode", "voice", "brand", "nav", "hero", "beats", "ending", "audit_notes"],
+        "required": ["kind", "concept", "mode", "voice", "brand", "nav", "hero", "beats", "ending", "audit_notes", "blueprint", "change"],
         "properties": {
-            "kind": {"type": "string", "enum": ["place", "service", "product", "software"]},
+            "kind": {"type": "string", "enum": ["place", "service", "product", "software"]}, "blueprint": {"type": "string"}, "change": {"type": "string", "enum": ["rebuild", "restructure", "polish"]},
             "concept": {"type": "string"}, "mode": {"type": "string", "enum": ["light", "dark"]}, "voice": {"type": "string", "enum": ["serif", "sans"]},
             "brand": {"type": "object", "properties": {"name": {"type": "string"}, "badge": {"type": "string"}, "keep_font": {"type": "boolean"}, "font_hint": {"type": "string"}, "accent": {"type": "string"}, "paper": {"type": "string"}, "ink": {"type": "string"}}, "required": ["name"]},
             "nav": {"type": "object", "properties": {"links": {"type": "array", "items": {"type": "array", "items": {"type": "string"}}}, "cta": {"type": "string"}}},
@@ -103,7 +107,18 @@ def direct(slug_dir, model='claude-sonnet-5-5'):
     rules = '\n\n'.join(f'### {r}\n' + open(os.path.join(ROOT, r)).read() for r in RULES)
     user = f"""RULES\n{rules}\n\nSCHEMA\n{SCHEMA}\n\nINVENTORY (what the site HAS)\n{json.dumps(inv, ensure_ascii=False)[:60000]}\n\nBRAND ASSETS\n{json.dumps({k: v for k, v in (assets or {}).items() if k != 'logo'}, ensure_ascii=False)[:6000]}\n\nIMAGES (ids you may use)\n{json.dumps(imgs, ensure_ascii=False)[:6000]}\n\nAUDIT\n{json.dumps(audit, ensure_ascii=False)[:8000] if audit else 'n/a'}\n\nOWNER'S BRIEF (hard constraints, override everything above)\n{brief_text(brief)}\n\nCall write_direction with the complete document."""
     client = anthropic.Anthropic()
-    messages = [{"role": "user", "content": user}]
+    import base64, glob
+    bps = []
+    for f in sorted(glob.glob(os.path.join(ROOT, 'lib/blueprints', '*.bp.json'))):
+        bpj = json.load(open(f)); t = bpj.get('type', {}); dsp = t.get('display') or {}
+        bps.append(f"- {bpj['id']}: class={bpj.get('class')} archetype={bpj.get('archetype')} mode={bpj.get('colour', {}).get('mode')} display={dsp.get('fam')} {dsp.get('px')}px w{dsp.get('w')} sections={len(bpj.get('sections', []))} imagery={'heavy' if bpj.get('media', {}).get('aspects') and len(bpj['media']['aspects']) > 3 else 'light'} note={bpj.get('motion', {}).get('idea', '')[:90]}")
+    content = [{"type": "text", "text": user + "\n\nBLUEPRINTS (choose one id)\n" + "\n".join(bps)}]
+    for shot in ('before-hero.jpg', 'before-full.jpg'):
+        fp = os.path.join(slug_dir, shot)
+        if os.path.exists(fp) and os.path.getsize(fp) < 4_500_000:
+            content.append({"type": "text", "text": f"SCREENSHOT: {shot} ({'the first screen' if 'hero' in shot else 'the whole page, top to bottom'})"})
+            content.append({"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": base64.b64encode(open(fp, 'rb').read()).decode()}})
+    messages = [{"role": "user", "content": content}]
     doc, last = None, None
     for attempt in range(3):
         msg = client.messages.create(model=model, max_tokens=8000, system=SYSTEM, messages=messages, tools=[TOOL], tool_choice={"type": "auto"})
