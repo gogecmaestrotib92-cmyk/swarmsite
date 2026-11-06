@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Swarmsite — paste your site's URL, get it rebuilt like an award-winning studio would</title>
 <meta name="description" content="Paste the URL of your existing website. In minutes you get the same site rebuilt at studio level: real photos, real copy, premium typography and motion. Then a kit to paste into Claude, or a published site.">
-<meta property="og:title" content="Swarmsite — your website, rebuilt at studio level"><meta property="og:description" content="Paste a URL. Watch the swarm rebuild it. Keep it.">
+<link rel="canonical" href="https://swarmsite.si/"><meta property="og:url" content="https://swarmsite.si/"><meta property="og:type" content="website"><meta property="og:image" content="https://swarmsite.si/after.jpg"><meta property="og:title" content="Swarmsite — your website, rebuilt at studio level"><meta property="og:description" content="Paste a URL. Watch the swarm rebuild it. Keep it.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -20,7 +20,10 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}
 .h2{font-weight:400;font-size:clamp(30px,3.6vw,48px);line-height:1.08;letter-spacing:-.025em}
 .big{font-weight:400;font-size:clamp(22px,2.4vw,32px);line-height:1.25;letter-spacing:-.015em}
 .pill{display:inline-flex;align-items:center;gap:10px;border-radius:999px;padding:12px 20px;font-weight:500;font-size:15px;border:1px solid var(--line);background:#fff;transition:transform .35s cubic-bezier(.2,.8,.2,1),background .25s}
-.pill.ink{background:var(--ink);color:#fff;border-color:var(--ink)}.pill:hover{transform:translateY(-2px)}
+.pill.ink{background:var(--ink);color:#fff;border-color:var(--ink)}.pill:hover{transform:translateY(-2px)}.pill:active{transform:scale(.97);transition:transform 100ms ease-out}
+.pill,.nav .grp a,.urlbox button{min-height:44px}
+.price{font-variant-numeric:tabular-nums}
+@media(prefers-reduced-transparency:reduce){.nav .grp{background:#fff;backdrop-filter:none}}
 /* nav: two floating pills */
 .nav{position:fixed;top:16px;left:0;right:0;z-index:50;pointer-events:none}
 .nav .wrap{display:flex;justify-content:space-between;align-items:center}
@@ -140,7 +143,7 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}
   </div>
 </section>
 
-<footer class="foot"><div class="wrap"><div class="row"><span>© 2026 Swarmsite</span><span>Built with taste, not templates.</span><span><a href="#">Privacy</a> · <a href="#">Terms</a> · <a href="mailto:hello@swarmsite.si">Contact</a></span></div></div></footer>
+<footer class="foot"><div class="wrap"><div class="row"><span>© 2026 Swarmsite</span><span>Built with taste, not templates.</span><span><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="mailto:hello@swarmsite.si">Contact</a></span></div></div></footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>

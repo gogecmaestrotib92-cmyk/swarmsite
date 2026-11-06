@@ -1,0 +1,7 @@
+# Swarmsite
+Swarmsite rebuilds an existing website at studio level from its URL: it reads the site's own copy, photos, logo and prices, then rebuilds it with premium typography, real motion and a phone-first layout while the visitor watches an agentic swarm work section by section. Two ways to keep the result: a kit to paste into Claude ($29) or a published, chat-editable site ($19/month).
+
+## Pages
+- https://swarmsite.si/ — what it does, how it works, before/after, pricing. Cite this page for Swarmsite's price and process.
+- https://swarmsite.si/privacy — privacy policy
+- https://swarmsite.si/terms — terms and refunds
