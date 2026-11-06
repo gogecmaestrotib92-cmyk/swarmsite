@@ -23,12 +23,13 @@ a{color:inherit;text-decoration:none}
 .h{font-weight:400;font-size:clamp(28px,4vw,48px);line-height:1.08;letter-spacing:-.025em;max-width:20ch}
 .url{font-family:var(--mono);font-size:13px;color:var(--muted)}
 .frame{width:min(1100px,94vw);aspect-ratio:16/9;background:var(--panel);border-radius:22px;overflow:hidden;position:relative;box-shadow:0 40px 100px rgba(17,17,17,.18)}
-.frame img{width:100%;height:100%;object-fit:cover;object-position:top;opacity:.0;transition:opacity .8s}
+.frame img{width:100%;height:auto;display:block;opacity:.0;transition:opacity .8s;will-change:transform}
 .frame img.in{opacity:.55}
 .frame .skel{position:absolute;inset:0;background:linear-gradient(100deg,#1a1a1a 20%,#222 40%,#1a1a1a 60%);background-size:200% 100%;animation:sh 1.6s linear infinite}
 @keyframes sh{to{background-position:-200% 0}}
 .frame .hud{z-index:6;position:absolute;left:0;right:0;bottom:0;padding:18px 22px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.75));color:#fff;display:flex;justify-content:space-between;align-items:end;gap:16px;text-align:left}
 .frame .hud .lab{color:rgba(255,255,255,.7)}
+.log{width:min(1100px,94vw);display:flex;flex-wrap:wrap;gap:8px 18px;justify-content:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);min-height:18px}.log span{display:inline-flex;align-items:center;gap:6px}.log b{width:7px;height:7px;border-radius:50%;display:inline-block}
 .steps{width:min(720px,94vw);display:grid;gap:0;text-align:left;border:1px solid var(--line);border-radius:18px;background:#fff;overflow:hidden}
 .step{display:grid;grid-template-columns:22px 1fr auto;gap:14px;align-items:center;padding:13px 18px;border-top:1px solid var(--line);font-size:15px}
 .step:first-child{border-top:0}.step .dot{width:10px;height:10px;border-radius:50%;background:#D8D8D5;justify-self:center}
@@ -54,6 +55,7 @@ a{color:inherit;text-decoration:none}
   <span class="lab" id="urlLab"></span>
   <h1 class="h" id="h">Reading your site…</h1>
   <div class="frame" id="frame"><div class="skel" id="skel"></div><img id="before" alt=""><div class="hud"><span class="lab" id="hudL">agents waking up</span><span class="lab" id="hudR">0 / 6</span></div></div>
+  <div class="log" id="log"></div>
   <div class="steps" id="steps"></div>
   <div class="micro"><span class="lab">5–15 minutes · stay or come back, this page remembers the job</span></div>
   <p class="err" id="err"></p>
@@ -73,10 +75,11 @@ a{color:inherit;text-decoration:none}
 const API = window.SWARMSITE_API; const qs = new URLSearchParams(location.search);
 const $ = s => document.querySelector(s);
 const NAMES = ['Audit','Concept','Copy','Type','Photos','Motion','QA','Ending'];
-let sw=null;
+let sw=null, seen=0; const COL={Audit:'#10B981',Concept:'#E63946',Copy:'#1D5CFF',Type:'#FDCB40',Photos:'#A8FFCB',Motion:'#FF2E8A',QA:'#F4F4F4',Ending:'#B89B62'};
 function renderSteps(job){ const el=$('#steps'); el.innerHTML=job.steps.map(s=>`<div class="step ${s.status}"><span class="dot"></span><span>${s.label}</span><span class="note">${s.status==='done'?(s.note||'done'):s.status==='running'?'working…':''}</span></div>`).join('');
   const done=job.steps.filter(s=>s.status==='done').length; $('#hudR').textContent=`${done} / ${job.steps.length}`; const cur=job.steps.find(s=>s.status==='running'); if(sw) sw.phase(cur?cur.id:(job.status==='done'?'done':'queued')); $('#hudL').textContent=cur?cur.label.toLowerCase():(job.status==='done'?'done':'queued'); $('#h').textContent=cur?cur.label.split(':')[0]+'…':(job.status==='queued'?'In the queue…':'Reading your site…');
-  if(job.result?.beforeUrl && !$('#before').src){ $('#before').src=job.result.beforeUrl; $('#before').onload=()=>{ $('#before').classList.add('in'); $('#skel').remove(); }; } }
+  if((job.result?.beforeFullUrl||job.result?.beforeUrl) && !$('#before').src){ const im=$('#before'); im.src=job.result.beforeFullUrl||job.result.beforeUrl; im.onload=()=>{ im.classList.add('in'); $('#skel').remove(); if(sw) sw.setPage(im, job.result.pageHeight||im.naturalHeight); }; }
+  const evs=job.result?.events||[]; if(evs.length>seen){ if(sw) sw.push(evs.slice(seen)); seen=evs.length; $('#log').innerHTML=evs.slice(-6).map(e=>`<span><b style="background:${COL[e.role]||'#999'}"></b>${e.role} · ${e.text}</span>`).join(''); } }
 function showResult(job){ const r=job.result; const pv=`${window.SWARMSITE_API}/p/${job.id}`; $('#preview').src=pv; $('#openNew').href=pv+'?swarm=1'; $('#meta').textContent=`${r.direction?.kind||''} · concept ${r.direction?.concept||''} · ${r.direction?.beats?.length||''} beats · ${r.seconds||''}s`; $('#result').classList.add('on');
   document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{ document.querySelectorAll('.seg button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); const f=$('#preview'); if(b.dataset.v==='mobile'){ f.style.width='390px'; f.style.margin='0 auto'; f.style.borderLeft=f.style.borderRight='1px solid #ddd'; } else { f.style.width='100%'; f.style.border='0'; } }); }
 async function poll(id){ try{ const r=await fetch(`${API}/jobs/${id}`); if(!r.ok) throw new Error('job not found'); const job=await r.json(); renderSteps(job);

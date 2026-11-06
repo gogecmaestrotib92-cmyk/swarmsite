@@ -31,7 +31,7 @@
   .ag-sel i{position:absolute;width:6px;height:6px;background:#fff;border:1.5px solid;border-color:inherit}
   .ag-sel i:nth-child(1){left:-4px;top:-4px}.ag-sel i:nth-child(2){right:-4px;top:-4px}.ag-sel i:nth-child(3){left:-4px;bottom:-4px}.ag-sel i:nth-child(4){right:-4px;bottom:-4px}
   .ag-sel b{position:absolute;left:50%;bottom:-20px;transform:translateX(-50%);color:#111;font:600 9.5px/1 system-ui;padding:3px 6px;border-radius:3px;white-space:nowrap}
-  .ag-note{position:absolute;pointer-events:none;z-index:4;color:#fff;font:500 11px/1.2 ui-monospace,Menlo,monospace;background:rgba(0,0,0,.7);padding:5px 7px;border-radius:4px;border-left:2px solid;white-space:nowrap;transition:opacity .35s}
+  .ag-note{position:absolute;pointer-events:none;z-index:6;color:#fff;font:500 11px/1.2 ui-monospace,Menlo,monospace;background:rgba(0,0,0,.7);padding:5px 7px;border-radius:4px;border-left:2px solid;white-space:nowrap;transition:opacity .35s}
   .ag-line{position:absolute;pointer-events:none;z-index:4;height:0;border-top:1px dashed;transition:opacity .35s}
   @media(prefers-reduced-motion:reduce){.ag-cur,.ag-sel,.ag-note,.ag-line{display:none}}`;
   let cssDone = false;
@@ -56,23 +56,31 @@
   class Swarm {
     constructor(frame, opts = {}) {
       if (!cssDone) { const s = document.createElement('style'); s.textContent = CSS; document.head.appendChild(s); cssDone = true; }
-      this.frame = frame; this.opts = opts; this.alive = true; this.ph = opts.phase || 'queued'; this.cursors = [];
+      this.frame = frame; this.opts = opts; this.alive = true; this.ph = opts.phase || 'queued'; this.cursors = []; this.queue = []; this.pan = 0; this.scale = 1; this.pageH = 0;
       if (getComputedStyle(frame).position === 'static') frame.style.position = 'relative';
       const n = Math.min(opts.count || 7, ROLES.length);
       ROLES.slice(0, n).forEach(([role, color], i) => { const c = new Cursor(frame, role, color, NAMES[(i * 3 + Math.floor(rnd(0, 3))) % NAMES.length]); this.cursors.push(c); setTimeout(() => this.loop(c), 300 + i * 420); });
     }
     phase(p) { if (VOCAB[p]) this.ph = p; }
+    /* Real page: an <img> of the full page (1440 wide) inside the frame; we pan it to show the rect an agent works on. */
+    setPage(img, pageH) { this.page = img; this.pageH = pageH || img.naturalHeight; this.scale = this.frame.clientWidth / 1440; img.style.transition = 'transform 1.1s cubic-bezier(.2,.8,.2,1)'; }
+    toLocal(rect) { const s = this.scale; return { x: rect.x * s, y: rect.y * s - this.pan, w: rect.w * s, h: rect.h * s }; }
+    panTo(rect) { if (!this.page) return; const s = this.scale, H = this.frame.clientHeight, maxPan = Math.max(0, this.pageH * s - H); const want = Math.min(maxPan, Math.max(0, rect.y * s - H * 0.38)); if (Math.abs(want - this.pan) < 40) return; this.pan = want; this.page.style.transform = `translateY(${-want}px)`; }
+    /* Feed real events: {role, text, rect?}. One agent per event; the matching role takes it when free. */
+    push(evs) { for (const e of evs) this.queue.push(e); }
     stop() { this.alive = false; this.cursors.forEach(c => c.el.classList.remove('in')); setTimeout(() => this.frame.querySelectorAll('.ag-cur,.ag-sel,.ag-note,.ag-line').forEach(e => e.remove()), 600); }
     say(c) { const v = VOCAB[this.ph] || VOCAB.queued; return pick(v[c.role] || v.all || ['…']); }
     // A plausible region of the page: left/center/right column, hero/mid/low band.
     region() { const W = this.frame.clientWidth, H = this.frame.clientHeight; const w = rnd(.14, .42) * W, h = rnd(.06, .22) * H; return { x: rnd(.04, .96 - w / W) * W, y: rnd(.05, .95 - h / H) * H, w, h }; }
     async loop(c) {
       while (this.alive) {
-        const act = Math.random(); const r = this.region();
+        const qi = this.queue.findIndex(e => e.role === c.role); const mine = qi >= 0 ? this.queue.splice(qi, 1)[0] : (this.queue.length && Math.random() < .25 ? this.queue.shift() : null);
         try {
-          if (act < .45) await this.select(c, r); else if (act < .75) await this.note(c, r); else if (act < .88) await this.measure(c, r); else await this.wander(c, r);
+          if (mine) await this.real(c, mine);
+          else if (this.queue.length) await this.wander(c, this.region());           // others are busy with real work: stay light
+          else { const act = Math.random(); const r = this.region(); if (act < .45) await this.select(c, r); else if (act < .75) await this.note(c, r); else if (act < .88) await this.measure(c, r); else await this.wander(c, r); }
         } catch (e) { /* frame may be gone */ }
-        await sleep(rnd(150, 700));
+        await sleep(mine ? rnd(80, 300) : rnd(150, 700));
       }
     }
     async select(c, r) {
@@ -95,6 +103,26 @@
       const l = document.createElement('div'); l.className = 'ag-line'; l.style.borderColor = c.color; l.style.left = r.x + 'px'; l.style.top = (r.y + r.h) + 'px'; l.style.width = '0px'; this.frame.appendChild(l);
       const t0 = performance.now(), dur = 500; await new Promise(res => { const step = now => { const t = Math.min(1, (now - t0) / dur), e = ease(t); l.style.width = r.w * e + 'px'; c.x = r.x + r.w * e; c.render(); t < 1 ? requestAnimationFrame(step) : res(); }; requestAnimationFrame(step); });
       c.task(`${Math.round(r.w * 1.3)}px`); await sleep(rnd(600, 1100)); l.style.opacity = '0'; setTimeout(() => l.remove(), 400); c.task('');
+    }
+    async real(c, ev) {
+      c.task('');
+      if (ev.rect && this.page) {
+        this.panTo(ev.rect); await sleep(500); const r = this.toLocal(ev.rect);
+        await c.moveTo(r.x, r.y);
+        const s = document.createElement('div'); s.className = 'ag-sel'; s.style.borderColor = c.color; s.style.left = r.x + 'px'; s.style.top = r.y + 'px'; s.style.width = '0px'; s.style.height = '0px'; s.innerHTML = '<i></i><i></i><i></i><i></i>'; this.frame.appendChild(s);
+        const t0 = performance.now(), dur = rnd(350, 600);
+        await new Promise(res => { const step = now => { const t = Math.min(1, (now - t0) / dur), e = ease(t); s.style.width = r.w * e + 'px'; s.style.height = r.h * e + 'px'; c.x = r.x + r.w * e; c.y = r.y + r.h * e; c.render(); t < 1 ? requestAnimationFrame(step) : res(); }; requestAnimationFrame(step); });
+        const b = document.createElement('b'); b.style.background = c.color; b.textContent = `${ev.rect.w} × ${ev.rect.h}`; s.appendChild(b);
+        const n = document.createElement('div'); n.className = 'ag-note'; n.style.borderColor = c.color; const nx = Math.min(this.frame.clientWidth - 260, r.x + r.w + 10); n.style.left = (nx < r.x + r.w ? Math.max(8, r.x) : nx) + 'px'; n.style.top = (nx < r.x + r.w ? r.y + r.h + 26 : r.y + Math.min(r.h, 28) - 10) + 'px'; n.style.maxWidth = '320px'; n.style.whiteSpace = 'normal'; this.frame.appendChild(n);
+        for (let i = 1; i <= ev.text.length; i++) { n.textContent = ev.text.slice(0, i); await sleep(rnd(10, 28)); if (!this.alive) break; }
+        await sleep(rnd(900, 1500)); s.style.opacity = n.style.opacity = '0'; setTimeout(() => { s.remove(); n.remove(); }, 400);
+      } else {
+        const r = this.region(); await c.moveTo(r.x, r.y);
+        const n = document.createElement('div'); n.className = 'ag-note'; n.style.borderColor = c.color; n.style.left = (r.x + 14) + 'px'; n.style.top = (r.y - 8) + 'px'; this.frame.appendChild(n);
+        for (let i = 1; i <= ev.text.length; i++) { n.textContent = ev.text.slice(0, i); await sleep(rnd(10, 28)); if (!this.alive) break; }
+        await sleep(rnd(1100, 1800)); n.style.opacity = '0'; setTimeout(() => n.remove(), 400);
+      }
+      c.task('');
     }
     async wander(c, r) { c.task(''); await c.moveTo(r.x, r.y); await sleep(rnd(200, 500)); }
   }
