@@ -138,16 +138,17 @@ def build(slug_dir, bp_id, out_path=None):
         hd = sec.get('head') or {}; px_ = hd.get('px') or H2['px']
         inner = f'{lab(bt.get("label"))}<h2 class="h2" style="{head_style(sec)}">{e(big)}</h2>' if big and px_ >= 40 else lab(bt.get('label'))
         body_px = (sec.get('body') or {}).get('px') or BO['px']
-        return f'<section class="sec statement band-{sec.get("band") or "paper"}" id="{e(bt["id"])}" style="min-height:{min(1.2, max(.5, sec.get("screens", .8))) * 100}svh"><div class="wrap" style="{col_style(sec)}">{inner}<p class="big-p" style="font-size:{clampf(max(body_px, 22), .7)}">{e(text)}</p>{who}</div></section>'
+        centered = (hd.get('al') == 'center')
+        return f'<section class="sec statement band-{sec.get("band") or "paper"}" id="{e(bt["id"])}" style="min-height:{min(1.2, max(.5, sec.get("screens", .8))) * 100}svh"><div class="wrap{" center" if centered else ""}" style="{col_style(sec)}">{inner}<p class="big-p" style="font-size:{clampf(max(body_px, 22), .7)}{";margin-left:auto;margin-right:auto" if centered else ""}">{e(text)}</p>{who}</div></section>'
 
     def photo_sec(sec, bt=None):
         ms = sec_media(sec) or [{'ar': 1.6, 'wf': 1, 'bleed': True}]
         if len(ms) >= 2 and ms[0].get('wf', 1) < .7:
-            tiles = ''.join(f'<figure style="width:{round(m["wf"] * 100)}%;aspect-ratio:{m["ar"]}"><img src="{img()}" alt=""></figure>' for m in ms[:2])
+            tiles = ''.join(f'<figure style="width:{round(m["wf"] * 100)}%;aspect-ratio:{m["ar"]}"><img src="{img(want_shot=False)}" alt=""></figure>' for m in ms[:2])
             cap = f'<p class="cap">{e(bt.get("lede"))}</p>' if bt and bt.get('lede') else ''
             return f'<section class="sec photos band-{sec.get("band") or "paper"}" id="{e(bt["id"]) if bt else ""}"><div class="wrap pair">{tiles}</div>{"<div class=\"wrap\">" + cap + "</div>" if cap else ""}</section>'
         m = ms[0]; bleed = m.get('bleed') or m.get('wf', 1) > .95
-        src = img(bt.get('image') if bt else None)
+        src = img(bt.get('image') if bt else None, want_shot=(True if (soft and not bleed) else None))
         head = f'<div class="wrap over"><h2 class="h2 light" style="{head_style(sec)}">{e(bt["h2"])}</h2></div>' if bt and bt.get('h2') and sec.get('head') else ''
         cap = f'<div class="wrap"><div class="caps">{lab(bt.get("label"))}{("<p class=\"cap\">" + e(bt.get("lede")) + "</p>") if bt and bt.get("lede") else ""}</div></div>' if bt else ''
         return f'<section class="sec photo{" bleed" if bleed else ""}" id="{e(bt["id"]) if bt else ""}"><figure style="aspect-ratio:{max(1.1, min(2.4, m["ar"]))};{"" if bleed else "margin:0 var(--frame);border-radius:var(--radius);overflow:hidden"}"><img src="{src}" alt="">{head}</figure>{cap}</section>'
@@ -161,10 +162,10 @@ def build(slug_dir, bp_id, out_path=None):
         elif bt['type'] == 'facts': items = [(f[0], f[1], None) for f in bt.get('facts', [])]
         elif bt['type'] == 'faq': items = [(q, a, None) for q, a in bt.get('items', [])]
         elif bt['type'] == 'ledger': return ledger(sec, bt)
-        with_img = bool(ms) and bt['type'] in ('features', 'steps') and len(images) >= 3
+        with_img = bool(ms) and bt['type'] in ('features', 'steps') and len([i for i in images.values() if not i.get('shot')]) >= 3
         cells = ''
         for i, (t, body_, num) in enumerate(items[:8]):
-            pic = f'<figure style="aspect-ratio:{ar}"><img src="{img()}" alt=""></figure>' if with_img and i < len(images) else ''
+            pic = f'<figure style="aspect-ratio:{ar}"><img src="{img(want_shot=False)}" alt=""></figure>' if with_img and i < len(images) else ''
             big = f'<b class="num">{e(num)}</b>' if isinstance(num, str) and re.search(r'\d', num) else ''
             cells += f'<div class="card">{pic}{lab(f"0{i + 1}") if not big and bt["type"] != "steps" else ""}{big}<h3 class="h3">{e(t)}</h3><p>{e(body_)}</p></div>'
         head = f'<div class="gh">{lab(bt.get("label"))}<h2 class="h2" style="{head_style(sec)}">{e(bt.get("h2"))}</h2>{("<p class=\"lede\">" + e(bt.get("lede")) + "</p>") if bt.get("lede") else ""}</div>' if bt.get('h2') else ''
@@ -256,10 +257,10 @@ img,video{{display:block;max-width:100%}}a{{color:inherit;text-decoration:none}}
 .hero .hero-in{{position:relative;z-index:1;padding-bottom:clamp(40px,6vw,80px)}}.hero.has-media{{color:var(--on-photo)}}.hero .cat{{display:flex;gap:26px;flex-wrap:wrap;margin-bottom:22px}}.hero .al-center{{text-align:center;justify-items:center;display:grid}}.hero .place-start{{align-self:start;padding-top:40px}}.hero .ctas{{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px}}
 .hero.shot{{align-content:start;padding-top:150px}}.shotwrap{{padding-top:clamp(36px,5vw,64px);padding-bottom:0}}.shotframe{{border-radius:max(12px,var(--radius)) max(12px,var(--radius)) 0 0;overflow:hidden;border:1px solid var(--line);border-bottom:0;box-shadow:0 30px 80px color-mix(in srgb,var(--ink) 14%,transparent)}}.shotframe img{{width:100%;max-height:64vh;object-fit:cover;object-position:top}}
 .sec{{padding:clamp(64px,9vw,140px) 0;display:grid;align-content:center}}.band-dark{{background:var(--band-paper);color:var(--band-ink)}}.band-dark .lab{{color:color-mix(in srgb,var(--band-ink) 62%,transparent)}}.band-dark .btn{{background:var(--band-ink);color:var(--band-paper)}}.band-alt{{background:color-mix(in srgb,var(--ink) 6%,var(--paper))}}
-.statement .who{{margin-top:22px}}
+.statement .who{{margin-top:22px}}.statement .wrap.center{{text-align:center;display:grid;justify-items:center}}
 .photos .pair{{display:flex;gap:var(--gutter);align-items:flex-start}}.photos figure{{overflow:hidden;border-radius:var(--radius)}}.photos figure img,.photo figure img{{width:100%;height:100%;object-fit:cover}}.photo figure{{position:relative;margin:0}}.photo.bleed{{padding:0}}.photo .over{{position:absolute;inset:auto 0 0 0;padding-bottom:clamp(28px,4vw,56px);color:var(--on-photo)}}.h2.light{{color:var(--on-photo)}}.cap{{margin-top:14px;max-width:var(--body-max);color:var(--muted)}}.caps{{display:flex;gap:24px;align-items:baseline;flex-wrap:wrap;padding-top:14px}}
-.gh{{display:grid;grid-template-columns:1.1fr .9fr;gap:var(--gutter);align-items:end;margin-bottom:clamp(28px,4vw,48px)}}.gh .h2{{margin-top:14px}}.gh .lede{{margin-top:0}}
-.grid{{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:var(--gutter)}}.card figure{{overflow:hidden;border-radius:var(--radius);margin-bottom:16px}}.card figure img{{width:100%;height:100%;object-fit:cover}}.card .h3{{margin-top:8px}}.card p{{margin-top:10px;color:var(--muted);max-width:34ch}}.card .num{{display:block;font-family:var(--display);font-weight:var(--h2-w);font-size:var(--h2);line-height:1;letter-spacing:-.02em}}
+.gh{{display:grid;grid-template-columns:1.1fr .9fr;gap:var(--gutter);align-items:end;margin-bottom:clamp(28px,4vw,48px)}}.gh .h2{{text-align:left!important;margin-left:0!important}}.gh .h2{{margin-top:14px}}.gh .lede{{margin-top:0}}
+.grid{{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:var(--gutter)}}.card figure{{overflow:hidden;border-radius:var(--radius);margin-bottom:16px}}.card figure img{{width:100%;height:100%;object-fit:cover}}.card .h3{{margin-top:8px;font-size:min(var(--h3),28px)}}.card p{{margin-top:10px;color:var(--muted);max-width:34ch}}.card .num{{display:block;font-family:var(--display);font-weight:var(--h2-w);font-size:var(--h2);line-height:1;letter-spacing:-.02em}}
 .ledger .two{{display:grid;grid-template-columns:.9fr 1.1fr;gap:var(--gutter)}}.rows{{list-style:none}}.rows li{{display:flex;align-items:baseline;gap:12px;padding:14px 0;border-top:1px solid var(--line);font-size:calc(var(--body-px) + 2px)}}.rows li i{{flex:1;border-bottom:1px dotted var(--line)}}.rows li b{{font-weight:500;font-variant-numeric:tabular-nums}}.ledger .ctas{{margin-top:26px}}
 .twocol .cols{{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:var(--gutter);margin-top:30px}}.twocol .cols .h2{{font-size:var(--h3)}}
 .cta .center{{text-align:center;display:grid;justify-items:center;gap:22px}}.cta .h2{{max-width:16ch}}.form{{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:min(640px,100%);text-align:left}}.form label{{display:grid;gap:6px}}.form label span{{font-family:var(--label);font-size:var(--lab-px);letter-spacing:var(--lab-ls);text-transform:uppercase;opacity:.7}}.form input{{min-height:46px;border:1px solid color-mix(in srgb,currentColor 30%,transparent);background:transparent;color:inherit;padding:0 12px;border-radius:max(4px,min(12px,var(--btn-r)));font:inherit}}.form .btn{{grid-column:1/-1;justify-content:center}}.alts{{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}}
@@ -277,7 +278,7 @@ img,video{{display:block;max-width:100%}}a{{color:inherit;text-decoration:none}}
 <script>{moves}</script><script>{swarm}</script>
 <script>
 // blueprint motion: reveal on scroll for every section's main pieces, with the winner's own easing/durations
-document.querySelectorAll('.sec .h2, .sec .big-p, .sec .lede, .card, .rows li, .photo figure, .photos figure').forEach((el, i) => {{ if (!el.closest('.hero')) el.setAttribute('data-move', el.matches('figure') ? 'clip-reveal' : el.matches('.card, .rows li') ? 'stagger-in' : 'fade-rise'); }});
+document.querySelectorAll('.sec .h2, .sec .big-p, .sec .lede, .grid, .rows, .cols, .photo figure, .photos figure').forEach((el, i) => {{ if (!el.closest('.hero')) el.setAttribute('data-move', el.matches('figure') ? 'clip-reveal' : el.matches('.grid, .rows, .cols') ? 'stagger-in' : 'fade-rise'); }});
 document.querySelector('.hero')?.setAttribute('data-move', 'hero-intro');
 const PREVIEW=(self!==top||/[?&]swarm/.test(location.search))&&!matchMedia('(prefers-reduced-motion:reduce)').matches;
 addEventListener('load',()=>{{ const nav=document.getElementById('nav'); const solidFrom=document.querySelector('.hero.has-media')?innerHeight*.7:0; const onS=()=>nav.classList.toggle('solid',scrollY>solidFrom); onS(); addEventListener('scroll',onS,{{passive:true}});
