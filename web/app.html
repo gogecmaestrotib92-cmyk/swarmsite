@@ -30,6 +30,11 @@ a{color:inherit;text-decoration:none}
 .frame .hud{z-index:6;position:absolute;left:0;right:0;bottom:0;padding:18px 22px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.75));color:#fff;display:flex;justify-content:space-between;align-items:end;gap:16px;text-align:left}
 .frame .hud .lab{color:rgba(255,255,255,.7)}
 .log{width:min(1100px,94vw);display:flex;flex-wrap:wrap;gap:8px 18px;justify-content:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);min-height:18px}.log span{display:inline-flex;align-items:center;gap:6px}.log b{width:7px;height:7px;border-radius:50%;display:inline-block}
+.brief{width:min(760px,94vw);display:grid;gap:14px;text-align:left;border:1px solid var(--line);border-radius:18px;background:#fff;padding:18px 20px}
+.brief .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.brief .row.col{flex-direction:column;align-items:stretch;gap:6px}
+.brief .lab{min-width:44px}.brief input[type=text],.brief input:not([type]){border:1px solid var(--line);border-radius:10px;padding:11px 12px;font:500 15px var(--sans);min-height:44px}
+.chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:13.5px;min-height:36px;cursor:pointer}.chip input{accent-color:var(--ink)}
+.brief.hide{display:none}
 .steps{width:min(720px,94vw);display:grid;gap:0;text-align:left;border:1px solid var(--line);border-radius:18px;background:#fff;overflow:hidden}
 .step{display:grid;grid-template-columns:22px 1fr auto;gap:14px;align-items:center;padding:13px 18px;border-top:1px solid var(--line);font-size:15px}
 .step:first-child{border-top:0}.step .dot{width:10px;height:10px;border-radius:50%;background:#D8D8D5;justify-self:center}
@@ -54,6 +59,23 @@ a{color:inherit;text-decoration:none}
 <section class="stage" id="stage">
   <span class="lab" id="urlLab"></span>
   <h1 class="h" id="h">Reading your site…</h1>
+  <form class="brief" id="brief" onsubmit="return false">
+    <div class="row"><span class="lab">Keep</span>
+      <label class="chip"><input type="checkbox" name="keepFont" checked><span>their font</span></label>
+      <label class="chip"><input type="checkbox" name="keepColours" checked><span>their colours</span></label>
+      <label class="chip"><input type="checkbox" name="keepLogo" checked><span>their logo</span></label>
+    </div>
+    <div class="row"><span class="lab">Kind</span>
+      <label class="chip"><input type="radio" name="kind" value=""><span>let the swarm decide</span></label>
+      <label class="chip"><input type="radio" name="kind" value="place"><span>place (restaurant, hotel, clinic)</span></label>
+      <label class="chip"><input type="radio" name="kind" value="service"><span>service (agency, law, studio)</span></label>
+      <label class="chip"><input type="radio" name="kind" value="software"><span>software</span></label>
+      <label class="chip"><input type="radio" name="kind" value="product"><span>product / shop</span></label>
+    </div>
+    <div class="row col"><span class="lab">What is already good — don’t touch it</span><input name="keep" placeholder="e.g. the headline, our prices, the photo on the hero" maxlength="300"></div>
+    <div class="row col"><span class="lab">The one action visitors should take</span><input name="goal" placeholder="e.g. Book a table · Start free trial · Call us" maxlength="80"></div>
+    <div class="row"><button class="pill ink" id="go">Rebuild it →</button><span class="lab">5–15 min · nothing changes on your real site</span></div>
+  </form>
   <div class="frame" id="frame"><div class="skel" id="skel"></div><img id="before" alt=""><div class="hud"><span class="lab" id="hudL">agents waking up</span><span class="lab" id="hudR">0 / 6</span></div></div>
   <div class="log" id="log"></div>
   <div class="steps" id="steps"></div>
@@ -85,9 +107,14 @@ function showResult(job){ const r=job.result; const pv=`${window.SWARMSITE_API}/
 async function poll(id){ try{ const r=await fetch(`${API}/jobs/${id}`); if(!r.ok) throw new Error('job not found'); const job=await r.json(); renderSteps(job);
     if(job.status==='done'){ if(sw) sw.stop(); showResult(job); return; } if(job.status==='failed'){ $('#err').textContent='Something broke: '+(job.error||'unknown')+'. Try again or send us the URL.'; $('#h').textContent='That one didn’t go through.'; return; }
   }catch(e){ $('#err').textContent=e.message; } setTimeout(()=>poll(id), 3000); }
-async function start(){ let id=qs.get('job'); const url=qs.get('url'); $('#urlLab').textContent=url?('https://'+url.replace(/^https?:\/\//,'')):''; sw=Agents.mount($('#frame'),{count:7,phase:'queued'});
-  if(!id && url){ const r=await fetch(`${API}/jobs`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url})}); const j=await r.json(); if(!r.ok){ $('#err').textContent=j.error||'could not start'; return; } id=j.id; history.replaceState(null,'',`/app?url=${encodeURIComponent(url)}&job=${id}`); }
-  if(!id){ location.href='/'; return; } poll(id); }
+function briefData(){ const f=$('#brief'); const d={keepFont:f.keepFont.checked,keepColours:f.keepColours.checked,keepLogo:f.keepLogo.checked,kind:(f.querySelector('[name=kind]:checked')||{}).value||'',keep:f.keep.value.trim(),goal:f.goal.value.trim()}; return d; }
+async function launch(url){ $('#brief').classList.add('hide'); $('#h').textContent='Reading your site…'; sw=Agents.mount($('#frame'),{count:7,phase:'queued'});
+  const r=await fetch(`${API}/jobs`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url,options:briefData()})}); const j=await r.json(); if(!r.ok){ $('#err').textContent=j.error||'could not start'; return; }
+  history.replaceState(null,'',`/app?url=${encodeURIComponent(url)}&job=${j.id}`); poll(j.id); }
+async function start(){ let id=qs.get('job'); const url=qs.get('url'); $('#urlLab').textContent=url?('https://'+url.replace(/^https?:\/\//,'')):'';
+  if(id){ $('#brief').classList.add('hide'); sw=Agents.mount($('#frame'),{count:7,phase:'queued'}); poll(id); return; }
+  if(!url){ location.href='/'; return; }
+  $('#h').textContent='Before the swarm starts…'; $('#brief').querySelector('[name=kind][value=""]').checked=true; $('#go').onclick=()=>launch(url); }
 start();
 </script>
 </body></html>

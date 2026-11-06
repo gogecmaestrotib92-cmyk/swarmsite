@@ -101,7 +101,7 @@ function eventsRender(dir) { const html = (() => { try { return fs.readFileSync(
   return ev; }
 function eventsQA(qa) { return String(qa || '').split('\n').filter(Boolean).slice(0, 8).map(l => ({ role: 'QA', text: l.replace(/^\[(high|med|low)\]\s*/, '').slice(0, 70) })); }
 
-const ARTS = ['inventory.json', 'assets.json', 'images.json', 'geometry.json', 'audit.json', 'direction.json', 'mobile.json', 'index.html'];
+const ARTS = ['brief.json', 'inventory.json', 'assets.json', 'images.json', 'geometry.json', 'audit.json', 'direction.json', 'mobile.json', 'index.html'];
 async function uploadArtefacts(job, dir) { for (const f of ARTS) { const fp = path.join(dir, f); if (fs.existsSync(fp)) { try { await upload(fp, `${job.id}/art/${f}`, f.endsWith('.html') ? 'text/html' : 'application/json'); } catch (e) { console.warn('art', f, e.message); } } } }
 async function process_(job) {
   const slug = slugOf(job.url); const dir = path.join(OUT, slug); fs.mkdirSync(dir, { recursive: true });
@@ -112,6 +112,7 @@ async function process_(job) {
     await emit(job, eventsCapture(dir));
   });
   await timed('diagnose', async () => { const out = await run('python3', ['-I', 'lib/audit/diagnose.py', path.join(dir, 'inventory.json')]); fs.writeFileSync(path.join(dir, 'audit.json'), out); }); await emit(job, eventsDiagnose(dir));
+  fs.writeFileSync(path.join(dir, 'brief.json'), JSON.stringify(job.options || {}));
   await timed('direct', () => run('python3', ['lib/direct/direct.py', dir, process.env.DIRECT_MODEL || 'claude-sonnet-5-5'], { timeoutMs: 240000 })); await emit(job, eventsDirect(dir));
   await timed('render', () => run('python3', ['lib/render/render_beats.py', dir])); await emit(job, eventsRender(dir));
   let qa = null; await timed('qa', async () => { try { const o = await run('python3', ['lib/qa/check.py', path.join(dir, 'index.html')], { timeoutMs: 240000 }); qa = o.split('\n').filter(l => /QA score|\[(high|med|low)/.test(l)).join('\n'); } catch (e) { qa = 'qa skipped: ' + e.message.slice(0, 200); } }); await emit(job, eventsQA(qa));
