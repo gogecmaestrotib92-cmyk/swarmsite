@@ -21,7 +21,8 @@ SCHEMA = r'''
    {"id":"...","type":"photo","label":"...","h2":"noun heading 1-6 words","lede":"10-40 words","image":"image id","cap":["left caption","right caption"]},
    {"id":"...","type":"ledger","label":"...","h2":"...","lede":"...","image":"image id or ''","items":[["name","price"],...6-10],"cta":"...","cta_href":"https://...","cta2":"","cta2_href":""},
    {"id":"...","type":"facts","image":"image id","facts":[["1982","label"],["44","label"],["9–00","label"]]},
-   {"id":"...","type":"cells","label":"...","h2":"...","lede":"...","cells":[["label","big number","sub"],...3-6]},
+   {"id":"...","type":"cells","label":"...","h2":"...","lede":"...","cells":[["label","REAL number from the site e.g. 39 / €69 / 14 days","sub"],...3-6]},   // ONLY real figures. Never 01/02/03 ordinals, never invented counts.
+   {"id":"...","type":"features","label":"...","h2":"noun heading ≤5 words","lede":"...","features":[{"title":"2-4 words","body":"one sentence ≤18 words from the site"},...3-6]},   // software/product capabilities as text, not numbers
    {"id":"...","type":"steps","label":"...","h2":"...","steps":["...","...","..."],"note":"..."},
    {"id":"...","type":"form","label":"Rezervacija","h2":"≤4 words","fields":["Ime i prezime","Telefon","Broj gostiju","Datum","Vreme","Napomena"],"cta":"...","alt":["phone line","email line"],"image":"image id or ''"},
    {"id":"...","type":"faq","label":"...","items":[["Q","A ≤40 words"],...3-5]}
@@ -35,7 +36,9 @@ Hard rules:
 - Every number, price, hour, address, name, quote and claim must come from the inventory. If it isn't there, leave it out. Never invent reviews, counts, logos, customers.
 - Write in the site's own language (the inventory shows it). Keep the owner's voice; cut the noise.
 - Follow the copy and rhythm rules below exactly (H1 ≤ 6 words with a stance; category + fact label; 60–80 words per screen; nouns in headings; buttons = verb + object; one main action everywhere).
-- Pick 4–6 beats only. One screen each. Photographs lead for a place/service; the ledger (real items + prices) is the artefact for a restaurant/shop/clinic; cells/steps for software.
+- Pick 4–6 beats only. One screen each. Photographs lead for a place/service; the ledger (real items + prices) is the artefact for a restaurant/shop/clinic.
+- SOFTWARE / PRODUCT: voice "sans" unless the brand's own display font is a serif. hero.media = the product screenshot (the largest UI image), shown framed, not as a photo background. Beats: features (capabilities as text) → steps (≤3, each ≤12 words) → cells ONLY if the site states real figures (prices, counts, days) → ledger for pricing (plan, price) → faq/form. No "quote" beat unless the site has a real quoted sentence with an author.
+- Headings: h2 ≤ 5 words (nouns). Steps ≤ 12 words each. Feature bodies ≤ 18 words. Never pad a grid with ordinals or placeholders; fewer, true items beat more.
 - Choose images by id from images.json: the hero gets the best 'heroGrade' landscape photo; never reuse the same image twice.
 - Output ONLY the JSON document, no prose, matching the schema. Comments in the schema are for you, not for the output.
 """
@@ -59,7 +62,7 @@ TOOL = {
             "brand": {"type": "object", "properties": {"name": {"type": "string"}, "badge": {"type": "string"}, "keep_font": {"type": "boolean"}, "font_hint": {"type": "string"}, "accent": {"type": "string"}, "paper": {"type": "string"}, "ink": {"type": "string"}}, "required": ["name"]},
             "nav": {"type": "object", "properties": {"links": {"type": "array", "items": {"type": "array", "items": {"type": "string"}}}, "cta": {"type": "string"}}},
             "hero": {"type": "object", "required": ["category", "fact", "h1", "lede", "cta"], "properties": {"category": {"type": "string"}, "fact": {"type": "string"}, "h1": {"type": "string"}, "lede": {"type": "string"}, "cta": {"type": "string"}, "cta2": {"type": "string"}, "media": {"type": "string"}}},
-            "beats": {"type": "array", "minItems": 3, "maxItems": 7, "items": {"type": "object", "required": ["id", "type"], "properties": {"id": {"type": "string"}, "type": {"type": "string", "enum": ["quote", "photo", "ledger", "facts", "cells", "steps", "form", "faq"]}}, "additionalProperties": True}},
+            "beats": {"type": "array", "minItems": 3, "maxItems": 7, "items": {"type": "object", "required": ["id", "type"], "properties": {"id": {"type": "string"}, "type": {"type": "string", "enum": ["quote", "photo", "ledger", "facts", "cells", "features", "steps", "form", "faq"]}}, "additionalProperties": True}},
             "ending": {"type": "object", "additionalProperties": True},
             "audit_notes": {"type": "array", "items": {"type": "string"}}
         }
@@ -71,6 +74,12 @@ def validate(doc):
     if not 3 <= len(doc.get('beats', [])) <= 7: errs.append('beats must be 4-6')
     h1 = re.sub(r'<[^>]+>', '', str(doc.get('hero', {}).get('h1', '')))
     if len(h1.split()) > 8: errs.append(f'h1 too long ({len(h1.split())} words): "{h1}"')
+    for b in doc.get('beats', []):
+        if b.get('type') == 'cells':
+            nums = [str(c[1]).strip() for c in b.get('cells', []) if len(c) > 1]
+            if nums and all(re.fullmatch(r'0?\d', n) for n in nums): errs.append('cells hold ordinals (01,02…) — use type "features" with text, or real figures')
+        if b.get('type') == 'steps' and any(len(str(x).split()) > 14 for x in b.get('steps', [])): errs.append('a step is longer than 12 words')
+        if b.get('h2') and len(re.sub(r'<[^>]+>', '', b['h2']).split()) > 6: errs.append(f'h2 too long: "{b["h2"]}"')
     ids = [b.get('id') for b in doc.get('beats', [])]
     if len(set(ids)) != len(ids): errs.append('beat ids must be unique')
     return errs
