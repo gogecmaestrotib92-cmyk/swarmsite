@@ -153,13 +153,13 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}
 <script src="/js/gsap.min.js" defer></script>
 <script src="/js/ScrollTrigger.min.js" defer></script>
 <script src="/js/lenis.min.js" defer></script>
-<script src="/js/moves.js" defer></script>
+<script src="/js/moves.js?v=3542b24" defer></script>
 <script>
 function go(e){e.preventDefault();const v=document.getElementById('url').value.trim();if(!v)return;location.href='/app?url='+encodeURIComponent(v.replace(/^https?:\/\//,''));}
 addEventListener('DOMContentLoaded',()=>{if(window.Moves)Moves.init();else addEventListener('load',()=>Moves.init());});
 </script>
-<script src="/js/agents.js" defer></script>
-<script src="/js/swarm.js" defer></script>
+<script src="/js/agents.js?v=3542b24" defer></script>
+<script src="/js/swarm.js?v=3542b24" defer></script>
 <script>addEventListener('load',()=>{ try{ if(!window.Swarm||matchMedia('(prefers-reduced-motion:reduce)').matches||location.hash==='#noswarm') return;
   const mobile=innerWidth<900; new Swarm({agents:mobile?8:18,speed:1,hud:true,sectionSelector:'[data-agent]',boxSel:'.pill,.urlbox,.step,.ba .row>div,.path,.faq details,.nav .wrap'}).run(); }catch(e){} });</script>
 <script>addEventListener('load',()=>{ if(!window.Agents) return; const bf=document.getElementById('bf'); if(!bf) return; let sw=null;
