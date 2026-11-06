@@ -86,13 +86,13 @@ a{color:inherit;text-decoration:none}
 <div class="result" id="result">
   <iframe id="preview" title="Your rebuilt site"></iframe>
   <div class="bar">
-    <div class="l"><span class="lab" id="meta"></span><div class="seg"><button class="on" data-v="desktop">Desktop</button><button data-v="mobile">Phone</button></div></div>
+    <div class="l"><span class="lab" id="meta"></span><div class="seg" id="variants"><button class="on" data-bp="">Beats</button></div><div class="seg"><button class="on" data-v="desktop">Desktop</button><button data-v="mobile">Phone</button></div></div>
     <div class="l"><a class="pill" id="openNew" target="_blank" rel="noopener">Open full screen ↗</a><a class="pill ink" href="/#paths">Keep it →</a></div>
   </div>
 </div>
 
 <script src="/config.js"></script>
-<script src="/js/agents.js?v=ceee019"></script>
+<script src="/js/agents.js?v=a44fe9b"></script>
 <script>
 const API = window.SWARMSITE_API; const qs = new URLSearchParams(location.search);
 const $ = s => document.querySelector(s);
@@ -102,7 +102,9 @@ function renderSteps(job){ const el=$('#steps'); el.innerHTML=job.steps.map(s=>`
   const done=job.steps.filter(s=>s.status==='done').length; $('#hudR').textContent=`${done} / ${job.steps.length}`; const cur=job.steps.find(s=>s.status==='running'); if(sw) sw.phase(cur?cur.id:(job.status==='done'?'done':'queued')); $('#hudL').textContent=cur?cur.label.toLowerCase():(job.status==='done'?'done':'queued'); $('#h').textContent=cur?cur.label.split(':')[0]+'…':(job.status==='queued'?'In the queue…':'Reading your site…');
   if((job.result?.beforeFullUrl||job.result?.beforeUrl) && !$('#before').src){ const im=$('#before'); im.src=job.result.beforeFullUrl||job.result.beforeUrl; im.onload=()=>{ im.classList.add('in'); $('#skel').remove(); if(sw) sw.setPage(im, job.result.pageHeight||im.naturalHeight); }; }
   const evs=job.result?.events||[]; if(evs.length>seen){ if(sw) sw.push(evs.slice(seen)); seen=evs.length; $('#log').innerHTML=evs.slice(-6).map(e=>`<span><b style="background:${COL[e.role]||'#999'}"></b>${e.role} · ${e.text}</span>`).join(''); } }
-function showResult(job){ const r=job.result; const pv=`${window.SWARMSITE_API}/p/${job.id}`; $('#preview').src=pv; $('#openNew').href=pv+'?swarm=1'; $('#meta').textContent=`${r.direction?.kind||''} · concept ${r.direction?.concept||''} · ${r.direction?.beats?.length||''} beats · ${r.seconds||''}s`; $('#result').classList.add('on');
+function showResult(job){ const r=job.result; const pv=`${window.SWARMSITE_API}/p/${job.id}`; $('#preview').src=pv; $('#openNew').href=pv+'?swarm=1';
+  const vs=$('#variants'); (r.blueprints||[]).forEach(bp=>{ const b=document.createElement('button'); b.dataset.bp=bp; b.textContent='Blueprint · '+bp; vs.appendChild(b); });
+  vs.querySelectorAll('button').forEach(b=>b.onclick=()=>{ vs.querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); const u=pv+(b.dataset.bp?('?bp='+b.dataset.bp):''); $('#preview').src=u; $('#openNew').href=u+(b.dataset.bp?'&':'?')+'swarm=1'; }); $('#meta').textContent=`${r.direction?.kind||''} · concept ${r.direction?.concept||''} · ${r.direction?.beats?.length||''} beats · ${r.seconds||''}s`; $('#result').classList.add('on');
   document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{ document.querySelectorAll('.seg button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); const f=$('#preview'); if(b.dataset.v==='mobile'){ f.style.width='390px'; f.style.margin='0 auto'; f.style.borderLeft=f.style.borderRight='1px solid #ddd'; } else { f.style.width='100%'; f.style.border='0'; } }); }
 async function poll(id){ try{ const r=await fetch(`${API}/jobs/${id}`); if(!r.ok) throw new Error('job not found'); const job=await r.json(); renderSteps(job);
     if(job.status==='done'){ if(sw) sw.stop(); showResult(job); return; } if(job.status==='failed'){ $('#err').textContent='Something broke: '+(job.error||'unknown')+'. Try again or send us the URL.'; $('#h').textContent='That one didn’t go through.'; return; }

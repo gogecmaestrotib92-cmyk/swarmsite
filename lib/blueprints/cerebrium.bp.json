@@ -1,0 +1,366 @@
+{
+ "id": "cerebrium",
+ "source": "https://cerebrium.ai/",
+ "class": "software",
+ "archetype": "dark-light-bands",
+ "screens": 14.2,
+ "grid": {
+  "frame": 40,
+  "gutter": 40,
+  "container": 1345,
+  "col": null
+ },
+ "type": {
+  "display": {
+   "fam": "ABC Favorit",
+   "px": 86,
+   "w": 300,
+   "ls": -0.023,
+   "lh": 1.0,
+   "tt": null,
+   "it": false,
+   "al": "start"
+  },
+  "h2": {
+   "fam": "ABC Favorit",
+   "px": 44,
+   "w": 300,
+   "ls": -0.045,
+   "lh": 1.15,
+   "tt": null,
+   "it": false,
+   "al": null
+  },
+  "h3": {
+   "fam": "Suisse Intl",
+   "px": 36,
+   "w": 300,
+   "ls": -0.028,
+   "lh": 1.15,
+   "tt": null,
+   "it": false,
+   "al": null
+  },
+  "body": {
+   "fam": "Suisse Intl",
+   "px": 17,
+   "lh": 1.35,
+   "maxw": 321
+  },
+  "label": {
+   "fam": "Suisse Intl Mono",
+   "px": 13,
+   "ls": 0.0,
+   "tt": "uppercase"
+  }
+ },
+ "colour": {
+  "paper": "#101421",
+  "ink": "#101421",
+  "accent": "#ff488b",
+  "mode": "dark",
+  "bands": [
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "paper"
+  ],
+  "alt": "#172b76"
+ },
+ "media": {
+  "radius": 0,
+  "aspects": [
+   0.78,
+   0.86,
+   1.21
+  ],
+  "bleed": false,
+  "video_hero": false
+ },
+ "button": {
+  "h": 54,
+  "pad": "0px 20px",
+  "radius": 7,
+  "px": 16,
+  "w": 500,
+  "tt": null,
+  "filled": true
+ },
+ "motion": {
+  "smooth": true,
+  "ease": "cubic-bezier(0.645, 0.045, 0.355, 1)",
+  "fast": 0.2,
+  "slow": 0.8,
+  "cursor": false,
+  "idea": ""
+ },
+ "nav": {
+  "pos": "fixed",
+  "h": 82,
+  "links": null
+ },
+ "sections": [
+  {
+   "role": "hero",
+   "screens": 1.85,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 86,
+    "w": 300,
+    "tt": null,
+    "it": false,
+    "al": "start",
+    "lh": 1.0,
+    "x": 0.028,
+    "y": 0.297,
+    "wf": 0.46,
+    "ls": -0.023
+   },
+   "body": {
+    "px": 17,
+    "lh": 1.35,
+    "maxw": 321
+   },
+   "media": [
+    {
+     "ar": 2.62,
+     "wf": 0.094,
+     "xf": 0.0,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "cols": [
+    0.0,
+    0.556
+   ],
+   "note": "full-bleed webgl canvas behind; h1 left 663px; logo ticker at bottom; CLICK AND HOLD affordance",
+   "words": 44
+  },
+  {
+   "role": "feature-cards-sticky",
+   "screens": 4.18,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 16,
+    "w": 500,
+    "tt": null,
+    "it": false,
+    "al": "start",
+    "lh": 1.5,
+    "x": 0.028,
+    "y": 0.0,
+    "wf": 0.46,
+    "ls": 0
+   },
+   "body": {
+    "px": 27,
+    "lh": 1.35,
+    "maxw": null
+   },
+   "media": [
+    {
+     "ar": 0.86,
+     "wf": 0.46,
+     "xf": 0.502,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "cols": [
+    0.028,
+    0.5
+   ],
+   "note": "2-col: left sticky copy stack, right tall cards 663x775 scrolling; mono labels with data (CAPACITY : 2500+)",
+   "words": 245
+  },
+  {
+   "role": "statement",
+   "screens": 0.79,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 16,
+    "w": 500,
+    "tt": null,
+    "it": false,
+    "al": "start",
+    "lh": 1.05,
+    "x": 0.028,
+    "y": 0.0,
+    "wf": 0.417,
+    "ls": 0
+   },
+   "body": {
+    "px": 57,
+    "lh": 1.05,
+    "maxw": 600
+   },
+   "cols": [
+    0.028
+   ],
+   "note": "dark band: mono label, 57px light display line, 27px body, pink button",
+   "words": 107
+  },
+  {
+   "role": "logo-grid",
+   "screens": 0.47,
+   "pad": null,
+   "band": null,
+   "note": "20-col strip of partner marks"
+  },
+  {
+   "role": "cases-grid",
+   "screens": 0.76,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 44,
+    "w": 300,
+    "tt": null,
+    "it": false,
+    "al": "start",
+    "lh": 1.15,
+    "x": 0.371,
+    "y": 0.0,
+    "wf": 0.248,
+    "ls": -0.045
+   },
+   "body": {
+    "px": 17,
+    "lh": 1.35,
+    "maxw": 388
+   },
+   "cols": [
+    0.097,
+    0.375
+   ],
+   "note": "container-sm 1240; centered h2; 2x2 list rows with 47px icon + h3 21px + 17px body",
+   "words": 91
+  },
+  {
+   "role": "cards-row",
+   "screens": 0.93,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 27,
+    "w": 400,
+    "tt": null,
+    "it": false,
+    "al": "start",
+    "lh": 1.35,
+    "x": 0.042,
+    "y": 0.692,
+    "wf": 0.276,
+    "ls": -0.037
+   },
+   "media": [
+    {
+     "ar": 1.21,
+     "wf": 0.138,
+     "xf": 0.111,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "3 cards 453px wide, image 199x165 contained, h3 27px; horizontal carousel with arrows",
+   "words": 171
+  },
+  {
+   "role": "features-list",
+   "screens": 0.7,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 16,
+    "w": 500,
+    "tt": null,
+    "it": false,
+    "al": "start",
+    "lh": 1.05,
+    "x": 0.028,
+    "y": 0.0,
+    "wf": 0.302,
+    "ls": 0
+   },
+   "cols": [
+    0.028,
+    0.347
+   ],
+   "note": "label left (435px col), content right from x=500",
+   "words": 35
+  },
+  {
+   "role": "blog-cards",
+   "screens": 0.87,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 36,
+    "w": 300,
+    "tt": null,
+    "it": false,
+    "al": "start",
+    "lh": 1.15,
+    "x": 0.028,
+    "y": 0.009,
+    "wf": 0.224,
+    "ls": -0.028
+   },
+   "media": [
+    {
+     "ar": 0.78,
+     "wf": 0.302,
+     "xf": 0.028,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "cols": [
+    0.028,
+    0.347,
+    0.667,
+    0.889
+   ],
+   "note": "3 portrait cards 435x560, title inside card bottom",
+   "words": 72
+  },
+  {
+   "role": "footer",
+   "screens": 1.18,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 15,
+    "w": 400,
+    "tt": null,
+    "it": false,
+    "al": "start",
+    "lh": 1.3,
+    "x": 0.502,
+    "y": 0.079,
+    "wf": 0.223,
+    "ls": 0.0
+   },
+   "body": {
+    "px": 36,
+    "lh": 1.15,
+    "maxw": 663
+   },
+   "note": "dark footer: 36px statement left 663px + CTA, link columns right at 723/1064",
+   "words": 51
+  }
+ ]
+}

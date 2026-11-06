@@ -1,0 +1,329 @@
+{
+ "id": "aino",
+ "source": "https://aino.agency/",
+ "class": "service",
+ "archetype": "index-grid",
+ "screens": 8.9,
+ "grid": {
+  "frame": 16,
+  "gutter": 16,
+  "container": 1408,
+  "col": 340
+ },
+ "type": {
+  "display": {
+   "fam": "abcplus",
+   "px": 38,
+   "w": 720,
+   "ls": -0.026,
+   "lh": 1.03,
+   "tt": null,
+   "it": false,
+   "al": null
+  },
+  "h2": {
+   "fam": "abcplus",
+   "px": 38,
+   "w": 720,
+   "ls": -0.026,
+   "lh": 1.03,
+   "tt": null,
+   "it": false,
+   "al": null
+  },
+  "h3": null,
+  "body": null,
+  "label": {
+   "fam": null,
+   "px": 13,
+   "ls": 0,
+   "tt": "uppercase"
+  }
+ },
+ "colour": {
+  "paper": "#181818",
+  "ink": "#181818",
+  "accent": null,
+  "mode": "dark",
+  "bands": [
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "paper"
+  ],
+  "alt": null
+ },
+ "media": {
+  "radius": 0,
+  "aspects": [
+   0.8,
+   0.84,
+   1.33,
+   1.78,
+   6.77
+  ],
+  "bleed": false,
+  "video_hero": true
+ },
+ "button": {
+  "h": 32,
+  "pad": "1px 12px 0px",
+  "radius": 4,
+  "px": 13,
+  "w": 400,
+  "tt": "uppercase",
+  "filled": true
+ },
+ "motion": {
+  "smooth": false,
+  "ease": "cubic-bezier(0.2,0.8,0.2,1)",
+  "fast": 0.3,
+  "slow": 0.1,
+  "cursor": false,
+  "idea": "almost no motion: hover colour 0.1s, blinking clock; the rhythm IS the motion"
+ },
+ "nav": {
+  "pos": "static",
+  "h": 0,
+  "links": 6
+ },
+ "sections": [
+  {
+   "role": "work-2up",
+   "screens": 1.22,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 13,
+    "w": 500,
+    "tt": "uppercase",
+    "it": false,
+    "al": "start",
+    "lh": 1.39,
+    "x": 0.011,
+    "y": 0.962,
+    "wf": 0.483,
+    "ls": 0.077
+   },
+   "media": [
+    {
+     "ar": 0.8,
+     "wf": 0.483,
+     "xf": 0.011,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 0.8,
+     "wf": 0.483,
+     "xf": 0.506,
+     "bleed": false,
+     "video": true,
+     "radius": 0
+    }
+   ],
+   "cols": [
+    0.014,
+    0.5
+   ],
+   "note": "two 4:5 tiles, index label under each (A002 NAME)"
+  },
+  {
+   "role": "statement",
+   "screens": 0.26,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 38,
+    "w": 720,
+    "tt": null,
+    "it": false,
+    "al": "start",
+    "lh": 1.03,
+    "x": 0.011,
+    "y": 0.0,
+    "wf": 0.607,
+    "ls": -0.026
+   },
+   "note": "the only sentence on the page; h1 38px bold 874px + two small pills",
+   "words": 22
+  },
+  {
+   "role": "work-asym",
+   "screens": 1.22,
+   "pad": null,
+   "band": null,
+   "media": [
+    {
+     "ar": 0.8,
+     "wf": 0.483,
+     "xf": 0.011,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 0.8,
+     "wf": 0.236,
+     "xf": 0.753,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "cols": [
+    0.014,
+    0.75
+   ],
+   "note": "big tile left, small tile top-right (1 col), empty middle"
+  },
+  {
+   "role": "work-2up",
+   "screens": 1.16,
+   "pad": null,
+   "band": null,
+   "media": [
+    {
+     "ar": 0.84,
+     "wf": 0.483,
+     "xf": 0.011,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 0.84,
+     "wf": 0.483,
+     "xf": 0.506,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ]
+  },
+  {
+   "role": "work-full",
+   "screens": 1.11,
+   "pad": null,
+   "band": null,
+   "media": [
+    {
+     "ar": 1.78,
+     "wf": 0.978,
+     "xf": 0.011,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "one 16:9 tile full width"
+  },
+  {
+   "role": "work-3up",
+   "screens": 0.63,
+   "pad": null,
+   "band": null,
+   "media": [
+    {
+     "ar": 0.8,
+     "wf": 0.236,
+     "xf": 0.011,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 0.8,
+     "wf": 0.236,
+     "xf": 0.258,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 0.8,
+     "wf": 0.236,
+     "xf": 0.506,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "cols": [
+    0.014,
+    0.264,
+    0.5
+   ],
+   "note": "three 1-col tiles, fourth column empty"
+  },
+  {
+   "role": "work-full",
+   "screens": 1.46,
+   "pad": null,
+   "band": null,
+   "media": [
+    {
+     "ar": 1.33,
+     "wf": 0.978,
+     "xf": 0.011,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ]
+  },
+  {
+   "role": "services-footer",
+   "screens": 0.28,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 13,
+    "w": 400,
+    "tt": "uppercase",
+    "it": false,
+    "al": "start",
+    "lh": 1.05,
+    "x": null,
+    "y": null,
+    "wf": null,
+    "ls": 0
+   },
+   "cols": [
+    0.014,
+    0.264,
+    0.5,
+    0.75
+   ],
+   "note": "4 equal columns of 13px uppercase lists",
+   "words": 37
+  },
+  {
+   "role": "footer",
+   "screens": 0.36,
+   "pad": null,
+   "band": null,
+   "media": [
+    {
+     "ar": 6.77,
+     "wf": 0.978,
+     "xf": 0.0,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "cols": [
+    0.014,
+    0.264,
+    0.625
+   ]
+  }
+ ]
+}

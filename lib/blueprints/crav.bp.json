@@ -1,0 +1,405 @@
+{
+ "id": "crav",
+ "source": "https://www.cravburgers.shop/",
+ "class": "product",
+ "archetype": "loud-brand-poster",
+ "screens": 13.6,
+ "grid": {
+  "frame": 36,
+  "gutter": 40,
+  "container": 1353,
+  "col": null
+ },
+ "type": {
+  "display": {
+   "fam": "Modak",
+   "px": 504,
+   "w": 400,
+   "ls": 0,
+   "lh": 0.5,
+   "tt": null,
+   "it": false,
+   "al": "center"
+  },
+  "h2": {
+   "fam": "Mouse Memoirs",
+   "px": 432,
+   "w": 400,
+   "ls": 0,
+   "lh": 0.8,
+   "tt": null,
+   "it": false,
+   "al": "center"
+  },
+  "h3": {
+   "fam": "Mouse Memoirs",
+   "px": 216,
+   "w": 400,
+   "ls": 0,
+   "lh": 0.75,
+   "tt": "uppercase",
+   "it": false,
+   "al": "center"
+  },
+  "body": {
+   "fam": "Modak",
+   "px": 40,
+   "lh": 0.9,
+   "maxw": 189
+  },
+  "label": null
+ },
+ "colour": {
+  "paper": "#f5e3cd",
+  "ink": "#1b1b1b",
+  "accent": "#f91814",
+  "mode": "light",
+  "bands": [
+   "paper",
+   "paper",
+   "dark",
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "light",
+   "paper"
+  ],
+  "alt": "#ffd750"
+ },
+ "media": {
+  "radius": 0,
+  "aspects": [
+   0.7,
+   0.83,
+   0.88,
+   0.9,
+   0.94,
+   0.98,
+   0.99,
+   1.0
+  ],
+  "bleed": false,
+  "video_hero": false
+ },
+ "button": {
+  "h": 48,
+  "pad": "0 20px",
+  "radius": 999,
+  "px": 15,
+  "w": 500,
+  "tt": null
+ },
+ "motion": {
+  "smooth": true,
+  "ease": "cubic-bezier(0.4, 0, 0.2, 1)",
+  "fast": 0.3,
+  "slow": 0.3,
+  "cursor": false,
+  "idea": "poster site: condensed display at 216–504px, stickers/cutouts scattered with rotation, colour bands (cream/red/yellow), SVG curved divider, wobbly outline filter on cutouts"
+ },
+ "nav": {
+  "pos": "fixed",
+  "h": 86,
+  "links": 7
+ },
+ "sections": [
+  {
+   "role": "hero-poster",
+   "screens": 1.0,
+   "pad": [
+    115,
+    0
+   ],
+   "band": null,
+   "head": {
+    "px": 432,
+    "w": 400,
+    "tt": null,
+    "it": false,
+    "al": "center",
+    "lh": 0.8,
+    "x": 0.02,
+    "y": null,
+    "wf": 0.95,
+    "ls": 0
+   },
+   "body": {
+    "px": 40,
+    "lh": 0.9,
+    "maxw": 189
+   },
+   "media": [
+    {
+     "ar": 1.0,
+     "wf": 0.4,
+     "xf": 0.295,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "432px condensed headline full width, product cutout 576px over it, 40px chunky labels"
+  },
+  {
+   "role": "statement-stickers",
+   "screens": 1.73,
+   "pad": [
+    115,
+    115
+   ],
+   "band": null,
+   "head": {
+    "px": 216,
+    "w": 400,
+    "tt": "uppercase",
+    "it": false,
+    "al": "center",
+    "lh": 0.75,
+    "x": 0.166,
+    "y": 0.127,
+    "wf": 0.658,
+    "ls": 0
+   },
+   "media": [
+    {
+     "ar": 0.9,
+     "wf": 0.242,
+     "xf": 0.028,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 0.83,
+     "wf": 0.221,
+     "xf": 0.174,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "216px centred 3-line headline, cutouts pinned at the left edge"
+  },
+  {
+   "role": "band-red",
+   "screens": 2.28,
+   "pad": [
+    115,
+    115
+   ],
+   "band": "alt",
+   "head": {
+    "px": 216,
+    "w": 400,
+    "tt": "uppercase",
+    "it": false,
+    "al": "center",
+    "lh": 0.75,
+    "x": null,
+    "y": null,
+    "wf": null,
+    "ls": 0
+   },
+   "media": [
+    {
+     "ar": 0.94,
+     "wf": 0.208,
+     "xf": 0.041,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 1.07,
+     "wf": 0.226,
+     "xf": 0.742,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "full-bleed red band, headline centred, cutouts at both edges"
+  },
+  {
+   "role": "photo-bleed",
+   "screens": 1.6,
+   "pad": null,
+   "band": null,
+   "media": [
+    {
+     "ar": 1.18,
+     "wf": 0.99,
+     "xf": 0.0,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ]
+  },
+  {
+   "role": "sticker-row",
+   "screens": 1.06,
+   "pad": null,
+   "band": null,
+   "body": {
+    "px": 40,
+    "lh": 1.4,
+    "maxw": 1347
+   },
+   "media": [
+    {
+     "ar": 1.13,
+     "wf": 0.18,
+     "xf": 0.635,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 2.07,
+     "wf": 0.23,
+     "xf": 0.165,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 1.76,
+     "wf": 0.2,
+     "xf": 0.605,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "row of small contained stickers/badges"
+  },
+  {
+   "role": "curve-divider",
+   "screens": 2.59,
+   "pad": null,
+   "band": null,
+   "note": "big SVG path curve separating bands"
+  },
+  {
+   "role": "statement-left",
+   "screens": 0.72,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 216,
+    "w": 400,
+    "tt": null,
+    "it": false,
+    "al": "start",
+    "lh": 0.85,
+    "x": 0.025,
+    "y": 0.119,
+    "wf": 0.8,
+    "ls": 0
+   }
+  },
+  {
+   "role": "band-cream-collage",
+   "screens": 1.34,
+   "pad": [
+    259,
+    0
+   ],
+   "band": "alt",
+   "head": {
+    "px": 216,
+    "w": 400,
+    "tt": "uppercase",
+    "it": false,
+    "al": "start",
+    "lh": 0.75,
+    "x": 0.025,
+    "y": 0.389,
+    "wf": 0.35,
+    "ls": 0
+   },
+   "media": [
+    {
+     "ar": 0.98,
+     "wf": 0.431,
+     "xf": 0.279,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 1.02,
+     "wf": 0.439,
+     "xf": -0.081,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 0.7,
+     "wf": 0.423,
+     "xf": 0.567,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "cream band, headline left 504 wide, overlapping photo + cutouts"
+  },
+  {
+   "role": "footer-giant",
+   "screens": 1.06,
+   "pad": [
+    115,
+    115
+   ],
+   "band": null,
+   "head": {
+    "px": 504,
+    "w": 400,
+    "tt": null,
+    "it": false,
+    "al": "center",
+    "lh": 0.5,
+    "x": 0.025,
+    "y": 0.563,
+    "wf": 0.94,
+    "ls": 0
+   },
+   "body": {
+    "px": 26,
+    "lh": 1.5,
+    "maxw": 264
+   },
+   "media": [
+    {
+     "ar": 0.88,
+     "wf": 0.115,
+     "xf": 0.0,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 0.99,
+     "wf": 0.119,
+     "xf": 0.0,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 1.0,
+     "wf": 0.169,
+     "xf": 0.0,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "504px wordmark cropped at the bottom, stickers around, 26px columns"
+  }
+ ]
+}

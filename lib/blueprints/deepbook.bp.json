@@ -1,0 +1,294 @@
+{
+ "id": "deepbook",
+ "source": "https://deepbook.tech/",
+ "class": "software",
+ "archetype": "dark-mono-sans",
+ "screens": 13.3,
+ "grid": {
+  "frame": 48,
+  "gutter": 48,
+  "container": 1344,
+  "col": null
+ },
+ "type": {
+  "display": {
+   "fam": "TWKEverett",
+   "px": 102,
+   "w": 500,
+   "ls": -0.02,
+   "lh": 1.0,
+   "tt": null,
+   "it": false,
+   "al": "center"
+  },
+  "h2": {
+   "fam": "TWKEverett",
+   "px": 81,
+   "w": 500,
+   "ls": -0.02,
+   "lh": 1.0,
+   "tt": null,
+   "it": false,
+   "al": "center"
+  },
+  "h3": {
+   "fam": "TWKEverett",
+   "px": 48,
+   "w": 500,
+   "ls": -0.03,
+   "lh": 1.1,
+   "tt": null,
+   "it": false,
+   "al": null
+  },
+  "body": {
+   "fam": null,
+   "px": 18,
+   "lh": 1.4,
+   "maxw": 470
+  },
+  "label": null
+ },
+ "colour": {
+  "paper": "#000000",
+  "ink": "#000000",
+  "accent": "#1e6ef3",
+  "mode": "dark",
+  "bands": [
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "dark",
+   "light"
+  ],
+  "alt": null
+ },
+ "media": {
+  "radius": 0,
+  "aspects": [
+   1.9
+  ],
+  "bleed": true,
+  "video_hero": false
+ },
+ "button": {
+  "h": 49,
+  "pad": "15px 19px",
+  "radius": 4,
+  "px": 15,
+  "w": 500,
+  "tt": null,
+  "filled": true
+ },
+ "motion": {
+  "smooth": true,
+  "ease": "cubic-bezier(0.16, 1, 0.3, 1)",
+  "fast": 0.4,
+  "slow": 0.4,
+  "cursor": false,
+  "idea": "black page, one grotesk at 7 sizes, electric-blue 4px-radius buttons 49px; a 5-screen pinned feature sequence; big centred statements with 400–480px pads; canvas hero (substitute: gradient/video)"
+ },
+ "nav": {
+  "pos": "relative",
+  "h": 53,
+  "links": 3
+ },
+ "sections": [
+  {
+   "role": "hero-centre",
+   "screens": 1.0,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 81,
+    "w": 500,
+    "tt": null,
+    "it": false,
+    "al": "center",
+    "lh": 1.0,
+    "x": 0.158,
+    "y": null,
+    "wf": 0.684,
+    "ls": -0.02
+   },
+   "body": {
+    "px": 18,
+    "lh": 1.2,
+    "maxw": 490
+   },
+   "media": [
+    {
+     "ar": 1.9,
+     "wf": 1.0,
+     "xf": 0.0,
+     "bleed": true,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "centred 81px h1 low on the screen (y=508), 18px lede 490 wide, blue button; canvas behind"
+  },
+  {
+   "role": "pinned-features",
+   "screens": 5.0,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 40,
+    "w": 500,
+    "tt": null,
+    "it": false,
+    "al": "center",
+    "lh": 1.2,
+    "x": null,
+    "y": null,
+    "wf": null,
+    "ls": -0.03
+   },
+   "note": "5-screen pinned sequence inside a 1344 container: three features swap (title 40px centred, panels)"
+  },
+  {
+   "role": "two-audiences",
+   "screens": 1.13,
+   "pad": [
+    100,
+    100
+   ],
+   "band": null,
+   "head": {
+    "px": 48,
+    "w": 500,
+    "tt": null,
+    "it": false,
+    "al": "start",
+    "lh": 1.1,
+    "x": 0.056,
+    "y": 0.154,
+    "wf": 0.128,
+    "ls": -0.03
+   },
+   "body": {
+    "px": 18,
+    "lh": 1.2,
+    "maxw": 534
+   },
+   "note": "two columns at x=80 and x=762: 48px heading + 18px paragraph 534 wide + bullet list",
+   "words": 67
+  },
+  {
+   "role": "statement-giant",
+   "screens": 1.4,
+   "pad": [
+    400,
+    480
+   ],
+   "band": null,
+   "head": {
+    "px": 102,
+    "w": 500,
+    "tt": null,
+    "it": false,
+    "al": "center",
+    "lh": 1.0,
+    "x": 0.201,
+    "y": 0.377,
+    "wf": 0.597,
+    "ls": -0.02
+   },
+   "note": "one 102px centred line with 400/480px pads"
+  },
+  {
+   "role": "logos-statement-right",
+   "screens": 1.45,
+   "pad": [
+    240,
+    0
+   ],
+   "band": null,
+   "head": {
+    "px": 48,
+    "w": 500,
+    "tt": null,
+    "it": false,
+    "al": "start",
+    "lh": 1.1,
+    "x": 0.507,
+    "y": 0.218,
+    "wf": 0.456,
+    "ls": -0.03
+   },
+   "body": {
+    "px": 18,
+    "lh": 1.4,
+    "maxw": 470
+   },
+   "note": "48px statement in right half (x=730, 656 wide), logo grid left",
+   "words": 228
+  },
+  {
+   "role": "security-left",
+   "screens": 1.14,
+   "pad": [
+    200,
+    200
+   ],
+   "band": null,
+   "head": {
+    "px": 81,
+    "w": 500,
+    "tt": null,
+    "it": false,
+    "al": "start",
+    "lh": 0.9,
+    "x": 0.097,
+    "y": 0.315,
+    "wf": 0.362,
+    "ls": -0.02
+   },
+   "body": {
+    "px": 18,
+    "lh": 1.4,
+    "maxw": 400
+   },
+   "note": "81px heading at x=140, 18px paragraph 400 wide, button"
+  },
+  {
+   "role": "cta-centre",
+   "screens": 1.0,
+   "pad": null,
+   "band": "dark",
+   "head": {
+    "px": 81,
+    "w": 400,
+    "tt": null,
+    "it": false,
+    "al": "center",
+    "lh": 0.9,
+    "x": 0.256,
+    "y": 0.351,
+    "wf": 0.488,
+    "ls": 0
+   },
+   "body": {
+    "px": 18,
+    "lh": 1.4,
+    "maxw": 360
+   },
+   "note": "full-screen CTA repeating the h1"
+  },
+  {
+   "role": "footer-brand-colour",
+   "screens": 1.0,
+   "pad": [
+    48,
+    160
+   ],
+   "band": "dark",
+   "note": "full-screen footer in brand blue",
+   "words": 29
+  }
+ ]
+}

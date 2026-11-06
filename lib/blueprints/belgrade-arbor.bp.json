@@ -1,0 +1,572 @@
+{
+ "id": "belgrade-arbor",
+ "source": "https://belgradearbor.rs/en",
+ "class": "place",
+ "archetype": "real-estate-cinematic",
+ "screens": 23.4,
+ "grid": {
+  "frame": 64,
+  "gutter": 64,
+  "container": 1312,
+  "col": null
+ },
+ "type": {
+  "display": {
+   "fam": "editorialOld",
+   "px": 240,
+   "w": 300,
+   "ls": 0,
+   "lh": 1.1,
+   "tt": "uppercase",
+   "it": false,
+   "al": "center"
+  },
+  "h2": {
+   "fam": "editorialOld",
+   "px": 160,
+   "w": 400,
+   "ls": 0,
+   "lh": 1.1,
+   "tt": "uppercase",
+   "it": false,
+   "al": null
+  },
+  "h3": {
+   "fam": "editorialOld",
+   "px": 151,
+   "w": 400,
+   "ls": 0,
+   "lh": 1.1,
+   "tt": "uppercase",
+   "it": false,
+   "al": "center"
+  },
+  "body": {
+   "fam": "Work Sans",
+   "px": 16,
+   "lh": 1.4,
+   "maxw": 437
+  },
+  "label": null
+ },
+ "colour": {
+  "paper": "#fdfbef",
+  "ink": "#2e3a26",
+  "accent": "#314759",
+  "mode": "light",
+  "bands": [
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "dark",
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "paper"
+  ],
+  "alt": null
+ },
+ "media": {
+  "radius": 0,
+  "aspects": [
+   0.62,
+   0.67,
+   0.69,
+   0.75,
+   0.95,
+   1.0,
+   1.02,
+   1.18
+  ],
+  "bleed": true,
+  "video_hero": true
+ },
+ "button": {
+  "h": 56,
+  "pad": "20px",
+  "radius": 999,
+  "px": 14,
+  "w": 500,
+  "tt": "uppercase",
+  "filled": false
+ },
+ "motion": {
+  "smooth": true,
+  "ease": "cubic-bezier(0.4, 0, 0.2, 1)",
+  "fast": 0.22,
+  "slow": 0.65,
+  "cursor": false,
+  "idea": "one pinned 9-screen intro; every chapter opens with a 160px uppercase serif title over a bleed photo; horizontal card rails (864x907) scrub with scroll; a 3D map canvas"
+ },
+ "nav": {
+  "pos": "static",
+  "h": 432,
+  "links": 9
+ },
+ "sections": [
+  {
+   "role": "hero-video-wordmark",
+   "screens": 1.0,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 151,
+    "w": 400,
+    "tt": "uppercase",
+    "it": false,
+    "al": "center",
+    "lh": 1.05,
+    "x": 0.044,
+    "y": null,
+    "wf": 0.912,
+    "ls": 0
+   },
+   "media": [
+    {
+     "ar": 1.9,
+     "wf": 1.0,
+     "xf": 0.0,
+     "bleed": true,
+     "video": true,
+     "radius": 0
+    }
+   ],
+   "note": "bleed video, 151px uppercase serif wordmark pinned to the bottom of the screen"
+  },
+  {
+   "role": "pinned-intro",
+   "screens": 9.0,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 56,
+    "w": 300,
+    "tt": null,
+    "it": false,
+    "al": "start",
+    "lh": 1.1,
+    "x": 0.044,
+    "y": 0.022,
+    "wf": 0.456,
+    "ls": 0.018
+   },
+   "body": {
+    "px": 20,
+    "lh": 1.5,
+    "maxw": 656
+   },
+   "media": [
+    {
+     "ar": 1.91,
+     "wf": 1.2,
+     "xf": -0.1,
+     "bleed": true,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "9-screen pinned chapter: two 56px light serif columns (656 each), oversized photo (1728 wide, overscan) scrubs behind"
+  },
+  {
+   "role": "chapter-title-photo",
+   "screens": 1.0,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 160,
+    "w": 400,
+    "tt": "uppercase",
+    "it": false,
+    "al": "start",
+    "lh": 1.05,
+    "x": 0.397,
+    "y": 0.63,
+    "wf": 0.559,
+    "ls": 0
+   },
+   "body": {
+    "px": 16,
+    "lh": 1.2,
+    "maxw": 437
+   },
+   "media": [
+    {
+     "ar": 1.34,
+     "wf": 1.0,
+     "xf": 0.0,
+     "bleed": true,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 4.37,
+     "wf": 0.456,
+     "xf": 0.0,
+     "bleed": false,
+     "video": true,
+     "radius": 0
+    }
+   ],
+   "note": "chapter opener: bleed photo, 160px uppercase serif title bottom-right, 16px text 437 wide"
+  },
+  {
+   "role": "map-3d",
+   "screens": 1.42,
+   "pad": null,
+   "band": null,
+   "media": [
+    {
+     "ar": 1.78,
+     "wf": 0.6,
+     "xf": 0.4,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "cols": [
+    0.0,
+    0.403
+   ],
+   "note": "3D canvas map 864x486 right, list of places left — not reproducible; substitute static map + list",
+   "words": 396
+  },
+  {
+   "role": "chapter-title-photo",
+   "screens": 1.09,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 160,
+    "w": 400,
+    "tt": "uppercase",
+    "it": false,
+    "al": "start",
+    "lh": 1.05,
+    "x": 0.044,
+    "y": 0.543,
+    "wf": 0.911,
+    "ls": 0
+   },
+   "body": {
+    "px": 16,
+    "lh": 1.4,
+    "maxw": 525
+   },
+   "media": [
+    {
+     "ar": 1.26,
+     "wf": 1.0,
+     "xf": 0.0,
+     "bleed": true,
+     "video": false,
+     "radius": 0
+    }
+   ]
+  },
+  {
+   "role": "card-rail",
+   "screens": 1.0,
+   "pad": null,
+   "band": null,
+   "body": {
+    "px": 56,
+    "lh": 1.0,
+    "maxw": 576
+   },
+   "media": [
+    {
+     "ar": 0.95,
+     "wf": 0.6,
+     "xf": 0.45,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 0.95,
+     "wf": 0.6,
+     "xf": 1.05,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "cols": [
+    0.0,
+    0.5
+   ],
+   "note": "56px serif number/label left (576), horizontal rail of 864x907 cards starting at x=648, scrubbed by scroll"
+  },
+  {
+   "role": "chapter-title-photo",
+   "screens": 1.2,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 160,
+    "w": 400,
+    "tt": "uppercase",
+    "it": false,
+    "al": "start",
+    "lh": 1.05,
+    "x": 0.044,
+    "y": 0.088,
+    "wf": 0.911,
+    "ls": 0
+   },
+   "media": [
+    {
+     "ar": 1.18,
+     "wf": 1.0,
+     "xf": 0.0,
+     "bleed": true,
+     "video": false,
+     "radius": 0
+    }
+   ]
+  },
+  {
+   "role": "photo-half-text",
+   "screens": 1.0,
+   "pad": null,
+   "band": null,
+   "body": {
+    "px": 56,
+    "lh": 1.4,
+    "maxw": 616
+   },
+   "media": [
+    {
+     "ar": 0.67,
+     "wf": 0.5,
+     "xf": 0.0,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "cols": [
+    0.0,
+    0.5
+   ],
+   "note": "left half tall photo, right half 56px serif + body + pill",
+   "words": 141
+  },
+  {
+   "role": "giant-title-collage",
+   "screens": 1.18,
+   "pad": null,
+   "band": "dark",
+   "head": {
+    "px": 240,
+    "w": 300,
+    "tt": "uppercase",
+    "it": false,
+    "al": "center",
+    "lh": 1.05,
+    "x": 0.023,
+    "y": 0.011,
+    "wf": 0.955,
+    "ls": 0
+   },
+   "media": [
+    {
+     "ar": 1.42,
+     "wf": 0.397,
+     "xf": 0.559,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 1.02,
+     "wf": 0.333,
+     "xf": 0.59,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 0.75,
+     "wf": 0.433,
+     "xf": 0.45,
+     "bleed": false,
+     "video": true,
+     "radius": 0
+    }
+   ],
+   "note": "navy band, 240px light serif title, overlapping photo/video collage right of centre"
+  },
+  {
+   "role": "chapter-title-photo",
+   "screens": 1.0,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 128,
+    "w": 400,
+    "tt": "uppercase",
+    "it": false,
+    "al": "start",
+    "lh": 1.05,
+    "x": 0.482,
+    "y": 0.672,
+    "wf": 0.474,
+    "ls": 0
+   },
+   "body": {
+    "px": 16,
+    "lh": 1.4,
+    "maxw": 437
+   },
+   "media": [
+    {
+     "ar": 1.34,
+     "wf": 1.0,
+     "xf": 0.0,
+     "bleed": true,
+     "video": false,
+     "radius": 0
+    }
+   ]
+  },
+  {
+   "role": "card-rail",
+   "screens": 1.0,
+   "pad": null,
+   "band": null,
+   "media": [
+    {
+     "ar": 0.95,
+     "wf": 0.6,
+     "xf": 0.45,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 0.95,
+     "wf": 0.6,
+     "xf": 0.7,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "words": 161
+  },
+  {
+   "role": "pinned-zoom",
+   "screens": 4.35,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 120,
+    "w": 400,
+    "tt": "uppercase",
+    "it": false,
+    "al": "center",
+    "lh": 1.05,
+    "x": 0.0,
+    "y": 0.037,
+    "wf": 1.0,
+    "ls": 0
+   },
+   "media": [
+    {
+     "ar": 3.58,
+     "wf": 1.878,
+     "xf": 0.0,
+     "bleed": true,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 1.0,
+     "wf": 0.972,
+     "xf": -0.485,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 1.0,
+     "wf": 1.249,
+     "xf": -0.624,
+     "bleed": true,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "4.3-screen pinned zoom: aerial photos scale up around the centre while title holds"
+  },
+  {
+   "role": "photo-half-text",
+   "screens": 1.1,
+   "pad": null,
+   "band": null,
+   "body": {
+    "px": 56,
+    "lh": 1.1,
+    "maxw": 588
+   },
+   "media": [
+    {
+     "ar": 0.62,
+     "wf": 0.55,
+     "xf": -0.025,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "solid sand pill = the one filled button on the page"
+  },
+  {
+   "role": "footer-photo",
+   "screens": 1.38,
+   "pad": null,
+   "band": null,
+   "body": {
+    "px": 56,
+    "lh": 1.25,
+    "maxw": 566
+   },
+   "media": [
+    {
+     "ar": 1.36,
+     "wf": 1.0,
+     "xf": 0.0,
+     "bleed": true,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 0.69,
+     "wf": 0.208,
+     "xf": 0.0,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 2.11,
+     "wf": 0.694,
+     "xf": 0.306,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "footer on a bleed photo; 56px serif statement; 16px links",
+   "words": 119
+  }
+ ]
+}

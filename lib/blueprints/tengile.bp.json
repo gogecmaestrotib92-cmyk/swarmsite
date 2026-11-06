@@ -1,0 +1,507 @@
+{
+ "id": "tengile",
+ "source": "https://tengilemalamala.com/",
+ "class": "place",
+ "archetype": "editorial-lodge",
+ "screens": 15.1,
+ "grid": {
+  "frame": 16,
+  "gutter": 40,
+  "container": 1393,
+  "col": null
+ },
+ "type": {
+  "display": {
+   "fam": "PP Fragment",
+   "px": 120,
+   "w": 220,
+   "ls": -0.017,
+   "lh": 0.9,
+   "tt": "uppercase",
+   "it": false,
+   "al": null
+  },
+  "h2": {
+   "fam": "PP Fragment",
+   "px": 48,
+   "w": 220,
+   "ls": 0,
+   "lh": 1.1,
+   "tt": null,
+   "it": false,
+   "al": null
+  },
+  "h3": {
+   "fam": "PP Fragment",
+   "px": 32,
+   "w": 310,
+   "ls": 0,
+   "lh": 1.15,
+   "tt": null,
+   "it": false,
+   "al": null
+  },
+  "body": {
+   "fam": "Inter",
+   "px": 16,
+   "lh": 1.25,
+   "maxw": 454
+  },
+  "label": {
+   "fam": "Inter",
+   "px": 14,
+   "ls": 0,
+   "tt": "uppercase"
+  }
+ },
+ "colour": {
+  "paper": "#f5eee9",
+  "ink": "#373f1d",
+  "accent": "#5c6e21",
+  "mode": "light",
+  "bands": [
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "light"
+  ],
+  "alt": "#e3e1d4"
+ },
+ "media": {
+  "radius": 0,
+  "aspects": [
+   0.68,
+   0.79,
+   0.82,
+   0.83,
+   0.85,
+   0.88,
+   0.9,
+   1.0
+  ],
+  "bleed": true,
+  "video_hero": true
+ },
+ "button": {
+  "h": 48,
+  "pad": "0 20px",
+  "radius": 999,
+  "px": 15,
+  "w": 500,
+  "tt": null
+ },
+ "motion": {
+  "smooth": true,
+  "ease": "cubic-bezier(0.19, 1, 0.22, 1)",
+  "fast": 0.8,
+  "slow": 2.0,
+  "cursor": false,
+  "idea": "slow expo easings 1.6–2s on image reveal (blur+scale), image marquee band, map with idle pins"
+ },
+ "nav": {
+  "pos": "absolute",
+  "h": 34,
+  "links": null
+ },
+ "sections": [
+  {
+   "role": "hero-video",
+   "screens": 1.0,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 120,
+    "w": 220,
+    "tt": "uppercase",
+    "it": false,
+    "al": "start",
+    "lh": 0.9,
+    "x": 0.011,
+    "y": null,
+    "wf": 0.967,
+    "ls": -0.017
+   },
+   "body": {
+    "px": 18,
+    "lh": 1.1,
+    "maxw": 336
+   },
+   "media": [
+    {
+     "ar": 1.88,
+     "wf": 0.99,
+     "xf": 0.0,
+     "bleed": false,
+     "video": true,
+     "radius": 0
+    }
+   ],
+   "note": "full-bleed video, giant uppercase light serif h1 top-left at y=166, 18px serif lede 336px wide",
+   "words": 20
+  },
+  {
+   "role": "statement-right",
+   "screens": 0.39,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 32,
+    "w": 310,
+    "tt": null,
+    "it": false,
+    "al": "start",
+    "lh": 1.15,
+    "x": 0.501,
+    "y": 0.0,
+    "wf": 0.478,
+    "ls": 0
+   },
+   "body": {
+    "px": 14,
+    "lh": 1.4,
+    "maxw": 219
+   },
+   "note": "32px serif paragraph in right half (x=721, 689 wide); small Inter 14 label left",
+   "words": 55
+  },
+  {
+   "role": "photo-pair",
+   "screens": 1.52,
+   "pad": null,
+   "band": null,
+   "body": {
+    "px": 16,
+    "lh": 1.25,
+    "maxw": 343
+   },
+   "media": [
+    {
+     "ar": 0.79,
+     "wf": 0.444,
+     "xf": -0.013,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 0.83,
+     "wf": 0.535,
+     "xf": 0.472,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "cols": [
+    0.014,
+    0.5
+   ],
+   "note": "two portrait photos offset (left bleeds edge, right larger), 16px Inter caption 343px"
+  },
+  {
+   "role": "statement-full",
+   "screens": 0.55,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 48,
+    "w": 220,
+    "tt": null,
+    "it": false,
+    "al": "start",
+    "lh": 1.1,
+    "x": 0.011,
+    "y": 0.111,
+    "wf": 0.967,
+    "ls": 0
+   },
+   "note": "48px light serif across full container",
+   "words": 66
+  },
+  {
+   "role": "cards-3up",
+   "screens": 1.11,
+   "pad": [
+    16,
+    16
+   ],
+   "band": null,
+   "head": {
+    "px": 14,
+    "w": 500,
+    "tt": "uppercase",
+    "it": false,
+    "al": "start",
+    "lh": 1.05,
+    "x": null,
+    "y": null,
+    "wf": null,
+    "ls": 0
+   },
+   "body": {
+    "px": 16,
+    "lh": 1.25,
+    "maxw": 454
+   },
+   "media": [
+    {
+     "ar": 0.82,
+     "wf": 0.353,
+     "xf": -0.008,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 0.82,
+     "wf": 0.353,
+     "xf": 0.318,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 0.82,
+     "wf": 0.353,
+     "xf": 0.644,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "uppercase 14 label, 3 portrait cards 508x619 with 20px serif title + 16px text under",
+   "words": 83
+  },
+  {
+   "role": "cards-3up",
+   "screens": 1.11,
+   "pad": null,
+   "band": null,
+   "note": "same as 5 (CAMPS)"
+  },
+  {
+   "role": "quote-band",
+   "screens": 0.68,
+   "pad": [
+    80,
+    80
+   ],
+   "band": null,
+   "body": {
+    "px": 48,
+    "lh": 1.1,
+    "maxw": 1158
+   },
+   "cols": [
+    0.014,
+    0.097
+   ],
+   "note": "48px serif quote indented to x=140, 1158 wide, 80px pads",
+   "words": 36
+  },
+  {
+   "role": "photo-bleed",
+   "screens": 1.08,
+   "pad": null,
+   "band": null,
+   "media": [
+    {
+     "ar": 1.78,
+     "wf": 1.083,
+     "xf": 0.0,
+     "bleed": true,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "full-bleed 16:9 photo, slight overscan (parallax)"
+  },
+  {
+   "role": "story-right",
+   "screens": 1.19,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 32,
+    "w": 310,
+    "tt": null,
+    "it": false,
+    "al": "start",
+    "lh": 1.15,
+    "x": 0.501,
+    "y": 0.106,
+    "wf": 0.478,
+    "ls": 0
+   },
+   "media": [
+    {
+     "ar": 0.68,
+     "wf": 0.262,
+     "xf": 0.486,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 1.0,
+     "wf": 0.262,
+     "xf": 0.731,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "32px serif in right half + two small photos (portrait + square) under it",
+   "words": 56
+  },
+  {
+   "role": "collage",
+   "screens": 1.17,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 32,
+    "w": 310,
+    "tt": null,
+    "it": false,
+    "al": "start",
+    "lh": 1.05,
+    "x": null,
+    "y": null,
+    "wf": null,
+    "ls": 0
+   },
+   "media": [
+    {
+     "ar": 0.9,
+     "wf": 0.14,
+     "xf": 0.662,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 0.88,
+     "wf": 0.109,
+     "xf": 0.406,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 0.9,
+     "wf": 0.14,
+     "xf": 0.256,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "small scattered photos around a centered 32px heading"
+  },
+  {
+   "role": "marquee-photos",
+   "screens": 1.47,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 32,
+    "w": 310,
+    "tt": null,
+    "it": false,
+    "al": "start",
+    "lh": 1.05,
+    "x": 0.011,
+    "y": 0.077,
+    "wf": 0.478,
+    "ls": 0
+   },
+   "media": [
+    {
+     "ar": 1.21,
+     "wf": 0.361,
+     "xf": 0.0,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 0.85,
+     "wf": 0.361,
+     "xf": 0.0,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 0.82,
+     "wf": 0.361,
+     "xf": 0.0,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "32px serif left half, then horizontal photo marquee of 520px-wide mixed-aspect images"
+  },
+  {
+   "role": "photo-text-overlay",
+   "screens": 1.68,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 32,
+    "w": 310,
+    "tt": null,
+    "it": false,
+    "al": "start",
+    "lh": 1.05,
+    "x": 0.506,
+    "y": 0.588,
+    "wf": 0.319,
+    "ls": 0
+   },
+   "media": [
+    {
+     "ar": 1.13,
+     "wf": 1.12,
+     "xf": 0.0,
+     "bleed": true,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "tall bleed photo with 32px serif paragraph bottom-right (x=728, 459 wide)",
+   "words": 58
+  },
+  {
+   "role": "footer",
+   "screens": 0.66,
+   "pad": null,
+   "band": "alt",
+   "head": {
+    "px": 16,
+    "w": 400,
+    "tt": null,
+    "it": false,
+    "al": "start",
+    "lh": 1.05,
+    "x": null,
+    "y": null,
+    "wf": null,
+    "ls": 0
+   },
+   "note": "olive footer, 219px link columns from x=16",
+   "words": 83
+  }
+ ]
+}

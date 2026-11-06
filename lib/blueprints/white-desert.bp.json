@@ -1,0 +1,423 @@
+{
+ "id": "white-desert",
+ "source": "https://white-desert.com/",
+ "class": "place",
+ "archetype": "cinematic-travel",
+ "screens": 25.6,
+ "grid": {
+  "frame": 60,
+  "gutter": 60,
+  "container": 1320,
+  "col": null
+ },
+ "type": {
+  "display": {
+   "fam": "Oswald",
+   "px": 320,
+   "w": 400,
+   "ls": 0,
+   "lh": 0.9,
+   "tt": "uppercase",
+   "it": false,
+   "al": "center"
+  },
+  "h2": {
+   "fam": "Oswald",
+   "px": 256,
+   "w": 400,
+   "ls": 0,
+   "lh": 1.0,
+   "tt": "uppercase",
+   "it": false,
+   "al": "center"
+  },
+  "h3": {
+   "fam": "Cardinal Classic Long",
+   "px": 140,
+   "w": 500,
+   "ls": 0,
+   "lh": 1.1,
+   "tt": "uppercase",
+   "it": false,
+   "al": null
+  },
+  "body": {
+   "fam": "Cardinal Classic Long",
+   "px": 22,
+   "lh": 1.2,
+   "maxw": 472
+  },
+  "label": {
+   "fam": "Inter Tight",
+   "px": 10,
+   "ls": 0.1,
+   "tt": "uppercase"
+  }
+ },
+ "colour": {
+  "paper": "#ffffff",
+  "ink": "#090b10",
+  "accent": null,
+  "mode": "light",
+  "bands": [
+   "paper",
+   "paper",
+   "paper",
+   "light",
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "light",
+   "paper",
+   "light"
+  ],
+  "alt": "#e9e7e1"
+ },
+ "media": {
+  "radius": 0,
+  "aspects": [
+   0.84,
+   0.89,
+   1.12,
+   1.27,
+   1.36,
+   1.78,
+   1.9,
+   4.13
+  ],
+  "bleed": true,
+  "video_hero": true
+ },
+ "button": {
+  "h": 44,
+  "pad": "6px 32px",
+  "radius": 0,
+  "px": 16,
+  "w": 500,
+  "tt": null,
+  "filled": false
+ },
+ "motion": {
+  "smooth": true,
+  "ease": "cubic-bezier(0.5, 1, 0.89, 1)",
+  "fast": 0.3,
+  "slow": 1.0,
+  "cursor": true,
+  "idea": "page transitions, reveal keyframes, a long pinned camps sequence (11.8 screens), giant condensed wordmarks"
+ },
+ "nav": {
+  "pos": "fixed",
+  "h": 80,
+  "links": 3
+ },
+ "sections": [
+  {
+   "role": "hero-video-giant",
+   "screens": 2.0,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 256,
+    "w": 400,
+    "tt": "uppercase",
+    "it": false,
+    "al": "center",
+    "lh": 1.0,
+    "x": 0.096,
+    "y": null,
+    "wf": 0.809,
+    "ls": 0
+   },
+   "body": {
+    "px": 18,
+    "lh": 1.2,
+    "maxw": 294
+   },
+   "media": [
+    {
+     "ar": 1.9,
+     "wf": 1.0,
+     "xf": 0.0,
+     "bleed": true,
+     "video": true,
+     "radius": 0
+    },
+    {
+     "ar": 0.89,
+     "wf": 0.131,
+     "xf": 0.828,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "2-screen hero: full-bleed video, 256px condensed uppercase wordmark centered, 18px serif lede 294 wide, small inset photo"
+  },
+  {
+   "role": "statement-uppercase",
+   "screens": 1.04,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 42,
+    "w": 400,
+    "tt": "uppercase",
+    "it": false,
+    "al": "start",
+    "lh": 1.0,
+    "x": 0.336,
+    "y": 0.476,
+    "wf": 0.492,
+    "ls": 0
+   },
+   "note": "42px uppercase serif, 708 wide, offset right of centre (x=484), a full screen for one sentence"
+  },
+  {
+   "role": "photo-bleed-tall",
+   "screens": 1.5,
+   "pad": null,
+   "band": null,
+   "media": [
+    {
+     "ar": 1.27,
+     "wf": 1.0,
+     "xf": 0.0,
+     "bleed": true,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "tall bleed photo with caption words in Oswald 18",
+   "words": 66
+  },
+  {
+   "role": "section-title",
+   "screens": 0.71,
+   "pad": [
+    320,
+    160
+   ],
+   "band": "alt",
+   "head": {
+    "px": 60,
+    "w": 400,
+    "tt": "uppercase",
+    "it": false,
+    "al": "center",
+    "lh": 1.0,
+    "x": null,
+    "y": null,
+    "wf": null,
+    "ls": 0
+   },
+   "note": "white band, 320px top pad, centred 60px uppercase serif title"
+  },
+  {
+   "role": "cards-2up-wide",
+   "screens": 0.85,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 42,
+    "w": 500,
+    "tt": null,
+    "it": true,
+    "al": "start",
+    "lh": 1.05,
+    "x": 0.039,
+    "y": 0.068,
+    "wf": 0.201,
+    "ls": 0
+   },
+   "body": {
+    "px": 16,
+    "lh": 1.4,
+    "maxw": 344
+   },
+   "media": [
+    {
+     "ar": 1.12,
+     "wf": 0.5,
+     "xf": 0.008,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 1.12,
+     "wf": 0.5,
+     "xf": 0.5,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "two half-width trip cards 720x643, italic serif 42 title top-left inside, 16px body; carousel continues (third at x=897)",
+   "words": 172
+  },
+  {
+   "role": "quote-centre",
+   "screens": 1.26,
+   "pad": [
+    320,
+    320
+   ],
+   "band": null,
+   "body": {
+    "px": 22,
+    "lh": 1.2,
+    "maxw": 472
+   },
+   "note": "22px serif paragraph 472 wide, 320px pads"
+  },
+  {
+   "role": "pinned-sequence",
+   "screens": 11.83,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 140,
+    "w": 500,
+    "tt": "uppercase",
+    "it": false,
+    "al": "start",
+    "lh": 1.05,
+    "x": 0.191,
+    "y": 0.032,
+    "wf": 0.617,
+    "ls": 0
+   },
+   "media": [
+    {
+     "ar": 1.9,
+     "wf": 1.0,
+     "xf": 0.0,
+     "bleed": true,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 1.36,
+     "wf": 0.472,
+     "xf": 1.014,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "pinned 11.8-screen sequence: bleed photos swap behind, camp cards slide horizontally from right (x=1460), 140px uppercase serif title"
+  },
+  {
+   "role": "giant-wordmark",
+   "screens": 0.57,
+   "pad": [
+    140,
+    0
+   ],
+   "band": null,
+   "head": {
+    "px": 320,
+    "w": 400,
+    "tt": "uppercase",
+    "it": false,
+    "al": "center",
+    "lh": 0.9,
+    "x": 0.008,
+    "y": 0.327,
+    "wf": 0.983,
+    "ls": 0
+   },
+   "note": "320px condensed route code as a section divider"
+  },
+  {
+   "role": "itinerary-overlay",
+   "screens": 2.6,
+   "pad": null,
+   "band": "alt",
+   "head": {
+    "px": 42,
+    "w": 400,
+    "tt": "uppercase",
+    "it": false,
+    "al": "center",
+    "lh": 1.05,
+    "x": null,
+    "y": null,
+    "wf": null,
+    "ls": 0
+   },
+   "body": {
+    "px": 14,
+    "lh": 1.4,
+    "maxw": 464
+   },
+   "media": [
+    {
+     "ar": 0.84,
+     "wf": 1.0,
+     "xf": 0.0,
+     "bleed": true,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 1.78,
+     "wf": 0.216,
+     "xf": 0.67,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "tall bleed photo with time-stamped itinerary rows (42px times left) and small video thumb right"
+  },
+  {
+   "role": "cta-photo",
+   "screens": 1.0,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 42,
+    "w": 400,
+    "tt": "uppercase",
+    "it": false,
+    "al": "center",
+    "lh": 1.05,
+    "x": null,
+    "y": null,
+    "wf": null,
+    "ls": 0
+   },
+   "media": [
+    {
+     "ar": 1.9,
+     "wf": 1.0,
+     "xf": 0.0,
+     "bleed": true,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "full-screen photo, centred uppercase serif + outlined button"
+  },
+  {
+   "role": "footer-sand",
+   "screens": 1.25,
+   "pad": null,
+   "band": "alt",
+   "media": [
+    {
+     "ar": 4.13,
+     "wf": 0.315,
+     "xf": 0.669,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "sand footer with a quote, 10px uppercase attribution, badges",
+   "words": 123
+  }
+ ]
+}
