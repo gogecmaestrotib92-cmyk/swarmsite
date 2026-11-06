@@ -32,6 +32,15 @@ app.get('/jobs/:id', async (req, res) => {
   const { data, error } = await sb.from('jobs').select('id,url,status,step,steps,result,error,created_at').eq('id', req.params.id).single();
   if (error) return res.status(404).json({ error: 'not found' }); res.json(data);
 });
+// Preview page: Supabase public storage serves HTML as text/plain (XSS guard), so we proxy it with the right type.
+const SELF = process.env.PUBLIC_API || (process.env.RAILWAY_PUBLIC_DOMAIN ? 'https://' + process.env.RAILWAY_PUBLIC_DOMAIN : 'http://localhost:' + (process.env.PORT || 8080));
+app.get('/p/:id', async (req, res) => {
+  if (!/^[0-9a-f-]{36}$/.test(req.params.id)) return res.status(400).end();
+  const { data, error } = await sb.storage.from(BUCKET).download(`${req.params.id}/index.html`);
+  if (error || !data) return res.status(404).send('preview not found');
+  res.set({ 'content-type': 'text/html; charset=utf-8', 'cache-control': 'public, max-age=300', 'x-frame-options': 'ALLOWALL' });
+  res.send(Buffer.from(await data.arrayBuffer()));
+});
 app.listen(process.env.PORT || 8080, () => console.log('api on', process.env.PORT || 8080));
 
 // ---------- worker ----------
@@ -62,7 +71,7 @@ async function process_(job) {
   await timed('render', () => run('python3', ['lib/render/render_beats.py', dir]));
   let qa = null; await timed('qa', async () => { try { const o = await run('python3', ['lib/qa/check.py', path.join(dir, 'index.html')], { timeoutMs: 240000 }); qa = o.split('\n').filter(l => /QA score|\[(high|med|low)/.test(l)).join('\n'); } catch (e) { qa = 'qa skipped: ' + e.message.slice(0, 200); } });
   const result = await timed('upload', async () => {
-    const previewUrl = await upload(path.join(dir, 'index.html'), `${job.id}/index.html`, 'text/html');
+    await upload(path.join(dir, 'index.html'), `${job.id}/index.html`, 'text/html'); const previewUrl = `${SELF}/p/${job.id}`;
     const beforeUrl = fs.existsSync(path.join(dir, 'before-hero.jpg')) ? await upload(path.join(dir, 'before-hero.jpg'), `${job.id}/before.jpg`, 'image/jpeg') : null;
     const direction = JSON.parse(fs.readFileSync(path.join(dir, 'direction.json'), 'utf8'));
     return { previewUrl, beforeUrl, qa, direction: { kind: direction.kind, concept: direction.concept, voice: direction.voice, brand: direction.brand, beats: direction.beats.map(b => b.type), audit_notes: direction.audit_notes }, seconds: Math.round((Date.now() - t0) / 1000) };
