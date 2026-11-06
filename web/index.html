@@ -161,7 +161,7 @@ addEventListener('DOMContentLoaded',()=>{if(window.Moves)Moves.init();else addEv
 <script src="/js/agents.js" defer></script>
 <script src="/js/swarm.js" defer></script>
 <script>addEventListener('load',()=>{ try{ if(!window.Swarm||innerWidth<900||matchMedia('(prefers-reduced-motion:reduce)').matches||sessionStorage.getItem('sw1')) return; sessionStorage.setItem('sw1','1');
-  new Swarm({agents:9,speed:1.6,hud:false,sectionSelector:'[data-agent]',boxSel:'.urlbox,.urlbox button,.step,.hero .lab'}).run(); }catch(e){} });</script>
+  new Swarm({agents:9,speed:1.1,hud:false,sectionSelector:'[data-agent]',boxSel:'.urlbox,.urlbox button,.step,.hero .lab'}).run(); }catch(e){} });</script>
 <script>addEventListener('load',()=>{ if(!window.Agents) return; const bf=document.getElementById('bf'); if(!bf) return; let sw=null;
   new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting&&!sw){ sw=Agents.mount(bf,{count:6,phase:'demo'}); } else if(!e.isIntersecting&&sw){ sw.stop(); sw=null; } }),{threshold:.35}).observe(bf); });</script>
 </body></html>
