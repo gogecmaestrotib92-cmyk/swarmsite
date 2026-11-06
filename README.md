@@ -1,4 +1,4 @@
-# Relift — paste a URL, get your site rebuilt at studio level
+# Swarmsite — paste a URL, get your site rebuilt at studio level
 
 Pipeline: `lib/pipeline/capture.mjs` (Playwright: inventory, assets, images, screenshots) → `lib/audit/diagnose.py` → concept (`lib/concepts`) + typography (`lib/typography`) + colour worlds (`lib/colour/palette.py`) → `lib/render` (content JSON → HTML) → `lib/motion/moves.js` + `lib/artefacts` → `lib/qa` (check.py, shots.mjs) → `swarm.js` (the live rebuild show).
 
