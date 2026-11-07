@@ -45,8 +45,8 @@ const GEO = {
 };
 const shot = document.getElementById('shot'), page = document.querySelector('.page'), cv = document.getElementById('gl'), tags = document.getElementById('tags'), hud = document.getElementById('hud');
 let W = 1200, H = 800, scale = 1; // page px → css px scale (screenshot is 1440 wide)
-const renderer = new T.WebGLRenderer({ canvas: cv, alpha: true, antialias: true }); renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap; renderer.setPixelRatio(Math.min(2, devicePixelRatio));
-const scene = new T.Scene(); const cam = new T.OrthographicCamera(0, 1, 0, 1, -2000, 2000); cam.position.set(0, 0, 1000);
+const renderer = new T.WebGLRenderer({ canvas: cv, alpha: true, antialias: true }); renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap; renderer.setPixelRatio(Math.min(2, devicePixelRatio)); renderer.setClearColor(0x000000, 0);
+const scene = new T.Scene(); const cam = new T.OrthographicCamera(0, 1, 0, -1, 1, 4000); cam.position.set(0, 0, 2000); cam.lookAt(0, 0, 0);
 const key = new T.DirectionalLight(0xffffff, 1.6); key.position.set(-300, -500, 900); key.castShadow = true; key.shadow.mapSize.set(2048, 2048); scene.add(key);
 const fill = new T.HemisphereLight(0xffffff, 0x8a8a8a, .9); scene.add(fill);
 const pmrem = new T.PMREMGenerator(renderer); scene.environment = pmrem.fromScene(new RoomEnv(), .04).texture;
@@ -57,7 +57,7 @@ function mkAgent(name) { const m = new T.Mesh(GEO[ROLES[name] || 'core'](), MATS
   const tag = document.createElement('div'); tag.className = 'tag'; tag.innerHTML = `${name}<i></i>`; tags.appendChild(tag); m.userData.tag = tag;
   const h = document.createElement('div'); h.innerHTML = `<s></s>${name} <span style="margin-left:auto;color:#777"></span>`; hud.appendChild(h); m.userData.hud = h; agents[name] = m; return m; }
 NAMES.forEach(mkAgent);
-function fit() { W = page.clientWidth; H = page.clientHeight; scale = W / 1440; renderer.setSize(W, H, false); cam.left = 0; cam.right = W; cam.top = 0; cam.bottom = H; cam.updateProjectionMatrix(); ground.scale.set(W * 2, H * 2, 1); ground.position.set(W / 2, H / 2, 0); key.shadow.camera.left = -W; key.shadow.camera.right = W; key.shadow.camera.top = H; key.shadow.camera.bottom = -H; key.shadow.camera.updateProjectionMatrix(); }
+function fit() { W = page.clientWidth; H = page.clientHeight; scale = W / 1440; renderer.setSize(W, H, false); cam.left = 0; cam.right = W; cam.top = 0; cam.bottom = -H; cam.updateProjectionMatrix(); ground.scale.set(W * 2, H * 2, 1); ground.position.set(W / 2, -H / 2, 0); key.position.set(W * .3, -H * .2, 900); key.target.position.set(W * .5, -H * .5, 0); scene.add(key.target); key.shadow.camera.left = -W; key.shadow.camera.right = W; key.shadow.camera.top = H; key.shadow.camera.bottom = -H; key.shadow.camera.near = 1; key.shadow.camera.far = 3000; key.shadow.camera.updateProjectionMatrix(); }
 shot.onload = fit; addEventListener('resize', fit);
 fetch(JOB).then(r => r.json()).then(j => { shot.src = (j.result && (j.result.beforeFullUrl || j.result.beforeUrl)) || ''; });
 // ───────── motion: lift, travel on an arc, settle, work, lift
@@ -69,12 +69,10 @@ function tick(now) { for (const a of Object.values(agents)) { const u = a.userDa
     if (u.phase === 'travel') { const k = Math.min(1, (now - u.t0) / u.dur); const e = 1 - Math.pow(1 - k, 3); u.x = u.fx + (u.tx - u.fx) * e; u.y = u.fy + (u.ty - u.fy) * e; u.z = 90 + Math.sin(k * Math.PI) * 120; if (k >= 1) { u.phase = 'work'; u.t1 = now; } }
     else if (u.phase === 'work') { const k = (now - u.t1) / (2200 / speed); u.z = 18 + Math.sin(now / 260) * 3; u.x = u.tx + Math.sin(now / 300 + u.spin) * (u.name === 'Reader' ? 18 : 4); if (k > 1) idle(u.name); }
     else { u.x += (u.tx - u.x) * .05; u.y += (u.ty - u.y) * .05; u.z += (u.tz + Math.sin(now / 900 + u.spin) * 10 - u.z) * .05; }
-    a.position.set(u.x, u.y, u.z); a.rotation.z += u.phase === 'work' ? .02 : .006; a.rotation.y = Math.sin(now / 1400 + u.spin) * .2;
+    a.position.set(u.x, -u.y, u.z); a.rotation.z += u.phase === 'work' ? .02 : .006; a.rotation.y = Math.sin(now / 1400 + u.spin) * .2;
     u.tag.style.left = u.x + 'px'; u.tag.style.top = (u.y - 26) + 'px'; }
-  // ortho y is flipped: top=0 at cam.top → set camera to look along -z with y down
   renderer.render(scene, cam); requestAnimationFrame(tick); }
-cam.up.set(0, -1, 0); cam.lookAt(0, 0, 0); cam.position.set(0, 0, 1000); cam.lookAt(0, 0, 0);
-requestAnimationFrame(tick);
+requestAnimationFrame(tick); window.__lab = { scene, cam, agents, renderer, fit: () => ({ W, H, scale }) };
 // ───────── replay the real job's events (those with a rect act on the page; the rest animate in the HUD)
 async function replay() { const j = await (await fetch(JOB)).json(); const ev = (j.result && j.result.events) || []; const seq = ev.filter(e => e.rect && e.rect.w > 20);
   let i = 0; const next = () => { if (!document.getElementById('replay').checked) return setTimeout(next, 800); const e = seq[i % seq.length]; i++; const name = NAMES.includes(e.role) ? e.role : ({ Type: 'Copy', Audit: 'Reader', Photos: 'Visual', Motion: 'UI', QA: 'Contract', Ending: 'UX' })[e.role] || 'UI'; goto(name, e.rect, e.text, 1200); window.scrollTo({ top: Math.max(0, e.rect.y * scale - 260 + page.getBoundingClientRect().top + scrollY), behavior: 'smooth' }); setTimeout(next, 2600 / speed); }; next(); }
