@@ -47,6 +47,7 @@ def build(slug_dir, bp_id, out_path=None):
     soft = d.get('kind') in ('software', 'product')
     def img(k=None, prefer_hero=False, want_shot=None):
         it = images.get(k) if k else None
+        if it and it.get('id') in used and not prefer_hero: it = None  # never the same picture twice on one page
         if not it:
             pool = [i for i in images.values() if i.get('data') and i.get('id') not in used] or [i for i in images.values() if i.get('data')]
             if want_shot is True: pool = [i for i in pool if i.get('shot')] or pool
@@ -172,7 +173,9 @@ def build(slug_dir, bp_id, out_path=None):
 
     def lead_fig(ui_, bt):
         src = ''; it = None
-        if ui_.get('lead') and images.get(ui_['lead']): it = images[ui_['lead']]; src = img(ui_['lead'])
+        if ui_.get('lead') and images.get(ui_['lead']):
+            if ui_['lead'] in used: return ''
+            it = images[ui_['lead']]; src = img(ui_['lead'])
         elif ui_.get('lead') == '': return ''
         elif bt['type'] == 'facts':
             pool = [i for i in images.values() if i.get('data') and not i.get('shot') and i.get('id') not in used and i.get('w', 0) >= 600]
