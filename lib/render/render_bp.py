@@ -149,7 +149,7 @@ def build(slug_dir, bp_id, out_path=None):
         inner = f'{lab(bt.get("label"))}<h2 class="h2" style="{head_style(sec)}">{e(big)}</h2>' if big and px_ >= 40 else lab(bt.get('label'))
         body_px = (sec.get('body') or {}).get('px') or BO['px']
         centered = (hd.get('al') == 'center')
-        return f'<section class="sec statement band-{band_of(sec, bt)}" id="{e(bt["id"])}" style="min-height:{min(1.2, max(.5, sec.get("screens", .8))) * 100}svh"><div class="wrap{" center" if centered else ""}" style="{col_style(sec)}">{inner}<p class="big-p" style="font-size:{clampf(max(body_px, 22), .7)}{";margin-left:auto;margin-right:auto" if centered else ""}">{e(text)}</p>{who}</div></section>'
+        return f'<section class="sec statement band-{band_of(sec, bt)}" id="{e(bt["id"])}" style="min-height:{(min(1.0, max(.5, sec.get("screens", .8))) * 100) if len(str(text or "").split()) > 45 else 0}svh"><div class="wrap{" center" if centered else ""}" style="{col_style(sec)}">{inner}<p class="big-p" style="font-size:{clampf(max(body_px, 22), .7)}{";margin-left:auto;margin-right:auto" if centered else ""}">{e(text)}</p>{who}</div></section>'
 
     def photo_sec(sec, bt=None):
         ms = sec_media(sec) or [{'ar': 1.6, 'wf': 1, 'bleed': True}]
@@ -243,37 +243,44 @@ def build(slug_dir, bp_id, out_path=None):
         band = sec.get('band') or ('dark' if C.get('bands') and C['bands'][-1] == 'dark' else 'paper')
         return f'<footer class="sec end band-{band}" id="end"><div class="wrap"><p class="big-p">{e(en.get("tag"))}</p><div class="fcols">{cols_}</div><div class="legal"><span>{e(en.get("legal"))}</span><span>{e(en.get("next"))}</span></div></div></footer>'
 
-    # allocate
-    out = [hero()]; stmt_i = 0; list_i = 0; photo_i = 0; used_beats = set(); cta_done = False
+    # allocate — in the DIRECTION's order (the UX agent owns the order); each beat takes the next blueprint section of its family,
+    # so the page keeps the winner's forms and rhythms but tells the client's story in the right sequence
+    FAM = {'statement': ('statement', 'quote', 'manifesto', 'pinned-intro', 'story-right'),
+           'photo': ('photo', 'work-', 'photo-pair', 'collage', 'marquee-photos', 'pinned-zoom', 'chapter-title-photo', 'photo-half-text'),
+           'list': ('cards', 'feature', 'cases', 'blog', 'card-rail', 'showcase', 'tabs-media', 'gallery', 'pinned-features', 'pinned-sequence', 'sticker', 'double', 'two-audiences', 'updates', 'logo', 'tabs'),
+           'cta': ('cta', 'band-', 'security', 'itinerary', 'giant-title')}
+    pools = {k: [] for k in FAM}
     for sec in bp['sections'][1:]:
-        role = sec['role']; r = role
-        if r in ('footer', 'footer-sand', 'footer-photo', 'footer-offices', 'footer-brand-colour', 'footer-giant', 'footer-photo-offices', 'services-footer'): continue
-        if r.startswith(('statement', 'quote', 'manifesto', 'pinned-intro', 'story-right')) and stmt_i < len(statements):
-            it = statements[stmt_i]; stmt_i += 1
-            if it[1]['id'] in used_beats and it[0] == 'lede': continue
-            out.append(statement(sec, it)); used_beats.add(it[1]['id'] if it[0] == 'quote' else '')
-        elif r.startswith(('photo', 'work-', 'photo-pair', 'collage', 'marquee-photos', 'pinned-zoom', 'chapter-title-photo', 'photo-half-text')):
-            if photo_i < len(photos): bt = photos[photo_i]; photo_i += 1; used_beats.add(bt['id']); out.append(photo_sec(sec, bt))
-            elif len(images) > len(used): out.append(photo_sec(sec))
-        elif r.startswith(('cards', 'feature', 'cases', 'blog', 'card-rail', 'showcase', 'tabs-media', 'gallery', 'pinned-features', 'pinned-sequence', 'sticker', 'double', 'two-audiences', 'updates', 'logo', 'tabs')):
-            while list_i < len(lists) and lists[list_i]['id'] in used_beats: list_i += 1
-            if list_i >= len(lists): continue
-            bt = lists[list_i]; list_i += 1; used_beats.add(bt['id'])
-            if bt['type'] == 'ledger': out.append(ledger(sec, bt))
-            elif (r.startswith(('two-audiences', 'double')) and bt['type'] in ('steps', 'features', 'cells')) or (bt['type'] == 'steps' and r.startswith('feature')): out.append(two_col(sec, bt))
-            else: out.append(cards(sec, bt))
-        elif r.startswith(('cta', 'band-', 'security', 'itinerary', 'giant-title')) and not cta_done:
-            if forms: out.append(cta(sec, forms[0])); used_beats.add(forms[0]['id']); cta_done = True
-            else: out.append(cta(sec)); cta_done = True
-        elif r.startswith('giant'): out.append(giant(sec))
-    # leftovers the blueprint had no slot for
+        r = sec['role']
+        if r.startswith('footer') or r == 'services-footer': continue
+        for fam, pre in FAM.items():
+            if r.startswith(pre): pools[fam].append(sec); break
+    DEF = {'statement': {'role': 'statement', 'head': {'px': H2['px']}, 'screens': .8}, 'photo': {'role': 'photo', 'media': [{'ar': 1.6, 'wf': 1, 'bleed': False}], 'head': None},
+           'list': {'role': 'cards', 'media': [], 'head': {'px': H2['px']}}, 'cta': {'role': 'cta', 'screens': .9, 'head': {'px': H2['px'], 'al': 'center'}}}
+    taken = {k: 0 for k in FAM}
+    def take(fam):
+        pool = pools[fam]
+        if not pool: return DEF[fam]
+        sec = pool[taken[fam] % len(pool)]; taken[fam] += 1; return sec
+    out = [hero()]; used_beats = set(); cta_done = False
     for bt in beats:
-        if bt['id'] in used_beats: continue
-        if bt['type'] in ('features', 'cells', 'steps', 'faq', 'facts'): out.append(cards({'role': 'cards', 'media': [], 'head': {'px': H2['px']}}, bt)); used_beats.add(bt['id'])
-        elif bt['type'] == 'ledger': out.append(ledger({'head': {'px': H2['px']}}, bt)); used_beats.add(bt['id'])
-        elif bt['type'] == 'photo': out.append(photo_sec({'media': [{'ar': 1.6, 'wf': 1, 'bleed': False}], 'head': None}, bt)); used_beats.add(bt['id'])
-        elif bt['type'] == 'quote': out.append(statement({'head': {'px': H2['px']}, 'screens': .8}, ('quote', bt))); used_beats.add(bt['id'])
-    if not cta_done: out.append(cta({'screens': .9, 'head': {'px': H2['px'], 'al': 'center'}}, forms[0] if forms else None))
+        t = bt['type']
+        if t == 'quote': sec = take('statement'); out.append(statement(sec, ('quote', bt)))
+        elif t == 'photo': sec = take('photo'); out.append(photo_sec(sec, bt))
+        elif t == 'ledger': sec = take('list'); out.append(ledger(sec, bt))
+        elif t in ('features', 'cells', 'steps', 'facts', 'faq'):
+            sec = take('list'); r = sec['role']
+            if (r.startswith(('two-audiences', 'double')) and t in ('steps', 'features', 'cells')) or (t == 'steps' and r.startswith('feature')): out.append(two_col(sec, bt))
+            else: out.append(cards(sec, bt))
+        elif t == 'form': sec = take('cta'); out.append(cta(sec, bt)); cta_done = True
+        else: continue
+        used_beats.add(bt['id'])
+    # a photo slot the blueprint has that the story did not use, when the client has an unused photo
+    if pools['photo'] and taken['photo'] == 0 and len([i for i in images.values() if not i.get('shot') and i.get('id') not in used and i.get('w', 0) >= 900]) >= 1 and d.get('kind') in ('place', 'service'):
+        out.insert(2, photo_sec(pools['photo'][0]))
+    for sec in bp['sections'][1:]:
+        if sec['role'].startswith('giant'): out.append(giant(sec)); break
+    if not cta_done: out.append(cta(take('cta'), None))
     out.append(footer(bp['sections'][-1] if bp['sections'][-1]['role'].startswith('footer') else {}))
 
     # ---- logo ----
@@ -331,7 +338,8 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
 // blueprint motion: reveal on scroll for every section's main pieces, with the winner's own easing/durations
 document.querySelectorAll('.sec .h2, .sec .big-p, .sec .lede, .grid, .rows, .cols, .photo figure, .photos figure').forEach((el, i) => {{ if (!el.closest('.hero')) el.setAttribute('data-move', el.matches('figure') ? 'clip-reveal' : el.matches('.grid, .rows, .cols') ? 'stagger-in' : 'fade-rise'); }});
 document.querySelector('.hero')?.setAttribute('data-move', 'hero-intro');
-const PREVIEW=(self!==top||/[?&]swarm/.test(location.search))&&!matchMedia('(prefers-reduced-motion:reduce)').matches;
+const NOMOTION=/[?&]nomotion/.test(location.search); const PREVIEW=!NOMOTION&&(self!==top||/[?&]swarm/.test(location.search))&&!matchMedia('(prefers-reduced-motion:reduce)').matches;
+if(NOMOTION){{ document.querySelectorAll('[data-move]').forEach(el=>el.removeAttribute('data-move')); }}
 addEventListener('load',()=>{{ const nav=document.getElementById('nav'); const solidFrom=document.querySelector('.hero.has-media')?innerHeight*.7:0; const onS=()=>nav.classList.toggle('solid',scrollY>solidFrom); onS(); addEventListener('scroll',onS,{{passive:true}});
   try{{ if(PREVIEW) new Swarm({{agents:innerWidth<900?8:18,speed:1,hud:true,sectionSelector:'section,footer',boxSel:'.btn,.card,figure,.rows li,.form input',onDone:()=>{{ try{{ scrollTo(0,0); Moves.init(); }}catch(e){{}} }}}}).run(); else Moves.init(); }}catch(e){{ try{{Moves.init();}}catch(_){{}} }} }});
 </script></body></html>'''
