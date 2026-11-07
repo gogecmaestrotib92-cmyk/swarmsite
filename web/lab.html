@@ -53,7 +53,7 @@ const pmrem = new T.PMREMGenerator(renderer); scene.environment = pmrem.fromScen
 function RoomEnv() { const s = new T.Scene(); const m = new T.MeshBasicMaterial({ color: 0xffffff }); const box = new T.Mesh(new T.BoxGeometry(1, 1, 1), new T.MeshBasicMaterial({ color: 0x888888, side: T.BackSide })); s.add(box); for (const [x, y, z, w, h] of [[-.3, .4, .4, .4, .2], [.3, .4, .4, .4, .2], [0, -.1, .45, .8, .1]]) { const p = new T.Mesh(new T.PlaneGeometry(w, h), m); p.position.set(x, y, z); p.lookAt(0, 0, 0); s.add(p); } return s; }
 const ground = new T.Mesh(new T.PlaneGeometry(1, 1), new T.ShadowMaterial({ opacity: .28 })); ground.receiveShadow = true; scene.add(ground);
 const agents = {}; let matName = 'graphite';
-function mkAgent(name) { const m = new T.Mesh(GEO[ROLES[name] || 'core'](), MATS[matName]()); m.castShadow = true; m.rotation.x = .9; m.userData = { name, x: W * .5 + (Math.random() - .5) * 400, y: 60, z: 90, tx: 0, ty: 0, tz: 90, phase: 'idle', spin: Math.random() * 6 }; scene.add(m);
+function mkAgent(name) { const m = new T.Mesh(GEO[ROLES[name] || 'core'](), MATS[matName]()); m.castShadow = true; m.rotation.x = .9; const px = 70 + NAMES.indexOf(name) * 46; m.userData = { name, x: px, y: -80, z: 90, tx: px, ty: 38, tz: 90, phase: 'idle', spin: Math.random() * 6 }; scene.add(m);
   const tag = document.createElement('div'); tag.className = 'tag'; tag.innerHTML = `${name}<i></i>`; tags.appendChild(tag); m.userData.tag = tag;
   const h = document.createElement('div'); h.innerHTML = `<s></s>${name} <span style="margin-left:auto;color:#777"></span>`; hud.appendChild(h); m.userData.hud = h; agents[name] = m; return m; }
 NAMES.forEach(mkAgent);
@@ -62,7 +62,7 @@ shot.onload = fit; addEventListener('resize', fit);
 fetch(JOB).then(r => r.json()).then(j => { shot.src = (j.result && (j.result.beforeFullUrl || j.result.beforeUrl)) || ''; });
 // ───────── motion: lift, travel on an arc, settle, work, lift
 function goto(name, rect, text, dur = 1400) { const a = agents[name] || mkAgent(name); const u = a.userData; const cx = (rect.x + rect.w / 2) * scale, cy = (rect.y + Math.min(rect.h, 220) / 2) * scale; u.fx = u.x; u.fy = u.y; u.tx = cx; u.ty = cy; u.t0 = performance.now(); u.dur = dur / speed; u.phase = 'travel'; u.text = text; u.tag.querySelector('i').textContent = text; u.tag.classList.add('on'); u.hud.classList.add('on'); u.hud.querySelector('span').textContent = text.slice(0, 26); mark(rect, name === 'Critic' || name === 'Contract'); }
-function idle(name) { const a = agents[name]; if (!a) return; const u = a.userData; u.phase = 'idle'; u.tag.classList.remove('on'); u.hud.classList.remove('on'); u.tz = 90; u.tx = W - 80 - NAMES.indexOf(name) * 46; u.ty = 40; }
+function idle(name) { const a = agents[name]; if (!a) return; const u = a.userData; u.phase = 'idle'; u.tag.classList.remove('on'); u.hud.classList.remove('on'); u.tz = 90; u.tx = 70 + NAMES.indexOf(name) * 46; u.ty = 38; }
 let marks = []; function mark(rect, red) { if (!red) return; const d = document.createElement('div'); d.className = 'mark'; d.style.cssText = `left:${rect.x * scale}px;top:${rect.y * scale}px;width:${rect.w * scale}px;height:${rect.h * scale}px`; tags.appendChild(d); requestAnimationFrame(() => d.classList.add('on')); setTimeout(() => { d.classList.remove('on'); setTimeout(() => d.remove(), 400); }, 2600 / speed); }
 let speed = 1, light = 1;
 function tick(now) { for (const a of Object.values(agents)) { const u = a.userData;
