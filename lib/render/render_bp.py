@@ -176,24 +176,32 @@ def build(slug_dir, bp_id, out_path=None):
         if t == 'ledger': return [(a, p) for a, p in bt.get('items', [])]
         return []
 
-    def pick_visuals(bt, n):
-        # the beat's own image first, then unused details/shots, then photos
+    ZOOMS = [('50% 50%', 1.0), ('30% 35%', 1.6), ('70% 40%', 1.6), ('50% 70%', 1.5), ('25% 65%', 1.7), ('75% 70%', 1.6)]
+    def pick_visuals(bt, n, strict=False):
+        """Visuals for a multi-frame move. strict (sticky/pinned): only the beat's image, detail crops and commissioned art —
+        never an unrelated screenshot; when short, the product image itself returns zoomed to a different region per frame."""
         out_ = []
-        if bt.get('image') and images.get(bt['image']) and not is_used(bt['image']): out_.append(img(bt['image']))
-        while len(out_) < n:
-            sr = img(want_shot=True if soft else None)
-            if not sr or sr in out_: break
-            out_.append(sr)
+        if bt.get('image') and images.get(bt['image']) and not is_used(bt['image']): out_.append((img(bt['image']), ZOOMS[0]))
+        pool = [i for i in images.values() if i.get('data') and not is_used(i.get('id')) and (not strict or i.get('detail') or i.get('gen'))]
+        pool.sort(key=lambda i: (not i.get('detail'), not i.get('gen'), -(i.get('w', 0) * i.get('h', 0))))
+        for it in pool:
+            if len(out_) >= n: break
+            out_.append((img(it['id']), ZOOMS[0]))
+        if strict and len(out_) < n:
+            base = images.get(h.get('media')) or next((i for i in images.values() if i.get('heroGrade') and i.get('data')), None)
+            if base:
+                k = 1
+                while len(out_) < n and k < len(ZOOMS): out_.append((base['data'], ZOOMS[k])); k += 1
         return out_
 
     def sticky_product(sec, bt):
         """SIGNATURE: text blocks scroll on the left, the product stays pinned on the right and swaps per block."""
         items = beat_items(bt)[:5]
         if len(items) < 2: return cards(sec, bt)
-        vis = pick_visuals(bt, len(items))
+        vis = pick_visuals(bt, len(items), strict=True)
         if not vis: return cards(sec, bt)
         rows = ''.join(f'<div class="sp-row" data-i="{i}"><span class="lab">{e(f"0{i + 1}")}</span><h3 class="h3">{e(t)}</h3><p>{e(b_)}</p></div>' for i, (t, b_) in enumerate(items))
-        frames = ''.join(f'<figure class="sp-f{" on" if i == 0 else ""}" data-i="{i}"><img src="{vis[i % len(vis)]}" alt=""></figure>' for i in range(len(items)))
+        frames = ''.join(f'<figure class="sp-f{" on" if i == 0 else ""}" data-i="{i}"><img src="{vis[i % len(vis)][0]}" alt="" style="object-position:{vis[i % len(vis)][1][0]};transform:scale({vis[i % len(vis)][1][1]})"></figure>' for i in range(len(items)))
         return f'<section class="sec sticky band-{band_of(sec, bt)}" id="{e(bt["id"])}" data-sig="sticky"><div class="wrap">{ghead(sec, bt)}<div class="sp"><div class="sp-text">{rows}</div><div class="sp-pin"><div class="sp-stage">{frames}</div></div></div></div></section>'
 
     def marquee(sec, bt):
@@ -208,8 +216,8 @@ def build(slug_dir, bp_id, out_path=None):
         """SIGNATURE: the section pins; each step takes over the screen as you scroll (number, sentence, visual)."""
         items = beat_items(bt)[:5]
         if len(items) < 2: return cards(sec, bt)
-        vis = pick_visuals(bt, len(items))
-        slides = ''.join(f'<div class="ps-s{" on" if i == 0 else ""}" data-i="{i}"><div class="ps-t"><b class="num">{e(t) if re.search(r"\d", str(t)) else f"0{i + 1}"}</b><h3 class="h2" style="font-size:var(--h3);max-width:22ch">{e(b_ if re.search(r"\d", str(t)) else t)}</h3>{("<p class=\"lede\">" + e(b_) + "</p>") if not re.search(r"\d", str(t)) and b_ else ""}</div>{("<figure class=\"ps-v\"><img src=\"" + vis[i % len(vis)] + "\" alt=\"\"></figure>") if vis else ""}</div>' for i, (t, b_) in enumerate(items))
+        vis = pick_visuals(bt, len(items), strict=True)
+        slides = ''.join(f'<div class="ps-s{" on" if i == 0 else ""}" data-i="{i}"><div class="ps-t"><b class="num">{e(t) if re.search(r"\d", str(t)) else f"0{i + 1}"}</b><h3 class="h2" style="font-size:var(--h3);max-width:22ch">{e(b_ if re.search(r"\d", str(t)) else t)}</h3>{("<p class=\"lede\">" + e(b_) + "</p>") if not re.search(r"\d", str(t)) and b_ else ""}</div>{("<figure class=\"ps-v\"><img src=\"" + vis[i % len(vis)][0] + "\" alt=\"\" style=\"object-position:" + vis[i % len(vis)][1][0] + ";transform:scale(" + str(vis[i % len(vis)][1][1]) + ")\"></figure>") if vis else ""}</div>' for i, (t, b_) in enumerate(items))
         return f'<section class="sec pinned band-{band_of(sec, bt)}" id="{e(bt["id"])}" data-sig="pinned" data-n="{len(items)}"><div class="ps-sticky"><div class="wrap">{ghead(sec, bt)}<div class="ps-stage">{slides}</div><div class="ps-dots">{"".join("<i></i>" for _ in items)}</div></div></div></section>'
 
     def type_wall(sec, bt):
@@ -223,7 +231,7 @@ def build(slug_dir, bp_id, out_path=None):
     def story(sec, bt, flip=False):
         """Text beside a visual, alternating sides; the visual reveals with a clip."""
         items = beat_items(bt)[:4]
-        vis = pick_visuals(bt, 1); src = vis[0] if vis else ''
+        vis = pick_visuals(bt, 1); src = vis[0][0] if vis else ''
         if not src: return cards(sec, bt)
         lst = ''.join(f'<li><b>{e(t)}</b><span>{e(b_)}</span></li>' for t, b_ in items)
         txt = f'<div class="st-t">{lab(bt.get("label"))}<h2 class="h2" style="{re.sub(r"max-width:[^;]+;?", "", head_style(sec, bt=bt))}">{e(bt.get("h2") or "")}</h2>{("<p class=\"lede\">" + e(bt.get("lede")) + "</p>") if bt.get("lede") else ""}<ul class="st-l">{lst}</ul></div>'
@@ -422,7 +430,7 @@ img,video{{display:block;max-width:100%}}a{{color:inherit;text-decoration:none}}
 .h2{{font-family:var(--display);font-weight:var(--h2-w);font-size:var(--h2);line-height:var(--h2-lh);letter-spacing:var(--h2-ls)}}.h3{{font-family:var(--display);font-weight:var(--h3-w);font-size:var(--h3);line-height:1.12;letter-spacing:-.01em}}
 .lede{{font-size:calc(var(--body-px) + 3px);line-height:1.4;max-width:var(--body-max);margin-top:22px}}.lede.light{{color:var(--on-photo);opacity:.88}}
 .big-p{{font-family:{'var(--display)' if disp_kind == 'serif' else 'var(--body)'};font-weight:{300 if disp_kind != 'serif' and D.get('w', 400) <= 300 else 400};line-height:1.25;max-width:min(100%,{min(1100, (BO.get('maxw') or 520) * 1.6)}px);margin-top:18px;letter-spacing:-.01em}}
-.btn{{display:inline-flex;align-items:center;gap:10px;min-height:var(--btn-h);padding:var(--btn-pad);border-radius:var(--btn-r);font-family:var(--body);font-size:var(--btn-px);font-weight:{BT.get('w', 500)};text-transform:var(--btn-tt);background:var(--{'accent' if BT.get('filled') and lum(accent) < .8 else 'ink'});color:var(--{'paper' if not (BT.get('filled') and lum(accent) < .8) else ('ink' if lum(accent) > .55 else 'paper')});border:1px solid transparent;transition:transform var(--fast) var(--ease),background var(--fast)}}
+.btn{{display:inline-flex;align-items:center;gap:10px;min-height:var(--btn-h);padding:var(--btn-pad);border-radius:var(--btn-r);font-family:var(--body);font-size:var(--btn-px);font-weight:{BT.get('w', 500)};text-transform:var(--btn-tt);background:var(--{'accent' if lum(accent) < .8 and abs(lum(accent) - lum(ink)) > .18 else 'ink'});color:{'var(--paper)' if not (lum(accent) < .8 and abs(lum(accent) - lum(ink)) > .18) else ('#111' if lum(accent) > .55 else '#fff')};border:1px solid transparent;transition:transform var(--fast) var(--ease),background var(--fast)}}
 .btn.ghost{{background:transparent;color:var(--ink);border-color:var(--ink)}}.btn.light{{color:var(--on-photo);border-color:var(--on-photo);background:transparent}}.btn.light:not(.ghost){{background:var(--on-photo);color:#111;border-color:var(--on-photo)}}.btn:active{{transform:scale(.97)}}.btn .ar{{transition:transform var(--fast) var(--ease)}}.btn:hover .ar{{transform:translateX(4px)}}
 .nav{{position:fixed;inset:0 0 auto 0;z-index:50;padding:18px 0;transition:background var(--slow),color var(--slow)}}.nav .wrap{{display:flex;align-items:center;justify-content:space-between;gap:24px}}.nav .links{{display:flex;gap:28px;font-size:15px}}.nav.solid{{background:color-mix(in srgb,var(--paper) 86%,transparent);backdrop-filter:blur(14px)}}.nav .logo{{height:{min(56, max(28, (bp.get('nav') or {}).get('h', 56) - 20))}px;width:auto}}.nav .wordmark{{font-family:var(--display);font-size:22px}}
 .hero{{position:relative;display:grid;align-content:end;overflow:hidden;padding-top:120px}}.hero .media{{position:absolute;inset:0;z-index:0;background:var(--ink)}}.hero .media img,.hero .media video{{width:100%;height:100%;object-fit:cover}}.hero.has-media .media::after{{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.35),rgba(0,0,0,.08) 40%,rgba(0,0,0,.55))}}
@@ -443,7 +451,7 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
 .end{{padding-top:clamp(48px,6vw,80px);padding-bottom:28px}}.end .fcols{{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--gutter);margin-top:48px;padding-top:40px;border-top:1px solid var(--line)}}.end ul{{list-style:none;margin-top:10px;display:grid;gap:6px}}.end .legal{{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:40px;font-family:var(--label);font-size:var(--lab-px);color:var(--muted)}}
 /* signature components */
 .hero.split{{padding-top:96px;min-height:100svh;align-content:center}}.split-wrap{{display:grid;grid-template-columns:1fr 1.1fr;gap:var(--gutter);align-items:center}}.split-l .lede{{margin-top:18px}}.split-l .ctas{{margin-top:26px}}.shotframe.tall{{border-radius:max(12px,var(--radius));border:1px solid var(--line);box-shadow:0 40px 100px color-mix(in srgb,var(--ink) 16%,transparent);overflow:hidden}}.shotframe.tall img{{width:100%;height:min(82vh,900px);object-fit:cover;object-position:left top}}
-.sp{{display:grid;grid-template-columns:1fr 1.15fr;gap:calc(var(--gutter) * 1.5);align-items:stretch}}.sp-row{{min-height:46vh;display:grid;align-content:center;gap:12px;max-width:40ch;opacity:.28;transition:opacity .5s var(--ease)}}.sp-row.on{{opacity:1}}.sp-row .h3{{font-size:min(var(--h2),44px)}}.sp-row p{{color:var(--muted);font-size:calc(var(--body-px) + 1px)}}.sp-pin{{position:relative}}.sp-stage{{position:sticky;top:12vh;height:76vh;border-radius:max(12px,var(--radius));overflow:hidden;border:1px solid var(--line);background:color-mix(in srgb,var(--ink) 6%,var(--paper))}}.sp-f{{position:absolute;inset:0;margin:0;opacity:0;transform:scale(1.03);transition:opacity .6s var(--ease),transform .9s var(--ease)}}.sp-f.on{{opacity:1;transform:none}}.sp-f img{{width:100%;height:100%;object-fit:cover;object-position:top}}
+.sp{{display:grid;grid-template-columns:1fr 1.15fr;gap:calc(var(--gutter) * 1.5);align-items:stretch}}.sp-row{{min-height:46vh;display:grid;align-content:center;gap:12px;max-width:40ch;opacity:.28;transition:opacity .5s var(--ease)}}.sp-row.on{{opacity:1}}.sp-row .h3{{font-size:min(var(--h2),44px)}}.sp-row p{{color:var(--muted);font-size:calc(var(--body-px) + 1px)}}.sp-pin{{position:relative}}.sp-stage{{position:sticky;top:12vh;height:76vh;border-radius:max(12px,var(--radius));overflow:hidden;border:1px solid var(--line);background:color-mix(in srgb,var(--ink) 6%,var(--paper))}}.sp-f{{position:absolute;inset:0;margin:0;opacity:0;transform:scale(1.03);transition:opacity .6s var(--ease),transform .9s var(--ease)}}.sp-f.on{{opacity:1;transform:none}}.sp-f img{{width:100%;height:100%;object-fit:cover;object-position:top;transition:transform 1.2s var(--ease)}}
 .marquee{{padding:clamp(28px,4vw,56px) 0;overflow:hidden}}.marquee .gh{{margin-bottom:24px}}.mq{{overflow:hidden;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:18px 0}}.mq-track{{display:flex;gap:0;width:max-content;animation:mq 46s linear infinite}}.mq-i{{display:inline-flex;align-items:center;gap:28px;padding:0 14px 0 28px;font-family:var(--display);font-weight:var(--h2-w);font-size:min(var(--h2),56px);letter-spacing:-.02em;white-space:nowrap}}.mq-i i{{font-style:normal;font-size:.45em;color:var(--accent)}}@keyframes mq{{to{{transform:translateX(-50%)}}}}.marquee:hover .mq-track{{animation-play-state:paused}}
 .pinned{{padding:0}}.ps-sticky{{position:sticky;top:0;height:100svh;display:grid;align-content:center;overflow:hidden}}.ps-stage{{position:relative;min-height:52vh}}.ps-s{{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;gap:var(--gutter);align-items:center;opacity:0;transform:translateY(24px);transition:opacity .5s var(--ease),transform .7s var(--ease);pointer-events:none}}.ps-s.on{{opacity:1;transform:none}}.ps-t .num{{display:block;font-family:var(--display);font-weight:var(--h1-w);font-size:clamp(64px,10vw,160px);line-height:.9;letter-spacing:-.03em;color:var(--accent)}}.ps-t .h2{{margin-top:18px}}.ps-v{{margin:0;border-radius:max(12px,var(--radius));overflow:hidden;border:1px solid var(--line);aspect-ratio:1.3}}.ps-v img{{width:100%;height:100%;object-fit:cover}}.ps-dots{{display:flex;gap:8px;margin-top:28px}}.ps-dots i{{width:28px;height:2px;background:var(--line)}}.ps-dots i.on{{background:var(--ink)}}.band-dark .ps-dots i.on{{background:var(--band-ink)}}
 .typewall{{padding:0}}.tw-sticky{{position:sticky;top:0;min-height:100svh;display:grid;align-content:center}}.tw{{font-family:var(--display);font-weight:var(--h2-w);font-size:clamp(28px,4.6vw,72px);line-height:1.08;letter-spacing:-.02em;max-width:22ch;margin-top:22px}}.tw-w{{opacity:.18;transition:opacity .25s}}.tw-w.on{{opacity:1}}.typewall .who{{margin-top:28px}}
