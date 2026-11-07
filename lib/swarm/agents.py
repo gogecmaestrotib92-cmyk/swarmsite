@@ -227,7 +227,11 @@ def visual(slug_dir, notes=''):
     from PIL import Image
     d = J(slug_dir, 'direction.json'); imgs = J(slug_dir, 'images.json') or []
     import gen as G
-    distinct = len([i for i in imgs if not i.get('crop_of') and not i.get('gen')]); have_gen = len([i for i in imgs if i.get('gen')])
+    def _photo(i):  # a real visual is a photograph-like raster: not a page screenshot, not a banner strip or logo, not a crop, not vector art
+        if i.get('crop_of') or i.get('gen') or i.get('shot') or i.get('w', 0) < 600: return False
+        if 'svg' in str(i.get('data', ''))[:30]: return False
+        ar = i.get('w', 1) / max(1, i.get('h', 1)); return .5 <= ar <= 2.2
+    distinct = len([i for i in imgs if _photo(i)]); have_gen = len([i for i in imgs if i.get('gen')])
     gen_rule = 'disabled' if not G.enabled() else (f'enabled — the site has only {distinct} distinct real visual(s) and {have_gen} commissioned so far: you MUST commission {max(0, 3 - have_gen)} originals now, one per section that lacks its own picture (never the hero)' if distinct < 3 and have_gen < 3 else 'enabled (optional, the site has enough visuals)')
     content = [{"type": "text", "text": f"GENERATION: {gen_rule}\nBRAND: {json.dumps({k: d.get('brand', {}).get(k) for k in ('name', 'accent', 'paper', 'ink')})} mode={d.get('mode')}\nKIND: {d.get('kind')}\nHERO: {json.dumps({k: d['hero'].get(k) for k in ('h1', 'media')}, ensure_ascii=False)}\nBEATS: {json.dumps([{'id': b['id'], 'type': b['type'], 'h2': b.get('h2'), 'image': b.get('image', ''), 'lead': (b.get('ui') or {}).get('lead', '')} for b in d['beats']], ensure_ascii=False)}\nCRITIC NOTES FOR VISUAL: {notes or 'none'}\nIMAGES (thumbnails follow, in this order):"}]
     for it in imgs[:18]:
@@ -270,6 +274,10 @@ def apply_visual(slug_dir, r):
         from concurrent.futures import ThreadPoolExecutor
         have_gen = len([i for i in imgs if i.get('gen')])
         asks = [g for g in (r.get('generate') or [])[:max(0, 3 - have_gen)] if g.get('prompt') and g.get('beat')]
+        if distinct < 3 and have_gen < 3 and not asks:  # the rule is mandatory: when the model only lists needs, the needs become the commissions
+            holes = [b for b in d.get('beats', []) if b.get('type') not in ('form', 'faq', 'ledger') and not b.get('image')][:3 - have_gen]
+            for b, need in zip(holes, (r.get('need') or []) + [f"{d.get('brand', {}).get('name', '')} — {b.get('h2') or b.get('big') or ''}" for b in holes]):
+                asks.append({'beat': b['id'], 'prompt': f"Editorial photograph for a {d.get('kind')} website: {need}. Natural light, real place, restrained palette, no people.", 'ar': '16:9', 'as': f"gen-{b['id']}"})
         def one(g):
             try:
                 pr = g['prompt'] + ' No text, no letters, no logos, no user interface, no watermark, no faces.'

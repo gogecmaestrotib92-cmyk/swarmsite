@@ -156,7 +156,11 @@ def build(slug_dir, bp_id, out_path=None):
 
     def hero():
         media = sec_media(bp['sections'][0]); light = bool(media)
-        vid = os.path.join(slug_dir, 'hero.mp4'); src = img(h.get('media'), True)
+        vid = os.path.join(slug_dir, 'hero.mp4')
+        hm = images.get(h.get('media')) or {}
+        if hm and ('svg' in str(hm.get('data', ''))[:30] or hm.get('w', 0) < 700 or not (.5 <= hm.get('w', 1) / max(1, hm.get('h', 1)) <= 2.4)): hm = {}  # vector art, a logo or a banner is not a hero picture
+        cand = hm or next((i for i in sorted(images.values(), key=lambda i: -(i.get('w', 0) * i.get('h', 0))) if photo_like(i, 900) and reserved.get(i.get('id')) in (None, '__hero__')), None)
+        src = img(cand['id'], True) if cand else img(None, True)
         if media and src:
             m = f'<div class="media"><img src="{src}" alt=""></div>' if not os.path.exists(vid) else f'<div class="media"><video autoplay muted loop playsinline poster="{src}"><source src="data:video/mp4;base64,{base64.b64encode(open(vid, "rb").read()).decode()}" type="video/mp4"></video></div>'
         else: m = ''
