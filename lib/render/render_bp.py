@@ -74,6 +74,11 @@ def build(slug_dir, bp_id, out_path=None):
         o = reserved.get(it.get('id'))
         return o is None or (bt is not None and o == bt.get('id')) or (bt is None and o == '__hero__')
     soft = d.get('kind') in ('software', 'product')
+    def photo_like(it, minw=500):
+        # a picture that can stand in a card or a frame: real pixels, not a page screenshot, not a banner strip or a logo, not vector art
+        if not it.get('data') or it.get('shot') or is_used(it.get('id')) or it.get('w', 0) < minw: return False
+        if str(it.get('data', ''))[:30].find('svg') >= 0: return False
+        ar = it.get('w', 1) / max(1, it.get('h', 1)); return .55 <= ar <= 2.0
     def img(k=None, prefer_hero=False, want_shot=None):
         it = images.get(k) if k else None
         if it and is_used(it.get('id')) and not prefer_hero: it = None
@@ -239,7 +244,7 @@ def build(slug_dir, bp_id, out_path=None):
         while 0 < len(words_) < 6: words_ = words_ + words_  # a ticker needs a track longer than the screen: repeat short lists
         track = ''.join(f'<span class="mq-i">{e(w)}<i>✦</i></span>' for w in words_)
         head = ghead(sec, bt) if bt.get('h2') else ''
-        own = bt.get('image') if bt.get('image') and images.get(bt['image']) and not is_used(bt['image']) and images[bt['image']].get('w', 0) >= 900 else None
+        own = bt.get('image') if bt.get('image') and images.get(bt['image']) and photo_like(images[bt['image']], minw=900) else None
         lead = f'<figure class="lead" style="aspect-ratio:{max(1.3, min(2.4, images[own]["w"] / max(1, images[own]["h"])))}"><img src="{img(own)}" alt=""></figure>' if own else ''
         return f'<section class="sec marquee band-{band_of(sec, bt)}" id="{e(bt["id"])}" data-sig="marquee">{("<div class=\"wrap\">" + head + lead + "</div>") if (head or lead) else ""}<div class="mq"><div class="mq-track">{track}{track}</div></div></section>'
 
@@ -254,6 +259,7 @@ def build(slug_dir, bp_id, out_path=None):
     def type_wall(sec, bt):
         """SIGNATURE: one statement in giant type; the words light up one by one as you scroll through it."""
         text = bt.get('body') if bt['type'] == 'quote' else (bt.get('lede') or bt.get('h2') or '')
+        if len(str(text).split()) < 10: return statement_v(sec, bt, 'wide')  # seven words cannot carry a screen-and-a-half runway
         big = bt.get('big') if bt['type'] == 'quote' else bt.get('h2')
         ws = ''.join(f'<span class="tw-w">{e(w)}</span> ' for w in str(text).split()[:48])
         who = f'<p class="lab who">{e(bt["who"])}</p>' if bt.get('who') else ''
@@ -306,7 +312,8 @@ def build(slug_dir, bp_id, out_path=None):
         band = 'accent' if variant == 'accent' else 'dark'
         return f'<section class="sec qband band-{band}{" center" if variant == "centre" else ""}" id="{e(bt["id"])}"><div class="wrap"><p class="qb">{e(text)}</p>{who}</div></section>'
     def rail(sec, bt):
-        items = beat_items(bt)[:8]; ps = [img(want_shot=None) for _ in range(min(len(items), len([i for i in images.values() if not is_used(i.get('id')) and i.get('w', 0) >= 500])))]
+        items = beat_items(bt)[:8]; cands = [i for i in images.values() if photo_like(i) and free_for(i, bt)]
+        ps = [img(i['id']) for i in cands[:len(items)]] if len(cands) >= min(3, len(items)) else []  # a rail with pictures on some cards and not others looks broken: all or none
         cards_ = ''.join(f'<article class="rc">{("<figure><img src=\"" + ps[i] + "\" alt=\"\"></figure>") if i < len(ps) and ps[i] else ""}<span class="lab">{e(f"0{i + 1}")}</span><h3 class="h3">{e(t)}</h3><p>{e(x)}</p></article>' for i, (t, x) in enumerate(items))
         return f'<section class="sec railsec band-{band_of(sec, bt)}" id="{e(bt["id"])}"><div class="wrap">{ghead(sec, bt)}</div><div class="rail" data-sig="rail"><div class="rail-in">{cards_}</div></div></section>'
     def numbers(sec, bt):
@@ -323,7 +330,7 @@ def build(slug_dir, bp_id, out_path=None):
         items = beat_items(bt)[:6]; n = min(4, max(2, len(items)))
         cards_ = ''
         for i, (t, x) in enumerate(items):
-            pic = img(want_shot=False); cards_ += f'<article class="pr">{("<figure><img src=\"" + pic + "\" alt=\"\"></figure>") if pic else "<figure class=\"ph\"></figure>"}<div class="pr-t"><h3 class="h3">{e(t)}</h3><b>{e(x)}</b></div></article>'
+            pc = next((i for i in images.values() if photo_like(i) and free_for(i, bt)), None); pic = img(pc['id']) if pc else ''; cards_ += f'<article class="pr">{("<figure><img src=\"" + pic + "\" alt=\"\"></figure>") if pic else "<figure class=\"ph\"></figure>"}<div class="pr-t"><h3 class="h3">{e(t)}</h3><b>{e(x)}</b></div></article>'
         return f'<section class="sec products band-{band_of(sec, bt)}" id="{e(bt["id"])}"><div class="wrap">{ghead(sec, bt)}<div class="prs" style="--n:{n}">{cards_}</div></div></section>'
     def statement_v(sec, bt, variant=''):
         kind = 'quote' if bt['type'] == 'quote' else 'lede'
