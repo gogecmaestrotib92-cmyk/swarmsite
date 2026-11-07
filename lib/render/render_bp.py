@@ -235,6 +235,8 @@ def build(slug_dir, bp_id, out_path=None):
         """SIGNATURE: a slow ticker of the beat's own words (titles / facts / prices); doubles as a breath between screens."""
         items = beat_items(bt)
         words_ = [f'{t}' if not b_ or bt['type'] in ('features', 'faq') else f'{t} — {b_}' for t, b_ in items][:10] or [bt.get('h2') or b['name']]
+        words_ = [w for w in words_ if len(str(w).split()) <= 12] or words_[:1]  # a ticker is made of phrases, not paragraphs
+        while 0 < len(words_) < 6: words_ = words_ + words_  # a ticker needs a track longer than the screen: repeat short lists
         track = ''.join(f'<span class="mq-i">{e(w)}<i>✦</i></span>' for w in words_)
         head = ghead(sec, bt) if bt.get('h2') else ''
         own = bt.get('image') if bt.get('image') and images.get(bt['image']) and not is_used(bt['image']) and images[bt['image']].get('w', 0) >= 900 else None
@@ -352,6 +354,7 @@ def build(slug_dir, bp_id, out_path=None):
         if want and images.get(want) and images[want].get('w', 0) < 900: want = None  # a photo screen is wrap-wide or wider: never from a small source
         big_pool = [i for i in images.values() if i.get('data') and i.get('w', 0) >= 900 and not is_used(i.get('id'))]
         if not want and not big_pool: bleed = False
+        if d.get('kind') == 'software': bleed = False  # a product screenshot bled edge to edge reads as a dark void; software photos sit in a framed, contained figure
         src = img(want, want_shot=(True if (soft and not bleed) else None)) if (want or big_pool) else img(want_shot=None)
         if not src: return ''
         head = f'<div class="wrap over"><h2 class="h2 light" style="{head_style(sec)}">{e(bt["h2"])}</h2></div>' if bt and bt.get('h2') and sec.get('head') else ''
