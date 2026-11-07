@@ -47,15 +47,17 @@ def build(slug_dir, bp_id, out_path=None):
     soft = d.get('kind') in ('software', 'product')
     def img(k=None, prefer_hero=False, want_shot=None):
         it = images.get(k) if k else None
-        if it and it.get('id') in used and not prefer_hero: it = None  # never the same picture twice on one page
+        if it and (it.get('id') in used or (it.get('crop_of') and it.get('crop_of') in used)) and not prefer_hero: it = None  # never the same picture twice on one page
         if not it:
-            pool = [i for i in images.values() if i.get('data') and i.get('id') not in used] or [i for i in images.values() if i.get('data')]
+            pool = [i for i in images.values() if i.get('data') and i.get('id') not in used and not (i.get('crop_of') and i['crop_of'] in used)] or [i for i in images.values() if i.get('data')]
             if want_shot is True: pool = [i for i in pool if i.get('shot')] or pool
             if want_shot is False: pool = [i for i in pool if not i.get('shot')] or pool
             # hero: real photos first; software bodies: UI section shots first; places: photos first
             pool.sort(key=lambda i: (bool(i.get('shot')) if (prefer_hero or not soft) else not i.get('shot'), not (i.get('heroGrade') if prefer_hero else True), -(i.get('w', 0) * i.get('h', 0)))); it = pool[0] if pool else None
         if not it: return ''
-        used.add(it.get('id')); return it.get('data', '')
+        used.add(it.get('id'));
+        if it.get('crop_of'): used.add(it['crop_of'])
+        return it.get('data', '')
 
     # ---- fonts: blueprint stance, owner's font if they keep it ----
     disp_name, disp_kind = font_for((T.get('display') or {}).get('fam'))
@@ -178,7 +180,7 @@ def build(slug_dir, bp_id, out_path=None):
             it = images[ui_['lead']]; src = img(ui_['lead'])
         elif ui_.get('lead') == '': return ''
         elif bt['type'] == 'facts':
-            pool = [i for i in images.values() if i.get('data') and not i.get('shot') and i.get('id') not in used and i.get('w', 0) >= 600]
+            pool = ([images[bt['image']]] if bt.get('image') and images.get(bt['image']) and bt['image'] not in used else []) + [i for i in images.values() if i.get('data') and not i.get('shot') and i.get('id') not in used and i.get('w', 0) >= 600]
             if pool: it = pool[0]; src = img(it['id'])
         elif bt['type'] == 'steps' and soft:
             pool = [i for i in images.values() if i.get('shot') and i.get('data') and i.get('id') not in used]
