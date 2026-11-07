@@ -11,7 +11,7 @@
   const easeOut = t => 1 - Math.pow(1 - t, 3); const easeInOut = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
   const CSS = `
   .s2-cur{position:absolute;left:0;top:0;pointer-events:none;z-index:7;will-change:transform;opacity:0;transition:opacity .6s}
-  .s2-cur.in{opacity:1}.s2-cur svg{display:block;filter:drop-shadow(0 4px 6px rgba(0,0,0,.28)) drop-shadow(0 1px 1px rgba(0,0,0,.2))}
+  .s2-cur.in{opacity:1}.s2-cur.off,.s2-ghost.off,.s2-trail.off{opacity:0!important;transition:opacity .35s}.s2-cur svg{display:block;filter:drop-shadow(0 4px 6px rgba(0,0,0,.28)) drop-shadow(0 1px 1px rgba(0,0,0,.2))}
   .s2-cur .tag{position:absolute;left:14px;top:18px;display:flex;align-items:center;gap:7px;padding:5px 8px 5px 6px;border-radius:999px;background:rgba(255,255,255,.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(0,0,0,.08);box-shadow:0 6px 18px rgba(0,0,0,.12);white-space:nowrap;opacity:0;transform:translateY(-4px);transition:opacity .25s,transform .25s}
   .s2-cur.on .tag{opacity:1;transform:none}.s2-cur .tag i{width:7px;height:7px;border-radius:50%;display:block}.s2-cur .tag b{font:500 10px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;color:#111}
   .s2-cur .tag s{text-decoration:none;font:400 10.5px/1 Inter,system-ui,sans-serif;color:#555;max-width:220px;overflow:hidden;text-overflow:ellipsis}
@@ -97,13 +97,14 @@
           if (mine && this.active < 2) { this.active++; try { await this.real(c, mine); } finally { this.active--; } }
           else if (mine) { this.queue.unshift(mine); await sleep(300); }
           else if (this.opts.demo && !this.queue.length && Math.random() < .5) await this.demo(c);
-          else { const p = this.park(c); if (Math.hypot(p.x - c.x, p.y - c.y) > 60) { c.say(''); await c.moveTo(p.x, p.y); } else { c.x += rnd(-.6, .6); c.y += rnd(-.4, .4); c.render(); } await sleep(rnd(400, 900)); }
+          else { c.say(''); c.el.classList.add('off'); c.ghost.classList.add('off'); await sleep(rnd(400, 900)); }
         } catch (e) { /* frame gone */ }
       }
     }
     /* ── one gesture per role, on the real rect, with the real text ── */
     async real(c, ev) {
       const role = ALIAS[c.role] || c.role; const text = ev.text || '';
+      if (c.el.classList.contains('off')) { const r0 = ev.rect && this.page ? this.toLocal(ev.rect) : null; c.x = (r0 ? r0.x : this.frame.clientWidth * .5) + rnd(-160, 160); c.y = (r0 ? r0.y : this.frame.clientHeight * .5) + rnd(-120, 120); c.hist = []; c.render(); c.el.classList.remove('off'); c.ghost.classList.remove('off'); await sleep(250); }
       if (!(ev.rect && this.page)) { const p = this.park(c); await c.moveTo(p.x + rnd(-20, 20), p.y - rnd(40, 120)); c.say(text); await sleep(Math.min(2600, 900 + text.length * 25)); c.say(''); return; }
       this.panTo(ev.rect); await sleep(450); const r = this.toLocal(ev.rect); this.spotlight(r);
       await c.moveTo(r.x + Math.min(24, r.w * .2), r.y + Math.min(18, r.h * .5)); c.say(text);
@@ -139,7 +140,7 @@
     async gSticky(c, r, text) { const s = this.mk('s2-sticky', { x: Math.min(this.frame.clientWidth - 210, r.x + 20), y: r.y + 16, w: 190, h: 0 }); s.style.height = 'auto'; s.textContent = text; await c.moveTo(r.x + 40, r.y + 30, { dur: 500 }); s.classList.add('on'); this.fade(s, 2600); }
     async gWipe(c, r, text) { const w = this.mk('s2-wipe', { x: 0, y: r.y, w: this.frame.clientWidth, h: 0 }); w.style.transition = 'height .9s cubic-bezier(.2,.8,.2,1),opacity .5s'; requestAnimationFrame(() => w.style.height = r.h + 'px'); await c.moveTo(r.x + r.w * .5, r.y + r.h, { dur: 900 }); this.fade(w, 500); }
     /* landing demo (no real events): a few quiet, plausible gestures on the frame's own blocks */
-    async demo(c) { let blocks = [...this.frame.querySelectorAll('[data-agent]')]; if (!blocks.length) blocks = [...this.frame.querySelectorAll('.row > div, figure, img, h1, h2, h3, p')].filter(b => b.getBoundingClientRect().width > 120); if (!blocks.length) return; const el = blocks[Math.floor(rnd(0, blocks.length))]; const fr = this.frame.getBoundingClientRect(), b = el.getBoundingClientRect(); const r = { x: b.left - fr.left, y: b.top - fr.top, w: b.width, h: Math.min(b.height, 240) };
+    async demo(c) { if (c.el.classList.contains('off')) { c.el.classList.remove('off'); c.ghost.classList.remove('off'); } let blocks = [...this.frame.querySelectorAll('[data-agent]')]; if (!blocks.length) blocks = [...this.frame.querySelectorAll('.row > div, figure, img, h1, h2, h3, p')].filter(b => b.getBoundingClientRect().width > 120); if (!blocks.length) return; const el = blocks[Math.floor(rnd(0, blocks.length))]; const fr = this.frame.getBoundingClientRect(), b = el.getBoundingClientRect(); const r = { x: b.left - fr.left, y: b.top - fr.top, w: b.width, h: Math.min(b.height, 240) };
       const role = ALIAS[c.role] || c.role; const say = { Reader: 'reading', Copy: 'h1 · 6 words', Visual: 'hero · 1440px', UX: 'one action', UI: '3 columns', Critic: 'empty screen', Contract: 'promise kept', Concept: 'one idea', Render: 'rendering' }[role] || 'working';
       await c.moveTo(r.x + 20, r.y + 16); c.say(say); const G = { Reader: this.gRead, Copy: this.gCopy, Visual: this.gCrop, UX: this.gDrag, UI: this.gGuides, Critic: this.gInk, Contract: this.gStamp, Concept: this.gSticky, Render: this.gWipe };
       await (G[role] || this.gRead).call(this, c, r, say); await sleep(600); c.say(''); }
