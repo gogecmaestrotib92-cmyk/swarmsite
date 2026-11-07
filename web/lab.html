@@ -23,7 +23,7 @@ canvas.gl{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 <div class="seg" id="spd"><button data-s="1" class="on">1×</button><button data-s="2">2×</button><button data-s="4">4×</button></div>
 <label>light <input type="range" id="light" min="0" max="2" step=".05" value="1"></label>
 <label><input type="checkbox" id="replay" checked> replay real job</label></div>
-<div class="stage"><div class="page"><img id="shot" alt=""><canvas class="gl" id="gl"></canvas><div class="tags" id="tags"></div></div></div>
+<div class="stage"><div class="page"><img id="shot" alt="" crossorigin="anonymous"><canvas class="gl" id="gl"></canvas><div class="tags" id="tags"></div></div></div>
 <div class="hud" id="hud"></div>
 <p class="note">Bálamo · real events from a real job · agents are 3D bodies with contact shadows; labels stay HTML</p>
 <script type="importmap">{"imports":{"three":"https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.module.min.js"}}</script>
@@ -59,7 +59,7 @@ function mkAgent(name) { const m = new T.Mesh(GEO[ROLES[name] || 'core'](), MATS
 NAMES.forEach(mkAgent);
 function fit() { W = page.clientWidth; H = page.clientHeight; scale = W / 1440; renderer.setSize(W, H, false); cam.left = 0; cam.right = W; cam.top = 0; cam.bottom = H; cam.updateProjectionMatrix(); ground.scale.set(W * 2, H * 2, 1); ground.position.set(W / 2, H / 2, 0); key.shadow.camera.left = -W; key.shadow.camera.right = W; key.shadow.camera.top = H; key.shadow.camera.bottom = -H; key.shadow.camera.updateProjectionMatrix(); }
 shot.onload = fit; addEventListener('resize', fit);
-shot.src = JOB + '/art/before-full.jpg';
+fetch(JOB).then(r => r.json()).then(j => { shot.src = (j.result && (j.result.beforeFullUrl || j.result.beforeUrl)) || ''; });
 // ───────── motion: lift, travel on an arc, settle, work, lift
 function goto(name, rect, text, dur = 1400) { const a = agents[name] || mkAgent(name); const u = a.userData; const cx = (rect.x + rect.w / 2) * scale, cy = (rect.y + Math.min(rect.h, 220) / 2) * scale; u.fx = u.x; u.fy = u.y; u.tx = cx; u.ty = cy; u.t0 = performance.now(); u.dur = dur / speed; u.phase = 'travel'; u.text = text; u.tag.querySelector('i').textContent = text; u.tag.classList.add('on'); u.hud.classList.add('on'); u.hud.querySelector('span').textContent = text.slice(0, 26); mark(rect, name === 'Critic' || name === 'Contract'); }
 function idle(name) { const a = agents[name]; if (!a) return; const u = a.userData; u.phase = 'idle'; u.tag.classList.remove('on'); u.hud.classList.remove('on'); u.tz = 90; u.tx = W - 80 - NAMES.indexOf(name) * 46; u.ty = 40; }
