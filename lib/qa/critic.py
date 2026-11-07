@@ -46,9 +46,9 @@ def critique(slug_dir, html, model='claude-sonnet-5-5', fast=False):
     moves = {b['id']: (b.get('ui') or {}).get('move') for b in d.get('beats', []) if (b.get('ui') or {}).get('move')}
     content = [{"type": "text", "text": "SIGNATURE MOVES on this page (judge them as scroll experiences; the screenshot is one frame mid-section): " + json.dumps(moves) + "\n- sticky-product: text blocks scroll on the left, the product stays pinned on the right and swaps per block\n- pinned-sequence: the section pins, each step takes the screen in turn\n- type-wall: one sentence in giant type lights up word by word as you scroll\n- marquee: a slow ticker of the section's words (one line IS the design)\n- story: text beside a visual\n\nDIRECTION (beat ids + copy)\n" + json.dumps({k: d[k] for k in ('hero', 'beats') if k in d}, ensure_ascii=False)[:14000] + "\n\nIMAGES available (ids)\n" + json.dumps(imgs_meta, ensure_ascii=False)[:3000]}]
     from PIL import Image; import io
-    for f in files[:16]:
+    for f in files[:14]:
         try:
-            im = Image.open(f).convert('RGB'); im.thumbnail((1100, 1100)); buf = io.BytesIO(); im.save(buf, 'JPEG', quality=72)
+            im = Image.open(f).convert('RGB'); im.thumbnail((1000, 1000)); buf = io.BytesIO(); im.save(buf, 'JPEG', quality=70)
         except Exception: continue
         content.append({"type": "text", "text": "SCREEN: " + os.path.basename(f)})
         content.append({"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": base64.b64encode(buf.getvalue()).decode()}})

@@ -55,11 +55,15 @@ def main():
     best = (-1, None)
     for k in range(1, rounds + 1):
         t = time.time()
-        con = contract(slug_dir, out); cfail = con.get('failed', [])
-        ev('Contract', f"round {k}: {con.get('score')}/100 · {len(cfail)} broken promise(s)")
-        for f in cfail[:4]: ev('Contract', f"✗ {f['id']}: {f['detail']}")
-        try: rep = C.critique(slug_dir, out, A.MODEL, fast=(k < rounds))  # desktop-only, short waits until the final look
-        except Exception as e: ev('Critic', 'skipped: ' + str(e)[:90]); break
+        # the contract (two viewports) and the critic's look (screenshots + model) are independent: grade both at once
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor(2) as ex:
+            fcon = ex.submit(contract, slug_dir, out); frep = ex.submit(C.critique, slug_dir, out, A.MODEL, (k < rounds))  # desktop-only, short waits until the final look
+            con = fcon.result(); cfail = con.get('failed', [])
+            ev('Contract', f"round {k}: {con.get('score')}/100 · {len(cfail)} broken promise(s)")
+            for f in cfail[:4]: ev('Contract', f"✗ {f['id']}: {f['detail']}")
+            try: rep = frep.result()
+            except Exception as e: ev('Critic', 'skipped: ' + str(e)[:90]); break
         taste = rep.get('score', -1) if isinstance(rep.get('score'), (int, float)) else -1
         fixes = [f for f in (rep.get('fixes') if isinstance(rep.get('fixes'), list) else []) if isinstance(f, dict)]
         score = round(0.55 * taste + 0.45 * con['score']) if con.get('score', -1) >= 0 and taste >= 0 else taste
