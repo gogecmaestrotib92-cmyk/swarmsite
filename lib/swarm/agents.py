@@ -172,13 +172,16 @@ VISUAL_TOOL = {"name": "set_visuals", "description": "Assign images to slots and
     "slots": {"type": "array", "items": {"type": "object", "required": ["beat", "image"], "properties": {"beat": {"type": "string"}, "image": {"type": "string"}}}},
     "crops": {"type": "array", "maxItems": 6, "items": {"type": "object", "required": ["image", "box"], "properties": {"image": {"type": "string"}, "box": {"type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4, "description": "[x,y,w,h] as fractions 0–1 of the source; the subject only, no page chrome, no nav, no text columns"}, "as": {"type": "string", "description": "new id, e.g. shot3-play"}}}},
     "need": {"type": "array", "items": {"type": "string"}, "description": "visuals the page needs but the site does not have (one line each) — e.g. 'founders portrait', 'the play diagram at 1600px'"},
+    "generate": {"type": "array", "maxItems": 3, "items": {"type": "object", "required": ["beat", "prompt", "ar"], "properties": {"beat": {"type": "string", "description": "beat id, or 'hero'"}, "prompt": {"type": "string", "description": "art-director prompt for an ORIGINAL visual: subject (an object, material, scene or abstract form that stands for the section's idea), medium (3D render / illustration / macro photo / paper-cut / ink), light, palette with hex codes, composition, 'no text, no letters, no logos, no user interface, no faces'"}, "ar": {"type": "string", "enum": ["16:9", "4:3", "1:1", "3:4", "3:2"]}, "as": {"type": "string"}}}, "description": "ONLY when GENERATION is enabled and fewer than 3 distinct real visuals exist: commission up to 3 originals"},
     "reasons": {"type": "array", "items": {"type": "string"}}}}}
-VISUAL_SYSTEM = """You are the visual editor. When the site has fewer than 3 distinct visuals, do what a studio does with one product screenshot: cut it into DETAIL crops (each ≤ 40% of the source, one feature per crop — the court diagram, the sidebar library, the details panel, a toolbar) and give each features/steps slot its own detail. Details may come from the same screenshot; whole-image repeats may not. You look at every image the site has (thumbnails attached, with ids) and decide what goes where. Rules: never a logo, icon or text block as a photo; never the same image twice; a UI screenshot is shown FRAMED (hero of a software product, or a lead above a grid) never stretched as a background; crop screenshots to the actual product surface (drop the browser chrome, sidebars, headers, surrounding whitespace). People sections get people. If nothing fits a slot, leave it empty and list it under need."""
+VISUAL_SYSTEM = """You are the visual editor. When the site has fewer than 3 distinct visuals, do what a studio does with one product screenshot: cut it into DETAIL crops (each ≤ 40% of the source, one feature per crop — the court diagram, the sidebar library, the details panel, a toolbar) and give each features/steps slot its own detail. Details may come from the same screenshot; whole-image repeats may not. You look at every image the site has (thumbnails attached, with ids) and decide what goes where. Rules: never a logo, icon or text block as a photo; never the same image twice; a UI screenshot is shown FRAMED (hero of a software product, or a lead above a grid) never stretched as a background; crop screenshots to the actual product surface (drop the browser chrome, sidebars, headers, surrounding whitespace). People sections get people. If nothing fits a slot, leave it empty and list it under need.
+When the prompt says GENERATION: enabled, you may also COMMISSION up to 3 original visuals like a studio commissions illustration: a 3D object, a material study, an abstract composition or a macro photo in the brand's palette that stands for a section's idea (a basketball court as clean line-art in brand orange on dark; a stack of printed sheets; a whistle on a bench). Never a fake product interface, never screenshots, never text or logos, never recognisable faces. Give each a beat (or 'hero' only if the site has no product image at all)."""
 
 def visual(slug_dir, notes=''):
     from PIL import Image
     d = J(slug_dir, 'direction.json'); imgs = J(slug_dir, 'images.json') or []
-    content = [{"type": "text", "text": f"KIND: {d.get('kind')}\nHERO: {json.dumps({k: d['hero'].get(k) for k in ('h1', 'media')}, ensure_ascii=False)}\nBEATS: {json.dumps([{'id': b['id'], 'type': b['type'], 'h2': b.get('h2'), 'image': b.get('image', ''), 'lead': (b.get('ui') or {}).get('lead', '')} for b in d['beats']], ensure_ascii=False)}\nCRITIC NOTES FOR VISUAL: {notes or 'none'}\nIMAGES (thumbnails follow, in this order):"}]
+    import gen as G
+    content = [{"type": "text", "text": f"GENERATION: {'enabled' if G.enabled() else 'disabled'}\nBRAND: {json.dumps({k: d.get('brand', {}).get(k) for k in ('name', 'accent', 'paper', 'ink')})} mode={d.get('mode')}\nKIND: {d.get('kind')}\nHERO: {json.dumps({k: d['hero'].get(k) for k in ('h1', 'media')}, ensure_ascii=False)}\nBEATS: {json.dumps([{'id': b['id'], 'type': b['type'], 'h2': b.get('h2'), 'image': b.get('image', ''), 'lead': (b.get('ui') or {}).get('lead', '')} for b in d['beats']], ensure_ascii=False)}\nCRITIC NOTES FOR VISUAL: {notes or 'none'}\nIMAGES (thumbnails follow, in this order):"}]
     for it in imgs[:18]:
         if not it.get('data'): continue
         try:
@@ -212,5 +215,27 @@ def apply_visual(slug_dir, r):
     for s in r.get('slots', []) or []:
         b = ids.get(s.get('beat')); im = s.get('image')
         if b and im in by and im not in seen: b['image'] = im; seen.add(im); n += 1
-    d.setdefault('swarm', {})['visual'] = {'need': r.get('need', [])[:4], 'reasons': r.get('reasons', [])[:3]}
+    # commissioned originals
+    import gen as G
+    gens = []
+    if G.enabled():
+        from concurrent.futures import ThreadPoolExecutor
+        asks = [g for g in (r.get('generate') or [])[:3] if g.get('prompt') and g.get('beat')]
+        def one(g):
+            try:
+                pr = g['prompt'] + ' No text, no letters, no logos, no user interface, no watermark, no faces.'
+                data = G.generate(pr, g.get('ar', '16:9')); im = Image.open(io.BytesIO(data)).convert('RGB'); im.thumbnail((1600, 1600)); buf = io.BytesIO(); im.save(buf, 'JPEG', quality=86)
+                return {'id': re.sub(r'[^\w-]', '', g.get('as') or f"gen-{g['beat']}"), 'src': 'commissioned', 'w': im.size[0], 'h': im.size[1], 'alt': g['prompt'][:80], 'ratio': round(im.size[0] / im.size[1], 2), 'heroGrade': im.size[0] >= 1200, 'gen': True, 'data': 'data:image/jpeg;base64,' + base64.b64encode(buf.getvalue()).decode()}, g['beat']
+            except Exception as e: return {'error': str(e)[:120]}, g['beat']
+        if asks:
+            with ThreadPoolExecutor(max_workers=3) as ex: gens = list(ex.map(one, asks))
+        for it, beat in gens:
+            if it.get('error'): continue
+            if it['id'] in by: imgs[[i.get('id') for i in imgs].index(it['id'])] = it
+            else: imgs.append(it)
+            by[it['id']] = it
+            if beat == 'hero': d['hero']['media'] = it['id']
+            elif beat in ids: ids[beat]['image'] = it['id']; ids[beat].setdefault('ui', {})['lead'] = it['id']
+            n += 1
+    d.setdefault('swarm', {})['visual'] = {'need': r.get('need', [])[:4], 'reasons': r.get('reasons', [])[:3], 'generated': [it['id'] for it, _ in gens if not it.get('error')], 'gen_errors': [it['error'] for it, _ in gens if it.get('error')]}
     W(slug_dir, 'images.json', imgs); W(slug_dir, 'direction.json', d); return n

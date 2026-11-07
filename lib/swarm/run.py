@@ -35,8 +35,10 @@ def main():
     safe('UX', A.ux, slug_dir); safe('Copy', A.copy, slug_dir); safe('UI', A.ui, slug_dir); safe('Visual', A.visual, slug_dir)
     d = A.J(slug_dir, 'direction.json')
     ev('UX', 'order: ' + ' → '.join(b['type'] for b in d['beats'])); ev('Copy', 'h1: ' + str(d['hero'].get('h1', '')).replace('<em>', '').replace('</em>', ''))
-    need = ((d.get('swarm') or {}).get('visual') or {}).get('need') or []
-    for x in need[:2]: ev('Visual', 'missing visual: ' + x)
+    vis = (d.get('swarm') or {}).get('visual') or {}
+    for x in (vis.get('generated') or [])[:3]: ev('Visual', 'commissioned: ' + x)
+    for x in (vis.get('gen_errors') or [])[:1]: ev('Visual', 'generation failed: ' + x)
+    for x in (vis.get('need') or [])[:2]: ev('Visual', 'missing visual: ' + x)
     render(slug_dir, bp, out); ev('Render', f'{bp} · round 0')
     best = (-1, None)
     for k in range(1, rounds + 1):
