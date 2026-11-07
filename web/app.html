@@ -110,11 +110,11 @@ async function poll(id){ try{ const r=await fetch(`${API}/jobs/${id}`); if(!r.ok
     if(job.status==='done'){ if(sw) sw.stop(); showResult(job); return; } if(job.status==='failed'){ $('#err').textContent='Something broke: '+(job.error||'unknown')+'. Try again or send us the URL.'; $('#h').textContent='That one didn’t go through.'; return; }
   }catch(e){ $('#err').textContent=e.message; } setTimeout(()=>poll(id), 3000); }
 function briefData(){ const f=$('#brief'); const d={keepFont:f.keepFont.checked,keepColours:f.keepColours.checked,keepLogo:f.keepLogo.checked,kind:(f.querySelector('[name=kind]:checked')||{}).value||'',keep:f.keep.value.trim(),goal:f.goal.value.trim()}; return d; }
-async function launch(url){ $('#brief').classList.add('hide'); $('#h').textContent='Reading your site…'; sw=Agents.mount($('#frame'),{count:14,phase:'queued'});
+async function launch(url){ $('#brief').classList.add('hide'); $('#h').textContent='Reading your site…'; sw=Agents.mount($('#frame'),{count:15,phase:'queued'});
   const r=await fetch(`${API}/jobs`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url,options:briefData()})}); const j=await r.json(); if(!r.ok){ $('#err').textContent=j.error||'could not start'; return; }
   history.replaceState(null,'',`/app?url=${encodeURIComponent(url)}&job=${j.id}`); poll(j.id); }
 async function start(){ let id=qs.get('job'); const url=qs.get('url'); $('#urlLab').textContent=url?('https://'+url.replace(/^https?:\/\//,'')):'';
-  if(id){ $('#brief').classList.add('hide'); sw=Agents.mount($('#frame'),{count:14,phase:'queued'}); poll(id); return; }
+  if(id){ $('#brief').classList.add('hide'); sw=Agents.mount($('#frame'),{count:15,phase:'queued'}); poll(id); return; }
   if(!url){ location.href='/'; return; }
   $('#h').textContent='Before the swarm starts…'; $('#brief').querySelector('[name=kind][value=""]').checked=true; $('#go').onclick=()=>launch(url); }
 start();

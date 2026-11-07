@@ -127,7 +127,7 @@ async function process_(job) {
     // the swarm: Reader → UX → Copy → UI → Visual shape the document, then Critic ↔ owners loop until the score passes
     if (job._bps[0]) { try {
         const out = path.join(dir, `bp-${job._bps[0]}.html`);
-        const o = await run('python3', ['lib/swarm/run.py', dir, job._bps[0], '--out', out, '--rounds', process.env.SWARM_ROUNDS || '3', '--target', process.env.SWARM_TARGET || '80'], { timeoutMs: 900000, onLine: async l => { try { const j = JSON.parse(l); if (j.event) await emit(job, [j.event]); } catch {} } });
+        const o = await run('python3', ['lib/swarm/run.py', dir, job._bps[0], '--out', out, '--rounds', process.env.SWARM_ROUNDS || '3', '--target', process.env.SWARM_TARGET || '80', '--alt', job._bps[1] || ''], { timeoutMs: 900000, onLine: async l => { try { const j = JSON.parse(l); if (j.event) await emit(job, [j.event]); } catch {} } });
         const last = o.trim().split('\n').map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
         const done = last.find(j => j.done)?.done; const crit = J(path.join(dir, 'critic.json'));
         job._critic = crit ? { score: crit.best ?? crit.score, fixes: (crit.fixes || []).length, verdict: crit.verdict, rounds: done?.rounds } : null;

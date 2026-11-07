@@ -17,6 +17,14 @@ def render(slug_dir, bp, out):
     if r.returncode: raise RuntimeError('render: ' + r.stderr[-400:])
     return out
 
+OWNER = {'h1': 'copy', 'h2': 'copy', 'one-cta': 'ux', 'page-length': 'ux', 'sections': 'ux', 'upscaled': 'visual', 'duplicate': 'visual', 'first-screen': 'visual', 'empty': 'ui', 'overflow': 'ui', 'sticky': 'ui', 'pinned': 'ui', 'contrast': 'ui'}
+def contract(slug_dir, html):
+    """THE CONTRACT: mechanical promises, graded on the render. Returns {score, failed:[{id, detail, weight}]}."""
+    r = subprocess.run(['node', os.path.join(ROOT, 'lib/qa/contract.mjs'), html, '--dir', slug_dir], capture_output=True, text=True, timeout=240)
+    try: return json.load(open(os.path.join(slug_dir, 'contract.json')))
+    except Exception: return {'score': -1, 'failed': [], 'error': (r.stderr or r.stdout)[-300:]}
+def owner_of(fid): return next((v for k, v in OWNER.items() if k in fid), 'ui')
+
 def safe(name, fn, *a):
     t = time.time()
     try: n = fn(*a); ev(name, f'{n if isinstance(n, int) else "ok"} change(s) · {round(time.time() - t)}s'); return n
@@ -47,14 +55,32 @@ def main():
     best = (-1, None)
     for k in range(1, rounds + 1):
         t = time.time()
+        con = contract(slug_dir, out); cfail = con.get('failed', [])
+        ev('Contract', f"round {k}: {con.get('score')}/100 · {len(cfail)} broken promise(s)")
+        for f in cfail[:4]: ev('Contract', f"✗ {f['id']}: {f['detail']}")
         try: rep = C.critique(slug_dir, out, A.MODEL, fast=(k < rounds))  # desktop-only, short waits until the final look
         except Exception as e: ev('Critic', 'skipped: ' + str(e)[:90]); break
-        score = rep.get('score', -1); fixes = rep.get('fixes', [])
-        ev('Critic', f'round {k}: {score}/100 · {len(fixes)} defects · {round(time.time() - t)}s'); ev('Critic', str(rep.get('verdict', ''))[:140])
-        log['rounds'].append({'k': k, 'score': score, 'fixes': fixes, 'verdict': rep.get('verdict')})
+        taste = rep.get('score', -1); fixes = rep.get('fixes', [])
+        score = round(0.55 * taste + 0.45 * con['score']) if con.get('score', -1) >= 0 and taste >= 0 else taste
+        ev('Critic', f'round {k}: taste {taste} · contract {con.get("score")} → {score}/100 · {len(fixes)} defects · {round(time.time() - t)}s'); ev('Critic', str(rep.get('verdict', ''))[:140])
+        for f in cfail: fixes.append({'op': 'note', 'agent': owner_of(f['id']), 'beat': '', 'reason': f"CONTRACT BROKEN — {f['id']}: {f['detail']}"})
+        log['rounds'].append({'k': k, 'score': score, 'taste': taste, 'contract': con.get('score'), 'broken': cfail, 'fixes': fixes, 'verdict': rep.get('verdict')})
         if score > best[0]: best = (score, open(out).read())
-        json.dump({**rep, 'round': k, 'best': best[0]}, open(os.path.join(slug_dir, 'critic.json'), 'w'), indent=1, ensure_ascii=False)
+        json.dump({**rep, 'score': score, 'taste': taste, 'contract': con.get('score'), 'broken': cfail, 'round': k, 'best': best[0]}, open(os.path.join(slug_dir, 'critic.json'), 'w'), indent=1, ensure_ascii=False)
         if score >= target or k == rounds: break
+        # RESTART, not patch: a weak first round means the idea or the form is wrong — throw it away, keep the facts, start over once
+        if k == 1 and score < 45 and not log.get('restarted'):
+            log['restarted'] = True; alt = args[args.index('--alt') + 1] if '--alt' in args else ''
+            why = f"RESTART: the first attempt scored {score}/100 with blueprint {bp} and idea '{(A.J(slug_dir, 'direction.json').get('swarm') or {}).get('idea', '')}'. The critic said: {str(rep.get('verdict', ''))[:300]}. Choose a DIFFERENT idea and different moves; do not repeat the failed ones."
+            d0 = A.J(slug_dir, 'direction.json')
+            if alt and alt != bp and os.path.exists(os.path.join(ROOT, 'lib/blueprints', alt + '.bp.json')): bp = alt; d0['blueprint'] = alt; A.W(slug_dir, 'direction.json', d0); ev('Concept', f'restart with blueprint {alt}')
+            else: ev('Concept', 'restart with a new idea')
+            for b_ in d0['beats']: (b_.get('ui') or {}).pop('move', None)
+            A.W(slug_dir, 'direction.json', d0)
+            safe('Concept', A.concept, slug_dir, why); safe('UX', A.ux, slug_dir, why); safe('Visual', A.visual, slug_dir, why); safe('UI', A.ui, slug_dir, why)
+            d = A.J(slug_dir, 'direction.json'); sw = d.get('swarm') or {}
+            if sw.get('idea'): ev('Concept', 'idea: ' + sw['idea'])
+            render(slug_dir, bp, out); ev('Render', f'{bp} · restart'); continue
         if len(log['rounds']) >= 2 and score <= log['rounds'][-2]['score']: ev('Critic', 'no gain this round — stopping'); break
         # route: every defect goes to its owner with the critic's reason
         notes = {'copy': [], 'ui': [], 'visual': [], 'ux': [], 'concept': []}
