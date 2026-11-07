@@ -53,11 +53,12 @@ def build(slug_dir, bp_id, out_path=None):
     hashes = {k: dhash(i) for k, i in images.items() if i.get('data')}
     def family(k):
         it = images.get(k) or {}; fam = {k}
+        if it.get('detail'): return fam  # a detail crop is its own picture
         if it.get('crop_of'): fam.add(it['crop_of'])
         h0 = hashes.get(k)
         if h0:
             for k2, h2 in hashes.items():
-                if h2 and sum(a != b for a, b in zip(h0, h2)) <= 10: fam.add(k2)
+                if h2 and not images[k2].get('detail') and sum(a != b for a, b in zip(h0, h2)) <= 10: fam.add(k2)
         return fam
     def is_used(k): return bool(family(k) & used)
     soft = d.get('kind') in ('software', 'product')
@@ -227,10 +228,11 @@ def build(slug_dir, bp_id, out_path=None):
         elif bt['type'] == 'facts': items = [(f[0], f[1], None) for f in bt.get('facts', [])]
         elif bt['type'] == 'faq': items = [(q, a, None) for q, a in bt.get('items', [])]
         elif bt['type'] == 'ledger': return ledger(sec, bt)
-        with_img = bool(ms) and bt['type'] in ('features', 'steps') and len([i for i in images.values() if not i.get('shot')]) >= 3
+        avail = [i for i in images.values() if i.get('data') and not is_used(i.get('id'))]
+        with_img = bool(ms) and bt['type'] in ('features', 'steps') and len(avail) >= min(len(items), 3) and not lead
         cells = ''
         for i, (t, body_, num) in enumerate(items[:8]):
-            pic = f'<figure style="aspect-ratio:{ar}"><img src="{img(want_shot=False)}" alt=""></figure>' if with_img and i < len(images) else ''
+            pic = (lambda sr: f'<figure style="aspect-ratio:{ar}"><img src="{sr}" alt=""></figure>' if sr else '')(img()) if with_img and i < len(avail) else ''
             big = f'<b class="num">{e(num)}</b>' if isinstance(num, str) and re.search(r'\d', num) else ''
             cells += f'<div class="card">{pic}{lab(f"0{i + 1}") if not big and bt["type"] != "steps" else ""}{big}<h3 class="h3">{e(t)}</h3><p>{e(body_)}</p></div>'
         return f'<section class="sec cards band-{band_of(sec, bt)}{" compact" if ui_.get("compact") else ""}" id="{e(bt["id"])}"><div class="wrap">{ghead(sec, bt)}{lead}<div class="grid" style="--n:{n}">{cells}</div></div></section>'

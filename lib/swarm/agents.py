@@ -173,7 +173,7 @@ VISUAL_TOOL = {"name": "set_visuals", "description": "Assign images to slots and
     "crops": {"type": "array", "maxItems": 6, "items": {"type": "object", "required": ["image", "box"], "properties": {"image": {"type": "string"}, "box": {"type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4, "description": "[x,y,w,h] as fractions 0–1 of the source; the subject only, no page chrome, no nav, no text columns"}, "as": {"type": "string", "description": "new id, e.g. shot3-play"}}}},
     "need": {"type": "array", "items": {"type": "string"}, "description": "visuals the page needs but the site does not have (one line each) — e.g. 'founders portrait', 'the play diagram at 1600px'"},
     "reasons": {"type": "array", "items": {"type": "string"}}}}}
-VISUAL_SYSTEM = """You are the visual editor. You look at every image the site has (thumbnails attached, with ids) and decide what goes where. Rules: never a logo, icon or text block as a photo; never the same image twice; a UI screenshot is shown FRAMED (hero of a software product, or a lead above a grid) never stretched as a background; crop screenshots to the actual product surface (drop the browser chrome, sidebars, headers, surrounding whitespace). People sections get people. If nothing fits a slot, leave it empty and list it under need."""
+VISUAL_SYSTEM = """You are the visual editor. When the site has fewer than 3 distinct visuals, do what a studio does with one product screenshot: cut it into DETAIL crops (each ≤ 40% of the source, one feature per crop — the court diagram, the sidebar library, the details panel, a toolbar) and give each features/steps slot its own detail. Details may come from the same screenshot; whole-image repeats may not. You look at every image the site has (thumbnails attached, with ids) and decide what goes where. Rules: never a logo, icon or text block as a photo; never the same image twice; a UI screenshot is shown FRAMED (hero of a software product, or a lead above a grid) never stretched as a background; crop screenshots to the actual product surface (drop the browser chrome, sidebars, headers, surrounding whitespace). People sections get people. If nothing fits a slot, leave it empty and list it under need."""
 
 def visual(slug_dir, notes=''):
     from PIL import Image
@@ -196,13 +196,13 @@ def apply_visual(slug_dir, r):
         src = by.get(c.get('image')); box = c.get('box') or []
         if not src or len(box) != 4: continue
         x, y, w, h = [max(0, min(1, float(v))) for v in box]
-        if w < .25 or h < .2: continue
+        if w < .18 or h < .15: continue
         try:
             raw = base64.b64decode(src['data'].split(',', 1)[1]); im = Image.open(io.BytesIO(raw)).convert('RGB'); W_, H_ = im.size
             cr = im.crop((int(x * W_), int(y * H_), int(min(W_, (x + w) * W_)), int(min(H_, (y + h) * H_))))
-            if cr.size[0] < 500: continue
+            if cr.size[0] < 360: continue
             buf = io.BytesIO(); cr.save(buf, 'JPEG', quality=84); nid = re.sub(r'[^\w-]', '', c.get('as') or (src['id'] + '-crop'))
-            new = {**{k: v for k, v in src.items() if k not in ('data',)}, 'id': nid, 'w': cr.size[0], 'h': cr.size[1], 'data': 'data:image/jpeg;base64,' + base64.b64encode(buf.getvalue()).decode(), 'crop_of': src['id']}
+            new = {**{k: v for k, v in src.items() if k not in ('data',)}, 'id': nid, 'w': cr.size[0], 'h': cr.size[1], 'data': 'data:image/jpeg;base64,' + base64.b64encode(buf.getvalue()).decode(), 'crop_of': src['id'], 'crop_area': round(w * h, 2), 'detail': (w * h) <= .42}
             if nid in by: imgs[[i.get('id') for i in imgs].index(nid)] = new
             else: imgs.append(new)
             by[nid] = new; n += 1
