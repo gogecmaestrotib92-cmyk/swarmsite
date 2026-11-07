@@ -227,7 +227,9 @@ def visual(slug_dir, notes=''):
     from PIL import Image
     d = J(slug_dir, 'direction.json'); imgs = J(slug_dir, 'images.json') or []
     import gen as G
-    content = [{"type": "text", "text": f"GENERATION: {'enabled' if G.enabled() else 'disabled'}\nBRAND: {json.dumps({k: d.get('brand', {}).get(k) for k in ('name', 'accent', 'paper', 'ink')})} mode={d.get('mode')}\nKIND: {d.get('kind')}\nHERO: {json.dumps({k: d['hero'].get(k) for k in ('h1', 'media')}, ensure_ascii=False)}\nBEATS: {json.dumps([{'id': b['id'], 'type': b['type'], 'h2': b.get('h2'), 'image': b.get('image', ''), 'lead': (b.get('ui') or {}).get('lead', '')} for b in d['beats']], ensure_ascii=False)}\nCRITIC NOTES FOR VISUAL: {notes or 'none'}\nIMAGES (thumbnails follow, in this order):"}]
+    distinct = len([i for i in imgs if not i.get('crop_of') and not i.get('gen')]); have_gen = len([i for i in imgs if i.get('gen')])
+    gen_rule = 'disabled' if not G.enabled() else (f'enabled — the site has only {distinct} distinct real visual(s) and {have_gen} commissioned so far: you MUST commission {max(0, 3 - have_gen)} originals now, one per section that lacks its own picture (never the hero)' if distinct < 3 and have_gen < 3 else 'enabled (optional, the site has enough visuals)')
+    content = [{"type": "text", "text": f"GENERATION: {gen_rule}\nBRAND: {json.dumps({k: d.get('brand', {}).get(k) for k in ('name', 'accent', 'paper', 'ink')})} mode={d.get('mode')}\nKIND: {d.get('kind')}\nHERO: {json.dumps({k: d['hero'].get(k) for k in ('h1', 'media')}, ensure_ascii=False)}\nBEATS: {json.dumps([{'id': b['id'], 'type': b['type'], 'h2': b.get('h2'), 'image': b.get('image', ''), 'lead': (b.get('ui') or {}).get('lead', '')} for b in d['beats']], ensure_ascii=False)}\nCRITIC NOTES FOR VISUAL: {notes or 'none'}\nIMAGES (thumbnails follow, in this order):"}]
     for it in imgs[:18]:
         if not it.get('data'): continue
         try:
@@ -266,7 +268,8 @@ def apply_visual(slug_dir, r):
     gens = []
     if G.enabled():
         from concurrent.futures import ThreadPoolExecutor
-        asks = [g for g in (r.get('generate') or [])[:3] if g.get('prompt') and g.get('beat')]
+        have_gen = len([i for i in imgs if i.get('gen')])
+        asks = [g for g in (r.get('generate') or [])[:max(0, 3 - have_gen)] if g.get('prompt') and g.get('beat')]
         def one(g):
             try:
                 pr = g['prompt'] + ' No text, no letters, no logos, no user interface, no watermark, no faces.'
