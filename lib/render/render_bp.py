@@ -155,6 +155,7 @@ def build(slug_dir, bp_id, out_path=None):
         cat = f'<div class="cat">{lab(h.get("category"), light)}{lab(h.get("fact"), light)}</div>'
         shot = (not media) and d.get('kind') == 'software' and src
         body_ = f'<div class="wrap hero-in al-{al} place-{place}">{cat}<h1 class="h1" style="{hsty}">{h1}</h1><p class="lede{" light" if light else ""}">{e(h.get("lede"))}</p><div class="ctas">{cta_html(light)}{("<a class=\"btn ghost" + (" light" if light else "") + "\" href=\"#" + e(beats[0]["id"] if beats else "") + "\">" + e(h["cta2"]) + "</a>") if h.get("cta2") else ""}</div></div>'
+        if not media and src and not hui.get('move') and d.get('kind') in ('place', 'service', 'product') and (images.get(h.get('media')) or {}).get('w', 0) >= 900: hui = {**hui, 'move': 'split'}
         if hui.get('move') == 'split' and src:
             # SIGNATURE split hero: words left, the product right, full height; the product drifts up slower than the page
             hsty2 = re.sub(r'max-width:[^;]+', 'max-width:11ch', hsty)
@@ -181,7 +182,7 @@ def build(slug_dir, bp_id, out_path=None):
         """Visuals for a multi-frame move. strict (sticky/pinned): only the beat's image, detail crops and commissioned art —
         never an unrelated screenshot; when short, the product image itself returns zoomed to a different region per frame."""
         out_ = []
-        if bt.get('image') and images.get(bt['image']) and not is_used(bt['image']): out_.append((img(bt['image']), ZOOMS[0]))
+        if bt.get('image') and images.get(bt['image']) and not is_used(bt['image']) and images[bt['image']].get('w', 0) >= (760 if strict else 500): out_.append((img(bt['image']), ZOOMS[0]))
         pool = [i for i in images.values() if i.get('data') and not is_used(i.get('id')) and i.get('w', 0) >= (760 if strict else 600) and (not strict or i.get('detail') or i.get('gen'))]
         pool.sort(key=lambda i: (not i.get('detail'), not i.get('gen'), -(i.get('w', 0) * i.get('h', 0))))
         for it in pool:
@@ -230,6 +231,7 @@ def build(slug_dir, bp_id, out_path=None):
 
     def story(sec, bt, flip=False):
         """Text beside a visual, alternating sides; the visual reveals with a clip."""
+        if bt['type'] == 'quote': bt = {**bt, 'h2': bt.get('big') or '', 'lede': bt.get('body') or '', 'label': bt.get('label') or bt.get('who') or ''}
         items = beat_items(bt)[:4]
         vis = pick_visuals(bt, 1); src = vis[0][0] if vis else ''
         if not src: return cards(sec, bt)
@@ -344,6 +346,10 @@ def build(slug_dir, bp_id, out_path=None):
         fields = ''.join(f'<label><span>{e(f)}</span><input placeholder="{e(f)}"></label>' for f in (bt or {}).get('fields', [])[:4])
         form = f'<form class="form" onsubmit="return false">{fields}<button class="btn">{e((bt or {}).get("cta") or h.get("cta"))} <span class="ar">→</span></button></form>' if fields else f'<div class="ctas">{cta_html()}</div>'
         alt = ''.join(f'<span class="lab">{e(a)}</span>' for a in (bt or {}).get('alt', []))
+        left = [i for i in images.values() if i.get('data') and not is_used(i.get('id')) and not i.get('shot') and i.get('w', 0) >= 900]
+        if fields and left:
+            pic = img(left[0]['id'])
+            return f'<section class="sec cta band-dark cta-pic" id="{e((bt or {}).get("id") or form_id)}"><div class="wrap cta2"><figure class="cta-v"><img src="{pic}" alt=""></figure><div class="cta-t">{lab((bt or {}).get("label"))}<h2 class="h2" style="{re.sub(r"text-align:[^;]+;?|margin-(left|right):auto;?", "", head_style(sec))}">{e(title)}</h2>{form}<div class="alts">{alt}</div></div></div></section>'
         return f'<section class="sec cta band-dark" id="{e((bt or {}).get("id") or form_id)}" style="min-height:{min(.7, sec.get("screens", 1)) * 100}svh"><div class="wrap center">{lab((bt or {}).get("label"))}<h2 class="h2" style="{head_style(sec)}">{e(title)}</h2>{form}<div class="alts">{alt}</div></div></section>'
 
     def giant(sec): return f'<section class="sec giant"><div class="wrap"><div class="gw" aria-hidden="true">{e(b["name"])}</div></div></section>'
@@ -387,7 +393,7 @@ def build(slug_dir, bp_id, out_path=None):
             fam = 'statement' if t == 'quote' else 'photo' if t == 'photo' else 'cta' if t == 'form' else 'list'
             pool = pools[fam]; peek = pool[taken[fam] % len(pool)] if pool else DEF[fam]
             mv = default_move(peek['role'], t) if not mv else ''
-        if mv in SIG and (t != 'quote' or mv == 'type-wall') and t not in ('photo', 'form'):
+        if mv in SIG and (t != 'quote' or mv in ('type-wall', 'story')) and t not in ('photo', 'form'):
             fam = 'statement' if t == 'quote' else 'list'; sec = take(fam)
             out.append(SIG[mv](sec, bt, flip) if mv == 'story' else SIG[mv](sec, bt)); flip = not flip if mv == 'story' else flip; used_beats.add(bt['id']); continue
         if t == 'quote' and mv == 'type-wall': sec = take('statement'); out.append(type_wall(sec, bt)); used_beats.add(bt['id']); continue
@@ -456,8 +462,9 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
 .marquee{{padding:clamp(28px,4vw,56px) 0;overflow:hidden}}.marquee .gh{{margin-bottom:24px}}.mq{{overflow:hidden;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:18px 0}}.mq-track{{display:flex;gap:0;width:max-content;animation:mq 46s linear infinite}}.mq-i{{display:inline-flex;align-items:center;gap:28px;padding:0 14px 0 28px;font-family:var(--display);font-weight:var(--h2-w);font-size:min(var(--h2),56px);letter-spacing:-.02em;white-space:nowrap}}.mq-i i{{font-style:normal;font-size:.45em;color:var(--accent)}}@keyframes mq{{to{{transform:translateX(-50%)}}}}.marquee:hover .mq-track{{animation-play-state:paused}}
 .pinned{{padding:0}}.ps-sticky{{position:sticky;top:0;height:100svh;display:grid;align-content:center;overflow:hidden}}.ps-stage{{position:relative;min-height:52vh}}.ps-s{{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;gap:var(--gutter);align-items:center;opacity:0;transform:translateY(24px);transition:opacity .5s var(--ease),transform .7s var(--ease);pointer-events:none}}.ps-s.on{{opacity:1;transform:none}}.ps-t .num{{display:block;font-family:var(--display);font-weight:var(--h1-w);font-size:clamp(64px,10vw,160px);line-height:.9;letter-spacing:-.03em;color:var(--accent)}}.ps-t .h2{{margin-top:18px}}.ps-v{{margin:0;border-radius:max(12px,var(--radius));overflow:hidden;border:1px solid var(--line);aspect-ratio:1.3}}.ps-v img{{width:100%;height:100%;object-fit:cover}}.ps-dots{{display:flex;gap:8px;margin-top:28px}}.ps-dots i{{width:28px;height:2px;background:var(--line)}}.ps-dots i.on{{background:var(--ink)}}.band-dark .ps-dots i.on{{background:var(--band-ink)}}
 .typewall{{padding:0}}.tw-sticky{{position:sticky;top:0;min-height:100svh;display:grid;align-content:center}}.tw{{font-family:var(--display);font-weight:var(--h2-w);font-size:clamp(28px,4.6vw,72px);line-height:1.08;letter-spacing:-.02em;max-width:22ch;margin-top:22px}}.tw-w{{opacity:.18;transition:opacity .25s}}.tw-w.on{{opacity:1}}.typewall .who{{margin-top:28px}}
+.cta2{{display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--gutter) * 1.5);align-items:center}}.cta-v{{margin:0;border-radius:max(12px,var(--radius));overflow:hidden;aspect-ratio:1.05}}.cta-v img{{width:100%;height:100%;object-fit:cover}}.cta-t{{display:grid;gap:22px}}.cta-t .form{{text-align:left}}.cta-t .alts{{justify-content:flex-start}}
 .st{{display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--gutter) * 1.5);align-items:center}}.story.flip .st-t{{order:2}}.st-l{{list-style:none;margin-top:28px;display:grid;gap:14px}}.st-l li{{display:grid;grid-template-columns:minmax(120px,.35fr) 1fr;gap:16px;padding-top:12px;border-top:1px solid var(--line)}}.st-l b{{font-weight:500}}.st-l span{{color:var(--muted)}}.st-v{{margin:0;border-radius:max(12px,var(--radius));overflow:hidden;border:1px solid var(--line);aspect-ratio:1.15}}.st-v img{{width:100%;height:100%;object-fit:cover;object-position:top}}
-@media(max-width:900px){{.split-wrap,.sp,.ps-s,.st{{grid-template-columns:1fr}}.story.flip .st-t{{order:0}}.sp-pin{{order:-1}}.sp-stage{{position:relative;top:auto;height:52vh}}.sp-row{{min-height:auto;padding:22px 0;opacity:1}}.ps-s{{align-content:start}}.ps-v{{aspect-ratio:1.6}}.shotframe.tall img{{height:52vh}}.mq-i{{font-size:28px}}.nav .links{{display:none}}.gh,.ledger .two,.faq .two,.photos .pair{{grid-template-columns:1fr;display:grid}}.photos figure{{width:100%!important}}.grid{{grid-template-columns:1fr}}.twocol .cols{{grid-template-columns:1fr}}.end .fcols{{grid-template-columns:1fr 1fr}}.form{{grid-template-columns:1fr}}.hero{{padding-top:100px}}.wrap{{padding:0 max(16px,calc(var(--frame) * .5))}}}}
+@media(max-width:900px){{.split-wrap,.sp,.ps-s,.st,.cta2{{grid-template-columns:1fr}}.story.flip .st-t{{order:0}}.sp-pin{{order:-1}}.sp-stage{{position:relative;top:auto;height:52vh}}.sp-row{{min-height:auto;padding:22px 0;opacity:1}}.ps-s{{align-content:start}}.ps-v{{aspect-ratio:1.6}}.shotframe.tall img{{height:52vh}}.mq-i{{font-size:28px}}.nav .links{{display:none}}.gh,.ledger .two,.faq .two,.photos .pair{{grid-template-columns:1fr;display:grid}}.photos figure{{width:100%!important}}.grid{{grid-template-columns:1fr}}.twocol .cols{{grid-template-columns:1fr}}.end .fcols{{grid-template-columns:1fr 1fr}}.form{{grid-template-columns:1fr}}.hero{{padding-top:100px}}.wrap{{padding:0 max(16px,calc(var(--frame) * .5))}}}}
 @media(prefers-reduced-motion:reduce){{*{{transition:none!important;animation:none!important}}}}
 '''
     moves_attr = lambda n: f' data-move="{n}"'
