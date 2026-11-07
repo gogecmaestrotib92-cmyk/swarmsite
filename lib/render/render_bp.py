@@ -35,6 +35,10 @@ def lum(h):
     h = (h or '#888888').lstrip('#'); r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16); return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255
 
 def build(slug_dir, bp_id, out_path=None):
+    try:
+        sys.path.insert(0, os.path.join(ROOT, 'lib/templates')); from recipes import RECIPES, FALLBACK
+    except Exception: RECIPES, FALLBACK = {}, {}
+    RECIPE = RECIPES.get(bp_id)
     j = lambda n: json.load(open(os.path.join(slug_dir, n))) if os.path.exists(os.path.join(slug_dir, n)) else None
     d = j('direction.json'); assets = j('assets.json') or {}; brief = j('brief.json') or {}
     images = {i.get('id', str(n)): i for n, i in enumerate(j('images.json') or [])}
@@ -74,7 +78,7 @@ def build(slug_dir, bp_id, out_path=None):
         it = images.get(k) if k else None
         if it and is_used(it.get('id')) and not prefer_hero: it = None
         if not it:
-            pool = [i for i in images.values() if i.get('data') and not is_used(i.get('id')) and reserved.get(i.get('id')) is None] or [i for i in images.values() if i.get('data') and not is_used(i.get('id'))] or [i for i in images.values() if i.get('data')]
+            pool = [i for i in images.values() if i.get('data') and not is_used(i.get('id')) and reserved.get(i.get('id')) is None] or [i for i in images.values() if i.get('data') and not is_used(i.get('id'))] or ([i for i in images.values() if i.get('data')] if prefer_hero else [])
             if want_shot is True: pool = [i for i in pool if i.get('shot')] or pool
             if want_shot is False: pool = [i for i in pool if not i.get('shot')] or pool
             # hero: real photos first; software bodies: UI section shots first; places: photos first
@@ -133,7 +137,7 @@ def build(slug_dir, bp_id, out_path=None):
     def band_of(sec, bt=None):
         return (bt or {}).get('band') or sec.get('band') or 'paper'
     def head_style(sec, key='head', bt=None):
-        hd = sec.get(key) or {}; px_ = ((bt or {}).get('ui') or {}).get('h2_px') or hd.get('px') or H2.get('px'); st = [f'font-size:{clampf(px_)}']
+        hd = sec.get(key) or {}; px_ = ((bt or {}).get('ui') or {}).get('h2_px') or hd.get('px') or H2.get('px'); px_ = min(px_, 96); st = [f'font-size:{clampf(px_)}']
         if hd.get('lh'): st.append(f'line-height:{hd["lh"]}')
         if hd.get('tt') == 'uppercase': st.append('text-transform:uppercase')
         if hd.get('it'): st.append('font-style:italic')
@@ -159,14 +163,28 @@ def build(slug_dir, bp_id, out_path=None):
         if nw >= 6: hpx = min(hpx, 84)
         if nw >= 8: hpx = min(hpx, 68)
         hui = h.get('ui') or {}; hpx = round(hpx * {'S': .72, 'M': .88, 'L': 1}.get(hui.get('size', ''), 1))
+        nch = len(re.sub(r'<[^>]+>', '', h['h1'])); upper = (hd.get('tt') == 'uppercase'); hpx = max(56, min(hpx, int(3 * 1150 / ((0.7 if upper else 0.56) * max(12, nch)))))
         hsty = head_style(bp['sections'][0]); hsty = re.sub(r'font-size:[^;]+', f'font-size:{clampf(hpx)}', hsty); hsty = re.sub(r'max-width:[^;]+', 'max-width:14ch', hsty); hsty = re.sub(r'text-align:[^;]+;?|margin-(left|right):auto;?', '', hsty) + ';text-wrap:balance' + (';text-align:center;margin-left:auto;margin-right:auto' if al == 'center' else ';text-align:left')
         cat = f'<div class="cat">{lab(h.get("category"), light)}{lab(h.get("fact"), light)}</div>'
         shot = (not media) and d.get('kind') == 'software' and src
         body_ = f'<div class="wrap hero-in al-{al} place-{place}">{cat}<h1 class="h1" style="{hsty}">{h1}</h1><p class="lede{" light" if light else ""}">{e(h.get("lede"))}</p><div class="ctas">{cta_html(light)}{("<a class=\"btn ghost" + (" light" if light else "") + "\" href=\"#" + e(beats[0]["id"] if beats else "") + "\">" + e(h["cta2"]) + "</a>") if h.get("cta2") else ""}</div></div>'
         if not media and src and not hui.get('move') and d.get('kind') in ('place', 'service', 'product') and (images.get(h.get('media')) or {}).get('w', 0) >= 900: hui = {**hui, 'move': 'split'}
+        if RECIPE and not (h.get('ui') or {}).get('move'): hui = {**hui, 'move': RECIPE.get('hero', hui.get('move'))}
+        mv = hui.get('move')
+        if mv == 'centre':
+            hsty2 = hsty.replace('text-align:left', 'text-align:center') + ';margin-left:auto;margin-right:auto;max-width:16ch'
+            shotp = (f'<div class="wrap shotwrap"><div class="shotframe"><img src="{src}" alt=""></div></div>' if soft else f'<div class="wrap"><figure class="inset-v" data-sig="parallax"><img src="{src}" alt=""></figure></div>') if src else ''
+            return f'<section class="sec hero centre{" shot" if shotp else ""}" id="top"><div class="wrap hero-in al-center">{cat}<h1 class="h1" style="{hsty2}">{h1}</h1><p class="lede" style="margin-left:auto;margin-right:auto;text-align:center">{e(h.get("lede"))}</p><div class="ctas" style="justify-content:center">{cta_html()}{("<a class=\"btn ghost\" href=\"#" + e(beats[0]["id"] if beats else "") + "\">" + e(h["cta2"]) + "</a>") if h.get("cta2") else ""}</div></div>{shotp}</section>'
+        if mv in ('photo', 'poster', 'inset') and src:
+            over = mv in ('photo', 'poster'); inset = mv == 'inset'
+            ppx = min(hpx * 1.25, int(2 * 1150 / ((0.7 if upper else 0.56) * max(12, nch)))) if mv == 'poster' else hpx
+            h1s = hsty if not over else re.sub(r'font-size:[^;]+', f'font-size:{clampf(ppx)}', hsty)
+            body_ = f'<div class="wrap hero-in al-{al}{" light" if over else ""}">{cat}<h1 class="h1" style="{h1s}">{h1}</h1><p class="lede">{e(h.get("lede"))}</p><div class="ctas">{cta_html()}{("<a class=\"btn ghost\" href=\"#" + e(beats[0]["id"] if beats else "") + "\">" + e(h["cta2"]) + "</a>") if h.get("cta2") else ""}</div></div>'
+            if inset: return f'<section class="sec hero inset" id="top">{body_}<div class="wrap"><figure class="inset-v" data-sig="parallax"><img src="{src}" alt=""></figure></div></section>'
+            return f'<section class="sec hero has-media {mv}" id="top" style="min-height:100svh"><div class="media"><img src="{src}" alt=""></div>{body_}</section>'
         if hui.get('move') == 'split' and src:
             # SIGNATURE split hero: words left, the product right, full height; the product drifts up slower than the page
-            hsty2 = re.sub(r'max-width:[^;]+', 'max-width:11ch', hsty)
+            spx = min(hpx, int(3 * 640 / ((0.7 if upper else 0.56) * max(12, nch)))); hsty2 = re.sub(r'font-size:[^;]+', f'font-size:{clampf(spx)}', re.sub(r'max-width:[^;]+', 'max-width:11ch', hsty))
             left = f'<div class="split-l">{cat}<h1 class="h1" style="{hsty2}">{h1}</h1><p class="lede">{e(h.get("lede"))}</p><div class="ctas">{cta_html()}{("<a class=\"btn ghost\" href=\"#" + e(beats[0]["id"] if beats else "") + "\">" + e(h["cta2"]) + "</a>") if h.get("cta2") else ""}</div></div>'
             right = f'<div class="split-r"><div class="shotframe tall" data-sig="parallax"><img src="{src}" alt=""></div></div>'
             return f'<section class="sec hero split" id="top"><div class="wrap split-wrap">{left}{right}</div></section>'
@@ -255,6 +273,63 @@ def build(slug_dir, bp_id, out_path=None):
         fig = f'<figure class="st-v"><img src="{src}" alt=""></figure>'
         return f'<section class="sec story{" flip" if flip else ""} band-{band_of(sec, bt)}" id="{e(bt["id"])}"><div class="wrap st">{txt}{fig}</div></section>'
 
+    def big_photos(n, bt=None):
+        out_ = []
+        if bt and bt.get('image') and images.get(bt['image']) and not is_used(bt['image']) and images[bt['image']].get('w', 0) >= 700: out_.append(img(bt['image']))
+        pool = sorted([i for i in images.values() if i.get('data') and not is_used(i.get('id')) and free_for(i, bt) and not i.get('shot') and i.get('w', 0) >= 700 and .5 <= i.get('w', 1) / max(1, i.get('h', 1)) <= 2.4], key=lambda i: -i.get('w', 0) * i.get('h', 0))
+        for it in pool:
+            if len(out_) >= n: break
+            out_.append(img(it['id']))
+        return out_
+    def photo_pair(sec, bt=None):
+        ps = big_photos(2, bt)
+        if len(ps) < 2: return photo_sec(sec, bt) if ps else ''
+        cap = f'<div class="wrap"><div class="caps">{lab((bt or {}).get("label"))}{("<p class=\"cap\">" + e(bt.get("lede")) + "</p>") if bt and bt.get("lede") else ""}</div></div>' if bt else ''
+        return f'<section class="sec photos" id="{e(bt["id"]) if bt else ""}"><div class="wrap pair"><figure style="width:58%;aspect-ratio:1.25"><img src="{ps[0]}" alt=""></figure><figure style="width:38%;aspect-ratio:.85;margin-top:12%"><img src="{ps[1]}" alt=""></figure></div>{cap}</section>'
+    def collage(sec, bt=None):
+        ps = big_photos(3, bt)
+        if len(ps) < 2: return photo_sec(sec, bt) if ps else ''
+        tiles = ''.join(f'<figure class="c{i + 1}"><img src="{p_}" alt=""></figure>' for i, p_ in enumerate(ps))
+        return f'<section class="sec collage" id="{e(bt["id"]) if bt else ""}"><div class="wrap cl">{tiles}</div></section>'
+    def overlay(sec, bt=None, variant=''):
+        ps = big_photos(1, bt)
+        if not ps: return statement(sec, ('lede', bt)) if bt and bt.get('lede') else ''
+        bt = bt or {}; title = bt.get('h2') or bt.get('big') or b['name']; items = beat_items(bt)[:4] if bt else []
+        rows = ''.join(f'<li><span>{e(t)}</span><i></i><b>{e(x)}</b></li>' for t, x in items) if bt.get('type') in ('ledger', 'facts') else ''
+        return f'<section class="sec overlay{" chapter" if variant == "chapter" else ""}" id="{e(bt.get("id", ""))}" data-sig="parallax"><figure class="ov-bg"><img src="{ps[0]}" alt=""></figure><div class="wrap ov-in light">{lab(bt.get("label"), True)}<h2 class="h2 light" style="{re.sub(r"max-width:[^;]+;?", "", head_style(sec))}">{e(title)}</h2>{("<p class=\"lede\">" + e(bt.get("lede")) + "</p>") if bt.get("lede") else ""}{("<ul class=\"rows light\">" + rows + "</ul>") if rows else ""}</div></section>'
+    def quote_band(sec, bt, variant=''):
+        text = bt.get('body') or bt.get('lede') or ''; who = f'<p class="lab who">{e(bt["who"])}</p>' if bt.get('who') else ''
+        band = 'accent' if variant == 'accent' else 'dark'
+        return f'<section class="sec qband band-{band}{" center" if variant == "centre" else ""}" id="{e(bt["id"])}"><div class="wrap"><p class="qb">{e(text)}</p>{who}</div></section>'
+    def rail(sec, bt):
+        items = beat_items(bt)[:8]; ps = [img(want_shot=None) for _ in range(min(len(items), len([i for i in images.values() if not is_used(i.get('id')) and i.get('w', 0) >= 500])))]
+        cards_ = ''.join(f'<article class="rc">{("<figure><img src=\"" + ps[i] + "\" alt=\"\"></figure>") if i < len(ps) and ps[i] else ""}<span class="lab">{e(f"0{i + 1}")}</span><h3 class="h3">{e(t)}</h3><p>{e(x)}</p></article>' for i, (t, x) in enumerate(items))
+        return f'<section class="sec railsec band-{band_of(sec, bt)}" id="{e(bt["id"])}"><div class="wrap">{ghead(sec, bt)}</div><div class="rail" data-sig="rail"><div class="rail-in">{cards_}</div></div></section>'
+    def numbers(sec, bt):
+        items = beat_items(bt)[:4]
+        if not items: return ''
+        cells_ = ''.join(f'<div><b class="num">{e(t)}</b><p>{e(x)}</p></div>' for t, x in items)
+        return f'<section class="sec numbers band-{band_of(sec, bt)}" id="{e(bt["id"])}"><div class="wrap">{ghead(sec, bt)}<div class="nums" style="--n:{len(items)}">{cells_}</div></div></section>'
+    def stickers(sec, bt):
+        items = beat_items(bt)[:8]
+        pills = ''.join(f'<span class="stk" style="--r:{(i % 5 - 2) * 2.2}deg">{e(t)}</span>' for i, (t, _) in enumerate(items))
+        lede = bt.get('lede') or (items[0][1] if items else '')
+        return f'<section class="sec stickers band-accent" id="{e(bt["id"])}"><div class="wrap center">{lab(bt.get("label"))}<h2 class="h2" style="{re.sub(r"max-width:[^;]+;?", "", head_style(sec))}">{e(bt.get("h2") or "")}</h2><div class="stks">{pills}</div>{("<p class=\"lede\" style=\"margin:28px auto 0\">" + e(lede) + "</p>") if lede else ""}</div></section>'
+    def product_row(sec, bt):
+        items = beat_items(bt)[:6]; n = min(4, max(2, len(items)))
+        cards_ = ''
+        for i, (t, x) in enumerate(items):
+            pic = img(want_shot=False); cards_ += f'<article class="pr">{("<figure><img src=\"" + pic + "\" alt=\"\"></figure>") if pic else "<figure class=\"ph\"></figure>"}<div class="pr-t"><h3 class="h3">{e(t)}</h3><b>{e(x)}</b></div></article>'
+        return f'<section class="sec products band-{band_of(sec, bt)}" id="{e(bt["id"])}"><div class="wrap">{ghead(sec, bt)}<div class="prs" style="--n:{n}">{cards_}</div></div></section>'
+    def statement_v(sec, bt, variant=''):
+        kind = 'quote' if bt['type'] == 'quote' else 'lede'
+        if kind == 'lede' and not bt.get('lede'): return ''
+        sec2 = dict(sec); hd = dict(sec.get('head') or {})
+        if variant == 'right': hd['x'] = .45; hd['wf'] = .55; hd['al'] = 'left'
+        if variant == 'left': hd['x'] = 0; hd['wf'] = .6; hd['al'] = 'left'
+        if variant == 'wide': hd['x'] = 0; hd['wf'] = .9; hd['al'] = 'left'
+        if variant == 'upper': hd['tt'] = 'uppercase'; hd['al'] = 'center'; hd['wf'] = .9
+        sec2['head'] = hd; return statement(sec2, (kind, bt))
     SIG = {'sticky-product': sticky_product, 'marquee': marquee, 'pinned-sequence': pinned_sequence, 'type-wall': type_wall, 'story': story}
 
     def statement(sec, item):
@@ -278,6 +353,7 @@ def build(slug_dir, bp_id, out_path=None):
         big_pool = [i for i in images.values() if i.get('data') and i.get('w', 0) >= 900 and not is_used(i.get('id'))]
         if not want and not big_pool: bleed = False
         src = img(want, want_shot=(True if (soft and not bleed) else None)) if (want or big_pool) else img(want_shot=None)
+        if not src: return ''
         head = f'<div class="wrap over"><h2 class="h2 light" style="{head_style(sec)}">{e(bt["h2"])}</h2></div>' if bt and bt.get('h2') and sec.get('head') else ''
         cap = f'<div class="wrap"><div class="caps">{lab(bt.get("label"))}{("<p class=\"cap\">" + e(bt.get("lede")) + "</p>") if bt and bt.get("lede") else ""}</div></div>' if bt else ''
         return f'<section class="sec photo{" bleed" if bleed else ""}" id="{e(bt["id"]) if bt else ""}"><figure style="aspect-ratio:{max(1.1, min(2.4, m["ar"]))};{"" if bleed else "margin:0 var(--frame);border-radius:var(--radius);overflow:hidden"}"><img src="{src}" alt="">{head}</figure>{cap}</section>'
@@ -321,7 +397,8 @@ def build(slug_dir, bp_id, out_path=None):
         if k in (3, 6, 9): n = 3
         elif k in (2, 4) and n > 2: n = 2 if k == 2 else 4
         elif k == 5: n = 3
-        n = ui_.get('cols') or n
+        n = ui_.get('cols') or n; variant = ui_.get('variant', '')
+        if variant == 'wide2': n = 2
         items = []
         if bt['type'] == 'features': items = [(f.get('title'), f.get('body'), True) for f in bt.get('features', [])]
         elif bt['type'] == 'cells': items = [(c[0], c[2] if len(c) > 2 else '', c[1]) for c in bt.get('cells', [])]
@@ -330,7 +407,7 @@ def build(slug_dir, bp_id, out_path=None):
         elif bt['type'] == 'faq': items = [(q, a, None) for q, a in bt.get('items', [])]
         elif bt['type'] == 'ledger': return ledger(sec, bt)
         avail = [i for i in images.values() if i.get('data') and not is_used(i.get('id')) and i.get('w', 0) >= 600 and (not i.get('shot') or i.get('detail') or i.get('gen'))]
-        with_img = bool(ms) and bt['type'] in ('features', 'steps') and len(avail) >= min(len(items), 3) and not lead
+        with_img = (bool(ms) or variant == 'photos') and bt['type'] in ('features', 'steps', 'cells') and len(avail) >= min(len(items), 3) and not lead
         cells = ''
         for i, (t, body_, num) in enumerate(items[:8]):
             pic = (lambda sr: f'<figure style="aspect-ratio:{ar}"><img src="{sr}" alt=""></figure>' if sr else '')(img()) if with_img and i < len(avail) else ''
@@ -395,6 +472,46 @@ def build(slug_dir, bp_id, out_path=None):
         if not pool: return DEF[fam]
         sec = pool[taken[fam] % len(pool)]; taken[fam] += 1; return sec
     out = [hero()]; used_beats = set(); cta_done = False; flip = False
+    if RECIPE:
+        COMP = {'sticky-product': lambda sec, bt, v: sticky_product(sec, bt), 'pinned-sequence': lambda sec, bt, v: pinned_sequence(sec, bt), 'type-wall': lambda sec, bt, v: type_wall(sec, bt),
+                'marquee': lambda sec, bt, v: marquee(sec, bt), 'story': lambda sec, bt, v: story(sec, bt), 'cards': lambda sec, bt, v: cards(sec, {**bt, 'ui': {**(bt.get('ui') or {}), 'variant': v}}),
+                'two-col': lambda sec, bt, v: two_col(sec, bt), 'ledger': lambda sec, bt, v: ledger(sec, bt), 'faq': lambda sec, bt, v: faq(sec, bt), 'statement': lambda sec, bt, v: statement_v(sec, bt, v),
+                'quote-band': lambda sec, bt, v: quote_band(sec, bt, v), 'photo': lambda sec, bt, v: photo_sec({**sec, 'media': [{'ar': 1.9 if v != 'tall' else 1.1, 'wf': 1, 'bleed': v == 'bleed'}]}, bt),
+                'photo-pair': lambda sec, bt, v: photo_pair(sec, bt), 'collage': lambda sec, bt, v: collage(sec, bt), 'overlay': lambda sec, bt, v: overlay(sec, bt, v), 'rail': lambda sec, bt, v: rail(sec, bt),
+                'numbers': lambda sec, bt, v: numbers(sec, bt), 'stickers': lambda sec, bt, v: stickers(sec, bt), 'product-row': lambda sec, bt, v: product_row(sec, bt), 'giant': lambda sec, bt, v: giant(sec)}
+        remaining = [bt for bt in beats if bt['type'] != 'form']; form_bt = next((bt for bt in beats if bt['type'] == 'form'), None)
+        def sec_for(comp):
+            fam = 'statement' if comp in ('statement', 'quote-band', 'type-wall') else 'photo' if comp in ('photo', 'photo-pair', 'collage', 'overlay') else 'cta' if comp.startswith('cta') else 'list'
+            return take(fam)
+        for slot in RECIPE['slots']:
+            comp = slot['comp']; v = slot.get('variant', ''); acc = slot['accepts']
+            if 'giant' in acc: out.append(giant({})); continue
+            bt = next((x for x in remaining if x['type'] in acc), None)
+            if bt is None and 'photo*' in acc:
+                if len(out) >= 7: continue
+                if len([i for i in images.values() if i.get('data') and not is_used(i.get('id')) and not i.get('shot') and i.get('w', 0) >= 700]) >= (2 if comp in ('photo-pair', 'collage') else 1):
+                    html_ = COMP[comp](sec_for(comp), {'id': f'ph{len(out)}', 'type': 'photo'}, v)
+                    if html_: out.append(html_)
+                continue
+            if bt is None: continue
+            mv = (bt.get('ui') or {}).get('move')
+            if mv in SIG and mv != comp and comp in ('cards', 'two-col', 'story', 'numbers'): comp = mv  # the concept's move wins over a plain slot
+            sec = sec_for(comp); html_ = COMP.get(comp, COMP['cards'])(sec, bt, v)
+            if html_: out.append(html_); remaining.remove(bt); used_beats.add(bt['id'])
+            if slot.get('band'): out[-1] = out[-1].replace('class="sec ', f'class="sec band-{slot["band"]} ', 1)
+        for bt in remaining:  # whatever the recipe had no slot for, in the fallback component for its type — unless the page is already full
+            if len(out) >= 7 and bt['type'] in ('facts', 'cells', 'photo', 'quote'): continue
+            comp = FALLBACK.get(bt['type'], 'cards'); html_ = COMP.get(comp, COMP['cards'])(sec_for(comp), bt, '')
+            if html_: out.append(html_); used_beats.add(bt['id'])
+        closing = RECIPE.get('closing', 'cta')
+        if closing == 'giant': out.append(giant({}))
+        if closing == 'cta-photo' and big_photos(1, None):
+            ps = big_photos(1, form_bt); title = (form_bt or {}).get('h2') or en.get('tag') or h.get('cta') or b['name']; cta_title_used.append(title)
+            fields = ''.join(f'<label><span>{e(f)}</span><input placeholder="{e(f)}"></label>' for f in (form_bt or {}).get('fields', [])[:6])
+            form = f'<form class="form" onsubmit="return false">{fields}<button class="btn">{e((form_bt or {}).get("cta") or h.get("cta"))} <span class="ar">→</span></button></form>' if fields else f'<div class="ctas">{cta_html()}</div>'
+            out.append(f'<section class="sec overlay cta-ov" id="{e((form_bt or {}).get("id") or form_id)}" data-sig="parallax"><figure class="ov-bg"><img src="{ps[0]}" alt=""></figure><div class="wrap ov-in light center">{lab((form_bt or {}).get("label"), True)}<h2 class="h2 light" style="{re.sub(r"max-width:[^;]+;?", "", head_style(take("cta")))};text-align:center;margin:0 auto">{e(title)}</h2>{form}</div></section>')
+        else: out.append(cta(take('cta'), form_bt))
+        out.append(footer(bp['sections'][-1] if bp['sections'][-1]['role'].startswith('footer') else {}))
     def default_move(role, t):
         # the winner's own section vocabulary → our signature component
         if 'sticky' in role and t in ('features', 'steps', 'cells'): return 'sticky-product'
@@ -402,7 +519,7 @@ def build(slug_dir, bp_id, out_path=None):
         if role.startswith('pinned') and t == 'steps': return 'pinned-sequence'
         if role.startswith(('story', 'tabs-media', 'photo-half-text')) and t in ('features', 'steps', 'cells', 'facts'): return 'story'
         return ''
-    for bt in beats:
+    for bt in ([] if RECIPE else beats):
         t = bt['type']; mv = (bt.get('ui') or {}).get('move') or ''
         if mv == 'auto' or not mv:
             fam = 'statement' if t == 'quote' else 'photo' if t == 'photo' else 'cta' if t == 'form' else 'list'
@@ -423,12 +540,13 @@ def build(slug_dir, bp_id, out_path=None):
         else: continue
         used_beats.add(bt['id'])
     # a photo slot the blueprint has that the story did not use, when the client has an unused photo
-    if pools['photo'] and taken['photo'] == 0 and len([i for i in images.values() if not i.get('shot') and i.get('id') not in used and i.get('w', 0) >= 900]) >= 1 and d.get('kind') in ('place', 'service'):
-        out.insert(2, photo_sec(pools['photo'][0]))
-    for sec in bp['sections'][1:]:
-        if sec['role'].startswith('giant'): out.append(giant(sec)); break
-    if not cta_done: out.append(cta(take('cta'), None))
-    out.append(footer(bp['sections'][-1] if bp['sections'][-1]['role'].startswith('footer') else {}))
+    if not RECIPE:
+        if pools['photo'] and taken['photo'] == 0 and len([i for i in images.values() if not i.get('shot') and i.get('id') not in used and i.get('w', 0) >= 900]) >= 1 and d.get('kind') in ('place', 'service'):
+            out.insert(2, photo_sec(pools['photo'][0]))
+        for sec in bp['sections'][1:]:
+            if sec['role'].startswith('giant'): out.append(giant(sec)); break
+        if not cta_done: out.append(cta(take('cta'), None))
+        out.append(footer(bp['sections'][-1] if bp['sections'][-1]['role'].startswith('footer') else {}))
 
     # ---- logo ----
     logo = (assets.get('logo') or {}).get('data', '')
@@ -471,6 +589,18 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
 .cta .center{{text-align:center;display:grid;justify-items:center;gap:22px}}.cta .h2{{max-width:16ch}}.form{{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:min(640px,100%);text-align:left}}.form label{{display:grid;gap:6px}}.form label span{{font-family:var(--label);font-size:var(--lab-px);letter-spacing:var(--lab-ls);text-transform:uppercase;opacity:.7}}.form input{{min-height:46px;border:1px solid color-mix(in srgb,currentColor 30%,transparent);background:transparent;color:inherit;padding:0 12px;border-radius:max(4px,min(12px,var(--btn-r)));font:inherit}}.form .btn{{grid-column:1/-1;justify-content:center}}.alts{{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}}
 .giant{{padding:40px 0 0;overflow:hidden}}.gw{{font-family:var(--display);font-weight:var(--h1-w);font-size:min(22vw,{round(165 / max(4, len(b['name'])), 1)}vw);line-height:.85;letter-spacing:-.03em;white-space:nowrap;text-transform:var(--h1-tt)}}
 .end{{padding-top:clamp(48px,6vw,80px);padding-bottom:28px}}.end .fcols{{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--gutter);margin-top:48px;padding-top:40px;border-top:1px solid var(--line)}}.end ul{{list-style:none;margin-top:10px;display:grid;gap:6px}}.end .legal{{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:40px;font-family:var(--label);font-size:var(--lab-px);color:var(--muted)}}
+/* template components */
+.hero.centre{{min-height:auto;padding-top:120px}}.hero.centre .hero-in{{text-align:center;display:grid;justify-items:center}}
+.hero.has-media{{background:#111}}.hero.poster .lede,.hero.photo .lede{{max-width:44ch;width:auto}}.hero.poster .hero-in{{display:grid;justify-items:center;text-align:center}}.hero.photo .hero-in,.hero.poster .hero-in{{position:relative;z-index:1}}.hero-in.light .lede{{color:rgba(255,255,255,.86)}}.hero-in.light .btn.ghost{{color:#fff;border-color:rgba(255,255,255,.5)}}.hero.poster .h1{{letter-spacing:-.035em}}
+.hero.inset{{min-height:auto;padding-bottom:0}}.inset-v{{margin:clamp(28px,4vw,56px) 0 0;border-radius:var(--radius);overflow:hidden;aspect-ratio:1.8}}.inset-v img{{width:100%;height:100%;object-fit:cover}}
+.collage .cl{{display:grid;grid-template-columns:1.2fr .8fr;grid-template-rows:auto auto;gap:var(--gutter)}}.collage figure{{margin:0;overflow:hidden;border-radius:var(--radius)}}.collage figure img{{width:100%;height:100%;object-fit:cover}}.collage .c1{{grid-row:1/3;aspect-ratio:.9}}.collage .c2{{aspect-ratio:1.3}}.collage .c3{{aspect-ratio:1.3}}
+.overlay{{position:relative;padding:0;min-height:88svh;background:#121212;color:#fff;display:grid;align-content:end;overflow:hidden}}.overlay.chapter{{min-height:72svh;align-content:center}}.ov-bg{{position:absolute;inset:0;margin:0}}.ov-bg::after{{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.55))}}.ov-bg img{{width:100%;height:100%;object-fit:cover}}.ov-in{{position:relative;z-index:1;padding:clamp(48px,7vw,110px) var(--frame) clamp(40px,6vw,80px);color:#fff}}.ov-in .lede{{color:rgba(255,255,255,.82)}}.ov-in .h2{{color:#fff}}.ov-in.center{{text-align:center;display:grid;justify-items:center}}.rows.light li{{border-color:rgba(255,255,255,.25);color:#fff}}.rows.light li i{{border-color:rgba(255,255,255,.25)}}.cta-ov .form{{margin:28px auto 0}}
+.qband{{padding:clamp(72px,10vw,150px) 0}}.qband .qb{{font-family:var(--display);font-weight:var(--h2-w);font-size:clamp(28px,4.2vw,64px);line-height:1.12;letter-spacing:-.02em;max-width:24ch}}.qband.center .qb{{margin:0 auto;text-align:center}}.qband.center .who{{text-align:center}}.band-accent{{background:var(--accent);color:#fff}}.band-accent .lab{{color:rgba(255,255,255,.7)}}
+.railsec{{overflow:hidden}}.rail{{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;padding:0 var(--frame)}}.rail::-webkit-scrollbar{{display:none}}.rail-in{{display:flex;gap:var(--gutter);width:max-content}}.rc{{width:min(360px,78vw);display:grid;gap:10px;align-content:start}}.rc figure{{margin:0 0 6px;aspect-ratio:.82;border-radius:var(--radius);overflow:hidden}}.rc figure img{{width:100%;height:100%;object-fit:cover}}.rc p{{color:var(--muted)}}
+.nums{{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:var(--gutter);border-top:1px solid var(--line);padding-top:28px}}.nums .num{{display:block;font-family:var(--display);font-weight:var(--h1-w);font-size:clamp(48px,7vw,120px);line-height:.95;letter-spacing:-.03em}}.nums p{{margin-top:12px;color:var(--muted)}}
+.stickers{{padding:clamp(72px,10vw,140px) 0}}.stks{{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:30px;max-width:900px;margin-left:auto;margin-right:auto}}.stk{{display:inline-block;padding:14px 22px;border-radius:999px;background:#fff;color:#111;font-family:var(--display);font-weight:var(--h3-w);font-size:clamp(16px,1.6vw,24px);transform:rotate(var(--r));box-shadow:0 10px 30px rgba(0,0,0,.18)}}.stickers .h2{{text-align:center;margin:0 auto}}.stickers .lede{{color:rgba(255,255,255,.85);text-align:center}}
+.prs{{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:var(--gutter)}}.prs>*,.nums>*,.cl>*,.grid>*,.cols>*,.rc{{min-width:0}}.sec img{{max-width:100%}}.pr figure{{margin:0;aspect-ratio:.8;border-radius:var(--radius);overflow:hidden;background:color-mix(in srgb,var(--ink) 6%,var(--paper))}}.pr figure img{{width:100%;height:100%;object-fit:cover}}.pr-t{{display:flex;justify-content:space-between;gap:12px;margin-top:12px;align-items:baseline}}.pr-t b{{font-weight:500;white-space:nowrap}}
+@media(max-width:900px){{.collage .cl,.nums,.prs{{grid-template-columns:1fr 1fr}}.collage .c1{{grid-row:auto}}.overlay{{min-height:70svh}}}}
 /* signature components */
 .hero.split{{padding-top:96px;min-height:100svh;align-content:center}}.split-wrap{{display:grid;grid-template-columns:1fr 1.1fr;gap:var(--gutter);align-items:center}}.split-l .lede{{margin-top:18px}}.split-l .ctas{{margin-top:26px}}.shotframe.tall{{border-radius:max(12px,var(--radius));border:1px solid var(--line);box-shadow:0 40px 100px color-mix(in srgb,var(--ink) 16%,transparent);overflow:hidden}}.shotframe.tall img{{width:100%;height:min(82vh,900px);object-fit:cover;object-position:left top}}
 .sp{{display:grid;grid-template-columns:1fr 1.15fr;gap:calc(var(--gutter) * 1.5);align-items:stretch}}.sp-row{{min-height:46vh;display:grid;align-content:center;gap:12px;max-width:40ch;opacity:.28;transition:opacity .5s var(--ease)}}.sp-row.on{{opacity:1}}.sp-row .h3{{font-size:min(var(--h2),44px)}}.sp-row p{{color:var(--muted);font-size:calc(var(--body-px) + 1px)}}.sp-pin{{position:relative}}.sp-stage{{position:sticky;top:12vh;height:76vh;border-radius:max(12px,var(--radius));overflow:hidden;border:1px solid var(--line);background:color-mix(in srgb,var(--ink) 6%,var(--paper))}}.sp-f{{position:absolute;inset:0;margin:0;opacity:0;transform:scale(1.03);transition:opacity .6s var(--ease),transform .9s var(--ease)}}.sp-f.on{{opacity:1;transform:none}}.sp-f img{{width:100%;height:100%;object-fit:cover;object-position:top;transition:transform 1.2s var(--ease)}}

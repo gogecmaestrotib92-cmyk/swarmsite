@@ -4,7 +4,7 @@
 set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"; cd "$ROOT"
 MIN="${1:-75}"; TMP="$(mktemp -d)"; FAIL=0; export LIVETEST=1
-BPS="butter cerebrium tengile lpas"; [ "${2:-}" = "--all" ] && BPS="$(ls lib/blueprints/*.bp.json | xargs -n1 basename | sed 's/.bp.json//' | tr '\n' ' ')"
+BPS="butter cerebrium tengile lpas crav atelier"; [ "${2:-}" = "--all" ] && BPS="$(ls lib/blueprints/*.bp.json | xargs -n1 basename | sed 's/.bp.json//' | tr '\n' ' ')"
 mkdir -p "$TMP/site"; cp tests/direction.sample.json "$TMP/site/direction.json"; cp tests/images.sample.json "$TMP/site/images.json"; cp tests/assets.sample.json "$TMP/site/assets.json" 2>/dev/null || true
 echo "livetest → $TMP"
 one() { bp="$1"; mkdir -p "$TMP/$bp"

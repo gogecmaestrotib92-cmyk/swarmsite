@@ -1,0 +1,294 @@
+{
+ "id": "atelier",
+ "source": "original \u2014 editorial studio, light, serif display",
+ "class": "service",
+ "archetype": "studio-grid-26",
+ "screens": 12,
+ "grid": {
+  "frame": 50,
+  "gutter": 50,
+  "container": 1330,
+  "col": null
+ },
+ "type": {
+  "display": {
+   "fam": "Instrument Serif",
+   "px": 75,
+   "w": 400,
+   "ls": 0,
+   "lh": 1.0,
+   "tt": null,
+   "it": false,
+   "al": null
+  },
+  "h2": {
+   "fam": "Aeonik",
+   "px": 56,
+   "w": 400,
+   "ls": 0,
+   "lh": 1.1,
+   "tt": null,
+   "it": false,
+   "al": null
+  },
+  "h3": {
+   "fam": "Aeonik",
+   "px": 38,
+   "w": 400,
+   "ls": 0,
+   "lh": 1.1,
+   "tt": null,
+   "it": false,
+   "al": null
+  },
+  "body": {
+   "fam": "Aeonik",
+   "px": 16,
+   "lh": 1.35,
+   "maxw": 791
+  },
+  "label": null
+ },
+ "colour": {
+  "paper": "#ffffff",
+  "ink": "#262626",
+  "accent": "#e3c1aa",
+  "mode": "light",
+  "bands": [
+   "paper",
+   "paper",
+   "paper",
+   "paper",
+   "light"
+  ],
+  "alt": "#e3c1aa"
+ },
+ "media": {
+  "radius": 0,
+  "aspects": [
+   1.37,
+   1.38,
+   1.6,
+   1.89,
+   1.9
+  ],
+  "bleed": true,
+  "video_hero": true
+ },
+ "button": {
+  "h": 45,
+  "pad": "12px",
+  "radius": 0,
+  "px": 15,
+  "w": 500,
+  "tt": null,
+  "filled": false
+ },
+ "motion": {
+  "smooth": true,
+  "ease": "cubic-bezier(0, 0, 0.13, 0.99)",
+  "fast": 0.3,
+  "slow": 1.2,
+  "cursor": false,
+  "idea": "26-column grid; one sans at 9 sizes; pinned 6.7-screen hero where project cards slide in from the right over a dimmed video (brightness .5); sticky work section"
+ },
+ "nav": {
+  "pos": "static",
+  "h": 0,
+  "links": 1
+ },
+ "sections": [
+  {
+   "role": "pinned-hero-rail",
+   "screens": 6.71,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 75,
+    "w": 400,
+    "tt": null,
+    "it": false,
+    "al": "start",
+    "lh": 1.0,
+    "x": 0.035,
+    "y": 0.093,
+    "wf": 0.625,
+    "ls": 0
+   },
+   "media": [
+    {
+     "ar": 1.9,
+     "wf": 1.0,
+     "xf": 0.0,
+     "bleed": true,
+     "video": true,
+     "radius": 0
+    },
+    {
+     "ar": 1.37,
+     "wf": 0.556,
+     "xf": 0.807,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 1.38,
+     "wf": 0.565,
+     "xf": 1.251,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "note": "dimmed bleed video, 75px sans h1 900 wide at x=50; on scroll, 800x582 project cards with 56px titles slide in from the right (x=1162, 1802\u2026) \u2014 the hero is a horizontal rail",
+   "words": 65
+  },
+  {
+   "role": "manifesto",
+   "screens": 0.5,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 56,
+    "w": 400,
+    "tt": null,
+    "it": false,
+    "al": "start",
+    "lh": 1.1,
+    "x": 0.035,
+    "y": 0.0,
+    "wf": 0.457,
+    "ls": 0
+   },
+   "body": {
+    "px": 16,
+    "lh": 1.35,
+    "maxw": 791
+   },
+   "cols": [
+    0.042,
+    0.264
+   ],
+   "note": "56px four-sentence manifesto 658 wide; 14px stacked verbs; 16px paragraph 791 wide"
+  },
+  {
+   "role": "work-grid-sticky",
+   "screens": 1.47,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 38,
+    "w": 400,
+    "tt": null,
+    "it": false,
+    "al": "start",
+    "lh": 1.1,
+    "x": null,
+    "y": null,
+    "wf": null,
+    "ls": 0
+   },
+   "media": [
+    {
+     "ar": 1.6,
+     "wf": 0.466,
+     "xf": 0.03,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 1.6,
+     "wf": 0.229,
+     "xf": 0.496,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    },
+    {
+     "ar": 1.6,
+     "wf": 0.229,
+     "xf": 0.728,
+     "bleed": false,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "cols": [
+    0.042,
+    0.5
+   ],
+   "note": "38px title; one big 16:10 image left (671), two small 16:10 right (330) \u2014 2:1:1 split, sticky title",
+   "words": 61
+  },
+  {
+   "role": "updates-list",
+   "screens": 0.6,
+   "pad": null,
+   "band": null,
+   "head": {
+    "px": 28,
+    "w": 400,
+    "tt": null,
+    "it": false,
+    "al": "start",
+    "lh": 1.3,
+    "x": null,
+    "y": null,
+    "wf": null,
+    "ls": 0
+   },
+   "body": {
+    "px": 14,
+    "lh": 1.4,
+    "maxw": 457
+   },
+   "note": "28px title, dated rows (16px source/date + 14px text 457 wide)",
+   "words": 299
+  },
+  {
+   "role": "footer-photo-offices",
+   "screens": 1.99,
+   "pad": [
+    120,
+    0
+   ],
+   "band": "alt",
+   "head": {
+    "px": 16,
+    "w": 400,
+    "tt": null,
+    "it": false,
+    "al": "start",
+    "lh": 1.05,
+    "x": 0.035,
+    "y": 0.25,
+    "wf": 0.119,
+    "ls": 0
+   },
+   "body": {
+    "px": 14,
+    "lh": 1.4,
+    "maxw": 171
+   },
+   "media": [
+    {
+     "ar": 1.89,
+     "wf": 1.385,
+     "xf": -0.198,
+     "bleed": true,
+     "video": false,
+     "radius": 0
+    }
+   ],
+   "cols": [
+    0.0,
+    0.042,
+    0.361
+   ],
+   "note": "2-screen footer: oversized bleed photo, office columns 171 wide at 267px pitch",
+   "words": 66
+  }
+ ]
+}
