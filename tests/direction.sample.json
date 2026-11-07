@@ -1,0 +1,256 @@
+{
+ "lang": "sr",
+ "kind": "software",
+ "concept": "C8",
+ "mode": "light",
+ "voice": "serif",
+ "brand": {
+  "name": "Franš",
+  "badge": "",
+  "keep_font": true,
+  "font_hint": "Cormorant Garamond",
+  "accent": "#0F2A14",
+  "paper": "#F4EFE3",
+  "ink": "#0F2A14"
+ },
+ "nav": {
+  "links": [
+   [
+    "#basta",
+    "Bašta"
+   ],
+   [
+    "#jelovnik",
+    "Jelovnik"
+   ]
+  ],
+  "cta": "Rezerviši sto"
+ },
+ "hero": {
+  "category": "Restoran Franš · Bulevar oslobođenja, Beograd",
+  "fact": "Pon–Sub · 9–00h",
+  "h1": "Bašta gde Beograd <em>slavi</em>",
+  "lede": "Tradicija i elegancija pod starim stablima: jelovnik koji se ne menja po modi, sto koji vas čeka i konobar koji zna šta pijete.",
+  "cta": "Rezerviši sto",
+  "cta2": "Jelovnik",
+  "media": "waiter",
+  "ui": {
+   "move": "split",
+   "size": "M"
+  }
+ },
+ "beats": [
+  {
+   "id": "feat",
+   "type": "features",
+   "label": "Features",
+   "h2": "One coaching workspace",
+   "lede": "Everything in one place.",
+   "ui": {
+    "move": "sticky-product"
+   },
+   "features": [
+    {
+     "title": "Plays & whiteboard",
+     "body": "Draw movements, animate frames."
+    },
+    {
+     "title": "Practice & drills",
+     "body": "Reuse saved exercises."
+    },
+    {
+     "title": "Teams & seasons",
+     "body": "Keep rosters and notes."
+    }
+   ]
+  },
+  {
+   "id": "how",
+   "type": "steps",
+   "label": "How it works",
+   "h2": "Draw, film, prepare",
+   "ui": {
+    "move": "cards"
+   },
+   "steps": [
+    "Diagram the play once, tag it, keep it in the library.",
+    "Link the clip from the real game to the play.",
+    "Print the bench sheet and walk to practice."
+   ]
+  },
+  {
+   "id": "q",
+   "type": "quote",
+   "label": "Why",
+   "big": "Built by players",
+   "body": "We built the tool we wished our staffs had, with the court in the middle and nothing in the way.",
+   "who": "Léo & Goran",
+   "ui": {
+    "move": "type-wall"
+   }
+  },
+  {
+   "id": "nums",
+   "type": "cells",
+   "label": "Figures",
+   "h2": "What you can verify",
+   "ui": {
+    "move": "marquee"
+   },
+   "cells": [
+    [
+     "plays",
+     "39",
+     "sample"
+    ],
+    [
+     "minutes",
+     "90",
+     "plan"
+    ],
+    [
+     "days",
+     "14",
+     "trial"
+    ]
+   ]
+  },
+  {
+   "id": "mk",
+   "type": "facts",
+   "label": "Founders",
+   "h2": "Two players, one tool",
+   "lede": "Léo and Goran built it.",
+   "ui": {
+    "move": "story"
+   },
+   "facts": [
+    [
+     "170+",
+     "EuroLeague games"
+    ],
+    [
+     "8",
+     "ACB seasons"
+    ]
+   ]
+  },
+  {
+   "id": "rezervacija",
+   "type": "form",
+   "label": "Rezervacija",
+   "h2": "Vaš sto, upisan.",
+   "fields": [
+    "Ime i prezime",
+    "Telefon",
+    "Broj gostiju",
+    "Datum",
+    "Vreme",
+    "Napomena"
+   ],
+   "cta": "Rezerviši sto",
+   "alt": [
+    "SMS · WhatsApp · Viber: +381 65 26 41 944",
+    "Fiksni: +381 11 26 41 944"
+   ],
+   "image": "reservation-book"
+  },
+  {
+   "id": "jelovnik",
+   "type": "ledger",
+   "label": "Jelovnik",
+   "h2": "Jelovnik",
+   "lede": "Pola porcije se naplaćuje 65% od cene. Cene su sa porezom, u dinarima.",
+   "image": "octopus",
+   "items": [
+    [
+     "Biftek u sosu od belih tartufa",
+     "1.200 din"
+    ],
+    [
+     "Guščija džigerica, sos od šljiva i krušaka",
+     "6 800"
+    ],
+    [
+     "Čudesni tanjir za dve osobe",
+     "6 000"
+    ],
+    [
+     "Rižoto sa crnim tartufima",
+     "2 400"
+    ],
+    [
+     "Karađorđeva šnicla, teleća",
+     "3 600"
+    ],
+    [
+     "Jagnjeći kotleti, grilovani",
+     "4 400"
+    ],
+    [
+     "Brancin svež, fileti",
+     "3 500"
+    ],
+    [
+     "Karpaćo od bifteka, rukola, pinjoli",
+     "3 200"
+    ]
+   ],
+   "cta": "Rezerviši sto",
+   "cta_href": "https://frans.rs/menu/jelovnik/",
+   "cta2": "Vinska karta",
+   "cta2_href": "https://frans.rs/bela-vina/"
+  }
+ ],
+ "ending": {
+  "tag": "",
+  "cols": [
+   [
+    "Restoran Franš",
+    [
+     "Bulevar oslobođenja 18G, Beograd",
+     "Ponedeljak – subota, 9–00h",
+     "Nedeljom ne radimo"
+    ]
+   ],
+   [
+    "Jelovnik",
+    [
+     "Jelovnik",
+     "Deserti",
+     "Vina"
+    ]
+   ],
+   [
+    "Proslave",
+    [
+     "Proslave",
+     "Torte",
+     "360° tura"
+    ]
+   ],
+   [
+    "Kontakt",
+    [
+     "pr@frans.rs",
+     "+381 11 26 41 944",
+     "Rezervacije"
+    ]
+   ]
+  ],
+  "next": "Sledeće: rezervišite sto →",
+  "legal": "© 2026 Restoran Franš · Beograd"
+ },
+ "audit_notes": [
+  "Video na sajtu je 854×480 — tražiti originalni fajl.",
+  "Nedeljom ne radi — potvrditi radno vreme praznicima."
+ ],
+ "swarm": {
+  "ux": [
+   "x"
+  ],
+  "ui": [],
+  "idea": "x",
+  "rhythm": ""
+ }
+}
