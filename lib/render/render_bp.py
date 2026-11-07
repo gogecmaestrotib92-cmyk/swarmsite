@@ -42,22 +42,36 @@ def build(slug_dir, bp_id, out_path=None):
     b = d['brand']; h = d['hero']; en = d.get('ending', {})
     T, C, G, M, BT, MO = bp['type'], bp['colour'], bp['grid'], bp['media'], bp['button'], bp['motion']
 
-    # ---- image pool (never an empty frame) ----
+    # ---- image pool (never an empty frame, never the same picture twice — even as a screenshot of itself or a crop) ----
     used = set()
+    def dhash(it):
+        try:
+            from PIL import Image; import io
+            raw = base64.b64decode(it['data'].split(',', 1)[1]); im = Image.open(io.BytesIO(raw)).convert('L').resize((9, 8))
+            px = list(im.tobytes()); return ''.join('1' if px[r * 9 + c] > px[r * 9 + c + 1] else '0' for r in range(8) for c in range(8))
+        except Exception: return None
+    hashes = {k: dhash(i) for k, i in images.items() if i.get('data')}
+    def family(k):
+        it = images.get(k) or {}; fam = {k}
+        if it.get('crop_of'): fam.add(it['crop_of'])
+        h0 = hashes.get(k)
+        if h0:
+            for k2, h2 in hashes.items():
+                if h2 and sum(a != b for a, b in zip(h0, h2)) <= 10: fam.add(k2)
+        return fam
+    def is_used(k): return bool(family(k) & used)
     soft = d.get('kind') in ('software', 'product')
     def img(k=None, prefer_hero=False, want_shot=None):
         it = images.get(k) if k else None
-        if it and (it.get('id') in used or (it.get('crop_of') and it.get('crop_of') in used)) and not prefer_hero: it = None  # never the same picture twice on one page
+        if it and is_used(it.get('id')) and not prefer_hero: it = None
         if not it:
-            pool = [i for i in images.values() if i.get('data') and i.get('id') not in used and not (i.get('crop_of') and i['crop_of'] in used)] or [i for i in images.values() if i.get('data')]
+            pool = [i for i in images.values() if i.get('data') and not is_used(i.get('id'))] or [i for i in images.values() if i.get('data')]
             if want_shot is True: pool = [i for i in pool if i.get('shot')] or pool
             if want_shot is False: pool = [i for i in pool if not i.get('shot')] or pool
             # hero: real photos first; software bodies: UI section shots first; places: photos first
             pool.sort(key=lambda i: (bool(i.get('shot')) if (prefer_hero or not soft) else not i.get('shot'), not (i.get('heroGrade') if prefer_hero else True), -(i.get('w', 0) * i.get('h', 0)))); it = pool[0] if pool else None
         if not it: return ''
-        used.add(it.get('id'));
-        if it.get('crop_of'): used.add(it['crop_of'])
-        return it.get('data', '')
+        used.update(family(it.get('id'))); return it.get('data', '')
 
     # ---- fonts: blueprint stance, owner's font if they keep it ----
     disp_name, disp_kind = font_for((T.get('display') or {}).get('fam'))
@@ -176,14 +190,15 @@ def build(slug_dir, bp_id, out_path=None):
     def lead_fig(ui_, bt):
         src = ''; it = None
         if ui_.get('lead') and images.get(ui_['lead']):
-            if ui_['lead'] in used: return ''
+            if is_used(ui_['lead']): return ''
             it = images[ui_['lead']]; src = img(ui_['lead'])
         elif ui_.get('lead') == '': return ''
+        elif bt.get('image') and images.get(bt['image']) and not is_used(bt['image']): it = images[bt['image']]; src = img(bt['image'])
         elif bt['type'] == 'facts':
-            pool = ([images[bt['image']]] if bt.get('image') and images.get(bt['image']) and bt['image'] not in used else []) + [i for i in images.values() if i.get('data') and not i.get('shot') and i.get('id') not in used and i.get('w', 0) >= 600]
+            pool = [i for i in images.values() if i.get('data') and not i.get('shot') and not is_used(i.get('id')) and i.get('w', 0) >= 600]
             if pool: it = pool[0]; src = img(it['id'])
         elif bt['type'] == 'steps' and soft:
-            pool = [i for i in images.values() if i.get('shot') and i.get('data') and i.get('id') not in used]
+            pool = [i for i in images.values() if i.get('shot') and i.get('data') and not is_used(i.get('id'))]
             if pool: it = max(pool, key=lambda i: i.get('w', 0) * i.get('h', 0)); src = img(it['id'])
         if not src or not it: return ''
         raw_ar = it.get('w', 16) / max(1, it.get('h', 9)); ar = max(1.0, min(2.4, raw_ar))
