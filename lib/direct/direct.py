@@ -44,6 +44,7 @@ Hard rules:
 - Choose images by id from images.json: the hero gets the best 'heroGrade' landscape photo; never reuse the same image twice.
 - You SEE the site (screenshots attached). Judge it as a creative director: if it is already well designed (clear hierarchy, custom type, real photography, restraint), choose change="polish" and keep its structure, order and wording — only fix the audit findings. Average template sites get "restructure"; broken or generic sites get "rebuild". Never flatten a good site into a generic one.
 - Choose ONE blueprint from BLUEPRINTS: same class first, then the mood (dark/light, serif/sans, photo-led vs type-led) and how much imagery the site actually has. Say why in audit_notes[0].
+- IMAGERY BUDGET: count the DISTINCT visuals in IMAGES (a screenshot of the same screen counts once). With fewer than 3 distinct visuals choose a TYPE-LED blueprint (imagery=light) and plan beats that need no pictures: features as text, a ledger, facts as big figures, a quote. Never plan a photo beat or a 'makers' section without a real photo for it. Do not invent what a section 'would' show.
 - Output ONLY the JSON document, no prose, matching the schema. Comments in the schema are for you, not for the output.
 """
 
