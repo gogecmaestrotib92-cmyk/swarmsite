@@ -110,7 +110,8 @@ async function process_(job) {
   const slug = slugOf(job.url); const dir = path.join(OUT, slug); fs.mkdirSync(dir, { recursive: true });
   const t0 = Date.now(); const timed = async (id, fn) => { await setStep(job, id, 'running'); const s = Date.now(); const r = await fn(); await setStep(job, id, 'done', `${Math.round((Date.now() - s) / 1000)}s`); return r; };
   await timed('capture', async () => {
-    await run('node', ['lib/pipeline/capture.mjs', job.url, '--out', 'out', '--chrome', process.env.CHROME_PATH || ''].filter(Boolean), { timeoutMs: 180000 });
+    try { await run('node', ['lib/pipeline/capture.mjs', job.url, '--out', 'out', '--chrome', process.env.CHROME_PATH || ''].filter(Boolean), { timeoutMs: 180000 }); }
+    catch (e) { const bp = path.join(dir, 'blocked.json'); if (fs.existsSync(bp)) throw new Error(JSON.parse(fs.readFileSync(bp, 'utf8')).reason + ' Try the www/non-www address, or a page that is not behind the check.'); throw e; }
     if (fs.existsSync(path.join(dir, 'before-hero.jpg'))) { const beforeUrl = await upload(path.join(dir, 'before-hero.jpg'), `${job.id}/before.jpg`, 'image/jpeg'); job._result = { beforeUrl }; if (fs.existsSync(path.join(dir, 'before-full.jpg'))) { job._result.beforeFullUrl = await upload(path.join(dir, 'before-full.jpg'), `${job.id}/before-full.jpg`, 'image/jpeg'); const g = J(path.join(dir, 'geometry.json')); job._result.pageHeight = Math.min(7000, g?.pageHeight || 900); } await sb.from('jobs').update({ result: job._result }).eq('id', job.id); }
     await emit(job, eventsCapture(dir));
   });
