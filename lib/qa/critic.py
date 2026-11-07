@@ -20,17 +20,18 @@ Look for: text clipped or overlapping, invisible text (same colour as background
 Report only what you can SEE. Every fix must name the beat id (from the direction), the agent who owns it, and the reason — written so that agent can act without seeing the screenshot (say which element, where, how big, what it should become).
 Ops: shorten/hero_h1 → copy; swap_image/hero_image → visual (name the image id); band/layout → ui (columns, lead visual, compact, h2 size, head alignment); drop_beat/reorder → ux; note → anything else, to the right agent. Prefer dropping a weak section over padding it. Score 0–100 against award-level work (90+ = ship)."""
 
-def shots(html, outdir):
+def shots(html, outdir, fast=False):
     os.makedirs(outdir, exist_ok=True)
-    subprocess.run(['node', os.path.join(ROOT, 'lib/qa/shots.mjs'), html, '--out', outdir], cwd=ROOT, capture_output=True, text=True, timeout=180)
+    for f in os.listdir(outdir): os.remove(os.path.join(outdir, f))
+    subprocess.run(['node', os.path.join(ROOT, 'lib/qa/shots.mjs'), html, '--out', outdir] + (['--desktop-only', '--fast'] if fast else []), cwd=ROOT, capture_output=True, text=True, timeout=180)
     files = sorted(f for f in os.listdir(outdir) if f.endswith(('.png', '.jpg')))
     return [os.path.join(outdir, f) for f in files]
 
-def critique(slug_dir, html, model='claude-sonnet-5-5'):
+def critique(slug_dir, html, model='claude-sonnet-5-5', fast=False):
     import anthropic
     d = json.load(open(os.path.join(slug_dir, 'direction.json')))
     imgs_meta = [{k: v for k, v in i.items() if k != 'data'} for i in (json.load(open(os.path.join(slug_dir, 'images.json'))) if os.path.exists(os.path.join(slug_dir, 'images.json')) else [])]
-    files = shots(html, os.path.join(slug_dir, 'critic-shots'))
+    files = shots(html, os.path.join(slug_dir, 'critic-shots'), fast)
     if not files: return {'score': -1, 'fixes': [], 'verdict': 'no screenshots'}
     moves = {b['id']: (b.get('ui') or {}).get('move') for b in d.get('beats', []) if (b.get('ui') or {}).get('move')}
     content = [{"type": "text", "text": "SIGNATURE MOVES on this page (judge them as scroll experiences; the screenshot is one frame mid-section): " + json.dumps(moves) + "\n- sticky-product: text blocks scroll on the left, the product stays pinned on the right and swaps per block\n- pinned-sequence: the section pins, each step takes the screen in turn\n- type-wall: one sentence in giant type lights up word by word as you scroll\n- marquee: a slow ticker of the section's words (one line IS the design)\n- story: text beside a visual\n\nDIRECTION (beat ids + copy)\n" + json.dumps({k: d[k] for k in ('hero', 'beats') if k in d}, ensure_ascii=False)[:14000] + "\n\nIMAGES available (ids)\n" + json.dumps(imgs_meta, ensure_ascii=False)[:3000]}]

@@ -47,7 +47,7 @@ def main():
     best = (-1, None)
     for k in range(1, rounds + 1):
         t = time.time()
-        try: rep = C.critique(slug_dir, out, A.MODEL)
+        try: rep = C.critique(slug_dir, out, A.MODEL, fast=(k < rounds))  # desktop-only, short waits until the final look
         except Exception as e: ev('Critic', 'skipped: ' + str(e)[:90]); break
         score = rep.get('score', -1); fixes = rep.get('fixes', [])
         ev('Critic', f'round {k}: {score}/100 · {len(fixes)} defects · {round(time.time() - t)}s'); ev('Critic', str(rep.get('verdict', ''))[:140])
@@ -55,6 +55,7 @@ def main():
         if score > best[0]: best = (score, open(out).read())
         json.dump({**rep, 'round': k, 'best': best[0]}, open(os.path.join(slug_dir, 'critic.json'), 'w'), indent=1, ensure_ascii=False)
         if score >= target or k == rounds: break
+        if len(log['rounds']) >= 2 and score <= log['rounds'][-2]['score']: ev('Critic', 'no gain this round — stopping'); break
         # route: every defect goes to its owner with the critic's reason
         notes = {'copy': [], 'ui': [], 'visual': [], 'ux': [], 'concept': []}
         for f in fixes:
