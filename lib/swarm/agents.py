@@ -71,7 +71,7 @@ def concept(slug_dir, notes=''):
     imgs = [{k: v for k, v in i.items() if k != 'data'} for i in (J(slug_dir, 'images.json') or [])]
     distinct = len([i for i in imgs if not i.get('crop_of')])
     beats = [{'id': b['id'], 'type': b['type'], 'h2': b.get('h2'), 'n_items': len(b.get('features') or b.get('cells') or b.get('steps') or b.get('facts') or b.get('items') or []), 'has_image': bool(b.get('image'))} for b in d['beats']]
-    content = [{"type": "text", "text": f"KIND: {d.get('kind')} · BLUEPRINT: {d.get('blueprint')} · MODE: {d.get('mode')}\nWHAT: {fs_.get('what', '')}\nBEST SENTENCE: {fs_.get('best_sentence', '')}\nHERO: {json.dumps({k: d['hero'].get(k) for k in ('h1', 'lede', 'media')}, ensure_ascii=False)}\nBEATS: {json.dumps(beats, ensure_ascii=False)}\nDISTINCT VISUALS: {distinct} (ids: {[i['id'] for i in imgs][:16]})\nCRITIC NOTES: {notes or 'none'}\nCall set_concept."}]
+    content = [{"type": "text", "text": f"LANGUAGE OF THE SITE (write the idea in it): {fs_.get('language') or d.get('lang') or 'en'}\nKIND: {d.get('kind')} · BLUEPRINT: {d.get('blueprint')} · MODE: {d.get('mode')}\nWHAT: {fs_.get('what', '')}\nBEST SENTENCE: {fs_.get('best_sentence', '')}\nHERO: {json.dumps({k: d['hero'].get(k) for k in ('h1', 'lede', 'media')}, ensure_ascii=False)}\nBEATS: {json.dumps(beats, ensure_ascii=False)}\nDISTINCT VISUALS: {distinct} (ids: {[i['id'] for i in imgs][:16]})\nCRITIC NOTES: {notes or 'none'}\nCall set_concept."}]
     r = ask(CONCEPT_SYSTEM, content, CONCEPT_TOOL)
     return apply_concept(slug_dir, r) if r else 0
 
@@ -87,8 +87,9 @@ def apply_concept(slug_dir, r):
             if pinned: mv = 'cards'
             pinned += 1
         if mv == 'type-wall':
-            if wall: mv = 'cards'
-            wall += 1
+            txt = b.get('body') if b['type'] == 'quote' else (b.get('lede') or '')
+            if wall or b['type'] in ('photo', 'form', 'ledger') or words(txt) < 8: mv = 'auto'
+            else: wall += 1
         b.setdefault('ui', {})['move'] = mv; n += 1
     d.setdefault('swarm', {})['rhythm'] = (r.get('rhythm') or '')[:200]
     W(slug_dir, 'direction.json', d); return n
