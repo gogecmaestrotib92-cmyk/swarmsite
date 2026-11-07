@@ -157,7 +157,10 @@ async function loop() {
       if (job) {
         const { data: claimed } = await sb.from('jobs').update({ status: 'running' }).eq('id', job.id).eq('status', 'queued').select('*').maybeSingle();
         if (claimed) { console.log('job', job.id, job.url); try { await process_(claimed); console.log('done', job.id); } catch (e) { console.error('failed', job.id, e.message); await sb.from('jobs').update({ status: 'failed', error: e.message.slice(0, 2000) }).eq('id', job.id); try { await uploadArtefacts(claimed, path.join(OUT, slugOf(claimed.url))); } catch {} } }
-      } else await new Promise(r => setTimeout(r, 2500));
+      } else {
+        // idle: a job still "running" after 20 min belongs to a worker that no longer exists (deploy overlap) — say so instead of showing a spinner forever
+        try { const cutoff = new Date(Date.now() - 20 * 60e3).toISOString(); const { data: dead } = await sb.from('jobs').select('id').eq('status', 'running').lt('created_at', cutoff); for (const j of dead || []) { await sb.from('jobs').update({ status: 'failed', error: 'This run was lost when the worker restarted. Run it again.' }).eq('id', j.id); console.warn('dead job marked failed', j.id); } } catch (e) { console.warn('dead check', e.message); }
+        await new Promise(r => setTimeout(r, 2500)); }
     } catch (e) { console.error('loop', e.message); await new Promise(r => setTimeout(r, 5000)); }
   }
 }
