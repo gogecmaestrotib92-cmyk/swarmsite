@@ -182,7 +182,7 @@ def build(slug_dir, bp_id, out_path=None):
         never an unrelated screenshot; when short, the product image itself returns zoomed to a different region per frame."""
         out_ = []
         if bt.get('image') and images.get(bt['image']) and not is_used(bt['image']): out_.append((img(bt['image']), ZOOMS[0]))
-        pool = [i for i in images.values() if i.get('data') and not is_used(i.get('id')) and (not strict or i.get('detail') or i.get('gen'))]
+        pool = [i for i in images.values() if i.get('data') and not is_used(i.get('id')) and i.get('w', 0) >= (760 if strict else 600) and (not strict or i.get('detail') or i.get('gen'))]
         pool.sort(key=lambda i: (not i.get('detail'), not i.get('gen'), -(i.get('w', 0) * i.get('h', 0))))
         for it in pool:
             if len(out_) >= n: break
@@ -233,6 +233,7 @@ def build(slug_dir, bp_id, out_path=None):
         items = beat_items(bt)[:4]
         vis = pick_visuals(bt, 1); src = vis[0][0] if vis else ''
         if not src: return cards(sec, bt)
+        if bt.get('image') and images.get(bt['image']) and images[bt['image']].get('w', 0) < 640 and vis[0][0] == images[bt['image']].get('data'): return cards(sec, bt)  # a small crop would pixelate at half width
         lst = ''.join(f'<li><b>{e(t)}</b><span>{e(b_)}</span></li>' for t, b_ in items)
         txt = f'<div class="st-t">{lab(bt.get("label"))}<h2 class="h2" style="{re.sub(r"max-width:[^;]+;?", "", head_style(sec, bt=bt))}">{e(bt.get("h2") or "")}</h2>{("<p class=\"lede\">" + e(bt.get("lede")) + "</p>") if bt.get("lede") else ""}<ul class="st-l">{lst}</ul></div>'
         fig = f'<figure class="st-v"><img src="{src}" alt=""></figure>'
@@ -312,7 +313,7 @@ def build(slug_dir, bp_id, out_path=None):
         elif bt['type'] == 'facts': items = [(f[0], f[1], None) for f in bt.get('facts', [])]
         elif bt['type'] == 'faq': items = [(q, a, None) for q, a in bt.get('items', [])]
         elif bt['type'] == 'ledger': return ledger(sec, bt)
-        avail = [i for i in images.values() if i.get('data') and not is_used(i.get('id'))]
+        avail = [i for i in images.values() if i.get('data') and not is_used(i.get('id')) and i.get('w', 0) >= 600 and (not i.get('shot') or i.get('detail') or i.get('gen'))]
         with_img = bool(ms) and bt['type'] in ('features', 'steps') and len(avail) >= min(len(items), 3) and not lead
         cells = ''
         for i, (t, body_, num) in enumerate(items[:8]):
