@@ -57,7 +57,8 @@
     }
     render(gx, gy) {
       if (this.shape === 'firefly') { this.el.style.transform = `translate(${this.x}px,${this.y}px)`; this.hist.unshift([this.x, this.y]); if (this.hist.length > 80) this.hist.pop();
-        const on = this.el.classList.contains('on'); this.dots.forEach((d, i) => { const h = this.hist[(i + 1) * 5]; if (!h) { d.style.opacity = 0; return; } d.style.transform = `translate(${h[0]}px,${h[1]}px) scale(${1 - i * .06})`; d.style.opacity = (on ? .75 : .4) * (1 - i / 14); }); return; }
+        const on = this.el.classList.contains('on'); const h1 = this.hist[6]; const sp = h1 ? Math.hypot(this.x - h1[0], this.y - h1[1]) : 0; const vis = Math.min(1, sp / 28);
+        this.dots.forEach((d, i) => { const h = this.hist[(i + 1) * 5]; if (!h || !vis) { d.style.opacity = 0; return; } d.style.transform = `translate(${h[0]}px,${h[1]}px) scale(${1 - i * .06})`; d.style.opacity = vis * (on ? .75 : .45) * (1 - i / 14); }); return; }
       this.el.style.transform = `translate(${this.x}px,${this.y}px) rotate(${this.ang}deg)`; if (gx !== undefined) this.ghost.style.transform = `translate(${gx}px,${gy}px) rotate(${this.ang}deg)`; }
     say(t) { this.el.querySelector('.tag s').textContent = t || ''; this.el.classList.toggle('on', !!t); }
     moveTo(x, y, opts = {}) {

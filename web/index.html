@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Shrikhand&display=swap" rel="stylesheet">
 <title>Swarmsite — paste your site's URL, get it rebuilt like an award-winning studio would</title>
 <meta name="description" content="Paste the URL of your existing website. In minutes you get the same site rebuilt at studio level: real photos, real copy, premium typography and motion. Then a kit to paste into Claude, or a published site.">
 <link rel="canonical" href="https://swarmsite.si/"><meta property="og:url" content="https://swarmsite.si/"><meta property="og:type" content="website"><meta property="og:image" content="https://swarmsite.si/after-960.webp"><meta property="og:title" content="Swarmsite — your website, rebuilt at studio level"><meta property="og:description" content="Paste a URL. Watch the swarm rebuild it. Keep it.">
@@ -34,11 +34,9 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}
 .nav .wrap{display:flex;justify-content:space-between;align-items:center}
 .nav .grp{pointer-events:auto;display:flex;gap:6px;align-items:center;background:rgba(255,255,255,.8);backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:999px;padding:6px}
 .nav .grp a{padding:8px 14px;border-radius:999px;font-size:14px;font-weight:500}.nav .grp a:hover{background:rgba(17,17,17,.06)}
-.nav .brand{display:inline-flex;align-items:baseline;gap:0;padding:6px 12px 6px 14px;line-height:1}
-.nav .brand .w{font-family:'Instrument Serif',Georgia,serif;font-style:italic;font-weight:400;font-size:24px;letter-spacing:-.015em;color:var(--ink)}
-.nav .brand .s{font-family:var(--sans);font-weight:500;font-size:17px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);margin-left:2px;transform:translateY(-1px)}
-.nav .brand .dot{width:6px;height:6px;border-radius:50%;background:#7C3AED;margin-left:7px;transform:translateY(-6px);box-shadow:0 0 0 2px rgba(124,58,237,.18),0 0 10px 2px rgba(124,58,237,.55);animation:brandglow 2.6s ease-in-out infinite}
-@keyframes brandglow{50%{transform:translateY(-6px) scale(1.25);box-shadow:0 0 0 3px rgba(124,58,237,.22),0 0 16px 4px rgba(124,58,237,.6)}}
+.nav .brand{display:inline-flex;align-items:center;padding:2px 12px 4px 14px;line-height:1;font-family:'Shrikhand',Georgia,serif;font-weight:400;font-size:26px;letter-spacing:-.01em;color:var(--ink);transform:rotate(-1.5deg);transform-origin:left center}
+.nav .brand .dot{width:7px;height:7px;border-radius:50%;background:var(--ink);margin-left:6px;transform:translateY(-9px)}
+@media(max-width:700px){.nav .brand{font-size:22px}}
 .nav .grp a.pill.ink:hover{background:#2b2b2b;color:#fff;border-color:#2b2b2b}
 /* hero */
 .hero{min-height:100svh;display:grid;align-content:center;padding:140px 0 60px;text-align:center}
@@ -93,7 +91,7 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}
 </style>
 </head>
 <body>
-<nav class="nav"><div class="wrap"><div class="grp"><a class="brand" href="#" aria-label="Swarmsite"><span class="w">swarm</span><span class="s">site</span><i class="dot" aria-hidden="true"></i></a><span class="links"><a href="#how">How it works</a><a href="#proof">Before / after</a><a href="#paths">Pricing</a></span></div><div class="grp"><a href="#faq">FAQ</a><a class="pill ink" href="#top" style="padding:8px 16px">Try it free</a></div></div></nav>
+<nav class="nav"><div class="wrap"><div class="grp"><a class="brand" href="#" aria-label="Swarmsite">swarmsite<i class="dot" aria-hidden="true"></i></a><span class="links"><a href="#how">How it works</a><a href="#proof">Before / after</a><a href="#paths">Pricing</a></span></div><div class="grp"><a href="#faq">FAQ</a><a class="pill ink" href="#top" style="padding:8px 16px">Try it free</a></div></div></nav>
 
 <section class="hero" id="top" data-move="hero-intro" data-agent="Hero">
   <div class="wrap">
@@ -164,8 +162,8 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}
 function go(e){e.preventDefault();const v=document.getElementById('url').value.trim();if(!v)return;location.href='/app?url='+encodeURIComponent(v.replace(/^https?:\/\//,''));}
 addEventListener('DOMContentLoaded',()=>{if(window.Moves)Moves.init();else addEventListener('load',()=>Moves.init());});
 </script>
-<script src="/js/swarm2.js?v=ff4" defer></script>
-<script src="/js/swarm.js?v=ff4" defer></script>
+<script src="/js/swarm2.js?v=ff5" defer></script>
+<script src="/js/swarm.js?v=ff5" defer></script>
 <script>addEventListener('load',()=>{ try{ if(!window.Swarm||matchMedia('(prefers-reduced-motion:reduce)').matches||location.hash==='#noswarm') return;
   const mobile=innerWidth<900; new Swarm({agents:mobile?8:18,speed:1,hud:true,skin:'firefly',sectionSelector:'[data-agent]',boxSel:'.pill,.urlbox,.step,.ba .row>div,.path,.faq details,.nav .wrap'}).run(); }catch(e){} });</script>
 <script>addEventListener('load',()=>{ if(!window.Swarm2) return; const bf=document.getElementById('bf'); if(!bf) return; let sw=null;
