@@ -16,6 +16,11 @@
   .s2-cur.on .tag{opacity:1;transform:none}.s2-cur .tag i{width:7px;height:7px;border-radius:50%;display:block}.s2-cur .tag b{font:500 10px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;color:#111}
   .s2-cur .tag s{text-decoration:none;font:400 10.5px/1 Inter,system-ui,sans-serif;color:#555;max-width:220px;overflow:hidden;text-overflow:ellipsis}
   .s2-ghost{position:absolute;left:0;top:0;pointer-events:none;z-index:6;opacity:.22;will-change:transform}
+  .s2-cur.fly svg{display:none}.s2-cur.fly .orb{position:absolute;left:-7px;top:-7px;width:14px;height:14px;border-radius:50%;background:var(--c);box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 28%,transparent),0 0 18px 4px color-mix(in srgb,var(--c) 55%,transparent),0 0 44px 10px color-mix(in srgb,var(--c) 25%,transparent)}
+  .s2-cur.fly .orb::after{content:"";position:absolute;left:4px;top:3px;width:4px;height:4px;border-radius:50%;background:#fff;opacity:.9}
+  .s2-cur.fly.on .orb{animation:s2pulse 1.1s ease-in-out infinite}@keyframes s2pulse{50%{transform:scale(1.25)}}
+  .s2-cur.fly .tag{left:12px;top:10px}
+  .s2-trail{position:absolute;left:0;top:0;pointer-events:none;z-index:6}.s2-trail i{position:absolute;left:-4px;top:-4px;width:8px;height:8px;border-radius:50%;background:var(--c);opacity:0;filter:blur(.5px)}
   .s2-spot{position:absolute;pointer-events:none;z-index:3;border-radius:10px;box-shadow:0 0 0 9999px rgba(10,10,10,.10);opacity:0;transition:left .9s cubic-bezier(.2,.8,.2,1),top .9s cubic-bezier(.2,.8,.2,1),width .9s cubic-bezier(.2,.8,.2,1),height .9s cubic-bezier(.2,.8,.2,1),opacity .5s}
   .s2-spot.on{opacity:1}
   .s2-x{position:absolute;pointer-events:none;z-index:5;transition:opacity .4s}
@@ -42,14 +47,18 @@
   let cssDone = false;
 
   class Cursor {
-    constructor(frame, role, color) {
-      this.frame = frame; this.role = role; this.color = color; this.x = rnd(.15, .85) * frame.clientWidth; this.y = -40; this.vx = 0; this.vy = 0; this.ang = 0;
-      this.el = document.createElement('div'); this.el.className = 's2-cur';
-      this.el.innerHTML = `<svg width="18" height="22" viewBox="0 0 18 22"><path d="M1.5 1.5 L1.5 17 L5.6 13.2 L8.4 20 L11.4 18.7 L8.6 12 L14.5 12 Z" fill="#0b0b0b" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg><div class="tag"><i style="background:${color}"></i><b>${role}</b><s></s></div>`;
-      this.ghost = document.createElement('div'); this.ghost.className = 's2-ghost'; this.ghost.innerHTML = this.el.querySelector('svg').outerHTML;
+    constructor(frame, role, color, shape) {
+      this.frame = frame; this.role = role; this.color = color; this.shape = shape || 'arrow'; this.x = rnd(.15, .85) * frame.clientWidth; this.y = -40; this.vx = 0; this.vy = 0; this.ang = 0; this.hist = [];
+      this.el = document.createElement('div'); this.el.className = 's2-cur' + (this.shape === 'firefly' ? ' fly' : ''); this.el.style.setProperty('--c', color);
+      this.el.innerHTML = `<svg width="18" height="22" viewBox="0 0 18 22"><path d="M1.5 1.5 L1.5 17 L5.6 13.2 L8.4 20 L11.4 18.7 L8.6 12 L14.5 12 Z" fill="#0b0b0b" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg><div class="orb"></div><div class="tag"><i style="background:${color}"></i><b>${role}</b><s></s></div>`;
+      if (this.shape === 'firefly') { this.ghost = document.createElement('div'); this.ghost.className = 's2-trail'; this.ghost.style.setProperty('--c', color); this.ghost.innerHTML = '<i></i>'.repeat(7); this.dots = [...this.ghost.children]; }
+      else { this.ghost = document.createElement('div'); this.ghost.className = 's2-ghost'; this.ghost.innerHTML = this.el.querySelector('svg').outerHTML; }
       frame.appendChild(this.ghost); frame.appendChild(this.el); this.render(); requestAnimationFrame(() => this.el.classList.add('in'));
     }
-    render(gx, gy) { this.el.style.transform = `translate(${this.x}px,${this.y}px) rotate(${this.ang}deg)`; if (gx !== undefined) this.ghost.style.transform = `translate(${gx}px,${gy}px) rotate(${this.ang}deg)`; }
+    render(gx, gy) {
+      if (this.shape === 'firefly') { this.el.style.transform = `translate(${this.x}px,${this.y}px)`; this.hist.unshift([this.x, this.y]); if (this.hist.length > 28) this.hist.pop();
+        this.dots.forEach((d, i) => { const h = this.hist[(i + 1) * 4]; if (!h) { d.style.opacity = 0; return; } const sp = Math.hypot(this.x - h[0], this.y - h[1]); d.style.transform = `translate(${h[0]}px,${h[1]}px) scale(${1 - i * .11})`; d.style.opacity = Math.min(.55, sp / 60) * (1 - i / 7); }); return; }
+      this.el.style.transform = `translate(${this.x}px,${this.y}px) rotate(${this.ang}deg)`; if (gx !== undefined) this.ghost.style.transform = `translate(${gx}px,${gy}px) rotate(${this.ang}deg)`; }
     say(t) { this.el.querySelector('.tag s').textContent = t || ''; this.el.classList.toggle('on', !!t); }
     moveTo(x, y, opts = {}) {
       const sx = this.x, sy = this.y, dx = x - sx, dy = y - sy, dist = Math.hypot(dx, dy); const dur = opts.dur || Math.min(1300, 260 + dist * .85);
@@ -68,14 +77,14 @@
       if (getComputedStyle(frame).position === 'static') frame.style.position = 'relative';
       this.spot = document.createElement('div'); this.spot.className = 's2-spot'; frame.appendChild(this.spot);
       const n = Math.min(opts.count || 9, ROLES.length);
-      ROLES.slice(0, n).forEach(([role, color], i) => { const c = new Cursor(frame, role, color); this.cursors.push(c); setTimeout(() => this.loop(c), 250 + i * 380); });
+      ROLES.slice(0, n).forEach(([role, color], i) => { const c = new Cursor(frame, role, color, opts.shape); this.cursors.push(c); setTimeout(() => this.loop(c), 250 + i * 380); });
     }
     phase() {}
     setPage(img, pageH) { this.page = img; this.pageH = pageH || img.naturalHeight; this.scale = this.frame.clientWidth / 1440; img.style.transition = 'transform 1.1s cubic-bezier(.2,.8,.2,1)'; }
     toLocal(rect) { const s = this.scale; return { x: rect.x * s, y: rect.y * s - this.pan, w: rect.w * s, h: Math.min(rect.h, 420) * s }; }
     panTo(rect) { if (!this.page) return; const s = this.scale, H = this.frame.clientHeight, maxPan = Math.max(0, this.pageH * s - H); const want = Math.min(maxPan, Math.max(0, rect.y * s - H * .36)); if (Math.abs(want - this.pan) < 40) return; this.pan = want; this.page.style.transform = `translateY(${-this.pan}px)`; this.frame.querySelectorAll('.s2-x').forEach(e => e.remove()); }
     push(evs) { for (const e of evs) this.queue.push(e); }
-    stop() { this.alive = false; this.cursors.forEach(c => c.el.classList.remove('in')); this.spot.classList.remove('on'); setTimeout(() => this.frame.querySelectorAll('.s2-cur,.s2-ghost,.s2-x,.s2-spot').forEach(e => e.remove()), 700); }
+    stop() { this.alive = false; this.cursors.forEach(c => c.el.classList.remove('in')); this.spot.classList.remove('on'); setTimeout(() => this.frame.querySelectorAll('.s2-cur,.s2-ghost,.s2-trail,.s2-x,.s2-spot').forEach(e => e.remove()), 700); }
     park(c) { const i = this.cursors.indexOf(c); return { x: 24 + i * 34 + rnd(-3, 3), y: this.frame.clientHeight - 30 + rnd(-3, 3) }; }
     spotlight(r) { if (!r) { this.spot.classList.remove('on'); return; } Object.assign(this.spot.style, { left: (r.x - 14) + 'px', top: (r.y - 14) + 'px', width: (r.w + 28) + 'px', height: (r.h + 28) + 'px' }); this.spot.classList.add('on'); }
     mk(cls, r, html) { const d = document.createElement('div'); d.className = 's2-x ' + cls; if (r) Object.assign(d.style, { left: r.x + 'px', top: r.y + 'px', width: r.w + 'px', height: r.h + 'px' }); if (html) d.innerHTML = html; this.frame.appendChild(d); return d; }

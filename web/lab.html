@@ -13,6 +13,7 @@
 .log div b{color:#ddd;font-weight:500;display:inline-block;width:80px}
 </style></head><body>
 <div class="top"><b>Swarmsite lab · swarm v2 (premium cursors)</b>
+<div class="seg" id="shape"><button data-sh="arrow">Cursor</button><button data-sh="firefly" class="on">Firefly</button></div>
 <div class="seg" id="spd"><button data-s="1" class="on">1×</button><button data-s="2">2×</button></div>
 <label><input type="checkbox" id="replay" checked> replay the real Bálamo job</label>
 <label><input type="checkbox" id="only"> only real events (no idle drift)</label></div>
@@ -27,7 +28,9 @@ let speed = 1; document.getElementById('spd').onclick = e => { const b = e.targe
   const j = await (await fetch(JOB)).json(); const ev = (j.result && j.result.events) || [];
   shot.src = (j.result && (j.result.beforeFullUrl || j.result.beforeUrl)) || '';
   await new Promise(r => { shot.onload = r; });
-  const sw = Swarm2.mount(stage, { count: 9 }); sw.setPage(shot, shot.naturalHeight);
+  const q = new URLSearchParams(location.search); let shape = q.get('shape') || 'firefly'; [...document.querySelectorAll('#shape button')].forEach(b => b.classList.toggle('on', b.dataset.sh === shape));
+  let sw = Swarm2.mount(stage, { count: 9, shape }); sw.setPage(shot, shot.naturalHeight);
+  document.getElementById('shape').onclick = e => { const b = e.target.closest('button'); if (!b) return; location.search = '?shape=' + b.dataset.sh; };
   const seq = ev.filter(e => e.rect && e.rect.w > 20 || /Reader|Concept|Copy|Critic|Contract|UX|UI|Visual/.test(e.role));
   let i = 0; const next = () => { if (!document.getElementById('replay').checked) return setTimeout(next, 800); const e = seq[i % seq.length]; i++; sw.push([e]);
     const d = document.createElement('div'); d.innerHTML = `<b>${e.role}</b>${e.text}`; log.prepend(d); while (log.children.length > 14) log.lastChild.remove(); setTimeout(next, (e.rect ? 3200 : 1600) / speed); }; next();
