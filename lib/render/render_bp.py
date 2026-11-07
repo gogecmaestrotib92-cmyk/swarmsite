@@ -286,10 +286,10 @@ def build(slug_dir, bp_id, out_path=None):
     def lead_fig(ui_, bt):
         src = ''; it = None
         if ui_.get('lead') and images.get(ui_['lead']):
-            if is_used(ui_['lead']): return ''
+            if is_used(ui_['lead']) or images[ui_['lead']].get('w', 0) < 900: return ''  # a lead is a full-width frame: never from a small source
             it = images[ui_['lead']]; src = img(ui_['lead'])
         elif ui_.get('lead') == '': return ''
-        elif bt.get('image') and images.get(bt['image']) and not is_used(bt['image']): it = images[bt['image']]; src = img(bt['image'])
+        elif bt.get('image') and images.get(bt['image']) and not is_used(bt['image']) and images[bt['image']].get('w', 0) >= 900: it = images[bt['image']]; src = img(bt['image'])
         elif bt['type'] == 'facts':
             pool = [i for i in images.values() if i.get('data') and not i.get('shot') and not is_used(i.get('id')) and free_for(i, bt) and i.get('w', 0) >= 600]
             if pool: it = pool[0]; src = img(it['id'])

@@ -28,6 +28,7 @@ app.post('/jobs', async (req, res) => {
   if (error) return res.status(500).json({ error: error.message });
   res.json({ id: data.id });
 });
+app.get('/jobs', async (req, res) => { const st = req.query.status || 'running'; const { data } = await sb.from('jobs').select('id,url,status,step,created_at').eq('status', st).order('created_at', { ascending: false }).limit(20); res.json(data || []); });
 app.get('/jobs/:id', async (req, res) => {
   const { data, error } = await sb.from('jobs').select('id,url,status,step,steps,result,error,created_at').eq('id', req.params.id).single();
   if (error) return res.status(404).json({ error: 'not found' }); res.json(data);
@@ -147,6 +148,8 @@ async function process_(job) {
   await sb.from('jobs').update({ status: 'done', step: 'done', result, slug }).eq('id', job.id); await uploadArtefacts(job, dir);
 }
 async function loop() {
+  // a deploy restarts this worker: jobs it was running are orphaned. Say so instead of spinning forever.
+  try { const { data: stale } = await sb.from('jobs').select('id').eq('status', 'running'); for (const j of stale || []) { await sb.from('jobs').update({ status: 'failed', error: 'The worker restarted (a deploy) while this job was running. Run it again.' }).eq('id', j.id); console.warn('orphaned job marked failed', j.id); } } catch (e) { console.warn('stale check', e.message); }
   while (true) {
     try {
       const { data: job } = await sb.from('jobs').select('*').eq('status', 'queued').order('created_at').limit(1).maybeSingle();

@@ -14,6 +14,9 @@ Use high effort for anything in `lib/render`, `lib/swarm`, `lib/qa`, `server/`. 
 ## What the loop is (see LOOPS.md)
 Deterministic renderer + blueprints = the engine. Agents only write `direction.json`. The critic grades taste; the contract grades promises. Neither is allowed to edit the page directly.
 
+## Deploys kill runs
+Railway restarts the worker on every push; a job that was running is lost (the worker now marks it failed on boot). Before `git push`, check nothing is running: `GET https://swarmsite-production.up.railway.app/jobs?status=running` — or accept that you are killing it and say so.
+
 ## Never
 - Never paste secrets into code, logs or chat. Keys live in Railway variables; the owner sets them.
 - Never add a model call inside the renderer.
