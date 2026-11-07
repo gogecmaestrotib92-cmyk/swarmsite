@@ -219,7 +219,9 @@ def build(slug_dir, bp_id, out_path=None):
         words_ = [f'{t}' if not b_ or bt['type'] in ('features', 'faq') else f'{t} — {b_}' for t, b_ in items][:10] or [bt.get('h2') or b['name']]
         track = ''.join(f'<span class="mq-i">{e(w)}<i>✦</i></span>' for w in words_)
         head = ghead(sec, bt) if bt.get('h2') else ''
-        return f'<section class="sec marquee band-{band_of(sec, bt)}" id="{e(bt["id"])}" data-sig="marquee">{("<div class=\"wrap\">" + head + "</div>") if head else ""}<div class="mq"><div class="mq-track">{track}{track}</div></div></section>'
+        own = bt.get('image') if bt.get('image') and images.get(bt['image']) and not is_used(bt['image']) and images[bt['image']].get('w', 0) >= 900 else None
+        lead = f'<figure class="lead" style="aspect-ratio:{max(1.3, min(2.4, images[own]["w"] / max(1, images[own]["h"])))}"><img src="{img(own)}" alt=""></figure>' if own else ''
+        return f'<section class="sec marquee band-{band_of(sec, bt)}" id="{e(bt["id"])}" data-sig="marquee">{("<div class=\"wrap\">" + head + lead + "</div>") if (head or lead) else ""}<div class="mq"><div class="mq-track">{track}{track}</div></div></section>'
 
     def pinned_sequence(sec, bt):
         """SIGNATURE: the section pins; each step takes over the screen as you scroll (number, sentence, visual)."""
@@ -241,9 +243,13 @@ def build(slug_dir, bp_id, out_path=None):
         """Text beside a visual, alternating sides; the visual reveals with a clip."""
         if bt['type'] == 'quote': bt = {**bt, 'h2': bt.get('big') or '', 'lede': bt.get('body') or '', 'label': bt.get('label') or bt.get('who') or ''}
         items = beat_items(bt)[:4]
-        vis = pick_visuals(bt, 1); src = vis[0][0] if vis else ''
+        own = bt.get('image') if bt.get('image') and images.get(bt['image']) and not is_used(bt['image']) and images[bt['image']].get('w', 0) >= 640 else None
+        if own: src = img(own)
+        else:
+            pool = [i for i in images.values() if i.get('data') and not is_used(i.get('id')) and free_for(i, bt) and i.get('w', 0) >= 640 and (i.get('gen') or not i.get('shot'))]
+            if bt['type'] in ('facts', 'quote') and not pool: return cards(sec, bt)
+            src = img(pool[0]['id']) if pool else ''
         if not src: return cards(sec, bt)
-        if bt.get('image') and images.get(bt['image']) and images[bt['image']].get('w', 0) < 640 and vis[0][0] == images[bt['image']].get('data'): return cards(sec, bt)  # a small crop would pixelate at half width
         lst = ''.join(f'<li><b>{e(t)}</b><span>{e(b_)}</span></li>' for t, b_ in items)
         txt = f'<div class="st-t">{lab(bt.get("label"))}<h2 class="h2" style="{re.sub(r"max-width:[^;]+;?", "", head_style(sec, bt=bt))}">{e(bt.get("h2") or "")}</h2>{("<p class=\"lede\">" + e(bt.get("lede")) + "</p>") if bt.get("lede") else ""}<ul class="st-l">{lst}</ul></div>'
         fig = f'<figure class="st-v"><img src="{src}" alt=""></figure>'
@@ -268,7 +274,7 @@ def build(slug_dir, bp_id, out_path=None):
             return f'<section class="sec photos band-{sec.get("band") or "paper"}" id="{e(bt["id"]) if bt else ""}"><div class="wrap pair">{tiles}</div>{"<div class=\"wrap\">" + cap + "</div>" if cap else ""}</section>'
         m = ms[0]; bleed = m.get('bleed') or m.get('wf', 1) > .95
         want = bt.get('image') if bt else None
-        if want and images.get(want) and images[want].get('w', 0) < 900 and bleed: want = None  # a small crop must not become a full-bleed banner
+        if want and images.get(want) and images[want].get('w', 0) < 900: want = None  # a photo screen is wrap-wide or wider: never from a small source
         big_pool = [i for i in images.values() if i.get('data') and i.get('w', 0) >= 900 and not is_used(i.get('id'))]
         if not want and not big_pool: bleed = False
         src = img(want, want_shot=(True if (soft and not bleed) else None)) if (want or big_pool) else img(want_shot=None)
