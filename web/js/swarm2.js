@@ -51,13 +51,13 @@
       this.frame = frame; this.role = role; this.color = color; this.shape = shape || 'arrow'; this.x = rnd(.15, .85) * frame.clientWidth; this.y = -40; this.vx = 0; this.vy = 0; this.ang = 0; this.hist = [];
       this.el = document.createElement('div'); this.el.className = 's2-cur' + (this.shape === 'firefly' ? ' fly' : ''); this.el.style.setProperty('--c', color);
       this.el.innerHTML = `<svg width="18" height="22" viewBox="0 0 18 22"><path d="M1.5 1.5 L1.5 17 L5.6 13.2 L8.4 20 L11.4 18.7 L8.6 12 L14.5 12 Z" fill="#0b0b0b" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg><div class="orb"></div><div class="tag"><i style="background:${color}"></i><b>${role}</b><s></s></div>`;
-      if (this.shape === 'firefly') { this.ghost = document.createElement('div'); this.ghost.className = 's2-trail'; this.ghost.style.setProperty('--c', color); this.ghost.innerHTML = '<i></i>'.repeat(7); this.dots = [...this.ghost.children]; }
+      if (this.shape === 'firefly') { this.ghost = document.createElement('div'); this.ghost.className = 's2-trail'; this.ghost.style.setProperty('--c', color); this.ghost.innerHTML = '<i></i>'.repeat(14); this.dots = [...this.ghost.children]; }
       else { this.ghost = document.createElement('div'); this.ghost.className = 's2-ghost'; this.ghost.innerHTML = this.el.querySelector('svg').outerHTML; }
       frame.appendChild(this.ghost); frame.appendChild(this.el); this.render(); requestAnimationFrame(() => this.el.classList.add('in'));
     }
     render(gx, gy) {
-      if (this.shape === 'firefly') { this.el.style.transform = `translate(${this.x}px,${this.y}px)`; this.hist.unshift([this.x, this.y]); if (this.hist.length > 28) this.hist.pop();
-        this.dots.forEach((d, i) => { const h = this.hist[(i + 1) * 4]; if (!h) { d.style.opacity = 0; return; } const sp = Math.hypot(this.x - h[0], this.y - h[1]); d.style.transform = `translate(${h[0]}px,${h[1]}px) scale(${1 - i * .11})`; d.style.opacity = Math.min(.55, sp / 60) * (1 - i / 7); }); return; }
+      if (this.shape === 'firefly') { this.el.style.transform = `translate(${this.x}px,${this.y}px)`; this.hist.unshift([this.x, this.y]); if (this.hist.length > 80) this.hist.pop();
+        const on = this.el.classList.contains('on'); this.dots.forEach((d, i) => { const h = this.hist[(i + 1) * 5]; if (!h) { d.style.opacity = 0; return; } d.style.transform = `translate(${h[0]}px,${h[1]}px) scale(${1 - i * .06})`; d.style.opacity = (on ? .75 : .4) * (1 - i / 14); }); return; }
       this.el.style.transform = `translate(${this.x}px,${this.y}px) rotate(${this.ang}deg)`; if (gx !== undefined) this.ghost.style.transform = `translate(${gx}px,${gy}px) rotate(${this.ang}deg)`; }
     say(t) { this.el.querySelector('.tag s').textContent = t || ''; this.el.classList.toggle('on', !!t); }
     moveTo(x, y, opts = {}) {
@@ -139,7 +139,7 @@
     async gSticky(c, r, text) { const s = this.mk('s2-sticky', { x: Math.min(this.frame.clientWidth - 210, r.x + 20), y: r.y + 16, w: 190, h: 0 }); s.style.height = 'auto'; s.textContent = text; await c.moveTo(r.x + 40, r.y + 30, { dur: 500 }); s.classList.add('on'); this.fade(s, 2600); }
     async gWipe(c, r, text) { const w = this.mk('s2-wipe', { x: 0, y: r.y, w: this.frame.clientWidth, h: 0 }); w.style.transition = 'height .9s cubic-bezier(.2,.8,.2,1),opacity .5s'; requestAnimationFrame(() => w.style.height = r.h + 'px'); await c.moveTo(r.x + r.w * .5, r.y + r.h, { dur: 900 }); this.fade(w, 500); }
     /* landing demo (no real events): a few quiet, plausible gestures on the frame's own blocks */
-    async demo(c) { const blocks = [...this.frame.querySelectorAll('[data-agent]')]; if (!blocks.length) return; const el = blocks[Math.floor(rnd(0, blocks.length))]; const fr = this.frame.getBoundingClientRect(), b = el.getBoundingClientRect(); const r = { x: b.left - fr.left, y: b.top - fr.top, w: b.width, h: Math.min(b.height, 240) };
+    async demo(c) { let blocks = [...this.frame.querySelectorAll('[data-agent]')]; if (!blocks.length) blocks = [...this.frame.querySelectorAll('.row > div, figure, img, h1, h2, h3, p')].filter(b => b.getBoundingClientRect().width > 120); if (!blocks.length) return; const el = blocks[Math.floor(rnd(0, blocks.length))]; const fr = this.frame.getBoundingClientRect(), b = el.getBoundingClientRect(); const r = { x: b.left - fr.left, y: b.top - fr.top, w: b.width, h: Math.min(b.height, 240) };
       const role = ALIAS[c.role] || c.role; const say = { Reader: 'reading', Copy: 'h1 · 6 words', Visual: 'hero · 1440px', UX: 'one action', UI: '3 columns', Critic: 'empty screen', Contract: 'promise kept', Concept: 'one idea', Render: 'rendering' }[role] || 'working';
       await c.moveTo(r.x + 20, r.y + 16); c.say(say); const G = { Reader: this.gRead, Copy: this.gCopy, Visual: this.gCrop, UX: this.gDrag, UI: this.gGuides, Critic: this.gInk, Contract: this.gStamp, Concept: this.gSticky, Render: this.gWipe };
       await (G[role] || this.gRead).call(this, c, r, say); await sleep(600); c.say(''); }
