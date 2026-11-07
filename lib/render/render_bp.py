@@ -318,7 +318,7 @@ def build(slug_dir, bp_id, out_path=None):
         pri = [x for x in its if re.search(r'\d', str(x[1]))]; rest = [x for x in its if x not in pri]
         its = (pri + rest)[:5]
         rows = ''.join(f'<li{" class=\"big\"" if i == 0 and re.search(r"\d", str(p)) else ""}><span>{e(a)}</span><i></i><b>{e(p)}</b></li>' for i, (a, p) in enumerate(its))
-        return f'<section class="sec ledger band-{band_of(sec, bt)}" id="{e(bt["id"])}"><div class="wrap two"><div>{lab(bt.get("label"))}<h2 class="h2" style="{head_style(sec)}">{e(bt.get("h2"))}</h2><p class="lede">{e(bt.get("lede"))}</p></div><div><ul class="rows">{rows}</ul><div class="ctas">{cta_html()}</div></div></div></section>'
+        return f'<section class="sec ledger band-{band_of(sec, bt)}" id="{e(bt["id"])}"><div class="wrap two"><div>{lab(bt.get("label"))}<h2 class="h2" style="{re.sub(r"text-align:[^;]+;?|margin-(left|right):auto;?|max-width:[^;]+;?", "", head_style(sec, bt=bt))}">{e(bt.get("h2"))}</h2><p class="lede">{e(bt.get("lede"))}</p></div><div><ul class="rows">{rows}</ul><div class="ctas">{cta_html()}</div></div></div></section>'
 
     def two_col(sec, bt):
         if bt['type'] == 'steps': cols_ = [(f'0{i + 1}', s) for i, s in enumerate(bt.get('steps', []))][:3]
@@ -328,8 +328,10 @@ def build(slug_dir, bp_id, out_path=None):
         ui_ = bt.get('ui') or {}; lead = lead_fig(ui_, bt)
         return f'<section class="sec twocol band-{band_of(sec, bt)}{" compact" if (bt.get("ui") or {}).get("compact") else ""}" id="{e(bt["id"])}"><div class="wrap">{ghead(sec, bt) if bt["type"] != "features" else lab(bt.get("label"))}{lead}<div class="cols" style="--n:{len(cols_)}">{inner}</div></div></section>'
 
+    cta_title_used = []
     def cta(sec, bt=None):
         title = (bt or {}).get('h2') or en.get('tag') or h.get('cta') or b['name']
+        cta_title_used.append(title)
         fields = ''.join(f'<label><span>{e(f)}</span><input placeholder="{e(f)}"></label>' for f in (bt or {}).get('fields', [])[:4])
         form = f'<form class="form" onsubmit="return false">{fields}<button class="btn">{e((bt or {}).get("cta") or h.get("cta"))} <span class="ar">→</span></button></form>' if fields else f'<div class="ctas">{cta_html()}</div>'
         alt = ''.join(f'<span class="lab">{e(a)}</span>' for a in (bt or {}).get('alt', []))
@@ -340,7 +342,8 @@ def build(slug_dir, bp_id, out_path=None):
     def footer(sec):
         cols_ = ''.join(f'<div><h5 class="lab">{e(t)}</h5><ul>{"".join("<li>" + e(x) + "</li>" for x in items)}</ul></div>' for t, items in en.get('cols', [])[:4])
         band = sec.get('band') or ('dark' if C.get('bands') and C['bands'][-1] == 'dark' else 'paper')
-        return f'<footer class="sec end band-{band}" id="end"><div class="wrap"><p class="big-p">{e(en.get("tag"))}</p><div class="fcols">{cols_}</div><div class="legal"><span>{e(en.get("legal"))}</span><span>{e(en.get("next"))}</span></div></div></footer>'
+        tag = en.get('tag') if en.get('tag') not in cta_title_used else (h.get('category') or b['name'])
+        return f'<footer class="sec end band-{band}" id="end"><div class="wrap"><p class="big-p">{e(tag)}</p><div class="fcols">{cols_}</div><div class="legal"><span>{e(en.get("legal"))}</span><span>{e(en.get("next"))}</span></div></div></footer>'
 
     # allocate — in the DIRECTION's order (the UX agent owns the order); each beat takes the next blueprint section of its family,
     # so the page keeps the winner's forms and rhythms but tells the client's story in the right sequence
@@ -410,7 +413,7 @@ def build(slug_dir, bp_id, out_path=None):
 --btn-h:{BT.get('h', 48)}px;--btn-r:{BT.get('radius', 999)}px;--btn-px:{BT.get('px', 15)}px;--btn-pad:{BT.get('pad', '0 20px')};--btn-tt:{'uppercase' if BT.get('tt') else 'none'};
 --h1:{clampf(D.get('px', 72))};--h1-lh:{D.get('lh', 1.0)};--h1-ls:{D.get('ls', -0.02)}em;--h1-w:{display_w};--h1-tt:{tt(D)};--h2:{clampf(H2.get('px', 44))};--h2-lh:{H2.get('lh', 1.1)};--h2-ls:{H2.get('ls', -0.02)}em;--h2-w:{H2.get('w', display_w)};
 --h3:{clampf(H3.get('px', 24), .8)};--h3-w:{H3.get('w', 500)};--body-px:{BO.get('px', 17)}px;--body-lh:{BO.get('lh', 1.4)};--body-max:{BO.get('maxw') or 520}px;--lab-px:{LB.get('px', 12)}px;--lab-ls:{LB.get('ls', .08)}em}}
-*{{box-sizing:border-box;margin:0;padding:0}}html{{scroll-behavior:auto}}html,body{{overflow-x:hidden}}
+*{{box-sizing:border-box;margin:0;padding:0}}html{{scroll-behavior:auto}}html,body{{overflow-x:clip}}
 body{{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:var(--body-px);line-height:var(--body-lh);-webkit-font-smoothing:antialiased}}
 img,video{{display:block;max-width:100%}}a{{color:inherit;text-decoration:none}}
 .wrap{{max-width:var(--container);margin:0 auto;padding:0 var(--frame);width:100%}}
