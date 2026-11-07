@@ -288,7 +288,7 @@ def build(slug_dir, bp_id, out_path=None):
     def big_photos(n, bt=None, minw=700):
         out_ = []
         if bt and bt.get('image') and images.get(bt['image']) and not is_used(bt['image']) and images[bt['image']].get('w', 0) >= minw: out_.append(img(bt['image']))
-        pool = sorted([i for i in images.values() if i.get('data') and not is_used(i.get('id')) and free_for(i, bt) and not i.get('shot') and i.get('w', 0) >= minw and .5 <= i.get('w', 1) / max(1, i.get('h', 1)) <= 2.4], key=lambda i: -i.get('w', 0) * i.get('h', 0))
+        pool = sorted([i for i in images.values() if photo_like(i, minw) and free_for(i, bt)], key=lambda i: -i.get('w', 0) * i.get('h', 0))
         for it in pool:
             if len(out_) >= n: break
             out_.append(img(it['id']))
@@ -349,6 +349,7 @@ def build(slug_dir, bp_id, out_path=None):
 
     def statement(sec, item):
         kind, bt = item; text = bt.get('body') if kind == 'quote' else bt.get('lede'); big = bt.get('big') if kind == 'quote' else bt.get('h2')
+        if kind == 'quote' and not big and text and len(str(text).split()) <= 14: big, text = text, ''  # one short line is the statement itself, set big — not a caption in a band
         who = f'<p class="lab who">{e(bt["who"])}</p>' if kind == 'quote' and bt.get('who') else ''
         hd = sec.get('head') or {}; px_ = hd.get('px') or H2['px']
         inner = f'{lab(bt.get("label"))}<h2 class="h2" style="{head_style(sec)}">{e(big)}</h2>' if big and px_ >= 40 else lab(bt.get('label'))
@@ -372,10 +373,13 @@ def build(slug_dir, bp_id, out_path=None):
                 ar = max(.7, min(1.9, it['w'] / max(1, it['h']))); src = img(want)
                 return f'<section class="sec photo inset band-{band_of(sec, bt)}" id="{e(bt["id"])}"><div class="wrap inset-wrap"><figure style="width:min(100%,{it["w"]}px);aspect-ratio:{ar:.3f}"><img src="{src}" alt=""></figure><div class="caps">{lab(bt.get("label"))}<p class="cap">{e(bt.get("lede"))}</p></div></div></section>'
             return ''
-        big_pool = [i for i in images.values() if i.get('data') and i.get('w', 0) >= 900 and not is_used(i.get('id'))]
+        big_pool = [i for i in images.values() if (photo_like(i, 900) if not soft else (i.get('data') and i.get('w', 0) >= 900 and not is_used(i.get('id'))))]
         if not want and not big_pool: bleed = False
         if d.get('kind') == 'software': bleed = False  # a product screenshot bled edge to edge reads as a dark void; software photos sit in a framed, contained figure
-        src = img(want, want_shot=(True if (soft and not bleed) else None)) if (want or big_pool) else img(want_shot=None)
+        if want: src = img(want)
+        elif big_pool:
+            big_pool.sort(key=lambda i: (not i.get('shot') if (soft and not bleed) else bool(i.get('shot')), -(i.get('w', 0) * i.get('h', 0)))); src = img(big_pool[0]['id'])
+        else: return ''  # no picture of the right size: no photo screen (a banner or a thumbnail blown up is worse than nothing)
         if not src: return ''
         head = f'<div class="wrap over"><h2 class="h2 light" style="{head_style(sec)}">{e(bt["h2"])}</h2></div>' if bt and bt.get('h2') and sec.get('head') else ''
         cap = f'<div class="wrap"><div class="caps">{lab(bt.get("label"))}{("<p class=\"cap\">" + e(bt.get("lede")) + "</p>") if bt and bt.get("lede") else ""}</div></div>' if bt else ''
