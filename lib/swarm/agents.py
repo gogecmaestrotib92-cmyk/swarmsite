@@ -48,6 +48,51 @@ def reader(slug_dir):
     if fs_: W(slug_dir, 'factsheet.json', fs_)
     return fs_
 
+# ───────────────────────────── CONCEPT ─────────────────────────────
+MOVES = {
+    'sticky-product': 'text blocks scroll on the left while the product stays pinned on the right and swaps per block — for features/steps/cells with 2–6 items and at least one product visual',
+    'pinned-sequence': 'the section pins and each step takes over the screen (giant number, one sentence, a visual) — for steps with 2–5 items',
+    'type-wall': 'one statement in giant type whose words light up as you scroll — for a quote or a lede worth a whole screen',
+    'marquee': 'a slow ticker of the section\'s own words (titles / figures / prices) — a breath between heavy screens; for cells/facts/features/ledger',
+    'story': 'text beside one visual, sides alternating — for features/facts with a good picture',
+    'cards': 'a plain grid — when nothing above fits',
+}
+CONCEPT_TOOL = {"name": "set_concept", "description": "The one idea of the page and the signature moves that carry it.", "input_schema": {"type": "object", "required": ["idea", "beats"], "properties": {
+    "idea": {"type": "string", "description": "one sentence: the single idea the whole page performs (e.g. 'the page is one court; every section is a play drawn on it')"},
+    "hero_move": {"type": "string", "enum": ["default", "split"], "description": "split = words left, product right full height (software with a product shot)"},
+    "beats": {"type": "array", "items": {"type": "object", "required": ["id", "move"], "properties": {"id": {"type": "string"}, "move": {"type": "string", "enum": ["sticky-product", "pinned-sequence", "type-wall", "marquee", "story", "cards", "auto"]}, "why": {"type": "string"}}}},
+    "rhythm": {"type": "string", "description": "how the page breathes: which screens are loud, which are quiet"}}}}
+CONCEPT_SYSTEM = """You are the creative director choosing the ONE idea of the page and the moves that perform it. You know the signature moves of award-winning sites:
+""" + "\n".join(f"- {k}: {v}" for k, v in MOVES.items()) + """
+Rules: at most ONE pinned move (sticky-product or pinned-sequence) and at most ONE type-wall per page; never two loud moves back to back — put a marquee or a quiet cards grid between them; a move needs the content it asks for (sticky needs ≥2 items and a visual; type-wall needs a sentence worth it). The first beat after the hero should be the strongest proof of the product. Write the idea in the client's language, in one sentence a designer could pin on the wall."""
+
+def concept(slug_dir, notes=''):
+    d = J(slug_dir, 'direction.json'); fs_ = J(slug_dir, 'factsheet.json') or {}
+    imgs = [{k: v for k, v in i.items() if k != 'data'} for i in (J(slug_dir, 'images.json') or [])]
+    distinct = len([i for i in imgs if not i.get('crop_of')])
+    beats = [{'id': b['id'], 'type': b['type'], 'h2': b.get('h2'), 'n_items': len(b.get('features') or b.get('cells') or b.get('steps') or b.get('facts') or b.get('items') or []), 'has_image': bool(b.get('image'))} for b in d['beats']]
+    content = [{"type": "text", "text": f"KIND: {d.get('kind')} · BLUEPRINT: {d.get('blueprint')} · MODE: {d.get('mode')}\nWHAT: {fs_.get('what', '')}\nBEST SENTENCE: {fs_.get('best_sentence', '')}\nHERO: {json.dumps({k: d['hero'].get(k) for k in ('h1', 'lede', 'media')}, ensure_ascii=False)}\nBEATS: {json.dumps(beats, ensure_ascii=False)}\nDISTINCT VISUALS: {distinct} (ids: {[i['id'] for i in imgs][:16]})\nCRITIC NOTES: {notes or 'none'}\nCall set_concept."}]
+    r = ask(CONCEPT_SYSTEM, content, CONCEPT_TOOL)
+    return apply_concept(slug_dir, r) if r else 0
+
+def apply_concept(slug_dir, r):
+    d = J(slug_dir, 'direction.json'); ids = by_id(d); n = 0; pinned = 0; wall = 0
+    if r.get('idea'): d.setdefault('swarm', {})['idea'] = r['idea'][:200]; n += 1
+    if r.get('hero_move') == 'split' and d['hero'].get('media'): d['hero'].setdefault('ui', {})['move'] = 'split'; n += 1
+    elif r.get('hero_move') == 'default': d['hero'].setdefault('ui', {}).pop('move', None)
+    for u in r.get('beats', []):
+        b = ids.get(u.get('id')); mv = u.get('move')
+        if not b or mv not in MOVES and mv != 'auto': continue
+        if mv in ('sticky-product', 'pinned-sequence'):
+            if pinned: mv = 'cards'
+            pinned += 1
+        if mv == 'type-wall':
+            if wall: mv = 'cards'
+            wall += 1
+        b.setdefault('ui', {})['move'] = mv; n += 1
+    d.setdefault('swarm', {})['rhythm'] = (r.get('rhythm') or '')[:200]
+    W(slug_dir, 'direction.json', d); return n
+
 # ───────────────────────────── UX ─────────────────────────────
 UX_TOOL = {"name": "set_flow", "description": "Set the page flow: beat order, goal action, nav.", "input_schema": {"type": "object", "required": ["order", "goal_cta"], "properties": {
     "order": {"type": "array", "items": {"type": "string"}, "description": "beat ids in the order the reader should meet them (every existing id exactly once; you may omit at most one weak beat to drop it)"},
@@ -141,7 +186,7 @@ UI_TOOL = {"name": "set_layout", "description": "Per-beat layout decisions the r
         "compact": {"type": "boolean", "description": "tighter padding, no min-height"}, "h2_px": {"type": "integer", "minimum": 28, "maximum": 96},
         "head": {"type": "string", "enum": ["left", "center", "split"], "description": "split = eyebrow+h2 left, lede right"}}}},
     "reasons": {"type": "array", "items": {"type": "string"}}}}}
-UI_SYSTEM = """You are the UI designer. The renderer is fixed; you decide per section: number of columns (match the item count: 3 or 6 items → 3 cols, 4 → 4, 2 → 2, 5 → 3), band (alternate paper/dark so no two dark bands touch and the page is not all cream), a lead visual (a section screenshot id for a software how-it-works, a photo for people/places; '' when the grid has its own images), compact when a section has little content, h2 size when a heading wraps to 3+ lines (smaller) or a statement needs presence (bigger), head alignment.
+UI_SYSTEM = """You are the UI designer. The concept has already assigned each section a MOVE (ui.move) — do not fight it: a sticky-product or story section needs no lead visual (set lead ''), a marquee needs no columns. The renderer is fixed; you decide per section: number of columns (match the item count: 3 or 6 items → 3 cols, 4 → 4, 2 → 2, 5 → 3), band (alternate paper/dark so no two dark bands touch and the page is not all cream), a lead visual (a section screenshot id for a software how-it-works, a photo for people/places; '' when the grid has its own images), compact when a section has little content, h2 size when a heading wraps to 3+ lines (smaller) or a statement needs presence (bigger), head alignment.
 Hero size: L for ≤4 words, M for 5–6, S for 7+. Think in screens: no screen should be more than 40% empty, none should hold two ideas."""
 
 def ui(slug_dir, notes=''):

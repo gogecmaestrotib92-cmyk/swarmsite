@@ -12,7 +12,7 @@ TOOL = {"name": "report_fixes", "description": "Report concrete visual defects a
             "verdict": {"type": "string"},
             "fixes": {"type": "array", "maxItems": 10, "items": {"type": "object", "required": ["op", "reason"], "properties": {
                 "op": {"type": "string", "enum": ["drop_beat", "shorten", "swap_image", "hero_image", "hero_h1", "band", "layout", "reorder", "note"]},
-                "agent": {"type": "string", "enum": ["copy", "ui", "visual", "ux"], "description": "who owns the fix: copy = words; ui = columns/bands/sizes/spacing/empty screens; visual = which image, crops, missing visuals; ux = order of sections, CTAs, nav"},
+                "agent": {"type": "string", "enum": ["copy", "ui", "visual", "ux", "concept"], "description": "who owns the fix: copy = words; ui = columns/bands/sizes/spacing/empty screens; visual = which image, crops, missing visuals; ux = order of sections, CTAs, nav; concept = the section's MOVE is wrong (sticky/pinned/type-wall/marquee/story/cards) or the page lacks one idea"},
                 "beat": {"type": "string"}, "field": {"type": "string"}, "max_words": {"type": "integer"}, "image": {"type": "string"}, "value": {"type": "string"}, "reason": {"type": "string"}}}}}}}
 
 SYSTEM = """You are the creative director reviewing screenshots of a page your studio just built. Be hard but concrete.

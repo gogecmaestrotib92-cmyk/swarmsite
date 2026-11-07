@@ -118,8 +118,7 @@ async function process_(job) {
   await timed('direct', async () => { try { await run('python3', ['-c', 'import sys; sys.path.insert(0, "lib/swarm"); import agents, json; f = agents.reader(sys.argv[1]) or {}; print(json.dumps({"what": f.get("what", ""), "n": len(f.get("facts", []))}))', dir], { timeoutMs: 180000 }).then(async o => { const f = JSON.parse(o.trim().split('\n').pop()); await emit(job, [{ role: 'Reader', text: String(f.what || '').slice(0, 120) }, { role: 'Reader', text: `${f.n} verified facts` }]); }); } catch (e) { console.warn('reader', e.message.slice(0, 200)); }
     return run('python3', ['lib/direct/direct.py', dir, process.env.DIRECT_MODEL || 'claude-sonnet-5-5'], { timeoutMs: 240000 }); }); await emit(job, eventsDirect(dir));
   await timed('render', async () => {
-    await run('python3', ['lib/render/render_beats.py', dir]);
-    // blueprint variants: the winner's measured form + this client's content (2 per class)
+    // one renderer: the winner's measured form + signature moves + this client's content (primary blueprint + one alternative)
     let kind = 'service', chosen = ''; try { const dd = JSON.parse(fs.readFileSync(path.join(dir, 'direction.json'), 'utf8')); kind = dd.kind || kind; chosen = dd.blueprint || ''; } catch {}
     const have = new Set(fs.readdirSync(path.join(ROOT, 'lib/blueprints')).filter(f => f.endsWith('.bp.json')).map(f => f.replace('.bp.json', '')));
     const picks = [...new Set([chosen, ...(BP[kind] || BP.service)])].filter(b => have.has(b)).slice(0, 2);
@@ -133,6 +132,9 @@ async function process_(job) {
         const done = last.find(j => j.done)?.done; const crit = J(path.join(dir, 'critic.json'));
         job._critic = crit ? { score: crit.best ?? crit.score, fixes: (crit.fixes || []).length, verdict: crit.verdict, rounds: done?.rounds } : null;
       } catch (e) { console.warn('swarm', e.message.slice(0, 300)); await emit(job, [{ role: 'QA', text: 'swarm loop failed: ' + e.message.slice(0, 80) }]); } }
+    // the primary blueprint IS the page
+    if (job._bps[0]) fs.copyFileSync(path.join(dir, `bp-${job._bps[0]}.html`), path.join(dir, 'index.html'));
+    else throw new Error('no blueprint rendered');
   }); await emit(job, eventsRender(dir)); if (job._bps?.length) await emit(job, job._bps.map(b => ({ role: 'Concept', text: `blueprint variant: ${b}` })));
   let qa = null; await timed('qa', async () => { try { const o = await run('python3', ['lib/qa/check.py', path.join(dir, 'index.html')], { timeoutMs: 240000 }); qa = o.split('\n').filter(l => /QA score|\[(high|med|low)/.test(l)).join('\n'); } catch (e) { qa = 'qa skipped: ' + e.message.slice(0, 200); } }); await emit(job, eventsQA(qa));
   const result = await timed('upload', async () => {

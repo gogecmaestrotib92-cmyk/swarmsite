@@ -155,10 +155,82 @@ def build(slug_dir, bp_id, out_path=None):
         cat = f'<div class="cat">{lab(h.get("category"), light)}{lab(h.get("fact"), light)}</div>'
         shot = (not media) and d.get('kind') == 'software' and src
         body_ = f'<div class="wrap hero-in al-{al} place-{place}">{cat}<h1 class="h1" style="{hsty}">{h1}</h1><p class="lede{" light" if light else ""}">{e(h.get("lede"))}</p><div class="ctas">{cta_html(light)}{("<a class=\"btn ghost" + (" light" if light else "") + "\" href=\"#" + e(beats[0]["id"] if beats else "") + "\">" + e(h["cta2"]) + "</a>") if h.get("cta2") else ""}</div></div>'
+        if hui.get('move') == 'split' and src:
+            # SIGNATURE split hero: words left, the product right, full height; the product drifts up slower than the page
+            hsty2 = re.sub(r'max-width:[^;]+', 'max-width:11ch', hsty)
+            left = f'<div class="split-l">{cat}<h1 class="h1" style="{hsty2}">{h1}</h1><p class="lede">{e(h.get("lede"))}</p><div class="ctas">{cta_html()}{("<a class=\"btn ghost\" href=\"#" + e(beats[0]["id"] if beats else "") + "\">" + e(h["cta2"]) + "</a>") if h.get("cta2") else ""}</div></div>'
+            right = f'<div class="split-r"><div class="shotframe tall" data-sig="parallax"><img src="{src}" alt=""></div></div>'
+            return f'<section class="sec hero split" id="top"><div class="wrap split-wrap">{left}{right}</div></section>'
         if shot: body_ += f'<div class="wrap shotwrap"><div class="shotframe"><img src="{src}" alt=""></div></div>'
         return f'<section class="sec hero{" has-media" if media else ""}{" shot" if shot else ""}" id="top" style="min-height:{min(2, bp["sections"][0].get("screens", 1)) * 100}svh">{m}{body_}</section>'
 
     def sec_media(sec): return [m for m in sec.get('media', []) if m.get('wf', 0) > .15 and .55 <= m.get('ar', 1) <= 2.6]
+
+    def beat_items(bt):
+        t = bt['type']
+        if t == 'features': return [(f.get('title'), f.get('body')) for f in bt.get('features', [])]
+        if t == 'steps': return [(f'0{i + 1}', x) for i, x in enumerate(bt.get('steps', []))]
+        if t == 'cells': return [(c[0] if len(c) < 2 else f'{c[1]} · {c[0]}', c[2] if len(c) > 2 else '') for c in bt.get('cells', [])]
+        if t == 'facts': return [(f[0], f[1]) for f in bt.get('facts', [])]
+        if t == 'faq': return [(q, a) for q, a in bt.get('items', [])]
+        if t == 'ledger': return [(a, p) for a, p in bt.get('items', [])]
+        return []
+
+    def pick_visuals(bt, n):
+        # the beat's own image first, then unused details/shots, then photos
+        out_ = []
+        if bt.get('image') and images.get(bt['image']) and not is_used(bt['image']): out_.append(img(bt['image']))
+        while len(out_) < n:
+            sr = img(want_shot=True if soft else None)
+            if not sr or sr in out_: break
+            out_.append(sr)
+        return out_
+
+    def sticky_product(sec, bt):
+        """SIGNATURE: text blocks scroll on the left, the product stays pinned on the right and swaps per block."""
+        items = beat_items(bt)[:6]
+        if len(items) < 2: return cards(sec, bt)
+        vis = pick_visuals(bt, len(items))
+        if not vis: return cards(sec, bt)
+        rows = ''.join(f'<div class="sp-row" data-i="{i}"><span class="lab">{e(f"0{i + 1}")}</span><h3 class="h3">{e(t)}</h3><p>{e(b_)}</p></div>' for i, (t, b_) in enumerate(items))
+        frames = ''.join(f'<figure class="sp-f{" on" if i == 0 else ""}" data-i="{i}"><img src="{vis[i % len(vis)]}" alt=""></figure>' for i in range(len(items)))
+        return f'<section class="sec sticky band-{band_of(sec, bt)}" id="{e(bt["id"])}" data-sig="sticky"><div class="wrap">{ghead(sec, bt)}<div class="sp"><div class="sp-text">{rows}</div><div class="sp-pin"><div class="sp-stage">{frames}</div></div></div></div></section>'
+
+    def marquee(sec, bt):
+        """SIGNATURE: a slow ticker of the beat's own words (titles / facts / prices); doubles as a breath between screens."""
+        items = beat_items(bt)
+        words_ = [f'{t}' if not b_ or bt['type'] in ('features', 'faq') else f'{t} — {b_}' for t, b_ in items][:10] or [bt.get('h2') or b['name']]
+        track = ''.join(f'<span class="mq-i">{e(w)}<i>✦</i></span>' for w in words_)
+        head = ghead(sec, bt) if bt.get('h2') else ''
+        return f'<section class="sec marquee band-{band_of(sec, bt)}" id="{e(bt["id"])}" data-sig="marquee">{("<div class=\"wrap\">" + head + "</div>") if head else ""}<div class="mq"><div class="mq-track">{track}{track}</div></div></section>'
+
+    def pinned_sequence(sec, bt):
+        """SIGNATURE: the section pins; each step takes over the screen as you scroll (number, sentence, visual)."""
+        items = beat_items(bt)[:5]
+        if len(items) < 2: return cards(sec, bt)
+        vis = pick_visuals(bt, len(items))
+        slides = ''.join(f'<div class="ps-s{" on" if i == 0 else ""}" data-i="{i}"><div class="ps-t"><b class="num">{e(t) if re.search(r"\d", str(t)) else f"0{i + 1}"}</b><h3 class="h2" style="font-size:var(--h3);max-width:22ch">{e(b_ if re.search(r"\d", str(t)) else t)}</h3>{("<p class=\"lede\">" + e(b_) + "</p>") if not re.search(r"\d", str(t)) and b_ else ""}</div>{("<figure class=\"ps-v\"><img src=\"" + vis[i % len(vis)] + "\" alt=\"\"></figure>") if vis else ""}</div>' for i, (t, b_) in enumerate(items))
+        return f'<section class="sec pinned band-{band_of(sec, bt)}" id="{e(bt["id"])}" data-sig="pinned" data-n="{len(items)}"><div class="ps-sticky"><div class="wrap">{ghead(sec, bt)}<div class="ps-stage">{slides}</div><div class="ps-dots">{"".join("<i></i>" for _ in items)}</div></div></div></section>'
+
+    def type_wall(sec, bt):
+        """SIGNATURE: one statement in giant type; the words light up one by one as you scroll through it."""
+        text = bt.get('body') if bt['type'] == 'quote' else (bt.get('lede') or bt.get('h2') or '')
+        big = bt.get('big') if bt['type'] == 'quote' else bt.get('h2')
+        ws = ''.join(f'<span class="tw-w">{e(w)}</span> ' for w in str(text).split()[:48])
+        who = f'<p class="lab who">{e(bt["who"])}</p>' if bt.get('who') else ''
+        return f'<section class="sec typewall band-{band_of(sec, bt)}" id="{e(bt["id"])}" data-sig="typewall"><div class="tw-sticky"><div class="wrap">{lab(bt.get("label") or big)}<p class="tw">{ws}</p>{who}</div></div></section>'
+
+    def story(sec, bt, flip=False):
+        """Text beside a visual, alternating sides; the visual reveals with a clip."""
+        items = beat_items(bt)[:4]
+        vis = pick_visuals(bt, 1); src = vis[0] if vis else ''
+        if not src: return cards(sec, bt)
+        lst = ''.join(f'<li><b>{e(t)}</b><span>{e(b_)}</span></li>' for t, b_ in items)
+        txt = f'<div class="st-t">{lab(bt.get("label"))}<h2 class="h2" style="{re.sub(r"max-width:[^;]+;?", "", head_style(sec, bt=bt))}">{e(bt.get("h2") or "")}</h2>{("<p class=\"lede\">" + e(bt.get("lede")) + "</p>") if bt.get("lede") else ""}<ul class="st-l">{lst}</ul></div>'
+        fig = f'<figure class="st-v"><img src="{src}" alt=""></figure>'
+        return f'<section class="sec story{" flip" if flip else ""} band-{band_of(sec, bt)}" id="{e(bt["id"])}"><div class="wrap st">{txt}{fig}</div></section>'
+
+    SIG = {'sticky-product': sticky_product, 'marquee': marquee, 'pinned-sequence': pinned_sequence, 'type-wall': type_wall, 'story': story}
 
     def statement(sec, item):
         kind, bt = item; text = bt.get('body') if kind == 'quote' else bt.get('lede'); big = bt.get('big') if kind == 'quote' else bt.get('h2')
@@ -285,9 +357,24 @@ def build(slug_dir, bp_id, out_path=None):
         pool = pools[fam]
         if not pool: return DEF[fam]
         sec = pool[taken[fam] % len(pool)]; taken[fam] += 1; return sec
-    out = [hero()]; used_beats = set(); cta_done = False
+    out = [hero()]; used_beats = set(); cta_done = False; flip = False
+    def default_move(role, t):
+        # the winner's own section vocabulary → our signature component
+        if 'sticky' in role and t in ('features', 'steps', 'cells'): return 'sticky-product'
+        if role.startswith(('ticker', 'marquee', 'gallery-marquee', 'logo')): return 'marquee'
+        if role.startswith('pinned') and t == 'steps': return 'pinned-sequence'
+        if role.startswith(('story', 'tabs-media', 'photo-half-text')) and t in ('features', 'steps', 'cells', 'facts'): return 'story'
+        return ''
     for bt in beats:
-        t = bt['type']
+        t = bt['type']; mv = (bt.get('ui') or {}).get('move') or ''
+        if mv == 'auto' or not mv:
+            fam = 'statement' if t == 'quote' else 'photo' if t == 'photo' else 'cta' if t == 'form' else 'list'
+            pool = pools[fam]; peek = pool[taken[fam] % len(pool)] if pool else DEF[fam]
+            mv = default_move(peek['role'], t) if not mv else ''
+        if mv in SIG and (t != 'quote' or mv == 'type-wall') and t not in ('photo', 'form'):
+            fam = 'statement' if t == 'quote' else 'list'; sec = take(fam)
+            out.append(SIG[mv](sec, bt, flip) if mv == 'story' else SIG[mv](sec, bt)); flip = not flip if mv == 'story' else flip; used_beats.add(bt['id']); continue
+        if t == 'quote' and mv == 'type-wall': sec = take('statement'); out.append(type_wall(sec, bt)); used_beats.add(bt['id']); continue
         if t == 'quote': sec = take('statement'); out.append(statement(sec, ('quote', bt)))
         elif t == 'photo': sec = take('photo'); out.append(photo_sec(sec, bt))
         elif t == 'ledger': sec = take('list'); out.append(ledger(sec, bt))
@@ -347,7 +434,14 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
 .cta .center{{text-align:center;display:grid;justify-items:center;gap:22px}}.cta .h2{{max-width:16ch}}.form{{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:min(640px,100%);text-align:left}}.form label{{display:grid;gap:6px}}.form label span{{font-family:var(--label);font-size:var(--lab-px);letter-spacing:var(--lab-ls);text-transform:uppercase;opacity:.7}}.form input{{min-height:46px;border:1px solid color-mix(in srgb,currentColor 30%,transparent);background:transparent;color:inherit;padding:0 12px;border-radius:max(4px,min(12px,var(--btn-r)));font:inherit}}.form .btn{{grid-column:1/-1;justify-content:center}}.alts{{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}}
 .giant{{padding:40px 0 0;overflow:hidden}}.gw{{font-family:var(--display);font-weight:var(--h1-w);font-size:min(22vw,{round(165 / max(4, len(b['name'])), 1)}vw);line-height:.85;letter-spacing:-.03em;white-space:nowrap;text-transform:var(--h1-tt)}}
 .end{{padding-top:clamp(48px,6vw,80px);padding-bottom:28px}}.end .fcols{{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--gutter);margin-top:48px;padding-top:40px;border-top:1px solid var(--line)}}.end ul{{list-style:none;margin-top:10px;display:grid;gap:6px}}.end .legal{{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:40px;font-family:var(--label);font-size:var(--lab-px);color:var(--muted)}}
-@media(max-width:900px){{.nav .links{{display:none}}.gh,.ledger .two,.faq .two,.photos .pair{{grid-template-columns:1fr;display:grid}}.photos figure{{width:100%!important}}.grid{{grid-template-columns:1fr}}.twocol .cols{{grid-template-columns:1fr}}.end .fcols{{grid-template-columns:1fr 1fr}}.form{{grid-template-columns:1fr}}.hero{{padding-top:100px}}.wrap{{padding:0 max(16px,calc(var(--frame) * .5))}}}}
+/* signature components */
+.hero.split{{padding-top:96px;min-height:100svh;align-content:center}}.split-wrap{{display:grid;grid-template-columns:1fr 1.1fr;gap:var(--gutter);align-items:center}}.split-l .lede{{margin-top:18px}}.split-l .ctas{{margin-top:26px}}.shotframe.tall{{border-radius:max(12px,var(--radius));border:1px solid var(--line);box-shadow:0 40px 100px color-mix(in srgb,var(--ink) 16%,transparent);overflow:hidden}}.shotframe.tall img{{width:100%;height:min(82vh,900px);object-fit:cover;object-position:left top}}
+.sp{{display:grid;grid-template-columns:1fr 1.15fr;gap:calc(var(--gutter) * 1.5);align-items:start}}.sp-row{{min-height:60vh;display:grid;align-content:center;gap:12px;max-width:40ch;opacity:.28;transition:opacity .5s var(--ease)}}.sp-row.on{{opacity:1}}.sp-row .h3{{font-size:min(var(--h2),44px)}}.sp-row p{{color:var(--muted);font-size:calc(var(--body-px) + 1px)}}.sp-pin{{position:sticky;top:12vh;height:76vh}}.sp-stage{{position:relative;height:100%;border-radius:max(12px,var(--radius));overflow:hidden;border:1px solid var(--line);background:color-mix(in srgb,var(--ink) 6%,var(--paper))}}.sp-f{{position:absolute;inset:0;margin:0;opacity:0;transform:scale(1.03);transition:opacity .6s var(--ease),transform .9s var(--ease)}}.sp-f.on{{opacity:1;transform:none}}.sp-f img{{width:100%;height:100%;object-fit:cover;object-position:top}}
+.marquee{{padding:clamp(28px,4vw,56px) 0;overflow:hidden}}.marquee .gh{{margin-bottom:24px}}.mq{{overflow:hidden;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:18px 0}}.mq-track{{display:flex;gap:0;width:max-content;animation:mq 46s linear infinite}}.mq-i{{display:inline-flex;align-items:center;gap:28px;padding:0 14px 0 28px;font-family:var(--display);font-weight:var(--h2-w);font-size:min(var(--h2),56px);letter-spacing:-.02em;white-space:nowrap}}.mq-i i{{font-style:normal;font-size:.45em;color:var(--accent)}}@keyframes mq{{to{{transform:translateX(-50%)}}}}.marquee:hover .mq-track{{animation-play-state:paused}}
+.pinned{{padding:0}}.ps-sticky{{position:sticky;top:0;height:100svh;display:grid;align-content:center;overflow:hidden}}.ps-stage{{position:relative;min-height:52vh}}.ps-s{{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;gap:var(--gutter);align-items:center;opacity:0;transform:translateY(24px);transition:opacity .5s var(--ease),transform .7s var(--ease);pointer-events:none}}.ps-s.on{{opacity:1;transform:none}}.ps-t .num{{display:block;font-family:var(--display);font-weight:var(--h1-w);font-size:clamp(64px,10vw,160px);line-height:.9;letter-spacing:-.03em;color:var(--accent)}}.ps-t .h2{{margin-top:18px}}.ps-v{{margin:0;border-radius:max(12px,var(--radius));overflow:hidden;border:1px solid var(--line);aspect-ratio:1.3}}.ps-v img{{width:100%;height:100%;object-fit:cover}}.ps-dots{{display:flex;gap:8px;margin-top:28px}}.ps-dots i{{width:28px;height:2px;background:var(--line)}}.ps-dots i.on{{background:var(--ink)}}.band-dark .ps-dots i.on{{background:var(--band-ink)}}
+.typewall{{padding:0}}.tw-sticky{{position:sticky;top:0;min-height:100svh;display:grid;align-content:center}}.tw{{font-family:var(--display);font-weight:var(--h2-w);font-size:clamp(28px,4.6vw,72px);line-height:1.08;letter-spacing:-.02em;max-width:22ch;margin-top:22px}}.tw-w{{opacity:.18;transition:opacity .25s}}.tw-w.on{{opacity:1}}.typewall .who{{margin-top:28px}}
+.st{{display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--gutter) * 1.5);align-items:center}}.story.flip .st-t{{order:2}}.st-l{{list-style:none;margin-top:28px;display:grid;gap:14px}}.st-l li{{display:grid;grid-template-columns:minmax(120px,.35fr) 1fr;gap:16px;padding-top:12px;border-top:1px solid var(--line)}}.st-l b{{font-weight:500}}.st-l span{{color:var(--muted)}}.st-v{{margin:0;border-radius:max(12px,var(--radius));overflow:hidden;border:1px solid var(--line);aspect-ratio:1.15}}.st-v img{{width:100%;height:100%;object-fit:cover;object-position:top}}
+@media(max-width:900px){{.split-wrap,.sp,.ps-s,.st{{grid-template-columns:1fr}}.story.flip .st-t{{order:0}}.sp-pin{{position:relative;top:auto;height:52vh;order:-1}}.sp-row{{min-height:auto;padding:22px 0;opacity:1}}.ps-s{{align-content:start}}.ps-v{{aspect-ratio:1.6}}.shotframe.tall img{{height:52vh}}.mq-i{{font-size:28px}}.nav .links{{display:none}}.gh,.ledger .two,.faq .two,.photos .pair{{grid-template-columns:1fr;display:grid}}.photos figure{{width:100%!important}}.grid{{grid-template-columns:1fr}}.twocol .cols{{grid-template-columns:1fr}}.end .fcols{{grid-template-columns:1fr 1fr}}.form{{grid-template-columns:1fr}}.hero{{padding-top:100px}}.wrap{{padding:0 max(16px,calc(var(--frame) * .5))}}}}
 @media(prefers-reduced-motion:reduce){{*{{transition:none!important;animation:none!important}}}}
 '''
     moves_attr = lambda n: f' data-move="{n}"'
@@ -361,10 +455,19 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
 // blueprint motion: reveal on scroll for every section's main pieces, with the winner's own easing/durations
 document.querySelectorAll('.sec .h2, .sec .big-p, .sec .lede, .grid, .rows, .cols, .photo figure, .photos figure').forEach((el, i) => {{ if (!el.closest('.hero')) el.setAttribute('data-move', el.matches('figure') ? 'clip-reveal' : el.matches('.grid, .rows, .cols') ? 'stagger-in' : 'fade-rise'); }});
 document.querySelector('.hero')?.setAttribute('data-move', 'hero-intro');
+// signature motion (GSAP ScrollTrigger is on the page)
+function Sig(){{ if(!window.gsap||!window.ScrollTrigger) return; gsap.registerPlugin(ScrollTrigger);
+  document.querySelectorAll('[data-sig="sticky"]').forEach(sec=>{{ const rows=[...sec.querySelectorAll('.sp-row')], fr=[...sec.querySelectorAll('.sp-f')]; const set=i=>{{ rows.forEach((r,k)=>r.classList.toggle('on',k===i)); fr.forEach((f,k)=>f.classList.toggle('on',k===i)); }}; set(0);
+    rows.forEach((r,i)=>ScrollTrigger.create({{trigger:r,start:'top 55%',end:'bottom 55%',onEnter:()=>set(i),onEnterBack:()=>set(i)}})); }});
+  document.querySelectorAll('[data-sig="pinned"]').forEach(sec=>{{ const n=+sec.dataset.n||1; sec.style.height=(n*85+40)+'vh'; const sl=[...sec.querySelectorAll('.ps-s')], dots=[...sec.querySelectorAll('.ps-dots i')]; const set=i=>{{ sl.forEach((s,k)=>s.classList.toggle('on',k===i)); dots.forEach((d,k)=>d.classList.toggle('on',k<=i)); }}; set(0);
+    ScrollTrigger.create({{trigger:sec,start:'top top',end:'bottom bottom',onUpdate:st=>set(Math.min(n-1,Math.floor(st.progress*n)))}}); }});
+  document.querySelectorAll('[data-sig="typewall"]').forEach(sec=>{{ const ws=[...sec.querySelectorAll('.tw-w')]; sec.style.height='170vh'; ScrollTrigger.create({{trigger:sec,start:'top top',end:'bottom bottom',onUpdate:st=>{{ const k=Math.round(st.progress*ws.length); ws.forEach((w,i)=>w.classList.toggle('on',i<k)); }}}}); }});
+  document.querySelectorAll('[data-sig="parallax"]').forEach(el=>gsap.fromTo(el,{{y:40}},{{y:-40,ease:'none',scrollTrigger:{{trigger:el,start:'top bottom',end:'bottom top',scrub:true}}}}));
+  ScrollTrigger.refresh(); }}
 const NOMOTION=/[?&]nomotion/.test(location.search); const PREVIEW=!NOMOTION&&(self!==top||/[?&]swarm/.test(location.search))&&!matchMedia('(prefers-reduced-motion:reduce)').matches;
-if(NOMOTION){{ document.querySelectorAll('[data-move]').forEach(el=>el.removeAttribute('data-move')); }}
+if(NOMOTION){{ document.querySelectorAll('[data-move]').forEach(el=>el.removeAttribute('data-move')); document.querySelectorAll('.tw-w,.sp-row').forEach(el=>el.classList.add('on')); document.querySelectorAll('.ps-s,.sp-f').forEach((el,i)=>el.classList.toggle('on',el.dataset.i==='0')); }}
 addEventListener('load',()=>{{ const nav=document.getElementById('nav'); const solidFrom=document.querySelector('.hero.has-media')?innerHeight*.7:0; const onS=()=>nav.classList.toggle('solid',scrollY>solidFrom); onS(); addEventListener('scroll',onS,{{passive:true}});
-  try{{ if(PREVIEW) new Swarm({{agents:innerWidth<900?8:18,speed:1,hud:true,sectionSelector:'section,footer',boxSel:'.btn,.card,figure,.rows li,.form input',onDone:()=>{{ try{{ scrollTo(0,0); Moves.init(); }}catch(e){{}} }}}}).run(); else Moves.init(); }}catch(e){{ try{{Moves.init();}}catch(_){{}} }} }});
+  try{{ if(PREVIEW) new Swarm({{agents:innerWidth<900?8:18,speed:1,hud:true,sectionSelector:'section,footer',boxSel:'.btn,.card,figure,.rows li,.form input',onDone:()=>{{ try{{ scrollTo(0,0); Moves.init(); Sig(); }}catch(e){{}} }}}}).run(); else {{ Moves.init(); Sig(); }} }}catch(e){{ try{{Moves.init(); Sig();}}catch(_){{}} }} }});
 </script></body></html>'''
     out_path = out_path or os.path.join(slug_dir, f'index.{bp_id}.html'); open(out_path, 'w').write(html); return out_path
 
