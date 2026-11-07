@@ -61,12 +61,20 @@ def build(slug_dir, bp_id, out_path=None):
                 if h2 and not images[k2].get('detail') and sum(a != b for a, b in zip(h0, h2)) <= 10: fam.add(k2)
         return fam
     def is_used(k): return bool(family(k) & used)
+    reserved = {}  # image id → beat id that owns it
+    for bt0 in d.get('beats', []):
+        for k0 in (bt0.get('image'), (bt0.get('ui') or {}).get('lead')):
+            if k0 and images.get(k0): reserved.setdefault(k0, bt0['id'])
+    if h.get('media') and images.get(h['media']): reserved.setdefault(h['media'], '__hero__')
+    def free_for(it, bt=None):
+        o = reserved.get(it.get('id'))
+        return o is None or (bt is not None and o == bt.get('id')) or (bt is None and o == '__hero__')
     soft = d.get('kind') in ('software', 'product')
     def img(k=None, prefer_hero=False, want_shot=None):
         it = images.get(k) if k else None
         if it and is_used(it.get('id')) and not prefer_hero: it = None
         if not it:
-            pool = [i for i in images.values() if i.get('data') and not is_used(i.get('id'))] or [i for i in images.values() if i.get('data')]
+            pool = [i for i in images.values() if i.get('data') and not is_used(i.get('id')) and reserved.get(i.get('id')) is None] or [i for i in images.values() if i.get('data') and not is_used(i.get('id'))] or [i for i in images.values() if i.get('data')]
             if want_shot is True: pool = [i for i in pool if i.get('shot')] or pool
             if want_shot is False: pool = [i for i in pool if not i.get('shot')] or pool
             # hero: real photos first; software bodies: UI section shots first; places: photos first
@@ -183,7 +191,7 @@ def build(slug_dir, bp_id, out_path=None):
         never an unrelated screenshot; when short, the product image itself returns zoomed to a different region per frame."""
         out_ = []
         if bt.get('image') and images.get(bt['image']) and not is_used(bt['image']) and images[bt['image']].get('w', 0) >= (760 if strict else 500): out_.append((img(bt['image']), ZOOMS[0]))
-        pool = [i for i in images.values() if i.get('data') and not is_used(i.get('id')) and i.get('w', 0) >= (760 if strict else 600) and (not strict or i.get('detail') or i.get('gen'))]
+        pool = [i for i in images.values() if i.get('data') and not is_used(i.get('id')) and free_for(i, bt) and i.get('w', 0) >= (760 if strict else 600) and (not strict or i.get('detail') or i.get('gen'))]
         pool.sort(key=lambda i: (not i.get('detail'), not i.get('gen'), -(i.get('w', 0) * i.get('h', 0))))
         for it in pool:
             if len(out_) >= n: break
@@ -283,10 +291,10 @@ def build(slug_dir, bp_id, out_path=None):
         elif ui_.get('lead') == '': return ''
         elif bt.get('image') and images.get(bt['image']) and not is_used(bt['image']): it = images[bt['image']]; src = img(bt['image'])
         elif bt['type'] == 'facts':
-            pool = [i for i in images.values() if i.get('data') and not i.get('shot') and not is_used(i.get('id')) and i.get('w', 0) >= 600]
+            pool = [i for i in images.values() if i.get('data') and not i.get('shot') and not is_used(i.get('id')) and free_for(i, bt) and i.get('w', 0) >= 600]
             if pool: it = pool[0]; src = img(it['id'])
         elif bt['type'] == 'steps' and soft:
-            pool = [i for i in images.values() if i.get('shot') and i.get('data') and not is_used(i.get('id'))]
+            pool = [i for i in images.values() if i.get('shot') and i.get('data') and not is_used(i.get('id')) and free_for(i, bt)]
             if pool: it = max(pool, key=lambda i: i.get('w', 0) * i.get('h', 0)); src = img(it['id'])
         if not src or not it: return ''
         raw_ar = it.get('w', 16) / max(1, it.get('h', 9)); ar = max(1.0, min(2.4, raw_ar))
@@ -343,10 +351,11 @@ def build(slug_dir, bp_id, out_path=None):
     def cta(sec, bt=None):
         title = (bt or {}).get('h2') or en.get('tag') or h.get('cta') or b['name']
         cta_title_used.append(title)
-        fields = ''.join(f'<label><span>{e(f)}</span><input placeholder="{e(f)}"></label>' for f in (bt or {}).get('fields', [])[:4])
+        fields = ''.join(f'<label><span>{e(f)}</span><input placeholder="{e(f)}"></label>' for f in (bt or {}).get('fields', [])[:6])
         form = f'<form class="form" onsubmit="return false">{fields}<button class="btn">{e((bt or {}).get("cta") or h.get("cta"))} <span class="ar">→</span></button></form>' if fields else f'<div class="ctas">{cta_html()}</div>'
         alt = ''.join(f'<span class="lab">{e(a)}</span>' for a in (bt or {}).get('alt', []))
-        left = [i for i in images.values() if i.get('data') and not is_used(i.get('id')) and not i.get('shot') and i.get('w', 0) >= 900]
+        own = (bt or {}).get('image') or ((bt or {}).get('ui') or {}).get('lead')
+        left = ([images[own]] if own and images.get(own) and not is_used(own) else []) + [i for i in images.values() if i.get('data') and not is_used(i.get('id')) and not i.get('shot') and reserved.get(i.get('id')) is None and i.get('w', 0) >= 900 and .6 <= i.get('w', 1) / max(1, i.get('h', 1)) <= 2.0 and not i.get('logo')]
         if fields and left:
             pic = img(left[0]['id'])
             return f'<section class="sec cta band-dark cta-pic" id="{e((bt or {}).get("id") or form_id)}"><div class="wrap cta2"><figure class="cta-v"><img src="{pic}" alt=""></figure><div class="cta-t">{lab((bt or {}).get("label"))}<h2 class="h2" style="{re.sub(r"text-align:[^;]+;?|margin-(left|right):auto;?", "", head_style(sec))}">{e(title)}</h2>{form}<div class="alts">{alt}</div></div></div></section>'

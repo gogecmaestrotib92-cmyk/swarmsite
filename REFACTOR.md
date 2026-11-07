@@ -20,3 +20,4 @@ Goal: refactor until the architecture is simple enough to explain in five lines,
 - `cells` beat type overlaps `facts`; merge.
 - Blueprint `sections` roles and renderer families are mapped by prefix lists; make the mapping a table in the blueprint file.
 - Critic screenshots cost ~50 s per round; cache shots per section hash.
+- 2026-11-07 · images assigned to a beat are reserved for it (sticky frames stole the form's photo), CTA never a logo/banner graphic, 6 form fields · live: 4 bp 75–81; Bálamo 34→65, courtsensei 64 (round 1) · next: critic round time (114 s even in fast mode)
