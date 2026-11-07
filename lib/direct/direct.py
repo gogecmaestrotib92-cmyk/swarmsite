@@ -43,7 +43,7 @@ Hard rules:
 - Headings: h2 ≤ 5 words (nouns). Steps ≤ 12 words each. Feature bodies ≤ 18 words. Never pad a grid with ordinals or placeholders; fewer, true items beat more.
 - Choose images by id from images.json: the hero gets the best 'heroGrade' landscape photo; never reuse the same image twice.
 - You SEE the site (screenshots attached). Judge it as a creative director: if it is already well designed (clear hierarchy, custom type, real photography, restraint), choose change="polish" and keep its structure, order and wording — only fix the audit findings. Average template sites get "restructure"; broken or generic sites get "rebuild". Never flatten a good site into a generic one.
-- Choose ONE blueprint from BLUEPRINTS: same class first, then the mood (dark/light, serif/sans, photo-led vs type-led) and how much imagery the site actually has. Say why in audit_notes[0].
+- Choose ONE blueprint from BLUEPRINTS whose class EQUALS the site's kind (a restaurant never gets a software blueprint, a SaaS never a place one); among those, the mood (dark/light, serif/sans, photo-led vs type-led) and how much imagery the site actually has. Say why in audit_notes[0].
 - IMAGERY BUDGET: count the DISTINCT visuals in IMAGES (a screenshot of the same screen counts once). With fewer than 3 distinct visuals choose a TYPE-LED blueprint (imagery=light) and plan beats that need no pictures: features as text, a ledger, facts as big figures, a quote. Never plan a photo beat or a 'makers' section without a real photo for it. Do not invent what a section 'would' show.
 - Output ONLY the JSON document, no prose, matching the schema. Comments in the schema are for you, not for the output.
 """
@@ -79,6 +79,10 @@ def validate(doc):
     if not 3 <= len(doc.get('beats', [])) <= 7: errs.append('beats must be 4-6')
     h1 = re.sub(r'<[^>]+>', '', str(doc.get('hero', {}).get('h1', '')))
     if len(h1.split()) > 8: errs.append(f'h1 too long ({len(h1.split())} words): "{h1}"')
+    try:
+        import glob as _g; cls = {json.load(open(f))['id']: json.load(open(f)).get('class') for f in _g.glob(os.path.join(ROOT, 'lib/blueprints', '*.bp.json'))}
+        if doc.get('blueprint') in cls and cls[doc['blueprint']] != doc.get('kind'): errs.append(f"blueprint {doc['blueprint']} is class {cls[doc['blueprint']]}, the site is kind {doc.get('kind')} — choose a {doc.get('kind')} blueprint")
+    except Exception: pass
     for b in doc.get('beats', []):
         if b.get('type') == 'cells':
             nums = [str(c[1]).strip() for c in b.get('cells', []) if len(c) > 1]

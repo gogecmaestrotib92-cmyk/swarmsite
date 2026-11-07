@@ -56,7 +56,12 @@ def critique(slug_dir, html, model='claude-sonnet-5-5', fast=False):
     client = anthropic.Anthropic()
     msg = client.messages.create(model=model, max_tokens=3000, system=SYSTEM, messages=[{"role": "user", "content": content}], tools=[TOOL], tool_choice={"type": "auto"})
     call = next((b for b in msg.content if getattr(b, 'type', '') == 'tool_use'), None)
-    return call.input if call else {'score': -1, 'fixes': [], 'verdict': 'no report'}
+    r = dict(call.input) if call else {'score': -1, 'fixes': [], 'verdict': 'no report'}
+    if not isinstance(r.get('fixes'), list): r['fixes'] = []
+    r['fixes'] = [f for f in r['fixes'] if isinstance(f, dict)]
+    if isinstance(r.get('axes'), dict) and not isinstance(r.get('score'), (int, float)):
+        ax = r['axes']; r['score'] = round(.35 * ax.get('design', 0) + .2 * ax.get('originality', 0) + .25 * ax.get('craft', 0) + .2 * ax.get('function', 0))
+    return r
 
 def apply(slug_dir, rep):
     p = os.path.join(slug_dir, 'direction.json'); d = json.load(open(p)); changed = 0

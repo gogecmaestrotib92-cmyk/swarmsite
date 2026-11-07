@@ -13,10 +13,10 @@ L = ['features', 'steps', 'cells', 'facts']
 RECIPES = {
     # ── software, light, editorial product ─────────────────────────────────────────────
     'butter': {'class': 'software', 'hero': 'shot', 'closing': 'cta', 'slots': [
-        {'accepts': ['cells', 'facts'], 'comp': 'marquee', 'optional': True},
-        {'accepts': ['quote'], 'comp': 'statement', 'variant': 'wide', 'optional': True},
         {'accepts': ['features'], 'comp': 'sticky-product'},
+        {'accepts': ['cells', 'facts'], 'comp': 'marquee', 'optional': True},
         {'accepts': ['steps'], 'comp': 'story', 'optional': True},
+        {'accepts': ['quote'], 'comp': 'statement', 'variant': 'wide', 'optional': True},
         {'accepts': ['cells', 'facts'], 'comp': 'cards', 'optional': True},
         {'accepts': ['ledger'], 'comp': 'ledger', 'optional': True},
         {'accepts': ['faq'], 'comp': 'faq', 'optional': True},

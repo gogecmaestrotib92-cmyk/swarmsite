@@ -60,12 +60,15 @@ def main():
         for f in cfail[:4]: ev('Contract', f"✗ {f['id']}: {f['detail']}")
         try: rep = C.critique(slug_dir, out, A.MODEL, fast=(k < rounds))  # desktop-only, short waits until the final look
         except Exception as e: ev('Critic', 'skipped: ' + str(e)[:90]); break
-        taste = rep.get('score', -1); fixes = rep.get('fixes', [])
+        taste = rep.get('score', -1) if isinstance(rep.get('score'), (int, float)) else -1
+        fixes = [f for f in (rep.get('fixes') if isinstance(rep.get('fixes'), list) else []) if isinstance(f, dict)]
         score = round(0.55 * taste + 0.45 * con['score']) if con.get('score', -1) >= 0 and taste >= 0 else taste
         ev('Critic', f'round {k}: taste {taste} · contract {con.get("score")} → {score}/100 · {len(fixes)} defects · {round(time.time() - t)}s'); ev('Critic', str(rep.get('verdict', ''))[:140])
         for f in cfail: fixes.append({'op': 'note', 'agent': owner_of(f['id']), 'beat': '', 'reason': f"CONTRACT BROKEN — {f['id']}: {f['detail']}"})
         log['rounds'].append({'k': k, 'score': score, 'taste': taste, 'contract': con.get('score'), 'broken': cfail, 'fixes': fixes, 'verdict': rep.get('verdict')})
-        if score > best[0]: best = (score, open(out).read())
+        try:
+            if score > best[0]: best = (score, open(out).read())
+        except Exception: pass
         json.dump({**rep, 'score': score, 'taste': taste, 'contract': con.get('score'), 'broken': cfail, 'round': k, 'best': best[0]}, open(os.path.join(slug_dir, 'critic.json'), 'w'), indent=1, ensure_ascii=False)
         if score >= target or k == rounds: break
         # RESTART, not patch: a weak first round means the idea or the form is wrong — throw it away, keep the facts, start over once
