@@ -7,6 +7,7 @@ import { chromium } from 'playwright';
 
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'swarm-blueprint-measurements-'));
 const extractor = fs.readFileSync('lib/blueprint/extract.js', 'utf8');
+assert.equal(fs.readFileSync('web/js/extract.js', 'utf8'), extractor, 'public extractor must match the measured source');
 let browser;
 try {
   browser = await chromium.launch({ executablePath: process.env.CHROME_PATH || undefined, args: ['--no-sandbox'] });
