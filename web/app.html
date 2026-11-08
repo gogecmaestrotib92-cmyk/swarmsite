@@ -55,6 +55,14 @@ a{color:inherit;text-decoration:none}
 .err{color:#D9424A;max-width:60ch}
 @media(max-width:700px){.frame{aspect-ratio:3/4}.top .brand span{display:none}.bar{padding:10px 12px}}
 .top .brand{display:inline-flex;align-items:center;padding:0 10px 2px 0;line-height:1;font-family:'Shrikhand',Georgia,serif;font-weight:400;font-size:28px;letter-spacing:-.01em;color:var(--ink)}
+
+/* Same visual language as the landing; preserve the existing flow and controls. */
+.stage{padding-top:115px}.h{letter-spacing:-.045em}.brief{border-radius:24px;padding:28px;gap:20px;box-shadow:0 25px 70px rgba(17,17,17,.06)}.brief .row{gap:9px}.brief .row.col{gap:9px}.brief .row.col .lab{font-size:12px}.chip{min-height:40px;background:#fafafa;transition:background .2s,border-color .2s}.chip:has(input:checked){background:#ededeb;border-color:#888}.brief input[type=text],.brief input:not([type]){background:#fafafa;border-radius:12px}.frame{box-shadow:0 35px 90px #1112}.bar{padding:14px 20px}.stage:has(.brief:not(.hide)) .frame,.stage:has(.brief:not(.hide)) .log,.stage:has(.brief:not(.hide)) .steps,.stage:has(.brief:not(.hide))>.micro{display:none}
+@media(max-width:700px){.brief,.frame,.steps,.log{width:100%;max-width:100%}.top .lab{display:none}.top .pill{white-space:nowrap}.brief{padding:20px}.result iframe{max-width:100%}}
+
+/* The brief is the first step of the product, so it uses the landing's type and color. */
+.stage{align-content:start;padding-top:clamp(118px,13vh,150px)}.stage>*{min-width:0}.brief-caption{width:100%;max-width:44ch;color:#69645f;font-size:16px;margin-top:-12px}.stage:has(.brief.hide) .brief-caption{display:none}.stage:has(.brief:not(.hide)) .h{font-size:clamp(38px,5vw,64px);max-width:none}.brief{width:min(820px,100%);padding:clamp(24px,4vw,48px);gap:30px;border-radius:8px;box-shadow:none}.option-group{border:0;min-width:0;display:grid;gap:12px}.option-group legend,.brief .row.col>label{font-size:16px;font-weight:500;letter-spacing:-.015em}.option-group legend{padding:0;margin-bottom:12px}.brief .row.col{gap:10px}.optional{font-size:12px;font-weight:400;color:#777;margin-left:6px}.chip{background:#f7f6f3;font-size:14px;min-height:44px;padding:9px 14px}.chip input{accent-color:#833b46}.chip:has(input:checked){background:#f3e1dd;border-color:#b67c80}.chip:focus-within{outline:2px solid #833b46;outline-offset:2px}.brief input[type=text],.brief input:not([type]){background:#faf9f7;border-radius:4px;min-height:50px}.brief input:focus{outline:2px solid #833b46;outline-offset:2px}.brief-action{display:flex;gap:20px;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding-top:26px}.brief-action .pill.ink{background:#833b46;border-color:#833b46;padding:12px 18px;min-width:210px;justify-content:space-between}.brief-action .pill.ink:disabled{opacity:.6;cursor:wait}.brief-action p{font-size:13px;color:#777}.err{font-size:14px}.stage:has(.brief:not(.hide)) .err:empty{display:none}
+@media(max-width:700px){.stage{padding:120px 20px 50px}.stage:has(.brief:not(.hide)) .h{font-size:40px}.brief-caption{font-size:15px}.brief{padding:24px 20px;gap:26px}.brief-action{flex-direction:column;align-items:stretch;gap:10px}.brief-action .pill.ink{width:100%}.brief-action p{text-align:center}.url{overflow-wrap:anywhere;max-width:100%}}
 </style>
 </head>
 <body>
@@ -63,28 +71,29 @@ a{color:inherit;text-decoration:none}
 <section class="stage" id="stage">
   <span class="lab" id="urlLab"></span>
   <h1 class="h" id="h">Reading your site…</h1>
+  <p class="brief-caption">Choose what to keep. Your agents will shape the rest.</p>
   <form class="brief" id="brief" onsubmit="return false">
-    <div class="row"><span class="lab">Keep</span>
-      <label class="chip"><input type="checkbox" name="keepFont" checked><span>their font</span></label>
-      <label class="chip"><input type="checkbox" name="keepColours" checked><span>keep their colours (off: blueprint palette)</span></label>
-      <label class="chip"><input type="checkbox" name="keepLogo" checked><span>their logo</span></label>
-    </div>
-    <div class="row"><span class="lab">Kind</span>
-      <label class="chip"><input type="radio" name="kind" value=""><span>let the swarm decide</span></label>
-      <label class="chip"><input type="radio" name="kind" value="place"><span>place (restaurant, hotel, clinic)</span></label>
-      <label class="chip"><input type="radio" name="kind" value="service"><span>service (agency, law, studio)</span></label>
-      <label class="chip"><input type="radio" name="kind" value="software"><span>software</span></label>
-      <label class="chip"><input type="radio" name="kind" value="product"><span>product / shop</span></label>
-    </div>
-    <div class="row col"><span class="lab">What is already good — don’t touch it</span><input name="keep" placeholder="e.g. the headline, our prices, the photo on the hero" maxlength="300"></div>
-    <div class="row col"><span class="lab">The one action visitors should take</span><input name="goal" placeholder="e.g. Book a table · Start free trial · Call us" maxlength="80"></div>
-    <div class="row"><button class="pill ink" id="go">Rebuild it →</button><span class="lab">5–15 min · nothing changes on your real site</span></div>
+    <fieldset class="option-group"><legend>What should we keep?</legend><div class="row">
+      <label class="chip"><input type="checkbox" name="keepFont" checked><span>Original font</span></label>
+      <label class="chip"><input type="checkbox" name="keepColours" checked><span>Original colours</span></label>
+      <label class="chip"><input type="checkbox" name="keepLogo" checked><span>Original logo</span></label>
+    </div></fieldset>
+    <fieldset class="option-group"><legend>What kind of site is this?</legend><div class="row">
+      <label class="chip"><input type="radio" name="kind" value=""><span>Let the swarm decide</span></label>
+      <label class="chip"><input type="radio" name="kind" value="place"><span>Restaurant, hotel or clinic</span></label>
+      <label class="chip"><input type="radio" name="kind" value="service"><span>Agency, studio or service</span></label>
+      <label class="chip"><input type="radio" name="kind" value="software"><span>Software</span></label>
+      <label class="chip"><input type="radio" name="kind" value="product"><span>Product or shop</span></label>
+    </div></fieldset>
+    <div class="row col"><label for="keepNote">Anything else to keep? <span class="optional">Optional</span></label><input id="keepNote" name="keep" placeholder="e.g. a headline, prices or a photo" maxlength="300"></div>
+    <div class="row col"><label for="goalNote">What should visitors do? <span class="optional">Optional</span></label><input id="goalNote" name="goal" placeholder="e.g. Book a table or start a trial" maxlength="80"></div>
+    <div class="brief-action"><button class="pill ink" id="go">Start my preview <span aria-hidden="true">↗</span></button><p>Your current website stays unchanged.</p></div>
   </form>
   <div class="frame" id="frame"><div class="skel" id="skel"></div><img id="before" alt=""><div class="hud"><span class="lab" id="hudL">agents waking up</span><span class="lab" id="hudR">0 / 6</span></div></div>
   <div class="log" id="log"></div>
   <div class="steps" id="steps"></div>
   <div class="micro"><span class="lab">5–15 minutes · stay or come back, this page remembers the job</span></div>
-  <p class="err" id="err"></p>
+  <p class="err" id="err" role="alert"></p>
 </section>
 
 <div class="result" id="result">
@@ -96,7 +105,7 @@ a{color:inherit;text-decoration:none}
 </div>
 
 <script src="/config.js"></script>
-<script src="/js/swarm2.js?v=pan2"></script>
+<script src="/js/swarm2.js?v=agent7"></script>
 <script>
 const API = window.SWARMSITE_API; const qs = new URLSearchParams(location.search);
 const $ = s => document.querySelector(s);
@@ -131,7 +140,7 @@ function renderCoverage(report,auditNotes){
   root.hidden=false;
 }
 function showUnavailableCoverage(){ const root=$('#coverage'); root.querySelector('summary').textContent='Content check unavailable'; root.open=false; root.hidden=false; const panel=$('#coveragePanel'); panel.replaceChildren(); const p=document.createElement('p'); p.textContent='Content check is not available for this alternative.'; panel.appendChild(p); }
-function showResult(job){ const r=job.result; const pv=new URL(`${window.SWARMSITE_API}/p/${job.id}`, location.href); if(r.previewUrl){const v=new URL(r.previewUrl,location.href).searchParams.get('v'); if(v){if(!/^[0-9a-f]{32}$/.test(v)) throw new Error('Invalid preview version');pv.searchParams.set('v',v);}} const open=u=>{const x=new URL(u); x.searchParams.set('swarm','1'); return x.href}; $('#preview').src=pv.href; $('#openNew').href=open(pv); renderCoverage(r.coverage,r.direction?.audit_notes);
+function showResult(job){ const r=job.result; const pv=new URL(`${window.SWARMSITE_API}/p/${job.id}`, location.href); if(r.previewUrl){const v=new URL(r.previewUrl,location.href).searchParams.get('v'); if(v){if(!/^[0-9a-f]{32}$/.test(v)) throw new Error('Invalid preview version');pv.searchParams.set('v',v);}} const open=u=>u; $('#preview').src=pv.href; $('#openNew').href=open(pv); renderCoverage(r.coverage,r.direction?.audit_notes);
   const vs=$('#variants'); vs.replaceChildren(); (r.blueprints||[]).forEach((bp,i)=>{ const b=document.createElement('button'); b.dataset.bp=bp; b.dataset.primary=String(i===0); b.textContent=(i?'Alternative · ':'Blueprint · ')+bp; if(!i) b.classList.add('on'); vs.appendChild(b); });
   vs.querySelectorAll('button').forEach(b=>b.onclick=()=>{ vs.querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); const u=new URL(pv); if(b.dataset.primary!=='true') u.searchParams.set('bp',b.dataset.bp); $('#preview').src=u.href; $('#openNew').href=open(u); if(b.dataset.primary==='true') renderCoverage(r.coverage,r.direction?.audit_notes); else showUnavailableCoverage(); }); $('#meta').textContent=`${r.direction?.kind||''} · concept ${r.direction?.concept||''} · ${r.direction?.beats?.length||''} beats · ${r.seconds||''}s`; $('#stage').hidden=true; $('#result').classList.add('on'); layoutResult();
   document.querySelectorAll('.seg button[data-v]').forEach(b=>b.onclick=()=>{ document.querySelectorAll('.seg button[data-v]').forEach(x=>x.classList.remove('on')); b.classList.add('on'); const f=$('#preview'); if(b.dataset.v==='mobile'){ f.style.width='390px'; f.style.margin='0 auto'; f.style.borderLeft=f.style.borderRight='1px solid #ddd'; } else { f.style.width='100%'; f.style.border='0'; } });
@@ -141,13 +150,24 @@ async function poll(id){ try{ const r=await fetch(`${API}/jobs/${id}`); if(!r.ok
     if(job.status==='done'){ if(sw) sw.stop(); showResult(job); return; } if(job.status==='failed'){ if(sw) sw.stop(); const message=String(job.error||'unknown'); const providerUnavailable=/your credit balance is too low to access the anthropic api/i.test(message) || message==='The AI service is temporarily unavailable. Please try again later.'; $('#err').textContent=providerUnavailable?'The AI service is temporarily unavailable. Please try again later.':'Something broke: '+message+'. Try again or send us the URL.'; $('#h').textContent='That one didn’t go through.'; return; }
   }catch(e){ $('#err').textContent=e.message; } setTimeout(()=>poll(id), 3000); }
 function briefData(){ const f=$('#brief'); const d={keepFont:f.keepFont.checked,keepColours:f.keepColours.checked,keepLogo:f.keepLogo.checked,kind:(f.querySelector('[name=kind]:checked')||{}).value||'',keep:f.keep.value.trim(),goal:f.goal.value.trim()}; return d; }
-async function launch(url){ $('#brief').classList.add('hide'); $('#h').textContent='Reading your site…'; sw=Swarm2.mount($('#frame'),{count:9,shape:'firefly'});
-  const r=await fetch(`${API}/jobs`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url,options:briefData()})}); const j=await r.json(); if(!r.ok){ $('#err').textContent=j.error||'could not start'; return; }
-  history.replaceState(null,'',`/app?url=${encodeURIComponent(url)}&job=${j.id}`); poll(j.id); }
+async function launch(url){
+  const button=$('#go'); if(button.disabled) return; button.disabled=true; $('#err').textContent='';
+  $('#brief').classList.add('hide'); $('#h').textContent='Reading your site…';
+  try {
+    sw=Swarm2.mount($('#frame'),{count:9,shape:'character'});
+    const r=await fetch(`${API}/jobs`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url,options:briefData()})});
+    const j=await r.json(); if(!r.ok || !j.id) throw new Error('Could not start preview');
+    history.replaceState(null,'',`/app?url=${encodeURIComponent(url)}&job=${j.id}`); poll(j.id);
+  } catch(e) {
+    if(sw){sw.stop();sw=null} $('#brief').classList.remove('hide'); $('#h').textContent='Set the direction.';
+    $('#err').textContent='We couldn’t start your preview. Check your connection and try again.';
+    setTimeout(()=>{button.disabled=false},750);
+  }
+}
 async function start(){ let id=qs.get('job'); const url=qs.get('url'); $('#urlLab').textContent=url?('https://'+url.replace(/^https?:\/\//,'')):'';
-  if(id){ $('#brief').classList.add('hide'); sw=Swarm2.mount($('#frame'),{count:9,shape:'firefly'}); poll(id); return; }
+  if(id){ $('#brief').classList.add('hide'); sw=Swarm2.mount($('#frame'),{count:9,shape:'character'}); poll(id); return; }
   if(!url){ location.href='/'; return; }
-  $('#h').textContent='Before the swarm starts…'; $('#brief').querySelector('[name=kind][value=""]').checked=true; $('#go').onclick=()=>launch(url); }
+  $('#h').textContent='Set the direction.'; $('#brief').querySelector('[name=kind][value=""]').checked=true; $('#go').onclick=()=>launch(url); }
 start();
 </script>
 </body></html>
