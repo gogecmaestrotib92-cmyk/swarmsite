@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.join(ROOT, 'lib/colour'))
 from palette import palette as mkpal
 sys.path.insert(0, os.path.join(ROOT, 'lib'))
 from visual_quality import empty_visual
-from colour_policy import resolve as resolve_colours
+from colour_policy import resolve as resolve_colours, norm as normalise_colour, contrast as colour_contrast
 
 e = lambda s: H.escape(str(s if s is not None else ''), quote=True)
 
@@ -38,6 +38,60 @@ def font_for(name, fallback=('Instrument Sans', 'sans')):
 
 def lum(h):
     h = (h or '#888888').lstrip('#'); r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16); return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255
+
+def dark_logo_colours(data):
+    """Recognise simple, opaque dark marks without changing their pixels.
+
+    Unknown SVG features, gradients and mixed/light logos deliberately opt out.
+    """
+    if not isinstance(data, str) or len(data) > 1_500_000 or ';base64,' not in data: return None
+    header, encoded = data.split(';base64,', 1)
+    try: raw = base64.b64decode(encoded, validate=True)
+    except Exception: return None
+    colours = set()
+    if header.lower() == 'data:image/svg+xml':
+        if re.search(br'<!DOCTYPE|<!ENTITY', raw, re.I): return None
+        try:
+            from xml.etree import ElementTree as ET
+            root = ET.fromstring(raw)
+            shapes = {'path', 'rect', 'circle', 'ellipse', 'polygon', 'polyline', 'line'}
+            for count, el in enumerate(root.iter()):
+                if count >= 1000: return None
+                tag = el.tag.split('}')[-1].lower()
+                if tag not in shapes | {'svg', 'g'} or any(k in el.attrib for k in ('style', 'class', 'filter', 'mask', 'opacity', 'fill-opacity', 'stroke-opacity')): return None
+                # Inherited paint can add a light fill or stroke not visible
+                # in a child's own attributes. Only classify explicit shapes.
+                if tag == 'g' and any(k in el.attrib for k in ('fill', 'stroke')): return None
+                if tag == 'svg' and el.attrib.get('stroke', 'none').lower() != 'none': return None
+                if tag not in shapes: continue
+                if 'fill' not in el.attrib: return None
+                values = [el.attrib[k] for k in ('fill', 'stroke') if k in el.attrib and el.attrib[k].lower() != 'none']
+                if not values: return None
+                for value in values:
+                    colour = normalise_colour({'black': '#000000', 'white': '#FFFFFF'}.get(value.lower(), value))
+                    if not colour: return None
+                    colours.add(colour)
+        except Exception: return None
+    elif header.lower() in ('data:image/png', 'data:image/webp', 'data:image/jpeg'):
+        try:
+            from PIL import Image
+            import io
+            with Image.open(io.BytesIO(raw)) as source:
+                if source.width * source.height > 4_000_000: return None
+                pixels = source.convert('RGBA').getdata()
+                seen = set()
+                for r, g, b, alpha in pixels:
+                    if alpha > 0:
+                        rgb = (r, g, b)
+                        if rgb in seen: continue
+                        seen.add(rgb)
+                        colour = f'#{r:02X}{g:02X}{b:02X}'
+                        if colour_contrast(colour, '#FFFFFF') < 4.5: return None
+                        colours.add(colour)
+                        if len(colours) > 128: return None
+        except Exception: return None
+    else: return None
+    return colours if colours and all(colour_contrast(c, '#FFFFFF') >= 4.5 for c in colours) else None
 
 def build(slug_dir, bp_id, out_path=None):
     try:
@@ -1252,13 +1306,25 @@ def build(slug_dir, bp_id, out_path=None):
 
     # ---- logo ----
     logo = (assets.get('logo') or {}).get('data', '')
-    mark = f'<img class="logo" src="{logo}" alt="{e(b["name"])}">' if logo and brief.get('keepLogo', True) else f'<span class="wordmark">{e(b["name"])}</span>'
+    logo_colours = dark_logo_colours(logo) if logo and brief.get('keepLogo', True) else None
+    paper_colour = normalise_colour(paper)
+    # The solid nav is 86% paper over whatever is behind it. For a dark logo,
+    # black underneath is the worst case and may be darker than paper itself.
+    darkest_nav = ('#' + ''.join(f'{round(int(paper_colour[i:i + 2], 16) * .86):02X}' for i in (1, 3, 5))) if paper_colour else None
+    plate_solid = bool(logo_colours and paper_colour and any(min(colour_contrast(c, paper_colour), colour_contrast(c, darkest_nav)) < 3 for c in logo_colours))
+    logo_class = (' logo-plate-photo' if logo_colours else '') + (' logo-plate-solid' if plate_solid else '')
+    mark = f'<span class="logo-surface"><img class="logo" src="{logo}" alt="{e(b["name"])}"></span>' if logo and brief.get('keepLogo', True) else f'<span class="wordmark">{e(b["name"])}</span>'
     nav_links = ''.join(f'<a href="{e(hr)}">{e(l)}</a>' for hr, l in d.get('nav', {}).get('links', [])[:4])
     moves = open(os.path.join(ROOT, 'lib/motion/moves.js')).read(); swarm = open(os.path.join(ROOT, 'lib/motion/swarm.js')).read()
     frame = G.get('frame') or G.get('gutter') or 40; container = G.get('container') or 1300; radius = M.get('radius', 0)
     palette_css = (f"--button:{policy['button']};--button-ink:{policy['button_ink']};--alt:{policy['alt']};--alt-ink:{policy['alt_ink']};--on-accent:{policy['accent_ink']};--alt-button:{policy['alt_button']};--alt-button-ink:{policy['alt_button_ink']};--accent-button:{policy['accent_button']};--accent-button-ink:{policy['accent_button_ink']};" if policy else '')
     button_bg = 'var(--button)' if policy else f"var(--{'accent' if lum(accent) < .8 and abs(lum(accent) - lum(ink)) > .18 else 'ink'})"
     button_fg = ('var(--button-ink)' if policy else ('var(--paper)' if not (lum(accent) < .8 and abs(lum(accent) - lum(ink)) > .18) else ('#111' if lum(accent) > .55 else '#fff')))
+    if not policy:
+        bg = normalise_colour(accent if button_bg == 'var(--accent)' else ink)
+        fg = normalise_colour(paper if button_fg == 'var(--paper)' else button_fg)
+        if bg and fg and colour_contrast(bg, fg) < 4.5:
+            button_fg = max(('#000000', '#FFFFFF'), key=lambda colour: colour_contrast(bg, colour))
     css = f'''
 :root{{--paper:{paper};--ink:{ink};--accent:{accent};{palette_css}--on-photo:{on_photo};--band-paper:{band_paper};--band-ink:{band_ink};--line:color-mix(in srgb,var(--ink) 16%,transparent);--muted:{policy['muted'] if policy else 'color-mix(in srgb,var(--ink) 62%,transparent)'};
 --display:{display_stack};--body:'{body_name}',system-ui,sans-serif;--label:'{label_name}',ui-monospace,monospace;
@@ -1279,7 +1345,7 @@ img,video{{display:block;max-width:100%}}a{{color:inherit;text-decoration:none}}
 .btn.ghost{{background:transparent;color:var(--ink);border-color:var(--ink)}}{' .band-alt .btn.ghost{color:var(--alt-ink);border-color:var(--alt-ink)} .band-accent .btn.ghost{color:var(--on-accent);border-color:var(--on-accent)}' if policy else ''}{' .band-alt .btn:not(.ghost):not(.light){background:var(--alt-button);color:var(--alt-button-ink)} .band-accent .btn:not(.ghost):not(.light){background:var(--accent-button);color:var(--accent-button-ink)}' if policy else ''}.btn.light{{color:var(--on-photo);border-color:var(--on-photo);background:transparent}}.btn.light:not(.ghost){{background:var(--on-photo);color:#111;border-color:var(--on-photo)}}.btn:active{{transform:scale(.97)}}.btn .ar{{transition:transform var(--fast) var(--ease)}}.btn:hover .ar{{transform:translateX(4px)}}
 .section-extras{{position:relative;z-index:1;margin-top:28px;overflow-wrap:anywhere}}.section-note{{max-width:var(--body-max);line-height:1.5}}.section-actions{{display:flex;flex-wrap:wrap;gap:12px}}.section-note+.section-actions{{margin-top:16px}}.section-actions .btn{{max-width:100%;overflow-wrap:anywhere}}.overlay .section-extras{{color:#fff;padding-bottom:clamp(40px,6vw,80px)}}.overlay .section-actions .btn,.band-accent .section-actions .btn{{background:#fff;color:#111}}
 .source-actions{{position:relative;z-index:1;margin-top:28px;overflow-wrap:anywhere}}.overlay .source-actions{{color:#fff;padding-bottom:clamp(40px,6vw,80px)}}.source-actions>div{{padding-top:16px;border-top:1px solid currentColor}}.source-actions>div+div{{margin-top:20px}}.source-actions-label{{font-size:max(12px,var(--lab-px));opacity:{'1' if policy else '.75'}}}.source-actions ul{{list-style:none;display:flex;flex-wrap:wrap;gap:4px 20px;margin-top:8px}}.source-actions a{{display:inline-flex;align-items:center;min-height:40px;text-decoration:underline;text-underline-offset:.2em;overflow-wrap:anywhere}}
-.nav{{position:fixed;inset:0 0 auto 0;z-index:50;padding:18px 0;transition:background var(--slow),color var(--slow)}}.nav .wrap{{display:flex;align-items:center;justify-content:space-between;gap:24px}}.nav .links{{display:flex;gap:28px;font-size:15px}}.nav.solid{{background:color-mix(in srgb,var(--paper) 86%,transparent);color:var(--ink);backdrop-filter:blur(14px)}}.nav.solid .btn{{background:var(--ink);color:var(--paper);border-color:var(--ink)}}.nav.on-photo:not(.solid){{color:var(--on-photo)}}.nav.on-photo:not(.solid) .btn{{background:var(--on-photo);color:#111}}.nav .logo{{height:{min(56, max(28, (bp.get('nav') or {}).get('h', 56) - 20))}px;width:auto}}.nav .wordmark{{font-family:var(--display);font-size:22px}}
+.nav{{position:fixed;inset:0 0 auto 0;z-index:50;padding:18px 0;transition:background var(--slow),color var(--slow)}}.nav .wrap{{display:flex;align-items:center;justify-content:space-between;gap:24px}}.nav .links{{display:flex;gap:28px;font-size:15px}}.nav.solid{{background:color-mix(in srgb,var(--paper) 86%,transparent);color:var(--ink);backdrop-filter:blur(14px)}}.nav.solid .btn{{background:var(--ink);color:var(--paper);border-color:var(--ink)}}.nav.on-photo:not(.solid){{color:var(--on-photo)}}.nav.on-photo:not(.solid) .btn{{background:var(--on-photo);color:#111}}.nav .logo-surface{{display:inline-flex;align-items:center;max-width:100%;box-sizing:border-box}}.nav.logo-plate-solid:not(.on-photo) .logo-surface,.nav.logo-plate-solid.solid .logo-surface,.nav.logo-plate-photo.on-photo:not(.solid) .logo-surface{{background:#fff;padding:4px 8px;border-radius:6px}}.nav .logo{{height:{min(56, max(28, (bp.get('nav') or {}).get('h', 56) - 20))}px;width:auto;max-width:100%}}.nav .wordmark{{font-family:var(--display);font-size:22px}}
 .hero{{position:relative;display:grid;align-content:end;overflow:hidden;padding-top:120px}}.hero .media{{position:absolute;inset:0;z-index:0;background:var(--ink)}}.hero .media img,.hero .media video{{width:100%;height:100%;object-fit:cover}}.hero.has-media .media::after{{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.46),transparent 75%),linear-gradient(180deg,rgba(0,0,0,.42),rgba(0,0,0,.22) 40%,rgba(0,0,0,.58))}}
 .hero .hero-in{{position:relative;z-index:1;padding-bottom:clamp(40px,6vw,80px)}}.hero .h1{{font-size:var(--hero-size);overflow-wrap:anywhere}}@media(max-width:600px){{.hero .h1{{font-size:min(var(--hero-size),16vw)}}}}.hero.has-media{{color:var(--on-photo)}}.hero.has-media .cat .lab{{color:var(--on-photo);font-size:max(13px,var(--lab-px))}}.hero.has-media .h1,.hero.has-media .lede,.hero.has-media .cat{{text-shadow:0 1px 8px rgba(0,0,0,.55)}}.hero.has-media .btn.ghost{{color:var(--on-photo);border-color:var(--on-photo)}}.hero .cat{{display:flex;gap:26px;flex-wrap:wrap;margin-bottom:22px}}.hero .al-center{{text-align:center;justify-items:center;display:grid}}.hero .place-start{{align-self:start;padding-top:40px}}.hero .ctas{{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px}}
 .hero.shot{{align-content:start;padding-top:104px;min-height:auto!important}}.hero.shot .hero-in{{padding-bottom:0}}.hero.shot .cat{{margin-bottom:14px}}.hero.shot .lede{{margin-top:14px}}.hero.shot .ctas{{margin-top:20px}}.hero .shotwrap{{padding-top:clamp(22px,3vw,36px);padding-bottom:0}}.shotframe{{border-radius:max(12px,var(--radius)) max(12px,var(--radius)) 0 0;overflow:hidden;border:1px solid var(--line);border-bottom:0;box-shadow:0 30px 80px color-mix(in srgb,var(--ink) 14%,transparent)}}.shotframe img{{width:100%;max-height:72vh;object-fit:cover;object-position:top center}}
@@ -1434,7 +1500,7 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
     lang_attr = f' lang="{e(language)}"' if language else ''
     html = f'''<!DOCTYPE html><html{lang_attr}><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{e(page_title)}</title>{description_tag}{fonts_link}<style>{css}</style></head>
 <body>
-<nav class="nav{' solid' if not sec_media(bp['sections'][0]) else ''}" id="nav" data-nav><div class="wrap"><a href="#top">{mark}</a><div class="links">{nav_links}</div>{cta_html(bool(sec_media(bp['sections'][0])))}</div></nav>
+<nav class="nav{' solid' if not sec_media(bp['sections'][0]) else ''}{logo_class}" id="nav" data-nav><div class="wrap"><a href="#top">{mark}</a><div class="links">{nav_links}</div>{cta_html(bool(sec_media(bp['sections'][0])))}</div></nav>
 {chr(10).join(out)}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>{'<script src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js"></script>' if MO.get('smooth') else ''}
 <script>{moves}</script><script>{swarm}</script>

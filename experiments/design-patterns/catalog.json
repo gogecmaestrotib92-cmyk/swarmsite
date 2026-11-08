@@ -81,7 +81,7 @@
     }
   ],
   "engine_file_sha256": {
-    "lib/render/render_bp.py": "c7ddb817d9af4a8b732874f282cae252d76f86ac410e632a16746534045906ab",
+    "lib/render/render_bp.py": "78b1b85686cc88c5c94814abf4899c409259e2a9ae0020d5ca954052c6cfaaeb",
     "lib/templates/recipes.py": "e9ecebe227c13ee5852d8930fef2f037561fed09a7142ce48b246d1e306dcfea",
     "lib/visual_quality.py": "66a17d3f757a17f8a71b1f32307e4aaaf59c32c4f6d07245614e3bf66e33a5b6"
   }
