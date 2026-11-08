@@ -18,7 +18,7 @@ export async function prepareAlternative({dir,root,primary,alternate,manifest,ou
   if(!same(snapshot(tmp,root,primary).inputs,manifest.fingerprints.inputs))throw new Error('variant snapshot differs from selected inputs');
   verifySelected({dir,root,bp:primary,manifest,out});
   const result=path.join(tmp,'alternative.html');
-  await run('python3',['experiments/design-patterns/verify_selected.py',tmp,alternate],{timeoutMs:60000});
+  if(process.env.SWARM_VERIFIED_PATTERNS==='1')await run('python3',['experiments/design-patterns/verify_selected.py',tmp,alternate],{timeoutMs:60000});
   await run('python3',['lib/render/render_bp.py',tmp,alternate,result],{timeoutMs:120000});
   if(hash(altPath)!==altVersion)throw new Error('alternative blueprint changed during render');
   verifySelected({dir,root,bp:primary,manifest,out});

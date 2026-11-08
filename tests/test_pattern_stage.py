@@ -14,6 +14,7 @@ import pattern_stage
 sys.path.insert(0, str(ROOT / 'experiments' / 'design-patterns'))
 import validate_transition
 import verify_selected
+import run
 
 
 def fingerprint(directory, blueprint):
@@ -129,5 +130,16 @@ class PatternStageTest(unittest.TestCase):
         for beat in direction['beats']: beat['ui'].pop('move', None)
         (self.dir / 'direction.json').write_text(json.dumps(direction))
         self.assertTrue(verify_selected.verify(self.dir, 'butter'))
+
+    def test_automatic_selection_is_opt_in_until_quality_gate(self):
+        with patch.dict('os.environ', {'SWARM_VERIFIED_PATTERNS': ''}), \
+             patch.object(run.A, 'review_ledger_leads', return_value=0), \
+             patch.object(run.Patterns, 'apply_verified_patterns', return_value={'choices': [], 'reason': 'checked'}) as select, \
+             patch.object(run, 'render', return_value='rendered'):
+            self.assertEqual(run.checked_render(str(self.dir), 'butter', 'out'), 'rendered')
+            select.assert_not_called()
+            with patch.dict('os.environ', {'SWARM_VERIFIED_PATTERNS': '1'}):
+                self.assertEqual(run.checked_render(str(self.dir), 'butter', 'out'), 'rendered')
+                select.assert_called_once()
 
 if __name__ == '__main__': unittest.main()

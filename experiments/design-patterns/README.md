@@ -2,11 +2,11 @@
 
 The optional `choose_patterns.py` calls a model, but does not change the supplied
 direction, deploy or approve a design. The candidate is the tuple `(pattern ID,
-version, beat ID, blueprint ID)`. The swarm's `pattern_stage.py` uses this
-selector before rendering section moves, checks the full transition against
-the previous render, and applies only validated changes. If selection fails it
-tries renderer defaults, which must pass the same transition check. Hero moves
-are not covered by this catalog. Structural validation is not a quality score.
+version, beat ID, blueprint ID)`. The swarm's `pattern_stage.py` can use this
+selector before rendering section moves when `SWARM_VERIFIED_PATTERNS=1` is set.
+It checks the transition against the previous render and applies validated
+changes. It is opt-in because it can produce a worse-looking page; there is no
+visual quality gate yet. Hero moves are not covered by this catalog.
 
 `catalog.json` describes conservative subsets of existing renderer forms:
 `story-assigned-product-ui@1`, `marquee-short-facts@1`, `butter-editorial-product@1`, `pinned-text-steps@1`, `type-wall-quote@1`, `sticky-assigned-visual@1`, and three ledger layouts (`ledger-cards`, `ledger-story`, `ledger-sticky`). The Butter editorial entry allows up to six features and verifies that the renderer actually selected its specific editorial component. The pinned and quote patterns are limited to text-only sections without extra actions; ledger checks retain each item's name, price, extra fields, links and existing visuals. The actual render still has to pass. Each declares allowed

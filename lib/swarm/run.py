@@ -75,8 +75,11 @@ def safe(name, fn, *a):
 
 def checked_render(slug_dir, bp, out):
     safe('Visual check', A.review_ledger_leads, slug_dir)
-    selection = Patterns.apply_verified_patterns(slug_dir, bp, fingerprints)
-    ev('Patterns', f"{len(selection['choices'])} verified section move(s) · {selection['reason']}")
+    # The structural selector can still make a weaker page. Keep it opt-in
+    # until its candidate can be compared with the original for visual quality.
+    if os.environ.get('SWARM_VERIFIED_PATTERNS') == '1':
+        selection = Patterns.apply_verified_patterns(slug_dir, bp, fingerprints)
+        ev('Patterns', f"{len(selection['choices'])} verified section move(s) · {selection['reason']}")
     return render(slug_dir, bp, out)
 
 def snapshot_shots(slug_dir, snapshot_dir):
