@@ -14,6 +14,8 @@ for (const scenario of ['provider-credit', 'unrelated']) {
     : 'capture failed because the source page timed out';
   const context = {
     process_: async () => { throw new Error(raw); },
+    drainEvents: async () => {},
+    updateWithRetry: async (_job, data) => { updates.push(data); },
     console: { log() {}, warn() {}, error(...args) { errors.push(args); } },
     sb: { from() { return { update(value) { updates.push(value); return { async eq() {} }; } }; } },
     uploadArtefacts: async () => true,

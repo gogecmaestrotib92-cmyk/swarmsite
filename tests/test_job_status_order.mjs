@@ -45,6 +45,10 @@ try {
       fs, path, process, ROOT: process.cwd(), OUT: base, slugOf, run,
       BP: { software: ['butter', 'cerebrium'] }, SELF: 'https://example.test',
       setStep: async () => {}, emit: async () => {},
+      // Simulate a final progress update that was still in flight when the
+      // upload began; the published result must include it.
+      drainEvents: async job => { job._result = { events: [{ text: 'last progress' }] }; },
+      updateWithRetry: async (_job, data) => { if (data.status === 'done') { events.push('status-done'); assert.equal(data.result.coverage.scope, 'single_page_preview'); assert.equal(data.result.coverage.sections[0].status, 'needs_review'); assert.equal(data.result.events[0].text, 'last progress'); } },
       eventsCapture: () => [], eventsDiagnose: () => [], eventsDirect: () => [], eventsRender: () => [], eventsQA: () => [],
       upload: async local => { assert.ok(fs.existsSync(local)); return 'https://example.test/preview'; },
       uploadArtefacts: async (_job, dir) => {

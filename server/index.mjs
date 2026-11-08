@@ -60,9 +60,33 @@ const run = (cmd, args, opts = {}) => new Promise((resolve, reject) => {
   p.on('close', c => { clearTimeout(t); c === 0 ? resolve(out) : reject(new Error(`${cmd} ${args[0]} exit ${c}: ${err.slice(-800)}`)); });
 });
 const slugOf = url => url.replace(/^https?:\/\//, '').replace(/[^a-z0-9.-]+/gi, '_').replace(/_+$/, '').toLowerCase();
+async function updateRunning(job, patch) {
+  // A job may have been failed by a different worker during a deployment.
+  // Never let a late update bring a terminal job back to life or overwrite it.
+  const { data, error } = await sb.from('jobs').update(patch).eq('id', job.id).eq('status', 'running').select('id').maybeSingle();
+  if (error) {
+    const failure = new Error('job update failed: ' + (error.message || 'database error'));
+    // These PostgreSQL errors explicitly reject/abort the transaction. A
+    // network failure has an unknown outcome and must not be retried here.
+    failure.retryableTransaction = ['40001', '40P01', '55P03', '57014', '53300', '57P03'].includes(String(error.code || '').toUpperCase());
+    throw failure;
+  }
+  if (!data) throw new Error('job is no longer running');
+}
+async function updateWithRetry(job, patch) {
+  // Retry only transactions explicitly rejected by PostgreSQL. The same
+  // immutable patch is sent again; unknown network outcomes fail closed.
+  for (let attempt = 0; ; attempt++) {
+    try { await updateRunning(job, patch); return; }
+    catch (error) {
+      if (!error.retryableTransaction || attempt >= 2) throw error;
+      await new Promise(resolve => setTimeout(resolve, 100 * (attempt + 1)));
+    }
+  }
+}
 async function setStep(job, id, status, note) {
   const steps = job.steps.map(s => s.id === id ? { ...s, status, at: new Date().toISOString(), note } : s); job.steps = steps;
-  await sb.from('jobs').update({ step: id, steps, status: 'running' }).eq('id', job.id);
+  await updateWithRetry(job, { step: id, steps });
 }
 async function upload(local, remote, type) {
   const buf = fs.readFileSync(local); const { error } = await sb.storage.from(BUCKET).upload(remote, buf, { contentType: type, upsert: true }); if (error) throw error;
@@ -71,10 +95,20 @@ async function upload(local, remote, type) {
 
 // ---- real events: what each step actually found / decided, with page rects where there are any ----
 const J = f => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return null; } };
-async function emit(job, evs) {
-  if (!evs.length) return; job._result = job._result || {}; job._result.events = (job._result.events || []).concat(evs.map(e => ({ ...e, at: Date.now() })));
-  await sb.from('jobs').update({ result: job._result }).eq('id', job.id);
+function emit(job, evs) {
+  if (!evs.length) return Promise.resolve();
+  // stdout event callbacks can arrive while earlier database writes are
+  // pending. Queue them in order and retain errors for the caller to await.
+  const next = (job._eventChain || Promise.resolve()).then(async () => {
+    job._result = job._result || {};
+    job._result.events = (job._result.events || []).concat(evs.map(e => ({ ...e, at: Date.now() })));
+    await updateWithRetry(job, { result: job._result });
+  });
+  job._eventChain = next;
+  next.catch(() => {}); // onLine callbacks are not awaited by the child process.
+  return next;
 }
+async function drainEvents(job) { if (job._eventChain) await job._eventChain; }
 function eventsCapture(dir) {
   const g = J(path.join(dir, 'geometry.json')) || {}; const inv = J(path.join(dir, 'inventory.json')) || {}; const as = J(path.join(dir, 'assets.json')) || {}; const ev = [];
   if (g.logo) ev.push({ role: 'Type', text: 'logo found', rect: g.logo });
@@ -111,6 +145,8 @@ const BP = { software: ['butter', 'cerebrium', 'deepbook'], place: ['tengile', '
 async function runClaimed(job) {
   try { await process_(job); console.log('done', job.id); }
   catch (e) {
+    // No in-flight progress write may arrive after the terminal update.
+    try { await drainEvents(job); } catch {}
     const message = String(e?.message || 'Unknown error');
     // Anthropic includes a Python traceback and request details in this
     // confirmed billing error. Keep an actionable owner diagnostic while
@@ -118,10 +154,16 @@ async function runClaimed(job) {
     const noAnthropicCredit = /your credit balance is too low to access the anthropic api/i.test(message);
     const publicError = noAnthropicCredit ? 'The AI service is temporarily unavailable. Please try again later.' : message.slice(0, 2000);
     console.error('failed', job.id, noAnthropicCredit ? 'Anthropic API credit balance is too low; check provider billing.' : message);
-    await sb.from('jobs').update({ status: 'failed', error: publicError }).eq('id', job.id);
-    try { if (job._dir) job._artifactsUploaded = await uploadArtefacts(job, job._dir); } catch {}
+    let markedFailed = false;
+    try { await updateWithRetry(job, { status: 'failed', error: publicError }); markedFailed = true; job._terminalPersisted = true; }
+    catch (updateError) { console.error('failed status update', job.id, updateError.message); }
+    // If another actor already finalized this job, do not overwrite its
+    // artifacts with files from this stale attempt.
+    try { if (markedFailed && job._dir) job._artifactsUploaded = await uploadArtefacts(job, job._dir); } catch {}
   } finally {
-    if (job._jobRoot && job._artifactsUploaded) {
+    // Uploading artifacts is not enough: keep the local files until a terminal
+    // status has also been confirmed by the database.
+    if (job._jobRoot && job._artifactsUploaded && job._terminalPersisted) {
       try { fs.rmSync(job._jobRoot, { recursive: true, force: true }); }
       catch (e) { console.warn('job cleanup', job.id, e.message); }
     }
@@ -138,7 +180,7 @@ async function process_(job) {
   await timed('capture', async () => {
     try { await run('node', ['lib/pipeline/capture.mjs', job.url, '--out', jobRoot, '--chrome', process.env.CHROME_PATH || ''].filter(Boolean), { timeoutMs: 180000 }); }
     catch (e) { const bp = path.join(dir, 'blocked.json'); if (fs.existsSync(bp)) throw new Error(JSON.parse(fs.readFileSync(bp, 'utf8')).reason + ' Try the www/non-www address, or a page that is not behind the check.'); throw e; }
-    if (fs.existsSync(path.join(dir, 'before-hero.jpg'))) { const beforeUrl = await upload(path.join(dir, 'before-hero.jpg'), `${job.id}/before.jpg`, 'image/jpeg'); job._result = { beforeUrl }; if (fs.existsSync(path.join(dir, 'before-full.jpg'))) { job._result.beforeFullUrl = await upload(path.join(dir, 'before-full.jpg'), `${job.id}/before-full.jpg`, 'image/jpeg'); const g = J(path.join(dir, 'geometry.json')); job._result.pageHeight = Math.min(7000, g?.pageHeight || 900); } await sb.from('jobs').update({ result: job._result }).eq('id', job.id); }
+    if (fs.existsSync(path.join(dir, 'before-hero.jpg'))) { const beforeUrl = await upload(path.join(dir, 'before-hero.jpg'), `${job.id}/before.jpg`, 'image/jpeg'); job._result = { beforeUrl }; if (fs.existsSync(path.join(dir, 'before-full.jpg'))) { job._result.beforeFullUrl = await upload(path.join(dir, 'before-full.jpg'), `${job.id}/before-full.jpg`, 'image/jpeg'); const g = J(path.join(dir, 'geometry.json')); job._result.pageHeight = Math.min(7000, g?.pageHeight || 900); } await updateWithRetry(job, { result: job._result }); }
     await emit(job, eventsCapture(dir));
   });
   await timed('diagnose', async () => { const out = await run('python3', ['-I', 'lib/audit/diagnose.py', path.join(dir, 'inventory.json')]); fs.writeFileSync(path.join(dir, 'audit.json'), out); }); await emit(job, eventsDiagnose(dir));
@@ -165,6 +207,8 @@ async function process_(job) {
     else throw new Error('no blueprint rendered');
   }); await emit(job, eventsRender(dir)); if (job._bps?.length) await emit(job, job._bps.map(b => ({ role: 'Concept', text: `blueprint variant: ${b}` })));
   let qa = null; await timed('qa', async () => { try { const o = await run('python3', ['lib/qa/check.py', path.join(dir, 'index.html')], { timeoutMs: 240000 }); qa = o.split('\n').filter(l => /QA score|\[(high|med|low)/.test(l)).join('\n'); } catch (e) { qa = 'qa skipped: ' + e.message.slice(0, 200); } }); await emit(job, eventsQA(qa));
+  // Snapshot the result only after all previously queued progress is present.
+  await drainEvents(job);
   const result = await timed('upload', async () => {
     await upload(path.join(dir, 'index.html'), `${job.id}/index.html`, 'text/html'); const previewUrl = `${SELF}/p/${job.id}`;
     for (const bp of (job._bps || [])) { try { await upload(path.join(dir, `bp-${bp}.html`), `${job.id}/bp-${bp}.html`, 'text/html'); } catch (e) { console.warn('bp upload', e.message); } }
@@ -173,7 +217,9 @@ async function process_(job) {
     return { ...(job._result || {}), previewUrl, beforeUrl, qa, coverage: J(path.join(dir, 'coverage.json')), blueprints: job._bps || [], critic: job._critic || null, direction: { kind: direction.kind, concept: direction.concept, voice: direction.voice, brand: direction.brand, beats: direction.beats.map(b => b.type), audit_notes: direction.audit_notes }, seconds: Math.round((Date.now() - t0) / 1000) };
   });
   job._artifactsUploaded = await uploadArtefacts(job, dir);
-  await sb.from('jobs').update({ status: 'done', step: 'done', result, slug }).eq('id', job.id);
+  await drainEvents(job);
+  await updateWithRetry(job, { status: 'done', step: 'done', result, slug });
+  job._terminalPersisted = true;
 }
 async function loop() {
   // a deploy restarts this worker: jobs it was running are orphaned. Say so instead of spinning forever.
