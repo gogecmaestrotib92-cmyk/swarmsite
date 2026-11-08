@@ -39,6 +39,13 @@ try {
   assert.match(html, /<section[^>]+id="customer"[^>]*>[\s\S]*?Read stories/);
   html = render([{ id: 'form', type: 'form', h2: 'Contact', cta: 'Contact us', source_sections: source }], 'butter');
   assert.match(html, /<section[^>]+id="form"[^>]*>[\s\S]*?Read stories/);
+  // A form renders only its primary CTA. Its secondary CTA must not cause
+  // the same source action to be falsely deduplicated as already visible.
+  const inv = JSON.parse(fs.readFileSync(path.join(dir, 'inventory.json'), 'utf8'));
+  inv.actions = [{ text: 'Read stories', href: 'https://source.example/stories' }];
+  fs.writeFileSync(path.join(dir, 'inventory.json'), JSON.stringify(inv));
+  html = render([{ id: 'form', type: 'form', h2: 'Contact', cta: 'Contact us', cta2: 'Read stories', cta2_href: 'https://source.example/stories', source_sections: source }], 'butter');
+  assert.match(html, /<section[^>]+id="form"[^>]*>[\s\S]*?<a href="https:\/\/source\.example\/stories"[^>]*>Read stories/);
   render([{ id: 'sticky-test', type: 'features', h2: 'Our steps', features: [
     { title: 'First', body: 'Hello' }, { title: 'Second', body: 'World' }, { title: 'Third', body: 'Yes' },
   ], source_sections: source, ui: { move: 'pinned-sequence' } }], 'butter');

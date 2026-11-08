@@ -225,7 +225,10 @@ def build(slug_dir, bp_id, out_path=None):
                     label = re.sub(r'\s*→\s*$', '', ' '.join(''.join(self.open[1]).split())).casefold()
                     self.pairs.add((self.open[0], label)); self.open = None
         anchors = Anchors(); anchors.feed(rendered)
-        for key in ('cta', 'cta2'):
+        # These beats render their own actions; only deduplicate against the
+        # anchors actually present above. Other beats get both actions from
+        # section_extras after this function returns.
+        for key in (() if bt.get('type') in ('ledger', 'form') else ('cta', 'cta2')):
             label = bt.get(key)
             url = action_url(label, bt.get(key + '_href'), include_forms=True) if label else ''
             if url: anchors.pairs.add((url, ' '.join(str(label).split()).casefold()))
