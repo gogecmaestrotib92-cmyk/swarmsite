@@ -1202,6 +1202,17 @@ def build(slug_dir, bp_id, out_path=None):
         return f'<section class="sec twocol band-{band_of(sec, bt)}{" compact" if (bt.get("ui") or {}).get("compact") else ""}" id="{e(bt["id"])}"><div class="wrap">{ghead(sec, bt)}{lead}<div class="cols" style="--n:{len(cols_)}">{inner}</div></div></section>'
 
     cta_title_used = []
+    def form_html(bt, label):
+        """A form beat is a form: real input fields. It posts to the source's own form page when we found one, otherwise it is a visible preview
+        (the live build wires it), never a bare link pretending to be a form."""
+        fields = [str(f) for f in ((bt or {}).get('fields') or [])[:6] if str(f).strip()]
+        if not fields: return f'<div class="ctas">{cta_html(label=label, href=contact_target)}</div>'
+        live = contact_target if contact_target and contact_target.startswith('http') else ''
+        attrs = f' action="{e(live)}" method="get" target="_blank" rel="noopener"' if live else ' onsubmit="return false" data-preview="form"'
+        inputs = ''.join(f'<label><span>{e(f)}</span><input name="{e(re.sub(r"[^a-z0-9]+", "_", f.lower()).strip("_") or "field")}" placeholder="{e(f)}"{" type=\"email\"" if re.search(r"e-?mail", f, re.I) else " type=\"tel\"" if re.search(r"tel|phone|mobil", f, re.I) else ""}></label>' for f in fields)
+        lang = str(inventory.get('lang') or '').lower().split('-')[0]
+        note = '' if live else f'<p class="lab form-note">{e({"sr": "Obrazac (pregled)", "hr": "Obrazac (pregled)", "es": "Formulario (vista previa)", "fr": "Formulaire (aperçu)", "de": "Formular (Vorschau)", "it": "Modulo (anteprima)", "pt": "Formulário (pré-visualização)"}.get(lang, "Preview form"))}</p>'
+        return f'<form class="form"{attrs}>{inputs}<button class="btn" type="submit">{e(label or h.get("cta") or "Send")} <span class="ar">→</span></button>{note}</form>'
     def cta(sec, bt=None):
         title = (bt or {}).get('h2') or en.get('tag') or h.get('cta') or b['name']
         cta_title_used.append(title)
@@ -1209,7 +1220,7 @@ def build(slug_dir, bp_id, out_path=None):
         if len(str(title)) <= 35 and len(str(title).split()) <= 6:
             title_style = re.sub(r'font-size:[^;]+', 'font-size:clamp(42px,6vw,88px)', title_style)
         label = (bt or {}).get('cta') or h.get('cta')
-        form = f'<div class="ctas">{cta_html(label=label, href=contact_target)}</div>'
+        form = form_html(bt, label)
         alt = ''.join(f'<span class="lab">{e(a)}</span>' for a in (bt or {}).get('alt', []))
         own = (bt or {}).get('image') or ((bt or {}).get('ui') or {}).get('lead')
         left = [images[own]] if own and images.get(own) and photo_like(images[own], 900) and free_for(images[own], bt) else []
@@ -1358,7 +1369,7 @@ def build(slug_dir, bp_id, out_path=None):
         if ps:
             title = (form_bt or {}).get('h2') or en.get('tag') or h.get('cta') or b['name']; cta_title_used.append(title)
             label = (form_bt or {}).get('cta') or h.get('cta')
-            form = f'<div class="ctas">{cta_html(label=label, href=contact_target)}</div>'
+            form = form_html(form_bt, label)
             alt = ''.join(f'<span class="lab">{e(a)}</span>' for a in (form_bt or {}).get('alt', []))
             photo_title_style = re.sub(r'max-width:[^;]+;?', '', head_style(take('cta')))
             if len(str(title)) <= 35 and len(str(title).split()) <= 6:
@@ -1557,7 +1568,7 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
 .hero.has-media{{background:#111}}.hero.poster .lede,.hero.photo .lede{{max-width:44ch;width:auto}}.hero.poster .hero-in{{display:grid;justify-items:center;text-align:center}}.hero.photo .hero-in,.hero.poster .hero-in{{position:relative;z-index:1}}.hero-in.light .lede{{color:rgba(255,255,255,.86)}}.hero-in.light .btn.ghost{{color:#fff;border-color:rgba(255,255,255,.5)}}.hero.poster .h1{{letter-spacing:-.035em}}
 .hero.inset{{min-height:auto;padding-bottom:0}}.inset-v{{margin:clamp(28px,4vw,56px) 0 0;border-radius:var(--radius);overflow:hidden;aspect-ratio:1.8}}.inset-v img{{width:100%;height:100%;object-fit:cover}}
 .collage .cl{{display:grid;grid-template-columns:1.2fr .8fr;grid-template-rows:auto auto;gap:var(--gutter)}}.collage figure{{margin:0;overflow:hidden;border-radius:var(--radius)}}.collage figure img{{width:100%;height:100%;object-fit:cover}}.collage .c1{{grid-row:1/3;aspect-ratio:.9}}.collage .c2{{aspect-ratio:1.3}}.collage .c3{{aspect-ratio:1.3}}
-.overlay{{position:relative;padding:0;min-height:88svh;background:#121212;color:#fff;display:grid;align-content:end;overflow:hidden}}.overlay.chapter{{min-height:72svh;align-content:center}}.ov-bg{{position:absolute;inset:0;margin:0}}.ov-bg::after{{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.55))}}.ov-bg img{{width:100%;height:100%;object-fit:cover}}.ov-in{{position:relative;z-index:1;padding:clamp(48px,7vw,110px) var(--frame) clamp(40px,6vw,80px);color:#fff}}.ov-in .lede{{color:rgba(255,255,255,.82)}}.ov-in .h2{{color:#fff}}.ov-in.center{{text-align:center;display:grid;justify-items:center}}.rows.light li{{border-color:rgba(255,255,255,.25);color:#fff}}.rows.light li i{{border-color:rgba(255,255,255,.25)}}.cta-ov .ov-in{{padding-block:clamp(48px,7vw,90px);gap:18px}}.cta-ov .alts{{gap:8px 18px}}.cta-ov .alts .lab{{color:rgba(255,255,255,.9);font-size:max(12px,var(--lab-px));line-height:1.4;overflow-wrap:anywhere}}.cta-ov .form{{margin:28px auto 0}}.cta-ov .ov-bg::after{{background:linear-gradient(180deg,rgba(0,0,0,.45),rgba(0,0,0,.78))}}.cta-ov .form input,.cta-ov .form textarea,.cta-ov .form select{{background:rgba(0,0,0,.35);color:#fff;border-color:rgba(255,255,255,.35)}}.cta-ov .form ::placeholder{{color:rgba(255,255,255,.6)}}.overlay.bare::after{{display:none}}
+.overlay{{position:relative;padding:0;min-height:88svh;background:#121212;color:#fff;display:grid;align-content:end;overflow:hidden}}.overlay.chapter{{min-height:72svh;align-content:center}}.ov-bg{{position:absolute;inset:0;margin:0}}.ov-bg::after{{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.55))}}.ov-bg img{{width:100%;height:100%;object-fit:cover}}.ov-in{{position:relative;z-index:1;padding:clamp(48px,7vw,110px) var(--frame) clamp(40px,6vw,80px);color:#fff}}.ov-in .lede{{color:rgba(255,255,255,.82)}}.ov-in .h2{{color:#fff}}.ov-in.center{{text-align:center;display:grid;justify-items:center}}.rows.light li{{border-color:rgba(255,255,255,.25);color:#fff}}.rows.light li i{{border-color:rgba(255,255,255,.25)}}.cta-ov .ov-in{{padding-block:clamp(48px,7vw,90px);gap:18px}}.cta-ov .alts{{gap:8px 18px}}.cta-ov .alts .lab{{color:rgba(255,255,255,.9);font-size:max(12px,var(--lab-px));line-height:1.4;overflow-wrap:anywhere}}.cta-ov .form{{margin:28px auto 0}}.form-note{{grid-column:1/-1;opacity:.6;margin:6px 0 0}}.cta-ov .ov-bg::after{{background:linear-gradient(180deg,rgba(0,0,0,.45),rgba(0,0,0,.78))}}.cta-ov .form input,.cta-ov .form textarea,.cta-ov .form select{{background:rgba(0,0,0,.35);color:#fff;border-color:rgba(255,255,255,.35)}}.cta-ov .form ::placeholder{{color:rgba(255,255,255,.6)}}.overlay.bare::after{{display:none}}
 .qband{{padding:clamp(72px,10vw,150px) 0}}.qband .qb{{font-family:var(--display);font-weight:var(--h2-w);font-size:clamp(28px,4.2vw,64px);line-height:1.12;letter-spacing:-.02em;max-width:24ch}}.qband.center .qb{{margin:0 auto;text-align:center}}.qband.center .who{{text-align:center}}.band-accent{{background:var(--accent);color:{'var(--on-accent)' if policy else '#fff'}{';--muted:'+policy['accent_muted'] if policy else ''}}}.band-accent .lab{{color:{'var(--muted)' if policy else 'rgba(255,255,255,.7)'}}}
 .railsec{{overflow:hidden}}.rail{{overflow-x:auto;scrollbar-width:thin;padding:0 var(--frame)}}.rail-in{{display:flex;gap:var(--gutter);width:max-content}}.rc{{width:min(360px,78vw);display:grid;gap:10px;align-content:start}}.rc figure{{margin:0 0 6px;aspect-ratio:.82;border-radius:var(--radius);overflow:hidden}}.rc figure img{{width:100%;height:100%;object-fit:cover}}.rc p{{color:var(--muted)}}
 .reduced-motion .rail-in{{width:auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}}.reduced-motion .rc{{width:auto}}
