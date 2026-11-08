@@ -32,6 +32,8 @@ try{
  for(const width of [390,1440]){
   const page=await browser.newPage({viewport:{width,height:900},reducedMotion:'reduce'});await page.route(/^https?:\/\//,r=>r.abort());await page.goto(pathToFileURL(dir+'/out.html').href+'?nomotion=1');
   assert.equal(await page.locator('.source-actions').filter({hasText:'Useful section'}).count(),1);
+  assert.equal(await page.locator('.source-actions-label').first().evaluate(el=>getComputedStyle(el).clip),'rect(0px, 0px, 0px, 0px)','provenance stays available to assistive technology without appearing as page copy');
+  assert.ok(await page.getByRole('link',{name:'Read stories'}).isVisible());
   assert.equal(await page.getByRole('link',{name:'Explore apps'}).count(),1,'existing CTA exact pair not duplicated');
   assert.equal(await page.getByRole('link',{name:'Find apps'}).count(),1,'different label, same destination retained');
   assert.equal(await page.getByRole('link',{name:'Read stories'}).getAttribute('href'),'https://source.example/stories');

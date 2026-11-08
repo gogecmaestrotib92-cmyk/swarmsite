@@ -38,7 +38,7 @@ try{
           return {textBackground:cr(color,button),buttonSurround:cr(button,backdrop),textSurround:cr(color,backdrop),opacity:a,bg,color:cs.color};
         },context);
         const b=await ratio('#target .section-actions .btn','#target');assert.ok(b.textBackground>=4.5,`${bp} ${width}: button text ${JSON.stringify(b)}`);assert.ok(b.buttonSurround>=3,`${bp} ${width}: visible button ${JSON.stringify(b)}`);
-        const label=await ratio('#target .source-actions-label','#target');assert.ok(label.textSurround>=4.5,`${bp} ${width}: source label ${JSON.stringify(label)}`);
+        const label=await ratio('#target .source-actions a','#target');assert.ok(label.textSurround>=4.5,`${bp} ${width}: source link ${JSON.stringify(label)}`);
         if(bp==='crav'){
           assert.equal(await section.locator('.stickers').count(),0);assert.match(await section.getAttribute('class'),/stickers/);
           const lede=await ratio('#target .lede','#target');assert.ok(lede.textSurround>=4.5,`${bp} ${width}: sticker lede ${JSON.stringify(lede)}`);

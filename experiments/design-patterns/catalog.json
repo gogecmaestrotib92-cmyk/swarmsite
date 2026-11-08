@@ -123,7 +123,7 @@
     }
   ],
   "engine_file_sha256": {
-    "lib/render/render_bp.py": "1ba6543d476d8704d3a4c2768dbb9ba46cd944eacf96a7a7c44e5eccd8ca59a3",
+    "lib/render/render_bp.py": "2a0f83b3225a5a9da33693b654125198ba782db988fa681eea0a04ffc2546f83",
     "lib/templates/recipes.py": "e9ecebe227c13ee5852d8930fef2f037561fed09a7142ce48b246d1e306dcfea",
     "lib/visual_quality.py": "66a17d3f757a17f8a71b1f32307e4aaaf59c32c4f6d07245614e3bf66e33a5b6",
     "lib/visual_semantics.py": "0433518fac3f43cbc1f6d74ca1fb901777f0ff5c607893e5c17a056600d697b8"
