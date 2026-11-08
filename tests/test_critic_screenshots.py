@@ -39,6 +39,15 @@ class CriticScreenshotsTest(unittest.TestCase):
                 report = critic.critique(directory, str(root / 'page.html'))
 
             self.assertEqual(report['score'], 80)
+            # The model receives the measured reference descriptions and the
+            # same internal calibration scores, not stale reference claims.
+            system = sent['system']
+            self.assertIn('Butter (butter.video) = 90: near-white paper, regular-weight grotesk', system)
+            self.assertIn('Cerebrium (cerebrium.ai) = 88: dark and light bands', system)
+            self.assertIn('Tengile (tengilemalamala.com) = 92:', system)
+            self.assertNotIn('one serif voice', system)
+            self.assertNotIn('the product is the only picture', system)
+            self.assertNotIn('a ledger of real prices', system)
             content = sent['messages'][0]['content']
             names = [item['text'].removeprefix('SCREEN: ') for item in content if item['type'] == 'text' and item['text'].startswith('SCREEN: ')]
             self.assertEqual(len(names), 28)
