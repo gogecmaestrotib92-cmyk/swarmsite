@@ -796,6 +796,39 @@ def build(slug_dir, bp_id, out_path=None):
         if not cards_: return ''
         return f'<section class="sec reviews band-{band_of(sec, bt)}" id="{e(bt["id"])}"><div class="wrap">{ghead(sec, bt)}<div class="review-grid">{"".join(cards_)}</div></div></section>'
 
+    def long_product_story_image(bt):
+        # Never manufacture a visual or substitute another beat's image.
+        if not soft or bt.get('type') != 'features' or len(bt.get('features') or []) < 5: return None
+        if any(not isinstance(f, dict) or f.get('image') for f in bt.get('features') or []): return None
+        ui_ = bt.get('ui') or {}
+        if ui_.get('move') not in (None, '', 'auto', 'cards', 'story'): return None
+        image_id = ui_.get('lead') if 'lead' in ui_ else bt.get('image')
+        shot = images.get(image_id) if isinstance(image_id, str) and image_id else None
+        if not shot or shot.get('shot') is not True or not shot.get('data') or is_used(image_id) or not free_for(shot, bt) or dark_background_texture(shot) or symbolic_asset(shot): return None
+        try:
+            from PIL import Image
+            import io
+            with Image.open(io.BytesIO(base64.b64decode(shot['data'].split(',', 1)[1]))) as source:
+                width, height = source.size
+            if width < 600 or height < 180 or not .5 <= width / height <= 3.5: return None
+        except Exception:
+            return None
+        return image_id, width, height
+
+    def long_product_story(sec, bt):
+        visual = long_product_story_image(bt)
+        if not visual: return cards(sec, bt)
+        image_id, width, height = visual
+        src = img(image_id)
+        # Use the measured story heading when the blueprint has one; fallback
+        # to its own H2 scale, never the unrelated feature-card measurement.
+        story_sec = next((section for section in bp['sections'] if section.get('role') == 'story' and section.get('head')), {'head': H2})
+        header = ghead(story_sec, {**bt, 'ui': {**(bt.get('ui') or {}), 'head': 'left'}})
+        rows = ''.join(f'<li class="product-story-row"><span class="lab">{i + 1:02d}</span><div><h3 class="h3">{e(feature.get("title"))}</h3><p>{e(feature.get("body"))}</p></div></li>' for i, feature in enumerate(bt.get('features') or []))
+        figure = f'<figure class="product-story-visual" style="--product-story-image-max:{width}px"><img src="{src}" alt="{source_alt(src)}"></figure>'
+        wide = ' product-story-wide' if width / height > 2 else ''
+        return f'<section class="sec product-story{wide} band-{band_of(sec, bt)}" id="{e(bt["id"])}"><div class="wrap product-story-layout">{header}{figure}<ol class="product-story-rows">{rows}</ol></div></section>'
+
     def cards(sec, bt):
         if bt['type'] == 'faq': return faq(sec, bt)
         ms = sec_media(sec); n = max(2, min(4, len(ms) or 3)); ar = (ms[0]['ar'] if ms else 0.82)
@@ -988,7 +1021,7 @@ def build(slug_dir, bp_id, out_path=None):
     out = [hero()]; used_beats = set(); cta_done = False; flip = False
     if RECIPE:
         COMP = {'sticky-product': lambda sec, bt, v: sticky_product(sec, bt), 'pinned-sequence': lambda sec, bt, v: pinned_sequence(sec, bt), 'type-wall': lambda sec, bt, v: type_wall(sec, bt),
-                'marquee': lambda sec, bt, v: marquee(sec, bt), 'story': lambda sec, bt, v: story(sec, bt), 'cards': lambda sec, bt, v: cards(sec, {**bt, 'ui': {**(bt.get('ui') or {}), 'variant': v}}),
+                'marquee': lambda sec, bt, v: marquee(sec, bt), 'story': lambda sec, bt, v: story(sec, bt), 'product-story': lambda sec, bt, v: long_product_story(sec, bt), 'cards': lambda sec, bt, v: cards(sec, {**bt, 'ui': {**(bt.get('ui') or {}), 'variant': v}}),
                 'two-col': lambda sec, bt, v: two_col(sec, bt), 'ledger': lambda sec, bt, v: ledger(sec, bt), 'faq': lambda sec, bt, v: faq(sec, bt), 'statement': lambda sec, bt, v: statement_v(sec, bt, v),
                 'quote-band': lambda sec, bt, v: quote_band(sec, bt, v), 'photo': lambda sec, bt, v: photo_sec({**sec, 'media': [{'ar': 1.9 if v != 'tall' else 1.1, 'wf': 1, 'bleed': v == 'bleed'}]}, bt),
                 'photo-pair': lambda sec, bt, v: photo_pair(sec, bt), 'collage': lambda sec, bt, v: collage(sec, bt), 'overlay': lambda sec, bt, v: overlay(sec, bt, v), 'rail': lambda sec, bt, v: rail(sec, bt),
@@ -1014,6 +1047,7 @@ def build(slug_dir, bp_id, out_path=None):
             return take(fam)
         def component_for(bt, fallback):
             kind = bt['type']; move = (bt.get('ui') or {}).get('move'); count = len(beat_items(bt))
+            if long_product_story_image(bt): return 'product-story'
             if kind == 'testimonials': return 'testimonials'
             if kind == 'ledger': return 'ledger'
             if kind == 'photo': return 'story' if move == 'story' else 'photo'
@@ -1142,6 +1176,14 @@ img,video{{display:block;max-width:100%}}a{{color:inherit;text-decoration:none}}
 .sec.compact{{padding:clamp(40px,5vw,72px) 0;min-height:auto!important}}.gh.one{{display:block;max-width:var(--body-max)}}.gh.one .h2{{max-width:none}}.gh.one.center{{text-align:center;margin-left:auto;margin-right:auto}}.gh.one.center .h2{{text-align:center!important;margin-left:auto!important;margin-right:auto}}.gh.one .lede{{margin-top:16px}}.gh.one.center .lede{{margin-left:auto;margin-right:auto}}
 figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4vw,48px);border:1px solid var(--line);max-height:78vh}}figure.lead.narrow{{width:min(100%,640px);margin-left:auto;margin-right:auto}}figure.lead.ledger-visual{{margin-top:28px}}figure.lead img{{width:100%;height:100%;object-fit:cover;object-position:top}}figure.lead.lead-shot{{width:fit-content;max-width:100%;margin-left:auto;margin-right:auto;border-radius:0}}figure.lead.lead-shot img{{width:auto;height:auto;max-width:100%;max-height:calc(78vh - 2px);object-fit:contain}}
 .faq .two{{display:grid;grid-template-columns:.8fr 1.2fr;gap:var(--gutter)}}.qa details{{border-top:1px solid var(--line);padding:16px 0}}.qa details:last-child{{border-bottom:1px solid var(--line)}}.qa summary{{cursor:pointer;list-style:none;font-family:var(--display);font-weight:var(--h3-w);font-size:min(var(--h3),24px);display:flex;justify-content:space-between;gap:16px}}.qa summary::after{{content:"+";font-weight:300}}.qa details[open] summary::after{{content:"–"}}.qa details p{{margin-top:10px;color:var(--muted);max-width:60ch}}
+.product-story-layout{{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);grid-template-areas:"heading image" "rows rows";align-items:center;column-gap:clamp(35px,5vw,75px);row-gap:clamp(56px,6vw,88px)}}
+.product-story .gh{{grid-area:heading;margin:0;display:block;text-align:left}}.product-story .gh h2{{max-width:14ch;text-align:left;margin:24px 0 0;line-height:1.02}}.product-story .gh .lede{{margin-top:22px;max-width:32ch}}
+.product-story-visual{{grid-area:image;width:100%;max-width:var(--product-story-image-max);margin:0;justify-self:center;overflow:hidden;border-radius:var(--radius)}}.product-story-visual img{{display:block;width:100%;height:auto;object-fit:contain}}
+@media(min-resolution:1.1dppx){{.product-story-visual{{max-width:calc(var(--product-story-image-max) / 2)}}}}@media(min-resolution:2.1dppx){{.product-story-visual{{max-width:calc(var(--product-story-image-max) / 3)}}}}@media(min-resolution:3.1dppx){{.product-story-visual{{max-width:calc(var(--product-story-image-max) / 4)}}}}
+.product-story-wide .product-story-layout{{grid-template-columns:minmax(0,1fr);grid-template-areas:"heading" "image" "rows";row-gap:clamp(36px,4vw,56px)}}.product-story-wide .gh h2{{max-width:20ch}}
+.product-story-rows{{grid-area:rows;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 clamp(30px,5vw,72px);list-style:none;margin:0;padding:0}}
+.product-story-row{{display:grid;grid-template-columns:40px minmax(0,1fr);column-gap:16px;padding:25px 0 29px;border-top:1px solid var(--line);min-width:0}}.product-story-row .lab{{padding-top:8px}}.product-story-row .h3{{margin:0;font-size:clamp(22px,2vw,28px);overflow-wrap:anywhere}}.product-story-row p{{margin-top:8px;font-size:17px;line-height:1.4;max-width:42ch;overflow-wrap:anywhere;color:var(--muted)}}
+@media(max-width:900px){{.product-story-layout{{display:flex;flex-direction:column;align-items:stretch;gap:34px}}.product-story .gh h2{{max-width:none}}.product-story-rows{{grid-template-columns:1fr;gap:0}}.product-story-row{{grid-template-columns:30px minmax(0,1fr);padding:20px 0}}.product-story-row p{{font-size:16px}}}}
 .grid{{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:var(--gutter)}}.card figure{{overflow:hidden;border-radius:var(--radius);margin-bottom:16px}}.card figure img{{width:100%;height:100%;object-fit:cover}}.card .h3{{margin-top:8px;font-size:min(var(--h3),28px)}}.card p{{margin-top:10px;color:var(--muted);max-width:34ch}}.card .num{{display:block;font-family:var(--display);font-weight:var(--h2-w);font-size:var(--h2);line-height:1;letter-spacing:-.02em}}
 .review-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:var(--gutter)}}.review-card{{min-width:0;margin:0;padding:24px;border:1px solid var(--line);border-radius:var(--radius);display:flex;flex-direction:column;gap:20px;overflow-wrap:anywhere}}.review-card blockquote{{flex:1;font-size:var(--body-px);line-height:1.5}}.review-card figcaption{{display:flex;flex-wrap:wrap;gap:6px 12px;color:var(--muted);font-size:.9em}}.review-card a{{color:inherit;text-decoration:underline;text-underline-offset:3px}}
 .ledger .two{{display:grid;grid-template-columns:.9fr 1.1fr;gap:var(--gutter)}}.ledger .two.no-visual{{grid-template-columns:minmax(0,1fr);max-width:min(var(--container),1000px)}}.ledger .two>*{{min-width:0}}.rows{{list-style:none}}.rows li{{display:flex;align-items:baseline;gap:12px;padding:14px 0;border-top:1px solid var(--line);font-size:calc(var(--body-px) + 2px)}}.rows li span{{min-width:0;overflow-wrap:anywhere}}.rows li i{{flex:1;border-bottom:1px dotted var(--line)}}.rows li b{{flex-shrink:0;font-weight:500;font-variant-numeric:tabular-nums}}.rows li.big{{padding:22px 0}}.rows li.big b{{font-family:var(--display);font-weight:var(--h2-w);font-size:clamp(32px,5vw,72px);line-height:1;letter-spacing:-.02em}}.ledger .ctas{{margin-top:26px}}@media(max-width:600px){{.rows li.big{{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}}.rows li.big i{{display:none}}.rows li.big b{{font-size:clamp(40px,15vw,72px)}}}}
