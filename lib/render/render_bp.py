@@ -22,7 +22,9 @@ FONT_MAP = {
 }
 GF = {'Instrument Sans': 'Instrument+Sans:ital,wght@0,400..700;1,400..700', 'Inter Tight': 'Inter+Tight:ital,wght@0,300..700;1,300..700', 'JetBrains Mono': 'JetBrains+Mono:wght@400;500',
       'Cormorant Garamond': 'Cormorant+Garamond:ital,wght@0,300..700;1,300..700', 'Instrument Serif': 'Instrument+Serif:ital@0;1', 'Work Sans': 'Work+Sans:wght@300..600', 'Oswald': 'Oswald:wght@300..600',
-      'Mouse Memoirs': 'Mouse+Memoirs', 'Modak': 'Modak', 'Fraunces': 'Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700', 'Bricolage Grotesque': 'Bricolage+Grotesque:opsz,wght@12..96,300..700', 'Space Grotesk': 'Space+Grotesk:wght@300..700'}
+      'Mouse Memoirs': 'Mouse+Memoirs', 'Modak': 'Modak', 'Fraunces': 'Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700', 'Bricolage Grotesque': 'Bricolage+Grotesque:opsz,wght@12..96,300..700', 'Space Grotesk': 'Space+Grotesk:wght@300..700',
+      # Cal Sans is available from Google Fonts as a regular (400) face.
+      'Cal Sans': 'Cal+Sans'}
 
 def font_for(name, fallback=('Instrument Sans', 'sans')):
     if not name: return fallback
@@ -157,12 +159,19 @@ def build(slug_dir, bp_id, out_path=None):
         return ''
 
     # ---- fonts: blueprint stance, owner's font if they keep it ----
-    disp_name, disp_kind = font_for((T.get('display') or {}).get('fam'))
+    blueprint_disp_name, blueprint_disp_kind = font_for((T.get('display') or {}).get('fam'))
+    disp_name, disp_kind = blueprint_disp_name, blueprint_disp_kind
     body_name, body_kind = font_for((T.get('body') or {}).get('fam'), ('Inter Tight', 'sans'))
     label_name, _ = font_for((T.get('label') or {}).get('fam'), ('JetBrains Mono', 'mono'))
-    if brief.get('keepFont', True) and b.get('keep_font') and b.get('font_hint'):
-        disp_name = b['font_hint']; disp_kind = 'serif' if any(w in disp_name.lower() for w in ('serif', 'garamond', 'fraunces', 'cormorant', 'playfair', 'editorial')) else 'sans'
-    families = {disp_name, body_name, label_name}
+    hint = b.get('font_hint')
+    if brief.get('keepFont', True) and b.get('keep_font') and isinstance(hint, str):
+        # Never interpolate an arbitrary site-provided family into CSS or a URL.
+        preferred = next((name for name in GF if name.casefold() == hint.strip().casefold()), None)
+        if preferred:
+            disp_name = preferred
+            disp_kind = 'serif' if any(w in disp_name.lower() for w in ('serif', 'garamond', 'fraunces', 'cormorant', 'playfair', 'editorial')) else 'sans'
+    families = {disp_name, blueprint_disp_name, body_name, label_name}
+    display_stack = f"'{disp_name}'," + (f"'{blueprint_disp_name}'," if disp_name != blueprint_disp_name else '') + ('Georgia,serif' if blueprint_disp_kind == 'serif' else 'system-ui,sans-serif')
     gf = '&family='.join(GF[f] for f in families if f in GF)
     fonts_link = f'<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family={gf}&display=swap" rel="stylesheet">' if gf else ''
 
@@ -618,6 +627,15 @@ def build(slug_dir, bp_id, out_path=None):
             fig = f'<figure class="st-v assigned-visual" style="--assigned-native:{width}px;--assigned-ratio:{width / height:.6f}"><img src="{src}" alt="{source_alt(src)}"></figure>'
         else:
             fig = f'<figure class="st-v"><img src="{src}" alt="{source_alt(src)}"></figure>'
+        editorial_product = (bp_id == 'butter' and soft and own and own.get('shot') and assigned_usable
+                             and (bt.get('ui') or {}).get('move') == 'story'
+                             and bt.get('type') == 'features' and 2 <= len(items) <= 6
+                             and not any(isinstance(f, dict) and f.get('image') for f in bt.get('features', []))
+                             and 35 <= len(str(bt.get('lede') or '')) <= 120
+                             and len(str(bt.get('h2') or '')) <= 48)
+        if editorial_product:
+            intro = f'<div class="st-t">{lab(bt.get("label"))}<h2 class="h2" style="{re.sub(r"max-width:[^;]+;?", "", head_style(sec, bt=bt))}">{e(bt.get("h2") or "")}</h2>{lede_html}</div>'
+            return f'<section class="sec story product-editorial band-{band_of(sec, bt)}" id="{e(bt["id"])}"><div class="wrap st">{intro}{fig}<ul class="st-l">{lst}</ul></div></section>'
         return f'<section class="sec story{" flip" if flip else ""} band-{band_of(sec, bt)}" id="{e(bt["id"])}"><div class="wrap st">{txt}{fig}</div></section>'
 
     def photo_caption(bt, title=True):
@@ -1219,7 +1237,7 @@ def build(slug_dir, bp_id, out_path=None):
     frame = G.get('frame') or G.get('gutter') or 40; container = G.get('container') or 1300; radius = M.get('radius', 0)
     css = f'''
 :root{{--paper:{paper};--ink:{ink};--accent:{accent};--on-photo:{on_photo};--band-paper:{band_paper};--band-ink:{band_ink};--line:color-mix(in srgb,var(--ink) 16%,transparent);--muted:color-mix(in srgb,var(--ink) 62%,transparent);
---display:'{disp_name}',{'Georgia,serif' if disp_kind == 'serif' else 'system-ui,sans-serif'};--body:'{body_name}',system-ui,sans-serif;--label:'{label_name}',ui-monospace,monospace;
+--display:{display_stack};--body:'{body_name}',system-ui,sans-serif;--label:'{label_name}',ui-monospace,monospace;
 --frame:{frame}px;--gutter:{G.get('gutter', 40)}px;--container:{container}px;--radius:{radius}px;--ease:{MO.get('ease')};--fast:{MO.get('fast', .3)}s;--slow:{MO.get('slow', .8)}s;
 --btn-h:{BT.get('h', 48)}px;--btn-r:{BT.get('radius', 999)}px;--btn-px:{BT.get('px', 15)}px;--btn-pad:{BT.get('pad', '0 20px')};--btn-tt:{'uppercase' if BT.get('tt') else 'none'};
 --h1:{clampf(D.get('px', 72))};--h1-lh:{D.get('lh', 1.0)};--h1-ls:{D.get('ls', -0.02)}em;--h1-w:{display_w};--h1-tt:{tt(D)};--h2:{clampf(H2.get('px', 44))};--h2-lh:{H2.get('lh', 1.1)};--h2-ls:{H2.get('ls', -0.02)}em;--h2-w:{H2.get('w', display_w)};
@@ -1353,6 +1371,15 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
 @media(min-width:901px) and (min-height:701px) and (min-resolution:3.1dppx){{.story-editorial .st{{max-width:min(calc(var(--editorial-image-max) / 4),calc(78svh * 1.6))}}}}
 @container(max-width:700px){{.story-editorial .st-v{{aspect-ratio:var(--story-ratio)!important}}.story-editorial .st-t{{grid-area:2/1;align-self:start;width:100%;padding:28px 0 0;background:none;color:inherit}}.story-editorial .st-t .h2{{color:inherit}}.story-editorial .st-t .lab,.story-editorial .st-t .lede{{color:inherit}}}}
 @media(max-width:900px),(max-height:700px){{.story-editorial{{padding:32px 0}}.story-editorial .st{{display:flex;flex-direction:column;gap:0}}.story-editorial .st-v{{order:0}}.story-editorial .st-t{{order:1;width:100%;padding-top:28px}}}}
+/* Experimental editorial product story: source words and assigned image only. */
+.product-editorial .st{{grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);align-items:center;column-gap:clamp(36px,5vw,80px);row-gap:clamp(50px,6vw,88px)}}
+.product-editorial .st-t .h2{{font-size:clamp(30px,3.6vw,52px);line-height:1.05;text-align:left!important;margin:14px 0 0;overflow-wrap:anywhere}}
+.product-editorial .st-t .lede{{font-family:var(--display);font-size:clamp(30px,3.5vw,50px);line-height:1.08;letter-spacing:-.035em;max-width:20ch;margin:22px 0 0;color:inherit;text-wrap:balance;overflow-wrap:anywhere}}
+.product-editorial .st-l{{grid-column:1 / -1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 clamp(24px,3vw,48px);margin:0}}
+.product-editorial .st-l li{{display:block;padding:18px 0 22px;min-width:0}}
+.product-editorial .st-l li b,.product-editorial .st-l li span{{display:block;overflow-wrap:anywhere}}
+.product-editorial .st-l li span{{margin-top:9px;line-height:1.42}}
+@media(max-width:900px){{.product-editorial .st{{grid-template-columns:minmax(0,1fr);gap:32px}}.product-editorial .st-t .h2{{font-size:clamp(28px,8vw,38px)}}.product-editorial .st-t .lede{{font-size:clamp(27px,8vw,34px);line-height:1.1}}.product-editorial .st-l{{grid-column:auto;grid-template-columns:1fr;gap:0}}}}
 /* Owned visuals remain whole and cannot exceed their embedded pixels. */
 .assigned-visual,figure.lead.lead-shot.assigned-visual{{width:100%;max-width:var(--assigned-native);justify-self:center;aspect-ratio:var(--assigned-ratio,auto)}}.assigned-visual img{{display:block;width:100%;height:auto;object-fit:contain}}
 @media(min-resolution:1.1dppx){{.assigned-visual,figure.lead.lead-shot.assigned-visual{{max-width:calc(var(--assigned-native) / 2)}}}}@media(min-resolution:2.1dppx){{.assigned-visual,figure.lead.lead-shot.assigned-visual{{max-width:calc(var(--assigned-native) / 3)}}}}@media(min-resolution:3.1dppx){{.assigned-visual,figure.lead.lead-shot.assigned-visual{{max-width:calc(var(--assigned-native) / 4)}}}}
