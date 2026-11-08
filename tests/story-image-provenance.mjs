@@ -46,7 +46,14 @@ try {
     const html=path.join(dir,'result.html');const rendered=spawnSync(process.env.PYTHON||'python3',['lib/render/render_bp.py',dir,'butter',html],{encoding:'utf8'});assert.equal(rendered.status,0,rendered.stderr);
     for(const width of [1440,390]) {
       const page=await browser.newPage({viewport:{width,height:900}});await page.route(/^https?:\/\//,r=>r.abort());await page.goto(`${pathToFileURL(html)}?nomotion=1`,{waitUntil:'load'});
-      for(const id of ['assigned-small',...(!includePhoto?['unassigned-steps']:[]),...(reserveLogo?['assigned-logo','wide-logo']:[])]) {
+      const assigned=page.locator('#assigned-small');
+      assert.equal(await assigned.locator('img').count(),1,'the assigned 600px product screenshot is retained');
+      assert.equal(await assigned.locator('img').getAttribute('src'),assets.find(x=>x.id==='small-ui').data);
+      const size=await assigned.locator('img').evaluate(el=>{const r=el.getBoundingClientRect();return {width:r.width,height:r.height,nw:el.naturalWidth,nh:el.naturalHeight,fit:getComputedStyle(el).objectFit}});
+      assert.equal(size.fit,'contain');assert.ok(size.width<=size.nw+1&&size.height<=size.nh+1,'assigned screenshot does not upscale');
+      assert.ok(Math.abs(size.width/size.height-size.nw/size.nh)<.02,'assigned screenshot is not cropped');
+      assert.equal(await assigned.locator('.st-l li').count(),2,'all assigned-story items retained');
+      for(const id of [...(!includePhoto?['unassigned-steps']:[]),...(reserveLogo?['assigned-logo','wide-logo']:[])]) {
         const section=page.locator(`#${id}`);assert.equal(await section.locator('img').count(),0,`${id}: no unrelated logo or substitute image`);
         assert.equal(await section.locator('.card').count(),id==='wide-logo'?5:2,`${id}: all items retained`);
         assert.match(await section.innerText(),id==='unassigned-steps'?/First step/:/A complete description/);

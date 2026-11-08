@@ -127,6 +127,24 @@ def build(slug_dir, bp_id, out_path=None):
         if not it: return ''
         used.update(family(it.get('id'))); return it.get('data', '')
 
+    def pixel_dimensions(it):
+        try:
+            from PIL import Image
+            import io
+            with Image.open(io.BytesIO(base64.b64decode(it['data'].split(',', 1)[1]))) as source:
+                return source.size
+        except Exception:
+            return None
+
+    def owned_story_shot(bt):
+        if not soft or (bt.get('ui') or {}).get('move') != 'story': return False
+        image_id = bt.get('image') or (bt.get('ui') or {}).get('lead')
+        image = images.get(image_id) if image_id else None
+        dimensions = pixel_dimensions(image) if image and image.get('data') else None
+        return bool(image and image.get('shot') and dimensions and dimensions[0] >= 500 and dimensions[1] > 0
+                    and not is_used(image_id) and free_for(image, bt)
+                    and not dark_background_texture(image) and not symbolic_asset(image))
+
     def source_alt(src):
         # Reuse the source author's alt text for actual content photographs.
         # Do not invent descriptions for generated visuals, screenshots or
@@ -554,15 +572,31 @@ def build(slug_dir, bp_id, out_path=None):
             return f'<section class="sec story story-photo{cls} band-{band_of(sec, bt)}" id="{e(bt["id"])}"{style}><div class="wrap st">{text}{figure}</div></section>'
         if bt['type'] == 'quote': bt = {**bt, 'h2': bt.get('big') or '', 'lede': bt.get('body') or '', 'label': bt.get('label') or bt.get('who') or ''}
         items = beat_items(bt)
+        if (len(items) > 4 and bt['type'] == 'features' and owned_story_shot(bt) and
+                any(isinstance(item, dict) and item.get('image') for item in bt.get('features', []))):
+            # Individual feature images need the cards renderer. Do not add a
+            # section lead there, since cards intentionally suppress their
+            # own images when a lead is present.
+            return cards(sec, {**bt, 'ui': {**(bt.get('ui') or {}), 'lead': ''}})
         def without_story_image():
             # Cards must not independently reintroduce the rejected image or
             # auto-pick a different screenshot through lead_fig().
             return cards(sec, {**bt, 'ui': {**(bt.get('ui') or {}), 'lead': ''}})
         assigned = bt.get('image')
+        lead_id = (bt.get('ui') or {}).get('lead')
+        lead_image = images.get(lead_id) if not assigned and soft and lead_id else None
+        lead_dimensions = pixel_dimensions(lead_image) if lead_image and lead_image.get('data') and lead_image.get('shot') else None
+        if (lead_dimensions and lead_dimensions[0] >= 500 and lead_dimensions[1] > 0
+                and not is_used(lead_id) and free_for(lead_image, bt)
+                and not dark_background_texture(lead_image) and not symbolic_asset(lead_image)):
+            assigned = lead_id
         own = images.get(assigned) if assigned else None
-        assigned_usable = (own and own.get('data') and not is_used(assigned) and free_for(own, bt)
-                           and own.get('w', 0) >= 640 and not dark_background_texture(own) and not symbolic_asset(own))
-        if len(items) > 4:
+        own_dimensions = pixel_dimensions(own) if own and own.get('data') else None
+        min_width = 500 if own and soft and own.get('shot') else 640
+        assigned_usable = (own and own_dimensions and own_dimensions[0] >= min_width and own_dimensions[1] > 0
+                           and not is_used(assigned) and free_for(own, bt)
+                           and not dark_background_texture(own) and not symbolic_asset(own))
+        if len(items) > 4 and not (assigned_usable and soft and own.get('shot')):
             if bt['type'] == 'facts': return numbers(sec, bt)
             lead = (bt.get('ui') or {}).get('lead')
             if (assigned and not assigned_usable) or (lead and images.get(lead) and symbolic_asset(images[lead])): return without_story_image()
@@ -579,7 +613,11 @@ def build(slug_dir, bp_id, out_path=None):
         lst = ''.join(f'<li><b>{e(t)}</b><span>{e(b_)}</span></li>' for t, b_ in items)
         lede_html = f'<p class="lede">{e(bt.get("lede"))}</p>' if bt.get('lede') else ''
         txt = f'<div class="st-t">{lab(bt.get("label"))}<h2 class="h2" style="{re.sub(r"max-width:[^;]+;?", "", head_style(sec, bt=bt))}">{e(bt.get("h2") or "")}</h2>{lede_html}<ul class="st-l">{lst}</ul></div>'
-        fig = f'<figure class="st-v"><img src="{src}" alt="{source_alt(src)}"></figure>'
+        if assigned and own_dimensions and soft and own.get('shot'):
+            width, height = own_dimensions
+            fig = f'<figure class="st-v assigned-visual" style="--assigned-native:{width}px;--assigned-ratio:{width / height:.6f}"><img src="{src}" alt="{source_alt(src)}"></figure>'
+        else:
+            fig = f'<figure class="st-v"><img src="{src}" alt="{source_alt(src)}"></figure>'
         return f'<section class="sec story{" flip" if flip else ""} band-{band_of(sec, bt)}" id="{e(bt["id"])}"><div class="wrap st">{txt}{fig}</div></section>'
 
     def photo_caption(bt, title=True):
@@ -768,26 +806,34 @@ def build(slug_dir, bp_id, out_path=None):
 
     def lead_fig(ui_, bt):
         src = ''; it = None
+        def valid_lead(image_id):
+            item = images.get(image_id)
+            dims = pixel_dimensions(item) if item and item.get('data') else None
+            min_width = 500 if item and soft and item.get('shot') else 900
+            return bool(item and dims and dims[0] >= min_width and dims[1] > 0 and not is_used(image_id)
+                        and free_for(item, bt) and not dark_background_texture(item) and not symbolic_asset(item))
         if ui_.get('lead'):
             lead = images.get(ui_['lead'])
-            if not lead or not lead.get('data') or is_used(ui_['lead']) or not free_for(lead, bt) or lead.get('w', 0) < 900 or dark_background_texture(lead) or symbolic_asset(lead): return ''  # a lead is a full-width frame: never from a small source, a logo or a flat texture
+            if not valid_lead(ui_['lead']): return ''  # reject tiny, symbolic or unrelated visuals
             it = lead; src = img(ui_['lead'])
         elif ui_.get('lead') == '': return ''
         elif bt.get('image'):
             own = images.get(bt['image'])
-            if not own or not own.get('data') or is_used(bt['image']) or not free_for(own, bt) or own.get('w', 0) < 900 or dark_background_texture(own) or symbolic_asset(own): return ''
+            if not valid_lead(bt['image']): return ''
             it = own; src = img(bt['image'])
         elif bt['type'] == 'facts':
             pool = [i for i in images.values() if photo_like(i, 600) and free_for(i, bt)]
             if pool: it = pool[0]; src = img(it['id'])
         elif bt['type'] == 'steps' and soft:
-            pool = [i for i in images.values() if i.get('shot') and i.get('data') and not is_used(i.get('id')) and free_for(i, bt)]
+            pool = [i for i in images.values() if i.get('shot') and valid_lead(i.get('id'))]
             if pool: it = max(pool, key=lambda i: i.get('w', 0) * i.get('h', 0)); src = img(it['id'])
         if not src or not it: return ''
         if it.get('shot'):
             # A product UI is information, not a background: keep the entire
             # image and let its intrinsic size cap prevent upscaling.
-            return f'<figure class="lead lead-shot"><img src="{src}" alt="{source_alt(src)}"></figure>'
+            dimensions = pixel_dimensions(it)
+            if not dimensions: return ''
+            return f'<figure class="lead lead-shot assigned-visual" style="--assigned-native:{dimensions[0]}px"><img src="{src}" alt="{source_alt(src)}"></figure>'
         raw_ar = it.get('w', 16) / max(1, it.get('h', 9)); ar = max(1.0, min(2.4, raw_ar))
         narrow = raw_ar < 1.25  # a portrait or square picture is shown at its own shape, centred, not cropped to a banner
         return f'<figure class="lead{" narrow" if narrow else ""}" style="aspect-ratio:{ar}"><img src="{src}" alt="{source_alt(src)}" style="object-position:{"top" if narrow else "center"}"></figure>'
@@ -853,7 +899,10 @@ def build(slug_dir, bp_id, out_path=None):
         if bt['type'] == 'faq': return faq(sec, bt)
         ms = sec_media(sec); n = max(2, min(4, len(ms) or 3)); ar = (ms[0]['ar'] if ms else 0.82)
         lead = ''; ui_ = bt.get('ui') or {}
-        lead = lead_fig(ui_, bt)
+        own_feature_images = (bt['type'] == 'features' and owned_story_shot(bt)
+                              and len(bt.get('features') or []) > 4
+                              and any(isinstance(item, dict) and item.get('image') for item in bt.get('features', [])))
+        lead = lead_fig({**ui_, 'lead': ''} if own_feature_images else ui_, bt)
         k = len(bt.get('features') or bt.get('cells') or bt.get('steps') or bt.get('facts') or bt.get('items') or [])
         if k in (3, 6, 9): n = 3
         elif k in (2, 4) and n > 2: n = 2 if k == 2 else 4
@@ -1074,7 +1123,11 @@ def build(slug_dir, bp_id, out_path=None):
             if move == 'type-wall' and kind == 'quote': return move
             if move == 'sticky-product' and kind in ('features', 'steps', 'cells', 'facts') and 2 <= count <= 5: return move
             if move == 'pinned-sequence' and kind in ('steps', 'features', 'facts'): return move
-            if move == 'story' and kind in ('features', 'steps', 'cells', 'facts') and count <= 4: return move
+            if move == 'story' and kind in ('features', 'steps', 'cells', 'facts'):
+                if count <= 4: return move
+                if owned_story_shot(bt):
+                    if kind == 'features' and any(isinstance(item, dict) and item.get('image') for item in bt.get('features', [])): return 'cards'
+                    return move
             if move == 'marquee' and kind in ('cells', 'facts') and 0 < count <= 10 and all(len(str(t).split()) <= 5 for t, _ in beat_items(bt)): return move
             if move == 'cards' and kind in ('features', 'steps', 'cells', 'facts', 'faq'): return move
             if kind in ('features', 'steps', 'cells', 'facts', 'faq') and fallback in ('statement', 'quote-band', 'type-wall'):
@@ -1300,6 +1353,9 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
 @media(min-width:901px) and (min-height:701px) and (min-resolution:3.1dppx){{.story-editorial .st{{max-width:min(calc(var(--editorial-image-max) / 4),calc(78svh * 1.6))}}}}
 @container(max-width:700px){{.story-editorial .st-v{{aspect-ratio:var(--story-ratio)!important}}.story-editorial .st-t{{grid-area:2/1;align-self:start;width:100%;padding:28px 0 0;background:none;color:inherit}}.story-editorial .st-t .h2{{color:inherit}}.story-editorial .st-t .lab,.story-editorial .st-t .lede{{color:inherit}}}}
 @media(max-width:900px),(max-height:700px){{.story-editorial{{padding:32px 0}}.story-editorial .st{{display:flex;flex-direction:column;gap:0}}.story-editorial .st-v{{order:0}}.story-editorial .st-t{{order:1;width:100%;padding-top:28px}}}}
+/* Owned visuals remain whole and cannot exceed their embedded pixels. */
+.assigned-visual,figure.lead.lead-shot.assigned-visual{{width:100%;max-width:var(--assigned-native);justify-self:center;aspect-ratio:var(--assigned-ratio,auto)}}.assigned-visual img{{display:block;width:100%;height:auto;object-fit:contain}}
+@media(min-resolution:1.1dppx){{.assigned-visual,figure.lead.lead-shot.assigned-visual{{max-width:calc(var(--assigned-native) / 2)}}}}@media(min-resolution:2.1dppx){{.assigned-visual,figure.lead.lead-shot.assigned-visual{{max-width:calc(var(--assigned-native) / 3)}}}}@media(min-resolution:3.1dppx){{.assigned-visual,figure.lead.lead-shot.assigned-visual{{max-width:calc(var(--assigned-native) / 4)}}}}
 @media(max-width:900px){{.statement .wrap{{padding-left:max(16px,calc(var(--frame) * .5))}}.split-wrap,.sp,.ps-s,.st,.cta2{{grid-template-columns:1fr}}.story.flip .st-t{{order:0}}.sp-pin{{order:-1}}.sp-stage{{position:relative;top:auto;height:52vh}}.sp-row{{min-height:auto;padding:22px 0;opacity:1}}.ps-s{{align-content:start}}.ps-v{{aspect-ratio:1.6}}.shotframe.tall img{{height:52vh}}.mq-i{{font-size:28px}}.nav .links{{display:none}}.nav .wrap{{gap:12px}}.nav .wrap>a:first-child{{min-width:0;max-width:28vw;flex:0 0 auto}}.nav .logo{{height:auto;max-height:56px;max-width:min(115px,28vw)}}.nav .wordmark{{font-size:clamp(16px,5vw,22px);overflow-wrap:anywhere}}.nav .btn{{min-width:0;padding-inline:8px;overflow-wrap:anywhere;justify-content:center}}.nav .btn .ar{{flex-shrink:0}}.gh,.ledger .two,.faq .two,.photos .pair{{grid-template-columns:1fr;display:grid}}.photos figure{{width:100%!important}}.grid{{grid-template-columns:1fr}}.twocol .cols{{grid-template-columns:1fr}}.end .fcols{{grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}}.form{{grid-template-columns:1fr}}.hero{{padding-top:100px}}.wrap{{padding:0 max(16px,calc(var(--frame) * .5))}}}}
 @media(max-width:900px){{.shotframe.tall.product-shot img{{height:auto;max-height:52vh}}}}
 .no-motion .ps-sticky{{position:static;height:auto;display:block;overflow:visible}}.no-motion .ps-stage{{min-height:0;display:grid;gap:clamp(40px,6vw,80px)}}.no-motion .ps-s{{position:static;inset:auto;opacity:1;transform:none;pointer-events:auto}}.no-motion .ps-dots{{display:none}}.no-motion *,.no-motion *::before,.no-motion *::after{{transition:none!important;animation:none!important}}@media(prefers-reduced-motion:reduce){{*{{transition:none!important;animation:none!important}}}}
