@@ -212,7 +212,7 @@ def build(slug_dir, bp_id, out_path=None):
         if t == 'ledger': return [(a, p) for a, p in bt.get('items', [])]
         return []
 
-    ZOOMS = [('50% 50%', 1.0), ('30% 35%', 1.6), ('70% 40%', 1.6), ('50% 70%', 1.5), ('25% 65%', 1.7), ('75% 70%', 1.6)]
+    ZOOMS = [('50% 50%', 1.0), ('30% 35%', 1.3), ('70% 40%', 1.3), ('50% 70%', 1.25), ('25% 65%', 1.35), ('75% 70%', 1.3)]
     def pick_visuals(bt, n, strict=False):
         """Visuals for a multi-frame move. strict (sticky/pinned): only the beat's image, detail crops and commissioned art —
         never an unrelated screenshot; when short, the product image itself returns zoomed to a different region per frame."""
@@ -510,6 +510,7 @@ def build(slug_dir, bp_id, out_path=None):
         def _norm(t): return re.sub(r'[^a-z0-9]+', '', re.sub(r'<[^>]+>', '', str(t or '')).lower())
         h1n = _norm(h.get('h1'))
         def _sane(bt):
+            bt['label'] = re.sub(r'^\s*\d{1,2}\s*[—–/·.-]\s*', '', str(bt.get('label') or ''))  # the template decides the order, so it owns the numbering
             if _norm(bt.get('label')) == _norm(b['name']): bt['label'] = ''
             if bt['type'] == 'quote':
                 big, body = bt.get('big') or '', bt.get('body') or ''
@@ -534,7 +535,7 @@ def build(slug_dir, bp_id, out_path=None):
                 continue
             if bt is None: continue
             mv = (bt.get('ui') or {}).get('move')
-            if mv in SIG and mv != comp and comp in ('cards', 'two-col', 'story', 'numbers'): comp = mv  # the concept's move wins over a plain slot
+            if mv in SIG and mv != comp and comp in ('cards', 'two-col', 'story', 'numbers') and not (mv == 'marquee' and (bt['type'] == 'steps' or any(len(str(t).split()) > 5 for t, _ in beat_items(bt)))): comp = mv  # the concept's move wins over a plain slot — but a ticker is for short phrases, never steps
             sec = sec_for(comp); html_ = COMP.get(comp, COMP['cards'])(sec, bt, v)
             if html_: out.append(html_); remaining.remove(bt); used_beats.add(bt['id'])
             if slot.get('band'): out[-1] = re.sub(r'(class="sec [^"]*?)band-\w+', lambda m: m.group(1) + f'band-{slot["band"]}', out[-1], count=1) if re.search(r'class="sec [^"]*band-\w+', out[-1]) else out[-1].replace('class="sec ', f'class="sec band-{slot["band"]} ', 1)  # one band per section: the slot's replaces the beat's
