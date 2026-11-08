@@ -105,7 +105,7 @@ a{color:inherit;text-decoration:none}
 </div>
 
 <script src="/config.js"></script>
-<script src="/js/swarm2.js?v=agent7"></script>
+<script src="/js/swarm2.js?v=ff6"></script>
 <script>
 const API = window.SWARMSITE_API; const qs = new URLSearchParams(location.search);
 const $ = s => document.querySelector(s);
@@ -157,7 +157,7 @@ async function launch(url){
   const button=$('#go'); if(button.disabled) return; button.disabled=true; $('#err').textContent='';
   $('#brief').classList.add('hide'); $('#h').textContent='Reading your site…';
   try {
-    sw=Swarm2.mount($('#frame'),{count:9,shape:'character'});
+    sw=Swarm2.mount($('#frame'),{count:9,shape:'firefly'});
     const r=await fetch(`${API}/jobs`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url,options:briefData()})});
     const j=await r.json(); if(!r.ok || !j.id) throw new Error('Could not start preview');
     history.replaceState(null,'',`/app?url=${encodeURIComponent(url)}&job=${j.id}`); poll(j.id);
@@ -168,7 +168,7 @@ async function launch(url){
   }
 }
 async function start(){ let id=qs.get('job'); const url=qs.get('url'); $('#urlLab').textContent=url?('https://'+url.replace(/^https?:\/\//,'')):'';
-  if(id){ $('#brief').classList.add('hide'); sw=Swarm2.mount($('#frame'),{count:9,shape:'character'}); poll(id); return; }
+  if(id){ $('#brief').classList.add('hide'); sw=Swarm2.mount($('#frame'),{count:9,shape:'firefly'}); poll(id); return; }
   if(!url){ location.href='/'; return; }
   $('#h').textContent='Set the direction.'; $('#brief').querySelector('[name=kind][value=""]').checked=true; $('#go').onclick=()=>launch(url); }
 start();
