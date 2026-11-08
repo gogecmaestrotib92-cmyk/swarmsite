@@ -189,7 +189,7 @@ class ContractTests(unittest.TestCase):
                 score = 70 if len(rendered) < 3 else 80
                 return {'score': score, 'fixes': [{'op': 'note', 'agent': 'ui', 'reason': 'Improve'}]}
 
-            def ui(folder, notes=''):
+            def ui(folder, notes='', blueprint_id=None):
                 return int(bool(notes))
 
             with patch.object(run.sys, 'argv', ['run.py', directory, 'butter', '--out', str(output), '--rounds', '3']), \
@@ -227,7 +227,7 @@ class ContractTests(unittest.TestCase):
                         return {'score': first_taste, 'fixes': [{'op': 'note', 'agent': 'ui', 'reason': 'Visible defect'}]}
                     return {'score': 90, 'fixes': []}
 
-                def ui(folder, notes=''):
+                def ui(folder, notes='', blueprint_id=None):
                     if notes: routed.append(notes)
                     return int(bool(notes))
 
@@ -294,7 +294,7 @@ class ContractTests(unittest.TestCase):
                         'verdict': f'round {round_number}',
                         'fixes': [{'op': 'note', 'agent': 'ui', 'reason': 'Improve'}]}
 
-            def ui(folder, notes=''):
+            def ui(folder, notes='', blueprint_id=None):
                 return int(bool(notes))
 
             with patch.object(run.sys, 'argv', ['run.py', directory, 'butter', '--out', str(output), '--rounds', '3']), \

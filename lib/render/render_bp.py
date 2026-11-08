@@ -1136,26 +1136,26 @@ def build(slug_dir, bp_id, out_path=None):
             if kind == 'facts' and fallback == 'overlay': return 'numbers'
             return fallback
         # Match each recipe slot to a real direction beat, then follow the UX agent's narrative order.
-        plan = []; claimed = []
+        slots_by_beat = {}; claimed = set()
         for slot in RECIPE['slots']:
             accepts = ['photo' if t == 'photo*' else t for t in slot['accepts']]
-            bt = next((x for x in remaining if (x['type'] in accepts or x['type'] == 'testimonials' and 'quote' in accepts) and x not in claimed), None)
-            if bt is not None: claimed.append(bt)
-            plan.append((slot, bt))
-        order = {bt['id']: i for i, bt in enumerate(beats)}
-        movable = [i for i, (sl, bt) in enumerate(plan) if bt is not None and i > 0]
-        pairs = sorted([plan[i] for i in movable], key=lambda pr: order.get(pr[1]['id'], 99))  # slot and beat travel together: the component stays the one chosen for that beat
-        for i, pr in zip(movable, pairs): plan[i] = pr
-        for slot, bt in plan:
-            comp = slot['comp']; v = slot.get('variant', '')
-            if bt is None: continue
-            comp = component_for(bt, comp)
-            sec = sec_for(comp); html_ = COMP.get(comp, COMP['cards'])(sec, bt, v)
-            if html_: out.append(section_extras(html_, bt)); remaining.remove(bt); used_beats.add(bt['id'])
-            if slot.get('band') and not bt.get('band'): out[-1] = re.sub(r'(class="sec [^"]*?)band-\w+', lambda m: m.group(1) + f'band-{slot["band"]}', out[-1], count=1) if re.search(r'class="sec [^"]*band-\w+', out[-1]) else out[-1].replace('class="sec ', f'class="sec band-{slot["band"]} ', 1)
-        for bt in remaining:  # whatever the recipe had no slot for, in the fallback component for its type — unless the page is already full
-            comp = component_for(bt, FALLBACK.get(bt['type'], 'cards')); html_ = COMP.get(comp, COMP['cards'])(sec_for(comp), bt, '')
-            if html_: out.append(section_extras(html_, bt)); used_beats.add(bt['id'])
+            bt = next((x for x in remaining if (x['type'] in accepts or x['type'] == 'testimonials' and 'quote' in accepts) and id(x) not in claimed), None)
+            if bt is not None:
+                claimed.add(id(bt)); slots_by_beat[id(bt)] = slot
+        # Unmatched beats remain in their original positions, not after recipe slots.
+        for bt in remaining:
+            slot = slots_by_beat.get(id(bt))
+            comp = component_for(bt, slot['comp'] if slot else FALLBACK.get(bt['type'], 'cards'))
+            html_ = COMP.get(comp, COMP['cards'])(sec_for(comp), bt, slot.get('variant', '') if slot else '')
+            if not html_ and slot:
+                slot = None
+                comp = component_for(bt, FALLBACK.get(bt['type'], 'cards'))
+                html_ = COMP.get(comp, COMP['cards'])(sec_for(comp), bt, '')
+            if not html_: continue
+            html_ = section_extras(html_, bt)
+            if slot and slot.get('band') and not bt.get('band'):
+                html_ = re.sub(r'(class="sec [^"]*?)band-\w+', lambda m: m.group(1) + f'band-{slot["band"]}', html_, count=1) if re.search(r'class="sec [^"]*band-\w+', html_) else html_.replace('class="sec ', f'class="sec band-{slot["band"]} ', 1)
+            out.append(html_); used_beats.add(bt['id'])
         closing = RECIPE.get('closing', 'cta')
         own = images.get((form_bt or {}).get('image'))
         ps = [img(own['id'])] if closing == 'cta-photo' and own and photo_like(own, 1100) and free_for(own, form_bt) else []
@@ -1240,7 +1240,7 @@ img,video{{display:block;max-width:100%}}a{{color:inherit;text-decoration:none}}
 .nav{{position:fixed;inset:0 0 auto 0;z-index:50;padding:18px 0;transition:background var(--slow),color var(--slow)}}.nav .wrap{{display:flex;align-items:center;justify-content:space-between;gap:24px}}.nav .links{{display:flex;gap:28px;font-size:15px}}.nav.solid{{background:color-mix(in srgb,var(--paper) 86%,transparent);color:var(--ink);backdrop-filter:blur(14px)}}.nav.solid .btn{{background:var(--ink);color:var(--paper);border-color:var(--ink)}}.nav.on-photo:not(.solid){{color:var(--on-photo)}}.nav.on-photo:not(.solid) .btn{{background:var(--on-photo);color:#111}}.nav .logo{{height:{min(56, max(28, (bp.get('nav') or {}).get('h', 56) - 20))}px;width:auto}}.nav .wordmark{{font-family:var(--display);font-size:22px}}
 .hero{{position:relative;display:grid;align-content:end;overflow:hidden;padding-top:120px}}.hero .media{{position:absolute;inset:0;z-index:0;background:var(--ink)}}.hero .media img,.hero .media video{{width:100%;height:100%;object-fit:cover}}.hero.has-media .media::after{{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.46),transparent 75%),linear-gradient(180deg,rgba(0,0,0,.42),rgba(0,0,0,.22) 40%,rgba(0,0,0,.58))}}
 .hero .hero-in{{position:relative;z-index:1;padding-bottom:clamp(40px,6vw,80px)}}.hero .h1{{font-size:var(--hero-size);overflow-wrap:anywhere}}@media(max-width:600px){{.hero .h1{{font-size:min(var(--hero-size),16vw)}}}}.hero.has-media{{color:var(--on-photo)}}.hero.has-media .cat .lab{{color:var(--on-photo);font-size:max(13px,var(--lab-px))}}.hero.has-media .h1,.hero.has-media .lede,.hero.has-media .cat{{text-shadow:0 1px 8px rgba(0,0,0,.55)}}.hero.has-media .btn.ghost{{color:var(--on-photo);border-color:var(--on-photo)}}.hero .cat{{display:flex;gap:26px;flex-wrap:wrap;margin-bottom:22px}}.hero .al-center{{text-align:center;justify-items:center;display:grid}}.hero .place-start{{align-self:start;padding-top:40px}}.hero .ctas{{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px}}
-.hero.shot{{align-content:start;padding-top:104px;min-height:auto!important}}.hero.shot .hero-in{{padding-bottom:0}}.hero.shot .cat{{margin-bottom:14px}}.hero.shot .lede{{margin-top:14px}}.hero.shot .ctas{{margin-top:20px}}.shotwrap{{padding-top:clamp(22px,3vw,36px);padding-bottom:0}}.shotframe{{border-radius:max(12px,var(--radius)) max(12px,var(--radius)) 0 0;overflow:hidden;border:1px solid var(--line);border-bottom:0;box-shadow:0 30px 80px color-mix(in srgb,var(--ink) 14%,transparent)}}.shotframe img{{width:100%;max-height:72vh;object-fit:cover;object-position:top center}}
+.hero.shot{{align-content:start;padding-top:104px;min-height:auto!important}}.hero.shot .hero-in{{padding-bottom:0}}.hero.shot .cat{{margin-bottom:14px}}.hero.shot .lede{{margin-top:14px}}.hero.shot .ctas{{margin-top:20px}}.hero .shotwrap{{padding-top:clamp(22px,3vw,36px);padding-bottom:0}}.shotframe{{border-radius:max(12px,var(--radius)) max(12px,var(--radius)) 0 0;overflow:hidden;border:1px solid var(--line);border-bottom:0;box-shadow:0 30px 80px color-mix(in srgb,var(--ink) 14%,transparent)}}.shotframe img{{width:100%;max-height:72vh;object-fit:cover;object-position:top center}}
 .sec{{padding:clamp(64px,9vw,140px) 0;display:grid;grid-template-columns:minmax(0,1fr);align-content:center}}.band-dark{{background:var(--band-paper);color:var(--band-ink);--muted:color-mix(in srgb,var(--band-ink) 68%,transparent);--line:color-mix(in srgb,var(--band-ink) 22%,transparent)}}.band-dark .lab{{color:color-mix(in srgb,var(--band-ink) 62%,transparent)}}.band-dark .btn{{background:var(--band-ink);color:var(--band-paper)}}.band-alt{{background:color-mix(in srgb,var(--ink) 6%,var(--paper))}}
 .statement .who{{margin-top:22px}}.statement .wrap{{padding-left:max(var(--frame),var(--statement-offset,0px))}}.statement .wrap.center{{text-align:center;display:grid;justify-items:center}}
 .photos .pair{{display:flex;gap:var(--gutter);align-items:flex-start}}.photos figure{{overflow:hidden;border-radius:var(--radius)}}.photos figure img,.photo figure img{{width:100%;height:100%;object-fit:cover}}.photo figure{{position:relative;margin:0;max-height:92svh}}.inset-wrap{{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--gutter);align-items:end}}.inset-wrap figure{{overflow:hidden;border-radius:var(--radius)}}.inset-wrap .cap{{font-size:clamp(20px,1.6vw,26px);color:inherit}}@media(max-width:820px){{.inset-wrap{{grid-template-columns:1fr}}}}.photo.bleed{{padding:0}}.photo .over{{position:absolute;inset:auto 0 0 0;padding-bottom:clamp(28px,4vw,56px);color:var(--on-photo)}}.h2.light{{color:var(--on-photo)}}.cap{{margin-top:14px;max-width:var(--body-max);color:var(--muted)}}.caps{{display:flex;gap:24px;align-items:baseline;flex-wrap:wrap;padding-top:14px}}.photo-caption{{padding:clamp(24px,3vw,40px) 0}}.photo-caption .h2{{margin-top:14px;overflow-wrap:anywhere}}.photo-details{{display:flex;flex-wrap:wrap;gap:12px 24px;list-style:none;margin-top:18px}}

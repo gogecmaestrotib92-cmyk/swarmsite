@@ -97,11 +97,11 @@ def _main(snapshot_dir):
     fs_ = A.J(slug_dir, 'factsheet.json') or {}
     if fs_: ev('Reader', f"{fs_.get('what', '')[:90]}"); ev('Reader', f"{len(fs_.get('facts', []))} facts · {len(fs_.get('offers', []))} offers · {len(fs_.get('quotes', []))} quotes")
     # round 0: the specialists shape the director's document
-    safe('Concept', A.concept, slug_dir)
+    safe('Concept', A.concept, slug_dir, '', bp)
     d = A.J(slug_dir, 'direction.json'); sw = d.get('swarm') or {}
     if sw.get('idea'): ev('Concept', 'idea: ' + sw['idea'])
     ev('Concept', 'moves: ' + ', '.join(f"{b['id']}→{(b.get('ui') or {}).get('move', 'auto')}" for b in d['beats']))
-    safe('UX', A.ux, slug_dir); safe('Visual', A.visual, slug_dir); safe('Copy', A.copy, slug_dir); safe('UI', A.ui, slug_dir)
+    safe('UX', A.ux, slug_dir); safe('Visual', A.visual, slug_dir); safe('Copy', A.copy, slug_dir); safe('UI', A.ui, slug_dir, '', bp)
     d = A.J(slug_dir, 'direction.json')
     ev('UX', 'order: ' + ' → '.join(b['type'] for b in d['beats'])); ev('Copy', 'h1: ' + str(d['hero'].get('h1', '')).replace('<em>', '').replace('</em>', ''))
     vis = (d.get('swarm') or {}).get('visual') or {}
@@ -147,7 +147,7 @@ def _main(snapshot_dir):
             else: ev('Concept', 'restart with a new idea')
             for b_ in d0['beats']: (b_.get('ui') or {}).pop('move', None)
             A.W(slug_dir, 'direction.json', d0)
-            safe('Concept', A.concept, slug_dir, why); safe('UX', A.ux, slug_dir, why); safe('Visual', A.visual, slug_dir, why); safe('UI', A.ui, slug_dir, why)
+            safe('Concept', A.concept, slug_dir, why, bp); safe('UX', A.ux, slug_dir, why); safe('Visual', A.visual, slug_dir, why); safe('UI', A.ui, slug_dir, why, bp)
             d = A.J(slug_dir, 'direction.json'); sw = d.get('swarm') or {}
             if sw.get('idea'): ev('Concept', 'idea: ' + sw['idea'])
             render(slug_dir, bp, out); ev('Render', f'{bp} · restart'); continue
@@ -160,9 +160,13 @@ def _main(snapshot_dir):
         applied = 0  # the critic only routes; owners change the document
         for owner, ns in notes.items():
             if ns: ev(owner.upper() if owner in ('ux', 'ui') else owner.capitalize(), f'{len(ns)} note(s) from the critic')
-        jobs = [(n, getattr(A, n), '\n'.join(notes[n])) for n in ('copy', 'ui', 'visual', 'ux', 'concept') if notes.get(n)]
+        # Concept owns the shared creative plan. Finish its repair before the
+        # specialists read that plan; otherwise they can act on stale guidance.
+        if notes.get('concept'):
+            applied += safe('Concept', A.concept, slug_dir, '\n'.join(notes['concept']), bp)
+        jobs = [(n, getattr(A, n), '\n'.join(notes[n])) for n in ('copy', 'ui', 'visual', 'ux') if notes.get(n)]
         with ThreadPoolExecutor(max_workers=4) as ex:
-            res = list(ex.map(lambda j: (j[0], safe(j[0].upper() if j[0] in ('ux', 'ui') else j[0].capitalize(), j[1], slug_dir, j[2])), jobs))
+            res = list(ex.map(lambda j: (j[0], safe(j[0].upper() if j[0] in ('ux', 'ui') else j[0].capitalize(), j[1], slug_dir, j[2], *([bp] if j[0] == 'ui' else []))), jobs))
         if applied + sum(r for _, r in res) == 0: ev('Critic', 'nothing more the team can change'); break
         render(slug_dir, bp, out); ev('Render', f'{bp} · round {k}')
     # Keep the selected render and the inputs and reports that describe it together.
