@@ -523,10 +523,21 @@ def build(slug_dir, bp_id, out_path=None):
         def sec_for(comp):
             fam = 'statement' if comp in ('statement', 'quote-band', 'type-wall') else 'photo' if comp in ('photo', 'photo-pair', 'collage', 'overlay') else 'cta' if comp.startswith('cta') else 'list'
             return take(fam)
+        # which beat each slot takes, in slot order; then the page runs in the UX agent's narrative order — the template's opener stays first,
+        # fillers (giant, extra photos) keep their place in the rhythm, everything else follows the direction
+        plan = []; claimed = []
         for slot in RECIPE['slots']:
+            if 'giant' in slot['accepts'] or 'photo*' in slot['accepts'] and not any(x['type'] in slot['accepts'] for x in remaining if x not in claimed): plan.append((slot, None)); continue
+            bt = next((x for x in remaining if x['type'] in slot['accepts'] and x not in claimed), None)
+            if bt is not None: claimed.append(bt)
+            plan.append((slot, bt))
+        order = {bt['id']: i for i, bt in enumerate(beats)}
+        movable = [i for i, (sl, bt) in enumerate(plan) if bt is not None and i > 0]
+        pairs = sorted([plan[i] for i in movable], key=lambda pr: order.get(pr[1]['id'], 99))  # slot and beat travel together: the component stays the one chosen for that beat
+        for i, pr in zip(movable, pairs): plan[i] = pr
+        for slot, bt in plan:
             comp = slot['comp']; v = slot.get('variant', ''); acc = slot['accepts']
             if 'giant' in acc: out.append(giant({})); continue
-            bt = next((x for x in remaining if x['type'] in acc), None)
             if bt is None and 'photo*' in acc:
                 if len(out) >= 7: continue
                 if len([i for i in images.values() if i.get('data') and not is_used(i.get('id')) and not i.get('shot') and i.get('w', 0) >= 700]) >= (2 if comp in ('photo-pair', 'collage') else 1):
