@@ -24,6 +24,7 @@ try {
       return '';
     }
     if (args[0] === '-I') return '{}';
+    if (args[0] === 'lib/swarm/site_map.py') return JSON.stringify({analysis:{total:1,completed:1,complete:true}});
     if (args[0] === '-c') {
       if (attempt === 1) {
         fs.writeFileSync(path.join(args[2], 'factsheet.json'), '{"what":"first attempt"}');
@@ -40,17 +41,17 @@ try {
   };
   const context = {
     fs, path, process, OUT: root, slugOf, run,
-    setStep: async () => {}, emit: async () => {}, eventsCapture: () => [], eventsDiagnose: () => [],
+    setStep: async () => {}, emit: async () => {}, drainEvents: async () => {}, checkpointCrawl: async () => {},
+    J: f => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return null; } }, eventsCapture: () => [], eventsDiagnose: () => [],
     console: { warn: () => {} },
   };
   const processJob = vm.runInNewContext(`(${source.slice(start, end)})`, context);
   const jobs = Array.from({ length: 2 }, () => ({ id: 'same-id', url: 'https://example.test', steps: [], options: {} }));
-  for (const job of jobs) {
-    await assert.rejects(processJob(job), /stop after inspecting director input/);
-  }
+  await assert.rejects(processJob(jobs[0]), /stop after inspecting director input/);
+  await assert.rejects(processJob(jobs[1]), /reader failed/);
 
   assert.notEqual(jobs[0]._dir, jobs[1]._dir);
-  assert.deepEqual(observedFacts, ['first attempt', null]);
+  assert.deepEqual(observedFacts, ['first attempt'], 'failed reader never reaches the director');
   assert.equal(fs.existsSync(path.join(jobs[1]._dir, 'factsheet.json')), false);
   console.log('Job attempts use fresh capture and director inputs');
 } finally {

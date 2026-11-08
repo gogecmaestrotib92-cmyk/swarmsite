@@ -75,6 +75,7 @@ def safe(name, fn, *a):
 
 def checked_render(slug_dir, bp, out):
     safe('Visual check', A.review_ledger_leads, slug_dir)
+    safe('Visual', A.review_software_hero, slug_dir)
     # The structural selector can still make a weaker page. Keep it opt-in
     # until its candidate can be compared with the original for visual quality.
     if os.environ.get('SWARM_VERIFIED_PATTERNS') == '1':

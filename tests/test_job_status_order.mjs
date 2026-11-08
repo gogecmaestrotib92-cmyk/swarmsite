@@ -29,6 +29,7 @@ try {
         return '';
       }
       if (args[0] === '-I') return '{}';
+      if (args[0] === 'lib/swarm/site_map.py') return JSON.stringify({analysis:{total:1,completed:1,complete:true}});
       if (args[0] === '-c') return '{"what":"test","n":0}';
       if (args[0] === 'lib/direct/direct.py') {
         fs.writeFileSync(path.join(args[1], 'direction.json'), JSON.stringify(direction));
@@ -58,7 +59,7 @@ try {
       fs, path, process, ROOT: process.cwd(), OUT: base, slugOf, run,
       BP: { software: ['butter', 'cerebrium'] }, SELF: 'https://example.test',
       prepareAlternative, publishSelected, verifySelected, verifyAlternative,
-      setStep: async () => {}, emit: async () => {},
+      setStep: async () => {}, emit: async () => {}, checkpointCrawl: async () => {},
       // Simulate a final progress update that was still in flight when the
       // upload began; the published result must include it.
       drainEvents: async job => { job._result = { events: [{ text: 'last progress' }] }; },

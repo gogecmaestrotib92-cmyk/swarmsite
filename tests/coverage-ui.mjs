@@ -7,6 +7,9 @@ const report = {
   scope: 'single_page_preview',
   source_catalog_truncated: true,
   source_actions_needing_review: true,
+  crawl: { complete: false, routes_visited: 1, routes_failed: 1, routes_limited: 2, routes_excluded: 1 },
+  source_analysis: {complete:false,batches_completed:2,batches_total:2,missing_pages:1,missing_sections:3,context_truncated:true},
+  source_pages: [{title: 'Pricing details', sections_truncated: true, sections: [{title:'Enterprise plan',status:'needs_review'}]}],
   sections: [
     { title: 'Frequently asked questions', status: 'needs_review', faq: [
       { question: 'What is included?', status: 'text_detected' },
@@ -21,7 +24,7 @@ const report = {
     { title: '<img src=x onerror=alert(1)>', status: 'needs_review', source_actions_version: null, source_actions: [] },
   ],
   routes: [
-    { label: 'Pricing', url: 'https://example.com/pricing', status: 'linked_to_source' },
+    { label: 'Pricing', url: 'https://example.com/pricing', status: 'linked_to_source', capture_status:'visited' },
     { label: 'Unsafe', url: 'javascript:alert(1)', status: 'not_linked' },
   ],
 };
@@ -35,13 +38,15 @@ try {
    const u = new URL(route.request().url());
    if (u.hostname === 'app.test' && u.pathname === '/app') return route.fulfill({ status: 200, contentType: 'text/html', body: html });
    if (u.hostname === 'app.test' && u.pathname === '/config.js') return route.fulfill({ status: 200, contentType: 'application/javascript', body: "window.SWARMSITE_API='https://api.test';" });
-   if (u.hostname === 'app.test' && u.pathname === '/js/swarm2.js') return route.fulfill({ status: 200, contentType: 'application/javascript', body: "window.Swarm2={ROLES:[],mount:()=>({phase(){},stop(){},push(){},setPage(){}})};" });
+   if (u.hostname === 'app.test' && u.pathname === '/js/swarm2.js') return route.fulfill({ status: 200, contentType: 'application/javascript', body: "window.__swarmEvents=[];window.Swarm2={ROLES:[],mount:()=>({phase(){},stop(){},push(e){window.__swarmEvents.push(...e)},setPage(){}})};" });
    if (u.hostname === 'api.test' && u.pathname.startsWith('/jobs/')) return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(responseJob) });
    if (u.hostname === 'api.test' && u.pathname.startsWith('/p/')) return route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>Preview</title><h1>Preview</h1>' });
    return route.abort();
   });
   await page.goto('http://app.test/app?url=example.com&job=11111111-1111-4111-8111-111111111111', { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => document.querySelector('#hudL').textContent === 'reading');
+  const eventsSeen=await page.evaluate(()=>{const steps=[{id:'capture',label:'Reading',status:'running'}];renderSteps({status:'running',steps,result:{eventsOffset:0,events:[{role:'Reader',text:'a'},{role:'Reader',text:'b'}]}});renderSteps({status:'running',steps,result:{eventsOffset:2,events:[{role:'Reader',text:'c'},{role:'Reader',text:'d'}]}});return window.__swarmEvents.map(e=>e.text)});
+  assert.deepEqual(eventsSeen,['a','b','c','d'],'agents keep receiving events after the log rolls over');
   assert.equal(await page.locator('#stage').isVisible(), true, 'loading screen stays visible before completion');
   assert.equal(await page.locator('#result').isHidden(), true, 'preview remains hidden while loading');
   const loadingHud=await page.locator('#frame .hud').boundingBox();
@@ -54,6 +59,12 @@ try {
   assert.ok(header && preview && preview.y >= header.y+header.height-1, 'preview starts below the fixed application header');
   assert.equal(await page.evaluate(({x,y}) => document.elementFromPoint(x,y)?.id === 'preview', {x:preview.x+preview.width/2,y:preview.y+Math.min(20,preview.height/2)}), true, 'header and loading UI cannot cover the top of the preview');
   await page.locator('#coverage > summary').click();
+  assert.match(await page.locator('#coveragePanel').textContent(), /1 pages read · 1 unavailable · 2 not read within limits/);
+  assert.match(await page.locator('#coveragePanel').textContent(), /1 pages and 3 section IDs need review/);
+  assert.match(await page.locator('#coveragePanel').textContent(), /Some observations were shortened for the design agents/);
+  assert.equal(await page.getByText('Read · Linked to original page').count(), 1);
+  await page.getByText('Pricing details', {exact:true}).click();
+  assert.equal(await page.getByText('Enterprise plan · Needs review').count(), 1);
   assert.equal(await page.getByText('Frequently asked questions', { exact: true }).count(), 1);
   assert.equal(await page.getByText('This source inventory is incomplete; more sections or pages may need review.').count(), 1);
   assert.equal(await page.getByText('Some original links need review: they may be missing, excluded from capture, or truncated.').count(), 1);
@@ -85,6 +96,10 @@ try {
   assert.equal(await page.locator('#coveragePanel svg').count(), 0, 'audit notes must remain text');
   assert.equal(await page.locator('#coveragePanel img').count(), 0, 'untrusted titles must not inject HTML');
   assert.equal(await page.getByText('Unsafe', { exact: true }).evaluate(el => el.tagName), 'SPAN', 'unsafe source URLs must not become links');
+  await page.evaluate(r=>renderCoverage({...r,crawl:{...r.crawl,scope:'landing_page_only'},routes:[{url:'https://example.com/pricing',label:'Pricing',capture_status:'not_scanned',status:'linked_to_source'}]},[]),report);
+  assert.match(await page.locator('#coveragePanel').textContent(),/Analysis covers the submitted landing page. Linked pages were not scanned/);
+  assert.match(await page.locator('#coveragePanel').textContent(),/Outside landing page scope/);
+  await page.locator('#coverage > summary').click();
   const rect = await page.locator('#coveragePanel').boundingBox();
   assert.ok(rect && rect.x >= -1 && rect.x + rect.width <= width + 1, `${width}px panel fits viewport`);
   const bar=await page.locator('.result .bar').boundingBox();

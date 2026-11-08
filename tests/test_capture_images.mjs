@@ -26,7 +26,7 @@ const server = http.createServer((req, res) => {
 try {
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const url = `http://127.0.0.1:${server.address().port}/`;
-  const child = spawn(process.execPath, ['lib/pipeline/capture.mjs', url, '--out', dir], { stdio: ['ignore', 'ignore', 'pipe'] });
+  const child = spawn(process.execPath, ['lib/pipeline/capture.mjs', url, '--site-wide', '--out', dir], { stdio: ['ignore', 'ignore', 'pipe'] });
   let error = '';
   child.stderr.on('data', chunk => { error += chunk; });
   const code = await new Promise((resolve, reject) => { child.on('error', reject); child.on('close', resolve); });

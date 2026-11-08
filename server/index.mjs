@@ -6,12 +6,15 @@
    Env: SUPABASE_URL, SUPABASE_SERVICE_KEY, ANTHROPIC_API_KEY, PORT, PUBLIC_ORIGIN (CORS), CHROME_PATH (optional) */
 import express from 'express'; import cors from 'cors'; import { createClient } from '@supabase/supabase-js';
 import { prepareAlternative, publishSelected, verifySelected, verifyAlternative } from './variant_snapshot.mjs';
+import { saveCrawlCheckpoint, restoreCrawlCheckpoint } from './crawl_checkpoint.mjs';
 import { spawn } from 'node:child_process'; import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
+import crypto from 'node:crypto';
 const HERE = path.dirname(fileURLToPath(import.meta.url)); const ROOT = path.resolve(HERE, '..');
 const sb = createClient(process.env.SUPABASE_URL || 'https://placeholder.supabase.co', process.env.SUPABASE_SERVICE_KEY || 'placeholder', { auth: { persistSession: false } });
 const BUCKET = 'previews'; const OUT = path.join(ROOT, 'out');
+const WORKER_ID = crypto.randomUUID();
 const STEPS = [
-  ['capture', 'Reading your site: text, photos, logo, colours'],
+  ['capture', 'Reading your landing page: text, photos, logo, colours'],
   ['diagnose', 'Auditing: words, sections, type, nav'],
   ['direct', 'Art direction: concept, beats, copy'],
   ['render', 'Building: type, photos, motion'],
@@ -84,7 +87,9 @@ const slugOf = url => url.replace(/^https?:\/\//, '').replace(/[^a-z0-9.-]+/gi, 
 async function updateRunning(job, patch) {
   // A job may have been failed by a different worker during a deployment.
   // Never let a late update bring a terminal job back to life or overwrite it.
-  const { data, error } = await sb.from('jobs').update(patch).eq('id', job.id).eq('status', 'running').select('id').maybeSingle();
+  let query = sb.from('jobs').update(patch).eq('id', job.id).eq('status', 'running');
+  if (job._leaseOwner) query = query.eq('lease_owner', job._leaseOwner);
+  const { data, error } = await query.select('id').maybeSingle();
   if (error) {
     const failure = new Error('job update failed: ' + (error.message || 'database error'));
     // These PostgreSQL errors explicitly reject/abort the transaction. A
@@ -122,7 +127,10 @@ function emit(job, evs) {
   // pending. Queue them in order and retain errors for the caller to await.
   const next = (job._eventChain || Promise.resolve()).then(async () => {
     job._result = job._result || {};
-    job._result.events = (job._result.events || []).concat(evs.map(e => ({ ...e, at: Date.now() })));
+    const events = (job._result.events || []).concat(evs.map(e => ({ ...e, at: Date.now() })));
+    const excess = Math.max(0, events.length - 400);
+    job._result.eventsOffset = Number(job._result.eventsOffset || 0) + excess;
+    job._result.events = events.slice(excess);
     await updateWithRetry(job, { result: job._result });
   });
   job._eventChain = next;
@@ -163,7 +171,23 @@ function eventsQA(qa) { return String(qa || '').split('\n').filter(Boolean).slic
 const ARTS = ['brief.json', 'critic.json', 'contract.json', 'coverage.json', 'factsheet.json', 'swarm.json', 'inventory.json', 'assets.json', 'images.json', 'geometry.json', 'audit.json', 'direction.json', 'mobile.json', 'index.html'];
 async function uploadArtefacts(job, dir, diagnostics = false) { let uploaded = true; for (const f of ARTS) { const fp = path.join(dir, f); if (fs.existsSync(fp)) { try { await upload(fp, `${job.id}/${!diagnostics && job._previewVersion ? `v-${job._previewVersion}/` : ''}art/${f}`, f.endsWith('.html') ? 'text/html' : 'application/json'); } catch (e) { uploaded = false; console.warn('art', f, e.message); } } } return uploaded; }
 const BP = { software: ['butter', 'cerebrium', 'deepbook'], place: ['tengile', 'white-desert', 'belgrade-arbor', 'units'], service: ['lpas', 'aino', 'atelier'], product: ['crav', 'halfdays'] };
+async function checkpointCrawl(job, dir) {
+  await drainEvents(job);
+  const old = job._result?.crawlCheckpoint;
+  const checkpoint = await saveCrawlCheckpoint(sb.storage.from('crawl-checkpoints'), job.id, dir);
+  job._result = { ...(job._result || {}), crawlCheckpoint: checkpoint };
+  await updateWithRetry(job, { result: job._result });
+  if (old?.key && old.key !== checkpoint.key) {
+    const { error } = await sb.storage.from('crawl-checkpoints').remove([old.key]);
+    if (error) console.warn('old checkpoint cleanup', job.id, error.message);
+  }
+}
 async function runClaimed(job) {
+  job._leaseOwner = WORKER_ID;
+  const heartbeat = setInterval(async () => {
+    try { await updateRunning(job, { lease_until: new Date(Date.now() + 120000).toISOString() }); }
+    catch (e) { console.warn('lease heartbeat', job.id, e.message); }
+  }, 30000);
   try { await process_(job); console.log('done', job.id); }
   catch (e) {
     // No in-flight progress write may arrive after the terminal update.
@@ -173,6 +197,18 @@ async function runClaimed(job) {
     // confirmed billing error. Keep an actionable owner diagnostic while
     // returning a simple, non-sensitive message to the customer.
     const noAnthropicCredit = /your credit balance is too low to access the anthropic api/i.test(message);
+    const retries = Number(job.retry_count || 0);
+    const retryable = !noAnthropicCredit && /timeout|timed out|econnreset|econnrefused|network error|connection error|rate.limit|HTTP (429|5\d\d)|\b5(?:00|02|03|04)\b/i.test(message);
+    if (retryable && retries < 3) {
+      job._result = job._result || {};
+      const events=(job._result.events || []).concat([{role:'Reader', text:'Temporary error; resuming from the saved checkpoint', at:Date.now()}]);
+      const excess=Math.max(0,events.length-400);job._result.eventsOffset=Number(job._result.eventsOffset || 0)+excess;job._result.events=events.slice(excess);
+      try {
+        await updateWithRetry(job, {status:'queued', lease_owner:null, lease_until:null, retry_count:retries+1,
+          retry_after:new Date(Date.now()+Math.min(60000,5000*2**retries)).toISOString(), result:job._result, error:null});
+        job._requeued = true; console.warn('retrying job', job.id, retries+1); return;
+      } catch (retryError) { console.warn('retry scheduling failed', job.id, retryError.message); }
+    }
     const publicError = noAnthropicCredit ? 'The AI service is temporarily unavailable. Please try again later.' : message.slice(0, 2000);
     console.error('failed', job.id, noAnthropicCredit ? 'Anthropic API credit balance is too low; check provider billing.' : message);
     let markedFailed = false;
@@ -182,9 +218,10 @@ async function runClaimed(job) {
     // artifacts with files from this stale attempt.
     try { if (markedFailed && job._dir) job._artifactsUploaded = await uploadArtefacts(job, job._dir, true); } catch {}
   } finally {
+    clearInterval(heartbeat);
     // Uploading artifacts is not enough: keep the local files until a terminal
     // status has also been confirmed by the database.
-    if (job._jobRoot && job._artifactsUploaded && job._terminalPersisted) {
+    if (job._jobRoot && (job._requeued || job._artifactsUploaded && job._terminalPersisted)) {
       try { fs.rmSync(job._jobRoot, { recursive: true, force: true }); }
       catch (e) { console.warn('job cleanup', job.id, e.message); }
     }
@@ -197,16 +234,66 @@ async function process_(job) {
   job._jobRoot = jobRoot;
   const dir = path.join(jobRoot, slug);
   job._dir = dir;
+  job._result = { ...(job.result || {}) };
+  let restored = false;
+  if (job._result.crawlCheckpoint) {
+    await restoreCrawlCheckpoint(sb.storage.from('crawl-checkpoints'), job.id, job._result.crawlCheckpoint, dir);
+    restored = true;
+  }
   const t0 = Date.now(); const timed = async (id, fn) => { await setStep(job, id, 'running'); const s = Date.now(); const r = await fn(); await setStep(job, id, 'done', `${Math.round((Date.now() - s) / 1000)}s`); return r; };
   await timed('capture', async () => {
-    try { await run('node', ['lib/pipeline/capture.mjs', job.url, '--out', jobRoot, '--chrome', process.env.CHROME_PATH || ''].filter(Boolean), { timeoutMs: 180000 }); }
+    try { if (!restored) await run('node', ['lib/pipeline/capture.mjs', job.url, '--out', jobRoot, '--chrome', process.env.CHROME_PATH || ''].filter(Boolean), { timeoutMs: 420000, onLine: line => {
+      let item; try { item = JSON.parse(line); } catch { return; }
+      if (item.event) emit(job, [item.event]);
+      if (item.captureReady) {
+        const next = (job._eventChain || Promise.resolve()).then(async () => {
+          job._result = job._result || {};
+          job._result.beforeUrl = await upload(path.join(dir, 'before-hero.jpg'), `${job.id}/before.jpg`, 'image/jpeg');
+          if (fs.existsSync(path.join(dir, 'before-full.jpg'))) job._result.beforeFullUrl = await upload(path.join(dir, 'before-full.jpg'), `${job.id}/before-full.jpg`, 'image/jpeg');
+          job._result.pageHeight = Math.min(7000, J(path.join(dir, 'geometry.json'))?.pageHeight || 900);
+          await updateWithRetry(job, { result: job._result });
+        });
+        job._eventChain = next; next.catch(() => {});
+      }
+    } }); await drainEvents(job); }
     catch (e) { const bp = path.join(dir, 'blocked.json'); if (fs.existsSync(bp)) throw new Error(JSON.parse(fs.readFileSync(bp, 'utf8')).reason + ' Try the www/non-www address, or a page that is not behind the check.'); throw e; }
-    if (fs.existsSync(path.join(dir, 'before-hero.jpg'))) { const beforeUrl = await upload(path.join(dir, 'before-hero.jpg'), `${job.id}/before.jpg`, 'image/jpeg'); job._result = { beforeUrl }; if (fs.existsSync(path.join(dir, 'before-full.jpg'))) { job._result.beforeFullUrl = await upload(path.join(dir, 'before-full.jpg'), `${job.id}/before-full.jpg`, 'image/jpeg'); const g = J(path.join(dir, 'geometry.json')); job._result.pageHeight = Math.min(7000, g?.pageHeight || 900); } await updateWithRetry(job, { result: job._result }); }
+    if (fs.existsSync(path.join(dir, 'before-hero.jpg'))) { const beforeUrl = await upload(path.join(dir, 'before-hero.jpg'), `${job.id}/before.jpg`, 'image/jpeg'); job._result = { ...(job._result || {}), beforeUrl }; if (fs.existsSync(path.join(dir, 'before-full.jpg'))) { job._result.beforeFullUrl = await upload(path.join(dir, 'before-full.jpg'), `${job.id}/before-full.jpg`, 'image/jpeg'); const g = J(path.join(dir, 'geometry.json')); job._result.pageHeight = Math.min(7000, g?.pageHeight || 900); } await updateWithRetry(job, { result: job._result }); }
+    if (restored) {
+      // Older checkpoints may contain sampled subpages. The active product
+      // scope is the submitted landing page, so do not feed those pages or
+      // their visuals into the business interpretation.
+      const invPath = path.join(dir, 'inventory.json'); const inv = J(invPath);
+      if (!inv) throw new Error('Saved landing capture is missing');
+      if (inv.sourceCoverage?.scope !== 'landing_page_only') {
+        inv.sourcePages = []; const coverage = inv.sourceCoverage || {};
+        for (const route of coverage.routes || []) { route.status = 'not_scanned'; route.reason = 'Only the submitted landing page is analyzed'; }
+        coverage.scope = 'landing_page_only'; coverage.routeLimit = 0;
+        coverage.sitemapQueue = [];
+        coverage.contentTruncated = !!inv.copy?.textTruncated || (coverage.sections || []).some(s => s.textTruncated || s.faqTruncated || s.panelsTruncated || s.testimonialsTruncated);
+        coverage.complete = !coverage.contentTruncated && !coverage.sectionsTruncated;
+        inv.sourceCoverage = coverage; fs.writeFileSync(invPath, JSON.stringify(inv));
+        const imagesPath = path.join(dir, 'images.json'); const images = J(imagesPath);
+        if (Array.isArray(images)) fs.writeFileSync(imagesPath, JSON.stringify(images.filter(image => !image.page && !/^p[0-9]+-/.test(image.id || ''))));
+        fs.rmSync(path.join(dir, 'site-analysis.json'), {force:true});
+        await checkpointCrawl(job, dir);
+      }
+      await emit(job, [{ role: 'Reader', text: 'Resuming saved landing analysis' }]);
+    } else await checkpointCrawl(job, dir);
     await emit(job, eventsCapture(dir));
   });
   await timed('diagnose', async () => { const out = await run('python3', ['-I', 'lib/audit/diagnose.py', path.join(dir, 'inventory.json')]); fs.writeFileSync(path.join(dir, 'audit.json'), out); }); await emit(job, eventsDiagnose(dir));
   fs.writeFileSync(path.join(dir, 'brief.json'), JSON.stringify(job.options || {}));
-  await timed('direct', async () => { try { await run('python3', ['-c', 'import sys; sys.path.insert(0, "lib/swarm"); import agents, json; f = agents.reader(sys.argv[1]) or {}; print(json.dumps({"what": f.get("what", ""), "n": len(f.get("facts", []))}))', dir], { timeoutMs: 180000 }).then(async o => { const f = JSON.parse(o.trim().split('\n').pop()); await emit(job, [{ role: 'Reader', text: String(f.what || '').slice(0, 120) }, { role: 'Reader', text: `${f.n} verified facts` }]); }); } catch (e) { console.warn('reader', e.message.slice(0, 200)); }
+  await timed('direct', async () => {
+    while (true) {
+      let output;
+      try { output = await run('python3', ['lib/swarm/site_map.py', dir, '3'], { timeoutMs: 240000, onLine: line => { try { const item=JSON.parse(line); if(item.event) emit(job,[item.event]); } catch {} } }); }
+      catch (error) { if (fs.existsSync(path.join(dir, 'site-analysis.json'))) await checkpointCrawl(job, dir); throw error; }
+      const analysis = output.trim().split('\n').map(line => { try { return JSON.parse(line).analysis; } catch { return null; } }).find(Boolean);
+      if (!analysis) throw new Error('Source analysis did not report progress');
+      await checkpointCrawl(job, dir);
+      if (analysis.completed >= analysis.total) { if (!analysis.complete) await emit(job, [{role:'Reader', text:`Source analysis needs review · ${analysis.missing_pages} pages · ${analysis.missing_sections} sections`}]); break; }
+    }
+    await run('python3', ['-c', 'import sys; sys.path.insert(0, "lib/swarm"); import agents, json; f = agents.reader(sys.argv[1]); assert f, "reader did not produce a factsheet"; print(json.dumps({"what": f.get("what", ""), "n": len(f.get("facts", []))}))', dir], { timeoutMs: 180000 }).then(async o => { const f = JSON.parse(o.trim().split('\n').pop()); await emit(job, [{ role: 'Reader', text: String(f.what || '').slice(0, 120) }, { role: 'Reader', text: `${f.n} source facts` }]); });
     return run('python3', ['lib/direct/direct.py', dir, process.env.DIRECT_MODEL || 'claude-sonnet-5-5'], { timeoutMs: 240000 }); }); await emit(job, eventsDirect(dir));
   await timed('render', async () => {
     // one renderer: the winner's measured form + signature moves + this client's content (primary blueprint + one alternative)
@@ -250,22 +337,20 @@ async function process_(job) {
   await drainEvents(job);
   verifySelected({dir, root:ROOT, bp:job._primary, manifest:job._manifest, out:path.join(dir, 'index.html')});
   if (result.blueprints.length > 1) verifyAlternative({root:ROOT, alternate:job._alternative});
-  await updateWithRetry(job, { status: 'done', step: 'done', result, slug });
+  const checkpoint = result.crawlCheckpoint;
+  delete result.crawlCheckpoint;
+  await updateWithRetry(job, { status: 'done', step: 'done', result, slug, lease_owner: null, lease_until: null });
   job._terminalPersisted = true;
+  if (checkpoint?.key) { const { error } = await sb.storage.from('crawl-checkpoints').remove([checkpoint.key]); if (error) console.warn('checkpoint cleanup', job.id, error.message); }
 }
 async function loop() {
-  // a deploy restarts this worker: jobs it was running are orphaned. Say so instead of spinning forever.
-  try { const { data: stale } = await sb.from('jobs').select('id').eq('status', 'running'); for (const j of stale || []) { await sb.from('jobs').update({ status: 'failed', error: 'The worker restarted (a deploy) while this job was running. Run it again.' }).eq('id', j.id); console.warn('orphaned job marked failed', j.id); } } catch (e) { console.warn('stale check', e.message); }
   while (true) {
     try {
-      const { data: job } = await sb.from('jobs').select('*').eq('status', 'queued').order('created_at').limit(1).maybeSingle();
-      if (job) {
-        const { data: claimed } = await sb.from('jobs').update({ status: 'running' }).eq('id', job.id).eq('status', 'queued').select('*').maybeSingle();
-        if (claimed) { console.log('job', job.id, job.url); await runClaimed(claimed); }
-      } else {
-        // idle: a job still "running" after 20 min belongs to a worker that no longer exists (deploy overlap) — say so instead of showing a spinner forever
-        try { const cutoff = new Date(Date.now() - 20 * 60e3).toISOString(); const { data: dead } = await sb.from('jobs').select('id').eq('status', 'running').lt('created_at', cutoff); for (const j of dead || []) { await sb.from('jobs').update({ status: 'failed', error: 'This run was lost when the worker restarted. Run it again.' }).eq('id', j.id); console.warn('dead job marked failed', j.id); } } catch (e) { console.warn('dead check', e.message); }
-        await new Promise(r => setTimeout(r, 2500)); }
+      const { data, error } = await sb.rpc('claim_swarmsite_job', { p_worker_id: WORKER_ID, p_lease_seconds: 120 });
+      if (error) throw error;
+      const claimed = Array.isArray(data) ? data[0] : data;
+      if (claimed) { console.log('job', claimed.id, claimed.url); await runClaimed(claimed); }
+      else await new Promise(r => setTimeout(r, 2500));
     } catch (e) { console.error('loop', e.message); await new Promise(r => setTimeout(r, 5000)); }
   }
 }

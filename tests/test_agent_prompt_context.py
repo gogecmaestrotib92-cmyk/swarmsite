@@ -59,6 +59,17 @@ class AgentPromptContextTests(unittest.TestCase):
                 with self.subTest(swarm=swarm, agent=agent.__name__):
                     self.assertNotIn('CREATIVE DIRECTION', self.prompt(agent))
 
+    def test_business_understanding_reaches_all_design_specialists_as_untrusted_guidance(self):
+        agents.W(self.directory, 'factsheet.json', {'business_understanding': {'offer': 'A price comparison tool', 'visual_priority': 'Show the product interface', 'extra': 'UNRELATED PRIVATE FIELD'}})
+        for agent, args in ((agents.concept, ('', 'butter')), (agents.ux, ()), (agents.ui, ()), (agents.visual, ())):
+            with self.subTest(agent=agent.__name__):
+                prompt = self.prompt(agent, *args)
+                self.assertIn('A price comparison tool', prompt)
+                self.assertIn('Show the product interface', prompt)
+                self.assertIn('design guidance only', prompt)
+                section = prompt.split('BUSINESS UNDERSTANDING', 1)[1].split('\n', 1)[0]
+                self.assertNotIn('UNRELATED PRIVATE FIELD', section)
+
     def test_concept_gets_only_actual_selected_blueprint_measurements(self):
         prompt = self.prompt(agents.concept, '', 'butter')
         marker = 'SELECTED BLUEPRINT MEASURED FORM (layout reference only; not source content): '

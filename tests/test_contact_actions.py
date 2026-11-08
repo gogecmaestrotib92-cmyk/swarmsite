@@ -51,6 +51,15 @@ class ContactActionsTest(unittest.TestCase):
         self.assertNotIn('href="#rezervacija"', html)
         self.assertNotIn('<form ', html)
 
+    def test_main_action_does_not_redirect_to_an_unrelated_contact_form(self):
+        self.direction['hero'].update({'cta':'Check a bet', 'cta_href':'https://example.test/bet-check'})
+        form = next(b for b in self.direction['beats'] if b['type'] == 'form')
+        form.update({'cta':'Send message', 'cta_href':'https://example.test/contact'})
+        rendered = self.build({'actions':[{'text':'Check a bet','href':'https://example.test/bet-check'},
+                                           {'text':'Send message','href':'https://example.test/contact'}]})
+        self.assertTrue('href="https://example.test/bet-check">Check a bet' in rendered, 'main action should use captured destination')
+        self.assertFalse('href="#'+form['id']+'">Check a bet' in rendered, 'contact form must not replace unrelated main action')
+
     def test_ux_keeps_existing_action_labels_with_their_destinations(self):
         ledger = next(beat for beat in self.direction['beats'] if beat['type'] == 'ledger')
         ledger['cta'] = 'View menu'

@@ -291,7 +291,14 @@ def build(slug_dir, bp_id, out_path=None):
     contact_target = action_url(contact.get('cta') or h.get('cta'), contact.get('cta_href') or h.get('cta_href'), include_forms=True)
     def cta_html(light=False, label=None, href=None):
         label = label or h.get('cta') or d.get('nav', {}).get('cta') or 'Contact'
-        target = href if href is not None else ('#' + form_id if forms and contact_target else action_url(label, h.get('cta_href')))
+        if href is not None:
+            target = href
+        else:
+            # A contact form can be a different action entirely. Preserve the
+            # source-backed destination for the requested primary action.
+            target = action_url(label, h.get('cta_href'), include_forms=True)
+            if not target and forms and contact_target and str(label).strip().casefold() == str(contact.get('cta') or '').strip().casefold():
+                target = '#' + form_id
         return f'<a class="btn{" light" if light else ""}" href="{e(target)}">{e(label)} <span class="ar">→</span></a>' if target else ''
     def secondary_cta(light=False):
         label = h.get('cta2')
@@ -420,11 +427,26 @@ def build(slug_dir, bp_id, out_path=None):
         vid = os.path.join(slug_dir, 'hero.mp4')
         hm = images.get(h.get('media')) or {}
         empty_hero = bool(hm and is_empty(hm))
-        if hm and (empty_hero or 'svg' in str(hm.get('data', ''))[:30] or hm.get('w', 0) < (700 if soft else 1000) or not (.5 <= hm.get('w', 1) / max(1, hm.get('h', 1)) <= 2.4) or (hm.get('shot') and not soft) or dark_background_texture(hm)): hm = {}  # a texture, vector, banner, small image or page screenshot is not a hero photo
+        rejected_product = d.get('kind') == 'software' and h.get('visual_verified') is False
+        verified_dimensions = pixel_dimensions(hm) if d.get('kind') == 'software' and h.get('visual_verified') is True and hm else None
+        hero_min_width = 360 if verified_dimensions and verified_dimensions[0] >= 360 else (700 if soft else 1000)
+        if verified_dimensions: hm = {**hm, 'w': verified_dimensions[0], 'h': verified_dimensions[1]}
+        if rejected_product:
+            # A decorative or unverified image is not a product demonstration.
+            # Do not replace it with a random photo from the source pool.
+            media = []; light = False; hm = {}; vid = ''
+        ratio = hm.get('w', 1) / max(1, hm.get('h', 1)) if hm else 0
+        # Real product interfaces can be wide charts or tall phone screens.
+        # Only relax the photo aspect rule when the visual reviewer verified
+        # the actual screenshot, and retain the native pixel-size limit.
+        aspect_ok = .5 <= ratio <= 2.4 or bool(verified_dimensions and h.get('visual_verified') is True and verified_dimensions[1] >= 160 and .25 <= ratio <= 5)
+        if hm and (empty_hero or 'svg' in str(hm.get('data', ''))[:30] or hm.get('w', 0) < hero_min_width or not aspect_ok or (hm.get('shot') and not soft) or dark_background_texture(hm)): hm = {}  # a texture, vector, banner, small image or page screenshot is not a hero photo
         cand = hm or next((i for i in sorted(images.values(), key=lambda i: -(i.get('w', 0) * i.get('h', 0))) if photo_like(i, 900) and reserved.get(i.get('id')) in (None, '__hero__')), None)
+        if d.get('kind') == 'software' and h.get('visual_verified') is True: cand = hm or None
         # An explicitly assigned empty capture is not evidence for replacing
         # it with another section's picture.
-        src = '' if empty_hero else (img(cand['id'], True) if cand else img(None, True))
+        src = '' if empty_hero or rejected_product else (img(cand['id'], True) if cand else ('' if d.get('kind') == 'software' and h.get('visual_verified') is True else img(None, True)))
+        if d.get('kind') == 'software' and h.get('visual_verified') is True and not src: media = []; light = False
         has_video = bool(media and os.path.exists(vid))
         if has_video:
             poster = f' poster="{src}"' if src else ''
@@ -448,6 +470,7 @@ def build(slug_dir, bp_id, out_path=None):
         body_ = f'<div class="wrap hero-in al-{al} place-{place}">{cat}<h1 class="h1" style="{hsty}">{h1}</h1><p class="lede{" light" if light else ""}">{e(h.get("lede"))}</p><div class="ctas">{cta_html(light)}{secondary_cta(light)}</div></div>'
         if not media and src and not hui.get('move') and d.get('kind') in ('place', 'service', 'product') and (images.get(h.get('media')) or {}).get('w', 0) >= 900: hui = {**hui, 'move': 'split'}
         if RECIPE and not (h.get('ui') or {}).get('move'): hui = {**hui, 'move': RECIPE.get('hero', hui.get('move'))}
+        if d.get('kind') == 'software' and h.get('visual_verified') is True and src and not has_video: hui = {**hui, 'move': 'split'}
         mv = hui.get('move')
         if has_video and not src:
             # A failed poster must not discard an independently valid video.
@@ -491,7 +514,8 @@ def build(slug_dir, bp_id, out_path=None):
             # SIGNATURE split hero: words left, the product right, full height; the product drifts up slower than the page
             spx = min(hpx, int(3 * 640 / ((0.7 if upper else 0.56) * max(12, nch)))); hsty2 = re.sub(r'--hero-size:[^;]+', f'--hero-size:{clampf(spx)}', re.sub(r'max-width:[^;]+', 'max-width:11ch', hsty))
             left = f'<div class="split-l">{plain_cat}<h1 class="h1" style="{hsty2}">{h1}</h1><p class="lede">{e(h.get("lede"))}</p><div class="ctas">{cta_html()}{secondary_cta()}</div></div>'
-            right = f'<div class="split-r"><div class="shotframe tall{" product-shot" if d.get("kind") == "software" else ""}" data-sig="parallax"><img src="{src}" alt="{source_alt(src)}"></div></div>'
+            native = f' style="max-width:{verified_dimensions[0]}px;margin-inline:auto"' if verified_dimensions and d.get('kind') == 'software' and h.get('visual_verified') is True else ''
+            right = f'<div class="split-r"><div class="shotframe tall{" product-shot" if d.get("kind") == "software" else ""}"{native} data-sig="parallax"><img src="{src}" alt="{source_alt(src)}"></div></div>'
             return f'<section class="sec hero split" id="top"><div class="wrap split-wrap">{left}{right}</div></section>'
         if shot: body_ += f'<div class="wrap shotwrap"><div class="shotframe"><img src="{src}" alt="{source_alt(src)}"></div></div>'
         return f'<section class="sec hero{" has-media" if media else ""}{" shot" if shot else ""}" id="top" style="min-height:{min(2, bp["sections"][0].get("screens", 1)) * 100}svh">{m}{body_}</section>'
@@ -644,9 +668,30 @@ def build(slug_dir, bp_id, out_path=None):
         prominent = bool(big and len(str(big)) <= 30 and len(str(big).split()) <= 6)
         return f'<section class="sec typewall band-{band_of(sec, bt)}" id="{e(bt["id"])}" data-sig="typewall"><div class="tw-sticky"><div class="wrap{" tw-prominent" if prominent else ""}">{lab(bt.get("label"))}<h2 class="tw{" tw-title" if big else ""}">{ws}</h2>{caption}{who}</div></div></section>'
 
+    def directed_photo(sec, bt):
+        """Render only photo treatments this renderer can safely honor."""
+        treatment = (bt.get('ui') or {}).get('photo_layout')
+        if treatment not in ('split', 'stacked', 'wide', 'gallery'): return ''
+        own = images.get(bt.get('image'))
+        if not own or not free_for(own, bt): return ''
+        dimensions = pixel_dimensions(own)
+        if not dimensions or dimensions[0] < 400 or dimensions[1] < 1: return ''
+        width, height = dimensions
+        if not photo_like({**own, 'w': width, 'h': height}, 400): return ''
+        # A small or portrait photo cannot safely fill a desktop-width band.
+        if treatment == 'wide' and (width < 1100 or not 1.2 <= width / height <= 2.4):
+            treatment = 'split'
+        src = img(own['id'])
+        if not src: return ''
+        caption = photo_caption(bt)
+        figure = f'<figure style="--photo-native:{width}px"><img src="{src}" alt="{source_alt(src)}"></figure>'
+        return f'<section class="sec art-photo art-photo-{treatment} band-{band_of(sec, bt)}" id="{e(bt["id"])}"><div class="wrap art-photo-inner" style="--photo-native:{width}px">{caption}{figure}</div></section>'
+
     def story(sec, bt, flip=False):
         """Text beside a visual, alternating sides; the visual reveals with a clip."""
         if bt['type'] == 'photo':
+            directed = directed_photo(sec, bt)
+            if directed: return directed
             own = images.get(bt.get('image'))
             dimensions = pixel_dimensions(own) if own and own.get('data') else None
             product_photo_story = (bp_id == 'butter' and soft and (bt.get('ui') or {}).get('move') == 'story'
@@ -845,6 +890,9 @@ def build(slug_dir, bp_id, out_path=None):
         return f'<section class="sec statement band-{band_of(sec, bt)}" id="{e(bt["id"])}" style="min-height:{(min(1.0, max(.5, sec.get("screens", .8))) * 100) if len(str(text or "").split()) > 45 else 0}svh"><div class="wrap{" center" if centered else ""}" style="{col_style(sec)}">{inner}<p class="big-p" style="font-size:{clampf(max(body_px, 22), .7)}{";margin-left:auto;margin-right:auto" if centered else ""}">{e(text)}</p>{who}</div></section>'
 
     def photo_sec(sec, bt=None):
+        if bt:
+            directed = directed_photo(sec, bt)
+            if directed: return directed
         ms = sec_media(sec) or [{'ar': 1.6, 'wf': 1, 'bleed': True}]
         if not bt and len(ms) >= 2 and ms[0].get('wf', 1) < .7:
             candidates = [i for i in images.values() if i.get('data') and not is_used(i.get('id')) and free_for(i, bt)]
@@ -1348,6 +1396,22 @@ def build(slug_dir, bp_id, out_path=None):
     if not RECIPE:
         if not cta_done: out.append(cta(take('cta'), None))
         out.append(footer(bp['sections'][-1] if bp['sections'][-1]['role'].startswith('footer') else {}))
+    # Adjacent gallery sections with the same band form one visual sequence.
+    # Keep each original section and its ID/actions intact; isolated choices
+    # remain ordinary stacked sections rather than pulling in unrelated beats.
+    grouped = []
+    i = 0
+    while i < len(out):
+        match = re.match(r'<section class="sec art-photo art-photo-gallery band-([\w-]+)"', out[i])
+        if match:
+            band = match.group(1); end = i + 1
+            while end < len(out) and end - i < 3 and out[end].startswith(f'<section class="sec art-photo art-photo-gallery band-{band}"'):
+                end += 1
+            if end - i >= 2:
+                grouped.append(f'<div class="photo-gallery gallery-{end - i} band-{band}">' + ''.join(out[i:end]) + '</div>')
+                i = end; continue
+        grouped.append(out[i]); i += 1
+    out = grouped
 
     # ---- logo ----
     logo = (assets.get('logo') or {}).get('data', '')
@@ -1398,6 +1462,26 @@ img,video{{display:block;max-width:100%}}a{{color:inherit;text-decoration:none}}
 .statement .who{{margin-top:22px}}.statement .wrap{{padding-left:max(var(--frame),var(--statement-offset,0px))}}.statement .wrap.center{{text-align:center;display:grid;justify-items:center}}
 .photos .pair{{display:flex;gap:var(--gutter);align-items:flex-start}}.photos figure{{overflow:hidden;border-radius:var(--radius)}}.photos figure img,.photo figure img{{width:100%;height:100%;object-fit:cover}}.photo figure{{position:relative;margin:0;max-height:92svh}}.inset-wrap{{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--gutter);align-items:end}}.inset-wrap figure{{overflow:hidden;border-radius:var(--radius)}}.inset-wrap .cap{{font-size:clamp(20px,1.6vw,26px);color:inherit}}@media(max-width:820px){{.inset-wrap{{grid-template-columns:1fr}}}}.photo.bleed{{padding:0}}.photo .over{{position:absolute;inset:auto 0 0 0;padding-bottom:clamp(28px,4vw,56px);color:var(--on-photo)}}.h2.light{{color:var(--on-photo)}}.cap{{margin-top:14px;max-width:var(--body-max);color:var(--muted)}}.caps{{display:flex;gap:24px;align-items:baseline;flex-wrap:wrap;padding-top:14px}}.photo-caption{{padding:clamp(24px,3vw,40px) 0}}.photo-caption .h2{{margin-top:14px;overflow-wrap:anywhere}}.photo-details{{display:flex;flex-wrap:wrap;gap:12px 24px;list-style:none;margin-top:18px}}
 .photo.ui-photo .ui-shot{{width:100%;overflow:hidden;border-radius:var(--radius)}}.photo.ui-photo .ui-shot img{{display:block;width:auto;max-width:100%;height:auto;max-height:92svh;object-fit:contain;margin:0 auto}}
+.art-photo .art-photo-inner{{display:grid;gap:clamp(28px,4vw,64px);align-items:center}}
+.art-photo figure{{margin:0;width:100%;max-width:var(--photo-native);overflow:hidden;border-radius:var(--radius)}}
+.art-photo figure img{{display:block;width:100%;height:auto;object-fit:contain}}
+.art-photo .photo-caption{{padding:0;min-width:0;overflow-wrap:anywhere}}
+.art-photo .photo-caption .h2{{text-wrap:balance}}
+.art-photo-split .art-photo-inner{{max-width:min(100%,calc(var(--photo-native) + 570px));grid-template-columns:minmax(0,1fr) minmax(0,min(48%,var(--photo-native,600px)))}}
+.art-photo-stacked .art-photo-inner{{max-width:min(100%,calc(var(--photo-native) + 280px));grid-template-columns:minmax(0,1fr);gap:24px}}
+.art-photo-stacked figure{{justify-self:end}}
+.art-photo-wide .art-photo-inner{{grid-template-columns:minmax(0,1fr);gap:24px}}
+.art-photo-wide figure{{order:-1;justify-self:center}}
+.art-photo-gallery .art-photo-inner{{grid-template-columns:minmax(0,1fr);gap:20px}}
+.art-photo-gallery figure{{order:-1}}
+.photo-gallery{{display:grid;justify-content:center;gap:clamp(20px,3vw,48px);padding:clamp(60px,7vw,110px) var(--frame)}}
+.photo-gallery.gallery-2{{grid-template-columns:repeat(2,minmax(0,480px))}}
+.photo-gallery.gallery-3{{grid-template-columns:repeat(3,minmax(0,1fr));padding-inline:max(var(--frame),calc((100% - 1350px) / 2))}}
+.photo-gallery .art-photo{{padding:0;min-width:0;align-content:start}}
+.photo-gallery .art-photo-inner{{padding:0;max-width:none}}
+.photo-gallery .photo-caption .h2{{font-size:clamp(26px,3vw,44px);line-height:1.05}}
+@media(max-width:820px){{.art-photo-split .art-photo-inner{{grid-template-columns:minmax(0,1fr)}}.art-photo-stacked figure{{justify-self:start}}}}
+@media(max-width:820px){{.photo-gallery.gallery-2,.photo-gallery.gallery-3{{grid-template-columns:minmax(0,1fr);gap:48px}}}}
 .gh{{display:grid;grid-template-columns:1.1fr .9fr;gap:var(--gutter);align-items:end;margin-bottom:clamp(28px,4vw,48px)}}.gh .h2{{text-align:left!important;margin-left:0!important;margin-top:14px;max-width:18ch;text-wrap:balance}}.gh .lede{{margin-top:0}}
 .sec.compact{{padding:clamp(40px,5vw,72px) 0;min-height:auto!important}}.gh.one{{display:block;max-width:var(--body-max)}}.gh.one .h2{{max-width:none}}.gh.one.center{{text-align:center;margin-left:auto;margin-right:auto}}.gh.one.center .h2{{text-align:center!important;margin-left:auto!important;margin-right:auto}}.gh.one .lede{{margin-top:16px}}.gh.one.center .lede{{margin-left:auto;margin-right:auto}}
 figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4vw,48px);border:1px solid var(--line);max-height:78vh}}figure.lead.narrow{{width:min(100%,640px);margin-left:auto;margin-right:auto}}figure.lead.ledger-visual{{margin-top:28px}}figure.lead img{{width:100%;height:100%;object-fit:cover;object-position:top}}figure.lead.lead-shot{{width:fit-content;max-width:100%;margin-left:auto;margin-right:auto;border-radius:0}}figure.lead.lead-shot img{{width:auto;height:auto;max-width:100%;max-height:calc(78vh - 2px);object-fit:contain}}

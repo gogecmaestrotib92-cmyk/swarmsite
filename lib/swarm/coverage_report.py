@@ -9,9 +9,11 @@ import html
 import json
 import os
 import re
+import sys
 import unicodedata
 from html.parser import HTMLParser
 from urllib.parse import urlsplit, urlunsplit
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 class PreviewText(HTMLParser):
@@ -171,6 +173,26 @@ def build_coverage(inventory, rendered_html):
                               'capture_status': capture_status,
                               'reason': str(route.get('reason') or ''),
                               'status': 'linked_to_source' if key in links or (final_key and final_key in links) else 'not_linked'})
+    # Subpages are source evidence, not generated pages. Track every captured
+    # section separately so homepage matches cannot imply whole-site coverage.
+    pages = []
+    for page in inventory.get('sourcePages') or []:
+        if not isinstance(page, dict): continue
+        page_sections = []
+        for sec in page.get('sections') or []:
+            if not isinstance(sec, dict): continue
+            title = str(sec.get('title') or '').strip()
+            if not title: continue
+            key = normalize(title)
+            found = len(key) >= 3 and (' ' + key + ' ') in text
+            page_sections.append({'id': str(sec.get('id') or ''), 'title': title,
+                                  'status': 'text_detected' if found else 'needs_review',
+                                  'source_text_truncated': bool(sec.get('textTruncated'))})
+        pages.append({'url': str(page.get('url') or ''), 'title': str(page.get('title') or ''),
+                      'sections_found': page.get('sectionsFound', len(page_sections)),
+                      'sections_truncated': bool(page.get('sectionsTruncated')),
+                      'copy_truncated': bool((page.get('copy') or {}).get('textTruncated')),
+                      'sections': page_sections})
     detected = sum(sec['status'] == 'text_detected' for sec in result_sections)
     linked = sum(route['status'] == 'linked_to_source' for route in result_routes)
     faq_items = [item for sec in result_sections for item in sec['faq']]
@@ -191,6 +213,16 @@ def build_coverage(inventory, rendered_html):
         'faq_catalog_truncated': any(sec['faq_truncated'] for sec in result_sections),
         'evidence_catalog_truncated': any(sec['evidence_truncated'] for sec in result_sections),
         'source_actions_needing_review': any(sec['source_actions_version'] != 1 or sec['source_actions_truncated'] or sec['source_actions_excluded'] or any(item['status'] == 'needs_review' for item in sec['source_actions']) for sec in result_sections),
+        'crawl': {'complete': catalog.get('complete'), 'scope': catalog.get('scope'),
+                  'content_truncated': bool(catalog.get('contentTruncated')),
+                  'route_limit': catalog.get('routeLimit'), 'time_limit_ms': catalog.get('timeLimitMs'),
+                  'routes_visited': sum(r['capture_status'] == 'visited' for r in result_routes),
+                  'routes_failed': sum(r['capture_status'] == 'failed' for r in result_routes),
+                  'routes_limited': sum(r['capture_status'] == 'limit' for r in result_routes),
+                  'sitemaps_waiting': len(catalog.get('sitemapQueue') or []),
+                  'sitemaps_failed': len(catalog.get('sitemapErrors') or []),
+                  'routes_excluded': sum(r['capture_status'] == 'excluded' for r in result_routes)},
+        'source_pages': pages,
         'sections': result_sections,
         'routes': result_routes,
         'summary': {'sections_total': len(result_sections), 'sections_text_detected': detected,
@@ -214,6 +246,12 @@ def write_coverage(slug_dir, html_path):
     with open(inventory_path, encoding='utf-8') as f: inventory = json.load(f)
     with open(html_path, encoding='utf-8') as f: rendered_html = f.read()
     result = build_coverage(inventory, rendered_html)
+    analysis_path = os.path.join(slug_dir, 'site-analysis.json')
+    if os.path.exists(analysis_path):
+        from source_context import model_analysis
+        with open(analysis_path, encoding='utf-8') as f: analysis = model_analysis(json.load(f))
+        if analysis:
+            result['source_analysis'] = {k: analysis[k] for k in ('complete','batches_completed','batches_total','missing_pages','missing_sections','context_truncated','usage_recorded_calls','token_usage')}
     with open(os.path.join(slug_dir, 'coverage.json'), 'w', encoding='utf-8') as f:
         json.dump(result, f, ensure_ascii=False, indent=1)
     return result

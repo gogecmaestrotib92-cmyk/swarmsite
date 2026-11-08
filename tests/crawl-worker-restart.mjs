@@ -1,0 +1,30 @@
+/* Real worker + browser; local stand-in for Supabase storage/PostgREST only. */
+import assert from 'node:assert/strict';import http from 'node:http';import fs from 'node:fs';import path from 'node:path';import net from 'node:net';import {spawn} from 'node:child_process';import {chromium} from 'playwright';
+const id='91f03a00-1a01-4000-8000-123456789abc';const objects=new Map();const steps=['capture','diagnose','direct','render','qa','upload'].map(id=>({id,label:id,status:'pending'}));let job;let worker;
+const wait=async(test,ms=60000)=>{let until=Date.now()+ms;while(Date.now()<until){if(await test())return;await new Promise(r=>setTimeout(r,250));}throw new Error('Timed out waiting for worker');};
+const mock=http.createServer(async(req,res)=>{let parts=[];for await(const c of req)parts.push(c);const body=Buffer.concat(parts);const u=new URL(req.url,'http://local');res.setHeader('access-control-allow-origin','*');res.setHeader('access-control-allow-headers','*');res.setHeader('access-control-allow-methods','GET, POST, PATCH, DELETE, OPTIONS');if(req.method==='OPTIONS'){res.writeHead(204);return res.end();}
+ const json=(value,code=200)=>{res.writeHead(code,{'content-type':'application/json'});res.end(JSON.stringify(value))};
+ if(u.pathname==='/rest/v1/rpc/claim_swarmsite_job'){const v=JSON.parse(body);if(job.status==='queued'||job.status==='running'&&job.lease_until&&Date.parse(job.lease_until)<Date.now()){job.status='running';job.lease_owner=v.p_worker_id;job.lease_until=new Date(Date.now()+120000).toISOString();return json([job]);}return json([]);}
+ if(u.pathname==='/v1/messages'){const timer=setTimeout(()=>json({error:{type:'test_timeout',message:'test stopped'}}),120000);timer.unref();req.on('close',()=>clearTimeout(timer));return;}
+ if(u.pathname==='/rest/v1/jobs'){
+  if(req.method==='PATCH'){const status=u.searchParams.get('status'),owner=u.searchParams.get('lease_owner');if(status&&status!=='eq.'+job.status || owner&&owner!=='eq.'+job.lease_owner)return json([]);Object.assign(job,JSON.parse(body));return json([{id}]);}
+  return json(String(req.headers.accept||'').includes('application/vnd.pgrst.object+json') ? job : [job]);
+ }
+ if(u.pathname.startsWith('/storage/v1/object/')){const rest=u.pathname.slice('/storage/v1/object/'.length).replace(/^public\//,'');if(req.method==='POST'||req.method==='PUT'){objects.set(rest,body);return json({Key:rest})}if(req.method==='GET'){if(!objects.has(rest)){res.writeHead(404);return res.end('missing')}res.writeHead(200,{'content-type':'image/jpeg'});return res.end(objects.get(rest));}if(req.method==='DELETE'){return json([])}}
+ if(u.pathname==='/source/'||u.pathname.startsWith('/source/p')){const links=u.pathname==='/source/'?Array.from({length:70},(_,i)=>`<a href="/source/p${i+1}">Page ${i+1}</a>`).join(' '):'';await new Promise(r=>setTimeout(r,150));res.writeHead(200,{'content-type':'text/html'});return res.end(`<!doctype html><title>Local sample business</title><body><h1>A useful real business</h1><p>${'Specific facts about this local business and its services. '.repeat(15)}</p>${links}</body>`);}
+ if(u.pathname==='/robots.txt'||u.pathname==='/sitemap.xml'){res.writeHead(404);return res.end()}
+ if(u.pathname==='/app'){res.writeHead(200,{'content-type':'text/html'});return res.end(fs.readFileSync('web/app.html'));}
+ if(u.pathname==='/config.js'){res.writeHead(200,{'content-type':'application/javascript'});return res.end(`window.SWARMSITE_API='http://[::1]:${port}'`)}
+ if(u.pathname.startsWith('/js/')||u.pathname.startsWith('/agents/')||u.pathname.startsWith('/fonts/')){const fp=path.join('web',u.pathname);if(fs.existsSync(fp)&&fs.statSync(fp).isFile()){res.writeHead(200);return res.end(fs.readFileSync(fp));}}
+ res.writeHead(404);res.end('not found');});
+let port;let browser;let log='';
+function startWorker(){worker=spawn(process.execPath,['server/index.mjs'],{detached:true,env:{...process.env,SUPABASE_URL:`http://[::1]:${mock.address().port}`,SUPABASE_SERVICE_KEY:'local-test',ANTHROPIC_API_KEY:'local-test',ANTHROPIC_BASE_URL:`http://[::1]:${mock.address().port}`,PORT:String(port),PUBLIC_API:`http://[::1]:${port}`,CHROME_PATH:process.env.CHROME_PATH}});worker.stdout.on('data',x=>log+=x);worker.stderr.on('data',x=>log+=x)}
+async function stopWorker(){if(!worker)return;try{process.kill(-worker.pid,'SIGKILL')}catch{}await new Promise(r=>worker.on('close',r));worker=null}
+try {await new Promise(r=>mock.listen(0,'::1',r));const temp=net.createServer();await new Promise(r=>temp.listen(0,'::1',r));port=temp.address().port;await new Promise(r=>temp.close(r));job={id,url:`http://[::1]:${mock.address().port}/source/`,status:'queued',created_at:new Date().toISOString(),options:{},steps,result:{}};startWorker();
+ await wait(()=>job.result?.crawlCheckpoint,90000);const initial=job.result.crawlCheckpoint.key;assert.ok(objects.has('crawl-checkpoints/'+initial));
+ browser=await chromium.launch({executablePath:process.env.CHROME_PATH,args:['--no-sandbox']});const page=await browser.newPage({viewport:{width:390,height:844}});await page.goto(`http://[::1]:${mock.address().port}/app?url=example.com&job=${id}`);await page.waitForFunction(()=>document.querySelector('#before').naturalWidth>0,null,{timeout:20000});await page.waitForFunction(()=>document.querySelector('.s2-cur.in:not(.off)'),null,{timeout:20000});
+ await stopWorker();job.lease_until=new Date(Date.now()-1000).toISOString();startWorker();
+ await wait(()=>job.result?.events?.some(e=>e.text==='Resuming saved landing analysis'),45000);
+ assert.equal(job.status,'running');assert.ok(job.result.beforeFullUrl);assert.ok(job.result.events.some(e=>e.role==='Reader'&&/Reading the landing page/.test(e.text)));
+ console.log('Real worker restored private checkpoint after restart; browser kept real Reader events and source image visible');
+} catch(e){console.error(log.slice(-4000));throw e;} finally {if(browser)await browser.close();await stopWorker();await new Promise(r=>mock.close(r));const out=path.resolve('out');if(fs.existsSync(out))for(const name of fs.readdirSync(out))if(name.startsWith('job-'+id+'-'))fs.rmSync(path.join(out,name),{recursive:true,force:true});}

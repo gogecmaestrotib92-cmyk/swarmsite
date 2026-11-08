@@ -49,16 +49,16 @@ class DirectorCoverageTests(unittest.TestCase):
         self.assertEqual(direct.TOOL['input_schema']['properties']['beats']['maxItems'], 48)
 
     def test_catalog_is_valid_bounded_and_marks_trimmed_content(self):
-        inv = {'sourceCoverage': {'sections': [{'id': f'home-{i}', 'title': f'Topic {i}', 'text': 'x' * 1300} for i in range(1, 43)],
+        inv = {'sourceCoverage': {'sections': [{'id': f'home-{i}', 'title': f'Topic {i}', 'text': 'x' * 1300} for i in range(1, 83)],
                                   'routes': [{'url': f'https://example.test/{i}', 'status': 'limit'} for i in range(125)]}}
         c = direct.source_catalog(inv)
-        self.assertEqual(len(c['sections']), 40)
+        self.assertEqual(len(c['sections']), 80)
         self.assertEqual(len(c['routes']), 120)
         self.assertTrue(c['sectionsTruncated'])
         self.assertTrue(c['routesTruncated'])
         self.assertTrue(c['sections'][0]['textTruncated'])
         self.assertEqual(len(c['sections'][0]['text']), 1200)
-        self.assertEqual(json.loads(json.dumps(c))['sections'][-1]['id'], 'home-40')
+        self.assertEqual(json.loads(json.dumps(c))['sections'][-1]['id'], 'home-80')
 
     def test_model_catalog_excludes_large_candidate_evidence_but_keeps_faq(self):
         faq = [{'question': 'What?', 'answer': 'Source answer', 'status': 'readable'}]

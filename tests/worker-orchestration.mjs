@@ -8,6 +8,7 @@ async function scenario({best='cerebrium',failFirst=false,failAltUpload=false,st
  const run=async(_bin,args)=>{
   if(args[0]==='lib/pipeline/capture.mjs'){const jobRoot=args[args.indexOf('--out')+1];jobDir=path.join(jobRoot,'site');fs.mkdirSync(jobDir,{recursive:true});fs.writeFileSync(path.join(jobDir,'inventory.json'),'{}');fs.writeFileSync(path.join(jobDir,'images.json'),'[]');return ''}
   if(args[0]==='-I')return '{}';
+  if(args[0]==='lib/swarm/site_map.py')return JSON.stringify({analysis:{total:1,completed:1,complete:true}});
   if(args[0]==='-c')return '{"what":"test","n":0}';
   if(args[0]==='lib/direct/direct.py'){fs.writeFileSync(path.join(jobDir,'direction.json'),JSON.stringify({kind:'software',blueprint:'butter',hero:{h1:'old'},beats:[]}));return ''}
   if(args[0]==='experiments/design-patterns/verify_selected.py')return '';
@@ -15,7 +16,7 @@ async function scenario({best='cerebrium',failFirst=false,failAltUpload=false,st
   if(args[0]==='lib/swarm/run.py'){const out=args[args.indexOf('--out')+1];const d=JSON.parse(fs.readFileSync(path.join(jobDir,'direction.json')));d.hero.h1='FINAL';d.blueprint=best;fs.writeFileSync(path.join(jobDir,'direction.json'),JSON.stringify(d));fs.writeFileSync(out,`<html><body>${best}:FINAL</body></html>`);fs.writeFileSync(path.join(jobDir,'coverage.json'),JSON.stringify({scope:'single_page_preview',sections:[],routes:[]}));return JSON.stringify({done:{best_blueprint:best,render_manifest:makeManifest(jobDir,best,out),rounds:1}})}
   if(args[0]==='lib/qa/check.py')return 'QA score 100';throw Error('unexpected run '+args[0])
  };
- const appCtx={fs,path,OUT:temp,ROOT:root,process,console,slugOf:()=> 'site',setStep:async()=>{},run,emit:async()=>{},eventsCapture:()=>[],eventsDiagnose:()=>[],eventsDirect:()=>[],eventsRender:()=>[],eventsQA:()=>[],upload,J:f=>{try{return JSON.parse(fs.readFileSync(f,'utf8'))}catch{return null}},BP:{software:['butter','cerebrium','deepbook'],service:['lpas']},prepareAlternative,publishSelected,verifySelected,verifyAlternative,SELF:'https://api.test',uploadArtefacts:async()=>true,drainEvents:async()=>{},updateWithRetry:async(_j,patch)=>{if(patch.status==='done')result=patch.result}};
+ const appCtx={fs,path,OUT:temp,ROOT:root,process,console,slugOf:()=> 'site',setStep:async()=>{},run,emit:async()=>{},eventsCapture:()=>[],eventsDiagnose:()=>[],eventsDirect:()=>[],eventsRender:()=>[],eventsQA:()=>[],upload,J:f=>{try{return JSON.parse(fs.readFileSync(f,'utf8'))}catch{return null}},BP:{software:['butter','cerebrium','deepbook'],service:['lpas']},prepareAlternative,publishSelected,verifySelected,verifyAlternative,SELF:'https://api.test',uploadArtefacts:async()=>true,drainEvents:async()=>{},checkpointCrawl:async()=>{},updateWithRetry:async(_j,patch)=>{if(patch.status==='done')result=patch.result}};
  vm.runInNewContext(source.slice(a,z)+'\nglobalThis.work=process_',appCtx);const job={id:'11111111-1111-4111-8111-111111111111',url:'https://example.com',options:{},steps:[]};
  try{await appCtx.work(job);return {result,objects,published}}finally{fs.rmSync(temp,{recursive:true,force:true})}
 }

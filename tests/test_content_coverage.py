@@ -21,8 +21,22 @@ class UXContentPreservationTests(unittest.TestCase):
                 agents.reader(directory)
             blocks = ask.call_args.args[1]
             self.assertIn('Frequently asked questions', blocks[0]['text'])
-            self.assertIn('SOURCE SUBPAGES', blocks[2]['text'])
+            self.assertTrue(any('SOURCE SUBPAGES' in block['text'] for block in blocks))
             self.assertIn('do not drop capabilities', agents.READER_TOOL['input_schema']['properties']['capabilities']['description'])
+
+    def test_subpage_sections_are_reported_as_source_evidence(self):
+        inventory = {'sourceCoverage': {'sections': [], 'routes': [
+            {'url': 'https://example.test/pricing', 'status': 'visited'},
+            {'url': 'https://example.test/missing', 'status': 'failed'}], 'complete': False},
+            'sourcePages': [{'url': 'https://example.test/pricing', 'title': 'Pricing',
+                             'sectionsFound': 2, 'sectionsTruncated': True,
+                             'sections': [{'id': 'p1-1', 'title': 'Gold plan'}]}]}
+        result = coverage_report.build_coverage(inventory, '<main><h1>Other</h1></main>')
+        self.assertFalse(result['crawl']['complete'])
+        self.assertEqual(result['crawl']['routes_failed'], 1)
+        self.assertTrue(result['source_pages'][0]['sections_truncated'])
+        self.assertEqual(result['source_pages'][0]['sections'][0]['status'], 'needs_review')
+        self.assertEqual(result['scope'], 'single_page_preview')
 
     def test_ux_cannot_drop_any_existing_beat(self):
         with tempfile.TemporaryDirectory() as directory:

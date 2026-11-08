@@ -32,7 +32,7 @@ const server = http.createServer((req, res) => {
 try {
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const url = `http://127.0.0.1:${server.address().port}/`;
-  const child = spawn(process.execPath, ['lib/pipeline/capture.mjs', url, '--out', dir], { stdio: ['ignore', 'ignore', 'pipe'] });
+  const child = spawn(process.execPath, ['lib/pipeline/capture.mjs', url, '--site-wide', '--out', dir], { stdio: ['ignore', 'ignore', 'pipe'] });
   let error = '';
   child.stderr.on('data', chunk => { error += chunk; });
   const code = await new Promise((resolve, reject) => {
@@ -43,8 +43,8 @@ try {
   const slug = url.replace(/^https?:\/\//, '').replace(/[^a-z0-9.-]+/gi, '_').replace(/_+$/, '').toLowerCase();
   const inventory = JSON.parse(fs.readFileSync(path.join(dir, slug, 'inventory.json'), 'utf8'));
   const paths = inventory.sourcePages.map(page => new URL(page.url).pathname).sort();
-  assert.deepEqual(paths, ['/contacto', '/design', '/menu', '/store/cookies']);
-  console.log('Capture excludes privacy and account pages while keeping relevant content');
+  assert.deepEqual(paths, links.filter(([url]) => !['/sign-in','/signup','/register'].includes(url)).map(([url]) => url).sort());
+  console.log('Capture reads public content, including legal pages, while excluding account routes');
 
   // The supplied URL can redirect to a canonical origin. Only that landed
   // origin may contribute subpages, even when another page redirects back to
@@ -68,7 +68,7 @@ try {
     await new Promise(resolve => entry.listen(0, '127.0.0.1', resolve));
     entryOrigin = `http://127.0.0.1:${entry.address().port}`;
     const redirectUrl = `${entryOrigin}/`;
-    const redirected = spawn(process.execPath, ['lib/pipeline/capture.mjs', redirectUrl, '--out', dir], { stdio: ['ignore', 'ignore', 'pipe'] });
+    const redirected = spawn(process.execPath, ['lib/pipeline/capture.mjs', redirectUrl, '--site-wide', '--out', dir], { stdio: ['ignore', 'ignore', 'pipe'] });
     let redirectError = '';
     redirected.stderr.on('data', chunk => { redirectError += chunk; });
     const redirectCode = await new Promise((resolve, reject) => {
