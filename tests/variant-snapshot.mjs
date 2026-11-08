@@ -3,7 +3,7 @@ import {prepareAlternative,publishSelected,verifySelected} from '../server/varia
 const repo=process.cwd(), dir=fs.mkdtempSync(path.join(os.tmpdir(),'swarm-variant-test-')),root=path.join(dir,'repo'),job=path.join(dir,'job');fs.mkdirSync(root);fs.mkdirSync(job);fs.cpSync(path.join(repo,'lib'),path.join(root,'lib'),{recursive:true});
 const source=process.env.CAL_ARTIFACT_DIR||path.join(repo,'tests');for(const n of ['direction','images','assets','inventory','brief']){const f=path.join(source,process.env.CAL_ARTIFACT_DIR?`${n}.json`:`${n}.sample.json`);if(fs.existsSync(f))fs.copyFileSync(f,path.join(job,`${n}.json`));}
 const sha=f=>fs.existsSync(f)?crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex'):null;
-const input=['direction.json','images.json','assets.json','inventory.json','brief.json','hero.mp4'],engine=['lib/render/render_bp.py','lib/templates/recipes.py','lib/visual_quality.py','lib/colour/palette.py','lib/colour_policy.py','lib/motion/moves.js','lib/motion/swarm.js'];
+const input=['direction.json','images.json','assets.json','inventory.json','brief.json','hero.mp4'],engine=['lib/render/render_bp.py','lib/templates/recipes.py','lib/visual_quality.py','lib/visual_semantics.py','lib/colour/palette.py','lib/colour_policy.py','lib/motion/moves.js','lib/motion/swarm.js'];
 const fingerprint=bp=>({inputs:Object.fromEntries(input.map(n=>[n,sha(path.join(job,n))])),engine:Object.fromEntries([...engine,`lib/blueprints/${bp}.bp.json`].map(n=>[n,sha(path.join(root,n))]))});
 const run=async(_bin,args)=>{const r=spawnSync(process.env.PYTHON||'python3',args,{cwd:root,env:{...process.env,PYTHONHASHSEED:'0'},encoding:'utf8'});if(r.status!==0)throw new Error(r.stderr);};
 try{

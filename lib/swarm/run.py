@@ -14,7 +14,7 @@ import coverage_report as Coverage
 def ev(role, text): print(json.dumps({"event": {"role": role, "text": str(text)[:140]}}, ensure_ascii=False), flush=True)
 
 INPUTS = ('direction.json', 'images.json', 'assets.json', 'inventory.json', 'brief.json', 'hero.mp4')
-ENGINE = ('lib/render/render_bp.py', 'lib/templates/recipes.py', 'lib/visual_quality.py',
+ENGINE = ('lib/render/render_bp.py', 'lib/templates/recipes.py', 'lib/visual_quality.py', 'lib/visual_semantics.py',
           'lib/colour/palette.py', 'lib/colour_policy.py', 'lib/motion/moves.js', 'lib/motion/swarm.js')
 def digest(path):
     if not os.path.isfile(path): return None
@@ -72,6 +72,10 @@ def safe(name, fn, *a):
     try: n = fn(*a); ev(name, f'{n if isinstance(n, int) else "ok"} change(s) · {round(time.time() - t)}s'); return n
     except Exception as e: ev(name, 'skipped: ' + str(e)[:90]); traceback.print_exc(file=sys.stderr); return 0
 
+def checked_render(slug_dir, bp, out):
+    safe('Visual check', A.review_ledger_leads, slug_dir)
+    return render(slug_dir, bp, out)
+
 def snapshot_shots(slug_dir, snapshot_dir):
     """Keep only the current best's screenshots on disk, never in memory."""
     saved = os.path.join(snapshot_dir, 'critic-shots')
@@ -122,7 +126,7 @@ def _main(snapshot_dir):
     for x in (vis.get('generated') or [])[:3]: ev('Visual', 'commissioned: ' + x)
     for x in (vis.get('gen_errors') or [])[:1]: ev('Visual', 'generation failed: ' + x)
     for x in (vis.get('need') or [])[:2]: ev('Visual', 'missing visual: ' + x)
-    render_manifest = render(slug_dir, bp, out); ev('Render', f'{bp} · round 0')
+    render_manifest = checked_render(slug_dir, bp, out); ev('Render', f'{bp} · round 0')
     best_score, best_key, best_round, best_files, best_bp, best_manifest = -1, None, None, None, None, None
     for k in range(1, rounds + 1):
         t = time.time()
@@ -164,7 +168,7 @@ def _main(snapshot_dir):
             safe('Concept', A.concept, slug_dir, why, bp); safe('UX', A.ux, slug_dir, why); safe('Visual', A.visual, slug_dir, why); safe('UI', A.ui, slug_dir, why, bp)
             d = A.J(slug_dir, 'direction.json'); sw = d.get('swarm') or {}
             if sw.get('idea'): ev('Concept', 'idea: ' + sw['idea'])
-            render_manifest = render(slug_dir, bp, out); ev('Render', f'{bp} · restart'); continue
+            render_manifest = checked_render(slug_dir, bp, out); ev('Render', f'{bp} · restart'); continue
         if len(log['rounds']) >= 2:
             previous = log['rounds'][-2]
             if rank <= (not previous['broken'], previous['score'], -len(previous['fixes'])):
@@ -182,7 +186,7 @@ def _main(snapshot_dir):
         with ThreadPoolExecutor(max_workers=4) as ex:
             res = list(ex.map(lambda j: (j[0], safe(j[0].upper() if j[0] in ('ux', 'ui') else j[0].capitalize(), j[1], slug_dir, j[2], *([bp] if j[0] == 'ui' else []))), jobs))
         if applied + sum(r for _, r in res) == 0: ev('Critic', 'nothing more the team can change'); break
-        render_manifest = render(slug_dir, bp, out); ev('Render', f'{bp} · round {k}')
+        render_manifest = checked_render(slug_dir, bp, out); ev('Render', f'{bp} · round {k}')
     # Keep the selected render and the inputs and reports that describe it together.
     if best_files:
         for path, data in best_files.items():

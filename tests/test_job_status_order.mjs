@@ -14,7 +14,7 @@ try {
   assert.ok(start >= 0 && end > start);
   const slugOf = url => url.replace(/^https?:\/\//, '').replace(/[^a-z0-9.-]+/gi, '_').replace(/_+$/, '').toLowerCase();
   const inputFiles = ['direction.json', 'images.json', 'assets.json', 'inventory.json', 'brief.json', 'hero.mp4'];
-  const engineFiles = ['lib/render/render_bp.py', 'lib/templates/recipes.py', 'lib/visual_quality.py', 'lib/colour/palette.py', 'lib/colour_policy.py', 'lib/motion/moves.js', 'lib/motion/swarm.js'];
+  const engineFiles = ['lib/render/render_bp.py', 'lib/templates/recipes.py', 'lib/visual_quality.py', 'lib/visual_semantics.py', 'lib/colour/palette.py', 'lib/colour_policy.py', 'lib/motion/moves.js', 'lib/motion/swarm.js'];
   const hash = file => fs.existsSync(file) && fs.statSync(file).isFile() ? crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex') : null;
   for (const scenario of ['success', 'artifact-failure', 'alternative-failure', 'primary-failure']) {
     const events = [];

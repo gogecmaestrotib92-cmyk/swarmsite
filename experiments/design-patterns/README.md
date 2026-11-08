@@ -7,8 +7,8 @@ consumer could ask an agent to propose that tuple, run this independent check,
 and keep the original direction whenever the check fails. Applying an accepted
 candidate and evaluating its design remain separate work.
 
-`catalog.json` describes conservative subsets of two existing renderer forms:
-`story-assigned-product-ui@1` and `marquee-short-facts@1`. Each declares allowed
+`catalog.json` describes conservative subsets of existing renderer forms:
+`story-assigned-product-ui@1`, `marquee-short-facts@1`, and `butter-editorial-product@1`. The Butter editorial entry allows up to six features and verifies that the renderer actually selected its specific editorial component. Each declares allowed
 beat types and site classes, item limits, asset requirements, fallback, renderer
 and reference. The reference identifies where a role was observed; it does not
 claim the generated result is identical or copy any original assets.

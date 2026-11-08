@@ -21,6 +21,8 @@ class CatalogTest(unittest.TestCase):
  def call(self,kind='story-assigned-product-ui',version=1):return m.check(self.dir,'butter','target',kind,version)
  def test_story_and_source_not_modified(self):
   before={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in self.dir.iterdir()};result=self.call();self.assertTrue(result['accepted'],result);self.assertEqual(before,{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in self.dir.iterdir()})
+ def test_butter_editorial_five_items_and_wrong_blueprint(self):
+  self.d['beats'][0]['features']=[{'title':f'Feature {i}','body':f'Detail {i}'} for i in range(5)];self.d['beats'][0]['lede']='A distinctive product story that explains the product clearly';self.save();r=self.call('butter-editorial-product');self.assertTrue(r['accepted'],r);self.assertFalse(m.check(self.dir,'cerebrium','target','butter-editorial-product',1)['accepted']);self.d['beats'][0]['features'] += [{'title':'Six','body':'Details'},{'title':'Seven','body':'Details'}];self.save();self.assertFalse(self.call('butter-editorial-product')['accepted'])
  def test_marquee_and_negative_conditions(self):
   self.d['beats'][0]={'id':'target','type':'facts','h2':'Proof','source_sections':['s1'],'facts':[['10','Customers'],['20','Projects']],'ui':{'move':'cards'}};self.save();self.assertTrue(self.call('marquee-short-facts')['accepted']);self.d['beats'][0]['facts']=[['a b c d e f','detail']];self.save();self.assertFalse(self.call('marquee-short-facts')['accepted']);self.d['beats'][0]['facts']=[[str(i),'x'] for i in range(11)];self.save();self.assertFalse(self.call('marquee-short-facts')['accepted'])
  def test_unknown_wrong_kind_missing_blank_and_item_images(self):

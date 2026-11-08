@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.join(ROOT, 'lib/colour'))
 from palette import palette as mkpal
 sys.path.insert(0, os.path.join(ROOT, 'lib'))
 from visual_quality import empty_visual
+from visual_semantics import ledger_lead_fingerprint
 from colour_policy import resolve as resolve_colours, norm as normalise_colour, contrast as colour_contrast
 
 e = lambda s: H.escape(str(s if s is not None else ''), quote=True)
@@ -450,6 +451,29 @@ def build(slug_dir, bp_id, out_path=None):
         if has_video and not src:
             # A failed poster must not discard an independently valid video.
             return f'<section class="sec hero has-media" id="top" style="min-height:100svh">{m}{body_}</section>'
+        if mv == 'editorial-type' and not has_video:
+            # Text remains one real heading; the image is optional and never
+            # replaces it. Keep the full copy and actual CTA destinations.
+            ep = normalise_colour(band_paper); ei = normalise_colour(band_ink)
+            if not ep or not ei or colour_contrast(ep, ei) < 4.5: ep, ei = '#101010', '#FFFFFF'
+            style = re.sub(r'max-width:[^;]+', 'max-width:14ch', hsty)
+            style = re.sub(r'text-align:(?:left|center)', 'text-align:left', style)
+            style = re.sub(r'--hero-size:[^;]+', f'--hero-size:{clampf(150 if nw < 6 else 92)}', style)
+            figure = f'<figure class="editorial-hero-visual"><img src="{src}" alt="{source_alt(src)}"></figure>' if src else ''
+            return f'<section class="sec hero editorial-type{" no-visual" if not src else ""}" id="top" style="--editorial-bg:{ep};--editorial-ink:{ei}"><div class="wrap editorial-hero-layout"><div class="editorial-hero-copy"><div class="cat">{lab(h.get("category"))}{lab(h.get("fact"))}</div><h1 class="h1" style="{style}">{h1}</h1><p class="lede">{e(h.get("lede"))}</p><div class="ctas">{cta_html()}{secondary_cta()}</div></div>{figure}</div></section>'
+        if mv == 'billboard' and src and hm and cand is hm and not hm.get('shot') and not has_video and free_for(hm):
+            # Use the assigned hero photo, not another section's asset.
+            heading_style = re.sub(r'max-width:[^;]+', 'max-width:18ch', hsty)
+            heading_style = re.sub(r'text-align:(?:left|center)', 'text-align:center', heading_style)
+            return f'<section class="sec hero billboard" id="top"><div class="wrap billboard-frame"><div class="billboard-media"><img src="{src}" alt="{source_alt(src)}"></div><div class="billboard-content"><div class="cat">{lab(h.get("category"), True)}{lab(h.get("fact"), True)}</div><h1 class="h1" style="{heading_style}">{h1}</h1><p class="lede">{e(h.get("lede"))}</p><div class="ctas">{cta_html(True)}{secondary_cta(True)}</div></div></div></section>'
+        if mv == 'poster' and not has_video:
+            # Poster composition uses a client visual, never a
+            # reference asset. Keep the heading and CTA outside the image so
+            # long text and opaque images cannot obscure one another.
+            poster_style = re.sub(r'max-width:[^;]+', 'max-width:100%', hsty)
+            poster_style = re.sub(r'text-align:(?:left|center)', 'text-align:center', poster_style)
+            poster_media = f'<figure class="poster-visual"><img src="{src}" alt="{source_alt(src)}"></figure>' if src else ''
+            return f'<section class="sec hero poster-composition" id="top"><div class="wrap poster-layout"><div class="cat">{lab(h.get("category"))}{lab(h.get("fact"))}</div><h1 class="h1" style="{poster_style}">{h1}</h1><p class="lede">{e(h.get("lede"))}</p><div class="ctas">{cta_html()}{secondary_cta()}</div>{poster_media}</div></section>'
         if mv == 'centre':
             hsty2 = hsty.replace('text-align:left', 'text-align:center') + ';margin-left:auto;margin-right:auto;max-width:16ch'
             shotp = (f'<div class="wrap shotwrap"><div class="shotframe"><img src="{src}" alt="{source_alt(src)}"></div></div>' if soft else f'<div class="wrap"><figure class="inset-v" data-sig="parallax"><img src="{src}" alt="{source_alt(src)}"></figure></div>') if src else ''
@@ -473,6 +497,16 @@ def build(slug_dir, bp_id, out_path=None):
 
     def sec_media(sec): return [m for m in sec.get('media', []) if m.get('wf', 0) > .15 and .55 <= m.get('ar', 1) <= 2.6]
 
+    def ledger_items(bt):
+        """Preserve optional descriptions and extra fields in priced rows."""
+        rows = []
+        for row in bt.get('items') or []:
+            if isinstance(row, (list, tuple)) and row:
+                rows.append((row[0], row[1] if len(row) > 1 else '', list(row[2:])))
+            elif isinstance(row, str) and row.strip():
+                rows.append((row, '', []))
+        return rows
+
     def beat_items(bt):
         t = bt['type']
         if t == 'features': return [(f.get('title'), f.get('body')) for f in bt.get('features', [])]
@@ -480,7 +514,7 @@ def build(slug_dir, bp_id, out_path=None):
         if t == 'cells': return [(c[0] if len(c) < 2 else f'{c[1]} · {c[0]}', c[2] if len(c) > 2 else '') for c in bt.get('cells', [])]
         if t == 'facts': return [(f[0], f[1]) for f in bt.get('facts', [])]
         if t == 'faq': return [(q, a) for q, a in bt.get('items', [])]
-        if t == 'ledger': return [(a, p) for a, p in bt.get('items', [])]
+        if t == 'ledger': return [(a, p) for a, p, _ in ledger_items(bt)]
         return []
 
     ZOOMS = [('50% 50%', 1.0), ('30% 35%', 1.3), ('70% 40%', 1.3), ('50% 70%', 1.25), ('25% 65%', 1.35), ('75% 70%', 1.3)]
@@ -1041,18 +1075,27 @@ def build(slug_dir, bp_id, out_path=None):
         return f'<section class="sec cards band-{band_of(sec, bt)}{" compact" if ui_.get("compact") else ""}{" facts-cards" if numeric_facts else ""}" id="{e(bt["id"])}"><div class="wrap">{ghead(sec, bt)}{lead}<div class="grid" style="--n:{n}">{cells}</div></div></section>'
 
     def ledger(sec, bt):
-        its = list(bt.get('items', []))
+        its = ledger_items(bt)
+        def detail_html(details):
+            return ''.join(f'<small class="ledger-detail">{e(detail)}</small>' for detail in details if detail is not None and str(detail).strip())
         def price_class(p): return ' class="price-short"' if len(str(p)) <= 16 and re.fullmatch(r'[\d\s.,€$£¥%+−–-]+', str(p)) else ''
-        def price_row(a, p):
+        def price_row(a, p, details):
             row_class = ' class="price-long"' if len(str(p)) > 9 else ''
-            return f'<li{row_class}><span>{e(a)}</span><i></i><b{price_class(p)}>{e(p)}</b></li>'
-        rows = ''.join(price_row(a, p) for a, p in its)
+            return f'<li{row_class}><span class="ledger-item">{e(a)}{detail_html(details)}</span><i></i><b{price_class(p)}>{e(p)}</b></li>'
+        rows = ''.join(price_row(a, p, details) for a, p, details in its)
         link = cta_html(label=bt.get('cta'), href=action_url(bt.get('cta'), bt.get('cta_href'), include_forms=True))
         second_label = bt.get('cta2')
         second_target = action_url(second_label, bt.get('cta2_href'), include_forms=True) if second_label else ''
         if second_target:
             link += f'<a class="btn ghost" href="{e(second_target)}">{e(second_label)} <span class="ar">→</span></a>'
         own = images.get(bt.get('image'))
+        if not own or not photo_like(own, 600) or not free_for(own, bt):
+            lead = images.get((bt.get('ui') or {}).get('lead'))
+            check = ((d.get('swarm') or {}).get('ledger_lead_checks') or {}).get(str(bt.get('id')), {})
+            if (lead and photo_like(lead, 600) and free_for(lead, bt) and isinstance(check, dict)
+                    and check.get('decision') == 'MATCH'
+                    and check.get('fingerprint') == ledger_lead_fingerprint(bt, lead)):
+                own = lead
         visual = ''
         if own and photo_like(own, 600) and free_for(own, bt):
             src = img(own['id'])
@@ -1078,16 +1121,16 @@ def build(slug_dir, bp_id, out_path=None):
             cols = (bt.get('ui') or {}).get('cols')
             cols = min(4, max(1, cols)) if isinstance(cols, int) and not isinstance(cols, bool) else 3
             amount_pattern = re.compile(r'^\s*(.+?)\s*·\s*((?:[$€£¥]|USD|EUR|GBP)\s*\d+(?:[.,]\d+)*|\d+(?:[.,]\d+)*\s*(?:[$€£¥]|USD|EUR|GBP)|free|custom)\s*$', re.I)
-            def price_card(name, price):
+            def price_card(name, price, details):
                 match = amount_pattern.fullmatch(name) if isinstance(name, str) else None
-                if not match: return f'<li><span>{e(name)}</span><b>{e(price)}</b></li>'
+                if not match: return f'<li><span class="ledger-item">{e(name)}{detail_html(details)}</span><b>{e(price)}</b></li>'
                 unit = f'<small>{e(price)}</small>' if price is not None and price != '' else ''
-                return f'<li><span>{e(match.group(1).strip())}</span><div class="ledger-price"><b>{e(match.group(2))}</b>{unit}</div></li>'
-            cards_ = ''.join(price_card(name, price) for name, price in its)
+                return f'<li><span class="ledger-item">{e(match.group(1).strip())}{detail_html(details)}</span><div class="ledger-price"><b>{e(match.group(2))}</b>{unit}</div></li>'
+            cards_ = ''.join(price_card(name, price, details) for name, price, details in its)
             return f'<section class="sec ledger ledger-cards band-{band_of(sec, bt)}" id="{e(bt["id"])}"><div class="wrap"><div class="ledger-cards-intro">{intro}</div><ul class="ledger-card-list" data-cols="{cols}" style="--ledger-cols:{cols}">{cards_}</ul><div class="ctas">{link}</div></div></section>'
         ticker = ''
         if move == 'marquee' and its:
-            labels = [f'{name} — {price}' if price else str(name) for name, price in its[:10]]
+            labels = [f'{name} — {price}' if price else str(name) for name, price, _ in its[:10]]
             track = ''.join(f'<span class="mq-i">{e(label)}<i>✦</i></span>' for label in labels)
             ticker = f'<div class="mq ledger-ticker" aria-hidden="true"><div class="mq-track">{track}{track}</div></div>'
         if move == 'story' and visual:
@@ -1390,6 +1433,7 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
 @media(min-resolution:3.01dppx){{.ledger-sticky .ledger-visual{{--ledger-density:4}}}}
 .no-motion .ledger-sticky .ledger-visual{{position:static}}
 @media(prefers-reduced-motion:reduce){{.ledger-sticky .ledger-visual{{position:static}}}}
+.ledger-item{{min-width:0}}.ledger-detail{{display:block;font-size:.85em;line-height:1.4;margin-top:6px;overflow-wrap:anywhere}}
 .ledger-cards-intro{{max-width:760px}}
 .ledger-cards>.wrap{{container-type:inline-size}}
 .ledger-card-list{{--ledger-card-gap:clamp(12px,2vw,24px);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(250px,calc((100% + var(--ledger-card-gap)) / var(--ledger-cols) - var(--ledger-card-gap)))),1fr));gap:var(--ledger-card-gap);list-style:none;margin-top:clamp(32px,5vw,72px)}}
@@ -1409,6 +1453,9 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
 .end{{padding-top:clamp(48px,6vw,80px);padding-bottom:28px}}.end .fcols{{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--gutter);margin-top:48px;padding-top:40px;border-top:1px solid var(--line)}}.end .fcols>*{{min-width:0}}.end li{{overflow-wrap:anywhere}}.end ul{{list-style:none;margin-top:10px;display:grid;gap:6px}}.end ul.footer-nav{{display:flex;flex-wrap:wrap;gap:12px 24px;margin-top:24px}}.end .legal{{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:40px;font-family:var(--label);font-size:var(--lab-px);color:var(--muted)}}
 /* template components */
 .hero.centre{{min-height:auto;padding-top:120px}}.hero.centre .hero-in{{text-align:center;display:grid;justify-items:center}}
+.hero.editorial-type{{background:var(--editorial-bg);color:var(--editorial-ink);min-height:100svh;padding:clamp(120px,12vw,180px) 0 clamp(64px,8vw,120px);overflow:visible}}.editorial-hero-layout{{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:clamp(30px,5vw,80px);align-items:end}}.editorial-type.no-visual .editorial-hero-layout{{grid-template-columns:minmax(0,1fr)}}.editorial-hero-copy{{min-width:0}}.editorial-hero-copy .lab{{color:var(--editorial-ink)}}.editorial-hero-copy .h1{{font-family:var(--display);font-size:min(var(--hero-size),clamp(56px,8.5vw,140px));line-height:1;letter-spacing:-.04em;overflow-wrap:anywhere}}.editorial-hero-copy .lede{{font-size:clamp(16px,1.6vw,21px);line-height:1.45;max-width:48ch}}.editorial-hero-copy .btn:not(.ghost){{background:var(--editorial-ink);color:var(--editorial-bg)}}.editorial-hero-copy .btn.ghost{{color:var(--editorial-ink);border-color:var(--editorial-ink)}}.editorial-hero-visual{{margin:0;width:100%;max-width:580px;justify-self:end}}.editorial-hero-visual img{{width:100%;max-height:65svh;object-fit:contain}}@media(max-width:800px){{.hero.editorial-type{{min-height:auto;padding-top:120px}}.editorial-hero-layout{{grid-template-columns:minmax(0,1fr)}}.editorial-hero-copy .h1{{font-size:min(var(--hero-size),13vw)}}.editorial-hero-visual{{justify-self:start}}}}
+.hero.billboard{{padding:clamp(100px,10vw,140px) 0 clamp(32px,4vw,64px);min-height:auto;overflow:visible}}.wrap.billboard-frame{{width:calc(100% - 2 * var(--frame));max-width:calc(var(--container) - 2 * var(--frame));padding:0;position:relative;isolation:isolate;overflow:hidden;border-radius:clamp(16px,2vw,28px);min-height:min(70svh,720px);display:grid;align-items:center}}.billboard-media{{position:absolute;inset:0;z-index:-1;background:#111}}.billboard-media img{{width:100%;height:100%;object-fit:cover}}.billboard-content{{display:grid;align-self:stretch;align-content:center;justify-items:center;text-align:center;background:rgba(0,0,0,.58);color:#fff;padding:clamp(48px,8vw,96px) clamp(20px,5vw,64px);overflow-wrap:anywhere}}.billboard-content .cat{{justify-content:center;margin-bottom:20px}}.billboard-content .lab{{color:#fff}}.billboard-content .h1{{color:#fff;margin:0 auto;text-shadow:none;line-height:1.05}}.billboard-content .lede{{color:#fff;max-width:55ch;font-size:clamp(16px,1.5vw,20px);line-height:1.45;margin:20px auto 0}}.billboard-content .ctas{{justify-content:center}}.billboard-content .btn.ghost{{color:#fff;border-color:#fff}}@media(max-height:950px) and (min-width:601px){{.hero.billboard{{padding-top:96px}}.billboard-content{{padding-top:clamp(26px,5vh,44px);padding-bottom:clamp(26px,5vh,44px)}}.billboard-content .h1{{font-size:min(var(--hero-size),clamp(48px,11vh,115px))}}.billboard-content .ctas{{margin-top:18px}}}}@media(max-width:600px){{.hero.billboard{{padding-top:100px}}.billboard-frame{{min-height:0}}.billboard-content .h1{{font-size:min(var(--hero-size),12vw)}}}}
+.hero.poster-composition{{min-height:100svh;padding:clamp(110px,12vw,160px) 0 clamp(48px,6vw,88px);align-content:center;overflow:visible}}.poster-layout{{display:flex;flex-direction:column;align-items:center;text-align:center;gap:clamp(18px,2.5vw,36px)}}.poster-layout .h1{{max-width:100%;font-size:min(var(--hero-size),clamp(56px,12vw,190px));line-height:.95;overflow-wrap:anywhere}}.poster-visual{{width:min(100%,620px);margin:0}}.poster-visual img{{width:100%;max-height:55svh;object-fit:contain}}.poster-layout .lede{{margin:0;max-width:52ch;font-size:clamp(16px,1.5vw,20px);line-height:1.45}}.poster-layout .ctas{{justify-content:center;margin:0}}@media(max-width:600px){{.hero.poster-composition{{min-height:auto;padding-top:116px}}.poster-layout .h1{{font-size:min(var(--hero-size),clamp(46px,13vw,76px))}}}}
 .hero.has-media{{background:#111}}.hero.poster .lede,.hero.photo .lede{{max-width:44ch;width:auto}}.hero.poster .hero-in{{display:grid;justify-items:center;text-align:center}}.hero.photo .hero-in,.hero.poster .hero-in{{position:relative;z-index:1}}.hero-in.light .lede{{color:rgba(255,255,255,.86)}}.hero-in.light .btn.ghost{{color:#fff;border-color:rgba(255,255,255,.5)}}.hero.poster .h1{{letter-spacing:-.035em}}
 .hero.inset{{min-height:auto;padding-bottom:0}}.inset-v{{margin:clamp(28px,4vw,56px) 0 0;border-radius:var(--radius);overflow:hidden;aspect-ratio:1.8}}.inset-v img{{width:100%;height:100%;object-fit:cover}}
 .collage .cl{{display:grid;grid-template-columns:1.2fr .8fr;grid-template-rows:auto auto;gap:var(--gutter)}}.collage figure{{margin:0;overflow:hidden;border-radius:var(--radius)}}.collage figure img{{width:100%;height:100%;object-fit:cover}}.collage .c1{{grid-row:1/3;aspect-ratio:.9}}.collage .c2{{aspect-ratio:1.3}}.collage .c3{{aspect-ratio:1.3}}
@@ -1500,7 +1547,7 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
     lang_attr = f' lang="{e(language)}"' if language else ''
     html = f'''<!DOCTYPE html><html{lang_attr}><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{e(page_title)}</title>{description_tag}{fonts_link}<style>{css}</style></head>
 <body>
-<nav class="nav{' solid' if not sec_media(bp['sections'][0]) else ''}{logo_class}" id="nav" data-nav><div class="wrap"><a href="#top">{mark}</a><div class="links">{nav_links}</div>{cta_html(bool(sec_media(bp['sections'][0])))}</div></nav>
+<nav class="nav{' solid' if 'has-media' not in out[0] else ''}{logo_class}" id="nav" data-nav><div class="wrap"><a href="#top">{mark}</a><div class="links">{nav_links}</div>{cta_html(bool(sec_media(bp['sections'][0])))}</div></nav>
 {chr(10).join(out)}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>{'<script src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js"></script>' if MO.get('smooth') else ''}
 <script>{moves}</script><script>{swarm}</script>
@@ -1519,7 +1566,7 @@ function Sig(){{ if(!window.gsap||!window.ScrollTrigger) return; gsap.registerPl
   ScrollTrigger.refresh(); }}
 const NOMOTION=/[?&]nomotion/.test(location.search)||matchMedia('(prefers-reduced-motion:reduce)').matches; const PREVIEW=!NOMOTION&&(self!==top||/[?&]swarm/.test(location.search));
 if(NOMOTION){{ document.documentElement.classList.add('no-motion'); document.querySelectorAll('[data-move]').forEach(el=>el.removeAttribute('data-move')); document.querySelectorAll('.tw-w,.sp-row').forEach(el=>el.classList.add('on')); document.querySelectorAll('.ps-s,.sp-f').forEach((el,i)=>el.classList.toggle('on',el.dataset.i==='0')); }}
-addEventListener('load',()=>{{ const nav=document.getElementById('nav'); const solidFrom=document.querySelector('.hero.has-media')?innerHeight*.7:0; if(solidFrom) nav.classList.add('on-photo'); const onS=()=>nav.classList.toggle('solid',scrollY>solidFrom); onS(); addEventListener('scroll',onS,{{passive:true}});
+addEventListener('load',()=>{{ const nav=document.getElementById('nav'); const solidFrom=document.querySelector('.hero.has-media')?innerHeight*.7:0; if(solidFrom) nav.classList.add('on-photo'); const onS=()=>nav.classList.toggle('solid',!!document.querySelector('.hero.editorial-type') || scrollY>solidFrom); onS(); addEventListener('scroll',onS,{{passive:true}});
   if(NOMOTION) return;
   try{{ if(PREVIEW) new Swarm({{agents:innerWidth<900?8:18,speed:1,hud:true,sectionSelector:'section,footer',boxSel:'.btn,.card,figure,.rows li,.form input',onDone:()=>{{ try{{ scrollTo(0,0); Moves.init(); Sig(); }}catch(e){{}} }}}}).run(); else {{ Moves.init(); Sig(); }} }}catch(e){{ try{{Moves.init(); Sig();}}catch(_){{}} }} }});
 </script></body></html>'''

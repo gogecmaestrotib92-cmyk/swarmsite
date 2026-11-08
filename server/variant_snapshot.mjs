@@ -1,6 +1,6 @@
 import fs from 'node:fs';import path from 'node:path';import os from 'node:os';import crypto from 'node:crypto';
 const INPUTS=['direction.json','images.json','assets.json','inventory.json','brief.json','hero.mp4'];
-const ENGINE=['lib/render/render_bp.py','lib/templates/recipes.py','lib/visual_quality.py','lib/colour/palette.py','lib/colour_policy.py','lib/motion/moves.js','lib/motion/swarm.js'];
+const ENGINE=['lib/render/render_bp.py','lib/templates/recipes.py','lib/visual_quality.py','lib/visual_semantics.py','lib/colour/palette.py','lib/colour_policy.py','lib/motion/moves.js','lib/motion/swarm.js'];
 const hash = f => fs.existsSync(f) && fs.statSync(f).isFile() ? crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex') : null;
 const valid = s => typeof s === 'string' && /^[a-z0-9-]{2,24}$/.test(s);
 const snapshot = (dir,root,bp) => ({inputs:Object.fromEntries(INPUTS.map(n=>[n,hash(path.join(dir,n))])),engine:Object.fromEntries([...ENGINE,`lib/blueprints/${bp}.bp.json`].map(n=>[n,hash(path.join(root,n))]))});

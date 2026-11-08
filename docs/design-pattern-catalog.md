@@ -77,3 +77,34 @@ Predlog za budući katalog, ne postojeći format ili implementacija. Jedan zapis
 ```
 
 Kod validacije treba proveriti obavezna polja i verziju, postojanje fajla i JSON pointera, konzistentnost statusa sa stvarnim enumom agenta i putanjom `component_for`/recipe, kao i uslove asseta i fallbacka. Za svaki `conditional` potez zahtevati pozitivni i negativni fixture, očuvanje svih činjenica, CTA-ova i source linkova, bez krađe dodeljenih slika; browser proveru desktop + mobile + reduced motion i bez eksternog JS-a kada je animacija bitna. Beležiti stvarne viewport/DPR, datum, verziju koda i rezultate umesto praznih tvrdnji o podršci. Potez `described_only` ne treba nuditi agentu kao izvršivu opciju dok se ne implementira i ne prođe vizuelni i funkcionalni pregled.
+
+### Reference candidate: Neutra VDL (editorial typography)
+
+- Source: Awwwards, *Hot Right Now 2023*, p. 115: https://assets.awwwards.com/awards/gallery/2023/07/HOT-RIGHT-NOW-BOOK-2023.pdf
+- Observed in the published screenshots: oversized stacked type, a restrained top navigation, a smaller vertical group of contextual links and a carefully organized editorial grid; the menu is rendered as a full-page contents list.
+- Transferable candidates: large responsive typographic hero; compact contextual link rail; editorial contents/menu. These are design observations, not implemented components or verified production patterns.
+- Scope: based on Awwwards screenshots only. The live site, scroll behavior, mobile experience and presence or absence of 3D elsewhere have not been verified. No parity or production suitability is claimed.
+
+## Pangram Pangram — tipografski katalog i serija postera
+
+Referenca koju je korisnik izabrao: https://pangrampangram.com/ . Pregled početne stranice u browseru 8. novembra 2026, desktop; ovo nisu mobilna merenja niti validacija renderer komponente.
+
+- **Uvučeni široki poster:** uz belu stranicu pojavljuje se širok zaobljeni pravougaonik sa pozadinom, centriranim ogromnim naslovom, kratkim tekstom i dva pill dugmeta; mali bedž daje kontekst. Ispod sledi drugi takav poster drugačije vizuelne atmosfere. Za našu primenu: jasno dodeljeni vizual, tekst i stvarni CTA; proveriti kontrast, bezbedno prelamanje i mobilni raspored. Status: zabeleženo, nije implementirano kao ovaj potez.
+- **Serija različitih vizuelnih poglavlja:** više samostalnih plakata sa istom geometrijom ali različitom tipografijom, bojom i slikom daje ritam bez potrebe za 3D scenom. Potrebni su različiti relevantni vizuali; bez njih ne ponavljati istu sliku niti izmišljati sadržaj. Status: koncept, nije implementirano kao takav sistem.
+- **Prebacivanje grid/list view:** vidljiv izbor Card view / List view iznad kataloga. Prenosivo za duge liste stvarnih proizvoda/projekata; mora čuvati podatke, pristup tastaturom i oznaku izabranog prikaza. Status: zabeleženo, nije potvrđeno u našem rendereru.
+- **Kartica kao mali tipografski poster:** grid uključuje naziv, opis i demonstraciju tipa. Za druge biznise koristiti stvarne proizvode/primere, bez izmišljenih kataloga. Status: zabeleženo, nije potvrđeno u našem rendereru.
+- **Fontovi i licence:** FAQ navodi da su trial fontovi za lične/nekomercijalne projekte i probe; web licenciranje zavisi od upotrebe i pageview-a. EULA zabranjuje deljenje font fajlova neovlašćenima. Za komercijalni SaaS, preview i distribuirani kit ne pretpostavljati da standardna ili starter-pack licenca pokriva sve klijente i isporuku; proveriti konkretne uslove ili tražiti odgovarajuću licencu od izdavača. Izvori: https://pangrampangram.com/pages/faq ; https://pangrampangram.com/pages/eula ; https://pangrampangram.com/products/fsp . Alternativa su odgovarajuće licencirani otvoreni fontovi; potrebno je proveriti karaktere za korisnikov jezik i vizuelni rezultat.
+
+Lokalni prototip `billboard`: renderer može prikazati jednu dodeljenu hero fotografiju u zaobljenom panelu sa centriranim postojećim naslovom, tekstom i CTA-ovima; tamna podloga osigurava čitljivost teksta. Concept schema lokalno nudi potez samo kada postoji dodeljena slika, dok renderer dodatno odbija screenshot i neupotrebljive slike. Ovaj prototip još nije testiran kroz novi produkcijski posao niti objavljen; ne tvrdi identičnost Pangram sajtu i ne koristi njihove fontove ili vizuale.
+
+## Synchronized Studio — eksperimentalni tipografski portfolio
+
+Korisnikova referenca: https://synchronized.studio/ . Posmatrano u browseru 8. novembra 2026. na desktopu: početni ekran posle učitavanja i deo stranice pri skrolu. Mobilna verzija, interakcije tastaturom i ponašanje sa smanjenim pokretom nisu ovde provereni.
+
+- **Rasuti ogromni serifni naslov:** više velikih delova reči na različitim pozicijama preko tamne podloge i mali sekundarni tekst. Za našu varijantu očuvati stvarni smisleni H1, čitljivost i selektabilni tekst; posebnu pažnju posvetiti dugim rečima i uskim ekranima. Status: opaženo; ovo nije isto što i postojeći `type-wall` i nije implementirano kao hero.
+- **Sitna ugaona navigacija nasuprot velikom naslovu:** logo/identitet levo, lista navigacije desno. Za našu varijantu koristiti stvarne linkove, vidljiv fokus i mobilni meni. Status: koncept; nije potvrđena ekvivalentna komponenta.
+- **Grafički akcenti tokom skrola:** tanke geometrijske forme i kružni natpis između sadržaja. Pravljenje varijante zahteva sopstveni dekorativni oblik, koji ne sme nositi ključnu informaciju; obezbediti mirnu varijantu bez pokreta. Status: opaženo, nije implementirano kao ovaj efekat.
+- **Kontrast svetlih portfolio-kartica i crne pozadine:** veliki svetli paneli s fotografijom, naslovom, opisom i rednim brojem. Primena samo kada korisnik zaista ima projekte, njihove opise i dodeljene vizuale; ne izmišljati primere ni nagrade. Status: opaženo, nije potvrđen ekvivalentan renderer.
+- Ovaj primer je pogodan za izražajan studio/portfolio, a njegovo razlamanje teksta možda nije dobar izbor za svaku vrstu sajta. Opažanja ne potvrđuju odsustvo 3D niti celokupnu funkcionalnost originala.
+
+Lokalni prototip `editorial-type`: jedan čitljiv veliki naslov na kontrastnoj podlozi, stvarni CTA i opcioni vizual. Concept schema ga ograničava na service sajtove; na sintetičkom primeru kreativnog studija stvarni model ga je izabrao. Prototip nije rekonstrukcija originalnog razlomljenog sloga, animacije ili portfolio-kartica, i nije objavljen. Bez slike automatski contract trenutno prijavljuje odsustvo vizuala u prvom ekranu; sa testnom slikom contract je 100/100. Potrebno je proveriti takav namerno tipografski hero i kriterijum contracta na stvarnim primerima pre produkcije.

@@ -75,6 +75,27 @@ class AgentUpdateTests(unittest.TestCase):
             self.assertEqual(agents.J(directory, 'direction.json')['hero']['ui'],
                              {'move': 'split', 'size': 'L', 'align': 'start'})
 
+    def test_billboard_requires_assigned_photo_and_survives_ui(self):
+        with tempfile.TemporaryDirectory() as directory:
+            agents.W(directory, 'direction.json', {'hero': {'media': 'hero'}, 'beats': []})
+            agents.W(directory, 'images.json', [{'id': 'hero', 'data': 'photo', 'shot': True}])
+            agents.apply_concept(directory, {'hero_move': 'billboard'})
+            self.assertNotEqual((agents.J(directory, 'direction.json')['hero'].get('ui') or {}).get('move'), 'billboard')
+            agents.W(directory, 'images.json', [{'id': 'hero', 'data': 'photo', 'shot': False}])
+            agents.apply_concept(directory, {'hero_move': 'billboard'})
+            agents.apply_ui(directory, {'hero': {'size': 'L'}})
+            self.assertEqual(agents.J(directory, 'direction.json')['hero']['ui']['move'], 'billboard')
+
+    def test_editorial_type_requires_service_kind(self):
+        with tempfile.TemporaryDirectory() as directory:
+            agents.W(directory, 'direction.json', {'kind': 'software', 'hero': {}, 'beats': []})
+            agents.apply_concept(directory, {'hero_move': 'editorial-type'})
+            self.assertFalse((agents.J(directory, 'direction.json')['hero'].get('ui') or {}).get('move'))
+            agents.W(directory, 'direction.json', {'kind': 'service', 'hero': {'media': 'hero'}, 'beats': []})
+            agents.W(directory, 'images.json', [{'id': 'hero', 'data': 'photo'}])
+            agents.apply_concept(directory, {'hero_move': 'editorial-type'})
+            self.assertEqual(agents.J(directory, 'direction.json')['hero']['ui']['move'], 'editorial-type')
+
     def test_concept_repair_changes_only_targeted_sections(self):
         with tempfile.TemporaryDirectory() as directory:
             direction = {'hero': {'h1': 'Headline', 'media': 'shot', 'ui': {'move': 'split'}}, 'beats': [

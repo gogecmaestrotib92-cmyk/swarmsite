@@ -106,6 +106,7 @@ def check(slug_dir, bp_id, beat_id, pattern_id, version):
     matches=[x for x in d.get('beats',[]) if x.get('id')==beat_id]
     if len(matches)!=1:return {'accepted':False,'reason':'beat id missing or ambiguous'}
     beat=matches[0]; errors=preflight(p,d,beat,{i.get('id'):i for i in imgs},bp)
+    if p.get('allowed_blueprints') and bp_id not in p['allowed_blueprints']: errors.append('pattern not available for this blueprint')
     if errors:return {'accepted':False,'reason':'; '.join(errors)}
     with tempfile.TemporaryDirectory(prefix='swarm-pattern-eval-') as temp:
         temp=Path(temp); base=temp/'base'; candidate=temp/'candidate';base.mkdir();candidate.mkdir()
