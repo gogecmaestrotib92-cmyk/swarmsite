@@ -3,12 +3,13 @@
   round k: Critic looks at the render → routes each defect to its owner (copy / ui / visual / ux) → owners fix in parallel → bounded critic ops → render
 Stops at --target score or --rounds. Prints one JSON line per event (the server turns them into swarm events) and a final {"done":…} line.
 Usage: python3 lib/swarm/run.py out/<slug> <blueprint-id> --out bp-<id>.html [--rounds 3] [--target 80]"""
-import json, os, sys, time, subprocess, traceback
+import json, os, sys, time, subprocess, traceback, shutil, tempfile
 from concurrent.futures import ThreadPoolExecutor
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.insert(0, os.path.join(ROOT, 'lib/swarm')); sys.path.insert(0, os.path.join(ROOT, 'lib/qa'))
 import agents as A
 import critic as C
+import coverage_report as Coverage
 
 def ev(role, text): print(json.dumps({"event": {"role": role, "text": str(text)[:140]}}, ensure_ascii=False), flush=True)
 
@@ -57,7 +58,35 @@ def safe(name, fn, *a):
     try: n = fn(*a); ev(name, f'{n if isinstance(n, int) else "ok"} change(s) · {round(time.time() - t)}s'); return n
     except Exception as e: ev(name, 'skipped: ' + str(e)[:90]); traceback.print_exc(file=sys.stderr); return 0
 
+def snapshot_shots(slug_dir, snapshot_dir):
+    """Keep only the current best's screenshots on disk, never in memory."""
+    saved = os.path.join(snapshot_dir, 'critic-shots')
+    if os.path.isdir(saved): shutil.rmtree(saved)
+    os.makedirs(saved)
+    source = os.path.join(slug_dir, 'critic-shots')
+    if os.path.isdir(source):
+        for name in os.listdir(source):
+            src = os.path.join(source, name)
+            if name.lower().endswith(('.png', '.jpg')) and os.path.isfile(src) and not os.path.islink(src):
+                shutil.copy2(src, os.path.join(saved, name))
+
+def restore_shots(slug_dir, snapshot_dir):
+    saved = os.path.join(snapshot_dir, 'critic-shots')
+    if not os.path.isdir(saved): raise RuntimeError('best-round screenshot snapshot is missing')
+    target = os.path.join(slug_dir, 'critic-shots')
+    if not os.path.isdir(target) and not os.listdir(saved): return
+    os.makedirs(target, exist_ok=True)
+    for name in os.listdir(target):
+        dest = os.path.join(target, name)
+        if name.lower().endswith(('.png', '.jpg')) and (os.path.isfile(dest) or os.path.islink(dest)):
+            os.remove(dest)
+    for name in os.listdir(saved): shutil.copy2(os.path.join(saved, name), os.path.join(target, name))
+
 def main():
+    with tempfile.TemporaryDirectory(prefix='swarm-best-') as snapshot_dir:
+        return _main(snapshot_dir)
+
+def _main(snapshot_dir):
     slug_dir, bp = sys.argv[1], sys.argv[2]; args = sys.argv[3:]
     out = args[args.index('--out') + 1] if '--out' in args else os.path.join(slug_dir, f'bp-{bp}.html')
     rounds = int(args[args.index('--rounds') + 1]) if '--rounds' in args else 3
@@ -107,6 +136,7 @@ def main():
         if best_round == k:
             paths = [out] + [os.path.join(slug_dir, name) for name in ('direction.json', 'images.json', 'contract.json', 'critic.json')]
             best_files = {path: open(path, 'rb').read() for path in paths if os.path.exists(path)}
+            snapshot_shots(slug_dir, snapshot_dir)
         if (score >= target and taste >= target and not cfail and not fixes) or k == rounds: break
         # RESTART, not patch: a weak first round means the idea or the form is wrong — throw it away, keep the facts, start over once
         if k == 1 and score < 45 and not log.get('restarted'):
@@ -139,7 +169,20 @@ def main():
     if best_files:
         for path, data in best_files.items():
             with open(path, 'wb') as f: f.write(data)
+        restore_shots(slug_dir, snapshot_dir)
         if best_round != log['rounds'][-1]['k']: ev('Critic', f'kept round {best_round} with {best_score}/100')
+    # Audit the selected render, after rolling back any weaker candidate.
+    # A text match is not a semantic guarantee; unmatched sections require review.
+    try:
+        coverage = Coverage.write_coverage(slug_dir, out)
+        summary = coverage['summary']
+        log['coverage'] = summary
+        ev('Coverage', f"{summary['sections_needing_review']}/{summary['sections_total']} source sections need review; {summary['routes_linked']}/{summary['routes_total']} source pages linked")
+    except Exception as e:
+        ev('Coverage', 'unavailable: ' + str(e)[:90])
+        log['coverage'] = {'error': str(e)[:200]}
+        with open(os.path.join(slug_dir, 'coverage.json'), 'w', encoding='utf-8') as f:
+            json.dump({'scope': 'single_page_preview', 'error': str(e)[:200]}, f)
     log['best'] = best_score; log['best_round'] = best_round
     json.dump(log, open(os.path.join(slug_dir, 'swarm.json'), 'w'), indent=1, ensure_ascii=False)
     print(json.dumps({"done": {"score": best_score, "rounds": len(log['rounds'])}}), flush=True)

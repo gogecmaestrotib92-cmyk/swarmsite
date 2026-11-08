@@ -263,6 +263,8 @@ class ContractTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             agents.W(directory, 'direction.json', {'hero': {'h1': 'Headline'}, 'beats': []})
             agents.W(directory, 'factsheet.json', {})
+            agents.W(directory, 'inventory.json', {'url': 'https://example.test', 'sourceCoverage': {
+                'sections': [{'id': 's1', 'title': 'page 2'}], 'routes': []}})
             output = Path(directory) / 'page.html'
             round_number = 0
 
@@ -283,6 +285,11 @@ class ContractTests(unittest.TestCase):
                 return result
 
             def critique(*args):
+                shots = Path(directory) / 'critic-shots'
+                shots.mkdir(exist_ok=True)
+                for old in shots.glob('*.png'): old.unlink()
+                (shots / f'desktop-{round_number}.png').write_bytes(f'screenshot {round_number}'.encode())
+                (shots / 'notes.txt').write_text('keep this unrelated file')
                 return {'score': {1: 90, 2: 25, 3: 100}[round_number],
                         'verdict': f'round {round_number}',
                         'fixes': [{'op': 'note', 'agent': 'ui', 'reason': 'Improve'}]}
@@ -304,6 +311,48 @@ class ContractTests(unittest.TestCase):
             self.assertEqual(agents.J(directory, 'contract.json')['failed'], [])
             self.assertEqual(agents.J(directory, 'critic.json')['round'], 2)
             self.assertEqual(agents.J(directory, 'swarm.json')['best_round'], 2)
+            shots = Path(directory) / 'critic-shots'
+            self.assertEqual((shots / 'desktop-2.png').read_bytes(), b'screenshot 2')
+            self.assertFalse((shots / 'desktop-3.png').exists())
+            self.assertEqual((shots / 'notes.txt').read_text(), 'keep this unrelated file')
+            # Coverage must refer to the selected, restored HTML, not the last attempted round.
+            self.assertEqual(agents.J(directory, 'coverage.json')['sections'][0]['status'], 'text_detected')
+
+    def test_missing_best_shots_remove_later_shots_without_touching_other_files(self):
+        with tempfile.TemporaryDirectory() as directory, tempfile.TemporaryDirectory() as snapshot:
+            run.snapshot_shots(directory, snapshot)
+            shots = Path(directory) / 'critic-shots'
+            shots.mkdir()
+            (shots / 'later.png').write_bytes(b'other round')
+            (shots / 'notes.txt').write_text('keep')
+            run.restore_shots(directory, snapshot)
+            self.assertFalse((shots / 'later.png').exists())
+            self.assertEqual((shots / 'notes.txt').read_text(), 'keep')
+
+    def test_failed_snapshot_cleans_temporary_directory(self):
+        actual_tempdir = tempfile.TemporaryDirectory
+        created = []
+        def tempdir(*args, **kwargs):
+            result = actual_tempdir(*args, **kwargs)
+            created.append(Path(result.name))
+            return result
+        with patch.object(run.tempfile, 'TemporaryDirectory', side_effect=tempdir), \
+                patch.object(run, '_main', side_effect=OSError('snapshot failed')):
+            with self.assertRaisesRegex(OSError, 'snapshot failed'):
+                run.main()
+        self.assertEqual(len(created), 1)
+        self.assertFalse(created[0].exists())
+
+    def test_snapshot_copy_failure_is_reported_without_deleting_original(self):
+        with tempfile.TemporaryDirectory() as directory, tempfile.TemporaryDirectory() as snapshot:
+            shots = Path(directory) / 'critic-shots'
+            shots.mkdir()
+            source = shots / 'desktop.png'
+            source.write_bytes(b'original')
+            with patch.object(run.shutil, 'copy2', side_effect=OSError('disk full')):
+                with self.assertRaisesRegex(OSError, 'disk full'):
+                    run.snapshot_shots(directory, snapshot)
+            self.assertEqual(source.read_bytes(), b'original')
 
 
 if __name__ == '__main__':

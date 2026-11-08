@@ -13,7 +13,7 @@ Decided by the art director 2026-11-06: **hybrid H1**, one-section-per-screen rh
 ## Sections
 5. Every h2 has a noun that names a thing (the record, prices, plans, questions). 1–6 words. Never a command, a question, a colon heading, or a line that only makes sense after the page.
 6. Under a heading: one line to two sentences, 10–40 words. Card body ≤ 25 words with one concrete detail.
-7. **60–80 words per screen** outside UI mocks/cards (headings + lines + buttons + labels). Over 80 → cut: second sentence under heading, card bodies to one sentence, a fourth card.
+7. Use concise wording as a layout guide, not a reason to erase useful content. If a section is dense, split it or group related items while keeping every distinct offering, material fact and action. Never drop a card, an FAQ answer or a real fact solely to meet a word count.
 8. One fact, one wording. A price, a count or a date appears once per page with one value (the audit's price conflict is a report item, never visible copy).
 9. Numbers sit in sentences with their unit, uneven where real (28,139 not 28k; 43% not "almost half").
 10. No invented proof: no quotes, reviews, counts, logos, awards that the client's site doesn't carry.

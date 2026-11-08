@@ -54,26 +54,34 @@ def text_ticker(b): return bool(b and b.get('type') in ('facts', 'cells') and (b
 READER_TOOL = {"name": "write_factsheet", "description": "The verified fact sheet of this website.", "input_schema": {"type": "object", "required": ["what", "language", "facts", "offers"], "properties": {
     "what": {"type": "string", "description": "one sentence: what this business/product is and for whom"},
     "language": {"type": "string"}, "tone": {"type": "string", "description": "3 adjectives for the site's own voice"},
-    "facts": {"type": "array", "items": {"type": "string"}, "description": "hard facts with numbers/dates/places, verbatim from the site, max 12"},
+    "facts": {"type": "array", "items": {"type": "string"}, "description": "distinct hard facts with numbers/dates/places, verbatim from the site; retain all facts necessary to explain the actual offerings and contact details"},
     "offers": {"type": "array", "items": {"type": "object", "properties": {"name": {"type": "string"}, "price": {"type": "string"}, "note": {"type": "string"}}}, "description": "every plan/item/service with its price if stated"},
     "quotes": {"type": "array", "items": {"type": "object", "properties": {"text": {"type": "string"}, "who": {"type": "string"}}}, "description": "real quoted sentences with an author, verbatim"},
-    "capabilities": {"type": "array", "items": {"type": "string"}, "description": "what it does / offers, one line each, from the site's words, max 10"},
+    "capabilities": {"type": "array", "items": {"type": "string"}, "description": "each distinct capability or offer presented in a meaningful source section, one line each, using the site's own facts; do not drop capabilities solely to meet an arbitrary count"},
     "people": {"type": "array", "items": {"type": "string"}}, "contact": {"type": "array", "items": {"type": "string"}},
     "best_sentence": {"type": "string", "description": "the single sentence on the site that best says why someone should care"},
     "missing": {"type": "array", "items": {"type": "string"}, "description": "what a premium page would need that the site does not state"}}}}
-READER_SYSTEM = "You are the studio's reader. You read a client's website and write the fact sheet the rest of the team works from. Only what the site SAYS, verbatim where it matters. No invention, no marketing gloss. If a number or claim is not on the site, it is not on the sheet."
+READER_SYSTEM = "You are the studio's reader. You read a client's website and write the fact sheet the rest of the team works from. Only what the site SAYS, verbatim where it matters. No invention, no marketing gloss. If a number or claim is not on the site, it is not on the sheet. Preserve distinct meaningful homepage offers, capabilities, customer proof, FAQ and important contact facts instead of compressing them into one generic claim. Treat animation fragments, navigation labels and repeated decorative text as context, not separate offers. Source subpages are reference material, not pages already recreated by the preview."
 
 def reader(slug_dir):
     inv = J(slug_dir, 'inventory.json') or {}
-    subpages = inv.get('sourcePages') or []
-    homepage = {k: v for k, v in inv.items() if k != 'sourcePages'}
-    content = [{"type": "text", "text": "SOURCE SUBPAGES (same-site pages; preserve their prices, offerings and contact details)\n" + json.dumps(subpages, ensure_ascii=False)},
-               {"type": "text", "text": "HOME PAGE INVENTORY\n" + json.dumps(homepage, ensure_ascii=False)[:70000]}]
+    # Structured review/panel candidates remain in the inventory for a
+    # deterministic verifier; do not expand or misrepresent the Reader prompt.
+    subpages = [{**page, 'sections': [{k: v for k, v in section.items() if k not in ('testimonials', 'panels')}
+                                    for section in (page.get('sections') or []) if isinstance(section, dict)]}
+                for page in (inv.get('sourcePages') or []) if isinstance(page, dict)]
+    catalog = inv.get('sourceCoverage') or {}
+    homepage = {k: v for k, v in inv.items() if k not in ('sourcePages', 'sourceCoverage')}
+    section_evidence = [{k: section.get(k) for k in ('id', 'title', 'headingLevel', 'text', 'textTruncated', 'kind', 'sourceUrl')}
+                        for section in (catalog.get('sections') or [])[:40] if isinstance(section, dict)]
+    content = [{"type": "text", "text": "MEANINGFUL HOMEPAGE SECTIONS (source evidence; preserve distinct sections, not animation fragments)\n" + json.dumps(section_evidence, ensure_ascii=False)},
+               {"type": "text", "text": "HOME PAGE INVENTORY\n" + json.dumps(homepage, ensure_ascii=False)[:70000]},
+               {"type": "text", "text": "SOURCE SUBPAGES (same-site pages; preserve their prices, offerings and contact details; not regenerated as pages)\n" + json.dumps(subpages, ensure_ascii=False)[:100000]}]
     for s in ('before-hero.jpg', 'before-full.jpg'):
         p = os.path.join(slug_dir, s)
         if os.path.exists(p) and os.path.getsize(p) < 4_500_000: content += [{"type": "text", "text": "SCREENSHOT " + s}, img_block(p)]
     content.append({"type": "text", "text": "Call write_factsheet."})
-    fs_ = ask(READER_SYSTEM, content, READER_TOOL)
+    fs_ = ask(READER_SYSTEM, content, READER_TOOL, max_tokens=7000)
     if fs_: W(slug_dir, 'factsheet.json', fs_)
     return fs_
 
@@ -137,13 +145,13 @@ def apply_concept(slug_dir, r):
 
 # ───────────────────────────── UX ─────────────────────────────
 UX_TOOL = {"name": "set_flow", "description": "Set the page flow: beat order, goal action, nav.", "input_schema": {"type": "object", "required": ["order", "goal_cta"], "properties": {
-    "order": {"type": "array", "items": {"type": "string"}, "description": "beat ids in the order the reader should meet them (every existing id exactly once; you may omit at most one weak beat to drop it)"},
+    "order": {"type": "array", "items": {"type": "string"}, "description": "beat ids in the order the reader should meet them; include every existing id exactly once"},
     "goal_cta": {"type": "string", "description": "verb + what you get, ≤4 words; used in hero, nav and ending"},
     "cta2": {"type": "string", "description": "secondary action or ''"},
     "nav": {"type": "array", "items": {"type": "array", "items": {"type": "string"}}, "description": "≤4 [#beat-id, Label]"},
     "reasons": {"type": "array", "items": {"type": "string"}}}}}
 UX_SYSTEM = """You are the UX lead. One page, one goal. Order the beats so the story is: what it is (hero) → proof it works / what you get → how it works → what it costs → objections (faq) → act (form/cta).
-A place or restaurant: photo → quote/proof → ledger (menu/prices) → facts → form. Software: features → steps → pricing ledger → faq → cta. Never put the form before the proof. Drop a beat only if it repeats another one.
+A place or restaurant: photo → quote/proof → ledger (menu/prices) → facts → form. Software: features → steps → pricing ledger → faq → cta. Never put the form before the proof. Do not drop any beat: each carries existing information, even when headings or layouts look similar.
 Every CTA on the page must say the same verb+object. Nav has ≤4 links to beats that exist."""
 
 def ux(slug_dir, notes=''):
@@ -157,7 +165,7 @@ def ux(slug_dir, notes=''):
 def apply_ux(slug_dir, r):
     d = J(slug_dir, 'direction.json'); ids = by_id(d); changed = 0
     order = [i for i in r.get('order', []) if i in ids]
-    if order and len(set(order)) >= max(3, len(ids) - 1) and len(set(order)) == len(order):
+    if order and len(order) == len(ids) and set(order) == set(ids):
         d['beats'] = [ids[i] for i in order]; changed += 1
     g = r.get('goal_cta')
     if g and 1 <= words(g) <= 5:
@@ -182,7 +190,7 @@ COPY_TOOL = {"name": "rewrite", "description": "Rewrite text fields. Only fields
 LIMITS = {'h1': 6, 'lede': 30, 'category': 8, 'fact': 8, 'h2': 5, 'label': 4, 'step': 12, 'ftitle': 4, 'fbody': 18, 'tag': 12, 'item': 6}
 COPY_SYSTEM = f"""You are the copywriter. Limits are hard: h1 ≤ {LIMITS['h1']} words with a stance (one word may be in <em>), lede ≤ {LIMITS['lede']}, h2 ≤ {LIMITS['h2']} words and a NOUN phrase, step ≤ {LIMITS['step']}, feature title ≤ {LIMITS['ftitle']}, feature body ≤ {LIMITS['fbody']}, label ≤ {LIMITS['label']}.
 Write in the site's language and voice. Every fact, number and name must be on the fact sheet. Cut adjectives, keep nouns and verbs. Buttons = verb + object. Never repeat the h2 inside the lede. Never two sections saying the same idea.
-Fix exactly what is asked (critic notes) plus any field over its limit. Leave good text alone."""
+FAQ questions and answers are source-verified: do not rewrite any faq items. Fix exactly what is asked (critic notes) plus any field over its limit. Leave good text alone."""
 
 def copy(slug_dir, notes=''):
     d = J(slug_dir, 'direction.json'); fs_ = J(slug_dir, 'factsheet.json') or {}
@@ -213,11 +221,13 @@ def apply_copy(slug_dir, r):
         root, f, i, sub, j = m.groups(); i = int(i) if i else None; j = int(j) if j else None
         tgt = d['hero'] if root == 'hero' else d.setdefault('ending', {}) if root == 'ending' else ids.get(root)
         if tgt is None: continue
+        if tgt.get('type') == 'testimonials': continue  # source quote and attribution stay byte-for-byte tied to their provenance
+        if tgt.get('type') == 'quote' and f in ('body', 'big', 'who'): continue  # verified source quote and excerpt must not be rewritten
         lim = LIMITS.get(f, LIMITS['lede']) if f not in ('steps', 'features', 'items') else None
         try:
             if f == 'steps' and i is not None and words(v) <= LIMITS['step']: tgt['steps'][i] = v; n += 1
             elif f == 'features' and i is not None and sub in ('title', 'body') and words(v) <= LIMITS['ftitle' if sub == 'title' else 'fbody']: tgt['features'][i][sub] = v; n += 1
-            elif f == 'items' and i is not None and j in (0, 1) and words(v) <= LIMITS['item']: tgt['items'][i][j] = v; n += 1
+            elif f == 'items' and tgt.get('type') != 'faq' and i is not None and j in (0, 1) and words(v) <= LIMITS['item']: tgt['items'][i][j] = v; n += 1
             elif lim and f in ('h1', 'lede', 'category', 'fact', 'h2', 'label', 'tag', 'big', 'body', 'cta', 'cta2') and words(v) <= (lim if f != 'body' else 60):
                 if f in ('cta', 'cta2') and words(v) > 5: continue
                 tgt[f] = v; n += 1

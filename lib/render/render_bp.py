@@ -43,7 +43,7 @@ def build(slug_dir, bp_id, out_path=None):
     d = j('direction.json'); assets = j('assets.json') or {}; brief = j('brief.json') or {}; inventory = j('inventory.json') or {}
     images = {i.get('id', str(n)): i for n, i in enumerate(j('images.json') or [])}
     bp = json.load(open(os.path.join(ROOT, 'lib/blueprints', bp_id + '.bp.json')))
-    b = d['brand']; h = d['hero']; en = d.get('ending', {})
+    b = d['brand']; h = d['hero']; en = d.get('ending') if isinstance(d.get('ending'), dict) else {}
     T, C, G, M, BT, MO = bp['type'], bp['colour'], bp['grid'], bp['media'], bp['button'], bp['motion']
 
     # ---- image pool (never an empty frame, never the same picture twice — even as a screenshot of itself or a crop) ----
@@ -107,6 +107,17 @@ def build(slug_dir, bp_id, out_path=None):
             pool.sort(key=lambda i: (bool(i.get('shot')) if (prefer_hero or not soft) else not i.get('shot'), not (i.get('heroGrade') if prefer_hero else True), -(i.get('w', 0) * i.get('h', 0)))); it = pool[0] if pool else None
         if not it: return ''
         used.update(family(it.get('id'))); return it.get('data', '')
+
+    def source_alt(src):
+        # Reuse the source author's alt text for actual content photographs.
+        # Do not invent descriptions for generated visuals, screenshots or
+        # derived crops: their content may differ from the source image.
+        for it in images.values():
+            if it.get('data') != src or it.get('gen') or it.get('shot') or it.get('crop_of'):
+                continue
+            alt = it.get('alt')
+            if isinstance(alt, str) and alt.strip(): return e(' '.join(alt.split()))
+        return ''
 
     # ---- fonts: blueprint stance, owner's font if they keep it ----
     disp_name, disp_kind = font_for((T.get('display') or {}).get('fam'))
@@ -174,6 +185,22 @@ def build(slug_dir, bp_id, out_path=None):
         label = h.get('cta2')
         target = action_url(label, h.get('cta2_href')) if label else ''
         return f'<a class="btn ghost{" light" if light else ""}" href="{e(target)}">{e(label)}</a>' if target else ''
+    def section_extras(rendered, bt):
+        # All list/photo/quote renderers share the same source-backed actions.
+        # Ledger and form already render their own actions.
+        if not rendered or bt['type'] in ('ledger', 'form') or '</section>' not in rendered: return rendered
+        note = bt.get('note') if bt['type'] == 'steps' else ''
+        note_html = f'<p class="section-note">{e(note)}</p>' if note else ''
+        links = []
+        for key in ('cta', 'cta2'):
+            label = bt.get(key)
+            target = action_url(label, bt.get(key + '_href'), include_forms=True) if label else ''
+            if target:
+                links.append(f'<a class="btn" href="{e(target)}">{e(label)} <span class="ar">→</span></a>')
+        actions_html = f'<div class="section-actions">{"".join(links)}</div>' if links else ''
+        if not note_html and not actions_html: return rendered
+        extra = f'<div class="wrap section-extras">{note_html}{actions_html}</div>'
+        return rendered.rsplit('</section>', 1)[0] + extra + '</section>'
     lab = lambda t, light=False: f'<span class="lab{" light" if light else ""}">{e(t)}</span>' if t else ''
     pos = {bt['id']: i + 1 for i, bt in enumerate(d.get('beats', []))}
     for bt in d.get('beats', []):
@@ -204,7 +231,7 @@ def build(slug_dir, bp_id, out_path=None):
         cand = hm or next((i for i in sorted(images.values(), key=lambda i: -(i.get('w', 0) * i.get('h', 0))) if photo_like(i, 900) and reserved.get(i.get('id')) in (None, '__hero__')), None)
         src = img(cand['id'], True) if cand else img(None, True)
         if media and src:
-            m = f'<div class="media"><img src="{src}" alt=""></div>' if not os.path.exists(vid) else f'<div class="media"><video autoplay muted loop playsinline poster="{src}"><source src="data:video/mp4;base64,{base64.b64encode(open(vid, "rb").read()).decode()}" type="video/mp4"></video></div>'
+            m = f'<div class="media"><img src="{src}" alt="{source_alt(src)}"></div>' if not os.path.exists(vid) else f'<div class="media"><video autoplay muted loop playsinline poster="{src}"><source src="data:video/mp4;base64,{base64.b64encode(open(vid, "rb").read()).decode()}" type="video/mp4"></video></div>'
         else: m = ''
         hd = bp['sections'][0].get('head') or D
         y = hd.get('y'); place = 'end' if (y or .6) > .5 else 'start'
@@ -224,22 +251,22 @@ def build(slug_dir, bp_id, out_path=None):
         mv = hui.get('move')
         if mv == 'centre':
             hsty2 = hsty.replace('text-align:left', 'text-align:center') + ';margin-left:auto;margin-right:auto;max-width:16ch'
-            shotp = (f'<div class="wrap shotwrap"><div class="shotframe"><img src="{src}" alt=""></div></div>' if soft else f'<div class="wrap"><figure class="inset-v" data-sig="parallax"><img src="{src}" alt=""></figure></div>') if src else ''
+            shotp = (f'<div class="wrap shotwrap"><div class="shotframe"><img src="{src}" alt="{source_alt(src)}"></div></div>' if soft else f'<div class="wrap"><figure class="inset-v" data-sig="parallax"><img src="{src}" alt="{source_alt(src)}"></figure></div>') if src else ''
             return f'<section class="sec hero centre{" shot" if shotp else ""}" id="top"><div class="wrap hero-in al-center">{cat}<h1 class="h1" style="{hsty2}">{h1}</h1><p class="lede" style="margin-left:auto;margin-right:auto;text-align:center">{e(h.get("lede"))}</p><div class="ctas" style="justify-content:center">{cta_html()}{secondary_cta()}</div></div>{shotp}</section>'
         if mv in ('photo', 'poster', 'inset') and src:
             over = mv in ('photo', 'poster'); inset = mv == 'inset'
             ppx = min(hpx * 1.25, int(2 * 1150 / ((0.7 if upper else 0.56) * max(12, nch)))) if mv == 'poster' else hpx
             h1s = hsty if not over else re.sub(r'--hero-size:[^;]+', f'--hero-size:{clampf(ppx)}', hsty)
             body_ = f'<div class="wrap hero-in al-{al}{" light" if over else ""}">{cat}<h1 class="h1" style="{h1s}">{h1}</h1><p class="lede">{e(h.get("lede"))}</p><div class="ctas">{cta_html()}{secondary_cta()}</div></div>'
-            if inset: return f'<section class="sec hero inset" id="top">{body_}<div class="wrap"><figure class="inset-v" data-sig="parallax"><img src="{src}" alt=""></figure></div></section>'
-            return f'<section class="sec hero has-media {mv}" id="top" style="min-height:100svh"><div class="media"><img src="{src}" alt=""></div>{body_}</section>'
+            if inset: return f'<section class="sec hero inset" id="top">{body_}<div class="wrap"><figure class="inset-v" data-sig="parallax"><img src="{src}" alt="{source_alt(src)}"></figure></div></section>'
+            return f'<section class="sec hero has-media {mv}" id="top" style="min-height:100svh"><div class="media"><img src="{src}" alt="{source_alt(src)}"></div>{body_}</section>'
         if hui.get('move') == 'split' and src:
             # SIGNATURE split hero: words left, the product right, full height; the product drifts up slower than the page
             spx = min(hpx, int(3 * 640 / ((0.7 if upper else 0.56) * max(12, nch)))); hsty2 = re.sub(r'--hero-size:[^;]+', f'--hero-size:{clampf(spx)}', re.sub(r'max-width:[^;]+', 'max-width:11ch', hsty))
             left = f'<div class="split-l">{cat}<h1 class="h1" style="{hsty2}">{h1}</h1><p class="lede">{e(h.get("lede"))}</p><div class="ctas">{cta_html()}{secondary_cta()}</div></div>'
-            right = f'<div class="split-r"><div class="shotframe tall{" product-shot" if d.get("kind") == "software" else ""}" data-sig="parallax"><img src="{src}" alt=""></div></div>'
+            right = f'<div class="split-r"><div class="shotframe tall{" product-shot" if d.get("kind") == "software" else ""}" data-sig="parallax"><img src="{src}" alt="{source_alt(src)}"></div></div>'
             return f'<section class="sec hero split" id="top"><div class="wrap split-wrap">{left}{right}</div></section>'
-        if shot: body_ += f'<div class="wrap shotwrap"><div class="shotframe"><img src="{src}" alt=""></div></div>'
+        if shot: body_ += f'<div class="wrap shotwrap"><div class="shotframe"><img src="{src}" alt="{source_alt(src)}"></div></div>'
         return f'<section class="sec hero{" has-media" if media else ""}{" shot" if shot else ""}" id="top" style="min-height:{min(2, bp["sections"][0].get("screens", 1)) * 100}svh">{m}{body_}</section>'
 
     def sec_media(sec): return [m for m in sec.get('media', []) if m.get('wf', 0) > .15 and .55 <= m.get('ar', 1) <= 2.6]
@@ -273,8 +300,8 @@ def build(slug_dir, bp_id, out_path=None):
 
     def sticky_product(sec, bt):
         """SIGNATURE: text blocks scroll on the left, the product stays pinned on the right and swaps per block."""
-        items = beat_items(bt)[:5]
-        if len(items) < 2: return numbers(sec, bt) if bt['type'] == 'facts' else cards(sec, bt)
+        items = beat_items(bt)
+        if len(items) < 2 or len(items) > 5: return numbers(sec, bt) if bt['type'] == 'facts' else cards(sec, bt)
         vis = pick_visuals(bt, len(items), strict=True)
         if not vis: return numbers(sec, bt) if bt['type'] == 'facts' else cards(sec, bt)
         rows = ''
@@ -291,19 +318,31 @@ def build(slug_dir, bp_id, out_path=None):
     def marquee(sec, bt):
         """SIGNATURE: a slow ticker of the beat's own words (titles / facts / prices); doubles as a breath between screens."""
         items = beat_items(bt)
-        words_ = [f'{t}' if not b_ or bt['type'] in ('features', 'faq') else f'{t} — {b_}' for t, b_ in items][:10] or [bt.get('h2') or b['name']]
-        words_ = [w for w in words_ if len(str(w).split()) <= 12] or words_[:1]  # a ticker is made of phrases, not paragraphs
+        # A ticker is for short phrases, not a substitute for a long list or
+        # a component with detailed descriptions. Never silently trim it.
+        if bt['type'] in ('features', 'steps', 'faq') or len(items) > 10:
+            return cards(sec, bt)
+        words_ = [f'{t}' if b_ is None or b_ == '' else f'{t} — {b_}' for t, b_ in items] or [bt.get('h2') or b['name']]
+        if any(len(str(w).split()) > 12 for w in words_): return cards(sec, bt)
         while 0 < len(words_) < 6: words_ = words_ + words_  # a ticker needs a track longer than the screen: repeat short lists
         track = ''.join(f'<span class="mq-i">{e(w)}<i>✦</i></span>' for w in words_)
-        head = ghead(sec, bt) if bt.get('h2') else ''
+        head = ghead(sec, bt)
         own = bt.get('image') if bt.get('type') not in ('facts', 'cells') and bt.get('image') and images.get(bt['image']) and photo_like(images[bt['image']], minw=900) else None
-        lead = f'<figure class="lead" style="aspect-ratio:{max(1.3, min(2.4, images[own]["w"] / max(1, images[own]["h"])))}"><img src="{img(own)}" alt=""></figure>' if own else ''
-        return f'<section class="sec marquee band-{band_of(sec, bt)}" id="{e(bt["id"])}" data-sig="marquee">{("<div class=\"wrap\">" + head + lead + "</div>") if (head or lead) else ""}<div class="mq"><div class="mq-track">{track}{track}</div></div></section>'
+        lead_src = img(own) if own else ''
+        lead = f'<figure class="lead" style="aspect-ratio:{max(1.3, min(2.4, images[own]["w"] / max(1, images[own]["h"])))}"><img src="{lead_src}" alt="{source_alt(lead_src)}"></figure>' if lead_src else ''
+        static = ''.join(f'<li><span>{e(t)}</span>{("<span>" + e(body) + "</span>") if body is not None and body != "" else ""}</li>' for t, body in items)
+        heading = f'<div class="wrap">{head}{lead}</div>' if head or lead else ''
+        return f'<section class="sec marquee band-{band_of(sec, bt)}" id="{e(bt["id"])}" data-sig="marquee">{heading}<div class="mq" aria-hidden="true"><div class="mq-track">{track}{track}</div></div><ul class="marquee-static">{static}</ul></section>'
 
     def pinned_sequence(sec, bt):
         """SIGNATURE: the section pins; each step takes over the screen as you scroll (number, sentence, visual)."""
-        items = beat_items(bt)[:5]
-        if len(items) < 2: return cards(sec, bt)
+        items = beat_items(bt)
+        # Pinning gives this section a fixed scroll height. Its sticky stage
+        # can cover content appended after the stage, so use a normal flow for
+        # beats with an additional note or action.
+        if bt.get('note') or bt.get('cta') or bt.get('cta2'):
+            return numbers(sec, bt) if bt['type'] == 'facts' else cards(sec, bt)
+        if len(items) < 2 or len(items) > 5: return numbers(sec, bt) if bt['type'] == 'facts' else cards(sec, bt)
         # A section-level photo is not evidence that it depicts an individual offer.
         vis = [] if bt['type'] in ('features', 'facts') else pick_visuals(bt, len(items), strict=True)
         slides = ''
@@ -331,7 +370,7 @@ def build(slug_dir, bp_id, out_path=None):
                         with Image.open(io.BytesIO(base64.b64decode(src.split(',', 1)[1]))) as source:
                             image_width = source.width
                     except Exception: pass
-                    picture = f'<figure class="ps-v item-visual" style="--ps-image-max:{round(image_width * 1.35)}px"><img src="{src}" alt=""></figure>'
+                    picture = f'<figure class="ps-v item-visual" style="--ps-image-max:{round(image_width * 1.35)}px"><img src="{src}" alt="{source_alt(src)}"></figure>'
             elif vis:
                 src, (position, zoom) = vis[i % len(vis)]
                 picture = f'<figure class="ps-v"><img src="{src}" alt="" style="object-position:{position};transform:scale({zoom})"></figure>'
@@ -371,9 +410,10 @@ def build(slug_dir, bp_id, out_path=None):
             details = f'<ul class="photo-details">{details}</ul>' if details else ''
             heading_style = re.sub(r'max-width:[^;]+;?', '', head_style(sec, bt=bt))
             heading_style = re.sub(r'font-size:', '--story-heading-size:', heading_style)
-            text = f'<div class="st-t">{lab(bt.get("label"))}<h2 class="h2" style="{heading_style}">{e(bt.get("h2") or "")}</h2>{("<p class=\"lede\">" + e(bt.get("lede")) + "</p>") if bt.get("lede") else ""}{details}</div>'
+            lede_html = f'<p class="lede">{e(bt.get("lede"))}</p>' if bt.get('lede') else ''
+            text = f'<div class="st-t">{lab(bt.get("label"))}<h2 class="h2" style="{heading_style}">{e(bt.get("h2") or "")}</h2>{lede_html}{details}</div>'
             ratio = image_width / max(1, image_height)
-            figure = f'<figure class="st-v" style="--story-image-max:{round(image_width * 1.35)}px;--story-ratio:{ratio:.6f};aspect-ratio:{ratio:.6f}"><img src="{src}" alt=""></figure>'
+            figure = f'<figure class="st-v" style="--story-image-max:{round(image_width * 1.35)}px;--story-ratio:{ratio:.6f};aspect-ratio:{ratio:.6f}"><img src="{src}" alt="{source_alt(src)}"></figure>'
             caps = bt.get('cap') or []
             headline = str(bt.get('h2') or '')
             lede = str(bt.get('lede') or '')
@@ -386,7 +426,8 @@ def build(slug_dir, bp_id, out_path=None):
             style = f' style="--editorial-image-max:{round(image_width * 1.35)}px"' if editorial else ''
             return f'<section class="sec story story-photo{cls} band-{band_of(sec, bt)}" id="{e(bt["id"])}"{style}><div class="wrap st">{text}{figure}</div></section>'
         if bt['type'] == 'quote': bt = {**bt, 'h2': bt.get('big') or '', 'lede': bt.get('body') or '', 'label': bt.get('label') or bt.get('who') or ''}
-        items = beat_items(bt)[:4]
+        items = beat_items(bt)
+        if len(items) > 4: return numbers(sec, bt) if bt['type'] == 'facts' else cards(sec, bt)
         own = bt.get('image') if bt.get('image') and images.get(bt['image']) and not is_used(bt['image']) and images[bt['image']].get('w', 0) >= 640 and not dark_background_texture(images[bt['image']]) else None
         if own: src = img(own)
         else:
@@ -395,8 +436,9 @@ def build(slug_dir, bp_id, out_path=None):
             src = img(pool[0]['id']) if pool else ''
         if not src: return cards(sec, bt)
         lst = ''.join(f'<li><b>{e(t)}</b><span>{e(b_)}</span></li>' for t, b_ in items)
-        txt = f'<div class="st-t">{lab(bt.get("label"))}<h2 class="h2" style="{re.sub(r"max-width:[^;]+;?", "", head_style(sec, bt=bt))}">{e(bt.get("h2") or "")}</h2>{("<p class=\"lede\">" + e(bt.get("lede")) + "</p>") if bt.get("lede") else ""}<ul class="st-l">{lst}</ul></div>'
-        fig = f'<figure class="st-v"><img src="{src}" alt=""></figure>'
+        lede_html = f'<p class="lede">{e(bt.get("lede"))}</p>' if bt.get('lede') else ''
+        txt = f'<div class="st-t">{lab(bt.get("label"))}<h2 class="h2" style="{re.sub(r"max-width:[^;]+;?", "", head_style(sec, bt=bt))}">{e(bt.get("h2") or "")}</h2>{lede_html}<ul class="st-l">{lst}</ul></div>'
+        fig = f'<figure class="st-v"><img src="{src}" alt="{source_alt(src)}"></figure>'
         return f'<section class="sec story{" flip" if flip else ""} band-{band_of(sec, bt)}" id="{e(bt["id"])}"><div class="wrap st">{txt}{fig}</div></section>'
 
     def photo_caption(bt, title=True):
@@ -423,11 +465,11 @@ def build(slug_dir, bp_id, out_path=None):
         ps = big_photos(2, bt)
         if len(ps) < 2: return photo_sec(sec, bt) if ps else photo_text_only(sec, bt)
         cap = f'<div class="wrap">{photo_caption(bt)}</div>' if bt else ''
-        return f'<section class="sec photos" id="{e(bt["id"]) if bt else ""}"><div class="wrap pair"><figure style="width:58%;aspect-ratio:1.25"><img src="{ps[0]}" alt=""></figure><figure style="width:38%;aspect-ratio:.85;margin-top:12%"><img src="{ps[1]}" alt=""></figure></div>{cap}</section>'
+        return f'<section class="sec photos" id="{e(bt["id"]) if bt else ""}"><div class="wrap pair"><figure style="width:58%;aspect-ratio:1.25"><img src="{ps[0]}" alt="{source_alt(ps[0])}"></figure><figure style="width:38%;aspect-ratio:.85;margin-top:12%"><img src="{ps[1]}" alt="{source_alt(ps[1])}"></figure></div>{cap}</section>'
     def collage(sec, bt=None):
         ps = big_photos(3, bt)
         if len(ps) < 2: return photo_sec(sec, bt) if ps else photo_text_only(sec, bt)
-        tiles = ''.join(f'<figure class="c{i + 1}"><img src="{p_}" alt=""></figure>' for i, p_ in enumerate(ps))
+        tiles = ''.join(f'<figure class="c{i + 1}"><img src="{p_}" alt="{source_alt(p_)}"></figure>' for i, p_ in enumerate(ps))
         return f'<section class="sec collage" id="{e(bt["id"]) if bt else ""}"><div class="wrap cl">{tiles}</div><div class="wrap">{photo_caption(bt)}</div></section>'
     def overlay(sec, bt=None, variant=''):
         ps = big_photos(1, bt, minw=1100)  # edge to edge at 1440: anything narrower upscales into a blur
@@ -436,15 +478,23 @@ def build(slug_dir, bp_id, out_path=None):
         if not title and not bt.get('lede'):  # a filler picture is a picture, not a chapter: no brand name stamped on it
             return f'<section class="sec overlay chapter bare" id="{e(bt.get("id", ""))}" data-sig="parallax"><figure class="ov-bg"><img src="{ps[0]}" alt=""></figure></section>'
         rows = ''.join(f'<li><span>{e(t)}</span><i></i><b>{e(x)}</b></li>' for t, x in items) if bt.get('type') in ('ledger', 'facts') else ''
-        return f'<section class="sec overlay{" chapter" if variant == "chapter" else ""}" id="{e(bt.get("id", ""))}" data-sig="parallax"><figure class="ov-bg"><img src="{ps[0]}" alt=""></figure><div class="wrap ov-in light">{lab(bt.get("label"), True)}<h2 class="h2 light" style="{re.sub(r"max-width:[^;]+;?", "", head_style(sec))}">{e(title)}</h2>{("<p class=\"lede\">" + e(bt.get("lede")) + "</p>") if bt.get("lede") else ""}{("<ul class=\"rows light\">" + rows + "</ul>") if rows else ""}</div></section>'
+        lede_html = f'<p class="lede">{e(bt.get("lede"))}</p>' if bt.get('lede') else ''
+        rows_html = f'<ul class="rows light">{rows}</ul>' if rows else ''
+        return f'<section class="sec overlay{" chapter" if variant == "chapter" else ""}" id="{e(bt.get("id", ""))}" data-sig="parallax"><figure class="ov-bg"><img src="{ps[0]}" alt=""></figure><div class="wrap ov-in light">{lab(bt.get("label"), True)}<h2 class="h2 light" style="{re.sub(r"max-width:[^;]+;?", "", head_style(sec))}">{e(title)}</h2>{lede_html}{rows_html}</div></section>'
     def quote_band(sec, bt, variant=''):
         text = bt.get('body') or bt.get('lede') or ''; who = f'<p class="lab who">{e(bt["who"])}</p>' if bt.get('who') else ''
         band = 'accent' if variant == 'accent' else 'dark'
         return f'<section class="sec qband band-{band}{" center" if variant == "centre" else ""}" id="{e(bt["id"])}"><div class="wrap"><p class="qb">{e(text)}</p>{who}</div></section>'
     def rail(sec, bt):
-        items = beat_items(bt)[:8]; cands = [i for i in images.values() if photo_like(i) and free_for(i, bt)]
+        items = beat_items(bt); cands = [i for i in images.values() if photo_like(i) and free_for(i, bt)]
+        # Long lists need a normal responsive grid, not a hidden-scrollbar
+        # horizontal rail where later items are easily missed on phones.
+        if len(items) > 8: return cards(sec, bt)
         ps = [img(i['id']) for i in cands[:len(items)]] if len(cands) >= min(3, len(items)) else []  # a rail with pictures on some cards and not others looks broken: all or none
-        cards_ = ''.join(f'<article class="rc">{("<figure><img src=\"" + ps[i] + "\" alt=\"\"></figure>") if i < len(ps) and ps[i] else ""}<span class="lab">{e(f"0{i + 1}")}</span><h3 class="h3">{e(t)}</h3><p>{e(x)}</p></article>' for i, (t, x) in enumerate(items))
+        cards_ = ''
+        for i, (t, x) in enumerate(items):
+            figure = f'<figure><img src="{ps[i]}" alt="{source_alt(ps[i])}"></figure>' if i < len(ps) and ps[i] else ''
+            cards_ += f'<article class="rc">{figure}<span class="lab">{e(f"0{i + 1}")}</span><h3 class="h3">{e(t)}</h3><p>{e(x)}</p></article>'
         return f'<section class="sec railsec band-{band_of(sec, bt)}" id="{e(bt["id"])}"><div class="wrap">{ghead(sec, bt)}</div><div class="rail" data-sig="rail"><div class="rail-in">{cards_}</div></div></section>'
     def numbers(sec, bt):
         items = beat_items(bt)
@@ -452,15 +502,19 @@ def build(slug_dir, bp_id, out_path=None):
         cells_ = ''.join(f'<div><b class="num">{e(t)}</b><p>{e(x)}</p></div>' for t, x in items)
         return f'<section class="sec numbers band-{band_of(sec, bt)}" id="{e(bt["id"])}"><div class="wrap">{ghead(sec, bt)}<div class="nums" style="--n:{min(4, len(items))}">{cells_}</div></div></section>'
     def stickers(sec, bt):
-        items = beat_items(bt)[:8]
+        items = beat_items(bt)
+        if len(items) > 8 or any(body is not None and body != '' for _, body in items): return cards(sec, bt)
         pills = ''.join(f'<span class="stk" style="--r:{(i % 5 - 2) * 2.2}deg">{e(t)}</span>' for i, (t, _) in enumerate(items))
         lede = bt.get('lede') or (items[0][1] if items else '')
-        return f'<section class="sec stickers band-accent" id="{e(bt["id"])}"><div class="wrap center">{lab(bt.get("label"))}<h2 class="h2" style="{re.sub(r"max-width:[^;]+;?", "", head_style(sec))}">{e(bt.get("h2") or "")}</h2><div class="stks">{pills}</div>{("<p class=\"lede\" style=\"margin:28px auto 0\">" + e(lede) + "</p>") if lede else ""}</div></section>'
+        lede_html = f'<p class="lede" style="margin:28px auto 0">{e(lede)}</p>' if lede else ''
+        return f'<section class="sec stickers band-accent" id="{e(bt["id"])}"><div class="wrap center">{lab(bt.get("label"))}<h2 class="h2" style="{re.sub(r"max-width:[^;]+;?", "", head_style(sec))}">{e(bt.get("h2") or "")}</h2><div class="stks">{pills}</div>{lede_html}</div></section>'
     def product_row(sec, bt):
-        items = beat_items(bt)[:6]; n = min(4, max(2, len(items)))
+        items = beat_items(bt); n = min(4, max(2, len(items)))
         cards_ = ''
         for i, (t, x) in enumerate(items):
-            pc = next((i for i in images.values() if photo_like(i) and free_for(i, bt)), None); pic = img(pc['id']) if pc else ''; cards_ += f'<article class="pr">{("<figure><img src=\"" + pic + "\" alt=\"\"></figure>") if pic else "<figure class=\"ph\"></figure>"}<div class="pr-t"><h3 class="h3">{e(t)}</h3><b>{e(x)}</b></div></article>'
+            pc = next((i for i in images.values() if photo_like(i) and free_for(i, bt)), None); pic = img(pc['id']) if pc else ''
+            figure = f'<figure><img src="{pic}" alt="{source_alt(pic)}"></figure>' if pic else '<figure class="ph"></figure>'
+            cards_ += f'<article class="pr">{figure}<div class="pr-t"><h3 class="h3">{e(t)}</h3><b>{e(x)}</b></div></article>'
         return f'<section class="sec products band-{band_of(sec, bt)}" id="{e(bt["id"])}"><div class="wrap">{ghead(sec, bt)}<div class="prs" style="--n:{n}">{cards_}</div></div></section>'
     def statement_v(sec, bt, variant=''):
         kind = 'quote' if bt['type'] == 'quote' else 'lede'
@@ -493,9 +547,10 @@ def build(slug_dir, bp_id, out_path=None):
                 if not is_used(it.get('id')): selected.append(img(it['id']))
                 if len(selected) == 2: break
             if selected:
-                tiles = ''.join(f'<figure style="width:{round(m["wf"] * 100)}%;aspect-ratio:{m["ar"]}"><img src="{src}" alt=""></figure>' for m, src in zip(ms, selected))
+                tiles = ''.join(f'<figure style="width:{round(m["wf"] * 100)}%;aspect-ratio:{m["ar"]}"><img src="{src}" alt="{source_alt(src)}"></figure>' for m, src in zip(ms, selected))
                 cap = photo_caption(bt)
-                return f'<section class="sec photos band-{sec.get("band") or "paper"}" id="{e(bt["id"]) if bt else ""}"><div class="wrap pair">{tiles}</div>{"<div class=\"wrap\">" + cap + "</div>" if cap else ""}</section>'
+                caption = f'<div class="wrap">{cap}</div>' if cap else ''
+                return f'<section class="sec photos band-{sec.get("band") or "paper"}" id="{e(bt["id"]) if bt else ""}"><div class="wrap pair">{tiles}</div>{caption}</section>'
             return photo_text_only(sec, bt) if bt else ''
         m = ms[0]; bleed = m.get('bleed') or m.get('wf', 1) > .95
         want = bt.get('image') if bt else None
@@ -514,7 +569,7 @@ def build(slug_dir, bp_id, out_path=None):
             it = images[want]
             if it.get('data') and it.get('w', 0) >= 400 and not is_used(it.get('id')) and free_for(it, bt) and bt.get('lede'):
                 ar = max(.7, min(1.9, it['w'] / max(1, it['h']))); src = img(want)
-                return f'<section class="sec photo inset band-{band_of(sec, bt)}" id="{e(bt["id"])}"><div class="wrap inset-wrap"><figure style="width:min(100%,{it["w"]}px);aspect-ratio:{ar:.3f}"><img src="{src}" alt=""></figure>{photo_caption(bt)}</div></section>'
+                return f'<section class="sec photo inset band-{band_of(sec, bt)}" id="{e(bt["id"])}"><div class="wrap inset-wrap"><figure style="width:min(100%,{it["w"]}px);aspect-ratio:{ar:.3f}"><img src="{src}" alt="{source_alt(src)}"></figure>{photo_caption(bt)}</div></section>'
             return photo_text_only(sec, bt)
         big_pool = [i for i in images.values() if free_for(i, bt) and (photo_like(i, 900) if not soft else (i.get('data') and i.get('w', 0) >= 900 and not is_used(i.get('id'))))]
         if not want and not big_pool: bleed = False
@@ -541,14 +596,18 @@ def build(slug_dir, bp_id, out_path=None):
         size = f'max-width:{max_width}px;margin:0 auto' if bleed else f'width:calc(100% - 2 * var(--frame));max-width:{max_width}px;margin:0 auto;border-radius:var(--radius);overflow:hidden'
         head = f'<div class="wrap over"><h2 class="h2 light" style="{head_style(sec)}">{e(bt["h2"])}</h2></div>' if bt and bt.get('h2') and sec.get('head') else ''
         cap = f'<div class="wrap">{photo_caption(bt, title=not head)}</div>' if bt else ''
-        return f'<section class="sec photo{" bleed" if bleed else ""}" id="{e(bt["id"]) if bt else ""}"><figure style="aspect-ratio:{max(1.1, min(2.4, m["ar"]))};{size}"><img src="{src}" alt="">{head}</figure>{cap}</section>'
+        return f'<section class="sec photo{" bleed" if bleed else ""}" id="{e(bt["id"]) if bt else ""}"><figure style="aspect-ratio:{max(1.1, min(2.4, m["ar"]))};{size}"><img src="{src}" alt="{source_alt(src)}">{head}</figure>{cap}</section>'
 
     def ghead(sec, bt, light=False):
-        if not bt.get('h2'): return lab(bt.get('label'))
+        if not bt.get('h2'):
+            label = lab(bt.get('label'), light)
+            lede = f'<p class="lede">{e(bt.get("lede"))}</p>' if bt.get('lede') else ''
+            return f'<div class="gh one">{label}{lede}</div>' if lede else label
         st = re.sub(r'max-width:[^;]+;?', '', head_style(sec, bt=bt)); hm = (bt.get('ui') or {}).get('head')
-        if hm == 'center': return f'<div class="gh one center">{lab(bt.get("label"), light)}<h2 class="h2" style="{st}">{e(bt.get("h2"))}</h2>{("<p class=\"lede\">" + e(bt.get("lede")) + "</p>") if bt.get("lede") else ""}</div>'
-        if hm == 'left': return f'<div class="gh one">{lab(bt.get("label"), light)}<h2 class="h2" style="{st}">{e(bt.get("h2"))}</h2>{("<p class=\"lede\">" + e(bt.get("lede")) + "</p>") if bt.get("lede") else ""}</div>'
-        return f'<div class="gh"><div>{lab(bt.get("label"), light)}<h2 class="h2" style="{st}">{e(bt.get("h2"))}</h2></div>{("<p class=\"lede\">" + e(bt.get("lede")) + "</p>") if bt.get("lede") else "<div></div>"}</div>'
+        lede_html = f'<p class="lede">{e(bt.get("lede"))}</p>' if bt.get('lede') else ''
+        if hm == 'center': return f'<div class="gh one center">{lab(bt.get("label"), light)}<h2 class="h2" style="{st}">{e(bt.get("h2"))}</h2>{lede_html}</div>'
+        if hm == 'left': return f'<div class="gh one">{lab(bt.get("label"), light)}<h2 class="h2" style="{st}">{e(bt.get("h2"))}</h2>{lede_html}</div>'
+        return f'<div class="gh"><div>{lab(bt.get("label"), light)}<h2 class="h2" style="{st}">{e(bt.get("h2"))}</h2></div>{lede_html or "<div></div>"}</div>'
 
     def lead_fig(ui_, bt):
         src = ''; it = None
@@ -564,14 +623,37 @@ def build(slug_dir, bp_id, out_path=None):
             pool = [i for i in images.values() if i.get('shot') and i.get('data') and not is_used(i.get('id')) and free_for(i, bt)]
             if pool: it = max(pool, key=lambda i: i.get('w', 0) * i.get('h', 0)); src = img(it['id'])
         if not src or not it: return ''
+        if it.get('shot'):
+            # A product UI is information, not a background: keep the entire
+            # image and let its intrinsic size cap prevent upscaling.
+            return f'<figure class="lead lead-shot"><img src="{src}" alt="{source_alt(src)}"></figure>'
         raw_ar = it.get('w', 16) / max(1, it.get('h', 9)); ar = max(1.0, min(2.4, raw_ar))
         narrow = raw_ar < 1.25  # a portrait or square picture is shown at its own shape, centred, not cropped to a banner
-        return f'<figure class="lead{" narrow" if narrow else ""}" style="aspect-ratio:{ar}"><img src="{src}" alt="" style="object-position:{"top" if narrow else "center"}"></figure>'
+        return f'<figure class="lead{" narrow" if narrow else ""}" style="aspect-ratio:{ar}"><img src="{src}" alt="{source_alt(src)}" style="object-position:{"top" if narrow else "center"}"></figure>'
 
     def faq(sec, bt):
-        rows = ''.join(f'<details><summary>{e(q)}</summary><p>{e(a)}</p></details>' for q, a in bt.get('items', [])[:8])
+        rows = ''.join(f'<details><summary>{e(q)}</summary><p>{e(a)}</p></details>' for q, a in bt.get('items', []))
         bt = dict(bt); bt.setdefault('h2', 'Questions'); bt['h2'] = bt['h2'] or 'Questions'
-        return f'<section class="sec faq band-{band_of(sec, bt)}" id="{e(bt["id"])}"><div class="wrap two"><div>{lab(bt.get("label"))}<h2 class="h2" style="{re.sub(r"max-width:[^;]+;?", "", head_style(sec))}">{e(bt["h2"])}</h2>{("<p class=\"lede\">" + e(bt["lede"]) + "</p>") if bt.get("lede") else ""}</div><div class="qa">{rows}</div></div></section>'
+        lede_html = f'<p class="lede">{e(bt["lede"])}</p>' if bt.get('lede') else ''
+        return f'<section class="sec faq band-{band_of(sec, bt)}" id="{e(bt["id"])}"><div class="wrap two"><div>{lab(bt.get("label"))}<h2 class="h2" style="{re.sub(r"max-width:[^;]+;?", "", head_style(sec))}">{e(bt["h2"])}</h2>{lede_html}</div><div class="qa">{rows}</div></div></section>'
+
+    def testimonials(sec, bt):
+        from urllib.parse import urlsplit
+        cards_ = []
+        for item in bt.get('testimonials') or []:
+            text, attribution, links = item.get('text'), item.get('attribution'), item.get('links') or []
+            if not isinstance(text, str) or not text.strip() or not isinstance(attribution, str) or not attribution.strip() or len(links) > 1: continue
+            link_html = ''
+            if links:
+                link = links[0]
+                try:
+                    url = urlsplit(link.get('url') or '')
+                    if url.scheme not in ('http', 'https') or not url.hostname or url.username or url.password or not link.get('label'): continue
+                except (ValueError, AttributeError): continue
+                link_html = f'<a href="{e(link["url"])}">{e(link["label"])}</a>'
+            cards_.append(f'<figure class="review-card"><blockquote>{e(text)}</blockquote><figcaption><span>{e(attribution)}</span>{link_html}</figcaption></figure>')
+        if not cards_: return ''
+        return f'<section class="sec reviews band-{band_of(sec, bt)}" id="{e(bt["id"])}"><div class="wrap">{ghead(sec, bt)}<div class="review-grid">{"".join(cards_)}</div></div></section>'
 
     def cards(sec, bt):
         if bt['type'] == 'faq': return faq(sec, bt)
@@ -582,7 +664,12 @@ def build(slug_dir, bp_id, out_path=None):
         if k in (3, 6, 9): n = 3
         elif k in (2, 4) and n > 2: n = 2 if k == 2 else 4
         elif k == 5: n = 3
-        n = ui_.get('cols') or n; variant = ui_.get('variant', '')
+        # A single-column marquee is a ticker setting, not a layout for the
+        # cards used when the ticker cannot carry the beat's full content.
+        # Preserve deliberate one-column card layouts selected as cards.
+        ticker_fallback = ui_.get('move') == 'marquee' and ui_.get('cols') == 1 and k >= 3
+        if not ticker_fallback: n = ui_.get('cols') or n
+        variant = ui_.get('variant', '')
         if variant == 'wide2': n = 2
         items = []
         if bt['type'] == 'features': items = [(f.get('title'), f.get('body'), True, f.get('image')) for f in bt.get('features', [])]
@@ -596,12 +683,13 @@ def build(slug_dir, bp_id, out_path=None):
         numeric_facts = bt['type'] == 'facts' and bool(items) and all(
             re.fullmatch(r'[\d\s.,:/%+−–-]+', str(t or '')) and len(str(t)) <= 12 for t, _, _, _ in items)
         cells = ''
-        for i, (t, body_, num, image_id) in enumerate(items[:8]):
+        for i, (t, body_, num, image_id) in enumerate(items):
             image = images.get(image_id) if isinstance(image_id, str) else None
             usable = image and image.get('data') and image.get('w', 0) >= 600 and not is_used(image_id) and free_for(image, bt) and not dark_background_texture(image) and (not image.get('shot') or image.get('detail') or image.get('gen'))
             src = img(image_id) if usable and not lead else ''
-            pic = f'<figure style="aspect-ratio:{ar}"><img src="{src}" alt=""></figure>' if src else ''
-            big = f'<b class="num">{e(num)}</b>' if isinstance(num, str) and re.search(r'\d', num) else ''
+            pic = f'<figure style="aspect-ratio:{ar}"><img src="{src}" alt="{source_alt(src)}"></figure>' if src else ''
+            value = str(num) if bt['type'] == 'cells' and num is not None else ''
+            big = (f'<b class="num">{e(value)}</b>' if re.search(r'\d', value) else f'<span class="lab">{e(value)}</span>') if value.strip() else ''
             cells += f'<div class="card">{pic}{lab(f"0{i + 1}") if not big and bt["type"] != "steps" and not numeric_facts else ""}{big}<h3 class="h3">{e(t)}</h3><p>{e(body_)}</p></div>'
         return f'<section class="sec cards band-{band_of(sec, bt)}{" compact" if ui_.get("compact") else ""}{" facts-cards" if numeric_facts else ""}" id="{e(bt["id"])}"><div class="wrap">{ghead(sec, bt)}{lead}<div class="grid" style="--n:{n}">{cells}</div></div></section>'
 
@@ -629,7 +717,7 @@ def build(slug_dir, bp_id, out_path=None):
                     image_width, image_height = source.size
             except Exception: pass
             ar = max(.7, min(2.0, image_width / max(1, image_height)))
-            visual = f'<figure class="lead ledger-visual" style="aspect-ratio:{ar:.3f};--ledger-image-max:{round(image_width * 1.35)}px;--ledger-image-height-max:{round(image_height * 1.35)}px"><img src="{src}" alt=""></figure>'
+            visual = f'<figure class="lead ledger-visual" style="aspect-ratio:{ar:.3f};--ledger-image-max:{round(image_width * 1.35)}px;--ledger-image-height-max:{round(image_height * 1.35)}px"><img src="{src}" alt="{source_alt(src)}"></figure>'
         heading_style = re.sub(r'text-align:[^;]+;?|margin-(left|right):auto;?|max-width:[^;]+;?', '', head_style(sec, bt=bt))
         if not (bt.get('ui') or {}).get('h2_px'):
             heading_style = re.sub(r'font-size:[^;]+', 'font-size:clamp(36px,4.4vw,64px)', heading_style)
@@ -662,12 +750,12 @@ def build(slug_dir, bp_id, out_path=None):
         return f'<section class="sec ledger band-{band_of(sec, bt)}" id="{e(bt["id"])}">{ticker}<div class="wrap two{" no-visual" if not visual else ""}"><div class="ledger-intro">{intro}</div><div><ul class="rows">{rows}</ul><div class="ctas">{link}</div></div></div></section>'
 
     def two_col(sec, bt):
-        if bt['type'] == 'steps': cols_ = [(f'0{i + 1}', s) for i, s in enumerate(bt.get('steps', []))][:3]
-        elif bt['type'] == 'features': cols_ = [(f.get('title'), f.get('body')) for f in bt.get('features', [])][:2]
-        else: cols_ = [(c[0], c[2] if len(c) > 2 else '') for c in bt.get('cells', [])][:2]
+        cols_ = beat_items(bt)
+        if len(cols_) > (3 if bt['type'] == 'steps' else 2):
+            return numbers(sec, bt) if bt['type'] == 'facts' else cards(sec, bt)
         inner = ''.join(f'<div><h3 class="h2" style="{head_style(sec)}">{e(t)}</h3><p class="big-p" style="font-size:{clampf(BO["px"] + 2, .8)}">{e(x)}</p></div>' for t, x in cols_)
         ui_ = bt.get('ui') or {}; lead = lead_fig(ui_, bt)
-        return f'<section class="sec twocol band-{band_of(sec, bt)}{" compact" if (bt.get("ui") or {}).get("compact") else ""}" id="{e(bt["id"])}"><div class="wrap">{ghead(sec, bt) if bt["type"] != "features" else lab(bt.get("label"))}{lead}<div class="cols" style="--n:{len(cols_)}">{inner}</div></div></section>'
+        return f'<section class="sec twocol band-{band_of(sec, bt)}{" compact" if (bt.get("ui") or {}).get("compact") else ""}" id="{e(bt["id"])}"><div class="wrap">{ghead(sec, bt)}{lead}<div class="cols" style="--n:{len(cols_)}">{inner}</div></div></section>'
 
     cta_title_used = []
     def cta(sec, bt=None):
@@ -687,10 +775,44 @@ def build(slug_dir, bp_id, out_path=None):
         return f'<section class="sec cta band-dark" id="{e((bt or {}).get("id") or form_id)}" style="min-height:{min(.5, sec.get("screens", 1)) * 100}svh"><div class="wrap center">{lab((bt or {}).get("label"))}<h2 class="h2" style="{title_style}">{e(title)}</h2>{form}<div class="alts">{alt}</div></div></section>'
 
     def footer(sec):
-        cols_ = ''.join(f'<div><h5 class="lab">{e(t)}</h5><ul>{"".join("<li>" + e(x) + "</li>" for x in items)}</ul></div>' for t, items in en.get('cols', [])[:4])
+        def text(value): return value.strip() if isinstance(value, str) else ''
+        cols = en.get('cols') if isinstance(en.get('cols'), list) else []
+        cols_ = ''
+        for col in cols[:4]:
+            if not isinstance(col, (list, tuple)) or len(col) != 2: continue
+            title, items = text(col[0]), col[1] if isinstance(col[1], list) else []
+            lines = ''.join(f'<li>{e(text(item))}</li>' for item in items if text(item))
+            if not title and not lines: continue
+            heading = f'<h5 class="lab">{e(title)}</h5>' if title else ''
+            listing = f'<ul>{lines}</ul>' if lines else ''
+            cols_ += f'<div>{heading}{listing}</div>'
+        # Only fall back to links that can actually navigate from this preview
+        # or were captured from the source, never invented footer destinations.
+        links = ''
+        if not cols_:
+            present_ids = {'top'} | set(re.findall(r'<section\b[^>]*\bid="([^"]+)"', ''.join(out)))
+            nav = d.get('nav') if isinstance(d.get('nav'), dict) else {}
+            nav_items = nav.get('links') if isinstance(nav.get('links'), list) else []
+            for item in nav_items:
+                if not isinstance(item, (list, tuple)) or len(item) != 2: continue
+                href, label = text(item[0]), text(item[1])
+                if not label: continue
+                fragment = href[1:] if href.startswith('#') else ''
+                if fragment and re.fullmatch(r'[A-Za-z][\w:.-]*', fragment) and e(fragment) in present_ids:
+                    target = '#' + fragment
+                else:
+                    target = action_url(label, href, include_forms=True) if href and not href.startswith('#') else ''
+                if target: links += f'<li><a href="{e(target)}">{e(label)}</a></li>'
         band = sec.get('band') or ('dark' if C.get('bands') and C['bands'][-1] == 'dark' else 'paper')
-        tag = en.get('tag') if en.get('tag') not in cta_title_used else (h.get('category') or b['name'])
-        return f'<footer class="sec end band-{band}" id="end"><div class="wrap"><p class="big-p">{e(tag)}</p><div class="fcols">{cols_}</div><div class="legal"><span>{e(en.get("legal"))}</span><span>{e(en.get("next"))}</span></div></div></footer>'
+        tag = text(en.get('tag'))
+        if not tag or tag in cta_title_used: tag = text(b.get('name'))
+        tagline = f'<p class="big-p">{e(tag)}</p>' if tag else ''
+        columns = f'<div class="fcols">{cols_}</div>' if cols_ else ''
+        navigation = f'<ul class="footer-nav">{links}</ul>' if links else ''
+        legal = ''.join(f'<span>{e(text(en.get(key)))}</span>' for key in ('legal', 'next') if text(en.get(key)))
+        legal = f'<div class="legal">{legal}</div>' if legal else ''
+        if not (tagline or columns or navigation or legal): return ''
+        return f'<footer class="sec end band-{band}" id="end"><div class="wrap">{tagline}{columns}{navigation}{legal}</div></footer>'
 
     # allocate — in the DIRECTION's order (the UX agent owns the order); each beat takes the next blueprint section of its family,
     # so the page keeps the winner's forms and rhythms but tells the client's story in the right sequence
@@ -718,7 +840,7 @@ def build(slug_dir, bp_id, out_path=None):
                 'two-col': lambda sec, bt, v: two_col(sec, bt), 'ledger': lambda sec, bt, v: ledger(sec, bt), 'faq': lambda sec, bt, v: faq(sec, bt), 'statement': lambda sec, bt, v: statement_v(sec, bt, v),
                 'quote-band': lambda sec, bt, v: quote_band(sec, bt, v), 'photo': lambda sec, bt, v: photo_sec({**sec, 'media': [{'ar': 1.9 if v != 'tall' else 1.1, 'wf': 1, 'bleed': v == 'bleed'}]}, bt),
                 'photo-pair': lambda sec, bt, v: photo_pair(sec, bt), 'collage': lambda sec, bt, v: collage(sec, bt), 'overlay': lambda sec, bt, v: overlay(sec, bt, v), 'rail': lambda sec, bt, v: rail(sec, bt),
-                'numbers': lambda sec, bt, v: numbers(sec, bt), 'stickers': lambda sec, bt, v: stickers(sec, bt), 'product-row': lambda sec, bt, v: product_row(sec, bt)}
+                'numbers': lambda sec, bt, v: numbers(sec, bt), 'stickers': lambda sec, bt, v: stickers(sec, bt), 'product-row': lambda sec, bt, v: product_row(sec, bt), 'testimonials': lambda sec, bt, v: testimonials(sec, bt)}
         # beats that would render as an echo or an empty frame are not content: a quote that repeats the h1, a list with no rows, a label that is just the brand
         def _norm(t): return re.sub(r'[^a-z0-9]+', '', re.sub(r'<[^>]+>', '', str(t or '')).lower())
         h1n = _norm(h.get('h1'))
@@ -738,6 +860,7 @@ def build(slug_dir, bp_id, out_path=None):
             return take(fam)
         def component_for(bt, fallback):
             kind = bt['type']; move = (bt.get('ui') or {}).get('move'); count = len(beat_items(bt))
+            if kind == 'testimonials': return 'testimonials'
             if kind == 'ledger': return 'ledger'
             if kind == 'photo': return 'story' if move == 'story' else 'photo'
             if move == 'type-wall' and kind == 'quote': return move
@@ -747,6 +870,8 @@ def build(slug_dir, bp_id, out_path=None):
             if move == 'story' and kind in ('features', 'steps', 'cells', 'facts') and count <= 4: return move
             if move == 'marquee' and kind in ('cells', 'facts') and 0 < count <= 10 and all(len(str(t).split()) <= 5 for t, _ in beat_items(bt)): return move
             if move == 'cards' and kind in ('features', 'steps', 'cells', 'facts', 'faq'): return move
+            if kind in ('features', 'steps', 'cells', 'facts', 'faq') and fallback in ('statement', 'quote-band', 'type-wall'):
+                return 'numbers' if kind == 'facts' else 'cards'
             if fallback == 'pinned-sequence' and not 2 <= count <= 5: return 'cards'
             if kind == 'facts' and fallback == 'overlay': return 'numbers'
             return fallback
@@ -754,7 +879,7 @@ def build(slug_dir, bp_id, out_path=None):
         plan = []; claimed = []
         for slot in RECIPE['slots']:
             accepts = ['photo' if t == 'photo*' else t for t in slot['accepts']]
-            bt = next((x for x in remaining if x['type'] in accepts and x not in claimed), None)
+            bt = next((x for x in remaining if (x['type'] in accepts or x['type'] == 'testimonials' and 'quote' in accepts) and x not in claimed), None)
             if bt is not None: claimed.append(bt)
             plan.append((slot, bt))
         order = {bt['id']: i for i, bt in enumerate(beats)}
@@ -766,11 +891,11 @@ def build(slug_dir, bp_id, out_path=None):
             if bt is None: continue
             comp = component_for(bt, comp)
             sec = sec_for(comp); html_ = COMP.get(comp, COMP['cards'])(sec, bt, v)
-            if html_: out.append(html_); remaining.remove(bt); used_beats.add(bt['id'])
+            if html_: out.append(section_extras(html_, bt)); remaining.remove(bt); used_beats.add(bt['id'])
             if slot.get('band') and not bt.get('band'): out[-1] = re.sub(r'(class="sec [^"]*?)band-\w+', lambda m: m.group(1) + f'band-{slot["band"]}', out[-1], count=1) if re.search(r'class="sec [^"]*band-\w+', out[-1]) else out[-1].replace('class="sec ', f'class="sec band-{slot["band"]} ', 1)
         for bt in remaining:  # whatever the recipe had no slot for, in the fallback component for its type — unless the page is already full
             comp = component_for(bt, FALLBACK.get(bt['type'], 'cards')); html_ = COMP.get(comp, COMP['cards'])(sec_for(comp), bt, '')
-            if html_: out.append(html_); used_beats.add(bt['id'])
+            if html_: out.append(section_extras(html_, bt)); used_beats.add(bt['id'])
         closing = RECIPE.get('closing', 'cta')
         own = images.get((form_bt or {}).get('image'))
         ps = [img(own['id'])] if closing == 'cta-photo' and own and photo_like(own, 1100) and free_for(own, form_bt) else []
@@ -794,14 +919,19 @@ def build(slug_dir, bp_id, out_path=None):
         return ''
     for bt in ([] if RECIPE else beats):
         t = bt['type']; mv = (bt.get('ui') or {}).get('move') or ''
+        if t == 'testimonials':
+            html_ = testimonials(take('list'), bt)
+            if html_: out.append(html_); used_beats.add(bt['id'])
+            continue
         if mv == 'auto' or not mv:
             fam = 'statement' if t == 'quote' else 'photo' if t == 'photo' else 'cta' if t == 'form' else 'list'
             pool = pools[fam]; peek = pool[taken[fam] % len(pool)] if pool else DEF[fam]
             mv = default_move(peek['role'], t) if not mv else ''
         if mv in SIG and (t != 'quote' or mv in ('type-wall', 'story')) and t not in ('photo', 'form', 'ledger'):
             fam = 'statement' if t == 'quote' else 'list'; sec = take(fam)
-            out.append(SIG[mv](sec, bt, flip) if mv == 'story' else SIG[mv](sec, bt)); flip = not flip if mv == 'story' else flip; used_beats.add(bt['id']); continue
-        if t == 'quote' and mv == 'type-wall': sec = take('statement'); out.append(type_wall(sec, bt)); used_beats.add(bt['id']); continue
+            rendered = SIG[mv](sec, bt, flip) if mv == 'story' else SIG[mv](sec, bt)
+            out.append(section_extras(rendered, bt)); flip = not flip if mv == 'story' else flip; used_beats.add(bt['id']); continue
+        if t == 'quote' and mv == 'type-wall': sec = take('statement'); out.append(section_extras(type_wall(sec, bt), bt)); used_beats.add(bt['id']); continue
         if t == 'quote': sec = take('statement'); out.append(statement(sec, ('quote', bt)))
         elif t == 'photo': sec = take('photo'); out.append(photo_sec(sec, bt))
         elif t == 'ledger': sec = take('list'); out.append(ledger(sec, bt))
@@ -811,6 +941,7 @@ def build(slug_dir, bp_id, out_path=None):
             else: out.append(cards(sec, bt))
         elif t == 'form': sec = take('cta'); out.append(cta(sec, bt)); cta_done = True
         else: continue
+        out[-1] = section_extras(out[-1], bt)
         used_beats.add(bt['id'])
     if not RECIPE:
         if not cta_done: out.append(cta(take('cta'), None))
@@ -840,6 +971,7 @@ img,video{{display:block;max-width:100%}}a{{color:inherit;text-decoration:none}}
 .big-p{{font-family:{'var(--display)' if disp_kind == 'serif' else 'var(--body)'};font-weight:{300 if disp_kind != 'serif' and D.get('w', 400) <= 300 else 400};line-height:1.25;max-width:min(100%,{min(1100, (BO.get('maxw') or 520) * 1.6)}px);margin-top:18px;letter-spacing:-.01em}}
 .btn{{display:inline-flex;align-items:center;gap:10px;min-height:var(--btn-h);padding:var(--btn-pad);border-radius:var(--btn-r);font-family:var(--body);font-size:var(--btn-px);font-weight:{BT.get('w', 500)};text-transform:var(--btn-tt);background:var(--{'accent' if lum(accent) < .8 and abs(lum(accent) - lum(ink)) > .18 else 'ink'});color:{'var(--paper)' if not (lum(accent) < .8 and abs(lum(accent) - lum(ink)) > .18) else ('#111' if lum(accent) > .55 else '#fff')};border:1px solid transparent;transition:transform var(--fast) var(--ease),background var(--fast)}}
 .btn.ghost{{background:transparent;color:var(--ink);border-color:var(--ink)}}.btn.light{{color:var(--on-photo);border-color:var(--on-photo);background:transparent}}.btn.light:not(.ghost){{background:var(--on-photo);color:#111;border-color:var(--on-photo)}}.btn:active{{transform:scale(.97)}}.btn .ar{{transition:transform var(--fast) var(--ease)}}.btn:hover .ar{{transform:translateX(4px)}}
+.section-extras{{position:relative;z-index:1;margin-top:28px;overflow-wrap:anywhere}}.section-note{{max-width:var(--body-max);line-height:1.5}}.section-actions{{display:flex;flex-wrap:wrap;gap:12px}}.section-note+.section-actions{{margin-top:16px}}.section-actions .btn{{max-width:100%;overflow-wrap:anywhere}}.overlay .section-extras{{color:#fff;padding-bottom:clamp(40px,6vw,80px)}}.overlay .section-actions .btn,.band-accent .section-actions .btn{{background:#fff;color:#111}}
 .nav{{position:fixed;inset:0 0 auto 0;z-index:50;padding:18px 0;transition:background var(--slow),color var(--slow)}}.nav .wrap{{display:flex;align-items:center;justify-content:space-between;gap:24px}}.nav .links{{display:flex;gap:28px;font-size:15px}}.nav.solid{{background:color-mix(in srgb,var(--paper) 86%,transparent);color:var(--ink);backdrop-filter:blur(14px)}}.nav.solid .btn{{background:var(--ink);color:var(--paper);border-color:var(--ink)}}.nav.on-photo:not(.solid){{color:var(--on-photo)}}.nav.on-photo:not(.solid) .btn{{background:var(--on-photo);color:#111}}.nav .logo{{height:{min(56, max(28, (bp.get('nav') or {}).get('h', 56) - 20))}px;width:auto}}.nav .wordmark{{font-family:var(--display);font-size:22px}}
 .hero{{position:relative;display:grid;align-content:end;overflow:hidden;padding-top:120px}}.hero .media{{position:absolute;inset:0;z-index:0;background:var(--ink)}}.hero .media img,.hero .media video{{width:100%;height:100%;object-fit:cover}}.hero.has-media .media::after{{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.46),transparent 75%),linear-gradient(180deg,rgba(0,0,0,.42),rgba(0,0,0,.22) 40%,rgba(0,0,0,.58))}}
 .hero .hero-in{{position:relative;z-index:1;padding-bottom:clamp(40px,6vw,80px)}}.hero .h1{{font-size:var(--hero-size);overflow-wrap:anywhere}}@media(max-width:600px){{.hero .h1{{font-size:min(var(--hero-size),16vw)}}}}.hero.has-media{{color:var(--on-photo)}}.hero.has-media .cat .lab{{color:var(--on-photo);font-size:max(13px,var(--lab-px))}}.hero.has-media .h1,.hero.has-media .lede,.hero.has-media .cat{{text-shadow:0 1px 8px rgba(0,0,0,.55)}}.hero.has-media .btn.ghost{{color:var(--on-photo);border-color:var(--on-photo)}}.hero .cat{{display:flex;gap:26px;flex-wrap:wrap;margin-bottom:22px}}.hero .al-center{{text-align:center;justify-items:center;display:grid}}.hero .place-start{{align-self:start;padding-top:40px}}.hero .ctas{{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px}}
@@ -849,9 +981,10 @@ img,video{{display:block;max-width:100%}}a{{color:inherit;text-decoration:none}}
 .photos .pair{{display:flex;gap:var(--gutter);align-items:flex-start}}.photos figure{{overflow:hidden;border-radius:var(--radius)}}.photos figure img,.photo figure img{{width:100%;height:100%;object-fit:cover}}.photo figure{{position:relative;margin:0;max-height:92svh}}.inset-wrap{{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--gutter);align-items:end}}.inset-wrap figure{{overflow:hidden;border-radius:var(--radius)}}.inset-wrap .cap{{font-size:clamp(20px,1.6vw,26px);color:inherit}}@media(max-width:820px){{.inset-wrap{{grid-template-columns:1fr}}}}.photo.bleed{{padding:0}}.photo .over{{position:absolute;inset:auto 0 0 0;padding-bottom:clamp(28px,4vw,56px);color:var(--on-photo)}}.h2.light{{color:var(--on-photo)}}.cap{{margin-top:14px;max-width:var(--body-max);color:var(--muted)}}.caps{{display:flex;gap:24px;align-items:baseline;flex-wrap:wrap;padding-top:14px}}.photo-caption{{padding:clamp(24px,3vw,40px) 0}}.photo-caption .h2{{margin-top:14px;overflow-wrap:anywhere}}.photo-details{{display:flex;flex-wrap:wrap;gap:12px 24px;list-style:none;margin-top:18px}}
 .gh{{display:grid;grid-template-columns:1.1fr .9fr;gap:var(--gutter);align-items:end;margin-bottom:clamp(28px,4vw,48px)}}.gh .h2{{text-align:left!important;margin-left:0!important;margin-top:14px;max-width:18ch;text-wrap:balance}}.gh .lede{{margin-top:0}}
 .sec.compact{{padding:clamp(40px,5vw,72px) 0;min-height:auto!important}}.gh.one{{display:block;max-width:var(--body-max)}}.gh.one .h2{{max-width:none}}.gh.one.center{{text-align:center;margin-left:auto;margin-right:auto}}.gh.one.center .h2{{text-align:center!important;margin-left:auto!important;margin-right:auto}}.gh.one .lede{{margin-top:16px}}.gh.one.center .lede{{margin-left:auto;margin-right:auto}}
-figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4vw,48px);border:1px solid var(--line);max-height:78vh}}figure.lead.narrow{{width:min(100%,640px);margin-left:auto;margin-right:auto}}figure.lead.ledger-visual{{margin-top:28px}}figure.lead img{{width:100%;height:100%;object-fit:cover;object-position:top}}
+figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4vw,48px);border:1px solid var(--line);max-height:78vh}}figure.lead.narrow{{width:min(100%,640px);margin-left:auto;margin-right:auto}}figure.lead.ledger-visual{{margin-top:28px}}figure.lead img{{width:100%;height:100%;object-fit:cover;object-position:top}}figure.lead.lead-shot{{width:fit-content;max-width:100%;margin-left:auto;margin-right:auto;border-radius:0}}figure.lead.lead-shot img{{width:auto;height:auto;max-width:100%;max-height:calc(78vh - 2px);object-fit:contain}}
 .faq .two{{display:grid;grid-template-columns:.8fr 1.2fr;gap:var(--gutter)}}.qa details{{border-top:1px solid var(--line);padding:16px 0}}.qa details:last-child{{border-bottom:1px solid var(--line)}}.qa summary{{cursor:pointer;list-style:none;font-family:var(--display);font-weight:var(--h3-w);font-size:min(var(--h3),24px);display:flex;justify-content:space-between;gap:16px}}.qa summary::after{{content:"+";font-weight:300}}.qa details[open] summary::after{{content:"–"}}.qa details p{{margin-top:10px;color:var(--muted);max-width:60ch}}
 .grid{{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:var(--gutter)}}.card figure{{overflow:hidden;border-radius:var(--radius);margin-bottom:16px}}.card figure img{{width:100%;height:100%;object-fit:cover}}.card .h3{{margin-top:8px;font-size:min(var(--h3),28px)}}.card p{{margin-top:10px;color:var(--muted);max-width:34ch}}.card .num{{display:block;font-family:var(--display);font-weight:var(--h2-w);font-size:var(--h2);line-height:1;letter-spacing:-.02em}}
+.review-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:var(--gutter)}}.review-card{{min-width:0;margin:0;padding:24px;border:1px solid var(--line);border-radius:var(--radius);display:flex;flex-direction:column;gap:20px;overflow-wrap:anywhere}}.review-card blockquote{{flex:1;font-size:var(--body-px);line-height:1.5}}.review-card figcaption{{display:flex;flex-wrap:wrap;gap:6px 12px;color:var(--muted);font-size:.9em}}.review-card a{{color:inherit;text-decoration:underline;text-underline-offset:3px}}
 .ledger .two{{display:grid;grid-template-columns:.9fr 1.1fr;gap:var(--gutter)}}.ledger .two.no-visual{{grid-template-columns:minmax(0,1fr);max-width:min(var(--container),1000px)}}.ledger .two>*{{min-width:0}}.rows{{list-style:none}}.rows li{{display:flex;align-items:baseline;gap:12px;padding:14px 0;border-top:1px solid var(--line);font-size:calc(var(--body-px) + 2px)}}.rows li span{{min-width:0;overflow-wrap:anywhere}}.rows li i{{flex:1;border-bottom:1px dotted var(--line)}}.rows li b{{flex-shrink:0;font-weight:500;font-variant-numeric:tabular-nums}}.rows li.big{{padding:22px 0}}.rows li.big b{{font-family:var(--display);font-weight:var(--h2-w);font-size:clamp(32px,5vw,72px);line-height:1;letter-spacing:-.02em}}.ledger .ctas{{margin-top:26px}}@media(max-width:600px){{.rows li.big{{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}}.rows li.big i{{display:none}}.rows li.big b{{font-size:clamp(40px,15vw,72px)}}}}
 .ledger .rows li b{{min-width:0;flex-shrink:1;overflow-wrap:anywhere}}
 .ledger .rows li b.price-short{{white-space:nowrap;overflow-wrap:normal;flex-shrink:0}}
@@ -891,7 +1024,7 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
 .twocol .cols{{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:var(--gutter);margin-top:30px}}.twocol .cols .h2{{font-size:var(--h3)}}
 .cta .center{{text-align:center;display:grid;justify-items:center;gap:clamp(22px,2vw,30px)}}.cta .h2{{max-width:16ch;text-wrap:balance;overflow-wrap:anywhere}}.cta .btn{{font-size:max(var(--btn-px),16px);min-height:max(var(--btn-h),48px)}}.cta .alts .lab{{font-size:clamp(13px,1vw,16px);line-height:1.5;color:color-mix(in srgb,var(--band-ink) 82%,transparent);overflow-wrap:anywhere}}.form{{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:min(640px,100%);text-align:left}}.form label{{display:grid;gap:6px}}.form label span{{font-family:var(--label);font-size:var(--lab-px);letter-spacing:var(--lab-ls);text-transform:uppercase;opacity:.7}}.form input{{min-height:46px;border:1px solid color-mix(in srgb,currentColor 30%,transparent);background:transparent;color:inherit;padding:0 12px;border-radius:max(4px,min(12px,var(--btn-r)));font:inherit}}.form .btn{{grid-column:1/-1;justify-content:center}}.alts{{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}}
 .giant{{padding:40px 0 0;overflow:hidden}}.gw{{font-family:var(--display);font-weight:var(--h1-w);font-size:min(22vw,{round(165 / max(4, len(b['name'])), 1)}vw);line-height:.85;letter-spacing:-.03em;white-space:nowrap;text-transform:var(--h1-tt)}}
-.end{{padding-top:clamp(48px,6vw,80px);padding-bottom:28px}}.end .fcols{{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--gutter);margin-top:48px;padding-top:40px;border-top:1px solid var(--line)}}.end .fcols>*{{min-width:0}}.end li{{overflow-wrap:anywhere}}.end ul{{list-style:none;margin-top:10px;display:grid;gap:6px}}.end .legal{{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:40px;font-family:var(--label);font-size:var(--lab-px);color:var(--muted)}}
+.end{{padding-top:clamp(48px,6vw,80px);padding-bottom:28px}}.end .fcols{{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--gutter);margin-top:48px;padding-top:40px;border-top:1px solid var(--line)}}.end .fcols>*{{min-width:0}}.end li{{overflow-wrap:anywhere}}.end ul{{list-style:none;margin-top:10px;display:grid;gap:6px}}.end ul.footer-nav{{display:flex;flex-wrap:wrap;gap:12px 24px;margin-top:24px}}.end .legal{{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:40px;font-family:var(--label);font-size:var(--lab-px);color:var(--muted)}}
 /* template components */
 .hero.centre{{min-height:auto;padding-top:120px}}.hero.centre .hero-in{{text-align:center;display:grid;justify-items:center}}
 .hero.has-media{{background:#111}}.hero.poster .lede,.hero.photo .lede{{max-width:44ch;width:auto}}.hero.poster .hero-in{{display:grid;justify-items:center;text-align:center}}.hero.photo .hero-in,.hero.poster .hero-in{{position:relative;z-index:1}}.hero-in.light .lede{{color:rgba(255,255,255,.86)}}.hero-in.light .btn.ghost{{color:#fff;border-color:rgba(255,255,255,.5)}}.hero.poster .h1{{letter-spacing:-.035em}}
@@ -899,7 +1032,9 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
 .collage .cl{{display:grid;grid-template-columns:1.2fr .8fr;grid-template-rows:auto auto;gap:var(--gutter)}}.collage figure{{margin:0;overflow:hidden;border-radius:var(--radius)}}.collage figure img{{width:100%;height:100%;object-fit:cover}}.collage .c1{{grid-row:1/3;aspect-ratio:.9}}.collage .c2{{aspect-ratio:1.3}}.collage .c3{{aspect-ratio:1.3}}
 .overlay{{position:relative;padding:0;min-height:88svh;background:#121212;color:#fff;display:grid;align-content:end;overflow:hidden}}.overlay.chapter{{min-height:72svh;align-content:center}}.ov-bg{{position:absolute;inset:0;margin:0}}.ov-bg::after{{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.55))}}.ov-bg img{{width:100%;height:100%;object-fit:cover}}.ov-in{{position:relative;z-index:1;padding:clamp(48px,7vw,110px) var(--frame) clamp(40px,6vw,80px);color:#fff}}.ov-in .lede{{color:rgba(255,255,255,.82)}}.ov-in .h2{{color:#fff}}.ov-in.center{{text-align:center;display:grid;justify-items:center}}.rows.light li{{border-color:rgba(255,255,255,.25);color:#fff}}.rows.light li i{{border-color:rgba(255,255,255,.25)}}.cta-ov .ov-in{{padding-block:clamp(48px,7vw,90px);gap:18px}}.cta-ov .alts{{gap:8px 18px}}.cta-ov .alts .lab{{color:rgba(255,255,255,.9);font-size:max(12px,var(--lab-px));line-height:1.4;overflow-wrap:anywhere}}.cta-ov .form{{margin:28px auto 0}}.cta-ov .ov-bg::after{{background:linear-gradient(180deg,rgba(0,0,0,.45),rgba(0,0,0,.78))}}.cta-ov .form input,.cta-ov .form textarea,.cta-ov .form select{{background:rgba(0,0,0,.35);color:#fff;border-color:rgba(255,255,255,.35)}}.cta-ov .form ::placeholder{{color:rgba(255,255,255,.6)}}.overlay.bare::after{{display:none}}
 .qband{{padding:clamp(72px,10vw,150px) 0}}.qband .qb{{font-family:var(--display);font-weight:var(--h2-w);font-size:clamp(28px,4.2vw,64px);line-height:1.12;letter-spacing:-.02em;max-width:24ch}}.qband.center .qb{{margin:0 auto;text-align:center}}.qband.center .who{{text-align:center}}.band-accent{{background:var(--accent);color:#fff}}.band-accent .lab{{color:rgba(255,255,255,.7)}}
-.railsec{{overflow:hidden}}.rail{{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;padding:0 var(--frame)}}.rail::-webkit-scrollbar{{display:none}}.rail-in{{display:flex;gap:var(--gutter);width:max-content}}.rc{{width:min(360px,78vw);display:grid;gap:10px;align-content:start}}.rc figure{{margin:0 0 6px;aspect-ratio:.82;border-radius:var(--radius);overflow:hidden}}.rc figure img{{width:100%;height:100%;object-fit:cover}}.rc p{{color:var(--muted)}}
+.railsec{{overflow:hidden}}.rail{{overflow-x:auto;scrollbar-width:thin;padding:0 var(--frame)}}.rail-in{{display:flex;gap:var(--gutter);width:max-content}}.rc{{width:min(360px,78vw);display:grid;gap:10px;align-content:start}}.rc figure{{margin:0 0 6px;aspect-ratio:.82;border-radius:var(--radius);overflow:hidden}}.rc figure img{{width:100%;height:100%;object-fit:cover}}.rc p{{color:var(--muted)}}
+.no-motion .rail-in{{width:auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}}.no-motion .rc{{width:auto}}
+@media(max-width:900px),(prefers-reduced-motion:reduce){{.rail-in{{width:auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}}.rc{{width:auto}}}}
 .facts-cards .card{{border-top:1px solid var(--line);padding-top:clamp(16px,2vw,28px)}}.facts-cards .card .h3{{font-family:var(--display);font-weight:var(--h1-w);font-size:clamp(40px,5.2vw,84px);line-height:1;letter-spacing:-.03em;overflow-wrap:anywhere}}.facts-cards .card p{{margin-top:12px}}
 .nums{{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:var(--gutter);border-top:1px solid var(--line);padding-top:28px}}.nums .num{{display:block;font-family:var(--display);font-weight:var(--h1-w);font-size:clamp(48px,7vw,120px);line-height:.95;letter-spacing:-.03em;overflow-wrap:anywhere}}.nums p{{margin-top:12px;color:var(--muted)}}@media(max-width:600px){{.numbers .nums{{grid-template-columns:1fr}}}}
 .stickers{{padding:clamp(72px,10vw,140px) 0}}.stks{{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:30px;max-width:900px;margin-left:auto;margin-right:auto}}.stk{{display:inline-block;padding:14px 22px;border-radius:999px;background:#fff;color:#111;font-family:var(--display);font-weight:var(--h3-w);font-size:clamp(16px,1.6vw,24px);transform:rotate(var(--r));box-shadow:0 10px 30px rgba(0,0,0,.18)}}.stickers .h2{{text-align:center;margin:0 auto}}.stickers .lede{{color:rgba(255,255,255,.85);text-align:center}}
@@ -910,6 +1045,9 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
 .hero.split{{padding-top:96px;min-height:100svh;align-content:center}}.split-wrap{{display:grid;grid-template-columns:1fr 1.1fr;gap:var(--gutter);align-items:center}}.split-l .lede{{margin-top:18px}}.split-l .ctas{{margin-top:26px}}.shotframe.tall{{border-radius:max(12px,var(--radius));border:1px solid var(--line);box-shadow:0 40px 100px color-mix(in srgb,var(--ink) 16%,transparent);overflow:hidden}}.shotframe.tall img{{width:100%;height:min(82vh,900px);object-fit:cover;object-position:left top}}.shotframe.tall.product-shot img{{display:block;width:100%;height:auto;max-height:min(82vh,900px);object-fit:contain}}
 .sp{{display:grid;grid-template-columns:1fr 1.15fr;gap:calc(var(--gutter) * 1.5);align-items:stretch}}.sp-row{{min-height:46vh;display:grid;align-content:center;gap:12px;max-width:40ch;opacity:.28;transition:opacity .5s var(--ease)}}.sp-row.on{{opacity:1}}.sp-row .h3{{font-size:min(var(--h2),44px)}}.sp-row p{{color:var(--muted);font-size:calc(var(--body-px) + 1px)}}.sp-pin{{position:relative}}.sp-stage{{position:sticky;top:12vh;height:76vh;border-radius:max(12px,var(--radius));overflow:hidden;border:1px solid var(--line);background:color-mix(in srgb,var(--ink) 6%,var(--paper))}}.sp-f{{position:absolute;inset:0;margin:0;opacity:0;transform:scale(1.03);transition:opacity .6s var(--ease),transform .9s var(--ease)}}.sp-f.on{{opacity:1;transform:none}}.sp-f img{{width:100%;height:100%;object-fit:cover;object-position:top;transition:transform 1.2s var(--ease)}}.sp-stage.product-shot .sp-f img{{object-fit:contain}}
 .marquee{{padding:clamp(28px,4vw,56px) 0;overflow:hidden}}.marquee .gh{{margin-bottom:24px}}.mq{{overflow:hidden;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:18px 0}}.mq-track{{display:flex;gap:0;width:max-content;animation:mq 46s linear infinite}}.mq-i{{display:inline-flex;align-items:center;gap:28px;padding:0 14px 0 28px;font-family:var(--display);font-weight:var(--h2-w);font-size:min(var(--h2),56px);letter-spacing:-.02em;white-space:nowrap}}.mq-i i{{font-style:normal;font-size:.45em;color:var(--accent)}}@keyframes mq{{to{{transform:translateX(-50%)}}}}.marquee:hover .mq-track{{animation-play-state:paused}}
+.marquee-static{{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}}
+.no-motion .marquee .mq{{display:none}}.no-motion .marquee-static{{position:static;width:auto;height:auto;padding:0 var(--frame);overflow:visible;clip-path:none;white-space:normal;list-style:none}}.no-motion .marquee-static li{{display:flex;flex-wrap:wrap;gap:.4em 1em;padding:14px 0;border-top:1px solid var(--line);overflow-wrap:anywhere}}
+@media(prefers-reduced-motion:reduce){{.marquee .mq{{display:none}}.marquee-static{{position:static;width:auto;height:auto;padding:0 var(--frame);overflow:visible;clip-path:none;white-space:normal;list-style:none}}.marquee-static li{{display:flex;flex-wrap:wrap;gap:.4em 1em;padding:14px 0;border-top:1px solid var(--line);overflow-wrap:anywhere}}}}
 .pinned,.typewall,.sticky,.railsec{{display:block;align-content:start}}.pinned{{padding:0}}.ps-sticky{{position:sticky;top:0;height:100svh;display:grid;align-content:center;overflow:hidden}}.ps-stage{{position:relative;min-height:52vh}}.ps-s{{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;gap:var(--gutter);align-items:center;opacity:0;transform:translateY(24px);transition:opacity .5s var(--ease),transform .7s var(--ease);pointer-events:none}}.ps-s.on{{opacity:1;transform:none}}.ps-t .num{{display:block;font-family:var(--display);font-weight:var(--h1-w);font-size:clamp(64px,10vw,160px);line-height:.9;letter-spacing:-.03em;color:inherit}}.ps-t .h2{{margin-top:18px}}.ps-v{{margin:0;border-radius:max(12px,var(--radius));overflow:hidden;border:1px solid var(--line);aspect-ratio:1.3}}.ps-v img{{width:100%;height:100%;object-fit:cover}}.ps-dots{{display:flex;gap:8px;margin-top:28px}}.ps-dots i{{width:28px;height:2px;background:var(--line)}}.ps-dots i.on{{background:var(--ink)}}.band-dark .ps-dots i.on{{background:var(--band-ink)}}
 .typewall{{padding:0}}.tw-sticky{{position:sticky;top:0;min-height:100svh;display:grid;align-content:center}}.tw{{font-family:var(--display);font-weight:var(--h2-w);font-size:clamp(28px,4.6vw,72px);line-height:1.08;letter-spacing:-.02em;max-width:min(92%,30ch);margin-top:22px;text-wrap:balance;overflow-wrap:anywhere}}.tw-title{{font-size:clamp(40px,8vw,120px)}}.tw-caption{{max-width:60ch;margin-top:24px}}.tw-prominent{{text-align:center}}.tw-prominent .tw-title{{font-size:clamp(40px,11.1vw,160px);max-width:100%;margin-left:auto;margin-right:auto}}.tw-prominent .tw-caption{{margin-left:auto;margin-right:auto}}.tw-w{{opacity:1;transition:opacity .25s}}.tw-animated .tw-w{{opacity:.35}}.tw-animated .tw-w.on{{opacity:1}}.typewall .who{{margin-top:28px}}
 .ps-t .h2,.ps-t .num{{overflow-wrap:anywhere}}.ps-s.no-visual{{grid-template-columns:minmax(0,1fr)}}.ps-s.no-visual .ps-t{{text-align:center}}.ps-v.item-visual{{width:100%;max-width:var(--ps-image-max);justify-self:center}}@media(min-resolution:1.1dppx){{.ps-v.item-visual{{max-width:calc(var(--ps-image-max) / 2)}}}}@media(min-resolution:2.1dppx){{.ps-v.item-visual{{max-width:calc(var(--ps-image-max) / 3)}}}}@media(min-resolution:3.1dppx){{.ps-v.item-visual{{max-width:calc(var(--ps-image-max) / 4)}}}}
@@ -945,7 +1083,18 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
 .no-motion .ps-sticky{{position:static;height:auto;display:block;overflow:visible}}.no-motion .ps-stage{{min-height:0;display:grid;gap:clamp(40px,6vw,80px)}}.no-motion .ps-s{{position:static;inset:auto;opacity:1;transform:none;pointer-events:auto}}.no-motion .ps-dots{{display:none}}.no-motion *,.no-motion *::before,.no-motion *::after{{transition:none!important;animation:none!important}}@media(prefers-reduced-motion:reduce){{*{{transition:none!important;animation:none!important}}}}
 '''
     moves_attr = lambda n: f' data-move="{n}"'
-    html = f'''<!DOCTYPE html><html lang="{e(d.get("lang", "en"))}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{e(b["name"])}</title>{fonts_link}<style>{css}</style></head>
+    def meta_text(value):
+        if not isinstance(value, str): return ''
+        return ' '.join(re.sub(r'<[^>]*>', '', value).split())
+    source_seo = inventory.get('seo') if isinstance(inventory.get('seo'), dict) else {}
+    page_title = meta_text(inventory.get('title')) or meta_text(b.get('name'))
+    # If the source has no description, use the page's own visible lede.
+    # Never copy the source canonical or robots onto a temporary preview.
+    page_description = meta_text(source_seo.get('description')) or meta_text(h.get('lede'))
+    description_tag = f'<meta name="description" content="{e(page_description)}">' if page_description else ''
+    language = next((value.strip() for value in (d.get('lang'), inventory.get('lang')) if isinstance(value, str) and re.fullmatch(r'[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*', value.strip())), '')
+    lang_attr = f' lang="{e(language)}"' if language else ''
+    html = f'''<!DOCTYPE html><html{lang_attr}><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{e(page_title)}</title>{description_tag}{fonts_link}<style>{css}</style></head>
 <body>
 <nav class="nav{' solid' if not sec_media(bp['sections'][0]) else ''}" id="nav" data-nav><div class="wrap"><a href="#top">{mark}</a><div class="links">{nav_links}</div>{cta_html(bool(sec_media(bp['sections'][0])))}</div></nav>
 {chr(10).join(out)}

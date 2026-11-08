@@ -35,6 +35,7 @@ try {
       }
       if (args[0] === 'lib/swarm/run.py') {
         fs.writeFileSync(path.join(args[1], 'critic.json'), '{"score":80}');
+        fs.writeFileSync(path.join(args[1], 'coverage.json'), JSON.stringify({ scope: 'single_page_preview', sections: [{ title: 'FAQ', status: 'needs_review' }], routes: [] }));
         return '{"done":{"rounds":1}}';
       }
       if (args[0] === 'lib/qa/check.py') return 'QA score: 100';
@@ -54,7 +55,7 @@ try {
         return result;
       },
       J: f => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return null; } },
-      sb: { from: () => ({ update: data => ({ eq: async () => { if (data.status === 'done') events.push('status-done'); } }) }) },
+      sb: { from: () => ({ update: data => ({ eq: async () => { if (data.status === 'done') { events.push('status-done'); assert.equal(data.result.coverage.scope, 'single_page_preview'); assert.equal(data.result.coverage.sections[0].status, 'needs_review'); } } }) }) },
       console: { warn() {}, log() {}, error() {} },
     };
     const processJob = vm.runInNewContext(`(${source.slice(start, end)})`, context);
