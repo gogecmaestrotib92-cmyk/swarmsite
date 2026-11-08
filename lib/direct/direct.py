@@ -17,7 +17,7 @@ SCHEMA = r'''
  "brand": {"name": "...", "badge": "" , "keep_font": true, "font_hint": "display font to keep or ''", "accent": "#hex or ''", "paper": "#hex or ''", "ink": "#hex or ''"},
  "nav": {"links": [["#id","Label"],...max 4], "cta": "verb + object"},
  "hero": {"category": "category + buyer/place, 3-8 words", "fact": "one hard fact (number/price/date/place)", "h1": "claim ≤ 6 words, ONE word may be wrapped in <em>",
-          "lede": "15-30 words", "cta": "verb + what you get", "cta2": "second action", "media": "image id from images.json, or '' "},
+          "lede": "15-30 words", "cta": "verb + what you get", "cta_href": "source URL for that action", "cta2": "second action", "cta2_href": "source URL for that action", "media": "image id from images.json, or '' "},
  "beats": [                                           // 4-6 beats, each ONE screen, in this order of types where they apply
    {"id":"quote","type":"quote","label":"...","big":"≤4 words italic statement","body":"≤60 words from the site's own words","who":"author or ''"},
    {"id":"...","type":"photo","label":"...","h2":"noun heading 1-6 words","lede":"10-40 words","image":"image id","cap":["left caption","right caption"]},
@@ -26,7 +26,7 @@ SCHEMA = r'''
    {"id":"...","type":"cells","label":"...","h2":"...","lede":"...","cells":[["label","REAL number from the site e.g. 39 / €69 / 14 days","sub"],...3-6]},   // ONLY real figures. Never 01/02/03 ordinals, never invented counts.
    {"id":"...","type":"features","label":"...","h2":"noun heading ≤5 words","lede":"...","features":[{"title":"2-4 words","body":"one sentence ≤18 words from the site"},...3-6]},   // software/product capabilities as text, not numbers
    {"id":"...","type":"steps","label":"...","h2":"...","steps":["...","...","..."],"note":"..."},
-   {"id":"...","type":"form","label":"Rezervacija","h2":"≤4 words","fields":["Ime i prezime","Telefon","Broj gostiju","Datum","Vreme","Napomena"],"cta":"...","alt":["phone line","email line"],"image":"image id or ''"},
+   {"id":"...","type":"form","label":"Rezervacija","h2":"≤4 words","fields":["Ime i prezime","Telefon","Broj gostiju","Datum","Vreme","Napomena"],"cta":"...","cta_href":"source URL for the action","alt":["phone line","email line"],"image":"image id or ''"},
    {"id":"...","type":"faq","label":"...","items":[["Q","A ≤40 words"],...3-5]}
  ],
  "ending": {"tag":"one line","cols":[["Heading",["line","line"]],...3-4],"next":"Sledeće: … →","legal":"© 2026 …"},
@@ -42,6 +42,7 @@ Hard rules:
 - SOFTWARE / PRODUCT: voice "sans" unless the brand's own display font is a serif. hero.media = the product screenshot (the largest UI image), shown framed, not as a photo background. Beats: features (capabilities as text) → steps (≤3, each ≤12 words) → cells ONLY if the site states real figures (prices, counts, days) → ledger for pricing (plan, price) → faq/form. No "quote" beat unless the site has a real quoted sentence with an author.
 - Headings: h2 ≤ 5 words (nouns). Steps ≤ 12 words each. Feature bodies ≤ 18 words. Never pad a grid with ordinals or placeholders; fewer, true items beat more.
 - Choose images by id from images.json: the hero gets the best 'heroGrade' landscape photo; never reuse the same image twice.
+- Preserve the actual destination of each action. Set hero.cta_href, hero.cta2_href, ledger.cta_href and form.cta_href only to appropriate URLs found in inventory actions or forms, including source subpages. Do not invent URLs.
 - You SEE the site (screenshots attached). Judge it as a creative director: if it is already well designed (clear hierarchy, custom type, real photography, restraint), choose change="polish" and keep its structure, order and wording — only fix the audit findings. Average template sites get "restructure"; broken or generic sites get "rebuild". Never flatten a good site into a generic one.
 - Choose ONE blueprint from BLUEPRINTS whose class EQUALS the site's kind (a restaurant never gets a software blueprint, a SaaS never a place one); among those, the mood (dark/light, serif/sans, photo-led vs type-led) and how much imagery the site actually has. Say why in audit_notes[0].
 - IMAGERY BUDGET: count the DISTINCT visuals in IMAGES (a screenshot of the same screen counts once). With fewer than 3 distinct visuals choose a TYPE-LED blueprint (imagery=light) and plan beats that need no pictures: features as text, a ledger, facts as big figures, a quote. Never plan a photo beat or a 'makers' section without a real photo for it. Do not invent what a section 'would' show.
@@ -66,7 +67,7 @@ TOOL = {
             "concept": {"type": "string"}, "mode": {"type": "string", "enum": ["light", "dark"]}, "voice": {"type": "string", "enum": ["serif", "sans"]},
             "brand": {"type": "object", "properties": {"name": {"type": "string"}, "badge": {"type": "string"}, "keep_font": {"type": "boolean"}, "font_hint": {"type": "string"}, "accent": {"type": "string"}, "paper": {"type": "string"}, "ink": {"type": "string"}}, "required": ["name"]},
             "nav": {"type": "object", "properties": {"links": {"type": "array", "items": {"type": "array", "items": {"type": "string"}}}, "cta": {"type": "string"}}},
-            "hero": {"type": "object", "required": ["category", "fact", "h1", "lede", "cta"], "properties": {"category": {"type": "string"}, "fact": {"type": "string"}, "h1": {"type": "string"}, "lede": {"type": "string"}, "cta": {"type": "string"}, "cta2": {"type": "string"}, "media": {"type": "string"}}},
+            "hero": {"type": "object", "required": ["category", "fact", "h1", "lede", "cta"], "properties": {"category": {"type": "string"}, "fact": {"type": "string"}, "h1": {"type": "string"}, "lede": {"type": "string"}, "cta": {"type": "string"}, "cta_href": {"type": "string"}, "cta2": {"type": "string"}, "cta2_href": {"type": "string"}, "media": {"type": "string"}}},
             "beats": {"type": "array", "minItems": 3, "maxItems": 7, "items": {"type": "object", "required": ["id", "type"], "properties": {"id": {"type": "string"}, "type": {"type": "string", "enum": ["quote", "photo", "ledger", "facts", "cells", "features", "steps", "form", "faq"]}}, "additionalProperties": True}},
             "ending": {"type": "object", "additionalProperties": True},
             "audit_notes": {"type": "array", "items": {"type": "string"}}
@@ -111,7 +112,10 @@ def direct(slug_dir, model='claude-sonnet-5-5'):
     bp = os.path.join(slug_dir, 'brief.json'); brief = json.load(open(bp)) if os.path.exists(bp) else {}
     rules = '\n\n'.join(f'### {r}\n' + open(os.path.join(ROOT, r)).read() for r in RULES)
     fsp = os.path.join(slug_dir, 'factsheet.json'); factsheet = open(fsp).read()[:8000] if os.path.exists(fsp) else 'n/a'
-    user = f"""RULES\n{rules}\n\nSCHEMA\n{SCHEMA}\n\nFACT SHEET (verified by the reader — prefer these words and figures)\n{factsheet}\n\nINVENTORY (what the site HAS)\n{json.dumps(inv, ensure_ascii=False)[:60000]}\n\nBRAND ASSETS\n{json.dumps({k: v for k, v in (assets or {}).items() if k != 'logo'}, ensure_ascii=False)[:6000]}\n\nIMAGES (ids you may use)\n{json.dumps(imgs, ensure_ascii=False)[:6000]}\n\nAUDIT\n{json.dumps(audit, ensure_ascii=False)[:8000] if audit else 'n/a'}\n\nOWNER'S BRIEF (hard constraints, override everything above)\n{brief_text(brief)}\n\nCall write_direction with the complete document."""
+    inv = inv or {}
+    subpages = inv.get('sourcePages') or []
+    homepage = {k: v for k, v in inv.items() if k != 'sourcePages'}
+    user = f"""RULES\n{rules}\n\nSCHEMA\n{SCHEMA}\n\nFACT SHEET (verified by the reader — prefer these words and figures)\n{factsheet}\n\nSOURCE SUBPAGES (prices, offerings, contacts and actions)\n{json.dumps(subpages, ensure_ascii=False)}\n\nHOME PAGE INVENTORY\n{json.dumps(homepage, ensure_ascii=False)[:60000]}\n\nBRAND ASSETS\n{json.dumps({k: v for k, v in (assets or {}).items() if k != 'logo'}, ensure_ascii=False)[:6000]}\n\nIMAGES (ids you may use)\n{json.dumps(imgs, ensure_ascii=False)[:6000]}\n\nAUDIT\n{json.dumps(audit, ensure_ascii=False)[:8000] if audit else 'n/a'}\n\nOWNER'S BRIEF (hard constraints, override everything above)\n{brief_text(brief)}\n\nCall write_direction with the complete document."""
     client = anthropic.Anthropic()
     import base64, glob
     bps = []
@@ -136,6 +140,8 @@ def direct(slug_dir, model='claude-sonnet-5-5'):
         last = '; '.join(errs)
         messages += [{"role": "assistant", "content": msg.content}, {"role": "user", "content": [{"type": "tool_result", "tool_use_id": call.id, "content": f"Rejected: {last}. Call write_direction again with a corrected document."}]}]
     if doc is None: raise SystemExit(f'direct: no document ({last})')
+    errs = validate(doc)
+    if errs: raise SystemExit(f"direct: invalid document after retries ({'; '.join(errs)})")
     out = os.path.join(slug_dir, 'direction.json'); json.dump(doc, open(out, 'w'), indent=1, ensure_ascii=False)
     return doc
 

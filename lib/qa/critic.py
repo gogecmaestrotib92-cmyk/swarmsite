@@ -4,6 +4,7 @@ Usage: python3 lib/qa/critic.py out/<slug> <html-file> [model]
 Fixes it may ask for (nothing else): drop a beat, shorten a text field, swap a beat's image, swap the hero image,
 change hero h1 (≤6 words, from the site's own words), set a beat's band (dark/paper). Each fix carries the reason."""
 import json, os, sys, subprocess, base64, re
+from html.parser import HTMLParser
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 
 TOOL = {"name": "report_fixes", "description": "Report concrete visual defects and the bounded fixes for them.",
@@ -33,9 +34,63 @@ Ops: shorten/hero_h1 → copy; swap_image/hero_image → visual (name the image 
 def shots(html, outdir, fast=False):
     os.makedirs(outdir, exist_ok=True)
     for f in os.listdir(outdir): os.remove(os.path.join(outdir, f))
-    subprocess.run(['node', os.path.join(ROOT, 'lib/qa/shots.mjs'), html, '--out', outdir] + (['--desktop-only', '--fast'] if fast else []), cwd=ROOT, capture_output=True, text=True, timeout=180)
+    result = subprocess.run(['node', os.path.join(ROOT, 'lib/qa/shots.mjs'), html, '--out', outdir] + (['--fast'] if fast else []), cwd=ROOT, capture_output=True, text=True, timeout=180)
+    if result.returncode:
+        raise RuntimeError('screenshot capture failed: ' + (result.stderr or result.stdout)[-500:])
     files = sorted(f for f in os.listdir(outdir) if f.endswith(('.png', '.jpg')))
     return [os.path.join(outdir, f) for f in files]
+
+def select_screenshots(files, limit=28):
+    if len(files) <= limit: return files
+    # Preserve the section overview before spending the remaining budget on
+    # individual pinned slides, with both viewport sizes represented.
+    primary = [f for f in files if not re.search(r'-slide-\d+-of-\d+\.png$', os.path.basename(f))]
+    extra = [f for f in files if f not in primary]
+    def balanced(group, count, prefer_end=False):
+        if count <= 0: return []
+        def evenly(items, n):
+            if not n: return []
+            if n == 1: return [items[-1] if prefer_end else items[0]]
+            return [items[round(i * (len(items) - 1) / (n - 1))] for i in range(n)]
+        desktop = [f for f in group if os.path.basename(f).startswith('desktop-')]
+        mobile = [f for f in group if os.path.basename(f).startswith('mobile-')]
+        if not desktop or not mobile: return evenly(group, min(count, len(group)))
+        nd = min(len(desktop), count // 2)
+        nm = min(len(mobile), count - nd)
+        nd = min(len(desktop), count - nm)
+        return evenly(desktop, nd) + evenly(mobile, nm)
+    selected = balanced(primary, min(limit, len(primary)))
+    return selected + balanced(extra, limit - len(selected), prefer_end=True)
+
+class RenderedActions(HTMLParser):
+    """Read actual rendered CTA destinations and embedded forms by section."""
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.sections, self.actions, self.forms = [], [], set()
+        self.link = None
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+        if tag == 'section': self.sections.append(attrs.get('id', ''))
+        if tag == 'form' and self.sections: self.forms.add(self.sections[-1])
+        if tag == 'a' and 'btn' in attrs.get('class', '').split() and attrs.get('href'):
+            self.link = {'section': self.sections[-1] if self.sections else '',
+                         'href': attrs['href'], 'text': ''}
+
+    def handle_data(self, text):
+        if self.link is not None: self.link['text'] += text
+
+    def handle_endtag(self, tag):
+        if tag == 'a' and self.link is not None:
+            self.link['text'] = ' '.join(self.link['text'].split())
+            self.actions.append(self.link)
+            self.link = None
+        if tag == 'section' and self.sections: self.sections.pop()
+
+def rendered_actions(html):
+    parser = RenderedActions()
+    with open(html, encoding='utf-8') as f: parser.feed(f.read())
+    return parser.actions, parser.forms
 
 def critique(slug_dir, html, model='claude-sonnet-5-5', fast=False):
     import anthropic
@@ -43,10 +98,16 @@ def critique(slug_dir, html, model='claude-sonnet-5-5', fast=False):
     imgs_meta = [{k: v for k, v in i.items() if k != 'data'} for i in (json.load(open(os.path.join(slug_dir, 'images.json'))) if os.path.exists(os.path.join(slug_dir, 'images.json')) else [])]
     files = shots(html, os.path.join(slug_dir, 'critic-shots'), fast)
     if not files: return {'score': -1, 'fixes': [], 'verdict': 'no screenshots'}
+    actions, embedded_forms = rendered_actions(html)
+    form_ids = {b.get('id') for b in d.get('beats', []) if b.get('type') == 'form'}
+    linked_forms = {a['section'] for a in actions if a['section'] in form_ids and a['section'] not in embedded_forms
+                    and re.match(r'^(?:https?://|mailto:|tel:)', a['href'], re.I)}
+    beats = [{k: v for k, v in beat.items() if k != 'fields' or beat.get('id') not in linked_forms}
+             for beat in d.get('beats', [])]
     moves = {b['id']: (b.get('ui') or {}).get('move') for b in d.get('beats', []) if (b.get('ui') or {}).get('move')}
-    content = [{"type": "text", "text": "SIGNATURE MOVES on this page (judge them as scroll experiences; the screenshot is one frame mid-section): " + json.dumps(moves) + "\n- sticky-product: text blocks scroll on the left, the product stays pinned on the right and swaps per block\n- pinned-sequence: the section pins, each step takes the screen in turn\n- type-wall: one sentence in giant type lights up word by word as you scroll\n- marquee: a slow ticker of the section's words (one line IS the design)\n- story: text beside a visual\n\nDIRECTION (beat ids + copy)\n" + json.dumps({k: d[k] for k in ('hero', 'beats') if k in d}, ensure_ascii=False)[:14000] + "\n\nIMAGES available (ids)\n" + json.dumps(imgs_meta, ensure_ascii=False)[:3000]}]
+    content = [{"type": "text", "text": "SIGNATURE MOVES on this page (all screenshots use the no-motion accessibility layout; slide-labeled images show positions within that static layout. Multiple steps visible together are expected in no-motion mode. The screenshots cannot establish whether animations or pinning work, so do not report them as broken or absent solely from these images): " + json.dumps(moves) + "\n- sticky-product: text blocks scroll on the left, the product stays pinned on the right and swaps per block\n- pinned-sequence: the section pins, each step takes the screen in turn\n- type-wall: one sentence in giant type lights up word by word as you scroll\n- marquee: a slow ticker of the section's words (one line IS the design)\n- story: text beside a visual\n\nRENDERED CTA LINKS (from the page HTML; destinations have not been tested)\n" + json.dumps(actions, ensure_ascii=False) + "\nSections " + json.dumps(sorted(linked_forms)) + " use a link to the source site or contact method in place of an embedded form. Do not report missing fields merely because these sections use a link. Evaluate their visible layout and whether the action is clear.\n\nDIRECTION (beat ids + copy)\n" + json.dumps({'hero': d.get('hero', {}), 'beats': beats}, ensure_ascii=False)[:14000] + "\n\nIMAGES available (ids)\n" + json.dumps(imgs_meta, ensure_ascii=False)[:3000]}]
     from PIL import Image; import io
-    for f in files[:14]:
+    for f in select_screenshots(files):
         try:
             im = Image.open(f).convert('RGB'); im.thumbnail((1000, 1000)); buf = io.BytesIO(); im.save(buf, 'JPEG', quality=70)
         except Exception: continue

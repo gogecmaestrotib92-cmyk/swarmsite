@@ -103,14 +103,32 @@ function eventsRender(dir) { const html = (() => { try { return fs.readFileSync(
   return ev; }
 function eventsQA(qa) { return String(qa || '').split('\n').filter(Boolean).slice(0, 8).map(l => ({ role: 'QA', text: l.replace(/^\[(high|med|low)\]\s*/, '').slice(0, 70) })); }
 
-const ARTS = ['brief.json', 'critic.json', 'factsheet.json', 'swarm.json', 'inventory.json', 'assets.json', 'images.json', 'geometry.json', 'audit.json', 'direction.json', 'mobile.json', 'index.html'];
-async function uploadArtefacts(job, dir) { for (const f of ARTS) { const fp = path.join(dir, f); if (fs.existsSync(fp)) { try { await upload(fp, `${job.id}/art/${f}`, f.endsWith('.html') ? 'text/html' : 'application/json'); } catch (e) { console.warn('art', f, e.message); } } } }
+const ARTS = ['brief.json', 'critic.json', 'contract.json', 'factsheet.json', 'swarm.json', 'inventory.json', 'assets.json', 'images.json', 'geometry.json', 'audit.json', 'direction.json', 'mobile.json', 'index.html'];
+async function uploadArtefacts(job, dir) { let uploaded = true; for (const f of ARTS) { const fp = path.join(dir, f); if (fs.existsSync(fp)) { try { await upload(fp, `${job.id}/art/${f}`, f.endsWith('.html') ? 'text/html' : 'application/json'); } catch (e) { uploaded = false; console.warn('art', f, e.message); } } } return uploaded; }
 const BP = { software: ['butter', 'cerebrium', 'deepbook'], place: ['tengile', 'white-desert', 'belgrade-arbor', 'units'], service: ['lpas', 'aino', 'atelier'], product: ['crav', 'halfdays'] };
+async function runClaimed(job) {
+  try { await process_(job); console.log('done', job.id); }
+  catch (e) {
+    console.error('failed', job.id, e.message);
+    await sb.from('jobs').update({ status: 'failed', error: e.message.slice(0, 2000) }).eq('id', job.id);
+    try { if (job._dir) job._artifactsUploaded = await uploadArtefacts(job, job._dir); } catch {}
+  } finally {
+    if (job._jobRoot && job._artifactsUploaded) {
+      try { fs.rmSync(job._jobRoot, { recursive: true, force: true }); }
+      catch (e) { console.warn('job cleanup', job.id, e.message); }
+    }
+  }
+}
 async function process_(job) {
-  const slug = slugOf(job.url); const dir = path.join(OUT, slug); fs.mkdirSync(dir, { recursive: true });
+  const slug = slugOf(job.url);
+  fs.mkdirSync(OUT, { recursive: true });
+  const jobRoot = fs.mkdtempSync(path.join(OUT, `job-${job.id}-`));
+  job._jobRoot = jobRoot;
+  const dir = path.join(jobRoot, slug);
+  job._dir = dir;
   const t0 = Date.now(); const timed = async (id, fn) => { await setStep(job, id, 'running'); const s = Date.now(); const r = await fn(); await setStep(job, id, 'done', `${Math.round((Date.now() - s) / 1000)}s`); return r; };
   await timed('capture', async () => {
-    try { await run('node', ['lib/pipeline/capture.mjs', job.url, '--out', 'out', '--chrome', process.env.CHROME_PATH || ''].filter(Boolean), { timeoutMs: 180000 }); }
+    try { await run('node', ['lib/pipeline/capture.mjs', job.url, '--out', jobRoot, '--chrome', process.env.CHROME_PATH || ''].filter(Boolean), { timeoutMs: 180000 }); }
     catch (e) { const bp = path.join(dir, 'blocked.json'); if (fs.existsSync(bp)) throw new Error(JSON.parse(fs.readFileSync(bp, 'utf8')).reason + ' Try the www/non-www address, or a page that is not behind the check.'); throw e; }
     if (fs.existsSync(path.join(dir, 'before-hero.jpg'))) { const beforeUrl = await upload(path.join(dir, 'before-hero.jpg'), `${job.id}/before.jpg`, 'image/jpeg'); job._result = { beforeUrl }; if (fs.existsSync(path.join(dir, 'before-full.jpg'))) { job._result.beforeFullUrl = await upload(path.join(dir, 'before-full.jpg'), `${job.id}/before-full.jpg`, 'image/jpeg'); const g = J(path.join(dir, 'geometry.json')); job._result.pageHeight = Math.min(7000, g?.pageHeight || 900); } await sb.from('jobs').update({ result: job._result }).eq('id', job.id); }
     await emit(job, eventsCapture(dir));
@@ -133,7 +151,7 @@ async function process_(job) {
         const last = o.trim().split('\n').map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
         const done = last.find(j => j.done)?.done; const crit = J(path.join(dir, 'critic.json'));
         job._critic = crit ? { score: crit.best ?? crit.score, fixes: (crit.fixes || []).length, verdict: crit.verdict, rounds: done?.rounds } : null;
-      } catch (e) { console.warn('swarm', e.message.slice(0, 300)); await emit(job, [{ role: 'QA', text: 'swarm loop failed: ' + e.message.slice(0, 80) }]); } }
+      } catch (e) { console.warn('swarm', e.message.slice(0, 300)); await emit(job, [{ role: 'QA', text: 'swarm loop failed: ' + e.message.slice(0, 80) }]); throw e; } }
     // the primary blueprint IS the page
     if (job._bps[0]) fs.copyFileSync(path.join(dir, `bp-${job._bps[0]}.html`), path.join(dir, 'index.html'));
     else throw new Error('no blueprint rendered');
@@ -146,7 +164,8 @@ async function process_(job) {
     const direction = JSON.parse(fs.readFileSync(path.join(dir, 'direction.json'), 'utf8'));
     return { ...(job._result || {}), previewUrl, beforeUrl, qa, blueprints: job._bps || [], critic: job._critic || null, direction: { kind: direction.kind, concept: direction.concept, voice: direction.voice, brand: direction.brand, beats: direction.beats.map(b => b.type), audit_notes: direction.audit_notes }, seconds: Math.round((Date.now() - t0) / 1000) };
   });
-  await sb.from('jobs').update({ status: 'done', step: 'done', result, slug }).eq('id', job.id); await uploadArtefacts(job, dir);
+  job._artifactsUploaded = await uploadArtefacts(job, dir);
+  await sb.from('jobs').update({ status: 'done', step: 'done', result, slug }).eq('id', job.id);
 }
 async function loop() {
   // a deploy restarts this worker: jobs it was running are orphaned. Say so instead of spinning forever.
@@ -156,7 +175,7 @@ async function loop() {
       const { data: job } = await sb.from('jobs').select('*').eq('status', 'queued').order('created_at').limit(1).maybeSingle();
       if (job) {
         const { data: claimed } = await sb.from('jobs').update({ status: 'running' }).eq('id', job.id).eq('status', 'queued').select('*').maybeSingle();
-        if (claimed) { console.log('job', job.id, job.url); try { await process_(claimed); console.log('done', job.id); } catch (e) { console.error('failed', job.id, e.message); await sb.from('jobs').update({ status: 'failed', error: e.message.slice(0, 2000) }).eq('id', job.id); try { await uploadArtefacts(claimed, path.join(OUT, slugOf(claimed.url))); } catch {} } }
+        if (claimed) { console.log('job', job.id, job.url); await runClaimed(claimed); }
       } else {
         // idle: a job still "running" after 20 min belongs to a worker that no longer exists (deploy overlap) — say so instead of showing a spinner forever
         try { const cutoff = new Date(Date.now() - 20 * 60e3).toISOString(); const { data: dead } = await sb.from('jobs').select('id').eq('status', 'running').lt('created_at', cutoff); for (const j of dead || []) { await sb.from('jobs').update({ status: 'failed', error: 'This run was lost when the worker restarted. Run it again.' }).eq('id', j.id); console.warn('dead job marked failed', j.id); } } catch (e) { console.warn('dead check', e.message); }

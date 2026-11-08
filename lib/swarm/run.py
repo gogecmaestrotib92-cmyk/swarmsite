@@ -17,13 +17,40 @@ def render(slug_dir, bp, out):
     if r.returncode: raise RuntimeError('render: ' + r.stderr[-400:])
     return out
 
-OWNER = {'h1': 'copy', 'h2': 'copy', 'one-cta': 'ux', 'page-length': 'ux', 'sections': 'ux', 'upscaled': 'visual', 'duplicate': 'visual', 'first-screen': 'visual', 'empty': 'ui', 'overflow': 'ui', 'sticky': 'ui', 'pinned': 'ui', 'contrast': 'ui'}
+OWNER = {'h1': 'copy', 'h2': 'copy', 'one-cta': 'ux', 'actionable-cta': 'ux', 'page-length': 'ux', 'sections': 'ux', 'upscaled': 'visual', 'duplicate': 'visual', 'first-screen': 'visual', 'empty': 'ui', 'overflow': 'ui', 'sticky': 'ui', 'pinned': 'ui', 'contrast': 'ui'}
 def contract(slug_dir, html):
     """THE CONTRACT: mechanical promises, graded on the render. Returns {score, failed:[{id, detail, weight}]}."""
+    report = os.path.join(slug_dir, 'contract.json')
+    if os.path.exists(report): os.remove(report)
     r = subprocess.run(['node', os.path.join(ROOT, 'lib/qa/contract.mjs'), html, '--dir', slug_dir], capture_output=True, text=True, timeout=240)
-    try: return json.load(open(os.path.join(slug_dir, 'contract.json')))
-    except Exception: return {'score': -1, 'failed': [], 'error': (r.stderr or r.stdout)[-300:]}
+    if r.returncode:
+        if os.path.exists(report): os.remove(report)
+        raise RuntimeError('contract failed: ' + (r.stderr or r.stdout)[-300:])
+    try:
+        with open(report) as f: result = json.load(f)
+        if not isinstance(result, dict) or not isinstance(result.get('score'), (int, float)) or not isinstance(result.get('failed'), list):
+            raise ValueError('missing score or failed checks')
+        return result
+    except (OSError, ValueError) as e:
+        if os.path.exists(report): os.remove(report)
+        raise RuntimeError('contract produced an invalid report: ' + str(e)) from e
 def owner_of(fid): return next((v for k, v in OWNER.items() if k in fid), 'ui')
+
+def route_fixes(fixes, direction):
+    """Send layout feedback to both its UI owner and the structural designer.
+
+    The UI tool cannot select a section move; Concept can, but only for
+    existing sections. Contract-wide and hero/form notes remain with UI.
+    """
+    notes = {'copy': [], 'ui': [], 'visual': [], 'ux': [], 'concept': []}
+    eligible = {b.get('id') for b in direction.get('beats', []) if b.get('type') not in ('form',)}
+    for f in fixes:
+        owner = f.get('agent') or {'shorten': 'copy', 'hero_h1': 'copy', 'swap_image': 'visual', 'hero_image': 'visual', 'band': 'ui', 'layout': 'ui', 'drop_beat': 'ux', 'reorder': 'ux', 'concept': 'concept', 'note': 'ui'}.get(f.get('op'), 'ui')
+        note = f"[{f.get('op')}] beat={f.get('beat', '')} {f.get('field', '')} {f.get('value', '') or f.get('image', '') or ''} — {f.get('reason', '')}"
+        notes.setdefault(owner, []).append(note)
+        if owner == 'ui' and f.get('op') == 'layout' and f.get('beat') in eligible:
+            notes['concept'].append(note)
+    return notes
 
 def safe(name, fn, *a):
     t = time.time()
@@ -35,6 +62,7 @@ def main():
     out = args[args.index('--out') + 1] if '--out' in args else os.path.join(slug_dir, f'bp-{bp}.html')
     rounds = int(args[args.index('--rounds') + 1]) if '--rounds' in args else 3
     target = int(args[args.index('--target') + 1]) if '--target' in args else 80
+    if rounds < 1: raise ValueError('at least one review round is required')
     log = {'rounds': [], 'blueprint': bp}
     if not os.path.exists(os.path.join(slug_dir, 'factsheet.json')): safe('Reader', A.reader, slug_dir)
     fs_ = A.J(slug_dir, 'factsheet.json') or {}
@@ -52,7 +80,7 @@ def main():
     for x in (vis.get('gen_errors') or [])[:1]: ev('Visual', 'generation failed: ' + x)
     for x in (vis.get('need') or [])[:2]: ev('Visual', 'missing visual: ' + x)
     render(slug_dir, bp, out); ev('Render', f'{bp} · round 0')
-    best = (-1, None)
+    best_score, best_key, best_round, best_files = -1, None, None, None
     for k in range(1, rounds + 1):
         t = time.time()
         # the contract (two viewports) and the critic's look (screenshots + model) are independent: grade both at once
@@ -63,18 +91,23 @@ def main():
             ev('Contract', f"round {k}: {con.get('score')}/100 · {len(cfail)} broken promise(s)")
             for f in cfail[:4]: ev('Contract', f"✗ {f['id']}: {f['detail']}")
             try: rep = frep.result()
-            except Exception as e: ev('Critic', 'skipped: ' + str(e)[:90]); break
+            except Exception as e: raise RuntimeError('critic failed: ' + str(e)) from e
+        if not isinstance(rep, dict): raise RuntimeError('critic returned an invalid report')
         taste = rep.get('score', -1) if isinstance(rep.get('score'), (int, float)) else -1
+        if taste < 0: raise RuntimeError('critic returned an invalid score')
         fixes = [f for f in (rep.get('fixes') if isinstance(rep.get('fixes'), list) else []) if isinstance(f, dict)]
         score = round(0.55 * taste + 0.45 * con['score']) if con.get('score', -1) >= 0 and taste >= 0 else taste
         ev('Critic', f'round {k}: taste {taste} · contract {con.get("score")} → {score}/100 · {len(fixes)} defects · {round(time.time() - t)}s'); ev('Critic', str(rep.get('verdict', ''))[:140])
         for f in cfail: fixes.append({'op': 'note', 'agent': owner_of(f['id']), 'beat': '', 'reason': f"CONTRACT BROKEN — {f['id']}: {f['detail']}"})
         log['rounds'].append({'k': k, 'score': score, 'taste': taste, 'contract': con.get('score'), 'broken': cfail, 'fixes': fixes, 'verdict': rep.get('verdict')})
-        try:
-            if score > best[0]: best = (score, open(out).read())
-        except Exception: pass
-        json.dump({**rep, 'score': score, 'taste': taste, 'contract': con.get('score'), 'broken': cfail, 'round': k, 'best': best[0]}, open(os.path.join(slug_dir, 'critic.json'), 'w'), indent=1, ensure_ascii=False)
-        if score >= target or k == rounds: break
+        rank = (not cfail, score, -len(fixes))
+        if best_key is None or rank > best_key:
+            best_score, best_key, best_round = score, rank, k
+        json.dump({**rep, 'score': score, 'taste': taste, 'contract': con.get('score'), 'broken': cfail, 'round': k, 'best': best_score}, open(os.path.join(slug_dir, 'critic.json'), 'w'), indent=1, ensure_ascii=False)
+        if best_round == k:
+            paths = [out] + [os.path.join(slug_dir, name) for name in ('direction.json', 'images.json', 'contract.json', 'critic.json')]
+            best_files = {path: open(path, 'rb').read() for path in paths if os.path.exists(path)}
+        if (score >= target and taste >= target and not cfail and not fixes) or k == rounds: break
         # RESTART, not patch: a weak first round means the idea or the form is wrong — throw it away, keep the facts, start over once
         if k == 1 and score < 45 and not log.get('restarted'):
             log['restarted'] = True; alt = args[args.index('--alt') + 1] if '--alt' in args else ''
@@ -88,12 +121,12 @@ def main():
             d = A.J(slug_dir, 'direction.json'); sw = d.get('swarm') or {}
             if sw.get('idea'): ev('Concept', 'idea: ' + sw['idea'])
             render(slug_dir, bp, out); ev('Render', f'{bp} · restart'); continue
-        if len(log['rounds']) >= 2 and score <= log['rounds'][-2]['score']: ev('Critic', 'no gain this round — stopping'); break
+        if len(log['rounds']) >= 2:
+            previous = log['rounds'][-2]
+            if rank <= (not previous['broken'], previous['score'], -len(previous['fixes'])):
+                ev('Critic', 'no gain this round — trying another round')
         # route: every defect goes to its owner with the critic's reason
-        notes = {'copy': [], 'ui': [], 'visual': [], 'ux': [], 'concept': []}
-        for f in fixes:
-            owner = f.get('agent') or {'shorten': 'copy', 'hero_h1': 'copy', 'swap_image': 'visual', 'hero_image': 'visual', 'band': 'ui', 'layout': 'ui', 'drop_beat': 'ux', 'reorder': 'ux', 'note': 'ui'}.get(f.get('op'), 'ui')
-            notes.setdefault(owner, []).append(f"[{f.get('op')}] beat={f.get('beat', '')} {f.get('field', '')} {f.get('value', '') or f.get('image', '') or ''} — {f.get('reason', '')}")
+        notes = route_fixes(fixes, A.J(slug_dir, 'direction.json') or {})
         applied = 0  # the critic only routes; owners change the document
         for owner, ns in notes.items():
             if ns: ev(owner.upper() if owner in ('ux', 'ui') else owner.capitalize(), f'{len(ns)} note(s) from the critic')
@@ -102,9 +135,13 @@ def main():
             res = list(ex.map(lambda j: (j[0], safe(j[0].upper() if j[0] in ('ux', 'ui') else j[0].capitalize(), j[1], slug_dir, j[2])), jobs))
         if applied + sum(r for _, r in res) == 0: ev('Critic', 'nothing more the team can change'); break
         render(slug_dir, bp, out); ev('Render', f'{bp} · round {k}')
-    # keep the best-scoring render if the last round regressed
-    if best[1] and log['rounds'] and log['rounds'][-1]['score'] < best[0]: open(out, 'w').write(best[1]); ev('Critic', f'kept round with {best[0]}/100')
-    log['best'] = best[0]; json.dump(log, open(os.path.join(slug_dir, 'swarm.json'), 'w'), indent=1, ensure_ascii=False)
-    print(json.dumps({"done": {"score": best[0], "rounds": len(log['rounds'])}}), flush=True)
+    # Keep the selected render and the inputs and reports that describe it together.
+    if best_files:
+        for path, data in best_files.items():
+            with open(path, 'wb') as f: f.write(data)
+        if best_round != log['rounds'][-1]['k']: ev('Critic', f'kept round {best_round} with {best_score}/100')
+    log['best'] = best_score; log['best_round'] = best_round
+    json.dump(log, open(os.path.join(slug_dir, 'swarm.json'), 'w'), indent=1, ensure_ascii=False)
+    print(json.dumps({"done": {"score": best_score, "rounds": len(log['rounds'])}}), flush=True)
 
 if __name__ == '__main__': main()
