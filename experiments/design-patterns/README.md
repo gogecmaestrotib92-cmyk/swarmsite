@@ -7,7 +7,7 @@ version, beat ID, blueprint ID)`. Applying an accepted candidate and evaluating
 its design remain separate work.
 
 `catalog.json` describes conservative subsets of existing renderer forms:
-`story-assigned-product-ui@1`, `marquee-short-facts@1`, `butter-editorial-product@1`, `pinned-text-steps@1`, `type-wall-quote@1`, and three ledger layouts (`ledger-cards`, `ledger-story`, `ledger-sticky`). The Butter editorial entry allows up to six features and verifies that the renderer actually selected its specific editorial component. The pinned and quote patterns are limited to text-only sections without extra actions; ledger checks retain each item's name, price, extra fields, links and existing visuals. The actual render still has to pass. Each declares allowed
+`story-assigned-product-ui@1`, `marquee-short-facts@1`, `butter-editorial-product@1`, `pinned-text-steps@1`, `type-wall-quote@1`, `sticky-assigned-visual@1`, and three ledger layouts (`ledger-cards`, `ledger-story`, `ledger-sticky`). The Butter editorial entry allows up to six features and verifies that the renderer actually selected its specific editorial component. The pinned and quote patterns are limited to text-only sections without extra actions; ledger checks retain each item's name, price, extra fields, links and existing visuals. The actual render still has to pass. Each declares allowed
 beat types and site classes, item limits, asset requirements, fallback, renderer
 and reference. The reference identifies where a role was observed; it does not
 claim the generated result is identical or copy any original assets.

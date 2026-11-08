@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';import {createRequire} from 'node:module';import {pathToFileURL} from 'node:url';
 const {chromium}=createRequire(new URL('../../package.json',import.meta.url))('playwright');const browser=await chromium.launch({headless:true,...(process.env.CHROME_PATH ? {executablePath:process.env.CHROME_PATH} : {})});
-for(const [kind,file] of [['story',process.argv[2]],['marquee',process.argv[3]],['pinned',process.argv[4]],['quote',process.argv[5]]])for(const width of [320,390,1440])for(const mode of ['reduce','no-preference']){
+for(const [kind,file] of [['story',process.argv[2]],['marquee',process.argv[3]],['pinned',process.argv[4]],['quote',process.argv[5]],['sticky',process.argv[6]]])for(const width of [320,390,1440])for(const mode of ['reduce','no-preference']){
  const p=await browser.newPage({viewport:{width,height:900},reducedMotion:mode});await p.goto(pathToFileURL(file).href+(mode==='reduce'?'?nomotion=1':''),{waitUntil:'domcontentloaded'});
  const sec=p.locator('#target');await sec.scrollIntoViewIfNeeded();
  if(kind==='story'){
@@ -17,12 +17,17 @@ for(const [kind,file] of [['story',process.argv[2]],['marquee',process.argv[3]],
   assert.equal(await sec.locator('.ps-s').count(),3);
   for(const text of ['Choose a time','Share the link','Meet your guests']) assert.equal(await sec.getByText(text).count(),1);
   if(mode==='reduce')assert.equal(await sec.locator('.ps-s:visible').count(),3);
- }else{
+ }else if(kind==='quote'){
   assert.equal(await sec.locator('h2.tw').count(),1);
   assert.match(await sec.locator('h2.tw').innerText(),/A thoughtful product gives people more time/);
   assert.equal(await sec.locator('.who').textContent(),'A real customer');
+ }else{
+  assert.equal(await sec.locator('.sp-row').count(),2);
+  assert.equal(await sec.locator('.sp-f img').count(),2);
+  for(const text of ['Feature one','Useful detail one','Feature two','Useful detail two']) assert.equal(await sec.getByText(text,{exact:true}).count(),1);
+  if(mode==='reduce')assert.equal(await sec.locator('.sp-row:visible').count(),2);
  }
- if(kind==='story'||kind==='marquee'){
+ if(kind==='story'||kind==='marquee'||kind==='sticky'){
   assert.equal(await sec.locator('a[href="https://source.example/docs"]').count(),1);
   assert.equal(await sec.locator('a[href="https://source.example/original"]').count(),1);
  }

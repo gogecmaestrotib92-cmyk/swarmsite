@@ -32,6 +32,7 @@ GUIDANCE = {
     'ledger-cards': 'A grid of the original priced items, keeping each description and price.',
     'ledger-story': 'A menu or price list beside its existing photograph.',
     'ledger-sticky': 'A menu or price list beside its existing photograph as a sticky panel, with a static reduced-motion fallback.',
+    'sticky-assigned-visual': 'A short sequence of features or steps alongside its own pinned assigned image.',
 }
 
 

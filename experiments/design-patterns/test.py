@@ -59,6 +59,9 @@ class CatalogTest(unittest.TestCase):
   self.d['beats'][0]={'id':'target','type':'ledger','h2':'Menu','items':[['Soup','12','Fresh herbs'],['Fish','20','Grilled','Lemon']],'source_sections':['s1'],'ui':{'move':'auto'}};self.save();r=self.call('ledger-cards');self.assertTrue(r['accepted'],r)
   self.assertFalse(self.call('ledger-story')['accepted']);self.assertFalse(self.call('ledger-sticky')['accepted'])
   self.d['beats'][0]['items'][0]={'name':'Soup','price':'12'};self.save();self.assertFalse(self.call('ledger-cards')['accepted'])
+ def test_sticky_requires_and_preserves_assigned_visual(self):
+  r=self.call('sticky-assigned-visual');self.assertTrue(r['accepted'],r)
+  self.d['hero']['media']='shot';self.save();self.assertFalse(self.call('sticky-assigned-visual')['accepted']);self.d['hero']['media']='hero';self.d['beats'][0]['image']='blank';self.save();self.assertFalse(self.call('sticky-assigned-visual')['accepted'])
  def test_unknown_wrong_kind_missing_blank_and_item_images(self):
   self.assertFalse(self.call(version=2)['accepted']);self.assertFalse(self.call('no-such-pattern')['accepted']);self.d['kind']='place';self.save();self.assertFalse(self.call()['accepted']);self.d['kind']='software';self.d['beats'][0]['image']='missing';self.save();self.assertFalse(self.call()['accepted']);self.d['beats'][0]['image']='blank';self.save();self.assertFalse(self.call()['accepted']);self.d['beats'][0]['image']='shot';self.d['beats'][0]['features'][0]['image']='hero';self.save();self.assertFalse(self.call()['accepted'])
  def test_ownership_conflict_fails_closed(self):
@@ -72,12 +75,12 @@ class CatalogTest(unittest.TestCase):
   finally:checks[key]=before
  def test_runtime(self):
   stories=[]
-  for move in ['story','marquee','pinned-sequence','type-wall']:
+  for move in ['story','marquee','pinned-sequence','type-wall','sticky-product']:
    d=copy.deepcopy(self.d)
    if move=='marquee':d['beats'][0]={'id':'target','type':'facts','h2':'Proof','source_sections':['s1'],'cta':'Explore','cta_href':'https://source.example/docs','facts':[['10','Customers'],['X'*100,'Projects']],'ui':{'move':'marquee'}}
    elif move=='pinned-sequence':d['beats'][0]={'id':'target','type':'steps','h2':'How it works','steps':['Choose a time','Share the link','Meet your guests'],'ui':{'move':move}}
    elif move=='type-wall':d['beats'][0]={'id':'target','type':'quote','body':'A thoughtful product gives people more time to do what matters most','who':'A real customer','ui':{'move':move}}
-   else:d['beats'][0]['ui']['move']='story'
+   else:d['beats'][0]['ui']['move']=move
    (self.dir/'direction.json').write_text(json.dumps(d));out=self.dir/f'{move}.html';r=subprocess.run([os.environ.get('PYTHON',sys.executable),str(ROOT/'lib/render/render_bp.py'),str(self.dir),'butter',str(out)],cwd=ROOT,capture_output=True,text=True);self.assertEqual(r.returncode,0,r.stderr);stories.append(out)
   r=subprocess.run(['node',str(P/'runtime.mjs'),*map(str,stories)],cwd=ROOT,capture_output=True,text=True,timeout=90);self.assertEqual(r.returncode,0,r.stderr)
 if __name__=='__main__':unittest.main()

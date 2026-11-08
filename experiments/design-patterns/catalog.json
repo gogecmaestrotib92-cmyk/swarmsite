@@ -289,10 +289,45 @@
         "url": "https://white-desert.com/"
       },
       "limitations": "Requires a usable existing image; reduced-motion fallback and full menu require visual review."
+    },
+    {
+      "id": "sticky-assigned-visual",
+      "version": 1,
+      "move": "sticky-product",
+      "allowed_beat_types": [
+        "features",
+        "steps"
+      ],
+      "allowed_site_kinds": [
+        "software",
+        "product",
+        "place",
+        "service"
+      ],
+      "item_count": {
+        "min": 2,
+        "max": 5
+      },
+      "asset": {
+        "required": true,
+        "kind": "assigned-visual"
+      },
+      "fallback": "decline-and-keep-original-direction",
+      "expected_render": {
+        "section_class": "sticky",
+        "item_container": "sp-text"
+      },
+      "implementation_source": "lib/render/render_bp.py:sticky_product + component_for",
+      "reference": {
+        "blueprint_id": "butter",
+        "observed_role": "product narrative",
+        "url": "https://www.butter.video/"
+      },
+      "limitations": "All frames use the same assigned visual; relevance and visual quality require separate review."
     }
   ],
   "engine_file_sha256": {
-    "lib/render/render_bp.py": "276f106dfdec2365708d0156b7252d41816a95f1560580c985e11c296c2e72c6",
+    "lib/render/render_bp.py": "bd999131fa36bc7940788735595cf03915fbf2db81e7a4a17a7d3dc7eddb080b",
     "lib/templates/recipes.py": "e9ecebe227c13ee5852d8930fef2f037561fed09a7142ce48b246d1e306dcfea",
     "lib/visual_quality.py": "66a17d3f757a17f8a71b1f32307e4aaaf59c32c4f6d07245614e3bf66e33a5b6",
     "lib/visual_semantics.py": "0433518fac3f43cbc1f6d74ca1fb901777f0ff5c607893e5c17a056600d697b8"

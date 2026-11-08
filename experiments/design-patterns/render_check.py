@@ -76,6 +76,15 @@ def rendered_rows(section, container_class):
             if len(nums) != 1 or len(heads) != 1: return None
             rows.append((norm(nums[0].text()), norm(heads[0].text())))
         return rows
+    if container_class == 'sp-text':
+        rows = []
+        for item in containers[0].find(lambda n:'sp-row' in n.classes()):
+            labels = item.find(lambda n:'lab' in n.classes())
+            heads = item.find(lambda n:n.tag=='h3')
+            paragraphs = item.find(lambda n:n.tag=='p')
+            if len(labels)!=1 or len(heads)!=1 or len(paragraphs)>1: return None
+            rows.append((norm(heads[0].text()), norm(paragraphs[0].text()) if paragraphs else ''))
+        return rows
     rows=[]
     for li in containers[0].find(lambda n:n.tag=='li'):
         columns=[x for x in li.children if isinstance(x,Node) and x.tag in ('b','span')]
@@ -112,6 +121,11 @@ def preflight(pattern, direction, beat, images, bp):
         if any(not isinstance(row, (list, tuple)) or not row or len(row) > 5 or
                any(not isinstance(v, str) for v in row)
                for row in beat.get('items', [])): errors.append('malformed ledger item')
+    elif pattern['move']=='sticky-product':
+        img = images.get(beat.get('image'))
+        if not img or not img.get('data') or empty_visual(img): errors.append('missing or empty assigned visual')
+        if any(not isinstance(f, dict) or f.get('image') for f in beat.get('features', [])): errors.append('individual feature images require another layout')
+        if beat.get('type') == 'steps' and any(not isinstance(x, str) or not x.strip() for x in beat.get('steps', [])): errors.append('step text must be nonempty strings')
     else:
         if any(not isinstance(f,dict) or f.get('image') for f in beat.get('features',[])): errors.append('individual feature images require another layout')
         img=images.get(beat.get('image'))
@@ -163,10 +177,17 @@ def check(slug_dir, bp_id, beat_id, pattern_id, version):
                          [norm(value) for value in values[2:] if norm(value)]) for values in beat['items']]
             if len(rows) != len(expected) or [ledger_values(row) for row in rows] != expected:
                 return {'accepted':False,'reason':'renderer changed or hid a ledger value'}
+        elif p['move']=='sticky-product' and beat.get('type') == 'steps':
+            if rendered_rows(new,p['expected_render']['item_container']) != [(norm(b), '') for _,b in rows_for(beat)]: return {'accepted':False,'reason':'renderer changed or hid a step'}
         elif rendered_rows(new,p['expected_render']['item_container']) != [(norm(a),norm(b)) for a,b in rows_for(beat)]:return {'accepted':False,'reason':'renderer changed or hid a content item'}
         for field in ('h2','lede','label'):
             if norm(beat.get(field)) and norm(beat[field]) not in norm(new.text()):return {'accepted':False,'reason':f'target {field} missing'}
         old_media=[n.attrs.get('src') for n in old.find(lambda x:x.tag in ('img','source')) if n.attrs.get('src')]
+        if p['move'] == 'sticky-product' and beat.get('type') in ('steps', 'features'):
+            assigned=next((i.get('data') for i in imgs if i.get('id')==beat.get('image')),None)
+            new_media=[n.attrs.get('src') for n in new.find(lambda x:x.tag=='img') if n.attrs.get('src')]
+            if not assigned or not new_media or any(src != assigned for src in new_media) or any(src != assigned for src in old_media): return {'accepted':False,'reason':'sticky section changed or lost its assigned visual'}
+            if norm(beat.get('note')) and norm(beat['note']) not in norm(new.text()): return {'accepted':False,'reason':'step note missing'}
         if beat.get('type') == 'ledger':
             new_media=[n.attrs.get('src') for n in new.find(lambda x:x.tag in ('img','source')) if n.attrs.get('src')]
             if old_media != new_media:return {'accepted':False,'reason':'ledger visual changed or disappeared'}
