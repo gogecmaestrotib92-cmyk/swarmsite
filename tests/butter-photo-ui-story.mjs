@@ -22,7 +22,7 @@ const cases = [
   { name: 'texture', editorial: false, image: 'texture' },
   { name: 'missing', editorial: false, image: 'missing' },
   { name: 'other-owner', editorial: false, image: 'hero' },
-  { name: 'other-blueprint', editorial: true, blueprint: 'cerebrium' } // a product component belongs to every software template,
+  { name: 'other-blueprint', editorial: true, blueprint: 'cerebrium' }, // a product component belongs to every software template
   { name: 'other-kind', editorial: false, kind: 'place' },
   { name: 'no-story', editorial: false, move: 'auto' },
 ];
