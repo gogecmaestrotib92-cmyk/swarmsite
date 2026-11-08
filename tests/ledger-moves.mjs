@@ -57,6 +57,8 @@ try {
             repeatedLabel: [...el.querySelectorAll('.lab')].some(node => node.textContent.trim() === 'Our menu'),
             storyImage: el.querySelector('.ledger-story-media')?.getBoundingClientRect().toJSON(),
             storyRows: el.querySelector('.ledger-story-content .rows')?.getBoundingClientRect().toJSON(),
+            cardsCopy: el.querySelector('.ledger-cards-copy')?.getBoundingClientRect().toJSON(),
+            cardsImage: el.querySelector('.ledger-cards-intro .ledger-visual')?.getBoundingClientRect().toJSON(),
             pricesWrap: [...el.querySelectorAll('.rows b.price-short')].some(node => node.getClientRects().length !== 1 || node.scrollWidth > node.clientWidth) };
         });
         assert.ok(result.width <= width + 2, `${move}, ${width}: overflow`);
@@ -72,6 +74,10 @@ try {
         if (move === 'cards') {
           assert.equal(result.cardColumns, width === 1440 ? 3 : 1);
           assert.equal(result.cardGap, width === 1440 ? 24 : 12, `${width}: compact card spacing`);
+          if (hasImage) {
+            if (width === 1440) assert.ok(result.cardsImage.left >= result.cardsCopy.right, 'card intro photo sits beside its copy on desktop');
+            else assert.ok(result.cardsImage.top >= result.cardsCopy.bottom, 'card intro photo follows its copy on mobile');
+          }
         }
         if (move === 'marquee') {
           assert.equal(result.tickerHidden, 'true');
