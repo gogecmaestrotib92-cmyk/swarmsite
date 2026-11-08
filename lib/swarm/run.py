@@ -145,16 +145,22 @@ def _main(snapshot_dir):
             ev('Contract', f"round {k}: {con.get('score')}/100 · {len(cfail)} broken promise(s)")
             for f in cfail[:4]: ev('Contract', f"✗ {f['id']}: {f['detail']}")
             try: rep = frep.result()
-            except Exception as e: raise RuntimeError('critic failed: ' + str(e)) from e
-        if not isinstance(rep, dict): raise RuntimeError('critic returned an invalid report')
+            except Exception as e:
+                # a critic that fails in round 2 or 3 must not throw away a page that already passed round 1
+                if best_key is not None: ev('Critic', 'skipped: ' + str(e)[:90] + ' — keeping the best round so far'); break
+                raise RuntimeError('critic failed: ' + str(e)) from e
+        if not isinstance(rep, dict): rep = {}
         taste = rep.get('score', -1) if isinstance(rep.get('score'), (int, float)) else -1
-        if taste < 0: raise RuntimeError('critic returned an invalid score')
+        if taste < 0:
+            if best_key is not None: ev('Critic', 'invalid score — keeping the best round so far'); break
+            raise RuntimeError('critic returned an invalid score')
         fixes = [f for f in (rep.get('fixes') if isinstance(rep.get('fixes'), list) else []) if isinstance(f, dict)]
         score = round(0.55 * taste + 0.45 * con['score']) if con.get('score', -1) >= 0 and taste >= 0 else taste
         ev('Critic', f'round {k}: taste {taste} · contract {con.get("score")} → {score}/100 · {len(fixes)} defects · {round(time.time() - t)}s'); ev('Critic', str(rep.get('verdict', ''))[:140])
         for f in cfail: fixes.append({'op': 'note', 'agent': owner_of(f['id']), 'beat': '', 'reason': f"CONTRACT BROKEN — {f['id']}: {f['detail']}"})
         log['rounds'].append({'k': k, 'score': score, 'taste': taste, 'contract': con.get('score'), 'broken': cfail, 'fixes': fixes, 'verdict': rep.get('verdict')})
-        rank = (not cfail, score, -len(fixes))
+        # taste leads: the combined score already carries the contract at 45%; a broken promise only breaks a tie
+        rank = (score, not cfail, -len(fixes))
         if best_key is None or rank > best_key:
             best_score, best_key, best_round, best_bp, best_manifest = score, rank, k, bp, render_manifest
         json.dump({**rep, 'score': score, 'taste': taste, 'contract': con.get('score'), 'broken': cfail, 'round': k, 'best': best_score}, open(os.path.join(slug_dir, 'critic.json'), 'w'), indent=1, ensure_ascii=False)
@@ -162,7 +168,7 @@ def _main(snapshot_dir):
             paths = [out] + [os.path.join(slug_dir, name) for name in ('direction.json', 'images.json', 'contract.json', 'critic.json')]
             best_files = {path: open(path, 'rb').read() for path in paths if os.path.exists(path)}
             snapshot_shots(slug_dir, snapshot_dir)
-        if (score >= target and taste >= target and not cfail and not fixes) or k == rounds: break
+        if (score >= target and taste >= 70 and not cfail) or k == rounds: break  # good enough, taste not carried by the contract alone, nothing mechanically broken: stop spending
         # RESTART, not patch: a weak first round means the idea or the form is wrong — throw it away, keep the facts, start over once
         if k == 1 and score < 45 and not log.get('restarted'):
             log['restarted'] = True; alt = args[args.index('--alt') + 1] if '--alt' in args else ''
@@ -178,8 +184,8 @@ def _main(snapshot_dir):
             render_manifest = checked_render(slug_dir, bp, out); ev('Render', f'{bp} · restart'); continue
         if len(log['rounds']) >= 2:
             previous = log['rounds'][-2]
-            if rank <= (not previous['broken'], previous['score'], -len(previous['fixes'])):
-                ev('Critic', 'no gain this round — trying another round')
+            if rank <= (previous['score'], not previous['broken'], -len(previous['fixes'])):
+                ev('Critic', 'no gain this round — stopping'); break  # another round costs the same and the last one bought nothing
         # route: every defect goes to its owner with the critic's reason
         notes = route_fixes(fixes, A.J(slug_dir, 'direction.json') or {})
         applied = 0  # the critic only routes; owners change the document

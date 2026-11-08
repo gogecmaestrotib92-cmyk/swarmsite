@@ -193,7 +193,8 @@ class ContractTests(unittest.TestCase):
         stage = patch.object(run.Patterns, 'apply_verified_patterns', return_value={'choices': [], 'reason': 'stubbed'})
         stage.start()
         self.addCleanup(stage.stop)
-    def test_no_gain_on_second_round_still_tries_the_remaining_round(self):
+    def test_no_gain_on_second_round_stops(self):
+        # a round that bought nothing is the signal to stop: another round costs the same and the critic's fixes did not move the page
         with tempfile.TemporaryDirectory() as directory:
             agents.W(directory, 'direction.json', {'hero': {'h1': 'Headline'}, 'beats': []})
             agents.W(directory, 'factsheet.json', {})
@@ -211,7 +212,7 @@ class ContractTests(unittest.TestCase):
                 return result
 
             def critique(*args):
-                score = 70 if len(rendered) < 3 else 80
+                score = 60 if len(rendered) < 3 else 80  # below target twice with no gain: the third round is never bought
                 return {'score': score, 'fixes': [{'op': 'note', 'agent': 'ui', 'reason': 'Improve'}]}
 
             def ui(folder, notes='', blueprint_id=None):
@@ -224,11 +225,11 @@ class ContractTests(unittest.TestCase):
                     patch.object(agents, 'visual', return_value=0), patch.object(agents, 'copy', return_value=0):
                 run.main()
 
-            self.assertEqual(rendered, [1, 2, 3])
-            self.assertEqual(output.read_text(), 'page 3')
-            self.assertEqual(agents.J(directory, 'swarm.json')['best_round'], 3)
+            self.assertEqual(rendered, [1, 2])
+            self.assertEqual(output.read_text(), 'page 1')
+            self.assertEqual(agents.J(directory, 'swarm.json')['best_round'], 1)
 
-    def test_target_score_does_not_hide_critic_defects(self):
+    def test_target_stops_only_when_taste_is_real(self):
         for first_taste in (64, 90):
             with self.subTest(taste=first_taste), tempfile.TemporaryDirectory() as directory:
                 agents.W(directory, 'direction.json', {'hero': {'h1': 'Headline'}, 'beats': []})
@@ -263,9 +264,13 @@ class ContractTests(unittest.TestCase):
                         patch.object(agents, 'visual', return_value=0), patch.object(agents, 'copy', return_value=0):
                     run.main()
 
-                self.assertEqual(len(rendered), 2)
-                self.assertTrue(any('Visible defect' in notes for notes in routed))
-                self.assertEqual(output.read_text(), 'page 2')
+                if first_taste < 70:  # the contract alone must not carry a page over the target
+                    self.assertEqual(len(rendered), 2)
+                    self.assertTrue(any('Visible defect' in notes for notes in routed))
+                    self.assertEqual(output.read_text(), 'page 2')
+                else:  # over target on taste too: stop and keep the money
+                    self.assertEqual(len(rendered), 1)
+                    self.assertEqual(output.read_text(), 'page 1')
 
     def test_failed_contract_does_not_reuse_existing_report(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -284,12 +289,12 @@ class ContractTests(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeError, 'invalid report'):
                     run.contract(directory, 'page.html')
 
-    def test_clean_round_wins_and_restores_matching_artifacts(self):
+    def test_best_taste_round_wins_and_restores_matching_artifacts(self):
         with tempfile.TemporaryDirectory() as directory:
             agents.W(directory, 'direction.json', {'hero': {'h1': 'Headline'}, 'beats': []})
             agents.W(directory, 'factsheet.json', {})
             agents.W(directory, 'inventory.json', {'url': 'https://example.test', 'sourceCoverage': {
-                'sections': [{'id': 's1', 'title': 'page 2'}], 'routes': []}})
+                'sections': [{'id': 's1', 'title': 'page 1'}], 'routes': []}})
             output = Path(directory) / 'page.html'
             round_number = 0
 
@@ -329,16 +334,17 @@ class ContractTests(unittest.TestCase):
                     patch.object(agents, 'visual', return_value=0), patch.object(agents, 'copy', return_value=0):
                 run.main()
 
-            self.assertEqual(round_number, 3)
-            self.assertEqual(output.read_text(), 'page 2')
-            self.assertEqual(agents.J(directory, 'direction.json')['hero']['h1'], 'Headline 2')
-            self.assertEqual(agents.J(directory, 'images.json')[0]['id'], 'image-2')
-            self.assertEqual(agents.J(directory, 'contract.json')['failed'], [])
-            self.assertEqual(agents.J(directory, 'critic.json')['round'], 2)
-            self.assertEqual(agents.J(directory, 'swarm.json')['best_round'], 2)
+            # taste leads: round 1 (taste 90, one broken promise) beats round 2 (clean, taste 25); round 2 bought nothing, so the loop stops there
+            self.assertEqual(round_number, 2)
+            self.assertEqual(output.read_text(), 'page 1')
+            self.assertEqual(agents.J(directory, 'direction.json')['hero']['h1'], 'Headline 1')
+            self.assertEqual(agents.J(directory, 'images.json')[0]['id'], 'image-1')
+            self.assertEqual(len(agents.J(directory, 'contract.json')['failed']), 1)
+            self.assertEqual(agents.J(directory, 'critic.json')['round'], 1)
+            self.assertEqual(agents.J(directory, 'swarm.json')['best_round'], 1)
             shots = Path(directory) / 'critic-shots'
-            self.assertEqual((shots / 'desktop-2.png').read_bytes(), b'screenshot 2')
-            self.assertFalse((shots / 'desktop-3.png').exists())
+            self.assertEqual((shots / 'desktop-1.png').read_bytes(), b'screenshot 1')
+            self.assertFalse((shots / 'desktop-2.png').exists())
             self.assertEqual((shots / 'notes.txt').read_text(), 'keep this unrelated file')
             # Coverage must refer to the selected, restored HTML, not the last attempted round.
             self.assertEqual(agents.J(directory, 'coverage.json')['sections'][0]['status'], 'text_detected')
