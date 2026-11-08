@@ -473,9 +473,8 @@ def build(slug_dir, bp_id, out_path=None):
         shot = (not media) and d.get('kind') == 'software' and src
         body_ = f'<div class="wrap hero-in al-{al} place-{place}">{cat}<h1 class="h1" style="{hsty}">{h1}</h1><p class="lede{" light" if light else ""}">{e(h.get("lede"))}</p><div class="ctas">{cta_html(light)}{secondary_cta(light)}</div></div>'
         if not media and src and not hui.get('move') and d.get('kind') in ('place', 'service', 'product') and (images.get(h.get('media')) or {}).get('w', 0) >= 900: hui = {**hui, 'move': 'split'}
-        # the template's hero is its signature: Concept may replace it only with a strong move (billboard, editorial-type); the generic 'split' never does
-        if RECIPE and (h.get('ui') or {}).get('move') in (None, '', 'default', 'split') and RECIPE.get('hero') not in (None, 'shot'): hui = {**hui, 'move': RECIPE['hero']}
-        elif RECIPE and not (h.get('ui') or {}).get('move'): hui = {**hui, 'move': RECIPE.get('hero', hui.get('move'))}
+        # the template's hero is the default; an explicit hero move in the direction (Concept chose it knowing the blueprint) is honoured
+        if RECIPE and (h.get('ui') or {}).get('move') in (None, '', 'default'): hui = {**hui, 'move': RECIPE.get('hero', hui.get('move'))}
         if d.get('kind') == 'software' and h.get('visual_verified') is True and src and not has_video: hui = {**hui, 'move': 'split'}
         mv = hui.get('move')
         if has_video and not src:
@@ -584,7 +583,7 @@ def build(slug_dir, bp_id, out_path=None):
             paragraph = f'<p>{e(description)}</p>' if description else ''
             rows += f'<div class="sp-row" data-i="{i}"><span class="lab">{e(f"0{i + 1}")}</span><h3 class="h3">{e(heading)}</h3>{paragraph}</div>'
         # a screenshot is shown whole (contain); a photograph fills the frame (cover) — decided by the picture, not the site's kind
-        product_shot = bt.get('_vis_shot') if bt.get('_vis_shot') is not None else d.get('kind') == 'software'
+        product_shot = d.get('kind') == 'software' or bool(bt.get('_vis_shot'))  # a software product is shown whole; a flagged screenshot on any site too
         frames = ''.join(f'<figure class="sp-f{" on" if i == 0 else ""}" data-i="{i}"><img src="{vis[i % len(vis)][0]}" alt="" style="object-position:{"center" if product_shot else vis[i % len(vis)][1][0]};transform:scale({1 if product_shot else vis[i % len(vis)][1][1]})"></figure>' for i in range(len(items)))
         return f'<section class="sec sticky band-{band_of(sec, bt)}" id="{e(bt["id"])}" data-sig="sticky"><div class="wrap">{ghead(sec, bt)}<div class="sp"><div class="sp-text">{rows}</div><div class="sp-pin"><div class="sp-stage{" product-shot" if product_shot else ""}">{frames}</div></div></div></div></section>'
 
@@ -778,13 +777,13 @@ def build(slug_dir, bp_id, out_path=None):
             lead = (bt.get('ui') or {}).get('lead')
             if (assigned and not assigned_usable) or (lead and images.get(lead) and symbolic_asset(images[lead])): return without_story_image()
             return cards(sec, bt)
-        if assigned:
-            # A missing, reserved, tiny or symbolic assigned visual is not
-            # permission to pick an unrelated fallback image for this beat.
-            if not assigned_usable: return without_story_image()
-            src = img(assigned)
+        if assigned and assigned_usable: src = img(assigned)
+        elif assigned and soft:
+            # a software story is about its own screenshot: when that one is unusable, no unrelated picture stands in
+            return without_story_image()
         else:
-            pool = [i for i in images.values() if photo_like(i, 640) and free_for(i, bt)]
+            # a place or service story takes the best free photograph (a rejected texture or an empty slot is not a reason to collapse into text cards)
+            pool = [i for i in images.values() if photo_like(i, 640) and free_for(i, bt) and not dark_background_texture(i)]
             src = img(pool[0]['id']) if pool else ''
         if not src: return without_story_image()
         lst = ''.join(f'<li><b>{e(t)}</b><span>{e(b_)}</span></li>' for t, b_ in items)
@@ -1006,11 +1005,11 @@ def build(slug_dir, bp_id, out_path=None):
             if not valid_lead(ui_['lead']): return ''  # reject tiny, symbolic or unrelated visuals
             it = lead; src = img(ui_['lead'])
         elif ui_.get('lead') == '': return ''
-        elif bt.get('image'):
+        elif bt.get('image') and (valid_lead(bt['image']) or soft):
             own = images.get(bt['image'])
-            if not valid_lead(bt['image']): return ''
+            if not valid_lead(bt['image']): return ''  # a software beat's own screenshot is unusable: no stand-in
             it = own; src = img(bt['image'])
-        elif bt['type'] == 'facts':
+        elif bt['type'] == 'facts':  # (a place/service beat whose assigned picture is unusable falls through to the pool, same as the story)
             pool = [i for i in images.values() if photo_like(i, 600) and free_for(i, bt)]
             if pool: it = pool[0]; src = img(it['id'])
         elif bt['type'] == 'steps' and soft:
@@ -1334,11 +1333,6 @@ def build(slug_dir, bp_id, out_path=None):
             if move == 'type-wall' and kind == 'quote': return move
             if move == 'sticky-product' and kind in ('features', 'steps', 'cells', 'facts') and 2 <= count <= 5: return move
             if move == 'pinned-sequence' and kind in ('steps', 'features', 'facts'): return move
-            # the template's signature slot (sticky-product, pinned-sequence, type-wall, marquee) is the design; a plain 'cards' or 'story' move from the UI agent never overrides it — only another signature move does
-            if fallback in SIG and kind in ('features', 'steps', 'cells', 'facts') and move not in SIG:
-                if fallback == 'sticky-product' and 2 <= count <= 5: return fallback
-                if fallback == 'pinned-sequence' and 2 <= count <= 5: return fallback
-                if fallback == 'marquee' and kind in ('cells', 'facts') and all(len(str(t).split()) <= 5 for t, _ in beat_items(bt)): return fallback
             if move == 'story' and kind in ('features', 'steps', 'cells', 'facts'):
                 if count <= 4: return move
                 if owned_story_shot(bt):
@@ -1645,6 +1639,8 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
 .assigned-visual,figure.lead.lead-shot.assigned-visual{{width:100%;max-width:var(--assigned-native);justify-self:center;aspect-ratio:var(--assigned-ratio,auto)}}.assigned-visual img{{display:block;width:100%;height:auto;object-fit:contain}}
 
 .ui-photo-story .assigned-visual{{--ui-photo-density:1;max-width:min(calc(var(--assigned-native) / var(--ui-photo-density)),calc(92svh * var(--assigned-ratio)))}}
+@media(min-resolution:1.5dppx){{.assigned-visual,figure.lead.lead-shot.assigned-visual{{max-width:calc(var(--assigned-native) / 2)}}.product-story-visual{{max-width:calc(var(--product-story-image-max) / 2)}}.ui-photo-story .assigned-visual{{--ui-photo-density:2}}}}@media(min-resolution:2.5dppx){{.assigned-visual,figure.lead.lead-shot.assigned-visual{{max-width:calc(var(--assigned-native) / 3)}}.product-story-visual{{max-width:calc(var(--product-story-image-max) / 3)}}.ui-photo-story .assigned-visual{{--ui-photo-density:3}}}}
+/* a product screenshot is shown at or below its native pixels so UI text stays crisp; photographs are not held back this way */
 
 @media(max-width:900px){{.statement .wrap{{padding-left:max(16px,calc(var(--frame) * .5))}}.split-wrap,.sp,.ps-s,.st,.cta2{{grid-template-columns:1fr}}.story.flip .st-t{{order:0}}.sp-pin{{order:-1}}.sp-stage{{position:relative;top:auto;height:52vh}}.sp-row{{min-height:auto;padding:22px 0;opacity:1}}.ps-s{{align-content:start}}.ps-v{{aspect-ratio:1.6}}.shotframe.tall img{{height:52vh}}.mq-i{{font-size:28px}}.nav .links{{display:none}}.nav .wrap{{gap:12px}}.nav .wrap>a:first-child{{min-width:0;max-width:28vw;flex:0 0 auto}}.nav .logo{{height:auto;max-height:56px;max-width:min(115px,28vw)}}.nav .wordmark{{font-size:clamp(16px,5vw,22px);overflow-wrap:anywhere}}.nav .btn{{min-width:0;padding-inline:8px;overflow-wrap:anywhere;justify-content:center}}.nav .btn .ar{{flex-shrink:0}}.gh,.ledger .two,.faq .two,.photos .pair{{grid-template-columns:1fr;display:grid}}.photos figure{{width:100%!important}}.grid{{grid-template-columns:1fr}}.twocol .cols{{grid-template-columns:1fr}}.end .fcols{{grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}}.form{{grid-template-columns:1fr}}.hero{{padding-top:100px}}.wrap{{padding:0 max(16px,calc(var(--frame) * .5))}}}}
 @media(max-width:900px){{.shotframe.tall.product-shot img{{height:auto;max-height:52vh}}}}

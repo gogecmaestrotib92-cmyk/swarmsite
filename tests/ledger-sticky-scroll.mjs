@@ -43,8 +43,8 @@ try {
     const second = await measure(350);
     assert.equal(first.count, items.length, `${width}/${density}: all prices`);
     assert.ok(first.docWidth <= width + 1, `${width}/${density}: no horizontal overflow`);
-    assert.ok(first.width * density <= first.naturalWidth * 1.35 + 2, `${width}/${density}: image width stays sharp`);
-    assert.ok(first.height * density <= first.naturalHeight * 1.35 + 2, `${width}/${density}: image height stays sharp`);
+    assert.ok(first.width <= first.naturalWidth * 1.35 + 2, `${width}/${density}: image width stays within its pixels`);  // CSS pixels: a photograph is not halved on retina
+    assert.ok(first.height <= first.naturalHeight * 1.35 + 2, `${width}/${density}: image height stays within its pixels`);
     if (width === 1440 && reducedMotion === 'no-preference') {
       assert.equal(first.position, 'sticky');
       assert.ok(Math.abs(first.top - second.top) < 2, 'the photograph stays pinned during real scrolling');

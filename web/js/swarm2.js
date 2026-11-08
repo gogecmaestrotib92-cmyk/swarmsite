@@ -81,9 +81,9 @@
       ROLES.slice(0, n).forEach(([role, color], i) => { const c = new Cursor(frame, role, color, opts.shape); this.cursors.push(c); setTimeout(() => this.loop(c), 250 + i * 380); });
     }
     phase() {}
-    setPage(img, pageH) { this.page = img; this.pageH = pageH || img.naturalHeight; this.scale = this.frame.clientWidth / 1440; img.style.transition = 'transform 1.1s cubic-bezier(.2,.8,.2,1)'; }
+    setPage(img, pageH) { this.page = img; const imageHeight = img.naturalHeight * 1440 / (img.naturalWidth || 1440); this.pageH = Math.min(pageH || imageHeight, imageHeight); this.scale = this.frame.clientWidth / 1440; img.style.transition = 'transform 1.1s cubic-bezier(.2,.8,.2,1)'; }  // never pan past the picture we actually have
     toLocal(rect) { const s = this.scale; return { x: rect.x * s, y: rect.y * s - this.pan, w: rect.w * s, h: Math.min(rect.h, 420) * s }; }
-    panTo(rect) { if (!this.page) return; const s = this.scale, H = this.frame.clientHeight, maxPan = Math.max(0, this.pageH * s - H); const want = Math.min(maxPan, Math.max(0, rect.y * s - H * .36)); if (Math.abs(want - this.pan) < 40) return; this.pan = want; this.page.style.transform = `translateY(${-this.pan}px)`; this.frame.querySelectorAll('.s2-x').forEach(e => e.remove()); }
+    panTo(rect) { if (!this.page) return; const s = this.scale = this.frame.clientWidth / 1440, H = this.frame.clientHeight, maxPan = Math.max(0, this.pageH * s - H); const want = Math.min(maxPan, Math.max(0, rect.y * s - H * .36)); if (Math.abs(want - this.pan) < 40) return; this.pan = want; this.page.style.transform = `translateY(${-this.pan}px)`; this.frame.querySelectorAll('.s2-x').forEach(e => e.remove()); }
     push(evs) { for (const e of evs) this.queue.push(e); }
     stop() { this.alive = false; this.cursors.forEach(c => c.el.classList.remove('in')); this.spot.classList.remove('on'); setTimeout(() => this.frame.querySelectorAll('.s2-cur,.s2-ghost,.s2-trail,.s2-x,.s2-spot').forEach(e => e.remove()), 700); }
     park(c) { const i = this.cursors.indexOf(c); return { x: 24 + i * 34 + rnd(-3, 3), y: this.frame.clientHeight - 30 + rnd(-3, 3) }; }

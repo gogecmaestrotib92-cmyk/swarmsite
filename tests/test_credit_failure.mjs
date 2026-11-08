@@ -13,6 +13,7 @@ for (const scenario of ['provider-credit', 'unrelated']) {
     ? "python3 lib/direct/direct.py exit 1: Traceback (most recent call last):\nanthropic.BadRequestError: Error code: 400 - {'message': 'Your credit balance is too low to access the Anthropic API.', 'request_id': 'private-sentinel'}"
     : 'capture failed because the source page timed out';
   const context = {
+      WORKER_ID: 'test-worker', setInterval, clearInterval, setTimeout, CURRENT_JOB_DIR: '',
     process_: async () => { throw new Error(raw); },
     drainEvents: async () => {},
     updateWithRetry: async (_job, data) => { updates.push(data); },

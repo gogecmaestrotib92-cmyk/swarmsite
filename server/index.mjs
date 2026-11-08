@@ -223,7 +223,10 @@ async function runClaimed(job) {
     const noAnthropicCredit = /your credit balance is too low to access the anthropic api/i.test(message);
     const overBudget = /job budget:/i.test(message);
     const retries = Number(job.retry_count || 0);
-    const retryable = !noAnthropicCredit && !overBudget && /timeout|timed out|econnreset|econnrefused|network error|connection error|rate.limit|HTTP (429|5\d\d)|status(?: code)?:? ?5\d\d|\b(?:overloaded|internal server error)\b/i.test(message);
+    // retry only what is ours to retry: the model provider or storage hiccuping — never the customer's site timing out or refusing us
+    const ours = /anthropic|overloaded|rate.limit|HTTP (429|5\d\d)|status(?: code)?:? ?5\d\d|internal server error|econnreset|econnrefused|fetch failed|supabase|storage/i.test(message);
+    const theirs = /capture\.mjs|source page|blocked\.json|bot check|node timeout/i.test(message);
+    const retryable = !noAnthropicCredit && !overBudget && ours && !theirs;
     if (retryable && retries < 3) {
       job._result = job._result || {};
       const events=(job._result.events || []).concat([{role:'Reader', text:'Temporary error; resuming from the saved checkpoint', at:Date.now()}]);
@@ -309,7 +312,9 @@ async function process_(job) {
   await timed('diagnose', async () => { const out = await run('python3', ['-I', 'lib/audit/diagnose.py', path.join(dir, 'inventory.json')]); fs.writeFileSync(path.join(dir, 'audit.json'), out); }); await emit(job, eventsDiagnose(dir));
   fs.writeFileSync(path.join(dir, 'brief.json'), JSON.stringify(job.options || {}));
   await timed('direct', async () => {
-    while (true) {
+    // batched source analysis is for a multi-page crawl; on the default landing-page scope the Reader already sees every section once
+    const invNow = J(path.join(dir, 'inventory.json')) || {}; const multiPage = (invNow.sourcePages || []).length > 0;
+    while (multiPage) {
       let output;
       try { output = await run('python3', ['lib/swarm/site_map.py', dir, '3'], { timeoutMs: 240000, onLine: line => { try { const item=JSON.parse(line); if(item.event) emit(job,[item.event]); } catch {} } }); }
       catch (error) { if (fs.existsSync(path.join(dir, 'site-analysis.json'))) await checkpointCrawl(job, dir); throw error; }

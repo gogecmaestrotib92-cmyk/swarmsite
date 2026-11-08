@@ -19,6 +19,7 @@ try {
     const events = [];
     const job = { id: scenario, _jobRoot: root, _dir: dir };
     const context = {
+      WORKER_ID: 'test-worker', setInterval, clearInterval, setTimeout, CURRENT_JOB_DIR: '',
       fs, path, ARTS: ['direction.json', 'contract.json'],
       console: { log() {}, warn() {}, error() {} },
       drainEvents: async () => {},

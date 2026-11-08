@@ -132,6 +132,7 @@ for (const terminal of ['done', 'failed']) {
 for (const externallyFinalized of [false, true]) {
   const gate = deferred(); const order = [];
   const context = {
+      WORKER_ID: 'test-worker', setInterval, clearInterval, setTimeout, CURRENT_JOB_DIR: '',
     process_: async () => { throw new Error('capture failed'); },
     drainEvents: async () => { order.push('drain-start'); await gate.promise; order.push('drain-end'); },
     updateWithRetry: async (_job, patch) => { order.push('terminal-update'); if (externallyFinalized) throw new Error('job is no longer running'); assert.equal(patch.status, 'failed'); },

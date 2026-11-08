@@ -13,7 +13,11 @@ import base64, io, json, os, sys
 from PIL import Image
 root = sys.argv[1]
 def picture(id, w, h, color):
-    b = io.BytesIO(); Image.new('RGB', (w, h), color).save(b, 'PNG')
+    # a flat colour is (correctly) treated as an empty capture, so give the fixture some content
+    from PIL import ImageDraw
+    im = Image.new('RGB', (w, h), color); dr = ImageDraw.Draw(im)
+    for i in range(0, w, 40): dr.rectangle((i, (i * 7) % h, i + 20, (i * 7) % h + 60), fill=(90 + i % 120, 60, 40))
+    b = io.BytesIO(); im.save(b, 'PNG')
     return {'id': id, 'w': w, 'h': h, 'detail': True,
             'data': 'data:image/png;base64,' + base64.b64encode(b.getvalue()).decode()}
 for name, kind, width, height, lede in [
@@ -66,7 +70,7 @@ try {
           mask: getComputedStyle(textEl, '::before').maskImage, scrollWidth: document.documentElement.scrollWidth };
       });
       assert.equal(metrics.scrollWidth, width, `${name} ${width}: horizontal overflow`);
-      assert.ok(metrics.figure.width * dpr <= metrics.naturalWidth * 1.35 + 2, `${name} ${width}: source stretched beyond DPR limit`);
+      assert.ok(metrics.figure.width <= metrics.naturalWidth * 1.35 + 2, `${name} ${width}: source stretched beyond its pixels`); // CSS pixels: a retina screen does not halve a photograph
       if (['place', 'boundary'].includes(name)) {
         if (width === 390 || metrics.figure.width <= 700) {
           assert.ok(Math.abs(metrics.figure.width / metrics.figure.height - metrics.naturalWidth / metrics.naturalHeight) < 0.01, 'compact layout shows the entire original image');
@@ -83,7 +87,7 @@ try {
           // Sample the rendered scrim next to every text element over a pure white image.
           await section.locator('.st-t').scrollIntoViewIfNeeded();
           const points = await section.evaluate(el => [...el.querySelectorAll('.st-t .lab,.st-t .h2,.st-t .lede,.st-t li')].map(x => {
-            const b = x.getBoundingClientRect(); return [Math.round(b.left - 6), Math.round((b.top + b.bottom) / 2)];
+            const b = x.getBoundingClientRect(); return [Math.round((b.left - 6) * devicePixelRatio), Math.round((b.top + b.bottom) / 2 * devicePixelRatio)];  // the screenshot is in device pixels
           }));
           const screenshot = path.join(dir, `contrast-${name}-${width}-${dpr}.png`);
           await page.screenshot({ path: screenshot });
@@ -92,7 +96,7 @@ try {
           for (const rgb of JSON.parse(sample.stdout)) {
             const linear = rgb.map(n => { const v = n / 255; return v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; });
             const lum = .2126 * linear[0] + .7152 * linear[1] + .0722 * linear[2];
-            assert.ok(1.05 / (lum + .05) >= 4.5, `rendered text contrast over white: ${rgb}`);
+            assert.ok(1.05 / (lum + .05) >= 4.5, `${name} ${width}@${dpr}: rendered text contrast over white: ${rgb}`);
           }
         }
       }
@@ -102,5 +106,5 @@ try {
   console.log('Editorial photo eligibility, content, contrast, and responsive sizing checks passed');
 } finally {
   if (browser) await browser.close();
-  fs.rmSync(dir, { recursive: true, force: true });
+  if (!process.env.KEEP) fs.rmSync(dir, { recursive: true, force: true });
 }

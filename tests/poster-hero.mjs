@@ -19,7 +19,9 @@ try {
   const output=path.join(dir,'index.html');const run=spawnSync(process.env.PYTHON||'python3',['lib/render/render_bp.py',dir,'crav',output],{encoding:'utf8'});assert.equal(run.status,0,run.stderr);
   for(const width of [320,390,1440]) {
    const page=await browser.newPage({viewport:{width,height:900},reducedMotion:'reduce'});await page.route(/^https?:/,r=>r.abort());await page.goto(pathToFileURL(output).href+'?nomotion=1');
-   const hero=page.locator('#top');assert.match(await hero.getAttribute('class'),/poster-composition/);assert.equal(await hero.locator('h1').innerText(),headline);assert.equal(await hero.locator('.poster-visual img').count(),withImage?1:0);assert.equal(await hero.locator('.ctas a').first().getAttribute('href'),'https://example.com/book');
+   const hero=page.locator('#top');const cls=await hero.getAttribute('class');assert.match(cls,/poster-composition|has-media poster/); /* a picture wide enough carries the type: the real poster; otherwise the composition */assert.equal(await hero.locator('h1').innerText(),headline);
+   const realPoster=/has-media poster/.test(cls);assert.equal(realPoster,withImage,'a wide picture gives the real poster, no picture gives the composition');if(realPoster){assert.equal(await hero.locator('.media img').count(),1);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),width);const h=await hero.locator('h1').boundingBox();assert.ok(h&&h.x>=0&&h.x+h.width<=width+1);await page.close();continue;}
+   assert.equal(await hero.locator('.poster-visual img').count(),0);assert.equal(await hero.locator('.ctas a').first().getAttribute('href'),'https://example.com/book');
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),width);const h=await hero.locator('h1').boundingBox();const c=await hero.locator('.ctas a').first().boundingBox();assert.ok(h&&c&&h.x>=0&&h.x+h.width<=width+1&&c.y>=h.y+h.height);if(withImage){const im=await hero.locator('.poster-visual img').boundingBox();assert.ok(im&&im.y>=c.y+c.height-1)}
    await page.close();
   }

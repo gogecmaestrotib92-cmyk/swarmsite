@@ -56,13 +56,13 @@ try {
         assert.equal(await section.locator('.ov-bg img').count(), 0, 'texture is not used as a CTA photograph');
       } else {
         assert.ok((await section.locator('.ov-bg img').getAttribute('src')) === images.find(i => i.id === 'dark-photo').data, 'dark photograph remains eligible');
-        if (name === 'duplicate-and-reserved') assert.equal(await page.locator('section.photo img').count(), 0, 'a duplicate of a reserved photo is not used as filler');
+        if (name === 'duplicate-and-reserved') assert.equal(await page.locator('section.photo:not(.hero) img').count(), 0, 'a duplicate of a reserved photo is not used as filler');
         if (name === 'free-and-reserved') {
-          assert.equal(await page.locator('section.photo img').count(), 0, 'a free photo does not create an unrequested filler section');
+          assert.equal(await page.locator('section.photo:not(.hero) img').count(), 0, 'a free photo does not create an unrequested filler section');
         }
         const layout = await section.evaluate(el => {
           const title = el.querySelector('.h2').getBoundingClientRect();
-          const button = el.querySelector('.ctas').getBoundingClientRect();
+          const button = (el.querySelector('.ctas') || el.querySelector('.form')).getBoundingClientRect(); // a form beat with a real form page renders the form itself
           const labels = [...el.querySelectorAll('.alts .lab')];
           const section = el.getBoundingClientRect();
           const content = el.querySelector('.ov-in').getBoundingClientRect();

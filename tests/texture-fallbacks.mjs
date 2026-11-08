@@ -47,7 +47,7 @@ for name in cases:
 const expected = {
   'story': ['dark-photo'], 'story-assigned': ['dark-photo'],
   'lead': ['dark-photo'], 'lead-assigned': ['dark-photo'], 'lead-explicit': [],
-  'sticky': [], 'sticky-positive': ['dark-photo', 'dark-photo'],
+  'sticky': ['dark-photo', 'dark-photo'], 'sticky-positive': ['dark-photo', 'dark-photo'],  // a rejected texture falls through to the best free photograph, same as story and lead
   'hero': [], 'hero-assigned': [], 'hero-positive': ['dark-photo'], 'hero-ui': ['ui-shot'],
 };
 
@@ -77,5 +77,5 @@ try {
   console.log('Texture fallback checks passed on desktop and mobile');
 } finally {
   if (browser) await browser.close();
-  fs.rmSync(dir, { recursive: true, force: true });
+  if (!process.env.KEEP) fs.rmSync(dir, { recursive: true, force: true });
 }
