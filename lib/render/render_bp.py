@@ -698,7 +698,8 @@ def build(slug_dir, bp_id, out_path=None):
             if directed: return directed
             own = images.get(bt.get('image'))
             dimensions = pixel_dimensions(own) if own and own.get('data') else None
-            product_photo_story = (bp_id == 'butter' and soft and (bt.get('ui') or {}).get('move') == 'story'
+            # a product screenshot beside a caption is a component for every software/product template, not one blueprint's privilege
+            product_photo_story = (soft and (bt.get('ui') or {}).get('move') == 'story'
                                    and (bt.get('h2') or bt.get('lede')) and own and own.get('shot') and dimensions and dimensions[0] >= 500 and dimensions[1] > 0
                                    and not is_used(own.get('id')) and free_for(own, bt)
                                    and not dark_background_texture(own) and not symbolic_asset(own))
@@ -786,7 +787,7 @@ def build(slug_dir, bp_id, out_path=None):
             fig = f'<figure class="st-v assigned-visual" style="--assigned-native:{width}px;--assigned-ratio:{width / height:.6f}"><img src="{src}" alt="{source_alt(src)}"></figure>'
         else:
             fig = f'<figure class="st-v"><img src="{src}" alt="{source_alt(src)}"></figure>'
-        editorial_product = (bp_id == 'butter' and soft and own and own.get('shot') and assigned_usable
+        editorial_product = (soft and own and own.get('shot') and assigned_usable
                              and (bt.get('ui') or {}).get('move') == 'story'
                              and bt.get('type') == 'features' and 2 <= len(items) <= 6
                              and not any(isinstance(f, dict) and f.get('image') for f in bt.get('features', []))

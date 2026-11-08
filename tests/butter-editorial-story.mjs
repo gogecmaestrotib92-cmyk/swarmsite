@@ -25,7 +25,7 @@ const cases = [
   {name: 'photo', editorial: false, length: 67, count: 3, photo: true},
   {name: 'cards', editorial: false, length: 67, count: 3, move: 'cards'},
   {name: 'individual-images', editorial: false, length: 67, count: 3, individual: true},
-  {name: 'other-blueprint', editorial: false, length: 67, count: 3, blueprint: 'cerebrium'},
+  {name: 'other-blueprint', editorial: true, length: 67, count: 3, blueprint: 'cerebrium'}, // a product component belongs to every software template, not one blueprint
   {name: 'other-kind', editorial: false, length: 67, count: 3, kind: 'place'},
   {name: 'unbroken-ascii', editorial: true, length: 40, count: 3, heading: 'W'.repeat(40), rawLede: 'W'.repeat(40), bounds: true},
   {name: 'unbroken-unicode', editorial: true, length: 40, count: 3, heading: '🧭'.repeat(40), rawLede: 'Ж'.repeat(40), bounds: true},
