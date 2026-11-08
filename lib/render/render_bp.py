@@ -1215,12 +1215,12 @@ def build(slug_dir, bp_id, out_path=None):
         """A form beat is a form: real input fields. It posts to the source's own form page when we found one, otherwise it is a visible preview
         (the live build wires it), never a bare link pretending to be a form."""
         fields = [str(f) for f in ((bt or {}).get('fields') or [])[:6] if str(f).strip()]
-        if not fields: return f'<div class="ctas">{cta_html(label=label, href=contact_target)}</div>'
         live = contact_target if contact_target and contact_target.startswith('http') else ''
-        attrs = f' action="{e(live)}" method="get" target="_blank" rel="noopener"' if live else ' onsubmit="return false" data-preview="form"'
+        # no fields, or no real form page behind it: an honest button, never a form that goes nowhere
+        if not fields or not live: return f'<div class="ctas">{cta_html(label=label, href=contact_target)}</div>'
+        attrs = f' action="{e(live)}" method="get" target="_blank" rel="noopener"'
         inputs = ''.join(f'<label><span>{e(f)}</span><input name="{e(re.sub(r"[^a-z0-9]+", "_", f.lower()).strip("_") or "field")}" placeholder="{e(f)}"{" type=\"email\"" if re.search(r"e-?mail", f, re.I) else " type=\"tel\"" if re.search(r"tel|phone|mobil", f, re.I) else ""}></label>' for f in fields)
-        lang = str(inventory.get('lang') or '').lower().split('-')[0]
-        note = '' if live else f'<p class="lab form-note">{e({"sr": "Obrazac (pregled)", "hr": "Obrazac (pregled)", "es": "Formulario (vista previa)", "fr": "Formulaire (aperçu)", "de": "Formular (Vorschau)", "it": "Modulo (anteprima)", "pt": "Formulário (pré-visualização)"}.get(lang, "Preview form"))}</p>'
+        note = ''
         return f'<form class="form"{attrs}>{inputs}<button class="btn" type="submit">{e(label or h.get("cta") or "Send")} <span class="ar">→</span></button>{note}</form>'
     def cta(sec, bt=None):
         title = (bt or {}).get('h2') or en.get('tag') or h.get('cta') or b['name']

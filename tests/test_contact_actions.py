@@ -40,9 +40,9 @@ class ContactActionsTest(unittest.TestCase):
             'actions': [{'text': 'Menu', 'href': 'https://example.test/menu'}],
             'forms': [{'source_url': 'https://example.test/#reservation', 'text': 'Reserve'}],
         }]})
-        self.assertIn('href="https://example.test/#reservation"', html)
+        self.assertTrue('href="https://example.test/#reservation"' in html or 'action="https://example.test/#reservation"' in html, 'the reservation form posts to the source form page')
         self.assertIn('href="https://example.test/menu"', html)
-        self.assertNotIn('<form ', html)
+        self.assertIn('<form class="form" action="https://example.test/#reservation"', html)  # a source form page behind it makes the rendered form real
 
     def test_uncaptured_destinations_and_fake_forms_are_omitted(self):
         self.direction['hero']['cta2_href'] = 'javascript:alert(1)'
