@@ -58,6 +58,8 @@ try {
   const servedHtml = fs.readFileSync(withMetadata);
   mock = http.createServer((req,res) => {
     if (req.url.startsWith('/storage/v1/object/')) { res.writeHead(200,{'content-type':'text/html'});res.end(servedHtml);return; }
+    const query = new URL(req.url, 'http://localhost').searchParams;
+    if (req.method === 'GET' && req.url.startsWith('/rest/v1/jobs?') && query.get('select') === 'status,result') { res.writeHead(200, {'content-type':'application/json'}); res.end(JSON.stringify({status:'done',result:{blueprints:['butter']}})); return; }
     res.writeHead(200,{'content-type':'application/json'}); res.end('[]');
   });
   await new Promise(resolve => mock.listen(0,'127.0.0.1',resolve));

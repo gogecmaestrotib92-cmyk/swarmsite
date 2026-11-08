@@ -3,7 +3,7 @@
   round k: Critic looks at the render → routes each defect to its owner (copy / ui / visual / ux) → owners fix in parallel → bounded critic ops → render
 Stops at --target score or --rounds. Prints one JSON line per event (the server turns them into swarm events) and a final {"done":…} line.
 Usage: python3 lib/swarm/run.py out/<slug> <blueprint-id> --out bp-<id>.html [--rounds 3] [--target 80]"""
-import json, os, sys, time, subprocess, traceback, shutil, tempfile
+import json, os, sys, time, subprocess, traceback, shutil, tempfile, hashlib
 from concurrent.futures import ThreadPoolExecutor
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.insert(0, os.path.join(ROOT, 'lib/swarm')); sys.path.insert(0, os.path.join(ROOT, 'lib/qa'))
@@ -13,10 +13,24 @@ import coverage_report as Coverage
 
 def ev(role, text): print(json.dumps({"event": {"role": role, "text": str(text)[:140]}}, ensure_ascii=False), flush=True)
 
+INPUTS = ('direction.json', 'images.json', 'assets.json', 'inventory.json', 'brief.json', 'hero.mp4')
+ENGINE = ('lib/render/render_bp.py', 'lib/templates/recipes.py', 'lib/visual_quality.py',
+          'lib/colour/palette.py', 'lib/colour_policy.py', 'lib/motion/moves.js', 'lib/motion/swarm.js')
+def digest(path):
+    if not os.path.isfile(path): return None
+    h = hashlib.sha256()
+    with open(path, 'rb') as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b''): h.update(chunk)
+    return h.hexdigest()
+def fingerprints(slug_dir, bp):
+    return {'inputs': {name: digest(os.path.join(slug_dir, name)) for name in INPUTS},
+            'engine': {name: digest(os.path.join(ROOT, name)) for name in (*ENGINE, f'lib/blueprints/{bp}.bp.json')}}
 def render(slug_dir, bp, out):
+    before = fingerprints(slug_dir, bp)
     r = subprocess.run([sys.executable, os.path.join(ROOT, 'lib/render/render_bp.py'), slug_dir, bp, out], capture_output=True, text=True, timeout=120)
     if r.returncode: raise RuntimeError('render: ' + r.stderr[-400:])
-    return out
+    if before != fingerprints(slug_dir, bp): raise RuntimeError('render inputs changed during render')
+    return {'fingerprints': before, 'html': digest(out)}
 
 OWNER = {'h1': 'copy', 'h2': 'copy', 'one-cta': 'ux', 'actionable-cta': 'ux', 'page-length': 'ux', 'sections': 'ux', 'upscaled': 'visual', 'duplicate': 'visual', 'first-screen': 'visual', 'empty': 'ui', 'overflow': 'ui', 'sticky': 'ui', 'pinned': 'ui', 'contrast': 'ui'}
 def contract(slug_dir, html):
@@ -108,8 +122,8 @@ def _main(snapshot_dir):
     for x in (vis.get('generated') or [])[:3]: ev('Visual', 'commissioned: ' + x)
     for x in (vis.get('gen_errors') or [])[:1]: ev('Visual', 'generation failed: ' + x)
     for x in (vis.get('need') or [])[:2]: ev('Visual', 'missing visual: ' + x)
-    render(slug_dir, bp, out); ev('Render', f'{bp} · round 0')
-    best_score, best_key, best_round, best_files = -1, None, None, None
+    render_manifest = render(slug_dir, bp, out); ev('Render', f'{bp} · round 0')
+    best_score, best_key, best_round, best_files, best_bp, best_manifest = -1, None, None, None, None, None
     for k in range(1, rounds + 1):
         t = time.time()
         # the contract (two viewports) and the critic's look (screenshots + model) are independent: grade both at once
@@ -131,7 +145,7 @@ def _main(snapshot_dir):
         log['rounds'].append({'k': k, 'score': score, 'taste': taste, 'contract': con.get('score'), 'broken': cfail, 'fixes': fixes, 'verdict': rep.get('verdict')})
         rank = (not cfail, score, -len(fixes))
         if best_key is None or rank > best_key:
-            best_score, best_key, best_round = score, rank, k
+            best_score, best_key, best_round, best_bp, best_manifest = score, rank, k, bp, render_manifest
         json.dump({**rep, 'score': score, 'taste': taste, 'contract': con.get('score'), 'broken': cfail, 'round': k, 'best': best_score}, open(os.path.join(slug_dir, 'critic.json'), 'w'), indent=1, ensure_ascii=False)
         if best_round == k:
             paths = [out] + [os.path.join(slug_dir, name) for name in ('direction.json', 'images.json', 'contract.json', 'critic.json')]
@@ -150,7 +164,7 @@ def _main(snapshot_dir):
             safe('Concept', A.concept, slug_dir, why, bp); safe('UX', A.ux, slug_dir, why); safe('Visual', A.visual, slug_dir, why); safe('UI', A.ui, slug_dir, why, bp)
             d = A.J(slug_dir, 'direction.json'); sw = d.get('swarm') or {}
             if sw.get('idea'): ev('Concept', 'idea: ' + sw['idea'])
-            render(slug_dir, bp, out); ev('Render', f'{bp} · restart'); continue
+            render_manifest = render(slug_dir, bp, out); ev('Render', f'{bp} · restart'); continue
         if len(log['rounds']) >= 2:
             previous = log['rounds'][-2]
             if rank <= (not previous['broken'], previous['score'], -len(previous['fixes'])):
@@ -168,13 +182,15 @@ def _main(snapshot_dir):
         with ThreadPoolExecutor(max_workers=4) as ex:
             res = list(ex.map(lambda j: (j[0], safe(j[0].upper() if j[0] in ('ux', 'ui') else j[0].capitalize(), j[1], slug_dir, j[2], *([bp] if j[0] == 'ui' else []))), jobs))
         if applied + sum(r for _, r in res) == 0: ev('Critic', 'nothing more the team can change'); break
-        render(slug_dir, bp, out); ev('Render', f'{bp} · round {k}')
+        render_manifest = render(slug_dir, bp, out); ev('Render', f'{bp} · round {k}')
     # Keep the selected render and the inputs and reports that describe it together.
     if best_files:
         for path, data in best_files.items():
             with open(path, 'wb') as f: f.write(data)
         restore_shots(slug_dir, snapshot_dir)
         if best_round != log['rounds'][-1]['k']: ev('Critic', f'kept round {best_round} with {best_score}/100')
+    if isinstance(best_manifest, dict) and (best_manifest['fingerprints'] != fingerprints(slug_dir, best_bp) or best_manifest['html'] != digest(out)):
+        raise RuntimeError('best snapshot changed after render')
     # Audit the selected render, after rolling back any weaker candidate.
     # A text match is not a semantic guarantee; unmatched sections require review.
     try:
@@ -187,8 +203,8 @@ def _main(snapshot_dir):
         log['coverage'] = {'error': str(e)[:200]}
         with open(os.path.join(slug_dir, 'coverage.json'), 'w', encoding='utf-8') as f:
             json.dump({'scope': 'single_page_preview', 'error': str(e)[:200]}, f)
-    log['best'] = best_score; log['best_round'] = best_round
+    log['best'] = best_score; log['best_round'] = best_round; log['best_blueprint'] = best_bp
     json.dump(log, open(os.path.join(slug_dir, 'swarm.json'), 'w'), indent=1, ensure_ascii=False)
-    print(json.dumps({"done": {"score": best_score, "rounds": len(log['rounds'])}}), flush=True)
+    print(json.dumps({"done": {"score": best_score, "rounds": len(log['rounds']), "best_blueprint": best_bp, "render_manifest": best_manifest}}), flush=True)
 
 if __name__ == '__main__': main()

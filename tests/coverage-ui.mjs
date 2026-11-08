@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { chromium } from 'playwright';
 
-const html = fs.readFileSync('web/app.html', 'utf8');
+const html = fs.readFileSync(process.env.SWARM_VARIANT_UI || 'web/app.html', 'utf8');
 const report = {
   scope: 'single_page_preview',
   source_catalog_truncated: true,
@@ -96,7 +96,8 @@ try {
   assert.ok(resized.previewTop >= resized.headerBottom-1 && resized.panelTop >= resized.headerBottom-1 && resized.panelBottom <= resized.barTop-5, 'resizing recalculates header and panel positions');
   await page.setViewportSize({width,height:900});
   await page.locator('#variants button').nth(1).click();
-  assert.equal(await page.locator('#coverage').isHidden(), true, 'primary report must not describe the alternative');
+  assert.equal(await page.locator('#coverage').isHidden(), false);
+  assert.match(await page.locator('#coveragePanel').textContent(), /not available for this alternative/);
   assert.match(await page.locator('#preview').getAttribute('src'), /bp=cerebrium/);
   await page.locator('#variants button').first().click();
   assert.equal(await page.locator('#coverage').isVisible(), true, 'primary report returns with selected variant');

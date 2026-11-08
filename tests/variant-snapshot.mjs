@@ -1,0 +1,25 @@
+import assert from 'node:assert/strict';import fs from 'node:fs';import os from 'node:os';import path from 'node:path';import crypto from 'node:crypto';import {spawnSync} from 'node:child_process';
+import {prepareAlternative,publishSelected,verifySelected} from '../server/variant_snapshot.mjs';
+const repo=process.cwd(), dir=fs.mkdtempSync(path.join(os.tmpdir(),'swarm-variant-test-')),root=path.join(dir,'repo'),job=path.join(dir,'job');fs.mkdirSync(root);fs.mkdirSync(job);fs.cpSync(path.join(repo,'lib'),path.join(root,'lib'),{recursive:true});
+const source=process.env.CAL_ARTIFACT_DIR||path.join(repo,'tests');for(const n of ['direction','images','assets','inventory','brief']){const f=path.join(source,process.env.CAL_ARTIFACT_DIR?`${n}.json`:`${n}.sample.json`);if(fs.existsSync(f))fs.copyFileSync(f,path.join(job,`${n}.json`));}
+const sha=f=>fs.existsSync(f)?crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex'):null;
+const input=['direction.json','images.json','assets.json','inventory.json','brief.json','hero.mp4'],engine=['lib/render/render_bp.py','lib/templates/recipes.py','lib/visual_quality.py','lib/colour/palette.py','lib/colour_policy.py','lib/motion/moves.js','lib/motion/swarm.js'];
+const fingerprint=bp=>({inputs:Object.fromEntries(input.map(n=>[n,sha(path.join(job,n))])),engine:Object.fromEntries([...engine,`lib/blueprints/${bp}.bp.json`].map(n=>[n,sha(path.join(root,n))]))});
+const run=async(_bin,args)=>{const r=spawnSync(process.env.PYTHON||'python3',args,{cwd:root,env:{...process.env,PYTHONHASHSEED:'0'},encoding:'utf8'});if(r.status!==0)throw new Error(r.stderr);};
+try{
+ const direction=JSON.parse(fs.readFileSync(path.join(job,'direction.json')));direction.hero.h1='FINAL SNAPSHOT TITLE';fs.writeFileSync(path.join(job,'direction.json'),JSON.stringify(direction));
+ // Simulate a restart that selected Cerebrium even though the reviewed path
+ // was created for Butter. The alternative must never overwrite that file.
+ const out=path.join(job,'bp-butter.html');await run('python3',['lib/render/render_bp.py',job,'cerebrium',out]);const original=fs.readFileSync(out);const manifest={fingerprints:fingerprint('cerebrium'),html:sha(out)};
+ verifySelected({dir:job,root,bp:'cerebrium',manifest,out});
+ const alt=await prepareAlternative({dir:job,root,primary:'cerebrium',alternate:'butter',manifest,out,run});assert.equal(alt.bp,'butter');assert.deepEqual(fs.readFileSync(out),original);assert.match(fs.readFileSync(alt.path,'utf8'),/FINAL SNAPSHOT TITLE/);
+ let keys=[];const upload=async(_f,key)=>keys.push(key);const result=await publishSelected({dir:job,root,primary:'cerebrium',alternate:alt,manifest,out,jobId:'job-id',upload,makeVersion:()=> 'a'.repeat(32)});assert.deepEqual(result.blueprints,['cerebrium','butter']);assert.deepEqual(keys,[`job-id/v-${'a'.repeat(32)}/index.html`,`job-id/v-${'a'.repeat(32)}/bp-butter.html`]);
+ keys=[];const failAlt=async(_f,key)=>{keys.push(key);if(key.includes('bp-'))throw Error('access denied')};const degraded=await publishSelected({dir:job,root,primary:'cerebrium',alternate:alt,manifest,out,jobId:'job-id',upload:failAlt,makeVersion:()=> 'b'.repeat(32)});assert.deepEqual(degraded.blueprints,['cerebrium']);assert.ok(keys.every(k=>k.includes(`v-${'b'.repeat(32)}`)));
+ await assert.rejects(()=>publishSelected({dir:job,root,primary:'cerebrium',alternate:alt,manifest,out,jobId:'job-id',upload:async()=>{throw Error('no storage')},makeVersion:()=> 'c'.repeat(32)}));
+ const images=path.join(job,'images.json'),imageData=fs.readFileSync(images);fs.appendFileSync(images,' ');assert.throws(()=>verifySelected({dir:job,root,bp:'cerebrium',manifest,out}),/changed/);fs.writeFileSync(images,imageData);
+ const mutateImages=async(...args)=>{await run(...args);fs.appendFileSync(images,' ')};await assert.rejects(()=>prepareAlternative({dir:job,root,primary:'cerebrium',alternate:'butter',manifest,out,run:mutateImages}),/changed/);fs.writeFileSync(images,imageData);
+ const bp=path.join(root,'lib/blueprints/butter.bp.json'),bpData=fs.readFileSync(bp);const mutateBp=async(...args)=>{await run(...args);fs.appendFileSync(bp,' ')};await assert.rejects(()=>prepareAlternative({dir:job,root,primary:'cerebrium',alternate:'butter',manifest,out,run:mutateBp}),/changed/);fs.writeFileSync(bp,bpData);
+ const engineFile=path.join(root,'lib/render/render_bp.py'),engineData=fs.readFileSync(engineFile);fs.appendFileSync(engineFile,'\n');assert.throws(()=>verifySelected({dir:job,root,bp:'cerebrium',manifest,out}),/changed/);fs.writeFileSync(engineFile,engineData);
+ const mutateOut=async(_f,key)=>{if(key.endsWith('index.html'))fs.appendFileSync(out,' ')};await assert.rejects(()=>publishSelected({dir:job,root,primary:'cerebrium',alternate:alt,manifest,out,jobId:'job-id',upload:mutateOut,makeVersion:()=> 'd'.repeat(32)}),/changed/);
+ console.log('Real renderer snapshot: restart identity, final alternative, collisions, stale assets/engine/BP, versioned uploads and failures pass');
+}finally{fs.rmSync(dir,{recursive:true,force:true})}

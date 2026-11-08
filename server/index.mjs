@@ -5,6 +5,7 @@
      capture (Playwright) → diagnose (py) → direct (LLM, py) → render (py) → qa (py) → upload (Supabase storage)
    Env: SUPABASE_URL, SUPABASE_SERVICE_KEY, ANTHROPIC_API_KEY, PORT, PUBLIC_ORIGIN (CORS), CHROME_PATH (optional) */
 import express from 'express'; import cors from 'cors'; import { createClient } from '@supabase/supabase-js';
+import { prepareAlternative, publishSelected, verifySelected, verifyAlternative } from './variant_snapshot.mjs';
 import { spawn } from 'node:child_process'; import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
 const HERE = path.dirname(fileURLToPath(import.meta.url)); const ROOT = path.resolve(HERE, '..');
 const sb = createClient(process.env.SUPABASE_URL || 'https://placeholder.supabase.co', process.env.SUPABASE_SERVICE_KEY || 'placeholder', { auth: { persistSession: false } });
@@ -35,19 +36,39 @@ app.get('/jobs/:id', async (req, res) => {
 });
 // Preview page: Supabase public storage serves HTML as text/plain (XSS guard), so we proxy it with the right type.
 const SELF = process.env.PUBLIC_API || (process.env.RAILWAY_PUBLIC_DOMAIN ? 'https://' + process.env.RAILWAY_PUBLIC_DOMAIN : 'http://localhost:' + (process.env.PORT || 8080));
+async function activePreview(id) {
+  const { data, error } = await sb.from('jobs').select('status,result').eq('id', id).single();
+  if (error || !data) throw new Error('preview metadata unavailable');
+  if (data.status === 'failed') return {failed:true, version:'', blueprints:[], artifactsAvailable:false};
+  if (data.status !== 'done') return null;
+  const result = data.result || {}, v = result.previewVersion;
+  if (v != null && (typeof v !== 'string' || !/^[0-9a-f]{32}$/.test(v) || !Array.isArray(result.blueprints))) throw new Error('invalid preview metadata');
+  return {version:v || '', blueprints:result.blueprints, artifactsAvailable:result.artifactsAvailable};
+}
 app.get('/jobs/:id/art/:name', async (req, res) => {
   if (!/^[0-9a-f-]{36}$/.test(req.params.id) || !ARTS.includes(req.params.name)) return res.status(400).end();
-  const { data, error } = await sb.storage.from(BUCKET).download(`${req.params.id}/art/${req.params.name}`); if (error || !data) return res.status(404).send('no artefact');
-  res.set({ 'content-type': req.params.name.endsWith('.html') ? 'text/plain; charset=utf-8' : 'application/json; charset=utf-8', 'access-control-allow-origin': '*', 'x-robots-tag': 'noindex' }); res.send(Buffer.from(await data.arrayBuffer()));
+  const requested = req.query.v == null ? '' : String(req.query.v); if (req.query.v != null && !/^[0-9a-f]{32}$/.test(requested)) return res.status(400).end();
+  let active; try { active = await activePreview(req.params.id); } catch { return res.status(503).send('preview metadata unavailable'); }
+  if (!active || (requested && requested !== active.version)) return res.status(404).send('preview not found');
+  const version = active.version; const prefix = version ? `${req.params.id}/v-${version}` : req.params.id;
+  const { data, error } = await sb.storage.from(BUCKET).download(`${prefix}/art/${req.params.name}`); if (error || !data) return res.status(404).send('no artefact');
+  res.set({ 'content-type': req.params.name.endsWith('.html') ? 'text/plain; charset=utf-8' : 'application/json; charset=utf-8', 'access-control-allow-origin': '*', 'cache-control': 'no-store', 'x-robots-tag': 'noindex' }); res.send(Buffer.from(await data.arrayBuffer()));
 });
 app.get('/p/:id', async (req, res) => {
   if (!/^[0-9a-f-]{36}$/.test(req.params.id)) return res.status(400).end();
-  const bp = /^[a-z0-9-]{2,24}$/.test(String(req.query.bp || '')) ? String(req.query.bp) : '';
-  const { data, error } = await sb.storage.from(BUCKET).download(`${req.params.id}/${bp ? 'bp-' + bp + '.html' : 'index.html'}`);
+  const bp = req.query.bp == null ? '' : String(req.query.bp); if (bp && !/^[a-z0-9-]{2,24}$/.test(bp)) return res.status(400).end();
+  const requested = req.query.v == null ? '' : String(req.query.v); if (req.query.v != null && !/^[0-9a-f]{32}$/.test(requested)) return res.status(400).end();
+  let active; try { active = await activePreview(req.params.id); } catch { return res.status(503).send('preview metadata unavailable'); }
+  if (!active || (requested && requested !== active.version)) return res.status(404).send('preview not found');
+  const version = active.version; const prefix = version ? `${req.params.id}/v-${version}` : req.params.id;
+  if (active.failed) return res.status(404).send('preview not found');
+  if (bp && Array.isArray(active.blueprints) && !active.blueprints.includes(bp)) return res.status(404).send('preview not found');
+  const file = bp && !(version && bp === active.blueprints[0]) ? 'bp-' + bp + '.html' : 'index.html';
+  const { data, error } = await sb.storage.from(BUCKET).download(`${prefix}/${file}`);
   if (error || !data) return res.status(404).send('preview not found');
   // These are temporary design previews, not the customer's published site.
   // Keep noindex at the HTTP layer so downloaded HTML remains publishable.
-  res.set({ 'content-type': 'text/html; charset=utf-8', 'cache-control': 'public, max-age=300', 'x-frame-options': 'ALLOWALL', 'x-robots-tag': 'noindex' });
+  res.set({ 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-frame-options': 'ALLOWALL', 'x-robots-tag': 'noindex' });
   res.send(Buffer.from(await data.arrayBuffer()));
 });
 app.listen(process.env.PORT || 8080, () => console.log('api on', process.env.PORT || 8080));
@@ -140,7 +161,7 @@ function eventsRender(dir) { const html = (() => { try { return fs.readFileSync(
 function eventsQA(qa) { return String(qa || '').split('\n').filter(Boolean).slice(0, 8).map(l => ({ role: 'QA', text: l.replace(/^\[(high|med|low)\]\s*/, '').slice(0, 70) })); }
 
 const ARTS = ['brief.json', 'critic.json', 'contract.json', 'coverage.json', 'factsheet.json', 'swarm.json', 'inventory.json', 'assets.json', 'images.json', 'geometry.json', 'audit.json', 'direction.json', 'mobile.json', 'index.html'];
-async function uploadArtefacts(job, dir) { let uploaded = true; for (const f of ARTS) { const fp = path.join(dir, f); if (fs.existsSync(fp)) { try { await upload(fp, `${job.id}/art/${f}`, f.endsWith('.html') ? 'text/html' : 'application/json'); } catch (e) { uploaded = false; console.warn('art', f, e.message); } } } return uploaded; }
+async function uploadArtefacts(job, dir, diagnostics = false) { let uploaded = true; for (const f of ARTS) { const fp = path.join(dir, f); if (fs.existsSync(fp)) { try { await upload(fp, `${job.id}/${!diagnostics && job._previewVersion ? `v-${job._previewVersion}/` : ''}art/${f}`, f.endsWith('.html') ? 'text/html' : 'application/json'); } catch (e) { uploaded = false; console.warn('art', f, e.message); } } } return uploaded; }
 const BP = { software: ['butter', 'cerebrium', 'deepbook'], place: ['tengile', 'white-desert', 'belgrade-arbor', 'units'], service: ['lpas', 'aino', 'atelier'], product: ['crav', 'halfdays'] };
 async function runClaimed(job) {
   try { await process_(job); console.log('done', job.id); }
@@ -159,7 +180,7 @@ async function runClaimed(job) {
     catch (updateError) { console.error('failed status update', job.id, updateError.message); }
     // If another actor already finalized this job, do not overwrite its
     // artifacts with files from this stale attempt.
-    try { if (markedFailed && job._dir) job._artifactsUploaded = await uploadArtefacts(job, job._dir); } catch {}
+    try { if (markedFailed && job._dir) job._artifactsUploaded = await uploadArtefacts(job, job._dir, true); } catch {}
   } finally {
     // Uploading artifacts is not enough: keep the local files until a terminal
     // status has also been confirmed by the database.
@@ -200,24 +221,35 @@ async function process_(job) {
         const o = await run('python3', ['lib/swarm/run.py', dir, job._bps[0], '--out', out, '--rounds', process.env.SWARM_ROUNDS || '3', '--target', process.env.SWARM_TARGET || '80', '--alt', job._bps[1] || ''], { timeoutMs: 900000, onLine: async l => { try { const j = JSON.parse(l); if (j.event) await emit(job, [j.event]); } catch {} } });
         const last = o.trim().split('\n').map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
         const done = last.find(j => j.done)?.done; const crit = J(path.join(dir, 'critic.json'));
+        if (!done?.best_blueprint || !done?.render_manifest || !job._bps.includes(done.best_blueprint)) throw new Error('selected blueprint identity unavailable');
+        job._primary = done.best_blueprint; job._manifest = done.render_manifest; job._reviewedOut = out;
         job._critic = crit ? { score: crit.best ?? crit.score, fixes: (crit.fixes || []).length, verdict: crit.verdict, rounds: done?.rounds } : null;
       } catch (e) { console.warn('swarm', e.message.slice(0, 300)); await emit(job, [{ role: 'QA', text: 'swarm loop failed: ' + e.message.slice(0, 80) }]); throw e; } }
     // the primary blueprint IS the page
-    if (job._bps[0]) fs.copyFileSync(path.join(dir, `bp-${job._bps[0]}.html`), path.join(dir, 'index.html'));
-    else throw new Error('no blueprint rendered');
+    if (!job._primary) throw new Error('no blueprint rendered');
+    const originalChoices = job._bps; const reviewed = job._reviewedOut;
+    verifySelected({dir, root:ROOT, bp:job._primary, manifest:job._manifest, out:reviewed});
+    fs.copyFileSync(reviewed, path.join(dir, 'index.html'));
+    const alternate = originalChoices.find(bp => bp !== job._primary);
+    if (alternate) { try { job._alternative = await prepareAlternative({dir, root:ROOT, primary:job._primary, alternate, manifest:job._manifest, out:reviewed, run}); }
+      catch (e) { verifySelected({dir, root:ROOT, bp:job._primary, manifest:job._manifest, out:reviewed}); console.warn('alternative unavailable', e.message); } }
+    job._bps = [job._primary, ...(job._alternative ? [job._alternative.bp] : [])];
   }); await emit(job, eventsRender(dir)); if (job._bps?.length) await emit(job, job._bps.map(b => ({ role: 'Concept', text: `blueprint variant: ${b}` })));
   let qa = null; await timed('qa', async () => { try { const o = await run('python3', ['lib/qa/check.py', path.join(dir, 'index.html')], { timeoutMs: 240000 }); qa = o.split('\n').filter(l => /QA score|\[(high|med|low)/.test(l)).join('\n'); } catch (e) { qa = 'qa skipped: ' + e.message.slice(0, 200); } }); await emit(job, eventsQA(qa));
   // Snapshot the result only after all previously queued progress is present.
   await drainEvents(job);
   const result = await timed('upload', async () => {
-    await upload(path.join(dir, 'index.html'), `${job.id}/index.html`, 'text/html'); const previewUrl = `${SELF}/p/${job.id}`;
-    for (const bp of (job._bps || [])) { try { await upload(path.join(dir, `bp-${bp}.html`), `${job.id}/bp-${bp}.html`, 'text/html'); } catch (e) { console.warn('bp upload', e.message); } }
+    const published = await publishSelected({dir, root:ROOT, primary:job._primary, alternate:job._alternative, manifest:job._manifest, out:path.join(dir, 'index.html'), jobId:job.id, upload});
+    job._bps = published.blueprints; job._previewVersion = published.version; const previewUrl = `${SELF}/p/${job.id}?v=${published.version}`;
     const beforeUrl = fs.existsSync(path.join(dir, 'before-hero.jpg')) ? await upload(path.join(dir, 'before-hero.jpg'), `${job.id}/before.jpg`, 'image/jpeg') : null;
     const direction = JSON.parse(fs.readFileSync(path.join(dir, 'direction.json'), 'utf8'));
-    return { ...(job._result || {}), previewUrl, beforeUrl, qa, coverage: J(path.join(dir, 'coverage.json')), blueprints: job._bps || [], critic: job._critic || null, direction: { kind: direction.kind, concept: direction.concept, voice: direction.voice, brand: direction.brand, beats: direction.beats.map(b => b.type), audit_notes: direction.audit_notes }, seconds: Math.round((Date.now() - t0) / 1000) };
+    return { ...(job._result || {}), previewUrl, previewVersion:published.version, beforeUrl, qa, coverage: J(path.join(dir, 'coverage.json')), blueprints: job._bps || [], critic: job._critic || null, direction: { kind: direction.kind, concept: direction.concept, voice: direction.voice, brand: direction.brand, beats: direction.beats.map(b => b.type), audit_notes: direction.audit_notes }, seconds: Math.round((Date.now() - t0) / 1000) };
   });
   job._artifactsUploaded = await uploadArtefacts(job, dir);
+  result.artifactsAvailable = job._artifactsUploaded; result.artifactsVersion = job._previewVersion;
   await drainEvents(job);
+  verifySelected({dir, root:ROOT, bp:job._primary, manifest:job._manifest, out:path.join(dir, 'index.html')});
+  if (result.blueprints.length > 1) verifyAlternative({root:ROOT, alternate:job._alternative});
   await updateWithRetry(job, { status: 'done', step: 'done', result, slug });
   job._terminalPersisted = true;
 }
