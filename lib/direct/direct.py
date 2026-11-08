@@ -199,12 +199,13 @@ def ground_testimonials(doc, inv):
     """Keep only quote/attribution pairs present together in source evidence.
 
     Model-written quotes are untrusted, even when the model fact sheet lists
-    them. A selected quote section can additionally render complete figure
-    candidates from that source section, in their original order.
+    them. Complete visible homepage figure/quote/caption pairs are retained
+    even if the model never selected that section, in their source order.
     """
     from urllib.parse import urlsplit
     norm = lambda text: re.sub(r'\s+', ' ', str(text or '')).strip().casefold()
-    sections = list((inv.get('sourceCoverage') or {}).get('sections') or [])
+    homepage = [s for s in ((inv.get('sourceCoverage') or {}).get('sections') or []) if isinstance(s, dict)]
+    sections = list(homepage)
     for page in inv.get('sourcePages') or []:
         if isinstance(page, dict): sections.extend(page.get('sections') or [])
     by_id = {str(s.get('id')): s for s in sections if isinstance(s, dict) and s.get('id')}
@@ -214,7 +215,7 @@ def ground_testimonials(doc, inv):
         if not isinstance(entries, list): continue
         valid = []; skipped = 0
         for item in entries:
-            if not isinstance(item, dict) or item.get('status') != 'candidate': skipped += 1; continue
+            if not isinstance(item, dict) or item.get('status') != 'candidate' or item.get('hidden') or item.get('ariaHidden') or item.get('visible') is False: skipped += 1; continue
             text, attribution = item.get('text'), item.get('attribution')
             links = item.get('links')
             if not isinstance(text, str) or not text.strip() or not isinstance(attribution, str) or not attribution.strip() or not isinstance(links, list) or len(links) > 1 or any(item.get(k) for k in ('textTruncated', 'attributionTruncated', 'linksTruncated')):
@@ -234,30 +235,36 @@ def ground_testimonials(doc, inv):
     def verified(beat):
         text, who = norm(beat.get('body')), norm(beat.get('who'))
         return bool(text and who and (text, who) in pairs)
-    def existing_group_source(beat):
+    def existing_group_sources(beat):
         source_ids = beat.get('source_sections') or []
-        if not isinstance(source_ids, list) or len(source_ids) != 1: return ''
-        source_id = str(source_ids[0])
-        return source_id if validated.get(source_id) else ''
+        if not isinstance(source_ids, list) or not source_ids: return []
+        return list(dict.fromkeys(str(source_id) for source_id in source_ids if validated.get(str(source_id))))
     beats = doc.get('beats') or []
     ids = {str(b.get('id')) for b in beats if isinstance(b, dict)}
-    slots = max(0, 48 - sum(1 for b in beats if (b.get('type') != 'quote' or verified(b)) and (b.get('type') != 'testimonials' or existing_group_source(b))))
+    slots = max(0, 48 - sum(1 for b in beats if (b.get('type') != 'quote' or verified(b)) and (b.get('type') != 'testimonials' or existing_group_sources(b))))
     # Existing grids are reconstituted from source evidence on every pass;
     # this also prevents duplicating them when auditing an earlier direction.
-    seen_sections = {existing_group_source(b) for b in beats if b.get('type') == 'testimonials' and existing_group_source(b)}
+    seen_sections = {source_id for b in beats if b.get('type') == 'testimonials' for source_id in existing_group_sources(b)}
     new_beats = []; emitted_groups = set()
     for beat in beats:
         if beat.get('type') == 'testimonials':
-            source_id = existing_group_source(beat)
-            if not source_id:
+            source_ids = existing_group_sources(beat)
+            if not source_ids:
                 doc.setdefault('audit_notes', []).append(f"Review group {beat.get('id', '')} was omitted: complete source evidence is unavailable; review it.")
                 continue
-            if source_id in emitted_groups:
-                doc.setdefault('audit_notes', []).append(f'Duplicate review group for {source_id} was omitted.')
+            original_ids = beat.get('source_sections') if isinstance(beat.get('source_sections'), list) else []
+            if any(str(source_id) not in source_ids for source_id in original_ids):
+                note = f"Some source evidence for review group {beat.get('id', '')} is incomplete or unavailable; review it."
+                if note not in doc.setdefault('audit_notes', []): doc['audit_notes'].append(note)
+            source_ids = [source_id for source_id in source_ids if source_id not in emitted_groups]
+            if not source_ids:
+                doc.setdefault('audit_notes', []).append('A duplicate review group was omitted.')
                 continue
-            emitted_groups.add(source_id)
+            emitted_groups.update(source_ids)
             output = dict(beat)
-            output.update({'h2': by_id[source_id].get('title') or '', 'testimonials': validated[source_id]})
+            output.update({'h2': by_id[source_ids[0]].get('title') or '' if len(source_ids) == 1 else '',
+                           'source_sections': source_ids,
+                           'testimonials': [item for source_id in source_ids for item in validated[source_id]]})
             new_beats.append(output)
             continue
         if beat.get('type') != 'quote':
@@ -317,10 +324,29 @@ def ground_testimonials(doc, inv):
     group_pairs = {}
     for b in new_beats:
         source_ids = b.get('source_sections') or []
-        if b.get('type') != 'testimonials' or not isinstance(source_ids, list) or len(source_ids) != 1: continue
-        source_id = str(source_ids[0])
-        group_pairs.setdefault(source_id, set()).update((norm(item.get('text')), norm(item.get('attribution'))) for item in b.get('testimonials') or [])
-    anchored = {str(link[0])[1:] for link in (doc.get('nav') or {}).get('links', []) if isinstance(link, (list, tuple)) and link and str(link[0]).startswith('#')}
+        if b.get('type') != 'testimonials' or not isinstance(source_ids, list): continue
+        for source_id in source_ids:
+            group_pairs.setdefault(str(source_id), set()).update((norm(item.get('text')), norm(item.get('attribution'))) for item in validated.get(str(source_id), []))
+    # Preserve every possible internal target, not just nav.links: links can
+    # also be attached to the hero, another beat, the ending or future fields.
+    # Collecting fragment strings recursively is deliberately conservative:
+    # a harmless false positive keeps a quote, whereas deleting a referenced
+    # quote would create a broken link.
+    from urllib.parse import unquote
+    def internal_targets(value):
+        if isinstance(value, dict):
+            for child in value.values(): yield from internal_targets(child)
+        elif isinstance(value, (list, tuple)):
+            for child in value: yield from internal_targets(child)
+        elif isinstance(value, str):
+            candidate = value.strip()
+            if '#' in candidate and not re.search(r'\s', candidate):
+                try:
+                    fragment = urlsplit(candidate).fragment
+                    if fragment: yield unquote(fragment)
+                except ValueError:
+                    pass
+    anchored = set(internal_targets(doc))
     seen_quotes = set(); deduped = []
     for b in new_beats:
         source_ids = b.get('source_sections') or []
@@ -340,7 +366,62 @@ def ground_testimonials(doc, inv):
         duplicate = pair in group_pairs.get(source_id, set()) or key in seen_quotes
         if duplicate and not extra: continue
         deduped.append(b); seen_quotes.add(key)
-    doc['beats'] = deduped
+    # An LLM may omit the entire review wall or omit source_sections. Recover
+    # complete, attributed homepage quotes directly from capture evidence;
+    # never invent text, bind a subpage to the homepage, or drop existing beats.
+    present = {str(source_id) for b in deduped if b.get('type') == 'testimonials'
+               for source_id in (b.get('source_sections') if isinstance(b.get('source_sections'), list) else [])}
+    missing = []
+    notes = doc.setdefault('audit_notes', [])
+    def note_once(message):
+        if message not in notes: notes.append(message)
+    for section in homepage:
+        source_id = str(section.get('id') or '')
+        if not source_id: continue
+        if issues.get(source_id):
+            note_once(f'Additional review evidence in {source_id} was incomplete or ambiguous and needs review.')
+        if source_id not in present and validated.get(source_id): missing.append(source_id)
+    available = max(0, 48 - len(deduped))
+    if missing and not available:
+        note_once('Some source-attributed quotes need review; no room remains in the 48-beat limit.')
+    elif missing:
+        # Keep sections separate when possible. When only a few beat slots are
+        # left, combine remaining source groups rather than drop source pairs.
+        groups = [[source_id] for source_id in missing]
+        if len(groups) > available:
+            groups = groups[:available - 1] + [[source_id for group in groups[available - 1:] for source_id in group]]
+        recovered = []
+        for group in groups:
+            id_ = 'source-reviews-' + re.sub(r'[^\w-]+', '-', group[0]).strip('-')
+            while id_ in ids: id_ += '-source'
+            ids.add(id_)
+            recovered.append({'id': id_, 'type': 'testimonials', 'source_sections': group,
+                              'h2': (by_id[group[0]].get('title') or '') if len(group) == 1 else '',
+                              'testimonials': [item for source_id in group for item in validated[source_id]]})
+        # Proof belongs before objections/contact; preserve every existing beat
+        # and the order of recovered source sections.
+        insert_at = next((i for i, b in enumerate(deduped) if b.get('type') in ('faq', 'form')), len(deduped))
+        deduped[insert_at:insert_at] = recovered
+    # A verified model quote may not carry a source id. If the exact same
+    # quote/attribution is now in a recovered grid, omit the redundant bare
+    # quote only when it has no independent content or navigation anchor.
+    recovered_pairs = {(norm(item.get('text')), norm(item.get('attribution')))
+                       for b in deduped if b.get('type') == 'testimonials'
+                       for item in b.get('testimonials') or []}
+    result = []
+    for beat in deduped:
+        if beat.get('type') != 'quote' or beat.get('source_sections'):
+            result.append(beat); continue
+        pair = (norm(beat.get('body')), norm(beat.get('who')))
+        extra = str(beat.get('id', '')) in anchored
+        for name, value in beat.items():
+            if name in ('id', 'type', 'source_sections', 'body', 'who', 'band'): continue
+            if name == 'ui':
+                if isinstance(value, dict) and any(value.get(k) for k in ('lead', 'image', 'media')): extra = True
+                continue
+            if value is not None and value != '' and value != [] and value != {}: extra = True
+        if pair not in recovered_pairs or extra: result.append(beat)
+    doc['beats'] = result
     return doc
 
 def direct(slug_dir, model='claude-sonnet-5-5'):
