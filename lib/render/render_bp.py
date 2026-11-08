@@ -158,7 +158,7 @@ def build(slug_dir, bp_id, out_path=None):
         media = sec_media(bp['sections'][0]); light = bool(media)
         vid = os.path.join(slug_dir, 'hero.mp4')
         hm = images.get(h.get('media')) or {}
-        if hm and ('svg' in str(hm.get('data', ''))[:30] or hm.get('w', 0) < 700 or not (.5 <= hm.get('w', 1) / max(1, hm.get('h', 1)) <= 2.4)): hm = {}  # vector art, a logo or a banner is not a hero picture
+        if hm and ('svg' in str(hm.get('data', ''))[:30] or hm.get('w', 0) < (700 if soft else 1000) or not (.5 <= hm.get('w', 1) / max(1, hm.get('h', 1)) <= 2.4) or (hm.get('shot') and not soft)): hm = {}  # vector art, a logo, a banner, a small file or (for a place) a page screenshot is not a hero picture
         cand = hm or next((i for i in sorted(images.values(), key=lambda i: -(i.get('w', 0) * i.get('h', 0))) if photo_like(i, 900) and reserved.get(i.get('id')) in (None, '__hero__')), None)
         src = img(cand['id'], True) if cand else img(None, True)
         if media and src:
