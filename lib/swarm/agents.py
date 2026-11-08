@@ -67,7 +67,7 @@ def reader(slug_dir):
     inv = J(slug_dir, 'inventory.json') or {}
     # Structured review/panel candidates remain in the inventory for a
     # deterministic verifier; do not expand or misrepresent the Reader prompt.
-    subpages = [{**page, 'sections': [{k: v for k, v in section.items() if k not in ('testimonials', 'panels')}
+    subpages = [{**page, 'sections': [{k: v for k, v in section.items() if k not in ('testimonials', 'panels', 'sourceActions')}
                                     for section in (page.get('sections') or []) if isinstance(section, dict)]}
                 for page in (inv.get('sourcePages') or []) if isinstance(page, dict)]
     catalog = inv.get('sourceCoverage') or {}

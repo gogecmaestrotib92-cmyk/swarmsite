@@ -6,6 +6,7 @@ const html = fs.readFileSync('web/app.html', 'utf8');
 const report = {
   scope: 'single_page_preview',
   source_catalog_truncated: true,
+  source_actions_needing_review: true,
   sections: [
     { title: 'Frequently asked questions', status: 'needs_review', faq: [
       { question: 'What is included?', status: 'text_detected' },
@@ -13,10 +14,11 @@ const report = {
       { question: 'Where is the rest?', status: 'source_incomplete' },
       { question: 'Is support included?', status: 'needs_review' },
     ] },
-    { title: 'Booking tools', status: 'text_detected', source_text_truncated: true,
+    { title: 'Booking tools', status: 'text_detected', source_text_truncated: true, source_actions_version: 1, source_actions_truncated: true, source_actions_excluded: 2,
+      source_actions: [{label:'Explore apps',url:'https://example.com/apps',status:'url_detected'},{label:'Missing <img src=x>',url:'https://example.com/missing',status:'needs_review'},{label:'Unsafe action',url:'javascript:alert(1)',status:'needs_review'},{label:'Local action',url:'http://localhost.:8080/',status:'needs_review'}],
       testimonials: [{attribution:'Ada',status:'text_detected'},{attribution:'<img src=x onerror=alert(1)>',status:'needs_review'}],
       panels: [{trigger:'Case study',status:'needs_review',source_excerpt:'Captured <img src=x> details.',source_links:[{label:'Original story',url:'https://example.com/customer'},{label:'Unsafe panel link',url:'javascript:alert(1)'}]},{trigger:'Hidden panel',status:'source_incomplete'}] },
-    { title: '<img src=x onerror=alert(1)>', status: 'needs_review' },
+    { title: '<img src=x onerror=alert(1)>', status: 'needs_review', source_actions_version: null, source_actions: [] },
   ],
   routes: [
     { label: 'Pricing', url: 'https://example.com/pricing', status: 'linked_to_source' },
@@ -54,6 +56,17 @@ try {
   await page.locator('#coverage > summary').click();
   assert.equal(await page.getByText('Frequently asked questions', { exact: true }).count(), 1);
   assert.equal(await page.getByText('This source inventory is incomplete; more sections or pages may need review.').count(), 1);
+  assert.equal(await page.getByText('Some original links need review: they may be missing, excluded from capture, or truncated.').count(), 1);
+  assert.equal(await page.getByText('Links open original destinations. A URL found in the preview does not confirm its label, placement, visibility or functionality.').count(), 1);
+  assert.equal(await page.getByText('Link capture truncated · 2 excluded from link capture').count(), 1);
+  assert.equal(await page.getByText('Link capture unavailable').count(), 1);
+  assert.equal(await page.getByText('Explore apps', {exact:true}).getAttribute('href'), 'https://example.com/apps');
+  assert.equal(await page.getByText('Explore apps', {exact:true}).getAttribute('rel'), 'noopener noreferrer');
+  assert.equal(await page.getByText('URL found in preview — check link').count(), 1);
+  assert.equal(await page.getByText('Needs review — URL not found in preview').count(), 3);
+  assert.equal(await page.getByText('Missing <img src=x>', {exact:true}).count(), 1);
+  assert.equal(await page.getByText('Unsafe action', {exact:true}).evaluate(el=>el.tagName), 'SPAN');
+  assert.equal(await page.getByText('Local action', {exact:true}).evaluate(el=>el.tagName), 'SPAN');
   assert.equal(await page.getByText('Matching title found — check details · Source section text was truncated').count(), 1);
   assert.equal(await page.getByText('Needs review — title not matched').count(), 2);
   assert.equal(await page.getByText('Linked to original page').count(), 1);

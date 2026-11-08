@@ -195,10 +195,77 @@ def build(slug_dir, bp_id, out_path=None):
         label = h.get('cta2')
         target = action_url(label, h.get('cta2_href')) if label else ''
         return f'<a class="btn ghost{" light" if light else ""}" href="{e(target)}">{e(label)}</a>' if target else ''
+    # This mapping is evidence from the page itself, not model-generated URLs.
+    source_sections = {str(s.get('id')): s for s in (inventory.get('sourceCoverage') or {}).get('sections', [])
+                       if isinstance(s, dict) and s.get('id')}
+    emitted_source_sections = set()
+    source_owner = {}
+    def assign_source_owners(renderable_beats):
+        source_owner.clear()
+        for beat in renderable_beats:
+            sections_for_beat = beat.get('source_sections') if isinstance(beat.get('source_sections'), list) else []
+            for source_id in dict.fromkeys(map(str, sections_for_beat)):
+                sec = source_sections.get(source_id)
+                if not sec: continue
+                # Reuse the section's real FAQ/testimonial component when available;
+                # otherwise a dedicated single-source beat beats a broad grouping.
+                score = (30 if sec.get('faq') and beat.get('type') == 'faq' else 0) + (30 if sec.get('testimonials') and beat.get('type') == 'testimonials' else 0) + (10 if len(sections_for_beat) == 1 else 0)
+                if source_id not in source_owner or score > source_owner[source_id][0]: source_owner[source_id] = (score, beat.get('id'))
+    def captured_source_actions(rendered, bt):
+        from html.parser import HTMLParser
+        from urllib.parse import urlsplit
+        class Anchors(HTMLParser):
+            def __init__(self): super().__init__(convert_charrefs=True); self.open = None; self.pairs = set()
+            def handle_starttag(self, tag, attrs):
+                if tag == 'a': self.open = [dict(attrs).get('href', ''), []]
+            def handle_data(self, text):
+                if self.open is not None: self.open[1].append(text)
+            def handle_endtag(self, tag):
+                if tag == 'a' and self.open is not None:
+                    label = re.sub(r'\s*→\s*$', '', ' '.join(''.join(self.open[1]).split())).casefold()
+                    self.pairs.add((self.open[0], label)); self.open = None
+        anchors = Anchors(); anchors.feed(rendered)
+        for key in ('cta', 'cta2'):
+            label = bt.get(key)
+            url = action_url(label, bt.get(key + '_href'), include_forms=True) if label else ''
+            if url: anchors.pairs.add((url, ' '.join(str(label).split()).casefold()))
+        lang = str(inventory.get('lang') or '').lower().split('-')[0]
+        heading = {'es':'Enlaces originales','sr':'Originalni linkovi','hr':'Izvorne poveznice','fr':'Liens originaux','de':'Originale Links','pt':'Links originais','it':'Link originali'}.get(lang, 'Original links')
+        sources = bt.get('source_sections'); sources = sources if isinstance(sources, list) else []
+        groups = []
+        for sid in sources:
+            sid = str(sid)
+            sec = source_sections.get(sid)
+            if sid in emitted_source_sections or not sec or sec.get('sourceActionsVersion') != 1: continue
+            if source_owner.get(sid, (None, None))[1] != bt.get('id'): continue
+            if sec.get('headingLevel') not in ('H2', 'H3') or sec.get('kind') == 'unheaded': continue
+            title = str(sec.get('title') or '').strip()
+            if not title: continue
+            links = []
+            evidence = sec.get('sourceActions') if isinstance(sec.get('sourceActions'), list) else []
+            for a in evidence[:20]:
+                if not isinstance(a, dict): continue
+                label, url = a.get('label'), a.get('url')
+                if not isinstance(label, str) or not label.strip() or len(label) > 160 or not isinstance(url, str) or re.search(r'[\x00-\x20\x7f]', url): continue
+                try:
+                    u = urlsplit(url); host = (u.hostname or '').lower(); _port = u.port
+                    host = host.rstrip('.')
+                    if u.scheme not in ('http', 'https') or not host or u.username or u.password or host == 'localhost' or host.endswith(('.local','.internal','.localhost')) or ':' in host or re.fullmatch(r'\d+\.\d+\.\d+\.\d+', host): continue
+                except ValueError: continue
+                pair = (url, ' '.join(label.split()).casefold())
+                if pair in anchors.pairs: continue
+                anchors.pairs.add(pair)
+                links.append(f'<li><a href="{e(url)}" target="_blank" rel="noopener noreferrer">{e(label)} ↗</a></li>')
+            emitted_source_sections.add(sid)
+            if links: groups.append(f'<div><p class="source-actions-label">{e(heading)} · {e(title)}</p><ul>{"".join(links)}</ul></div>')
+        return f'<aside class="wrap source-actions">{"".join(groups)}</aside>' if groups else ''
     def section_extras(rendered, bt):
         # All list/photo/quote renderers share the same source-backed actions.
         # Ledger and form already render their own actions.
-        if not rendered or bt['type'] in ('ledger', 'form') or '</section>' not in rendered: return rendered
+        if not rendered or '</section>' not in rendered: return rendered
+        source_actions_html = captured_source_actions(rendered, bt)
+        if bt['type'] in ('ledger', 'form'):
+            return rendered.rsplit('</section>', 1)[0] + source_actions_html + '</section>' if source_actions_html else rendered
         note = bt.get('note') if bt['type'] == 'steps' else ''
         note_html = f'<p class="section-note">{e(note)}</p>' if note else ''
         links = []
@@ -208,8 +275,8 @@ def build(slug_dir, bp_id, out_path=None):
             if target:
                 links.append(f'<a class="btn" href="{e(target)}">{e(label)} <span class="ar">→</span></a>')
         actions_html = f'<div class="section-actions">{"".join(links)}</div>' if links else ''
-        if not note_html and not actions_html: return rendered
-        extra = f'<div class="wrap section-extras">{note_html}{actions_html}</div>'
+        if not note_html and not actions_html and not source_actions_html: return rendered
+        extra = (f'<div class="wrap section-extras">{note_html}{actions_html}</div>' if note_html or actions_html else '') + source_actions_html
         return rendered.rsplit('</section>', 1)[0] + extra + '</section>'
     lab = lambda t, light=False: f'<span class="lab{" light" if light else ""}">{e(t)}</span>' if t else ''
     pos = {bt['id']: i + 1 for i, bt in enumerate(d.get('beats', []))}
@@ -363,7 +430,11 @@ def build(slug_dir, bp_id, out_path=None):
         # Pinning gives this section a fixed scroll height. Its sticky stage
         # can cover content appended after the stage, so use a normal flow for
         # beats with an additional note or action.
-        if bt.get('note') or bt.get('cta') or bt.get('cta2'):
+        source_ids = bt.get('source_sections') if isinstance(bt.get('source_sections'), list) else []
+        has_source_actions = any(source_owner.get(str(sid), (None, None))[1] == bt.get('id') and
+                                 source_sections.get(str(sid), {}).get('sourceActionsVersion') == 1 and
+                                 bool(source_sections.get(str(sid), {}).get('sourceActions')) for sid in source_ids)
+        if bt.get('note') or bt.get('cta') or bt.get('cta2') or has_source_actions:
             return static_fallback()
         if len(items) < 2 or len(items) > 5: return static_fallback()
         # A section-level photo is not evidence that it depicts an individual offer.
@@ -912,6 +983,8 @@ def build(slug_dir, bp_id, out_path=None):
             return True
         beats = [bt for bt in beats if _sane(bt)]
         remaining = [bt for bt in beats if bt['type'] != 'form']; form_bt = next((bt for bt in beats if bt['type'] == 'form'), None)
+        renderable = [bt for bt in remaining if bt['type'] != 'testimonials' or testimonials({}, bt)] + ([form_bt] if form_bt else [])
+        assign_source_owners(renderable)
         def sec_for(comp):
             fam = 'statement' if comp in ('statement', 'quote-band', 'type-wall') else 'photo' if comp in ('photo', 'photo-pair', 'collage', 'overlay') else 'cta' if comp.startswith('cta') else 'list'
             return take(fam)
@@ -965,6 +1038,7 @@ def build(slug_dir, bp_id, out_path=None):
                 photo_title_style = re.sub(r'font-size:[^;]+', 'font-size:clamp(42px,6vw,88px)', photo_title_style)
             out.append(f'<section class="sec overlay cta-ov" id="{e((form_bt or {}).get("id") or form_id)}" data-sig="parallax"><figure class="ov-bg"><img src="{ps[0]}" alt=""></figure><div class="wrap ov-in light center">{lab((form_bt or {}).get("label"), True)}<h2 class="h2 light" style="{photo_title_style};text-align:center;margin:0 auto">{e(title)}</h2>{form}<div class="alts">{alt}</div></div></section>')
         else: out.append(cta(take('cta'), form_bt))
+        if form_bt: out[-1] = section_extras(out[-1], form_bt)
         out.append(footer(bp['sections'][-1] if bp['sections'][-1]['role'].startswith('footer') else {}))
     def default_move(role, t):
         # the winner's own section vocabulary → our signature component
@@ -973,11 +1047,14 @@ def build(slug_dir, bp_id, out_path=None):
         if role.startswith('pinned') and t == 'steps': return 'pinned-sequence'
         if role.startswith(('story', 'tabs-media', 'photo-half-text')) and t in ('features', 'steps', 'cells', 'facts'): return 'story'
         return ''
+    if not RECIPE:
+        renderable_types = ('quote', 'photo', 'ledger', 'features', 'cells', 'steps', 'facts', 'faq', 'form', 'testimonials')
+        assign_source_owners([bt for bt in beats if bt.get('type') in renderable_types and (bt.get('type') != 'testimonials' or testimonials({}, bt))])
     for bt in ([] if RECIPE else beats):
         t = bt['type']; mv = (bt.get('ui') or {}).get('move') or ''
         if t == 'testimonials':
             html_ = testimonials(take('list'), bt)
-            if html_: out.append(html_); used_beats.add(bt['id'])
+            if html_: out.append(section_extras(html_, bt)); used_beats.add(bt['id'])
             continue
         if mv == 'auto' or not mv:
             fam = 'statement' if t == 'quote' else 'photo' if t == 'photo' else 'cta' if t == 'form' else 'list'
@@ -1028,6 +1105,7 @@ img,video{{display:block;max-width:100%}}a{{color:inherit;text-decoration:none}}
 .btn{{display:inline-flex;align-items:center;gap:10px;min-height:var(--btn-h);padding:var(--btn-pad);border-radius:var(--btn-r);font-family:var(--body);font-size:var(--btn-px);font-weight:{BT.get('w', 500)};text-transform:var(--btn-tt);background:var(--{'accent' if lum(accent) < .8 and abs(lum(accent) - lum(ink)) > .18 else 'ink'});color:{'var(--paper)' if not (lum(accent) < .8 and abs(lum(accent) - lum(ink)) > .18) else ('#111' if lum(accent) > .55 else '#fff')};border:1px solid transparent;transition:transform var(--fast) var(--ease),background var(--fast)}}
 .btn.ghost{{background:transparent;color:var(--ink);border-color:var(--ink)}}.btn.light{{color:var(--on-photo);border-color:var(--on-photo);background:transparent}}.btn.light:not(.ghost){{background:var(--on-photo);color:#111;border-color:var(--on-photo)}}.btn:active{{transform:scale(.97)}}.btn .ar{{transition:transform var(--fast) var(--ease)}}.btn:hover .ar{{transform:translateX(4px)}}
 .section-extras{{position:relative;z-index:1;margin-top:28px;overflow-wrap:anywhere}}.section-note{{max-width:var(--body-max);line-height:1.5}}.section-actions{{display:flex;flex-wrap:wrap;gap:12px}}.section-note+.section-actions{{margin-top:16px}}.section-actions .btn{{max-width:100%;overflow-wrap:anywhere}}.overlay .section-extras{{color:#fff;padding-bottom:clamp(40px,6vw,80px)}}.overlay .section-actions .btn,.band-accent .section-actions .btn{{background:#fff;color:#111}}
+.source-actions{{position:relative;z-index:1;margin-top:28px;overflow-wrap:anywhere}}.overlay .source-actions{{color:#fff;padding-bottom:clamp(40px,6vw,80px)}}.source-actions>div{{padding-top:16px;border-top:1px solid currentColor}}.source-actions>div+div{{margin-top:20px}}.source-actions-label{{font-size:max(12px,var(--lab-px));opacity:.75}}.source-actions ul{{list-style:none;display:flex;flex-wrap:wrap;gap:4px 20px;margin-top:8px}}.source-actions a{{display:inline-flex;align-items:center;min-height:40px;text-decoration:underline;text-underline-offset:.2em;overflow-wrap:anywhere}}
 .nav{{position:fixed;inset:0 0 auto 0;z-index:50;padding:18px 0;transition:background var(--slow),color var(--slow)}}.nav .wrap{{display:flex;align-items:center;justify-content:space-between;gap:24px}}.nav .links{{display:flex;gap:28px;font-size:15px}}.nav.solid{{background:color-mix(in srgb,var(--paper) 86%,transparent);color:var(--ink);backdrop-filter:blur(14px)}}.nav.solid .btn{{background:var(--ink);color:var(--paper);border-color:var(--ink)}}.nav.on-photo:not(.solid){{color:var(--on-photo)}}.nav.on-photo:not(.solid) .btn{{background:var(--on-photo);color:#111}}.nav .logo{{height:{min(56, max(28, (bp.get('nav') or {}).get('h', 56) - 20))}px;width:auto}}.nav .wordmark{{font-family:var(--display);font-size:22px}}
 .hero{{position:relative;display:grid;align-content:end;overflow:hidden;padding-top:120px}}.hero .media{{position:absolute;inset:0;z-index:0;background:var(--ink)}}.hero .media img,.hero .media video{{width:100%;height:100%;object-fit:cover}}.hero.has-media .media::after{{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.46),transparent 75%),linear-gradient(180deg,rgba(0,0,0,.42),rgba(0,0,0,.22) 40%,rgba(0,0,0,.58))}}
 .hero .hero-in{{position:relative;z-index:1;padding-bottom:clamp(40px,6vw,80px)}}.hero .h1{{font-size:var(--hero-size);overflow-wrap:anywhere}}@media(max-width:600px){{.hero .h1{{font-size:min(var(--hero-size),16vw)}}}}.hero.has-media{{color:var(--on-photo)}}.hero.has-media .cat .lab{{color:var(--on-photo);font-size:max(13px,var(--lab-px))}}.hero.has-media .h1,.hero.has-media .lede,.hero.has-media .cat{{text-shadow:0 1px 8px rgba(0,0,0,.55)}}.hero.has-media .btn.ghost{{color:var(--on-photo);border-color:var(--on-photo)}}.hero .cat{{display:flex;gap:26px;flex-wrap:wrap;margin-bottom:22px}}.hero .al-center{{text-align:center;justify-items:center;display:grid}}.hero .place-start{{align-self:start;padding-top:40px}}.hero .ctas{{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px}}

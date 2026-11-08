@@ -113,7 +113,7 @@ def model_section(sec):
     # These structured records may be numerous or long. They are retained in
     # inventory as source evidence for deterministic processing, but must not
     # accidentally expand the model prompt or be presented as verified claims.
-    return {k: v for k, v in sec.items() if k not in ('testimonials', 'panels')}
+    return {k: v for k, v in sec.items() if k not in ('testimonials', 'panels', 'sourceActions')}
 
 def source_catalog(inv):
     """Bound the input without silently losing the end of a serialized JSON document."""

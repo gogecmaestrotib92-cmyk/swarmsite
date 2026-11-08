@@ -28,7 +28,7 @@ class PreviewText(HTMLParser):
                 self.ignored.append(tag)
             return
         style = str(attrs.get('style') or '').replace(' ', '').lower()
-        hidden = tag in ('head', 'script', 'style', 'template', 'noscript', 'svg', 'textarea') or 'hidden' in attrs or str(attrs.get('aria-hidden') or '').lower() == 'true' or 'display:none' in style or 'visibility:hidden' in style
+        hidden = 'source-actions-label' in str(attrs.get('class') or '').split() or tag in ('head', 'script', 'style', 'template', 'noscript', 'svg', 'textarea') or 'hidden' in attrs or str(attrs.get('aria-hidden') or '').lower() == 'true' or 'display:none' in style or 'visibility:hidden' in style
         if hidden:
             if tag not in ('area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'):
                 self.ignored.append(tag)
@@ -141,7 +141,15 @@ def build_coverage(inventory, rendered_html):
                            'source_excerpt': panel_text,
                            'source_links': [{'url': str(link.get('url') or ''), 'label': str(link.get('label') or '')}
                                             for link in source_links if isinstance(link, dict) and normalized_url(link.get('url'))]})
+        action_evidence = sec.get('sourceActions') if sec.get('sourceActionsVersion') == 1 and isinstance(sec.get('sourceActions'), list) else []
+        source_actions = [{'label': str(item.get('label') or ''), 'url': str(item.get('url') or ''),
+                           'status': 'url_detected' if normalized_url(item.get('url')) in links else 'needs_review'}
+                          for item in action_evidence if isinstance(item, dict) and normalized_url(item.get('url'))]
         result_sections.append({'id': section_id, 'title': title,
+                                'source_actions_version': sec.get('sourceActionsVersion'),
+                                'source_actions': source_actions,
+                                'source_actions_excluded': sec.get('sourceActionsExcluded', 0) if sec.get('sourceActionsVersion') == 1 else None,
+                                'source_actions_truncated': bool(sec.get('sourceActionsTruncated')),
                                 'source_url': str(sec.get('sourceUrl') or inventory.get('url') or ''),
                                 'source_kind': str(sec.get('kind') or 'unknown'),
                                 'source_text_truncated': bool(sec.get('textTruncated')),
@@ -176,11 +184,13 @@ def build_coverage(inventory, rendered_html):
             'FAQ text matches do not prove that an answer is complete, visible or usable; unavailable and truncated source answers cannot be verified.',
             'Source routes are original pages, not regenerated subpages. Link checks only verify the preview HTML.',
             'The source catalog covers discovered public links and captured sections, not a complete sitemap.',
+            'Link evidence reports URL presence only, not label, section placement, visibility or destination function. Excluded or truncated links require review.',
         ],
         'source_catalog_fallback': fallback_sections or fallback_routes,
         'source_catalog_truncated': bool(catalog.get('sectionsTruncated') or catalog.get('routesTruncated')),
         'faq_catalog_truncated': any(sec['faq_truncated'] for sec in result_sections),
         'evidence_catalog_truncated': any(sec['evidence_truncated'] for sec in result_sections),
+        'source_actions_needing_review': any(sec['source_actions_version'] != 1 or sec['source_actions_truncated'] or sec['source_actions_excluded'] or any(item['status'] == 'needs_review' for item in sec['source_actions']) for sec in result_sections),
         'sections': result_sections,
         'routes': result_routes,
         'summary': {'sections_total': len(result_sections), 'sections_text_detected': detected,
