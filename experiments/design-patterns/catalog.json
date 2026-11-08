@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "patterns": [
+    {
+      "id": "story-assigned-product-ui",
+      "version": 1,
+      "move": "story",
+      "allowed_beat_types": [
+        "features"
+      ],
+      "allowed_site_kinds": [
+        "software",
+        "product"
+      ],
+      "item_count": {
+        "min": 2,
+        "max": 4
+      },
+      "asset": {
+        "required": true,
+        "source": "beat.image",
+        "kind": "explicitly-assigned-product-screenshot",
+        "minimum_pixel_width": 500,
+        "aspect_ratio_min": 0.6,
+        "aspect_ratio_max": 2.5,
+        "must_be_readable_raster": true,
+        "must_be_nonempty": true,
+        "must_not_have_item_images": true
+      },
+      "fallback": "decline-and-keep-original-direction",
+      "expected_render": {
+        "section_class": "story",
+        "item_container": "st-l"
+      },
+      "implementation_source": "lib/render/render_bp.py:story + component_for",
+      "reference": {
+        "blueprint_id": "butter",
+        "observed_role": "story",
+        "url": "https://www.butter.video/"
+      },
+      "limitations": "Conservative subset only; other story forms may exist. Actual renderer and ownership are verified by a dry run."
+    },
+    {
+      "id": "marquee-short-facts",
+      "version": 1,
+      "move": "marquee",
+      "allowed_beat_types": [
+        "cells",
+        "facts"
+      ],
+      "allowed_site_kinds": [
+        "software",
+        "product",
+        "place",
+        "service"
+      ],
+      "item_count": {
+        "min": 1,
+        "max": 10
+      },
+      "text": {
+        "max_title_words": 5,
+        "max_combined_words": 12
+      },
+      "asset": {
+        "required": false,
+        "kind": "text-only"
+      },
+      "fallback": "decline-and-keep-original-direction",
+      "expected_render": {
+        "section_class": "marquee",
+        "item_container": "marquee-static"
+      },
+      "implementation_source": "lib/render/render_bp.py:marquee + component_for",
+      "reference": {
+        "blueprint_id": "butter",
+        "observed_role": "ticker",
+        "url": "https://www.butter.video/"
+      },
+      "limitations": "Conservative text subset; source actions remain separate, and reduced-motion static list must preserve every item."
+    }
+  ],
+  "engine_file_sha256": {
+    "lib/render/render_bp.py": "58fa77ae4687481fe32d6a3e81f546497dab6ab89a842f2564ee69a02d2ca239",
+    "lib/templates/recipes.py": "e9ecebe227c13ee5852d8930fef2f037561fed09a7142ce48b246d1e306dcfea",
+    "lib/visual_quality.py": "66a17d3f757a17f8a71b1f32307e4aaaf59c32c4f6d07245614e3bf66e33a5b6"
+  }
+}
