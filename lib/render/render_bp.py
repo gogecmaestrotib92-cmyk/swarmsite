@@ -291,7 +291,17 @@ def build(slug_dir, bp_id, out_path=None):
     def band_of(sec, bt=None):
         return (bt or {}).get('band') or sec.get('band') or 'paper'
     def head_style(sec, key='head', bt=None):
-        hd = sec.get(key) or {}; px_ = ((bt or {}).get('ui') or {}).get('h2_px') or hd.get('px') or H2.get('px'); px_ = min(px_, 96); st = [f'font-size:{clampf(px_)}']
+        hd = sec.get(key) or {}; override = ((bt or {}).get('ui') or {}).get('h2_px')
+        px_ = override or hd.get('px') or H2.get('px')
+        # Some measured sections have a label or body as their largest text.
+        # Those measurements do not describe the H2 we add to a content beat.
+        # Preserve genuinely smaller blueprint headings and explicit direction
+        # choices; replace only measurements at body/label scale.
+        body_scale = max(BO.get('px') or 0, LB.get('px') or 0)
+        if not override and px_ and H2.get('px') and px_ <= body_scale and px_ < H2['px'] * .75:
+            px_ = H2['px']
+            hd = {**hd, **{key: H2.get(key) for key in ('lh', 'ls', 'tt', 'it')}}
+        px_ = min(px_, 96); st = [f'font-size:{clampf(px_)}']
         if hd.get('lh'): st.append(f'line-height:{hd["lh"]}')
         if hd.get('tt') == 'uppercase': st.append('text-transform:uppercase')
         if hd.get('it'): st.append('font-style:italic')
