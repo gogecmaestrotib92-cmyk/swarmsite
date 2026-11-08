@@ -111,8 +111,14 @@ const BP = { software: ['butter', 'cerebrium', 'deepbook'], place: ['tengile', '
 async function runClaimed(job) {
   try { await process_(job); console.log('done', job.id); }
   catch (e) {
-    console.error('failed', job.id, e.message);
-    await sb.from('jobs').update({ status: 'failed', error: e.message.slice(0, 2000) }).eq('id', job.id);
+    const message = String(e?.message || 'Unknown error');
+    // Anthropic includes a Python traceback and request details in this
+    // confirmed billing error. Keep an actionable owner diagnostic while
+    // returning a simple, non-sensitive message to the customer.
+    const noAnthropicCredit = /your credit balance is too low to access the anthropic api/i.test(message);
+    const publicError = noAnthropicCredit ? 'The AI service is temporarily unavailable. Please try again later.' : message.slice(0, 2000);
+    console.error('failed', job.id, noAnthropicCredit ? 'Anthropic API credit balance is too low; check provider billing.' : message);
+    await sb.from('jobs').update({ status: 'failed', error: publicError }).eq('id', job.id);
     try { if (job._dir) job._artifactsUploaded = await uploadArtefacts(job, job._dir); } catch {}
   } finally {
     if (job._jobRoot && job._artifactsUploaded) {
