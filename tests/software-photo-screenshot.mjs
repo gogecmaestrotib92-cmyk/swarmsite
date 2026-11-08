@@ -36,14 +36,26 @@ try {
     for(const width of [390,1440]){
       const page=await browser.newPage({viewport:{width,height:900}});await page.route(/^https?:\/\//,r=>r.abort());await page.goto(`${pathToFileURL(html)}?nomotion=1`,{waitUntil:'domcontentloaded'});
       for(const id of ['ui-wide','ui-portrait','ui-mismatch']){
-        const section=page.locator(`#${id}`);const h=section.locator('h2');const figure=section.locator('figure.ui-shot');const img=figure.locator('img');
-        assert.equal(await h.count(),1,`${kind}/${bp}/${id}: one heading`);assert.equal(await figure.count(),1,`${kind}/${bp}/${id}: UI image shown`);
-        const info=await section.evaluate(s=>{const h=s.querySelector('h2'), f=s.querySelector('figure'),i=f.querySelector('img'), a=h.getBoundingClientRect(), b=f.getBoundingClientRect(),c=i.getBoundingClientRect();return {overlay:!!h.closest('figure'),headingBelow:a.bottom> b.top+1,light:h.classList.contains('light'),color:getComputedStyle(h).color,fit:getComputedStyle(i).objectFit,w:c.width,h:c.height,nw:i.naturalWidth,nh:i.naturalHeight,overflow:document.documentElement.scrollWidth>innerWidth};});
-        assert.equal(info.overlay,false,`${kind}/${bp}/${id}: heading must not overlay UI`);assert.equal(info.headingBelow,false,`${kind}/${bp}/${id}: heading precedes image`);assert.equal(info.light,false,`${kind}/${bp}/${id}: do not apply photo-overlay text`);
+        const section=page.locator(`#${id}`);const h=section.locator('h2');
+        const split=(await section.getAttribute('class')).split(/\s+/).includes('ui-photo-story');
+        const figure=section.locator(split?'figure.st-v.assigned-visual':'figure.ui-shot');const img=figure.locator('img');
+        assert.equal(await h.count(),1,`${kind}/${bp}/${id}: one heading`);assert.ok(await h.isVisible(),`${kind}/${bp}/${id}: heading is visible`);
+        assert.equal(await h.textContent(),id==='ui-wide'?'Wide UI heading':id==='ui-portrait'?'Portrait UI heading':'Downsampled UI heading',`${kind}/${bp}/${id}: original heading`);
+        assert.equal(await figure.count(),1,`${kind}/${bp}/${id}: UI image shown`);
+        assert.ok(await img.isVisible(),`${kind}/${bp}/${id}: UI image is visible`);
+        assert.equal(await img.getAttribute('src'),images.find(x=>x.id===id.slice(3)).data,`${kind}/${bp}/${id}: original assigned image`);
+        const info=await section.evaluate(s=>{const h=s.querySelector('h2'), f=s.querySelector('figure'),i=f.querySelector('img'), a=h.getBoundingClientRect(), b=f.getBoundingClientRect(),c=i.getBoundingClientRect();return {overlay:!!h.closest('figure'),intersects:a.left<b.right-1&&a.right>b.left+1&&a.top<b.bottom-1&&a.bottom>b.top+1,headingBelow:a.bottom>b.top+1,light:h.classList.contains('light'),fit:getComputedStyle(i).objectFit,w:c.width,h:c.height,nw:i.naturalWidth,nh:i.naturalHeight,overflow:document.documentElement.scrollWidth>innerWidth};});
+        assert.equal(info.overlay,false,`${kind}/${bp}/${id}: heading must not be inside UI`);
+        assert.equal(info.intersects,false,`${kind}/${bp}/${id}: heading must not overlap UI`);
+        if(!split||width<=900)assert.equal(info.headingBelow,false,`${kind}/${bp}/${id}: heading precedes image in single-column layout`);
+        assert.equal(info.light,false,`${kind}/${bp}/${id}: do not apply photo-overlay text`);
         assert.equal(info.fit,'contain');assert.ok(info.w<=info.nw+1 && info.h<=info.nh+1,`${kind}/${bp}/${id}: no upscaling`);assert.ok(Math.abs(info.w/info.h-info.nw/info.nh)<.02,`${kind}/${bp}/${id}: full image aspect`);assert.equal(info.overflow,false);
-        const text=await section.innerText();assert.ok(text.includes(id==='ui-wide'?'Complete source explanation.':id==='ui-portrait'?'More verified source content.':'Content is still readable.'));assert.ok(text.includes(id==='ui-wide'?'Source detail':id==='ui-portrait'?'Additional detail':'Original detail'));
+        const explanation=id==='ui-wide'?'Complete source explanation.':id==='ui-portrait'?'More verified source content.':'Content is still readable.';
+        const detail=id==='ui-wide'?'Source detail':id==='ui-portrait'?'Additional detail':'Original detail';
+        assert.equal(await section.getByText(explanation,{exact:true}).count(),1,`${kind}/${bp}/${id}: source explanation`);
+        assert.equal(await section.getByText(detail,{exact:true}).count(),1,`${kind}/${bp}/${id}: caption`);
       }
-      assert.equal(await page.locator('#ui-wide a[href="https://example.test/tools"]').count(),1,`${kind}/${bp}: source CTA retained`);
+      const cta=page.locator('#ui-wide a[href="https://example.test/tools"]');assert.equal(await cta.count(),1,`${kind}/${bp}: source CTA retained`);await cta.click({trial:true});
       await page.close();
     }
   }

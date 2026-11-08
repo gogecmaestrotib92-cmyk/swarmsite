@@ -101,7 +101,7 @@ def brief_text(b):
     if not b: return 'none'
     lines = []
     lines.append('Keep their display font: ' + ('YES — brand.keep_font=true, font_hint = their font' if b.get('keepFont', True) else 'NO — choose a better one for this kind'))
-    lines.append('Keep their colours: ' + ('YES — brand.accent/paper/ink must come from their palette' if b.get('keepColours', True) else 'NO — propose a palette that fits the kind'))
+    lines.append('Keep their colours: ' + ('YES — brand.accent/paper/ink must come from their palette' if b.get('keepColours', True) else 'NO — use the selected blueprint palette, with contrast-safe foregrounds'))
     lines.append('Keep their logo: ' + ('YES' if b.get('keepLogo', True) else 'NO — set the wordmark'))
     if b.get('keep'): lines.append('Owner says this is already good, do not change its meaning or wording: ' + str(b['keep'])[:400])
     if b.get('goal'): lines.append('The one action every screen should lead to: ' + str(b['goal'])[:120] + ' (hero.cta, nav.cta, ending.next)')
