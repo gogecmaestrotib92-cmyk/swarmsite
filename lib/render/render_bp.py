@@ -90,10 +90,20 @@ def build(slug_dir, bp_id, out_path=None):
             stats = ImageStat.Stat(image)
             return stats.mean[0] <= 40 and stats.stddev[0] < 8
         except Exception: return False
+    def symbolic_asset(it):
+        # SVGs can be rasterized by capture, so their data URI may say JPEG.
+        # A source logo or icon is not a substitute for a story photograph.
+        from urllib.parse import urlsplit, unquote
+        source = str(it.get('src') or '')
+        try: source_path = unquote(urlsplit(source).path).lower()
+        except ValueError: source_path = source.split('?', 1)[0].lower()
+        if source_path.endswith('.svg') or 'svg' in str(it.get('data') or '')[:30].lower(): return True
+        markers = source_path + ' ' + str(it.get('alt') or '')
+        return bool(re.search(r'(?i)(?:^|[/_.\-\s])(logo|icon|favicon|wordmark|brandmark|badge)(?:$|[/_.\-\s])', markers))
     def photo_like(it, minw=500):
         # a picture that can stand in a card or a frame: real pixels, not a page screenshot, not a banner strip or a logo, not vector art
         if not it.get('data') or it.get('shot') or is_used(it.get('id')) or it.get('w', 0) < minw or dark_background_texture(it): return False
-        if str(it.get('data', ''))[:30].find('svg') >= 0: return False
+        if symbolic_asset(it): return False
         ar = it.get('w', 1) / max(1, it.get('h', 1)); return .55 <= ar <= 2.0
     def img(k=None, prefer_hero=False, want_shot=None):
         it = images.get(k) if k else None
@@ -441,11 +451,15 @@ def build(slug_dir, bp_id, out_path=None):
         if bt['type'] == 'quote': bt = {**bt, 'h2': bt.get('big') or '', 'lede': bt.get('body') or '', 'label': bt.get('label') or bt.get('who') or ''}
         items = beat_items(bt)
         if len(items) > 4: return numbers(sec, bt) if bt['type'] == 'facts' else cards(sec, bt)
-        own = bt.get('image') if bt.get('image') and images.get(bt['image']) and not is_used(bt['image']) and images[bt['image']].get('w', 0) >= 640 and not dark_background_texture(images[bt['image']]) else None
-        if own: src = img(own)
+        assigned = bt.get('image')
+        if assigned:
+            own = images.get(assigned)
+            # A missing, reserved, tiny or symbolic assigned visual is not
+            # permission to pick an unrelated fallback image for this beat.
+            if not own or not own.get('data') or is_used(assigned) or not free_for(own, bt) or own.get('w', 0) < 640 or dark_background_texture(own) or symbolic_asset(own): return cards(sec, bt)
+            src = img(assigned)
         else:
-            pool = [i for i in images.values() if i.get('data') and not is_used(i.get('id')) and free_for(i, bt) and i.get('w', 0) >= 640 and not dark_background_texture(i) and (i.get('gen') or not i.get('shot'))]
-            if bt['type'] in ('facts', 'quote') and not pool: return cards(sec, bt)
+            pool = [i for i in images.values() if photo_like(i, 640) and free_for(i, bt)]
             src = img(pool[0]['id']) if pool else ''
         if not src: return cards(sec, bt)
         lst = ''.join(f'<li><b>{e(t)}</b><span>{e(b_)}</span></li>' for t, b_ in items)
