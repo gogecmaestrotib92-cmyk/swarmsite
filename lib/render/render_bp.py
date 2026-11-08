@@ -819,6 +819,17 @@ def build(slug_dir, bp_id, out_path=None):
         elif bt['type'] == 'facts': items = [(f[0], f[1], None, None) for f in bt.get('facts', [])]
         elif bt['type'] == 'faq': items = [(q, a, None, None) for q, a in bt.get('items', [])]
         elif bt['type'] == 'ledger': return ledger(sec, bt)
+        # Short metric tiles do not benefit from a full-width column on desktop.
+        # Keep explicit one-column layouts for narrative cards or owned media.
+        metric_value = r'[<>≤≥~≈]?\s*[$€£¥]?\s*\d[\d,.]*(?:[kmbt]|ms|s|%|x|×)?\+?'
+        compact_metrics = (bt['type'] == 'cells' and ui_.get('move') == 'cards' and ui_.get('cols') == 1
+                           and not bt.get('image') and not ui_.get('lead') and not lead and 3 <= len(items) <= 6
+                           and all(isinstance(t, str) and len(t) <= 80 and len(t.split()) <= 8
+                                   and isinstance(body_, str) and len(body_) <= 100 and len(body_.split()) <= 12
+                                   and isinstance(num, str) and len(num) <= 16
+                                   and re.fullmatch(metric_value, num.strip(), re.I)
+                                   for t, body_, num, _ in items))
+        if compact_metrics: n = 2  # the existing mobile breakpoint still uses one column
         # Numeric facts should read as a typographic feature, not small card
         # headings with unrelated ordinal numbers beside them.
         numeric_facts = bt['type'] == 'facts' and bool(items) and all(
