@@ -10,6 +10,7 @@ async function scenario({best='cerebrium',failFirst=false,failAltUpload=false,st
   if(args[0]==='-I')return '{}';
   if(args[0]==='-c')return '{"what":"test","n":0}';
   if(args[0]==='lib/direct/direct.py'){fs.writeFileSync(path.join(jobDir,'direction.json'),JSON.stringify({kind:'software',blueprint:'butter',hero:{h1:'old'},beats:[]}));return ''}
+  if(args[0]==='experiments/design-patterns/verify_selected.py')return '';
   if(args[0]==='lib/render/render_bp.py'){const folder=args[1],bp=args[2],out=args[3];if(failFirst&&folder===jobDir&&bp==='butter')throw Error('render failed');const d=JSON.parse(fs.readFileSync(path.join(folder,'direction.json')));fs.writeFileSync(out,`<html><body>${bp}:${d.hero.h1}</body></html>`);if(stale&&folder!==jobDir)fs.appendFileSync(path.join(jobDir,'images.json'),' ');return ''}
   if(args[0]==='lib/swarm/run.py'){const out=args[args.indexOf('--out')+1];const d=JSON.parse(fs.readFileSync(path.join(jobDir,'direction.json')));d.hero.h1='FINAL';d.blueprint=best;fs.writeFileSync(path.join(jobDir,'direction.json'),JSON.stringify(d));fs.writeFileSync(out,`<html><body>${best}:FINAL</body></html>`);fs.writeFileSync(path.join(jobDir,'coverage.json'),JSON.stringify({scope:'single_page_preview',sections:[],routes:[]}));return JSON.stringify({done:{best_blueprint:best,render_manifest:makeManifest(jobDir,best,out),rounds:1}})}
   if(args[0]==='lib/qa/check.py')return 'QA score 100';throw Error('unexpected run '+args[0])

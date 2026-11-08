@@ -1,10 +1,12 @@
 # Executable design-pattern experiment
 
-This is a **prototype**, not part of the production pipeline. The optional
-`choose_patterns.py` experiment calls a model, but does not change the supplied
+The optional `choose_patterns.py` calls a model, but does not change the supplied
 direction, deploy or approve a design. The candidate is the tuple `(pattern ID,
-version, beat ID, blueprint ID)`. Applying an accepted candidate and evaluating
-its design remain separate work.
+version, beat ID, blueprint ID)`. The swarm's `pattern_stage.py` uses this
+selector before rendering section moves, checks the full transition against
+the previous render, and applies only validated changes. If selection fails it
+tries renderer defaults, which must pass the same transition check. Hero moves
+are not covered by this catalog. Structural validation is not a quality score.
 
 `catalog.json` describes conservative subsets of existing renderer forms:
 `story-assigned-product-ui@1`, `marquee-short-facts@1`, `butter-editorial-product@1`, `pinned-text-steps@1`, `type-wall-quote@1`, `sticky-assigned-visual@1`, and three ledger layouts (`ledger-cards`, `ledger-story`, `ledger-sticky`). The Butter editorial entry allows up to six features and verifies that the renderer actually selected its specific editorial component. The pinned and quote patterns are limited to text-only sections without extra actions; ledger checks retain each item's name, price, extra fields, links and existing visuals. The actual render still has to pass. Each declares allowed
@@ -49,7 +51,7 @@ python3 experiments/design-patterns/explore.py ./my-artifact butter
 API key in the environment and filters its choices against that list. It then
 rechecks choices sequentially in a private copy and rejects the result if its
 recorded inputs changed during selection. It never modifies the job. This is
-still a local experiment: the selection can be visually worse than the baseline
+still a bounded subset: the selection can be visually worse than the baseline
 and the cost and runtime grow with the number of candidates.
 Pass `--preview` to render the selected choices in a new temporary directory;
 the returned path is local to this machine and is not a published preview.
@@ -70,5 +72,6 @@ visually weak; no source semantic classification, design quality, complete
 accessibility or production acceptance is asserted. Current tests use synthetic
 Chrome fixtures; they do not constitute a production deployment test. Engine
 hashes cover four key files but not all dependencies such as blueprint data,
-fonts, browser and CSS: a production integration needs immutable dependency
-versions, atomic validation/application and a broader regression suite.
+fonts and browser. The production stage snapshots relevant files and applies a
+validated direction atomically, but cannot guarantee that source material was
+complete or that the selected design is visually good.

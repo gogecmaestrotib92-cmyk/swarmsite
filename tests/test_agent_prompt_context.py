@@ -15,6 +15,9 @@ import run
 
 class AgentPromptContextTests(unittest.TestCase):
     def setUp(self):
+        stage = patch.object(run.Patterns, 'apply_verified_patterns', return_value={'choices': [], 'reason': 'stubbed'})
+        stage.start()
+        self.addCleanup(stage.stop)
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.directory = self.temp.name

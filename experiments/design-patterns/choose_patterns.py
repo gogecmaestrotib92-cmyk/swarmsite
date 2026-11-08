@@ -85,13 +85,15 @@ def _select_snapshot(directory, blueprint, ask, initial, snapshot):
                    prompt, TOOL, max_tokens=700, timeout=25)
     raw = response.get('choices') if isinstance(response, dict) else []
     if not isinstance(raw, list): raw = []
-    choices = []; seen = set()
+    choices = []; seen = set(); pinned = False
     for item in raw[:3]:
         if not isinstance(item, dict): continue
         beat, pattern, version = item.get('beat'), item.get('pattern'), item.get('version')
         if not isinstance(beat, str) or not isinstance(pattern, str) or type(version) is not int: continue
         key = (beat, pattern, version)
         if key not in allowed or beat in seen: continue
+        is_pinned = pattern in ('pinned-text-steps', 'sticky-assigned-visual', 'ledger-sticky')
+        if pinned and is_pinned: continue
         verified = check(directory, blueprint, beat, pattern, version)
         if not verified.get('accepted'): continue
         # Validate each subsequent choice against the already accepted choices,
@@ -102,7 +104,7 @@ def _select_snapshot(directory, blueprint, ask, initial, snapshot):
         target = next(b for b in current['beats'] if b['id'] == beat)
         target.setdefault('ui', {})['move'] = move
         (directory / 'direction.json').write_text(json.dumps(current, ensure_ascii=False))
-        seen.add(beat); choices.append({'beat': beat, 'pattern': pattern, 'version': version})
+        seen.add(beat); pinned |= is_pinned; choices.append({'beat': beat, 'pattern': pattern, 'version': version})
     if snapshot() != initial: return {'choices': [], 'reason': 'Inputs changed during selection; discarded'}
     fingerprint = hashlib.sha256(json.dumps(initial, separators=(',', ':')).encode()).hexdigest()
     return {'choices': choices, 'snapshot_fingerprint': fingerprint,

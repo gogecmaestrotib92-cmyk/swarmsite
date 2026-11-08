@@ -5,6 +5,7 @@ WORKDIR /srv
 COPY server/package.json server/
 RUN cd server && npm install --omit=dev && ln -s /srv/server/node_modules /srv/node_modules
 COPY lib lib
+COPY experiments/design-patterns experiments/design-patterns
 COPY swarm.js swarm.js
 COPY server server
 ENV NODE_ENV=production PORT=8080

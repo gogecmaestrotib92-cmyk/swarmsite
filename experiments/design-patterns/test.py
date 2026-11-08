@@ -1,5 +1,6 @@
 import base64, copy, hashlib, importlib.util, io, json, os, shutil, subprocess, sys, tempfile, unittest
 from pathlib import Path
+from unittest.mock import patch
 from PIL import Image, ImageDraw
 P=Path(__file__).parent; ROOT=Path(__file__).resolve().parents[2];spec=importlib.util.spec_from_file_location('catalog_check',P/'render_check.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 sys.path.insert(0, str(P)); import explore, choose_patterns
@@ -39,6 +40,13 @@ class CatalogTest(unittest.TestCase):
   response={'choices':[{'beat':'target','pattern':'story-assigned-product-ui','version':1},{'beat':'proof','pattern':'marquee-short-facts','version':1}]}
   before=(self.dir/'direction.json').read_bytes();result=choose_patterns.select(self.dir,'butter',ask=lambda *a,**k:response)
   self.assertEqual(result['choices'],response['choices']);self.assertEqual((self.dir/'direction.json').read_bytes(),before)
+ def test_multiple_pinned_choices_are_limited(self):
+  self.d['beats'].insert(1,{'id':'menu','type':'ledger','h2':'Menu','items':[['Soup','12']],'ui':{'move':'cards'}});self.save()
+  response={'choices':[{'beat':'target','pattern':'sticky-assigned-visual','version':1},{'beat':'menu','pattern':'ledger-sticky','version':1}]}
+  options=[{**choice,'accepted':True,'reason':'ok'} for choice in response['choices']]
+  with patch.object(choose_patterns,'explore',return_value={'candidates':options}),patch.object(choose_patterns,'check',return_value={'accepted':True}):
+   result=choose_patterns.select(self.dir,'butter',ask=lambda *a,**k:response)
+  self.assertEqual(result['choices'],response['choices'][:1])
  def test_preview_is_a_private_render_and_source_is_unchanged(self):
   response={'choices':[{'beat':'target','pattern':'story-assigned-product-ui','version':1}]}
   before=(self.dir/'direction.json').read_bytes();result=choose_patterns.select(self.dir,'butter',ask=lambda *a,**k:response,make_trial=True);trial=Path(result['trial_directory'])

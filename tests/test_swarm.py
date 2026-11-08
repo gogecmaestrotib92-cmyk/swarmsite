@@ -189,6 +189,10 @@ class FeedbackRoutingTests(unittest.TestCase):
 
 
 class ContractTests(unittest.TestCase):
+    def setUp(self):
+        stage = patch.object(run.Patterns, 'apply_verified_patterns', return_value={'choices': [], 'reason': 'stubbed'})
+        stage.start()
+        self.addCleanup(stage.stop)
     def test_no_gain_on_second_round_still_tries_the_remaining_round(self):
         with tempfile.TemporaryDirectory() as directory:
             agents.W(directory, 'direction.json', {'hero': {'h1': 'Headline'}, 'beats': []})

@@ -3,6 +3,8 @@ from pathlib import Path
 from unittest.mock import patch
 root=Path.cwd();module=Path(__file__).resolve().parents[1]/'lib/swarm/run.py';sys.path.insert(0,str(root/'lib/swarm'));spec=importlib.util.spec_from_file_location('variant_run',module);run=importlib.util.module_from_spec(spec);spec.loader.exec_module(run);agents=run.A
 class BestBlueprintTest(unittest.TestCase):
+ def setUp(self):
+  stage=patch.object(run.Patterns,'apply_verified_patterns',return_value={'choices':[],'reason':'stubbed'});stage.start();self.addCleanup(stage.stop)
  def execute(self,initial,alternative,scores):
   with tempfile.TemporaryDirectory() as t:
    p=Path(t);d=json.loads((root/'tests/direction.sample.json').read_text());d['blueprint']='butter';agents.W(t,'direction.json',d);agents.W(t,'factsheet.json',{});out=p/'render.html'; calls=[]
