@@ -450,18 +450,28 @@ def build(slug_dir, bp_id, out_path=None):
             return f'<section class="sec story story-photo{cls} band-{band_of(sec, bt)}" id="{e(bt["id"])}"{style}><div class="wrap st">{text}{figure}</div></section>'
         if bt['type'] == 'quote': bt = {**bt, 'h2': bt.get('big') or '', 'lede': bt.get('body') or '', 'label': bt.get('label') or bt.get('who') or ''}
         items = beat_items(bt)
-        if len(items) > 4: return numbers(sec, bt) if bt['type'] == 'facts' else cards(sec, bt)
+        def without_story_image():
+            # Cards must not independently reintroduce the rejected image or
+            # auto-pick a different screenshot through lead_fig().
+            return cards(sec, {**bt, 'ui': {**(bt.get('ui') or {}), 'lead': ''}})
         assigned = bt.get('image')
+        own = images.get(assigned) if assigned else None
+        assigned_usable = (own and own.get('data') and not is_used(assigned) and free_for(own, bt)
+                           and own.get('w', 0) >= 640 and not dark_background_texture(own) and not symbolic_asset(own))
+        if len(items) > 4:
+            if bt['type'] == 'facts': return numbers(sec, bt)
+            lead = (bt.get('ui') or {}).get('lead')
+            if (assigned and not assigned_usable) or (lead and images.get(lead) and symbolic_asset(images[lead])): return without_story_image()
+            return cards(sec, bt)
         if assigned:
-            own = images.get(assigned)
             # A missing, reserved, tiny or symbolic assigned visual is not
             # permission to pick an unrelated fallback image for this beat.
-            if not own or not own.get('data') or is_used(assigned) or not free_for(own, bt) or own.get('w', 0) < 640 or dark_background_texture(own) or symbolic_asset(own): return cards(sec, bt)
+            if not assigned_usable: return without_story_image()
             src = img(assigned)
         else:
             pool = [i for i in images.values() if photo_like(i, 640) and free_for(i, bt)]
             src = img(pool[0]['id']) if pool else ''
-        if not src: return cards(sec, bt)
+        if not src: return without_story_image()
         lst = ''.join(f'<li><b>{e(t)}</b><span>{e(b_)}</span></li>' for t, b_ in items)
         lede_html = f'<p class="lede">{e(bt.get("lede"))}</p>' if bt.get('lede') else ''
         txt = f'<div class="st-t">{lab(bt.get("label"))}<h2 class="h2" style="{re.sub(r"max-width:[^;]+;?", "", head_style(sec, bt=bt))}">{e(bt.get("h2") or "")}</h2>{lede_html}<ul class="st-l">{lst}</ul></div>'
@@ -638,13 +648,17 @@ def build(slug_dir, bp_id, out_path=None):
 
     def lead_fig(ui_, bt):
         src = ''; it = None
-        if ui_.get('lead') and images.get(ui_['lead']):
-            if is_used(ui_['lead']) or images[ui_['lead']].get('w', 0) < 900 or dark_background_texture(images[ui_['lead']]): return ''  # a lead is a full-width frame: never from a small source or a flat texture
-            it = images[ui_['lead']]; src = img(ui_['lead'])
+        if ui_.get('lead'):
+            lead = images.get(ui_['lead'])
+            if not lead or not lead.get('data') or is_used(ui_['lead']) or not free_for(lead, bt) or lead.get('w', 0) < 900 or dark_background_texture(lead) or symbolic_asset(lead): return ''  # a lead is a full-width frame: never from a small source, a logo or a flat texture
+            it = lead; src = img(ui_['lead'])
         elif ui_.get('lead') == '': return ''
-        elif bt.get('image') and images.get(bt['image']) and not is_used(bt['image']) and images[bt['image']].get('w', 0) >= 900 and not dark_background_texture(images[bt['image']]): it = images[bt['image']]; src = img(bt['image'])
+        elif bt.get('image'):
+            own = images.get(bt['image'])
+            if not own or not own.get('data') or is_used(bt['image']) or not free_for(own, bt) or own.get('w', 0) < 900 or dark_background_texture(own) or symbolic_asset(own): return ''
+            it = own; src = img(bt['image'])
         elif bt['type'] == 'facts':
-            pool = [i for i in images.values() if i.get('data') and not i.get('shot') and not is_used(i.get('id')) and free_for(i, bt) and i.get('w', 0) >= 600 and not dark_background_texture(i)]
+            pool = [i for i in images.values() if photo_like(i, 600) and free_for(i, bt)]
             if pool: it = pool[0]; src = img(it['id'])
         elif bt['type'] == 'steps' and soft:
             pool = [i for i in images.values() if i.get('shot') and i.get('data') and not is_used(i.get('id')) and free_for(i, bt)]
