@@ -14,6 +14,8 @@ try {
     ['hidden', '<div style="display:none"><p class="offscreen">Hidden content</p></div>', false],
     ['provenance', '<p class="source-actions-label" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Original links · A long provenance title</p><a href="https://example.com">Real link</a>', false],
     ['visible-provenance', '<p class="source-actions-label offscreen">Visible labels still need overflow checks</p>', true],
+    ['card-clipped', '<div class="card" style="width:80px"><b class="num" style="font-size:48px;white-space:nowrap">08:00 – 0:00</b></div>', true],
+    ['card-contained', '<div class="card" style="width:320px"><b class="num" style="font-size:24px">08:00 – 0:00</b></div>', false],
   ]) {
     const html = path.join(dir, `${name}.html`);
     fs.writeFileSync(html, `<!doctype html><style>html,body { margin:0; overflow-x:clip } .sec { height:920px } .offscreen { position:relative; left:95vw; width:max-content } .rail { overflow-x:auto; width:100% }</style><button id="sw-skip">skip</button><section class="sec" id="content">${content}</section>`);
