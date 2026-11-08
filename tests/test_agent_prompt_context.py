@@ -185,7 +185,7 @@ class AgentPromptContextTests(unittest.TestCase):
             agents.W(folder, 'contract.json', result)
             return result
         def critique(*args):
-            return {'score': 70, 'fixes': [{'op': 'note', 'agent': 'ui', 'reason': 'Improve'}]}
+            return {'score': 50, 'fixes': [{'op': 'note', 'agent': 'ui', 'reason': 'Improve'}]}
         argv = ['run.py', self.directory, 'butter', '--out', str(output), '--rounds', '2']
         with patch.object(run.sys, 'argv', argv), patch.object(run, 'render', render), \
              patch.object(run, 'contract', contract), patch.object(run.C, 'critique', critique), \
@@ -222,7 +222,7 @@ class AgentPromptContextTests(unittest.TestCase):
             agents.W(folder, 'contract.json', result)
             return result
         def critique(*args):
-            return {'score': 70, 'fixes': [
+            return {'score': 50, 'fixes': [
                 {'op': 'concept', 'reason': 'Reconsider the global idea'},
                 {'op': 'note', 'agent': 'ui', 'reason': 'Reconsider layout'}]}
         argv = ['run.py', self.directory, 'butter', '--out', str(output), '--rounds', '2']
@@ -257,7 +257,7 @@ class AgentPromptContextTests(unittest.TestCase):
             return result
         def critique(*args):
             # Trigger restart, then a concept repair on the alternative.
-            return {'score': 0 if len(rendered) == 1 else 70,
+            return {'score': 0 if len(rendered) == 1 else 50,
                     'fixes': [] if len(rendered) == 1 else [{'op': 'concept', 'beat': 'features', 'reason': 'Improve'}, {'op': 'note', 'agent': 'ui', 'reason': 'Improve'}]}
         argv = ['run.py', self.directory, 'butter', '--alt', 'white-desert', '--out', str(output), '--rounds', '3']
         with patch.object(run.sys, 'argv', argv), patch.object(run, 'render', render), \
