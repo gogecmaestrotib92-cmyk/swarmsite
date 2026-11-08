@@ -223,14 +223,15 @@ VISUAL_TOOL = {"name": "set_visuals", "description": "Assign images to slots and
 VISUAL_SYSTEM = """You are the visual editor. When the site has fewer than 3 distinct visuals, do what a studio does with one product screenshot: cut it into DETAIL crops (each ≤ 40% of the source, one feature per crop — the court diagram, the sidebar library, the details panel, a toolbar) and give each features/steps slot its own detail. Details may come from the same screenshot; whole-image repeats may not. You look at every image the site has (thumbnails attached, with ids) and decide what goes where. Rules: never a logo, icon or text block as a photo; never the same image twice; a UI screenshot is shown FRAMED (hero of a software product, or a lead above a grid) never stretched as a background; crop screenshots to the actual product surface (drop the browser chrome, sidebars, headers, surrounding whitespace). People sections get people. If nothing fits a slot, leave it empty and list it under need.
 When the prompt says GENERATION: enabled, you may also COMMISSION up to 3 original visuals like a studio commissions illustration: a 3D object, a material study, an abstract composition or a macro photo in the brand's palette that stands for a section's idea (a basketball court as clean line-art in brand orange on dark; a stack of printed sheets; a whistle on a bench). Never a fake product interface, never screenshots, never text or logos, never recognisable faces. Give each a beat (or 'hero' only if the site has no product image at all)."""
 
+def _photo(i):  # a real visual is a photograph-like raster: not a page screenshot, not a banner strip or logo, not a crop, not vector art
+    if i.get('crop_of') or i.get('gen') or i.get('shot') or i.get('w', 0) < 600: return False
+    if 'svg' in str(i.get('data', ''))[:30]: return False
+    ar = i.get('w', 1) / max(1, i.get('h', 1)); return .5 <= ar <= 2.2
+
 def visual(slug_dir, notes=''):
     from PIL import Image
     d = J(slug_dir, 'direction.json'); imgs = J(slug_dir, 'images.json') or []
     import gen as G
-    def _photo(i):  # a real visual is a photograph-like raster: not a page screenshot, not a banner strip or logo, not a crop, not vector art
-        if i.get('crop_of') or i.get('gen') or i.get('shot') or i.get('w', 0) < 600: return False
-        if 'svg' in str(i.get('data', ''))[:30]: return False
-        ar = i.get('w', 1) / max(1, i.get('h', 1)); return .5 <= ar <= 2.2
     distinct = len([i for i in imgs if _photo(i)]); have_gen = len([i for i in imgs if i.get('gen')])
     gen_rule = 'disabled' if not G.enabled() else (f'enabled — the site has only {distinct} distinct real visual(s) and {have_gen} commissioned so far: you MUST commission {max(0, 3 - have_gen)} originals now, one per section that lacks its own picture (never the hero)' if distinct < 3 and have_gen < 3 else 'enabled (optional, the site has enough visuals)')
     content = [{"type": "text", "text": f"GENERATION: {gen_rule}\nBRAND: {json.dumps({k: d.get('brand', {}).get(k) for k in ('name', 'accent', 'paper', 'ink')})} mode={d.get('mode')}\nKIND: {d.get('kind')}\nHERO: {json.dumps({k: d['hero'].get(k) for k in ('h1', 'media')}, ensure_ascii=False)}\nBEATS: {json.dumps([{'id': b['id'], 'type': b['type'], 'h2': b.get('h2'), 'image': b.get('image', ''), 'lead': (b.get('ui') or {}).get('lead', '')} for b in d['beats']], ensure_ascii=False)}\nCRITIC NOTES FOR VISUAL: {notes or 'none'}\nIMAGES (thumbnails follow, in this order):"}]
@@ -274,6 +275,7 @@ def apply_visual(slug_dir, r):
         from concurrent.futures import ThreadPoolExecutor
         have_gen = len([i for i in imgs if i.get('gen')])
         asks = [g for g in (r.get('generate') or [])[:max(0, 3 - have_gen)] if g.get('prompt') and g.get('beat')]
+        distinct = len([i for i in imgs if _photo(i)])
         if distinct < 3 and have_gen < 3 and not asks:  # the rule is mandatory: when the model only lists needs, the needs become the commissions
             holes = [b for b in d.get('beats', []) if b.get('type') not in ('form', 'faq', 'ledger') and not b.get('image')][:3 - have_gen]
             for b, need in zip(holes, (r.get('need') or []) + [f"{d.get('brand', {}).get('name', '')} — {b.get('h2') or b.get('big') or ''}" for b in holes]):
