@@ -455,6 +455,11 @@ def direct(slug_dir, model='claude-sonnet-5-5'):
     for f in sorted(glob.glob(os.path.join(ROOT, 'lib/blueprints', '*.bp.json'))):
         bpj = json.load(open(f)); t = bpj.get('type', {}); dsp = t.get('display') or {}
         bps.append(f"- {bpj['id']}: class={bpj.get('class')} archetype={bpj.get('archetype')} mode={bpj.get('colour', {}).get('mode')} display={dsp.get('fam')} {dsp.get('px')}px w{dsp.get('w')} sections={len(bpj.get('sections', []))} imagery={'heavy' if bpj.get('media', {}).get('aspects') and len(bpj['media']['aspects']) > 3 else 'light'} note={bpj.get('motion', {}).get('idea', '')[:90]}")
+    # one director prompt is one page of a site: cap it (≈60k tokens) so a 300-section source cannot run the call into minutes and dollars
+    MAX_PROMPT = int(os.environ.get('DIRECT_MAX_CHARS', '240000'))
+    if len(user) > MAX_PROMPT:
+        keep_head = user[:MAX_PROMPT - 4000]
+        user = keep_head + "\n\n[SOURCE TRUNCATED: the page is longer than one director prompt allows; design from what is above and note the cut in audit_notes]"
     content = [{"type": "text", "text": user + "\n\nBLUEPRINTS (choose one id)\n" + "\n".join(bps)}]
     for shot in ('before-hero.jpg', 'before-full.jpg'):
         fp = os.path.join(slug_dir, shot)

@@ -219,16 +219,20 @@ def build(slug_dir, bp_id, out_path=None):
     disp_name, disp_kind = blueprint_disp_name, blueprint_disp_kind
     body_name, body_kind = font_for((T.get('body') or {}).get('fam'), ('Inter Tight', 'sans'))
     label_name, _ = font_for((T.get('label') or {}).get('fam'), ('JetBrains Mono', 'mono'))
-    hint = b.get('font_hint')
+    hint = b.get('font_hint'); extra_gf = {}
     if brief.get('keepFont', True) and b.get('keep_font') and isinstance(hint, str):
         # Never interpolate an arbitrary site-provided family into CSS or a URL.
         preferred = next((name for name in GF if name.casefold() == hint.strip().casefold()), None)
+        clean = re.sub(r'[^A-Za-z0-9 ]+', '', hint).strip()[:40]
+        if not preferred and clean and clean.casefold() not in {'inter', 'arial', 'helvetica', 'helvetica neue', 'system ui', 'sans serif', 'serif', 'times new roman', 'roboto'}:
+            # any other named family: ask Google Fonts for it by its sanitised name; a font Google does not have 404s silently and the stack falls through to the blueprint font
+            preferred = clean; extra_gf = {clean: clean.replace(' ', '+') + ':wght@400;500;600;700'}
         if preferred:
             disp_name = preferred
             disp_kind = 'serif' if any(w in disp_name.lower() for w in ('serif', 'garamond', 'fraunces', 'cormorant', 'playfair', 'editorial')) else 'sans'
     families = {disp_name, blueprint_disp_name, body_name, label_name}
     display_stack = f"'{disp_name}'," + (f"'{blueprint_disp_name}'," if disp_name != blueprint_disp_name else '') + ('Georgia,serif' if blueprint_disp_kind == 'serif' else 'system-ui,sans-serif')
-    gf = '&family='.join(GF[f] for f in families if f in GF)
+    gf_all = {**GF, **extra_gf}; gf = '&family='.join(gf_all[f] for f in families if f in gf_all)
     fonts_link = f'<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family={gf}&display=swap" rel="stylesheet">' if gf else ''
 
     # Opting out uses measured blueprint tokens without deriving a palette
@@ -469,7 +473,9 @@ def build(slug_dir, bp_id, out_path=None):
         shot = (not media) and d.get('kind') == 'software' and src
         body_ = f'<div class="wrap hero-in al-{al} place-{place}">{cat}<h1 class="h1" style="{hsty}">{h1}</h1><p class="lede{" light" if light else ""}">{e(h.get("lede"))}</p><div class="ctas">{cta_html(light)}{secondary_cta(light)}</div></div>'
         if not media and src and not hui.get('move') and d.get('kind') in ('place', 'service', 'product') and (images.get(h.get('media')) or {}).get('w', 0) >= 900: hui = {**hui, 'move': 'split'}
-        if RECIPE and not (h.get('ui') or {}).get('move'): hui = {**hui, 'move': RECIPE.get('hero', hui.get('move'))}
+        # the template's hero is its signature: Concept may replace it only with a strong move (billboard, editorial-type); the generic 'split' never does
+        if RECIPE and (h.get('ui') or {}).get('move') in (None, '', 'default', 'split') and RECIPE.get('hero') not in (None, 'shot'): hui = {**hui, 'move': RECIPE['hero']}
+        elif RECIPE and not (h.get('ui') or {}).get('move'): hui = {**hui, 'move': RECIPE.get('hero', hui.get('move'))}
         if d.get('kind') == 'software' and h.get('visual_verified') is True and src and not has_video: hui = {**hui, 'move': 'split'}
         mv = hui.get('move')
         if has_video and not src:
@@ -490,7 +496,8 @@ def build(slug_dir, bp_id, out_path=None):
             heading_style = re.sub(r'max-width:[^;]+', 'max-width:18ch', hsty)
             heading_style = re.sub(r'text-align:(?:left|center)', 'text-align:center', heading_style)
             return f'<section class="sec hero billboard" id="top"><div class="wrap billboard-frame"><div class="billboard-media"><img src="{src}" alt="{source_alt(src)}"></div><div class="billboard-content"><div class="cat">{lab(h.get("category"), True)}{lab(h.get("fact"), True)}</div><h1 class="h1" style="{heading_style}">{h1}</h1><p class="lede">{e(h.get("lede"))}</p><div class="ctas">{cta_html(True)}{secondary_cta(True)}</div></div></div></section>'
-        if mv == 'poster' and not has_video:
+        if mv == 'poster' and not has_video and not (src and cand and cand.get('w', 0) >= 1100 and not cand.get('shot') and 'svg' not in str(cand.get('data', ''))[:30]):
+            # no picture wide enough to carry type on top: the poster becomes a composition with the picture framed below the words
             # Poster composition uses a client visual, never a
             # reference asset. Keep the heading and CTA outside the image so
             # long text and opaque images cannot obscure one another.
@@ -553,7 +560,7 @@ def build(slug_dir, bp_id, out_path=None):
                 cand = [i for i in images.values() if i.get('data') and i.get('w', 0) >= 760 and not is_used(i.get('id')) and free_for(i, bt) and not dark_background_texture(i) and (soft or not i.get('shot'))]
                 cand.sort(key=lambda i: (not i.get('gen'), -(i.get('w', 0) * i.get('h', 0)))); own = cand[0] if cand else None
             if not own: return []
-            src = img(own['id'])
+            bt['_vis_shot'] = bool(own.get('shot')); src = img(own['id'])
             return [(src, ZOOMS[i % len(ZOOMS)]) for i in range(n)]
         if bt.get('image') and images.get(bt['image']) and not is_used(bt['image']) and images[bt['image']].get('w', 0) >= 500: out_.append((img(bt['image']), ZOOMS[0]))
         pool = [i for i in images.values() if i.get('data') and not is_used(i.get('id')) and free_for(i, bt) and i.get('w', 0) >= 600]
@@ -576,7 +583,8 @@ def build(slug_dir, bp_id, out_path=None):
             heading, description = (body, '') if bt['type'] == 'steps' else (title, body)
             paragraph = f'<p>{e(description)}</p>' if description else ''
             rows += f'<div class="sp-row" data-i="{i}"><span class="lab">{e(f"0{i + 1}")}</span><h3 class="h3">{e(heading)}</h3>{paragraph}</div>'
-        product_shot = d.get('kind') == 'software'
+        # a screenshot is shown whole (contain); a photograph fills the frame (cover) — decided by the picture, not the site's kind
+        product_shot = bt.get('_vis_shot') if bt.get('_vis_shot') is not None else d.get('kind') == 'software'
         frames = ''.join(f'<figure class="sp-f{" on" if i == 0 else ""}" data-i="{i}"><img src="{vis[i % len(vis)][0]}" alt="" style="object-position:{"center" if product_shot else vis[i % len(vis)][1][0]};transform:scale({1 if product_shot else vis[i % len(vis)][1][1]})"></figure>' for i in range(len(items)))
         return f'<section class="sec sticky band-{band_of(sec, bt)}" id="{e(bt["id"])}" data-sig="sticky"><div class="wrap">{ghead(sec, bt)}<div class="sp"><div class="sp-text">{rows}</div><div class="sp-pin"><div class="sp-stage{" product-shot" if product_shot else ""}">{frames}</div></div></div></div></section>'
 
@@ -1511,7 +1519,7 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
 .product-story-layout{{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);grid-template-areas:"heading image" "rows rows";align-items:center;column-gap:clamp(35px,5vw,75px);row-gap:clamp(56px,6vw,88px)}}
 .product-story .gh{{grid-area:heading;margin:0;display:block;text-align:left}}.product-story .gh h2{{max-width:14ch;text-align:left;margin:24px 0 0;line-height:1.02}}.product-story .gh .lede{{margin-top:22px;max-width:32ch}}
 .product-story-visual{{grid-area:image;width:100%;max-width:var(--product-story-image-max);margin:0;justify-self:center;overflow:hidden;border-radius:var(--radius)}}.product-story-visual img{{display:block;width:100%;height:auto;object-fit:contain}}
-@media(min-resolution:1.1dppx){{.product-story-visual{{max-width:calc(var(--product-story-image-max) / 2)}}}}@media(min-resolution:2.1dppx){{.product-story-visual{{max-width:calc(var(--product-story-image-max) / 3)}}}}@media(min-resolution:3.1dppx){{.product-story-visual{{max-width:calc(var(--product-story-image-max) / 4)}}}}
+
 .product-story-wide .product-story-layout{{grid-template-columns:minmax(0,1fr);grid-template-areas:"heading" "image" "rows";row-gap:clamp(36px,4vw,56px)}}.product-story-wide .gh h2{{max-width:20ch}}
 .product-story-rows{{grid-area:rows;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 clamp(30px,5vw,72px);list-style:none;margin:0;padding:0}}
 .product-story-row{{display:grid;grid-template-columns:40px minmax(0,1fr);column-gap:16px;padding:25px 0 29px;border-top:1px solid var(--line);min-width:0}}.product-story-row .lab{{padding-top:8px}}.product-story-row .h3{{margin:0;font-size:clamp(22px,2vw,28px);overflow-wrap:anywhere}}.product-story-row p{{margin-top:8px;font-size:17px;line-height:1.4;max-width:42ch;overflow-wrap:anywhere;color:var(--muted)}}
@@ -1536,15 +1544,15 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
 .ledger-sticky .ledger-sticky-content .rows{{margin-top:36px}}
 .ledger-sticky .rows li{{padding:25px 0}}
 .ledger-sticky figure.ledger-visual{{position:sticky;top:110px;align-self:start;justify-self:center;margin:0;width:100%;max-width:calc(var(--ledger-image-max) / var(--ledger-density,1));height:min(62vh,600px,calc(var(--ledger-image-height-max) / var(--ledger-density,1)));max-height:none;aspect-ratio:auto!important}}
-@media(min-resolution:1.01dppx){{.ledger-sticky .ledger-visual{{--ledger-density:2}}}}
-@media(min-resolution:2.01dppx){{.ledger-sticky .ledger-visual{{--ledger-density:3}}}}
-@media(min-resolution:3.01dppx){{.ledger-sticky .ledger-visual{{--ledger-density:4}}}}
+
+
+
 .reduced-motion .ledger-sticky .ledger-visual{{position:static}}
 @media(prefers-reduced-motion:reduce){{.ledger-sticky .ledger-visual{{position:static}}}}
 .ledger-item{{min-width:0}}.ledger-detail{{display:block;font-size:.85em;line-height:1.4;margin-top:6px;overflow-wrap:anywhere}}
 .ledger-cards-intro{{max-width:760px}}
 @media(min-width:901px){{.ledger-cards-intro.has-visual{{max-width:none;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:clamp(36px,5vw,80px);align-items:center}}.ledger-cards-intro.has-visual .ledger-visual{{justify-self:end;width:100%;max-width:calc(var(--ledger-image-max) / var(--ledger-density,1));max-height:min(60vh,calc(var(--ledger-image-height-max) / var(--ledger-density,1)));margin:0}}}}
-@media(min-resolution:1.01dppx){{.ledger-cards .ledger-visual{{--ledger-density:2}}}}@media(min-resolution:2.01dppx){{.ledger-cards .ledger-visual{{--ledger-density:3}}}}@media(min-resolution:3.01dppx){{.ledger-cards .ledger-visual{{--ledger-density:4}}}}
+
 .ledger-cards>.wrap{{container-type:inline-size}}
 .ledger-card-list{{--ledger-card-gap:clamp(12px,2vw,24px);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(250px,calc((100% + var(--ledger-card-gap)) / var(--ledger-cols) - var(--ledger-card-gap)))),1fr));gap:var(--ledger-card-gap);list-style:none;margin-top:clamp(32px,5vw,72px)}}
 .ledger-card-list li{{min-width:0;display:flex;flex-direction:column;justify-content:space-between;gap:24px;padding:clamp(20px,2.2vw,28px);border:1px solid var(--line);border-radius:var(--radius);overflow-wrap:anywhere}}
@@ -1592,9 +1600,9 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
 @media(prefers-reduced-motion:reduce){{.marquee-static li span{{min-width:0;overflow-wrap:anywhere}}.marquee-static li span:first-child{{font-family:var(--display);font-weight:var(--h2-w);font-size:clamp(21px,2.4vw,32px);line-height:1.2;letter-spacing:-.02em}}.marquee-static li span+span{{font-family:var(--body);font-size:var(--body-px);line-height:1.4}}}}
 .pinned,.typewall,.sticky,.railsec{{display:block;align-content:start}}.pinned{{padding:0}}.ps-sticky{{position:sticky;top:0;height:100svh;display:grid;align-content:center;overflow:hidden}}.ps-stage{{position:relative;min-height:52vh}}.ps-s{{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;gap:var(--gutter);align-items:center;opacity:0;transform:translateY(24px);transition:opacity .5s var(--ease),transform .7s var(--ease);pointer-events:none}}.ps-s.on{{opacity:1;transform:none}}.ps-t .num{{display:block;font-family:var(--display);font-weight:var(--h1-w);font-size:clamp(64px,10vw,160px);line-height:.9;letter-spacing:-.03em;color:inherit}}.ps-t .h2{{margin-top:18px}}.ps-v{{margin:0;border-radius:max(12px,var(--radius));overflow:hidden;border:1px solid var(--line);aspect-ratio:1.3}}.ps-v img{{width:100%;height:100%;object-fit:cover}}.ps-dots{{display:flex;gap:8px;margin-top:28px}}.ps-dots i{{width:28px;height:2px;background:var(--line)}}.ps-dots i.on{{background:var(--ink)}}.band-dark .ps-dots i.on{{background:var(--band-ink)}}
 .typewall{{padding:0}}.tw-sticky{{position:sticky;top:0;min-height:100svh;display:grid;align-content:center}}.tw{{font-family:var(--display);font-weight:var(--h2-w);font-size:clamp(28px,4.6vw,72px);line-height:1.08;letter-spacing:-.02em;max-width:min(92%,30ch);margin-top:22px;text-wrap:balance;overflow-wrap:anywhere}}.tw-title{{font-size:clamp(40px,8vw,120px)}}.tw-caption{{max-width:60ch;margin-top:24px}}.tw-prominent{{text-align:center}}.tw-prominent .tw-title{{font-size:clamp(40px,11.1vw,160px);max-width:100%;margin-left:auto;margin-right:auto}}.tw-prominent .tw-caption{{margin-left:auto;margin-right:auto}}.tw-w{{opacity:1;transition:opacity .25s}}.tw-animated .tw-w{{opacity:.35}}.tw-animated .tw-w.on{{opacity:1}}.typewall .who{{margin-top:28px}}
-.ps-t .h2,.ps-t .num{{overflow-wrap:anywhere}}.ps-s.no-visual{{grid-template-columns:minmax(0,1fr)}}.ps-s.no-visual .ps-t{{text-align:center}}.ps-v.item-visual{{width:100%;max-width:var(--ps-image-max);justify-self:center}}@media(min-resolution:1.1dppx){{.ps-v.item-visual{{max-width:calc(var(--ps-image-max) / 2)}}}}@media(min-resolution:2.1dppx){{.ps-v.item-visual{{max-width:calc(var(--ps-image-max) / 3)}}}}@media(min-resolution:3.1dppx){{.ps-v.item-visual{{max-width:calc(var(--ps-image-max) / 4)}}}}
+.ps-t .h2,.ps-t .num{{overflow-wrap:anywhere}}.ps-s.no-visual{{grid-template-columns:minmax(0,1fr)}}.ps-s.no-visual .ps-t{{text-align:center}}.ps-v.item-visual{{width:100%;max-width:var(--ps-image-max);justify-self:center}}
 .cta2{{display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--gutter) * 1.5);align-items:center}}.cta-v{{margin:0;border-radius:max(12px,var(--radius));overflow:hidden;aspect-ratio:1.05}}.cta-v img{{width:100%;height:100%;object-fit:cover}}.cta-t{{display:grid;gap:22px}}.cta-t .form{{text-align:left}}.cta-t .alts{{justify-content:flex-start}}
-.st{{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:calc(var(--gutter) * 1.5);align-items:center}}.story.flip .st-t{{order:2}}.st-l{{list-style:none;margin-top:28px;display:grid;gap:14px}}.st-l li{{display:grid;grid-template-columns:minmax(120px,.35fr) 1fr;gap:16px;padding-top:12px;border-top:1px solid var(--line)}}.st-l b{{font-weight:500}}.st-l span{{color:var(--muted)}}.st-v{{margin:0;border-radius:max(12px,var(--radius));overflow:hidden;border:1px solid var(--line);aspect-ratio:1.15}}.st-v img{{width:100%;height:100%;object-fit:cover;object-position:top}}.story-photo .st-t{{min-width:0;overflow-wrap:anywhere}}.story-photo .st-v{{width:100%;max-width:min(var(--story-image-max),calc(78svh * var(--story-ratio)));justify-self:center}}@media(min-resolution:1.1dppx){{.story-photo .st-v{{max-width:min(calc(var(--story-image-max) / 2),calc(78svh * var(--story-ratio)))}}}}@media(min-resolution:2.1dppx){{.story-photo .st-v{{max-width:min(calc(var(--story-image-max) / 3),calc(78svh * var(--story-ratio)))}}}}@media(min-resolution:3.1dppx){{.story-photo .st-v{{max-width:min(calc(var(--story-image-max) / 4),calc(78svh * var(--story-ratio)))}}}}
+.st{{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:calc(var(--gutter) * 1.5);align-items:center}}.story.flip .st-t{{order:2}}.st-l{{list-style:none;margin-top:28px;display:grid;gap:14px}}.st-l li{{display:grid;grid-template-columns:minmax(120px,.35fr) 1fr;gap:16px;padding-top:12px;border-top:1px solid var(--line)}}.st-l b{{font-weight:500}}.st-l span{{color:var(--muted)}}.st-v{{margin:0;border-radius:max(12px,var(--radius));overflow:hidden;border:1px solid var(--line);aspect-ratio:1.15}}.st-v img{{width:100%;height:100%;object-fit:cover;object-position:top}}.story-photo .st-t{{min-width:0;overflow-wrap:anywhere}}.story-photo .st-v{{width:100%;max-width:min(var(--story-image-max),calc(78svh * var(--story-ratio)));justify-self:center}}
 .story-photo .h2{{font-size:min(var(--story-heading-size),clamp(28px,4vw,72px))}}
 @media(max-width:900px){{.story-photo .h2{{font-size:min(var(--story-heading-size),clamp(28px,8.2vw,72px))}}}}
 /* Wide place photographs can carry an editorial chapter with readable text. */
@@ -1615,9 +1623,6 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
 }}
 }}
 }}
-@media(min-width:901px) and (min-height:701px) and (min-resolution:1.1dppx){{.story-editorial .st{{max-width:min(calc(var(--editorial-image-max) / 2),calc(78svh * 1.6))}}}}
-@media(min-width:901px) and (min-height:701px) and (min-resolution:2.1dppx){{.story-editorial .st{{max-width:min(calc(var(--editorial-image-max) / 3),calc(78svh * 1.6))}}}}
-@media(min-width:901px) and (min-height:701px) and (min-resolution:3.1dppx){{.story-editorial .st{{max-width:min(calc(var(--editorial-image-max) / 4),calc(78svh * 1.6))}}}}
 @container(max-width:700px){{.story-editorial .st-v{{aspect-ratio:var(--story-ratio)!important}}.story-editorial .st-t{{grid-area:2/1;align-self:start;width:100%;padding:28px 0 0;background:none;color:inherit}}.story-editorial .st-t .h2{{color:inherit}}.story-editorial .st-t .lab,.story-editorial .st-t .lede{{color:inherit}}}}
 @media(max-width:900px),(max-height:700px){{.story-editorial{{padding:32px 0}}.story-editorial .st{{display:flex;flex-direction:column;gap:0}}.story-editorial .st-v{{order:0}}.story-editorial .st-t{{order:1;width:100%;padding-top:28px}}}}
 /* Experimental editorial product story: source words and assigned image only. */
@@ -1638,9 +1643,9 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
 @media(max-width:900px){{.ui-photo-story .st{{grid-template-columns:minmax(0,1fr);gap:32px}}.ui-photo-story .photo-caption .h2{{font-size:clamp(30px,8.5vw,44px)}}.ui-photo-story .photo-caption .cap{{font-size:19px}}}}
 /* Owned visuals remain whole and cannot exceed their embedded pixels. */
 .assigned-visual,figure.lead.lead-shot.assigned-visual{{width:100%;max-width:var(--assigned-native);justify-self:center;aspect-ratio:var(--assigned-ratio,auto)}}.assigned-visual img{{display:block;width:100%;height:auto;object-fit:contain}}
-@media(min-resolution:1.1dppx){{.assigned-visual,figure.lead.lead-shot.assigned-visual{{max-width:calc(var(--assigned-native) / 2)}}}}@media(min-resolution:2.1dppx){{.assigned-visual,figure.lead.lead-shot.assigned-visual{{max-width:calc(var(--assigned-native) / 3)}}}}@media(min-resolution:3.1dppx){{.assigned-visual,figure.lead.lead-shot.assigned-visual{{max-width:calc(var(--assigned-native) / 4)}}}}
+
 .ui-photo-story .assigned-visual{{--ui-photo-density:1;max-width:min(calc(var(--assigned-native) / var(--ui-photo-density)),calc(92svh * var(--assigned-ratio)))}}
-@media(min-resolution:1.1dppx){{.ui-photo-story .assigned-visual{{--ui-photo-density:2}}}}@media(min-resolution:2.1dppx){{.ui-photo-story .assigned-visual{{--ui-photo-density:3}}}}@media(min-resolution:3.1dppx){{.ui-photo-story .assigned-visual{{--ui-photo-density:4}}}}
+
 @media(max-width:900px){{.statement .wrap{{padding-left:max(16px,calc(var(--frame) * .5))}}.split-wrap,.sp,.ps-s,.st,.cta2{{grid-template-columns:1fr}}.story.flip .st-t{{order:0}}.sp-pin{{order:-1}}.sp-stage{{position:relative;top:auto;height:52vh}}.sp-row{{min-height:auto;padding:22px 0;opacity:1}}.ps-s{{align-content:start}}.ps-v{{aspect-ratio:1.6}}.shotframe.tall img{{height:52vh}}.mq-i{{font-size:28px}}.nav .links{{display:none}}.nav .wrap{{gap:12px}}.nav .wrap>a:first-child{{min-width:0;max-width:28vw;flex:0 0 auto}}.nav .logo{{height:auto;max-height:56px;max-width:min(115px,28vw)}}.nav .wordmark{{font-size:clamp(16px,5vw,22px);overflow-wrap:anywhere}}.nav .btn{{min-width:0;padding-inline:8px;overflow-wrap:anywhere;justify-content:center}}.nav .btn .ar{{flex-shrink:0}}.gh,.ledger .two,.faq .two,.photos .pair{{grid-template-columns:1fr;display:grid}}.photos figure{{width:100%!important}}.grid{{grid-template-columns:1fr}}.twocol .cols{{grid-template-columns:1fr}}.end .fcols{{grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}}.form{{grid-template-columns:1fr}}.hero{{padding-top:100px}}.wrap{{padding:0 max(16px,calc(var(--frame) * .5))}}}}
 @media(max-width:900px){{.shotframe.tall.product-shot img{{height:auto;max-height:52vh}}}}
 .reduced-motion .ps-sticky{{position:static;height:auto;display:block;overflow:visible}}.reduced-motion .ps-stage{{min-height:0;display:grid;gap:clamp(40px,6vw,80px)}}.reduced-motion .ps-s{{position:static;inset:auto;opacity:1;transform:none;pointer-events:auto}}.reduced-motion .ps-dots{{display:none}}.reduced-motion *,.reduced-motion *::before,.reduced-motion *::after{{transition:none!important;animation:none!important}}@media(prefers-reduced-motion:reduce){{*{{transition:none!important;animation:none!important}}}}
