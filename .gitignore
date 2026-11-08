@@ -8,3 +8,6 @@ server/node_modules/
 out/*/images.json
 out/*/index.html
 out/*/hero.mp4
+.env
+.env.local
+.env.*.local
