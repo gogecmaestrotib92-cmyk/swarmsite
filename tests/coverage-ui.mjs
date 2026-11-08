@@ -28,16 +28,29 @@ const browser = await chromium.launch({ executablePath: process.env.CHROME_PATH 
 try {
  for (const width of [390, 1440]) {
   const page = await browser.newPage({ viewport: { width, height: 900 } });
+  let responseJob = {...job, status:'running', steps:[{id:'capture',label:'Reading',status:'running'}], result:{}};
   await page.route('**/*', async route => {
    const u = new URL(route.request().url());
    if (u.hostname === 'app.test' && u.pathname === '/app') return route.fulfill({ status: 200, contentType: 'text/html', body: html });
    if (u.hostname === 'app.test' && u.pathname === '/config.js') return route.fulfill({ status: 200, contentType: 'application/javascript', body: "window.SWARMSITE_API='https://api.test';" });
    if (u.hostname === 'app.test' && u.pathname === '/js/swarm2.js') return route.fulfill({ status: 200, contentType: 'application/javascript', body: "window.Swarm2={ROLES:[],mount:()=>({phase(){},stop(){},push(){},setPage(){}})};" });
-   if (u.hostname === 'api.test' && u.pathname.startsWith('/jobs/')) return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(job) });
+   if (u.hostname === 'api.test' && u.pathname.startsWith('/jobs/')) return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(responseJob) });
    if (u.hostname === 'api.test' && u.pathname.startsWith('/p/')) return route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>Preview</title><h1>Preview</h1>' });
    return route.abort();
   });
   await page.goto('http://app.test/app?url=example.com&job=11111111-1111-4111-8111-111111111111', { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => document.querySelector('#hudL').textContent === 'reading');
+  assert.equal(await page.locator('#stage').isVisible(), true, 'loading screen stays visible before completion');
+  assert.equal(await page.locator('#result').isHidden(), true, 'preview remains hidden while loading');
+  const loadingHud=await page.locator('#frame .hud').boundingBox();
+  assert.ok(loadingHud, 'loading HUD has a visible position');
+  assert.equal(await page.evaluate(({x,y}) => !!document.elementFromPoint(x,y)?.closest('#frame .hud'), {x:loadingHud.x+loadingHud.width/2,y:loadingHud.y+loadingHud.height/2}), true, 'loading HUD is on top during the run');
+  responseJob = job;
+  await page.locator('#result.on').waitFor({timeout:10000});
+  assert.equal(await page.locator('#stage').isHidden(), true, 'loading screen and its HUD are removed after completion');
+  const header=await page.locator('.top').boundingBox(), preview=await page.locator('#preview').boundingBox();
+  assert.ok(header && preview && preview.y >= header.y+header.height-1, 'preview starts below the fixed application header');
+  assert.equal(await page.evaluate(({x,y}) => document.elementFromPoint(x,y)?.id === 'preview', {x:preview.x+preview.width/2,y:preview.y+Math.min(20,preview.height/2)}), true, 'header and loading UI cannot cover the top of the preview');
   await page.locator('#coverage > summary').click();
   assert.equal(await page.getByText('Frequently asked questions', { exact: true }).count(), 1);
   assert.equal(await page.getByText('This source inventory is incomplete; more sections or pages may need review.').count(), 1);
@@ -61,6 +74,14 @@ try {
   assert.equal(await page.getByText('Unsafe', { exact: true }).evaluate(el => el.tagName), 'SPAN', 'unsafe source URLs must not become links');
   const rect = await page.locator('#coveragePanel').boundingBox();
   assert.ok(rect && rect.x >= -1 && rect.x + rect.width <= width + 1, `${width}px panel fits viewport`);
+  const bar=await page.locator('.result .bar').boundingBox();
+  assert.ok(bar && rect.y >= header.y+header.height-1 && rect.y+rect.height <= bar.y-5, 'coverage panel fits between the header and result bar');
+  assert.equal(await page.evaluate(({x,y}) => !!document.elementFromPoint(x,y)?.closest('#coveragePanel'), {x:rect.x+rect.width/2,y:rect.y+rect.height/2}), true, 'coverage panel is not obscured by loading HUD');
+  await page.setViewportSize({width:width===390?1440:390,height:900});
+  await page.waitForTimeout(100);
+  const resized=await page.evaluate(()=>{const h=document.querySelector('.top').getBoundingClientRect(), p=document.querySelector('#preview').getBoundingClientRect(), c=document.querySelector('#coveragePanel').getBoundingClientRect(), b=document.querySelector('.result .bar').getBoundingClientRect();return {headerBottom:h.bottom,previewTop:p.top,panelTop:c.top,panelBottom:c.bottom,barTop:b.top};});
+  assert.ok(resized.previewTop >= resized.headerBottom-1 && resized.panelTop >= resized.headerBottom-1 && resized.panelBottom <= resized.barTop-5, 'resizing recalculates header and panel positions');
+  await page.setViewportSize({width,height:900});
   await page.locator('#variants button').nth(1).click();
   assert.equal(await page.locator('#coverage').isHidden(), true, 'primary report must not describe the alternative');
   assert.match(await page.locator('#preview').getAttribute('src'), /bp=cerebrium/);

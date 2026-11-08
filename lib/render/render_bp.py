@@ -337,12 +337,25 @@ def build(slug_dir, bp_id, out_path=None):
     def pinned_sequence(sec, bt):
         """SIGNATURE: the section pins; each step takes over the screen as you scroll (number, sentence, visual)."""
         items = beat_items(bt)
+        def static_fallback():
+            if bt['type'] == 'facts': return numbers(sec, bt)
+            ui = dict(bt.get('ui') or {})
+            # A single column described the pinned stage, not its card fallback.
+            if ui.get('cols') == 1 and len(items) >= 3: ui.pop('cols', None)
+            # Keep only a deliberately assigned, available image. Do not let
+            # the generic steps fallback pick a different, unrelated image.
+            assigned = ui.get('lead') or bt.get('image')
+            image = images.get(assigned) if isinstance(assigned, str) else None
+            usable = (image and image.get('data') and image.get('w', 0) >= 900
+                      and not is_used(assigned) and free_for(image, bt) and not dark_background_texture(image))
+            ui['lead'] = assigned if usable else ''
+            return cards(sec, {**bt, 'ui': ui})
         # Pinning gives this section a fixed scroll height. Its sticky stage
         # can cover content appended after the stage, so use a normal flow for
         # beats with an additional note or action.
         if bt.get('note') or bt.get('cta') or bt.get('cta2'):
-            return numbers(sec, bt) if bt['type'] == 'facts' else cards(sec, bt)
-        if len(items) < 2 or len(items) > 5: return numbers(sec, bt) if bt['type'] == 'facts' else cards(sec, bt)
+            return static_fallback()
+        if len(items) < 2 or len(items) > 5: return static_fallback()
         # A section-level photo is not evidence that it depicts an individual offer.
         vis = [] if bt['type'] in ('features', 'facts') else pick_visuals(bt, len(items), strict=True)
         slides = ''
@@ -865,8 +878,7 @@ def build(slug_dir, bp_id, out_path=None):
             if kind == 'photo': return 'story' if move == 'story' else 'photo'
             if move == 'type-wall' and kind == 'quote': return move
             if move == 'sticky-product' and kind in ('features', 'steps', 'cells', 'facts') and 2 <= count <= 5: return move
-            if move == 'pinned-sequence' and kind in ('steps', 'features', 'facts') and 2 <= count <= 5: return move
-            if move == 'pinned-sequence' and kind == 'facts': return 'numbers'
+            if move == 'pinned-sequence' and kind in ('steps', 'features', 'facts'): return move
             if move == 'story' and kind in ('features', 'steps', 'cells', 'facts') and count <= 4: return move
             if move == 'marquee' and kind in ('cells', 'facts') and 0 < count <= 10 and all(len(str(t).split()) <= 5 for t, _ in beat_items(bt)): return move
             if move == 'cards' and kind in ('features', 'steps', 'cells', 'facts', 'faq'): return move
