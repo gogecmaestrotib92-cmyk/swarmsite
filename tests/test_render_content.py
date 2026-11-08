@@ -175,7 +175,8 @@ class RenderContentTests(unittest.TestCase):
             html = output.read_text()
             sections = SectionText()
             sections.feed(html)
-        self.assertIn('numbers', sections.attributes[facts['id']]['class'].split())
+        # a too-small assigned picture is not a reason to lose the sticky: the best free photograph carries the frames
+        self.assertIn('sticky', sections.attributes[facts['id']]['class'].split())
         for number, caption in facts['facts']:
             self.assertIn(number, sections.sections[facts['id']])
             self.assertIn(caption, sections.sections[facts['id']])
