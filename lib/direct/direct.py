@@ -8,6 +8,7 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.insert(0, os.path.join(ROOT, 'lib'))
 from source_context import model_pages, model_analysis
 import budget as B
+import seo as SEO
 RULES = ['lib/rules/copy.md', 'lib/rules/rhythm.md', 'lib/rules/master-run-01-frans.md', 'lib/rules/interaction.md']
 
 SCHEMA = r'''
@@ -103,9 +104,11 @@ def validate(doc):
     if len(set(ids)) != len(ids): errs.append('beat ids must be unique')
     return errs
 
-def brief_text(b):
-    if not b: return 'none'
+def brief_text(b, inv=None):
+    if not b: b = {}
     lines = []
+    if SEO.mode(b) == 'seo-safe' and inv: lines.append(SEO.rules_text(inv))
+    else: lines.append('FREE MODE — a studio redesign: the owner accepts that headings, copy and structure may change; keep the facts true.')
     lines.append('Keep their display font: ' + ('YES — brand.keep_font=true, font_hint = their font' if b.get('keepFont', True) else 'NO — choose a better one for this kind'))
     lines.append('Keep their colours: ' + ('YES — brand.accent/paper/ink must come from their palette' if b.get('keepColours', True) else 'NO — use the selected blueprint palette, with contrast-safe foregrounds'))
     lines.append('Keep their logo: ' + ('YES' if b.get('keepLogo', True) else 'NO — set the wordmark'))
@@ -448,7 +451,7 @@ def direct(slug_dir, model='claude-sonnet-5-5'):
     subpages = model_pages({**inv, 'sourcePages': (inv.get('sourcePages') or [])[:12]}) if analysis else model_pages(inv)
     homepage = {k: v for k, v in inv.items() if k not in ('sourcePages', 'sourceCoverage')}
     catalog = source_catalog(inv)
-    user = f"""RULES\n{rules}\n\nSCHEMA\n{SCHEMA}\n\nBUSINESS UNDERSTANDING (source-grounded design interpretation, verify claims against evidence)\n{json.dumps(understanding, ensure_ascii=False)}\n\nSOURCE HOMEPAGE CONTENT AND ROUTE CATALOG (visible source, not generated pages; retain every distinct meaningful homepage topic; record source_sections IDs)\n{json.dumps(catalog, ensure_ascii=False)}\n\nBATCHED SOURCE OBSERVATIONS (model interpretation; check against source evidence; omissions are marked)\n{json.dumps(analysis, ensure_ascii=False)}\n\nFACT SHEET (reader interpretation; verify words and figures against source evidence)\n{factsheet}\n\nSOURCE SUBPAGES (bounded excerpts, {len(subpages)} of {len(inv.get("sourcePages") or [])} captured pages shown; these pages are read, not rebuilt)\n{json.dumps(subpages, ensure_ascii=False)}\n\nHOME PAGE INVENTORY\n{json.dumps(homepage, ensure_ascii=False)[:60000]}\n\nBRAND ASSETS\n{json.dumps({k: v for k, v in (assets or {}).items() if k != 'logo'}, ensure_ascii=False)[:6000]}\n\nIMAGES (ids you may use)\n{json.dumps(imgs, ensure_ascii=False)[:6000]}\n\nAUDIT\n{json.dumps(audit, ensure_ascii=False)[:8000] if audit else 'n/a'}\n\nOWNER'S BRIEF (hard constraints, override everything above)\n{brief_text(brief)}\n\nCall write_direction with the complete document."""
+    user = f"""RULES\n{rules}\n\nSCHEMA\n{SCHEMA}\n\nBUSINESS UNDERSTANDING (source-grounded design interpretation, verify claims against evidence)\n{json.dumps(understanding, ensure_ascii=False)}\n\nSOURCE HOMEPAGE CONTENT AND ROUTE CATALOG (visible source, not generated pages; retain every distinct meaningful homepage topic; record source_sections IDs)\n{json.dumps(catalog, ensure_ascii=False)}\n\nBATCHED SOURCE OBSERVATIONS (model interpretation; check against source evidence; omissions are marked)\n{json.dumps(analysis, ensure_ascii=False)}\n\nFACT SHEET (reader interpretation; verify words and figures against source evidence)\n{factsheet}\n\nSOURCE SUBPAGES (bounded excerpts, {len(subpages)} of {len(inv.get("sourcePages") or [])} captured pages shown; these pages are read, not rebuilt)\n{json.dumps(subpages, ensure_ascii=False)}\n\nHOME PAGE INVENTORY\n{json.dumps(homepage, ensure_ascii=False)[:60000]}\n\nBRAND ASSETS\n{json.dumps({k: v for k, v in (assets or {}).items() if k != 'logo'}, ensure_ascii=False)[:6000]}\n\nIMAGES (ids you may use)\n{json.dumps(imgs, ensure_ascii=False)[:6000]}\n\nAUDIT\n{json.dumps(audit, ensure_ascii=False)[:8000] if audit else 'n/a'}\n\nOWNER'S BRIEF (hard constraints, override everything above)\n{brief_text(brief, inv)}\n\nCall write_direction with the complete document."""
     client = anthropic.Anthropic()
     import base64, glob
     bps = []

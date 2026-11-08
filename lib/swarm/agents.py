@@ -11,6 +11,7 @@ from source_context import model_pages, model_analysis
 from visual_quality import empty_visual
 from visual_semantics import ledger_lead_fingerprint
 import budget as B
+import seo as SEO
 MODEL = os.environ.get('DIRECT_MODEL', 'claude-sonnet-5-5')
 _document_lock = RLock()
 
@@ -309,13 +310,24 @@ def copy(slug_dir, notes=''):
             if words(f.get('title')) > LIMITS['ftitle']: over.append(f"{b['id']}.features[{i}].title")
     if not over and not notes: return 0
     doc = {'hero': d['hero'], 'beats': d['beats'], 'ending': {'tag': d.get('ending', {}).get('tag')}}
-    content = [{"type": "text", "text": f"FACT SHEET\n{json.dumps(fs_, ensure_ascii=False)[:6000]}\n\nCURRENT COPY\n{json.dumps(doc, ensure_ascii=False)[:14000]}\n\nOVER LIMIT: {over or 'none'}\nCRITIC NOTES FOR COPY: {notes or 'none'}\nCall rewrite."}]
+    brief = J(slug_dir, 'brief.json') or {}; inv = J(slug_dir, 'inventory.json') or {}
+    seo_rules = ('\n\n' + SEO.rules_text(inv)) if SEO.mode(brief) == 'seo-safe' else ''
+    content = [{"type": "text", "text": seo_rules.strip() + ("\n\n" if seo_rules else "") + f"FACT SHEET\n{json.dumps(fs_, ensure_ascii=False)[:6000]}\n\nCURRENT COPY\n{json.dumps(doc, ensure_ascii=False)[:14000]}\n\nOVER LIMIT: {over or 'none'}\nCRITIC NOTES FOR COPY: {notes or 'none'}\nCall rewrite."}]
     r = ask(COPY_SYSTEM, content, COPY_TOOL)
     return apply_copy(slug_dir, r) if r else 0
 
 @document_update
 def apply_copy(slug_dir, r):
     d = J(slug_dir, 'direction.json'); ids = by_id(d); n = 0
+    brief = J(slug_dir, 'brief.json') or {}; inv = J(slug_dir, 'inventory.json') or {}; safe = SEO.mode(brief) == 'seo-safe'
+    src_h1 = (inv.get('copy') or {}).get('h1') or ''; src_heads = {s.get('id'): s.get('title') for s in SEO.source_sections(inv)}
+    def keeps_keywords(tgt, f, v):
+        if not safe: return True
+        if tgt is d['hero'] and f == 'h1': return SEO.keyword_coverage(src_h1, v) >= .5  # the page's subject stays; a stance may be added
+        if f == 'h2':
+            heads = [src_heads.get(x) for x in (tgt.get('source_sections') or []) if src_heads.get(x)]
+            return all(SEO.keyword_coverage(h, v) >= .5 for h in heads)
+        return True
     for ed in r.get('edits', []):
         p, v = ed.get('path', ''), ed.get('value')
         if not isinstance(v, str) or not v.strip(): continue
@@ -333,6 +345,7 @@ def apply_copy(slug_dir, r):
             elif f == 'items' and tgt.get('type') != 'faq' and i is not None and j in (0, 1) and words(v) <= LIMITS['item']: tgt['items'][i][j] = v; n += 1
             elif lim and f in ('h1', 'lede', 'category', 'fact', 'h2', 'label', 'tag', 'big', 'body', 'cta', 'cta2') and words(v) <= (lim if f != 'body' else 60):
                 if f in ('cta', 'cta2') and words(v) > 5: continue
+                if not keeps_keywords(tgt, f, v): continue  # SEO-safe: a heading that loses its keywords is not an edit we take
                 tgt[f] = v; n += 1
         except (IndexError, KeyError, TypeError): pass
     W(slug_dir, 'direction.json', d); return n

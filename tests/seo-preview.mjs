@@ -33,7 +33,7 @@ try {
   await page.goto(`${pathToFileURL(withMetadata)}?nomotion=1`, {waitUntil:'domcontentloaded'});
   assert.equal(await page.title(), inventory.title, 'the original title is preserved');
   assert.equal(await page.locator('meta[name="description"]').getAttribute('content'), inventory.seo.description, 'the original description is preserved');
-  assert.equal(await page.locator('link[rel="canonical"]').count(),0,'source canonical is not copied to preview or export');
+  assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'), inventory.seo.canonical, 'SEO-safe (the default) carries the source canonical: the file is meant to replace that page');
   assert.equal(await page.locator('meta[name="robots"]').count(),0,'source robots is not copied into downloadable HTML');
   assert.equal(await page.locator('#top img').first().getAttribute('alt'), hero.alt, 'real source image keeps its author-provided alt text');
   assert.equal(await page.locator('#top h1').count(), 1, 'visible page keeps a single main heading');

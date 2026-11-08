@@ -33,7 +33,7 @@ def render(slug_dir, bp, out):
     if before != fingerprints(slug_dir, bp): raise RuntimeError('render inputs changed during render')
     return {'fingerprints': before, 'html': digest(out)}
 
-OWNER = {'h1': 'copy', 'h2': 'copy', 'one-cta': 'ux', 'actionable-cta': 'ux', 'page-length': 'ux', 'sections': 'ux', 'upscaled': 'visual', 'duplicate': 'visual', 'first-screen': 'visual', 'empty': 'ui', 'overflow': 'ui', 'sticky': 'ui', 'pinned': 'ui', 'contrast': 'ui'}
+OWNER = {'seo-text': 'ux', 'seo-h1': 'copy', 'seo-links': 'ux', 'seo-meta': 'ui', 'h1': 'copy', 'h2': 'copy', 'one-cta': 'ux', 'actionable-cta': 'ux', 'page-length': 'ux', 'sections': 'ux', 'upscaled': 'visual', 'duplicate': 'visual', 'first-screen': 'visual', 'empty': 'ui', 'overflow': 'ui', 'sticky': 'ui', 'pinned': 'ui', 'contrast': 'ui'}
 def contract(slug_dir, html):
     """THE CONTRACT: mechanical promises, graded on the render. Returns {score, failed:[{id, detail, weight}]}."""
     report = os.path.join(slug_dir, 'contract.json')

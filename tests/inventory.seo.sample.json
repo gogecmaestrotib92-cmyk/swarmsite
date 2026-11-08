@@ -1,0 +1,149 @@
+{
+ "url": "https://frans.rs/",
+ "title": "Restoran Franš Beograd — bašta, jelovnik, rezervacije",
+ "lang": "sr",
+ "actions": [
+  {
+   "text": "Jelovnik",
+   "href": "https://frans.rs/jelovnik"
+  },
+  {
+   "text": "Rezerviši sto",
+   "href": "https://frans.rs/rezervacija"
+  },
+  {
+   "text": "Proslave",
+   "href": "https://frans.rs/proslave"
+  },
+  {
+   "text": "Instagram",
+   "href": "https://instagram.com/frans"
+  }
+ ],
+ "forms": [
+  {
+   "source_url": "https://frans.rs/rezervacija",
+   "text": "Rezerviši sto"
+  }
+ ],
+ "seo": {
+  "title": "Restoran Franš Beograd — bašta, jelovnik, rezervacije",
+  "description": "Restoran Franš, Beograd: bašta pod starim stablima, srpska i francuska kuhinja, proslave do 200 gostiju. Rezervišite sto.",
+  "canonical": "https://frans.rs/",
+  "robots": null,
+  "hreflang": [
+   {
+    "lang": "sr",
+    "href": "https://frans.rs/"
+   },
+   {
+    "lang": "en",
+    "href": "https://frans.rs/en/"
+   }
+  ],
+  "og": {
+   "title": "Restoran Franš",
+   "description": "Bašta u srcu Beograda",
+   "image": null,
+   "type": "website"
+  },
+  "structuredData": {
+   "jsonLdCount": 1,
+   "invalidJsonLd": 0,
+   "types": [
+    "Restaurant"
+   ],
+   "raw": [
+    "{\"@context\": \"https://schema.org\", \"@type\": \"Restaurant\", \"name\": \"Restoran Franš\", \"address\": \"Bulevar oslobođenja 18, Beograd\", \"telephone\": \"+381 11 2641944\", \"servesCuisine\": [\"Serbian\", \"French\"]}"
+   ]
+  }
+ },
+ "copy": {
+  "totalWords": 119,
+  "headings": [
+   {
+    "tag": "H1",
+    "text": "Restoran Franš — bašta u srcu Beograda",
+    "words": 6
+   },
+   {
+    "tag": "H2",
+    "text": "Bašta pod starim stablima",
+    "words": 4
+   },
+   {
+    "tag": "H2",
+    "text": "Jelovnik i vinska karta",
+    "words": 4
+   },
+   {
+    "tag": "H2",
+    "text": "Proslave i poslovni ručkovi",
+    "words": 4
+   },
+   {
+    "tag": "H2",
+    "text": "Česta pitanja",
+    "words": 2
+   }
+  ],
+  "headingCount": 5,
+  "h1": "Restoran Franš — bašta u srcu Beograda",
+  "h1Words": 6,
+  "buttons": [],
+  "text": "Bašta restorana Franš je prava oaza mira i zelenila u srcu Beograda. Pod starim stablima, uz žubor fontane, gosti uživaju u tradicionalnim jelima i pažljivo biranim vinima. Bašta prima do 120 gostiju i radi od aprila do oktobra. Jelovnik restorana Franš spaja srpsku i francusku kuhinju: teleća čorba, jagnjetina ispod sača, biftek sa tartufima, domaći kolači. Vinska karta broji preko 200 etiketa iz Srbije, Francuske i Italije. Dnevni meni od 12 do 16 časova. Organizujemo svadbe, krštenja, rođendane i poslovne ručkove do 200 gostiju u zatvorenom salonu i bašti. Posebni meniji za grupe, ozvučenje i parking su obezbeđeni. Pozovite nas za ponudu. Da li je potrebna rezervacija? Preporučujemo rezervaciju vikendom. Da li imate parking? Da, besplatan parking za goste."
+ },
+ "sourceCoverage": {
+  "faqCatalogVersion": 1,
+  "sections": [
+   {
+    "id": "home-1",
+    "title": "Bašta pod starim stablima",
+    "headingLevel": "H2",
+    "kind": "section",
+    "text": "Bašta restorana Franš je prava oaza mira i zelenila u srcu Beograda. Pod starim stablima, uz žubor fontane, gosti uživaju u tradicionalnim jelima i pažljivo biranim vinima. Bašta prima do 120 gostiju i radi od aprila do oktobra."
+   },
+   {
+    "id": "home-2",
+    "title": "Jelovnik i vinska karta",
+    "headingLevel": "H2",
+    "kind": "section",
+    "text": "Jelovnik restorana Franš spaja srpsku i francusku kuhinju: teleća čorba, jagnjetina ispod sača, biftek sa tartufima, domaći kolači. Vinska karta broji preko 200 etiketa iz Srbije, Francuske i Italije. Dnevni meni od 12 do 16 časova."
+   },
+   {
+    "id": "home-3",
+    "title": "Proslave i poslovni ručkovi",
+    "headingLevel": "H2",
+    "kind": "section",
+    "text": "Organizujemo svadbe, krštenja, rođendane i poslovne ručkove do 200 gostiju u zatvorenom salonu i bašti. Posebni meniji za grupe, ozvučenje i parking su obezbeđeni. Pozovite nas za ponudu."
+   },
+   {
+    "id": "home-4",
+    "title": "Česta pitanja",
+    "headingLevel": "H2",
+    "kind": "faq",
+    "text": "Da li je potrebna rezervacija? Preporučujemo rezervaciju vikendom. Da li imate parking? Da, besplatan parking za goste.",
+    "faq": [
+     {
+      "question": "Da li je potrebna rezervacija?",
+      "answer": "Preporučujemo rezervaciju vikendom.",
+      "status": "readable"
+     },
+     {
+      "question": "Da li imate parking?",
+      "answer": "Da, besplatan parking za goste.",
+      "status": "readable"
+     }
+    ]
+   }
+  ],
+  "sectionsFound": 4,
+  "sectionLimit": 500,
+  "sectionsTruncated": false,
+  "routes": [],
+  "routesFound": 0,
+  "routesTruncated": false,
+  "scope": "landing_page_only",
+  "complete": true
+ }
+}

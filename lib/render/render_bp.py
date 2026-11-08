@@ -94,6 +94,9 @@ def dark_logo_colours(data):
     else: return None
     return colours if colours and all(colour_contrast(c, '#FFFFFF') >= 4.5 for c in colours) else None
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+import seo as SEO
+
 def build(slug_dir, bp_id, out_path=None):
     try:
         sys.path.insert(0, os.path.join(ROOT, 'lib/templates')); from recipes import RECIPES, FALLBACK
@@ -1237,6 +1240,27 @@ def build(slug_dir, bp_id, out_path=None):
             return f'<section class="sec cta band-dark cta-pic" id="{e((bt or {}).get("id") or form_id)}"><div class="wrap cta2"><figure class="cta-v"><img src="{pic}" alt=""></figure><div class="cta-t">{lab((bt or {}).get("label"))}<h2 class="h2" style="{re.sub(r"text-align:[^;]+;?|margin-(left|right):auto;?", "", title_style)}">{e(title)}</h2>{form}<div class="alts">{alt}</div></div></div></section>'
         return f'<section class="sec cta band-dark" id="{e((bt or {}).get("id") or form_id)}" style="min-height:{min(.5, sec.get("screens", 1)) * 100}svh"><div class="wrap center">{lab((bt or {}).get("label"))}<h2 class="h2" style="{title_style}">{e(title)}</h2>{form}<div class="alts">{alt}</div></div></section>'
 
+    def seo_archive(foot=''):
+        """SEO-safe: every source section whose words the page does not already carry, and every same-site link the page lost,
+        kept in a quiet accordion before the footer. Nothing the page ranked for disappears; the designer decides what is loud, not what exists."""
+        if SEO.mode(brief) != 'seo-safe': return ''
+        page_text = re.sub(r'<[^>]+>', ' ', ''.join(out))
+        items = []
+        for sec_ in SEO.source_sections(inventory):
+            text = ' '.join(str(sec_.get('text') or '').split())
+            if not text or len(text.split()) < 8: continue
+            if SEO.text_coverage(text, page_text) >= .85: continue  # its words are already on the page
+            faq = ''.join(f'<p><b>{e(q.get("question", ""))}</b> {e(q.get("answer", ""))}</p>' for q in (sec_.get('faq') or []) if isinstance(q, dict) and q.get('answer'))
+            items.append(f'<details><summary><h2 class="h3">{e(sec_.get("title"))}</h2></summary><div class="arch-body"><p>{e(text[:6000])}</p>{faq}</div></details>')
+        hrefs = set(re.findall(r'href="([^"]+)"', ''.join(out) + foot))  # the footer's links count too
+        lost = [l for l in SEO.internal_links(inventory) if l['href'] not in hrefs and l['href'].rstrip('/') not in {x.rstrip('/') for x in hrefs}]
+        links = ''.join(f'<li><a href="{e(l["href"])}">{e(l["text"])}</a></li>' for l in lost)
+        if not items and not links: return ''
+        lang = str(inventory.get('lang') or '').lower().split('-')[0]
+        heading = {'sr': 'Više o nama', 'hr': 'Više o nama', 'es': 'Más información', 'fr': 'En savoir plus', 'de': 'Mehr erfahren', 'it': 'Maggiori informazioni', 'pt': 'Mais informações'}.get(lang, 'More about us')
+        links_h = {'sr': 'Ostale stranice', 'hr': 'Ostale stranice', 'es': 'Otras páginas', 'fr': 'Autres pages', 'de': 'Weitere Seiten', 'it': 'Altre pagine', 'pt': 'Outras páginas'}.get(lang, 'More pages')
+        return (f'<section class="sec archive band-alt" id="more"><div class="wrap"><span class="lab">{e(heading)}</span><div class="arch">{"".join(items)}</div>'
+                + (f'<nav class="arch-links" aria-label="{e(links_h)}"><span class="lab">{e(links_h)}</span><ul>{links}</ul></nav>' if links else '') + '</div></section>')
     def footer(sec):
         def text(value): return value.strip() if isinstance(value, str) else ''
         cols = en.get('cols') if isinstance(en.get('cols'), list) else []
@@ -1380,7 +1404,9 @@ def build(slug_dir, bp_id, out_path=None):
             out.append(f'<section class="sec overlay cta-ov" id="{e((form_bt or {}).get("id") or form_id)}" data-sig="parallax"><figure class="ov-bg"><img src="{ps[0]}" alt=""></figure><div class="wrap ov-in light center">{lab((form_bt or {}).get("label"), True)}<h2 class="h2 light" style="{photo_title_style};text-align:center;margin:0 auto">{e(title)}</h2>{form}<div class="alts">{alt}</div></div></section>')
         else: out.append(cta(take('cta'), form_bt))
         if form_bt: out[-1] = section_extras(out[-1], form_bt)
-        out.append(footer(bp['sections'][-1] if bp['sections'][-1]['role'].startswith('footer') else {}))
+        foot = footer(bp['sections'][-1] if bp['sections'][-1]['role'].startswith('footer') else {}); arch = seo_archive(foot)
+        if arch: out.append(arch)
+        out.append(foot)
     def default_move(role, t):
         # the winner's own section vocabulary → our signature component
         if 'sticky' in role and t in ('features', 'steps', 'cells'): return 'sticky-product'
@@ -1419,7 +1445,9 @@ def build(slug_dir, bp_id, out_path=None):
         used_beats.add(bt['id'])
     if not RECIPE:
         if not cta_done: out.append(cta(take('cta'), None))
-        out.append(footer(bp['sections'][-1] if bp['sections'][-1]['role'].startswith('footer') else {}))
+        foot = footer(bp['sections'][-1] if bp['sections'][-1]['role'].startswith('footer') else {}); arch = seo_archive(foot)
+        if arch: out.append(arch)
+        out.append(foot)
     # Adjacent gallery sections with the same band form one visual sequence.
     # Keep each original section and its ID/actions intact; isolated choices
     # remain ordinary stacked sections rather than pulling in unrelated beats.
@@ -1571,7 +1599,7 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
 .hero.has-media{{background:#111}}.hero.poster .lede,.hero.photo .lede{{max-width:44ch;width:auto}}.hero.poster .hero-in{{display:grid;justify-items:center;text-align:center}}.hero.photo .hero-in,.hero.poster .hero-in{{position:relative;z-index:1}}.hero-in.light .lede{{color:rgba(255,255,255,.86)}}.hero-in.light .btn.ghost{{color:#fff;border-color:rgba(255,255,255,.5)}}.hero.poster .h1{{letter-spacing:-.035em}}
 .hero.inset{{min-height:auto;padding-bottom:0}}.inset-v{{margin:clamp(28px,4vw,56px) 0 0;border-radius:var(--radius);overflow:hidden;aspect-ratio:1.8}}.inset-v img{{width:100%;height:100%;object-fit:cover}}
 .collage .cl{{display:grid;grid-template-columns:1.2fr .8fr;grid-template-rows:auto auto;gap:var(--gutter)}}.collage figure{{margin:0;overflow:hidden;border-radius:var(--radius)}}.collage figure img{{width:100%;height:100%;object-fit:cover}}.collage .c1{{grid-row:1/3;aspect-ratio:.9}}.collage .c2{{aspect-ratio:1.3}}.collage .c3{{aspect-ratio:1.3}}
-.overlay{{position:relative;padding:0;min-height:88svh;background:#121212;color:#fff;display:grid;align-content:end;overflow:hidden}}.overlay.chapter{{min-height:72svh;align-content:center}}.ov-bg{{position:absolute;inset:0;margin:0}}.ov-bg::after{{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.55))}}.ov-bg img{{width:100%;height:100%;object-fit:cover}}.ov-in{{position:relative;z-index:1;padding:clamp(48px,7vw,110px) var(--frame) clamp(40px,6vw,80px);color:#fff}}.ov-in .lede{{color:rgba(255,255,255,.82)}}.ov-in .h2{{color:#fff}}.ov-in.center{{text-align:center;display:grid;justify-items:center}}.rows.light li{{border-color:rgba(255,255,255,.25);color:#fff}}.rows.light li i{{border-color:rgba(255,255,255,.25)}}.cta-ov .ov-in{{padding-block:clamp(48px,7vw,90px);gap:18px}}.cta-ov .alts{{gap:8px 18px}}.cta-ov .alts .lab{{color:rgba(255,255,255,.9);font-size:max(12px,var(--lab-px));line-height:1.4;overflow-wrap:anywhere}}.cta-ov .form{{margin:28px auto 0}}.form-note{{grid-column:1/-1;opacity:.6;margin:6px 0 0}}.cta-ov .ov-bg::after{{background:linear-gradient(180deg,rgba(0,0,0,.45),rgba(0,0,0,.78))}}.cta-ov .form input,.cta-ov .form textarea,.cta-ov .form select{{background:rgba(0,0,0,.35);color:#fff;border-color:rgba(255,255,255,.35)}}.cta-ov .form ::placeholder{{color:rgba(255,255,255,.6)}}.overlay.bare::after{{display:none}}
+.overlay{{position:relative;padding:0;min-height:88svh;background:#121212;color:#fff;display:grid;align-content:end;overflow:hidden}}.overlay.chapter{{min-height:72svh;align-content:center}}.ov-bg{{position:absolute;inset:0;margin:0}}.ov-bg::after{{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.55))}}.ov-bg img{{width:100%;height:100%;object-fit:cover}}.ov-in{{position:relative;z-index:1;padding:clamp(48px,7vw,110px) var(--frame) clamp(40px,6vw,80px);color:#fff}}.ov-in .lede{{color:rgba(255,255,255,.82)}}.ov-in .h2{{color:#fff}}.ov-in.center{{text-align:center;display:grid;justify-items:center}}.rows.light li{{border-color:rgba(255,255,255,.25);color:#fff}}.rows.light li i{{border-color:rgba(255,255,255,.25)}}.cta-ov .ov-in{{padding-block:clamp(48px,7vw,90px);gap:18px}}.cta-ov .alts{{gap:8px 18px}}.cta-ov .alts .lab{{color:rgba(255,255,255,.9);font-size:max(12px,var(--lab-px));line-height:1.4;overflow-wrap:anywhere}}.cta-ov .form{{margin:28px auto 0}}.form-note{{grid-column:1/-1;opacity:.6;margin:6px 0 0}}.archive{{padding:clamp(48px,6vw,80px) 0}}.arch{{margin-top:18px;border-top:1px solid var(--line)}}.arch details{{border-bottom:1px solid var(--line);padding:14px 0}}.arch summary{{cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:16px}}.arch summary::after{{content:"+";font-weight:300}}.arch details[open] summary::after{{content:"–"}}.arch summary .h3{{font-size:min(var(--h3),24px);margin:0}}.arch-body{{margin-top:10px;color:var(--muted);max-width:70ch}}.arch-body p+p{{margin-top:8px}}.arch-links{{margin-top:28px}}.arch-links ul{{list-style:none;display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:10px}}.arch-links a{{text-decoration:underline;text-underline-offset:.2em}}.cta-ov .ov-bg::after{{background:linear-gradient(180deg,rgba(0,0,0,.45),rgba(0,0,0,.78))}}.cta-ov .form input,.cta-ov .form textarea,.cta-ov .form select{{background:rgba(0,0,0,.35);color:#fff;border-color:rgba(255,255,255,.35)}}.cta-ov .form ::placeholder{{color:rgba(255,255,255,.6)}}.overlay.bare::after{{display:none}}
 .qband{{padding:clamp(72px,10vw,150px) 0}}.qband .qb{{font-family:var(--display);font-weight:var(--h2-w);font-size:clamp(28px,4.2vw,64px);line-height:1.12;letter-spacing:-.02em;max-width:24ch}}.qband.center .qb{{margin:0 auto;text-align:center}}.qband.center .who{{text-align:center}}.band-accent{{background:var(--accent);color:{'var(--on-accent)' if policy else '#fff'}{';--muted:'+policy['accent_muted'] if policy else ''}}}.band-accent .lab{{color:{'var(--muted)' if policy else 'rgba(255,255,255,.7)'}}}
 .railsec{{overflow:hidden}}.rail{{overflow-x:auto;scrollbar-width:thin;padding:0 var(--frame)}}.rail-in{{display:flex;gap:var(--gutter);width:max-content}}.rc{{width:min(360px,78vw);display:grid;gap:10px;align-content:start}}.rc figure{{margin:0 0 6px;aspect-ratio:.82;border-radius:var(--radius);overflow:hidden}}.rc figure img{{width:100%;height:100%;object-fit:cover}}.rc p{{color:var(--muted)}}
 .reduced-motion .rail-in{{width:auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}}.reduced-motion .rc{{width:auto}}
@@ -1656,9 +1684,23 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
     # Never copy the source canonical or robots onto a temporary preview.
     page_description = meta_text(source_seo.get('description')) or meta_text(h.get('lede'))
     description_tag = f'<meta name="description" content="{e(page_description)}">' if page_description else ''
+    # SEO-safe: the head is the source's head. The preview is served with no-store + X-Robots-Tag noindex by the server, so carrying canonical/robots/og/JSON-LD
+    # into the HTML is safe here and exactly what the downloaded file needs when it replaces the live page.
+    seo_head = ''
+    if SEO.mode(brief) == 'seo-safe':
+        sd = SEO.describe(inventory); parts = []
+        if sd.get('canonical'): parts.append(f'<link rel="canonical" href="{e(sd["canonical"])}">')
+        # robots is deliberately not carried: a source captured behind noindex must not hand that noindex to the page that replaces it
+        for alt in sd.get('hreflang') or []:
+            if alt.get('href') and alt.get('lang'): parts.append(f'<link rel="alternate" hreflang="{e(alt["lang"])}" href="{e(alt["href"])}">')
+        for k, v in (sd.get('og') or {}).items():
+            if v and k != 'image': parts.append(f'<meta property="og:{k}" content="{e(v)}">')
+        for raw in sd.get('jsonld') or []:
+            parts.append('<script type="application/ld+json">' + raw.replace('</script', '<\\/script') + '</script>')
+        seo_head = ''.join(parts)
     language = next((value.strip() for value in (d.get('lang'), inventory.get('lang')) if isinstance(value, str) and re.fullmatch(r'[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*', value.strip())), '')
     lang_attr = f' lang="{e(language)}"' if language else ''
-    html = f'''<!DOCTYPE html><html{lang_attr}><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{e(page_title)}</title>{description_tag}{fonts_link}<style>{css}</style></head>
+    html = f'''<!DOCTYPE html><html{lang_attr}><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{e(page_title)}</title>{description_tag}{seo_head}{fonts_link}<style>{css}</style></head>
 <body>
 <nav class="nav{' solid' if 'has-media' not in out[0] else ''}{logo_class}" id="nav" data-nav><div class="wrap"><a href="#top">{mark}</a><div class="links">{nav_links}</div>{cta_html(bool(sec_media(bp['sections'][0])))}</div></nav>
 {chr(10).join(out)}
@@ -1677,7 +1719,7 @@ function Sig(){{ if(!window.gsap||!window.ScrollTrigger) return; gsap.registerPl
   document.querySelectorAll('[data-sig="typewall"]').forEach(sec=>{{ const ws=[...sec.querySelectorAll('.tw-w')]; sec.classList.add('tw-animated'); sec.style.height='150vh'; ScrollTrigger.create({{trigger:sec,start:'top top',end:'bottom bottom',onUpdate:st=>{{ const k=Math.round(st.progress*ws.length); ws.forEach((w,i)=>w.classList.toggle('on',i<k)); }}}}); }});
   document.querySelectorAll('[data-sig="parallax"]').forEach(el=>gsap.fromTo(el,{{y:40}},{{y:-40,ease:'none',scrollTrigger:{{trigger:el,start:'top bottom',end:'bottom top',scrub:true}}}}));
   ScrollTrigger.refresh(); }}
-const REDUCED=matchMedia('(prefers-reduced-motion:reduce)').matches; const NOMOTION=/[?&]nomotion/.test(location.search)||REDUCED; const PREVIEW=!NOMOTION&&(self!==top||/[?&]swarm/.test(location.search));
+const REDUCED=matchMedia('(prefers-reduced-motion:reduce)').matches; const NOMOTION=/[?&]nomotion/.test(location.search)||REDUCED; const PREVIEW=!NOMOTION&&/[?&]swarm=1/.test(location.search); // the finished page is the finished page: agents replay only when asked for explicitly, never because it sits in a frame
 // ?nomotion=1 freezes the page for screenshots and the contract: the real layout, animation off. prefers-reduced-motion is the user's choice: static fallbacks for pinned, rail and marquee.
 if(REDUCED) document.documentElement.classList.add('reduced-motion');
 if(NOMOTION){{ document.documentElement.classList.add('no-motion'); document.querySelectorAll('[data-move]').forEach(el=>el.removeAttribute('data-move')); document.querySelectorAll('.tw-w,.sp-row').forEach(el=>el.classList.add('on')); document.querySelectorAll('.ps-s,.sp-f').forEach((el,i)=>el.classList.toggle('on',el.dataset.i==='0')); }}
