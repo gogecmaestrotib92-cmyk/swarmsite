@@ -73,6 +73,10 @@ a{color:inherit;text-decoration:none}
   <h1 class="h" id="h">Reading your site…</h1>
   <p class="brief-caption">Choose what to keep. Your agents will shape the rest.</p>
   <form class="brief" id="brief" onsubmit="return false">
+    <fieldset class="option-group"><legend>Does this page already rank on Google?</legend><div class="row">
+      <label class="chip"><input type="radio" name="mode" value="seo-safe" checked><span>Yes — keep my SEO (same words, headings, links, meta)</span></label>
+      <label class="chip"><input type="radio" name="mode" value="free"><span>No — free redesign</span></label>
+    </div></fieldset>
     <fieldset class="option-group"><legend>What should we keep?</legend><div class="row">
       <label class="chip"><input type="checkbox" name="keepFont" checked><span>Original font</span></label>
       <label class="chip"><input type="checkbox" name="keepColours" checked><span>Original colours</span></label>
@@ -105,7 +109,7 @@ a{color:inherit;text-decoration:none}
 </div>
 
 <script src="/config.js"></script>
-<script src="/js/swarm2.js?v=ff6"></script>
+<script src="/js/swarm2.js?v=agent8"></script>
 <script>
 const API = window.SWARMSITE_API; const qs = new URLSearchParams(location.search);
 const $ = s => document.querySelector(s);
@@ -145,19 +149,19 @@ function renderCoverage(report,auditNotes){
 function showUnavailableCoverage(){ const root=$('#coverage'); root.querySelector('summary').textContent='Content check unavailable'; root.open=false; root.hidden=false; const panel=$('#coveragePanel'); panel.replaceChildren(); const p=document.createElement('p'); p.textContent='Content check is not available for this alternative.'; panel.appendChild(p); }
 function showResult(job){ const r=job.result; const pv=new URL(`${window.SWARMSITE_API}/p/${job.id}`, location.href); if(r.previewUrl){const v=new URL(r.previewUrl,location.href).searchParams.get('v'); if(v){if(!/^[0-9a-f]{32}$/.test(v)) throw new Error('Invalid preview version');pv.searchParams.set('v',v);}} const open=u=>{const o=new URL(u); o.searchParams.set('swarm','1'); return o.href;}; /* full screen shows the agents at work over the finished page */ $('#preview').src=pv.href; $('#openNew').href=open(pv); renderCoverage(r.coverage,r.direction?.audit_notes);
   const vs=$('#variants'); vs.replaceChildren(); (r.blueprints||[]).forEach((bp,i)=>{ const b=document.createElement('button'); b.dataset.bp=bp; b.dataset.primary=String(i===0); b.textContent=(i?'Alternative · ':'Blueprint · ')+bp; if(!i) b.classList.add('on'); vs.appendChild(b); });
-  vs.querySelectorAll('button').forEach(b=>b.onclick=()=>{ vs.querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); const u=new URL(pv); if(b.dataset.primary!=='true') u.searchParams.set('bp',b.dataset.bp); $('#preview').src=u.href; $('#openNew').href=open(u); if(b.dataset.primary==='true') renderCoverage(r.coverage,r.direction?.audit_notes); else showUnavailableCoverage(); }); $('#meta').textContent=`${r.direction?.kind||''} · concept ${r.direction?.concept||''} · ${r.direction?.beats?.length||''} beats · ${r.seconds||''}s`; $('#stage').hidden=true; $('#result').classList.add('on'); layoutResult();
+  vs.querySelectorAll('button').forEach(b=>b.onclick=()=>{ vs.querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); const u=new URL(pv); if(b.dataset.primary!=='true') u.searchParams.set('bp',b.dataset.bp); $('#preview').src=u.href; $('#openNew').href=open(u); if(b.dataset.primary==='true') renderCoverage(r.coverage,r.direction?.audit_notes); else showUnavailableCoverage(); }); const seo=r.seo; const seoLine=seo&&seo.mode==='seo-safe'?` · SEO kept: ${Math.round((seo.text_kept||0)*100)}% words, h1 ${seo.h1_keywords?.kept?.length||0}/${seo.h1_keywords?.source?.length||0} keywords, ${seo.links?.kept||0}/${seo.links?.total||0} links`:(seo?' · free redesign':''); $('#meta').textContent=`${r.direction?.kind||''} · concept ${r.direction?.concept||''} · ${r.direction?.beats?.length||''} beats · ${r.seconds||''}s${seoLine}`; $('#stage').hidden=true; $('#result').classList.add('on'); layoutResult();
   document.querySelectorAll('.seg button[data-v]').forEach(b=>b.onclick=()=>{ document.querySelectorAll('.seg button[data-v]').forEach(x=>x.classList.remove('on')); b.classList.add('on'); const f=$('#preview'); if(b.dataset.v==='mobile'){ f.style.width='390px'; f.style.margin='0 auto'; f.style.borderLeft=f.style.borderRight='1px solid #ddd'; } else { f.style.width='100%'; f.style.border='0'; } });
 }
 
 async function poll(id){ try{ const r=await fetch(`${API}/jobs/${id}`); if(!r.ok) throw new Error('job not found'); const job=await r.json(); renderSteps(job);
     if(job.status==='done'){ if(sw) sw.stop(); showResult(job); return; } if(job.status==='failed'){ if(sw) sw.stop(); const message=String(job.error||'unknown'); const providerUnavailable=/your credit balance is too low to access the anthropic api/i.test(message) || message==='The AI service is temporarily unavailable. Please try again later.'; $('#err').textContent=providerUnavailable?'The AI service is temporarily unavailable. Please try again later.':'Something broke: '+message+'. Try again or send us the URL.'; $('#h').textContent='That one didn’t go through.'; return; }
   }catch(e){ $('#err').textContent=e.message; } setTimeout(()=>poll(id), 3000); }
-function briefData(){ const f=$('#brief'); const d={keepFont:f.keepFont.checked,keepColours:f.keepColours.checked,keepLogo:f.keepLogo.checked,kind:(f.querySelector('[name=kind]:checked')||{}).value||'',keep:f.keep.value.trim(),goal:f.goal.value.trim()}; return d; }
+function briefData(){ const f=$('#brief'); const d={keepFont:f.keepFont.checked,keepColours:f.keepColours.checked,keepLogo:f.keepLogo.checked,mode:(f.querySelector('[name=mode]:checked')||{}).value||'seo-safe',kind:(f.querySelector('[name=kind]:checked')||{}).value||'',keep:f.keep.value.trim(),goal:f.goal.value.trim()}; return d; }
 async function launch(url){
   const button=$('#go'); if(button.disabled) return; button.disabled=true; $('#err').textContent='';
   $('#brief').classList.add('hide'); $('#h').textContent='Reading your site…';
   try {
-    sw=Swarm2.mount($('#frame'),{count:9,shape:'firefly'});
+    sw=Swarm2.mount($('#frame'),{count:9,shape:'character'});
     const r=await fetch(`${API}/jobs`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url,options:briefData()})});
     const j=await r.json(); if(!r.ok || !j.id) throw new Error('Could not start preview');
     history.replaceState(null,'',`/app?url=${encodeURIComponent(url)}&job=${j.id}`); poll(j.id);
@@ -168,7 +172,7 @@ async function launch(url){
   }
 }
 async function start(){ let id=qs.get('job'); const url=qs.get('url'); $('#urlLab').textContent=url?('https://'+url.replace(/^https?:\/\//,'')):'';
-  if(id){ $('#brief').classList.add('hide'); sw=Swarm2.mount($('#frame'),{count:9,shape:'firefly'}); poll(id); return; }
+  if(id){ $('#brief').classList.add('hide'); sw=Swarm2.mount($('#frame'),{count:9,shape:'character'}); poll(id); return; }
   if(!url){ location.href='/'; return; }
   $('#h').textContent='Set the direction.'; $('#brief').querySelector('[name=kind][value=""]').checked=true; $('#go').onclick=()=>launch(url); }
 start();
