@@ -2,9 +2,12 @@
 Reader → (Designer = lib/direct/direct.py) → UX → Copy → UI → Visual, then Critic routes defects back to the owner of each defect.
 Every agent returns a small JSON patch; `apply_*` functions are the only code that writes direction.json, so a bad agent cannot wreck the document."""
 import json, os, re, base64, io
+import sys
 from functools import wraps
 from threading import RLock
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, os.path.join(ROOT, 'lib'))
+from visual_quality import empty_visual
 MODEL = os.environ.get('DIRECT_MODEL', 'claude-sonnet-5-5')
 _document_lock = RLock()
 
@@ -288,15 +291,18 @@ VISUAL_TOOL = {"name": "set_visuals", "description": "Assign images to slots and
 VISUAL_SYSTEM = """You are the visual editor. When the site has fewer than 3 distinct visuals, do what a studio does with one product screenshot: cut it into DETAIL crops (each ≤ 40% of the source, one feature per crop — the court diagram, the sidebar library, the details panel, a toolbar) and give each features/steps slot its own detail. Details may come from the same screenshot; whole-image repeats may not. You look at every image the site has (thumbnails attached, with ids) and decide what goes where. Facts or cells with a marquee move are text-only tickers: do not assign or commission pictures for them. For other sections, choose images related to the actual subject. Rules: never a logo, icon or text block as a photo; never the same image twice; a UI screenshot is shown FRAMED (hero of a software product, or a lead above a grid) never stretched as a background; crop screenshots to the actual product surface (drop the browser chrome, sidebars, headers, surrounding whitespace). People sections get people. If nothing fits a slot, leave it empty and list it under need.
 When the prompt says GENERATION: enabled, you may also COMMISSION up to 3 original visuals like a studio commissions illustration: a 3D object, a material study, an abstract composition or a macro photo in the brand's palette that stands for a section's idea (a basketball court as clean line-art in brand orange on dark; a stack of printed sheets; a whistle on a bench). Never a fake product interface, never screenshots, never text or logos, never recognisable faces. Give each a beat (or 'hero' only if the site has no product image at all)."""
 
-def _photo(i):  # a real visual is a photograph-like raster: not a page screenshot, not a banner strip or logo, not a crop, not vector art
-    if not i.get('data') or i.get('crop_of') or i.get('gen') or i.get('shot') or i.get('w', 0) < 600: return False
+def _photo(i, *, known_nonempty=False, decoded=None):  # a real visual is a photograph-like raster: not a page screenshot, not a banner strip or logo, not a crop, not vector art
+    if not i.get('data') or i.get('crop_of') or i.get('gen') or i.get('shot') or i.get('w', 0) < 600 or (not known_nonempty and empty_visual(i)): return False
     if 'svg' in str(i.get('data', ''))[:30]: return False
     lum = i.get('lum')
     if i.get('bg') and (not isinstance(lum, (int, float)) or lum <= 40):
         try:
             from PIL import Image, ImageStat
-            data = base64.b64decode(i['data'].split(',', 1)[1])
-            image = Image.open(io.BytesIO(data)).convert('L').resize((64, 64))
+            if decoded is not None:
+                image = decoded.convert('L').resize((64, 64))
+            else:
+                data = base64.b64decode(i['data'].split(',', 1)[1])
+                image = Image.open(io.BytesIO(data)).convert('L').resize((64, 64))
             stats = ImageStat.Stat(image)
             if stats.mean[0] <= 40 and stats.stddev[0] < 8: return False
         except Exception: pass
@@ -338,7 +344,7 @@ def apply_visual_assignments(d, images, hero=None, slots=()):
         initial_claims.setdefault(visual_image_key(target[field], images), set()).add(owner)
 
     hero_obj = d.get('hero') or {}
-    if isinstance(hero, str) and hero in images and hero != hero_obj.get('media'):
+    if isinstance(hero, str) and hero in images and not empty_visual(images[hero]) and hero != hero_obj.get('media'):
         original[('hero', None)] = (hero_obj, 'media', hero_obj.get('media'), None, None)
         hero_obj['media'] = hero
 
@@ -346,7 +352,7 @@ def apply_visual_assignments(d, images, hero=None, slots=()):
     for slot in slots:
         if not isinstance(slot, dict): continue
         beat = beats.get(slot.get('beat')); image = slot.get('image')
-        if not beat or text_ticker(beat) or not isinstance(image, str) or image not in images: continue
+        if not beat or text_ticker(beat) or not isinstance(image, str) or image not in images or empty_visual(images[image]): continue
         owner = ('beat', beat['id'])
         old = beat.get('image')
         if image == old: continue
@@ -383,15 +389,30 @@ def visual(slug_dir, notes=''):
     from PIL import Image
     d = J(slug_dir, 'direction.json'); imgs = J(slug_dir, 'images.json') or []
     import gen as G
-    distinct = len([i for i in imgs if _photo(i)]); have_gen = len([i for i in imgs if i.get('gen')])
-    gen_rule = 'disabled' if not G.enabled() else (f'enabled — the site has only {distinct} distinct real visual(s) and {have_gen} commissioned so far: you MUST commission {max(0, 3 - have_gen)} originals now, one per section that lacks its own picture (never the hero)' if distinct < 3 and have_gen < 3 else 'enabled (optional, the site has enough visuals)')
-    content = [{"type": "text", "text": f"GENERATION: {gen_rule}\nBRAND: {json.dumps({k: d.get('brand', {}).get(k) for k in ('name', 'accent', 'paper', 'ink')})} mode={d.get('mode')}\nKIND: {d.get('kind')}\nHERO: {json.dumps({k: d['hero'].get(k) for k in ('h1', 'media')}, ensure_ascii=False)}\nBEATS: {json.dumps([{'id': b['id'], 'type': b['type'], 'h2': b.get('h2'), 'image': b.get('image', ''), 'move': (b.get('ui') or {}).get('move', ''), 'lead': (b.get('ui') or {}).get('lead', '')} for b in d['beats']], ensure_ascii=False)}\nCRITIC NOTES FOR VISUAL: {notes or 'none'}\nIMAGES (thumbnails follow, in this order):"}]
-    for it in imgs[:28]:
+    # Decode each input sequentially; the full-size image is released before
+    # the next one. Keep only bounded thumbnails for the model request.
+    distinct = have_gen = 0; thumbnails = []
+    for it in imgs:
         if not it.get('data'): continue
         try:
-            raw = base64.b64decode(it['data'].split(',', 1)[1]); im = Image.open(io.BytesIO(raw)).convert('RGB'); im.thumbnail((640, 640)); buf = io.BytesIO(); im.save(buf, 'JPEG', quality=70)
-            content += [{"type": "text", "text": f"id={it.get('id')} {it.get('w')}×{it.get('h')}{' section-shot' if it.get('shot') else ''}{' hero-grade' if it.get('heroGrade') else ''}"}, {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": base64.b64encode(buf.getvalue()).decode()}}]
-        except Exception: continue
+            raw = base64.b64decode(it['data'].split(',', 1)[1])
+            with Image.open(io.BytesIO(raw)) as im:
+                if empty_visual(it, decoded=im): continue
+                if _photo(it, known_nonempty=True, decoded=im): distinct += 1
+                if it.get('gen'): have_gen += 1
+                if len(thumbnails) < 28:
+                    try:
+                        thumb = im.convert('RGB'); thumb.thumbnail((640, 640)); buf = io.BytesIO(); thumb.save(buf, 'JPEG', quality=70)
+                        thumbnails.append((it, base64.b64encode(buf.getvalue()).decode()))
+                    except Exception: pass
+        except Exception:
+            # Preserve the existing fail-open behavior for unsupported formats.
+            if _photo(it, known_nonempty=True): distinct += 1
+            if it.get('gen'): have_gen += 1
+    gen_rule = 'disabled' if not G.enabled() else (f'enabled — the site has only {distinct} distinct real visual(s) and {have_gen} commissioned so far: you MUST commission {max(0, 3 - have_gen)} originals now, one per section that lacks its own picture (never the hero)' if distinct < 3 and have_gen < 3 else 'enabled (optional, the site has enough visuals)')
+    content = [{"type": "text", "text": f"GENERATION: {gen_rule}\nBRAND: {json.dumps({k: d.get('brand', {}).get(k) for k in ('name', 'accent', 'paper', 'ink')})} mode={d.get('mode')}\nKIND: {d.get('kind')}\nHERO: {json.dumps({k: d['hero'].get(k) for k in ('h1', 'media')}, ensure_ascii=False)}\nBEATS: {json.dumps([{'id': b['id'], 'type': b['type'], 'h2': b.get('h2'), 'image': b.get('image', ''), 'move': (b.get('ui') or {}).get('move', ''), 'lead': (b.get('ui') or {}).get('lead', '')} for b in d['beats']], ensure_ascii=False)}\nCRITIC NOTES FOR VISUAL: {notes or 'none'}\nIMAGES (thumbnails follow, in this order):"}]
+    for it, thumbnail in thumbnails:
+        content += [{"type": "text", "text": f"id={it.get('id')} {it.get('w')}×{it.get('h')}{' section-shot' if it.get('shot') else ''}{' hero-grade' if it.get('heroGrade') else ''}"}, {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": thumbnail}}]
     content.append({"type": "text", "text": "Call set_visuals."})
     r = ask(VISUAL_SYSTEM, content, VISUAL_TOOL, max_tokens=2500)
     return apply_visual(slug_dir, r) if r else 0
@@ -400,6 +421,11 @@ def visual(slug_dir, notes=''):
 def apply_visual(slug_dir, r):
     from PIL import Image
     d = J(slug_dir, 'direction.json'); imgs = J(slug_dir, 'images.json') or []; by = {i.get('id'): i for i in imgs}; n = 0
+    empty_cache = {}
+    def is_empty(image):
+        key = id(image)
+        if key not in empty_cache: empty_cache[key] = empty_visual(image)
+        return empty_cache[key]
     aliases = {}
     def owners(image_id):
         return {owner for owner, target, field in visual_references(d, by) if target[field] == image_id}
@@ -412,7 +438,7 @@ def apply_visual(slug_dir, r):
             suffix += 1
     for c in r.get('crops', []) or []:
         src = by.get(aliases.get(c.get('image'), c.get('image'))); box = c.get('box') or []
-        if not src or len(box) != 4: continue
+        if not src or len(box) != 4 or is_empty(src): continue
         x, y, w, h = [max(0, min(1, float(v))) for v in box]
         if w < .18 or h < .15: continue
         try:
@@ -443,11 +469,14 @@ def apply_visual(slug_dir, r):
     gens = []
     if G.enabled():
         from concurrent.futures import ThreadPoolExecutor
-        have_gen = len([i for i in imgs if i.get('gen')])
+        valid_imgs = [i for i in imgs if i.get('data') and not is_empty(i)]
+        valid_objects = {id(i) for i in valid_imgs}
+        have_gen = len([i for i in valid_imgs if i.get('gen')])
         asks = [g for g in (r.get('generate') or []) if g.get('prompt') and g.get('beat') and not text_ticker(ids.get(g['beat']))][:max(0, 3 - have_gen)]
-        distinct = len([i for i in imgs if _photo(i)])
+        distinct = len([i for i in valid_imgs if _photo(i, known_nonempty=True)])
         if distinct < 3 and have_gen < 3 and not asks:  # the rule is mandatory: when the model only lists needs, the needs become the commissions
-            holes = [b for b in d.get('beats', []) if b.get('type') not in ('form', 'faq', 'ledger') and not text_ticker(b) and not b.get('image')][:3 - have_gen]
+            holes = [b for b in d.get('beats', []) if b.get('type') not in ('form', 'faq', 'ledger') and not text_ticker(b)
+                     and (not b.get('image') or b.get('image') in by and id(by[b['image']]) not in valid_objects)][:3 - have_gen]
             for b, need in zip(holes, (r.get('need') or []) + [f"{d.get('brand', {}).get('name', '')} — {b.get('h2') or b.get('big') or ''}" for b in holes]):
                 asks.append({'beat': b['id'], 'prompt': f"Editorial photograph for a {d.get('kind')} website: {need}. Natural light, real place, restrained palette, no people.", 'ar': '16:9', 'as': f"gen-{b['id']}"})
         def one(g):
@@ -460,6 +489,9 @@ def apply_visual(slug_dir, r):
             with ThreadPoolExecutor(max_workers=3) as ex: gens = list(ex.map(one, asks))
         for it, beat in gens:
             if it.get('error'): continue
+            if is_empty(it):
+                it['error'] = 'generated image is empty'
+                continue
             owner = ('hero', None) if beat == 'hero' else ('beat', beat)
             def same_generation(image_id):
                 return by[image_id].get('gen') and (not owners(image_id) or owners(image_id) <= {owner})

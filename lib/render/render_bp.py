@@ -6,6 +6,8 @@ import json, os, re, sys, html as H, base64
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.insert(0, os.path.join(ROOT, 'lib/colour'))
 from palette import palette as mkpal
+sys.path.insert(0, os.path.join(ROOT, 'lib'))
+from visual_quality import empty_visual
 
 e = lambda s: H.escape(str(s if s is not None else ''), quote=True)
 
@@ -48,13 +50,18 @@ def build(slug_dir, bp_id, out_path=None):
 
     # ---- image pool (never an empty frame, never the same picture twice — even as a screenshot of itself or a crop) ----
     used = set()
+    empty_cache = {}
+    def is_empty(it):
+        key = id(it)
+        if key not in empty_cache: empty_cache[key] = empty_visual(it)
+        return empty_cache[key]
     def dhash(it):
         try:
             from PIL import Image; import io
             raw = base64.b64decode(it['data'].split(',', 1)[1]); im = Image.open(io.BytesIO(raw)).convert('L').resize((9, 8))
             px = list(im.tobytes()); return ''.join('1' if px[r * 9 + c] > px[r * 9 + c + 1] else '0' for r in range(8) for c in range(8))
         except Exception: return None
-    hashes = {k: dhash(i) for k, i in images.items() if i.get('data')}
+    hashes = {k: dhash(i) for k, i in images.items() if i.get('data') and not is_empty(i)}
     def family(k):
         it = images.get(k) or {}; fam = {k}
         if it.get('detail'): return fam  # a detail crop is its own picture
@@ -75,6 +82,7 @@ def build(slug_dir, bp_id, out_path=None):
                 reserved.setdefault(image_id, bt0['id'])
     if h.get('media') and images.get(h['media']): reserved.setdefault(h['media'], '__hero__')
     def free_for(it, bt=None):
+        if is_empty(it): return False
         owners = {reserved[k] for k in family(it.get('id')) if k in reserved}
         owner = bt.get('id') if bt is not None else '__hero__'
         return not owners or owners == {owner}
@@ -102,14 +110,15 @@ def build(slug_dir, bp_id, out_path=None):
         return bool(re.search(r'(?i)(?:^|[/_.\-\s])(logo|icon|favicon|wordmark|brandmark|badge)(?:$|[/_.\-\s])', markers))
     def photo_like(it, minw=500):
         # a picture that can stand in a card or a frame: real pixels, not a page screenshot, not a banner strip or a logo, not vector art
-        if not it.get('data') or it.get('shot') or is_used(it.get('id')) or it.get('w', 0) < minw or dark_background_texture(it): return False
+        if not it.get('data') or is_empty(it) or it.get('shot') or is_used(it.get('id')) or it.get('w', 0) < minw or dark_background_texture(it): return False
         if symbolic_asset(it): return False
         ar = it.get('w', 1) / max(1, it.get('h', 1)); return .55 <= ar <= 2.0
     def img(k=None, prefer_hero=False, want_shot=None):
         it = images.get(k) if k else None
+        if it and is_empty(it): return ''
         if it and is_used(it.get('id')) and not prefer_hero: it = None
         if not it:
-            available = [i for i in images.values() if i.get('data') and not dark_background_texture(i)]
+            available = [i for i in images.values() if i.get('data') and not is_empty(i) and not dark_background_texture(i)]
             pool = [i for i in available if not is_used(i.get('id')) and reserved.get(i.get('id')) is None] or [i for i in available if not is_used(i.get('id'))] or (available if prefer_hero else [])
             if want_shot is True: pool = [i for i in pool if i.get('shot')] or pool
             if want_shot is False: pool = [i for i in pool if not i.get('shot')] or pool
@@ -317,11 +326,18 @@ def build(slug_dir, bp_id, out_path=None):
         media = sec_media(bp['sections'][0]); light = bool(media)
         vid = os.path.join(slug_dir, 'hero.mp4')
         hm = images.get(h.get('media')) or {}
-        if hm and ('svg' in str(hm.get('data', ''))[:30] or hm.get('w', 0) < (700 if soft else 1000) or not (.5 <= hm.get('w', 1) / max(1, hm.get('h', 1)) <= 2.4) or (hm.get('shot') and not soft) or dark_background_texture(hm)): hm = {}  # a texture, vector, banner, small image or page screenshot is not a hero photo
+        empty_hero = bool(hm and is_empty(hm))
+        if hm and (empty_hero or 'svg' in str(hm.get('data', ''))[:30] or hm.get('w', 0) < (700 if soft else 1000) or not (.5 <= hm.get('w', 1) / max(1, hm.get('h', 1)) <= 2.4) or (hm.get('shot') and not soft) or dark_background_texture(hm)): hm = {}  # a texture, vector, banner, small image or page screenshot is not a hero photo
         cand = hm or next((i for i in sorted(images.values(), key=lambda i: -(i.get('w', 0) * i.get('h', 0))) if photo_like(i, 900) and reserved.get(i.get('id')) in (None, '__hero__')), None)
-        src = img(cand['id'], True) if cand else img(None, True)
-        if media and src:
-            m = f'<div class="media"><img src="{src}" alt="{source_alt(src)}"></div>' if not os.path.exists(vid) else f'<div class="media"><video autoplay muted loop playsinline poster="{src}"><source src="data:video/mp4;base64,{base64.b64encode(open(vid, "rb").read()).decode()}" type="video/mp4"></video></div>'
+        # An explicitly assigned empty capture is not evidence for replacing
+        # it with another section's picture.
+        src = '' if empty_hero else (img(cand['id'], True) if cand else img(None, True))
+        has_video = bool(media and os.path.exists(vid))
+        if has_video:
+            poster = f' poster="{src}"' if src else ''
+            m = f'<div class="media"><video autoplay muted loop playsinline{poster}><source src="data:video/mp4;base64,{base64.b64encode(open(vid, "rb").read()).decode()}" type="video/mp4"></video></div>'
+        elif media and src:
+            m = f'<div class="media"><img src="{src}" alt="{source_alt(src)}"></div>'
         else: m = ''
         hd = bp['sections'][0].get('head') or D
         y = hd.get('y'); place = 'end' if (y or .6) > .5 else 'start'
@@ -339,6 +355,9 @@ def build(slug_dir, bp_id, out_path=None):
         if not media and src and not hui.get('move') and d.get('kind') in ('place', 'service', 'product') and (images.get(h.get('media')) or {}).get('w', 0) >= 900: hui = {**hui, 'move': 'split'}
         if RECIPE and not (h.get('ui') or {}).get('move'): hui = {**hui, 'move': RECIPE.get('hero', hui.get('move'))}
         mv = hui.get('move')
+        if has_video and not src:
+            # A failed poster must not discard an independently valid video.
+            return f'<section class="sec hero has-media" id="top" style="min-height:100svh">{m}{body_}</section>'
         if mv == 'centre':
             hsty2 = hsty.replace('text-align:left', 'text-align:center') + ';margin-left:auto;margin-right:auto;max-width:16ch'
             shotp = (f'<div class="wrap shotwrap"><div class="shotframe"><img src="{src}" alt="{source_alt(src)}"></div></div>' if soft else f'<div class="wrap"><figure class="inset-v" data-sig="parallax"><img src="{src}" alt="{source_alt(src)}"></figure></div>') if src else ''
@@ -349,7 +368,8 @@ def build(slug_dir, bp_id, out_path=None):
             h1s = hsty if not over else re.sub(r'--hero-size:[^;]+', f'--hero-size:{clampf(ppx)}', hsty)
             body_ = f'<div class="wrap hero-in al-{al}{" light" if over else ""}">{cat}<h1 class="h1" style="{h1s}">{h1}</h1><p class="lede">{e(h.get("lede"))}</p><div class="ctas">{cta_html()}{secondary_cta()}</div></div>'
             if inset: return f'<section class="sec hero inset" id="top">{body_}<div class="wrap"><figure class="inset-v" data-sig="parallax"><img src="{src}" alt="{source_alt(src)}"></figure></div></section>'
-            return f'<section class="sec hero has-media {mv}" id="top" style="min-height:100svh"><div class="media"><img src="{src}" alt="{source_alt(src)}"></div>{body_}</section>'
+            visual = m if has_video else f'<div class="media"><img src="{src}" alt="{source_alt(src)}"></div>'
+            return f'<section class="sec hero has-media {mv}" id="top" style="min-height:100svh">{visual}{body_}</section>'
         if hui.get('move') == 'split' and src:
             # SIGNATURE split hero: words left, the product right, full height; the product drifts up slower than the page
             spx = min(hpx, int(3 * 640 / ((0.7 if upper else 0.56) * max(12, nch)))); hsty2 = re.sub(r'--hero-size:[^;]+', f'--hero-size:{clampf(spx)}', re.sub(r'max-width:[^;]+', 'max-width:11ch', hsty))
