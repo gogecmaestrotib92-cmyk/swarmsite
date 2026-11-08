@@ -5,6 +5,8 @@ Fixes it may ask for (nothing else): drop a beat, shorten a text field, swap a b
 change hero h1 (≤6 words, from the site's own words), set a beat's band (dark/paper). Each fix carries the reason."""
 import json, os, sys, subprocess, base64, re
 from html.parser import HTMLParser
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+import budget as B
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 
 TOOL = {"name": "report_fixes", "description": "Report concrete visual defects and the bounded fixes for them.",
@@ -115,7 +117,8 @@ def critique(slug_dir, html, model='claude-sonnet-5-5', fast=False):
         content.append({"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": base64.b64encode(buf.getvalue()).decode()}})
     content.append({"type": "text", "text": "Score the four axes against the calibration, compute the weighted score, then call report_fixes."})
     client = anthropic.Anthropic()
-    msg = client.messages.create(model=model, max_tokens=3000, system=SYSTEM, messages=[{"role": "user", "content": content}], tools=[TOOL], tool_choice={"type": "auto"})
+    B.check('critic'); msg = client.messages.create(model=model, max_tokens=3000, system=SYSTEM, messages=[{"role": "user", "content": content}], tools=[TOOL], tool_choice={"type": "auto"})
+    B.charge(getattr(msg, 'usage', None), 'critic')
     call = next((b for b in msg.content if getattr(b, 'type', '') == 'tool_use'), None)
     r = dict(call.input) if call else {'score': -1, 'fixes': [], 'verdict': 'no report'}
     if not isinstance(r.get('fixes'), list): r['fixes'] = []

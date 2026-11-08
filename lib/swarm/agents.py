@@ -10,17 +10,22 @@ sys.path.insert(0, os.path.join(ROOT, 'lib'))
 from source_context import model_pages, model_analysis
 from visual_quality import empty_visual
 from visual_semantics import ledger_lead_fingerprint
+import budget as B
 MODEL = os.environ.get('DIRECT_MODEL', 'claude-sonnet-5-5')
 _document_lock = RLock()
 
 def ask(system, content, tool, model=None, max_tokens=4000, timeout=None, usage_callback=None):
     import anthropic
     client = anthropic.Anthropic(timeout=timeout, max_retries=0) if timeout else anthropic.Anthropic()
+    who = tool.get('name', '?')
+    B.check(who)
     msg = client.messages.create(model=model or MODEL, max_tokens=max_tokens, system=system, messages=[{"role": "user", "content": content}], tools=[tool], tool_choice={"type": "auto"})
+    B.charge(getattr(msg, 'usage', None), who)
     if usage_callback: usage_callback(getattr(msg, 'usage', None))
     call = next((b for b in msg.content if getattr(b, 'type', '') == 'tool_use'), None)
     if call is None:  # one nudge
         msg2 = client.messages.create(model=model or MODEL, max_tokens=max_tokens, system=system, messages=[{"role": "user", "content": content}, {"role": "assistant", "content": msg.content}, {"role": "user", "content": f"Call {tool['name']} now."}], tools=[tool], tool_choice={"type": "auto"})
+        B.charge(getattr(msg2, 'usage', None), who)
         if usage_callback: usage_callback(getattr(msg2, 'usage', None))
         call = next((b for b in msg2.content if getattr(b, 'type', '') == 'tool_use'), None)
     return call.input if call else None

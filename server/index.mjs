@@ -24,10 +24,31 @@ const STEPS = [
 
 const app = express(); app.use(cors({ origin: process.env.PUBLIC_ORIGIN ? process.env.PUBLIC_ORIGIN.split(',') : true })); app.use(express.json({ limit: '1mb' }));
 app.get('/', (_, res) => res.json({ ok: true, service: 'swarmsite', steps: STEPS.map(s => s[0]) }));
+// ---- abuse and cost limits: a public endpoint that spends our model credit needs all three ----
+const RATE = { perIpPerHour: Number(process.env.JOBS_PER_IP_PER_HOUR || 3), perDay: Number(process.env.JOBS_PER_DAY || 150), maxQueue: Number(process.env.JOBS_MAX_QUEUE || 20) };
+const ipHits = new Map(); // ip → [timestamps]; one worker process per instance, so in-memory is enough per instance
+const clientIp = req => String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
+function rateLimited(ip) {
+  const now = Date.now(), hits = (ipHits.get(ip) || []).filter(t => now - t < 3600e3); ipHits.set(ip, hits);
+  if (ipHits.size > 5000) for (const [k, v] of ipHits) if (!v.length || now - v[v.length - 1] > 3600e3) ipHits.delete(k);
+  if (hits.length >= RATE.perIpPerHour) return true; hits.push(now); return false;
+}
+const canonicalUrl = url => { try { const u = new URL(url); u.hash = ''; u.hostname = u.hostname.toLowerCase().replace(/^www\./, ''); u.pathname = u.pathname.replace(/\/+$/, '') || '/'; return u.origin.replace(/^https?:\/\/www\./, m => m) + u.pathname + u.search; } catch { return url; } };
 app.post('/jobs', async (req, res) => {
   let url = String(req.body?.url || '').trim(); if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
   try { new URL(url); } catch { return res.status(400).json({ error: 'bad url' }); }
   if (/localhost|127\.|10\.|192\.168\.|\.internal/i.test(url)) return res.status(400).json({ error: 'not allowed' });
+  const ip = clientIp(req);
+  if (rateLimited(ip)) return res.status(429).json({ error: 'You have started several previews recently. Please wait an hour before starting another.' });
+  // the same site already queued or running → hand back that job instead of paying twice
+  const key = canonicalUrl(url);
+  const { data: live } = await sb.from('jobs').select('id,url,status,created_at').in('status', ['queued', 'running']).order('created_at', { ascending: false }).limit(200);
+  const same = (live || []).find(j => canonicalUrl(j.url) === key);
+  if (same) return res.json({ id: same.id, reused: true });
+  if ((live || []).length >= RATE.maxQueue) return res.status(503).json({ error: `The studio is full right now (${live.length} sites in the queue). Please try again in a few minutes.` });
+  const since = new Date(Date.now() - 86400e3).toISOString();
+  const { count } = await sb.from('jobs').select('id', { count: 'exact', head: true }).gte('created_at', since);
+  if ((count || 0) >= RATE.perDay) return res.status(503).json({ error: 'Today\'s preview budget is used up. Please come back tomorrow.' });
   const { data, error } = await sb.from('jobs').insert({ url, options: req.body?.options || {}, steps: STEPS.map(([id, label]) => ({ id, label, status: 'pending' })) }).select('id').single();
   if (error) return res.status(500).json({ error: error.message });
   res.json({ id: data.id });
@@ -35,7 +56,9 @@ app.post('/jobs', async (req, res) => {
 app.get('/jobs', async (req, res) => { const st = req.query.status || 'running'; const { data } = await sb.from('jobs').select('id,url,status,step,created_at').eq('status', st).order('created_at', { ascending: false }).limit(20); res.json(data || []); });
 app.get('/jobs/:id', async (req, res) => {
   const { data, error } = await sb.from('jobs').select('id,url,status,step,steps,result,error,created_at').eq('id', req.params.id).single();
-  if (error) return res.status(404).json({ error: 'not found' }); res.json(data);
+  if (error) return res.status(404).json({ error: 'not found' });
+  if (data.status === 'queued') { const { count } = await sb.from('jobs').select('id', { count: 'exact', head: true }).eq('status', 'queued').lt('created_at', data.created_at); const { count: running } = await sb.from('jobs').select('id', { count: 'exact', head: true }).eq('status', 'running'); data.queue = { ahead: (count || 0) + (running || 0), eta_min: Math.round(((count || 0) + (running || 0) + 1) * 6) }; }
+  res.json(data);
 });
 // Preview page: Supabase public storage serves HTML as text/plain (XSS guard), so we proxy it with the right type.
 const SELF = process.env.PUBLIC_API || (process.env.RAILWAY_PUBLIC_DOMAIN ? 'https://' + process.env.RAILWAY_PUBLIC_DOMAIN : 'http://localhost:' + (process.env.PORT || 8080));
@@ -77,8 +100,9 @@ app.get('/p/:id', async (req, res) => {
 app.listen(process.env.PORT || 8080, () => console.log('api on', process.env.PORT || 8080));
 
 // ---------- worker ----------
+let CURRENT_JOB_DIR = ''; // set per job by process_; the worker runs one job at a time, so a module variable is enough (make it per-call before raising concurrency)
 const run = (cmd, args, opts = {}) => new Promise((resolve, reject) => {
-  const p = spawn(cmd, args, { cwd: ROOT, env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' }, ...opts }); let out = '', err = '';
+  const p = spawn(cmd, args, { cwd: ROOT, env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1', ...(CURRENT_JOB_DIR ? { SWARM_JOB_DIR: CURRENT_JOB_DIR } : {}) }, ...opts }); let out = '', err = '';
   let buf = ''; p.stdout.on('data', d => { out += d; if (opts.onLine) { buf += d; const lines = buf.split('\n'); buf = lines.pop(); lines.forEach(l => { try { opts.onLine(l); } catch {} }); } }); p.stderr.on('data', d => err += d);
   const t = setTimeout(() => { p.kill('SIGKILL'); reject(new Error(cmd + ' timeout')); }, opts.timeoutMs || 300000);
   p.on('close', c => { clearTimeout(t); c === 0 ? resolve(out) : reject(new Error(`${cmd} ${args[0]} exit ${c}: ${err.slice(-800)}`)); });
@@ -197,8 +221,9 @@ async function runClaimed(job) {
     // confirmed billing error. Keep an actionable owner diagnostic while
     // returning a simple, non-sensitive message to the customer.
     const noAnthropicCredit = /your credit balance is too low to access the anthropic api/i.test(message);
+    const overBudget = /job budget:/i.test(message);
     const retries = Number(job.retry_count || 0);
-    const retryable = !noAnthropicCredit && /timeout|timed out|econnreset|econnrefused|network error|connection error|rate.limit|HTTP (429|5\d\d)|\b5(?:00|02|03|04)\b/i.test(message);
+    const retryable = !noAnthropicCredit && !overBudget && /timeout|timed out|econnreset|econnrefused|network error|connection error|rate.limit|HTTP (429|5\d\d)|status(?: code)?:? ?5\d\d|\b(?:overloaded|internal server error)\b/i.test(message);
     if (retryable && retries < 3) {
       job._result = job._result || {};
       const events=(job._result.events || []).concat([{role:'Reader', text:'Temporary error; resuming from the saved checkpoint', at:Date.now()}]);
@@ -209,7 +234,7 @@ async function runClaimed(job) {
         job._requeued = true; console.warn('retrying job', job.id, retries+1); return;
       } catch (retryError) { console.warn('retry scheduling failed', job.id, retryError.message); }
     }
-    const publicError = noAnthropicCredit ? 'The AI service is temporarily unavailable. Please try again later.' : message.slice(0, 2000);
+    const publicError = noAnthropicCredit ? 'The AI service is temporarily unavailable. Please try again later.' : overBudget ? 'This site needed more work than one preview allows. We stopped to keep it fair; try a smaller page or contact us.' : message.slice(0, 2000);
     console.error('failed', job.id, noAnthropicCredit ? 'Anthropic API credit balance is too low; check provider billing.' : message);
     let markedFailed = false;
     try { await updateWithRetry(job, { status: 'failed', error: publicError }); markedFailed = true; job._terminalPersisted = true; }
@@ -233,7 +258,7 @@ async function process_(job) {
   const jobRoot = fs.mkdtempSync(path.join(OUT, `job-${job.id}-`));
   job._jobRoot = jobRoot;
   const dir = path.join(jobRoot, slug);
-  job._dir = dir;
+  job._dir = dir; CURRENT_JOB_DIR = dir;
   job._result = { ...(job.result || {}) };
   let restored = false;
   if (job._result.crawlCheckpoint) {
@@ -330,7 +355,7 @@ async function process_(job) {
     job._bps = published.blueprints; job._previewVersion = published.version; const previewUrl = `${SELF}/p/${job.id}?v=${published.version}`;
     const beforeUrl = fs.existsSync(path.join(dir, 'before-hero.jpg')) ? await upload(path.join(dir, 'before-hero.jpg'), `${job.id}/before.jpg`, 'image/jpeg') : null;
     const direction = JSON.parse(fs.readFileSync(path.join(dir, 'direction.json'), 'utf8'));
-    return { ...(job._result || {}), previewUrl, previewVersion:published.version, beforeUrl, qa, coverage: J(path.join(dir, 'coverage.json')), blueprints: job._bps || [], critic: job._critic || null, direction: { kind: direction.kind, concept: direction.concept, voice: direction.voice, brand: direction.brand, beats: direction.beats.map(b => b.type), audit_notes: direction.audit_notes }, seconds: Math.round((Date.now() - t0) / 1000) };
+    return { ...(job._result || {}), previewUrl, previewVersion:published.version, beforeUrl, qa, budget: J(path.join(dir, 'budget.json')), coverage: J(path.join(dir, 'coverage.json')), blueprints: job._bps || [], critic: job._critic || null, direction: { kind: direction.kind, concept: direction.concept, voice: direction.voice, brand: direction.brand, beats: direction.beats.map(b => b.type), audit_notes: direction.audit_notes }, seconds: Math.round((Date.now() - t0) / 1000) };
   });
   job._artifactsUploaded = await uploadArtefacts(job, dir);
   result.artifactsAvailable = job._artifactsUploaded; result.artifactsVersion = job._previewVersion;

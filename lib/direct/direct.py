@@ -7,6 +7,7 @@ import json, os, sys, re
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.insert(0, os.path.join(ROOT, 'lib'))
 from source_context import model_pages, model_analysis
+import budget as B
 RULES = ['lib/rules/copy.md', 'lib/rules/rhythm.md', 'lib/rules/master-run-01-frans.md', 'lib/rules/interaction.md']
 
 SCHEMA = r'''
@@ -459,7 +460,8 @@ def direct(slug_dir, model='claude-sonnet-5-5'):
     doc, last = None, None
     for attempt in range(3):
         budget = min(16000, max(8000, 2000 + 500 * len(catalog['sections'])))
-        msg = client.messages.create(model=model, max_tokens=budget, system=SYSTEM, messages=messages, tools=[TOOL], tool_choice={"type": "auto"})
+        B.check('direct'); msg = client.messages.create(model=model, max_tokens=budget, system=SYSTEM, messages=messages, tools=[TOOL], tool_choice={"type": "auto"})
+        B.charge(getattr(msg, 'usage', None), 'direct')
         call = next((b for b in msg.content if getattr(b, 'type', '') == 'tool_use'), None)
         if call is None:
             last = "no tool call"; messages += [{"role": "assistant", "content": msg.content}, {"role": "user", "content": "You must call write_direction with the document. Do it now."}]; continue

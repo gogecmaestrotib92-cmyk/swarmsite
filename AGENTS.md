@@ -21,3 +21,6 @@ Railway restarts the worker on every push; a job that was running is lost (the w
 - Never paste secrets into code, logs or chat. Keys live in Railway variables; the owner sets them.
 - Never add a model call inside the renderer.
 - Never fix a critic finding by special-casing one site; fix the rule that let it through.
+
+## Working in parallel (added 2026-11-08)
+`main` is the deployed branch. Any agent other than the owner's active session works on a branch and opens a PR. Before every commit: `npm test` (pytest + every `tests/*.mjs`) and `scripts/livetest.sh 80` must both pass. A test that a change breaks is fixed or consciously updated in the same commit — never left red.
