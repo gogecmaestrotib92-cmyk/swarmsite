@@ -52,8 +52,10 @@ def internal_links(inventory):
     for a in (inventory or {}).get('actions') or []:
         href = str(a.get('href') or ''); text = ' '.join(str(a.get('text') or '').split())
         if not href.startswith('http') or '#' in href.split('/')[-1][:1]: continue
-        try: h = urlparse(href).netloc.lower().replace('www.', '')
+        if a.get('region') in ('form', 'demo'): continue  # a form's own buttons and demo widgets are not pages
+        try: u = urlparse(href); h = u.netloc.lower().replace('www.', '')
         except Exception: continue
+        if u.username or u.password or not u.hostname or '.' not in u.hostname: continue  # credentials in a URL or a local host never leave the capture
         if host and h != host: continue
         key = href.rstrip('/')
         if key in seen or not text: continue

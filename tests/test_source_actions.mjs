@@ -26,7 +26,7 @@ try{
  assert.deepEqual(sec.sourceActions.map(a=>a.label),['Read stories','Explore apps','Find apps']);
  assert.equal(sec.sourceActionsVersion,1);assert.ok(sec.sourceActionsExcluded>=4);assert.equal(long.sourceActions.length,20);assert.equal(long.sourceActionsFound,22);assert.equal(long.sourceActionsTruncated,true);
  d.beats=[{id:'first',type:'features',h2:'Feature one',features:[{title:'Name',body:'Description'}],source_sections:[sec.id],cta:'Explore apps',cta_href:'https://source.example/apps'}, {id:'second',type:'features',h2:'Feature two',features:[{title:'Name',body:'Description'}],source_sections:[sec.id]}, {id:'third',type:'features',h2:'Feature three',features:[{title:'Name',body:'Description'}],source_sections:[long.id]}];
- fs.writeFileSync(dir+'/direction.json',JSON.stringify(d));fs.writeFileSync(dir+'/inventory.json',JSON.stringify(inv));fs.writeFileSync(dir+'/images.json','[]');
+ fs.writeFileSync(dir+'/direction.json',JSON.stringify(d));fs.writeFileSync(dir+'/inventory.json',JSON.stringify(inv));fs.writeFileSync(dir+'/brief.json',JSON.stringify({mode:'free'}));/* section-action hygiene is about the studio page; SEO-safe adds its own archive of source links */fs.writeFileSync(dir+'/images.json','[]');
  for(const blueprint of ['aino','atelier','belgrade-arbor','butter','cerebrium','crav','deepbook','halfdays','lpas','tengile','units','white-desert']){
  const rendered=spawnSync(process.env.PYTHON || 'python3',[base+'/lib/render/render_bp.py',dir,blueprint,dir+'/out.html'],{encoding:'utf8'});assert.equal(rendered.status,0,rendered.stderr);
  for(const width of [390,1440]){

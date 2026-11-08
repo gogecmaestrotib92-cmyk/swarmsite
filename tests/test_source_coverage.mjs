@@ -61,7 +61,7 @@ try {
  assert.equal(inv.seo.canonical,new URL('/canonical',url).href);
  assert.equal(inv.seo.robots,'index,follow');
  assert.deepEqual(inv.seo.hreflang,[{lang:'es',href:new URL('/es',url).href}]);
- assert.deepEqual(inv.seo.structuredData,{jsonLdCount:2,invalidJsonLd:1,types:['Organization']});
+ const {raw,...sd}=inv.seo.structuredData; assert.deepEqual(sd,{jsonLdCount:2,invalidJsonLd:1,types:['Organization']}); assert.equal(raw.length,1,'only the valid JSON-LD block is carried verbatim'); assert.ok(raw[0].includes('Organization'));
  assert.equal(inv.sourcePages[0].seo.description,'A real local description', 'subpage metadata is preserved');
  const limited = spawn(process.execPath, ['lib/pipeline/capture.mjs', url, '--site-wide', '--out', path.join(dir,'limited')], {env:{...process.env, SWARM_CRAWL_PAGE_LIMIT:'1'},stdio:['ignore','ignore','pipe']});
  let limitedError=''; limited.stderr.on('data', c => {limitedError += c});
