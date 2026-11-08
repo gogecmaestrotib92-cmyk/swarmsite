@@ -443,6 +443,7 @@ def build(slug_dir, bp_id, out_path=None):
         nch = len(re.sub(r'<[^>]+>', '', h['h1'])); upper = (hd.get('tt') == 'uppercase'); hpx = max(56, min(hpx, int(3 * 1150 / ((0.7 if upper else 0.56) * max(12, nch)))))
         hsty = head_style(bp['sections'][0]); hsty = re.sub(r'font-size:[^;]+', f'--hero-size:{clampf(hpx)}', hsty); hsty = re.sub(r'max-width:[^;]+', 'max-width:14ch', hsty); hsty = re.sub(r'text-align:[^;]+;?|margin-(left|right):auto;?', '', hsty) + ';text-wrap:balance' + (';text-align:center;margin-left:auto;margin-right:auto' if al == 'center' else ';text-align:left')
         cat = f'<div class="cat">{lab(h.get("category"), light)}{lab(h.get("fact"), light)}</div>'
+        plain_cat = f'<div class="cat">{lab(h.get("category"))}{lab(h.get("fact"))}</div>'
         shot = (not media) and d.get('kind') == 'software' and src
         body_ = f'<div class="wrap hero-in al-{al} place-{place}">{cat}<h1 class="h1" style="{hsty}">{h1}</h1><p class="lede{" light" if light else ""}">{e(h.get("lede"))}</p><div class="ctas">{cta_html(light)}{secondary_cta(light)}</div></div>'
         if not media and src and not hui.get('move') and d.get('kind') in ('place', 'service', 'product') and (images.get(h.get('media')) or {}).get('w', 0) >= 900: hui = {**hui, 'move': 'split'}
@@ -477,19 +478,19 @@ def build(slug_dir, bp_id, out_path=None):
         if mv == 'centre':
             hsty2 = hsty.replace('text-align:left', 'text-align:center') + ';margin-left:auto;margin-right:auto;max-width:16ch'
             shotp = (f'<div class="wrap shotwrap"><div class="shotframe"><img src="{src}" alt="{source_alt(src)}"></div></div>' if soft else f'<div class="wrap"><figure class="inset-v" data-sig="parallax"><img src="{src}" alt="{source_alt(src)}"></figure></div>') if src else ''
-            return f'<section class="sec hero centre{" shot" if shotp else ""}" id="top"><div class="wrap hero-in al-center">{cat}<h1 class="h1" style="{hsty2}">{h1}</h1><p class="lede" style="margin-left:auto;margin-right:auto;text-align:center">{e(h.get("lede"))}</p><div class="ctas" style="justify-content:center">{cta_html()}{secondary_cta()}</div></div>{shotp}</section>'
+            return f'<section class="sec hero centre{" shot" if shotp else ""}" id="top"><div class="wrap hero-in al-center">{plain_cat}<h1 class="h1" style="{hsty2}">{h1}</h1><p class="lede" style="margin-left:auto;margin-right:auto;text-align:center">{e(h.get("lede"))}</p><div class="ctas" style="justify-content:center">{cta_html()}{secondary_cta()}</div></div>{shotp}</section>'
         if mv in ('photo', 'poster', 'inset') and src:
             over = mv in ('photo', 'poster'); inset = mv == 'inset'
             ppx = min(hpx * 1.25, int(2 * 1150 / ((0.7 if upper else 0.56) * max(12, nch)))) if mv == 'poster' else hpx
             h1s = hsty if not over else re.sub(r'--hero-size:[^;]+', f'--hero-size:{clampf(ppx)}', hsty)
-            body_ = f'<div class="wrap hero-in al-{al}{" light" if over else ""}">{cat}<h1 class="h1" style="{h1s}">{h1}</h1><p class="lede">{e(h.get("lede"))}</p><div class="ctas">{cta_html()}{secondary_cta()}</div></div>'
+            body_ = f'<div class="wrap hero-in al-{al}{" light" if over else ""}">{cat if over else plain_cat}<h1 class="h1" style="{h1s}">{h1}</h1><p class="lede">{e(h.get("lede"))}</p><div class="ctas">{cta_html()}{secondary_cta()}</div></div>'
             if inset: return f'<section class="sec hero inset" id="top">{body_}<div class="wrap"><figure class="inset-v" data-sig="parallax"><img src="{src}" alt="{source_alt(src)}"></figure></div></section>'
             visual = m if has_video else f'<div class="media"><img src="{src}" alt="{source_alt(src)}"></div>'
             return f'<section class="sec hero has-media {mv}" id="top" style="min-height:100svh">{visual}{body_}</section>'
         if hui.get('move') == 'split' and src:
             # SIGNATURE split hero: words left, the product right, full height; the product drifts up slower than the page
             spx = min(hpx, int(3 * 640 / ((0.7 if upper else 0.56) * max(12, nch)))); hsty2 = re.sub(r'--hero-size:[^;]+', f'--hero-size:{clampf(spx)}', re.sub(r'max-width:[^;]+', 'max-width:11ch', hsty))
-            left = f'<div class="split-l">{cat}<h1 class="h1" style="{hsty2}">{h1}</h1><p class="lede">{e(h.get("lede"))}</p><div class="ctas">{cta_html()}{secondary_cta()}</div></div>'
+            left = f'<div class="split-l">{plain_cat}<h1 class="h1" style="{hsty2}">{h1}</h1><p class="lede">{e(h.get("lede"))}</p><div class="ctas">{cta_html()}{secondary_cta()}</div></div>'
             right = f'<div class="split-r"><div class="shotframe tall{" product-shot" if d.get("kind") == "software" else ""}" data-sig="parallax"><img src="{src}" alt="{source_alt(src)}"></div></div>'
             return f'<section class="sec hero split" id="top"><div class="wrap split-wrap">{left}{right}</div></section>'
         if shot: body_ += f'<div class="wrap shotwrap"><div class="shotframe"><img src="{src}" alt="{source_alt(src)}"></div></div>'

@@ -12,7 +12,7 @@ try {
   for (const name of ['images', 'assets']) fs.copyFileSync(`tests/${name}.sample.json`, path.join(dir, `${name}.json`));
   const direction = JSON.parse(fs.readFileSync('tests/direction.sample.json'));
   direction.hero.h1 = 'Partiendo el <em>bacalao</em> Supercalifragilisticexpialidocious';
-  for (const move of ['photo', 'poster', 'split', 'centre']) {
+  for (const move of ['photo', 'poster', 'split', 'centre', 'inset']) {
     direction.hero.ui = { move };
     fs.writeFileSync(path.join(dir, 'direction.json'), JSON.stringify(direction));
     const html = path.join(dir, `${move}.html`);
@@ -22,6 +22,13 @@ try {
       const page = await browser.newPage({ viewport: { width, height: 900 } });
       await page.route(/^https?:\/\//, route => route.abort());
       await page.goto(`${pathToFileURL(html)}?nomotion=1`, { waitUntil: 'domcontentloaded' });
+      if (['split', 'centre', 'inset'].includes(move)) {
+        assert.ok(await page.locator(`#top.${move}`).count(), `${move} fixture must render that composition`);
+        assert.equal(await page.locator('#top .cat .lab.light').count(), 0, `${move} labels must use page-foreground styling`);
+      }
+      if (move === 'photo' && await page.locator('#top.has-media').count()) {
+        assert.ok(await page.locator('#top .cat .lab.light').count(), 'photo overlay must retain light labels');
+      }
       const problems = await page.locator('#top h1').evaluate(heading => {
         const walker = document.createTreeWalker(heading, NodeFilter.SHOW_TEXT), problems = [];
         while (walker.nextNode()) {
