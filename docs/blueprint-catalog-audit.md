@@ -70,6 +70,19 @@ Ovim su provereni dostupnost i veza između navedenih stranica, ne puna upotrebl
 
 Ova provera nije kompletan audit sekcija, interakcija ili mobilnog ponašanja. Pri ekstrakciji je zabeležen zaseban problem: prazan blok iz DOM-a preklapa drugu detektovanu sekciju, pa automatsku segmentaciju treba proveriti i ispraviti pre normalizacije. To nije `bpout`: on je pomoćni element koji extractor ubacuje u stranicu za prikaz JSON rezultata i može pomeriti ili zakloniti sadržaj pri naknadnom vizuelnom pregledu; ukloniti ga pre referentnih snimaka. Novija izmena extractora zapisuje `vw` i ponovo meri `pageH` posle scroll prolaska, ali sama po sebi ne rešava preklapanje blokova niti potvrđuje potpunost merenja. Kandidat ostaje u istraživanju i nije spreman za produkciju do postupka promocije ispod.
 
+## Preliminarna merenja četiri kandidata
+
+Snimci su urađeni u Chrome-u na viewportima **1440 × 900** i **390 × 900**, DPR 1. Broj blokova označava izlaz extractora za te posete, ne broj stvarnih semantičkih sekcija niti potvrdu kvaliteta dizajna. Ovi rezultati ne sadrže originalni tekst ili assete referenci.
+
+| Kandidat | Izmereni blokovi 1440 / 390 | Zapažanja i ograničenja |
+| --- | --- | --- |
+| Wafer | 6 / 7 | Vidljivi H1 je 56 / 32 px; jedan H2 je 36 / 28 px. Na desktopu je vidljiv H2 u bloku visokom oko 220 px izostao iz izabranih sekcija jer extractor zahteva više od četvrtine visine viewporta, tj. 225 px; na mobilnom je odgovarajući blok visok oko 228 px i uhvaćen je. Dijagnostika za nepovezane H1/H2 sada prijavljuje taj propust, ali ne rekonstruše sekciju i ne dokazuje potpunost preostalih blokova. |
+| Délice | 11 / 11 | DOM H1 ima izmerenih 18 px na oba viewporta, dok je vizuelno dominantan hero naslov veći; H1 merenje zato nije pouzdan opis display tipografije. Vidljivi H2 imaju različite veličine, npr. 48 / približno 32 px i 64 / približno 40 px. Više vidljivih naslova ne pojavljuje se u izdvojenim `heads` podacima, koji su ograničeni na dva po bloku; samo broj blokova ne dokazuje potpunost. |
+| Qissa | 12 / 12 | H1 je oko 122 / 35 px, a česti H2 oko 58 / 32 px. Između nekih izdvojenih blokova postoje razmaci; jedan blok ima mnogo teksta bez izdvojenog naslova, što samo po sebi ne dokazuje grešku ili duplikat. Zabeleženi su canvas i video; detektor velikog canvas elementa sam po sebi ne dokazuje WebGL. |
+| Velaa | 1 / 1 u osnovnom extractoru; 12 / 12 u izolovanom prototipu | Osnovni extractor grupiše skoro celu stranicu jer `display: contents` roditelj nema sopstveni box. Prototip prolazi kroz takve roditelje i označava nejasno razdvajanje, ali je i dalje heuristika. Hero je video bez izdvojenog naslova, što samo po sebi nije prazan blok. Česti H2 su oko 60 / 40 px; kasniji H1 80 / 48 px nije hero naslov. Vidljivu navigaciju postojeći extractor nije prepoznao, a izračunati udeo pojedinih boja može biti veći od 1 zbog prebrojavanja ugnježdenih površina. |
+
+Prototip za `display: contents` ostaje izolovan i nije produkcijski; eksperimentalno je testiran i na skrivenim, ugnježdenim i preklopljenim blokovima. Ne postoji dokaz da nula upozorenja znači potpunu segmentaciju. Extractor i dalje ograničava broj blokova, naslova i slika, a animacije, video, canvas, kasno učitan sadržaj i fontovi zahtevaju zasebnu proveru. Nijedan od ova četiri kandidata **nije spreman za aktivni katalog ili produkciju** dok ne prođe postupak promocije ispod, uključujući realan render sa sadržajem klijenta.
+
 ## Postupak od kandidata do aktivnog blueprinta
 
 1. **Kandidat:** zabeležiti originalni URL, Awwwards URL ako postoji, vrstu sajta, stvarni status nagrade, datum pregleda, dostupnost i razlog izbora. Proveriti uslove korišćenja i poštovati ograničenja pristupa, `robots.txt` za automatizovani pristup i razumnu učestalost zahteva; ne zaobilaziti zaštitu, prijavu ni paywall. `robots.txt` sam po sebi nije licenca za sadržaj.
