@@ -35,18 +35,20 @@ class DirectorCoverageTests(unittest.TestCase):
         self.assertIn('could not be verified', doc['audit_notes'][0])
         self.assertEqual(doc['beats'][0]['items'], [['Q?', 'A']])
 
-    def test_faq_cannot_silently_disappear_when_beat_budget_is_full(self):
-        doc = {'beats': [{'id': str(i), 'type': 'features'} for i in range(48)]}
+    def test_faq_dropped_on_a_full_page_is_noted_not_fatal(self):
+        doc = {'beats': [{'id': str(i), 'type': 'features'} for i in range(12)]}
         inv = {'sourceCoverage': {'faqCatalogVersion': 1, 'sections': [{'id': 'home-1', 'faq': [{'question': 'Q?', 'answer': 'A', 'status': 'readable'}]}]}}
-        with self.assertRaisesRegex(ValueError, '48-beat'): direct.ground_faq(doc, inv)
+        out = direct.ground_faq(doc, inv)  # a paid director call is never thrown away over a FAQ that does not fit
+        self.assertEqual(len(out['beats']), 12)
+        self.assertTrue(any('FAQ' in n for n in out['audit_notes']))
 
     def test_limit_scales_past_seven_without_permitting_unbounded_document(self):
         doc = {'kind': 'software', 'blueprint': 'butter', 'hero': {'h1': 'A clear heading'},
                'beats': [{'id': f'b{i}', 'type': 'features'} for i in range(12)]}
         self.assertEqual(direct.validate(doc), [])
-        doc['beats'] += [{'id': f'b{i}', 'type': 'features'} for i in range(12, 49)]
-        self.assertTrue(any('3-48' in e for e in direct.validate(doc)))
-        self.assertEqual(direct.TOOL['input_schema']['properties']['beats']['maxItems'], 48)
+        doc['beats'] += [{'id': f'b{i}', 'type': 'features'} for i in range(12, 14)]
+        self.assertTrue(any('3-12' in e for e in direct.validate(doc)))  # one page: one idea per screen, at most 12 screens
+        self.assertEqual(direct.TOOL['input_schema']['properties']['beats']['maxItems'], 12)
 
     def test_catalog_is_valid_bounded_and_marks_trimmed_content(self):
         inv = {'sourceCoverage': {'sections': [{'id': f'home-{i}', 'title': f'Topic {i}', 'text': 'x' * 1300} for i in range(1, 83)],

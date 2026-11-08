@@ -19,7 +19,8 @@ try {
     const html = path.join(dir, `${bp}.html`);
     const rendered = spawnSync(process.env.PYTHON || 'python3', ['lib/render/render_bp.py', dir, bp, html], { encoding: 'utf8' });
     assert.equal(rendered.status, 0, `${bp}: ${rendered.stderr}`);
-    for (const mode of ['nomotion', 'reduced']) {
+    // ?nomotion=1 freezes the real layout for screenshots; only prefers-reduced-motion gets the static fallback layout
+    for (const mode of ['reduced']) {
       const page = await browser.newPage({ viewport: { width: 390, height: 844 }, reducedMotion: mode === 'reduced' ? 'reduce' : 'no-preference' });
       await page.route(/^https?:\/\//, route => route.abort());
       await page.goto(`${pathToFileURL(html)}${mode === 'nomotion' ? '?nomotion=1' : ''}`, { waitUntil: 'domcontentloaded' });

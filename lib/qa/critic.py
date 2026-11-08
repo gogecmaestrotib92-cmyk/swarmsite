@@ -33,16 +33,16 @@ Look for: text clipped or overlapping, invisible text (same colour as background
 Report only what you can SEE. Every fix must name the beat id (from the direction), the agent who owns it, and the reason — written so that agent can act without seeing the screenshot (say which element, where, how big, what it should become).
 Ops: shorten/hero_h1 → copy; swap_image/hero_image → visual (name the image id); band/layout → ui (columns, lead visual, compact, h2 size, head alignment); drop_beat/reorder → ux; note → anything else, to the right agent. Prefer dropping a weak section over padding it. Score 0–100 against award-level work (90+ = ship)."""
 
-def shots(html, outdir, fast=False):
+def shots(html, outdir, fast=False):  # fast = intermediate rounds: desktop only, short waits; the final look sees both viewports
     os.makedirs(outdir, exist_ok=True)
     for f in os.listdir(outdir): os.remove(os.path.join(outdir, f))
-    result = subprocess.run(['node', os.path.join(ROOT, 'lib/qa/shots.mjs'), html, '--out', outdir] + (['--fast'] if fast else []), cwd=ROOT, capture_output=True, text=True, timeout=180)
+    result = subprocess.run(['node', os.path.join(ROOT, 'lib/qa/shots.mjs'), html, '--out', outdir] + (['--fast', '--desktop-only'] if fast else []), cwd=ROOT, capture_output=True, text=True, timeout=180)
     if result.returncode:
         raise RuntimeError('screenshot capture failed: ' + (result.stderr or result.stdout)[-500:])
     files = sorted(f for f in os.listdir(outdir) if f.endswith(('.png', '.jpg')))
     return [os.path.join(outdir, f) for f in files]
 
-def select_screenshots(files, limit=28):
+def select_screenshots(files, limit=20):  # final look: both viewports, every section of a 10-section page; fast rounds are desktop only
     if len(files) <= limit: return files
     # Preserve the section overview before spending the remaining budget on
     # individual pinned slides, with both viewport sizes represented.
@@ -107,7 +107,7 @@ def critique(slug_dir, html, model='claude-sonnet-5-5', fast=False):
     beats = [{k: v for k, v in beat.items() if k != 'fields' or beat.get('id') not in linked_forms}
              for beat in d.get('beats', [])]
     moves = {b['id']: (b.get('ui') or {}).get('move') for b in d.get('beats', []) if (b.get('ui') or {}).get('move')}
-    content = [{"type": "text", "text": "SIGNATURE MOVES on this page (all screenshots use the no-motion accessibility layout; slide-labeled images show positions within that static layout. Multiple steps visible together are expected in no-motion mode. The screenshots cannot establish whether animations or pinning work, so do not report them as broken or absent solely from these images): " + json.dumps(moves) + "\n- sticky-product: text blocks scroll on the left, the product stays pinned on the right and swaps per block\n- pinned-sequence: the section pins, each step takes the screen in turn\n- type-wall: one sentence in giant type lights up word by word as you scroll\n- marquee: a slow ticker of the section's words (one line IS the design)\n- story: text beside a visual\n\nRENDERED CTA LINKS (from the page HTML; destinations have not been tested)\n" + json.dumps(actions, ensure_ascii=False) + "\nSections " + json.dumps(sorted(linked_forms)) + " use a link to the source site or contact method in place of an embedded form. Do not report missing fields merely because these sections use a link. Evaluate their visible layout and whether the action is clear.\n\nDIRECTION (beat ids + copy)\n" + json.dumps({'hero': d.get('hero', {}), 'beats': beats}, ensure_ascii=False)[:14000] + "\n\nIMAGES available (ids)\n" + json.dumps(imgs_meta, ensure_ascii=False)[:3000]}]
+    content = [{"type": "text", "text": "SIGNATURE MOVES on this page (screenshots are the real layout with animation frozen: a pinned or sticky section is shown mid-scroll with its first frame on; slide-labeled images show later frames. Judge whether each move reads as designed — a pinned panel that is not on screen, a ticker that is one static line, a type-wall that is plain unlit text are defects): " + json.dumps(moves) + "\n- sticky-product: text blocks scroll on the left, the product stays pinned on the right and swaps per block\n- pinned-sequence: the section pins, each step takes the screen in turn\n- type-wall: one sentence in giant type lights up word by word as you scroll\n- marquee: a slow ticker of the section's words (one line IS the design)\n- story: text beside a visual\n\nRENDERED CTA LINKS (from the page HTML; destinations have not been tested)\n" + json.dumps(actions, ensure_ascii=False) + "\nSections " + json.dumps(sorted(linked_forms)) + " use a link to the source site or contact method in place of an A form beat must show real input fields; a bare link in its place is a defect.\n\nDIRECTION (beat ids + copy)\n" + json.dumps({'hero': d.get('hero', {}), 'beats': beats}, ensure_ascii=False)[:14000] + "\n\nIMAGES available (ids)\n" + json.dumps(imgs_meta, ensure_ascii=False)[:3000]}]
     from PIL import Image; import io
     for f in select_screenshots(files):
         try:

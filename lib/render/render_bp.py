@@ -548,7 +548,11 @@ def build(slug_dir, bp_id, out_path=None):
         out_ = []
         if strict:
             own = images.get(bt.get('image'))
-            if not own or not own.get('data') or own.get('w', 0) < 760 or is_used(own.get('id')) or not free_for(own, bt) or dark_background_texture(own): return []
+            if own and (not own.get('data') or own.get('w', 0) < 760 or is_used(own.get('id')) or not free_for(own, bt) or dark_background_texture(own)): own = None
+            if not own:  # nothing assigned: the best free picture of the right size carries the frames; a signature move must not die because the Visual agent left the slot blank
+                cand = [i for i in images.values() if i.get('data') and i.get('w', 0) >= 760 and not is_used(i.get('id')) and free_for(i, bt) and not dark_background_texture(i) and (soft or not i.get('shot'))]
+                cand.sort(key=lambda i: (not i.get('gen'), -(i.get('w', 0) * i.get('h', 0)))); own = cand[0] if cand else None
+            if not own: return []
             src = img(own['id'])
             return [(src, ZOOMS[i % len(ZOOMS)]) for i in range(n)]
         if bt.get('image') and images.get(bt['image']) and not is_used(bt['image']) and images[bt['image']].get('w', 0) >= 500: out_.append((img(bt['image']), ZOOMS[0]))
@@ -1092,7 +1096,7 @@ def build(slug_dir, bp_id, out_path=None):
         if variant == 'wide2': n = 2
         items = []
         if bt['type'] == 'features': items = [(f.get('title'), f.get('body'), True, f.get('image')) for f in bt.get('features', [])]
-        elif bt['type'] == 'cells': items = [(c[0], c[2] if len(c) > 2 else '', c[1], None) for c in bt.get('cells', [])]
+        elif bt['type'] == 'cells': items = [(c[0], c[2] if len(c) > 2 else '', c[1] if len(c) > 1 else '', None) for c in bt.get('cells', []) if c]
         elif bt['type'] == 'steps': items = [(f'0{i + 1}', s, True, None) for i, s in enumerate(bt.get('steps', []))]
         elif bt['type'] == 'facts': items = [(f[0], f[1], None, None) for f in bt.get('facts', [])]
         elif bt['type'] == 'faq': items = [(q, a, None, None) for q, a in bt.get('items', [])]
@@ -1149,7 +1153,7 @@ def build(slug_dir, bp_id, out_path=None):
         visual = ''
         if own and photo_like(own, 600) and free_for(own, bt):
             src = img(own['id'])
-            image_width, image_height = own['w'], own['h']
+            image_width, image_height = own.get('w', 0), own.get('h', 0) or 1
             try:
                 from PIL import Image
                 import io
@@ -1291,6 +1295,7 @@ def build(slug_dir, bp_id, out_path=None):
                 big, body = bt.get('big') or '', bt.get('body') or ''
                 if _norm(big) and _norm(big) == h1n: bt['big'] = ''; big = ''
                 return bool(_norm(big) or (_norm(body) and _norm(body) != h1n))
+            # the renderer draws what it is given; the director (direct.validate) is where a one-item list is refused
             if bt['type'] in ('features', 'steps', 'cells', 'ledger', 'facts', 'faq'): return len(beat_items(bt)) >= 1
             return True
         beats = [bt for bt in beats if _sane(bt)]
@@ -1309,6 +1314,11 @@ def build(slug_dir, bp_id, out_path=None):
             if move == 'type-wall' and kind == 'quote': return move
             if move == 'sticky-product' and kind in ('features', 'steps', 'cells', 'facts') and 2 <= count <= 5: return move
             if move == 'pinned-sequence' and kind in ('steps', 'features', 'facts'): return move
+            # the template's signature slot (sticky-product, pinned-sequence, type-wall, marquee) is the design; a plain 'cards' or 'story' move from the UI agent never overrides it — only another signature move does
+            if fallback in SIG and kind in ('features', 'steps', 'cells', 'facts') and move not in SIG:
+                if fallback == 'sticky-product' and 2 <= count <= 5: return fallback
+                if fallback == 'pinned-sequence' and 2 <= count <= 5: return fallback
+                if fallback == 'marquee' and kind in ('cells', 'facts') and all(len(str(t).split()) <= 5 for t, _ in beat_items(bt)): return fallback
             if move == 'story' and kind in ('features', 'steps', 'cells', 'facts'):
                 if count <= 4: return move
                 if owned_story_shot(bt):
@@ -1517,7 +1527,7 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
 @media(min-resolution:1.01dppx){{.ledger-sticky .ledger-visual{{--ledger-density:2}}}}
 @media(min-resolution:2.01dppx){{.ledger-sticky .ledger-visual{{--ledger-density:3}}}}
 @media(min-resolution:3.01dppx){{.ledger-sticky .ledger-visual{{--ledger-density:4}}}}
-.no-motion .ledger-sticky .ledger-visual{{position:static}}
+.reduced-motion .ledger-sticky .ledger-visual{{position:static}}
 @media(prefers-reduced-motion:reduce){{.ledger-sticky .ledger-visual{{position:static}}}}
 .ledger-item{{min-width:0}}.ledger-detail{{display:block;font-size:.85em;line-height:1.4;margin-top:6px;overflow-wrap:anywhere}}
 .ledger-cards-intro{{max-width:760px}}
@@ -1550,7 +1560,7 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
 .overlay{{position:relative;padding:0;min-height:88svh;background:#121212;color:#fff;display:grid;align-content:end;overflow:hidden}}.overlay.chapter{{min-height:72svh;align-content:center}}.ov-bg{{position:absolute;inset:0;margin:0}}.ov-bg::after{{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.55))}}.ov-bg img{{width:100%;height:100%;object-fit:cover}}.ov-in{{position:relative;z-index:1;padding:clamp(48px,7vw,110px) var(--frame) clamp(40px,6vw,80px);color:#fff}}.ov-in .lede{{color:rgba(255,255,255,.82)}}.ov-in .h2{{color:#fff}}.ov-in.center{{text-align:center;display:grid;justify-items:center}}.rows.light li{{border-color:rgba(255,255,255,.25);color:#fff}}.rows.light li i{{border-color:rgba(255,255,255,.25)}}.cta-ov .ov-in{{padding-block:clamp(48px,7vw,90px);gap:18px}}.cta-ov .alts{{gap:8px 18px}}.cta-ov .alts .lab{{color:rgba(255,255,255,.9);font-size:max(12px,var(--lab-px));line-height:1.4;overflow-wrap:anywhere}}.cta-ov .form{{margin:28px auto 0}}.cta-ov .ov-bg::after{{background:linear-gradient(180deg,rgba(0,0,0,.45),rgba(0,0,0,.78))}}.cta-ov .form input,.cta-ov .form textarea,.cta-ov .form select{{background:rgba(0,0,0,.35);color:#fff;border-color:rgba(255,255,255,.35)}}.cta-ov .form ::placeholder{{color:rgba(255,255,255,.6)}}.overlay.bare::after{{display:none}}
 .qband{{padding:clamp(72px,10vw,150px) 0}}.qband .qb{{font-family:var(--display);font-weight:var(--h2-w);font-size:clamp(28px,4.2vw,64px);line-height:1.12;letter-spacing:-.02em;max-width:24ch}}.qband.center .qb{{margin:0 auto;text-align:center}}.qband.center .who{{text-align:center}}.band-accent{{background:var(--accent);color:{'var(--on-accent)' if policy else '#fff'}{';--muted:'+policy['accent_muted'] if policy else ''}}}.band-accent .lab{{color:{'var(--muted)' if policy else 'rgba(255,255,255,.7)'}}}
 .railsec{{overflow:hidden}}.rail{{overflow-x:auto;scrollbar-width:thin;padding:0 var(--frame)}}.rail-in{{display:flex;gap:var(--gutter);width:max-content}}.rc{{width:min(360px,78vw);display:grid;gap:10px;align-content:start}}.rc figure{{margin:0 0 6px;aspect-ratio:.82;border-radius:var(--radius);overflow:hidden}}.rc figure img{{width:100%;height:100%;object-fit:cover}}.rc p{{color:var(--muted)}}
-.no-motion .rail-in{{width:auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}}.no-motion .rc{{width:auto}}
+.reduced-motion .rail-in{{width:auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}}.reduced-motion .rc{{width:auto}}
 @media(max-width:900px),(prefers-reduced-motion:reduce){{.rail-in{{width:auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}}.rc{{width:auto}}}}
 .facts-cards .card{{border-top:1px solid var(--line);padding-top:clamp(16px,2vw,28px)}}.facts-cards .card .h3{{font-family:var(--display);font-weight:var(--h1-w);font-size:clamp(40px,5.2vw,84px);line-height:1;letter-spacing:-.03em;overflow-wrap:anywhere}}.facts-cards .card p{{margin-top:12px}}
 .nums{{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:var(--gutter);border-top:1px solid var(--line);padding-top:28px}}.nums .num{{display:block;font-family:var(--display);font-weight:var(--h1-w);font-size:clamp(48px,7vw,120px);line-height:.95;letter-spacing:-.03em;overflow-wrap:anywhere}}.nums p{{margin-top:12px;color:var(--muted)}}@media(max-width:600px){{.numbers .nums{{grid-template-columns:1fr}}}}
@@ -1564,8 +1574,8 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
 .marquee{{padding:clamp(28px,4vw,56px) 0;overflow:hidden}}.marquee .gh{{margin-bottom:24px}}.mq{{overflow:hidden;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:18px 0}}.mq-track{{display:flex;gap:0;width:max-content;animation:mq 46s linear infinite}}.mq-i{{display:inline-flex;align-items:center;gap:28px;padding:0 14px 0 28px;font-family:var(--display);font-weight:var(--h2-w);font-size:min(var(--h2),56px);letter-spacing:-.02em;white-space:nowrap}}.mq-i i{{font-style:normal;font-size:.45em;color:var(--accent)}}@keyframes mq{{to{{transform:translateX(-50%)}}}}.marquee:hover .mq-track{{animation-play-state:paused}}
 .marquee-static{{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}}
 .marquee-static ul{{list-style:none}}
-.no-motion .marquee .mq{{display:none}}.no-motion .marquee-static{{position:static;width:auto;height:auto;padding:0;overflow:visible;clip-path:none;white-space:normal}}.no-motion .marquee-static li{{display:flex;flex-wrap:wrap;gap:.4em 1em;padding:14px 0;border-top:1px solid var(--line);overflow-wrap:anywhere}}
-.no-motion .marquee-static li span{{min-width:0;overflow-wrap:anywhere}}.no-motion .marquee-static li span:first-child{{font-family:var(--display);font-weight:var(--h2-w);font-size:clamp(21px,2.4vw,32px);line-height:1.2;letter-spacing:-.02em}}.no-motion .marquee-static li span+span{{font-family:var(--body);font-size:var(--body-px);line-height:1.4}}
+.reduced-motion .marquee .mq{{display:none}}.reduced-motion .marquee-static{{position:static;width:auto;height:auto;padding:0;overflow:visible;clip-path:none;white-space:normal}}.reduced-motion .marquee-static li{{display:flex;flex-wrap:wrap;gap:.4em 1em;padding:14px 0;border-top:1px solid var(--line);overflow-wrap:anywhere}}
+.reduced-motion .marquee-static li span{{min-width:0;overflow-wrap:anywhere}}.reduced-motion .marquee-static li span:first-child{{font-family:var(--display);font-weight:var(--h2-w);font-size:clamp(21px,2.4vw,32px);line-height:1.2;letter-spacing:-.02em}}.reduced-motion .marquee-static li span+span{{font-family:var(--body);font-size:var(--body-px);line-height:1.4}}
 @media(prefers-reduced-motion:reduce){{.marquee .mq{{display:none}}.marquee-static{{position:static;width:auto;height:auto;padding:0;overflow:visible;clip-path:none;white-space:normal}}.marquee-static li{{display:flex;flex-wrap:wrap;gap:.4em 1em;padding:14px 0;border-top:1px solid var(--line);overflow-wrap:anywhere}}}}
 @media(prefers-reduced-motion:reduce){{.marquee-static li span{{min-width:0;overflow-wrap:anywhere}}.marquee-static li span:first-child{{font-family:var(--display);font-weight:var(--h2-w);font-size:clamp(21px,2.4vw,32px);line-height:1.2;letter-spacing:-.02em}}.marquee-static li span+span{{font-family:var(--body);font-size:var(--body-px);line-height:1.4}}}}
 .pinned,.typewall,.sticky,.railsec{{display:block;align-content:start}}.pinned{{padding:0}}.ps-sticky{{position:sticky;top:0;height:100svh;display:grid;align-content:center;overflow:hidden}}.ps-stage{{position:relative;min-height:52vh}}.ps-s{{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;gap:var(--gutter);align-items:center;opacity:0;transform:translateY(24px);transition:opacity .5s var(--ease),transform .7s var(--ease);pointer-events:none}}.ps-s.on{{opacity:1;transform:none}}.ps-t .num{{display:block;font-family:var(--display);font-weight:var(--h1-w);font-size:clamp(64px,10vw,160px);line-height:.9;letter-spacing:-.03em;color:inherit}}.ps-t .h2{{margin-top:18px}}.ps-v{{margin:0;border-radius:max(12px,var(--radius));overflow:hidden;border:1px solid var(--line);aspect-ratio:1.3}}.ps-v img{{width:100%;height:100%;object-fit:cover}}.ps-dots{{display:flex;gap:8px;margin-top:28px}}.ps-dots i{{width:28px;height:2px;background:var(--line)}}.ps-dots i.on{{background:var(--ink)}}.band-dark .ps-dots i.on{{background:var(--band-ink)}}
@@ -1621,7 +1631,7 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
 @media(min-resolution:1.1dppx){{.ui-photo-story .assigned-visual{{--ui-photo-density:2}}}}@media(min-resolution:2.1dppx){{.ui-photo-story .assigned-visual{{--ui-photo-density:3}}}}@media(min-resolution:3.1dppx){{.ui-photo-story .assigned-visual{{--ui-photo-density:4}}}}
 @media(max-width:900px){{.statement .wrap{{padding-left:max(16px,calc(var(--frame) * .5))}}.split-wrap,.sp,.ps-s,.st,.cta2{{grid-template-columns:1fr}}.story.flip .st-t{{order:0}}.sp-pin{{order:-1}}.sp-stage{{position:relative;top:auto;height:52vh}}.sp-row{{min-height:auto;padding:22px 0;opacity:1}}.ps-s{{align-content:start}}.ps-v{{aspect-ratio:1.6}}.shotframe.tall img{{height:52vh}}.mq-i{{font-size:28px}}.nav .links{{display:none}}.nav .wrap{{gap:12px}}.nav .wrap>a:first-child{{min-width:0;max-width:28vw;flex:0 0 auto}}.nav .logo{{height:auto;max-height:56px;max-width:min(115px,28vw)}}.nav .wordmark{{font-size:clamp(16px,5vw,22px);overflow-wrap:anywhere}}.nav .btn{{min-width:0;padding-inline:8px;overflow-wrap:anywhere;justify-content:center}}.nav .btn .ar{{flex-shrink:0}}.gh,.ledger .two,.faq .two,.photos .pair{{grid-template-columns:1fr;display:grid}}.photos figure{{width:100%!important}}.grid{{grid-template-columns:1fr}}.twocol .cols{{grid-template-columns:1fr}}.end .fcols{{grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}}.form{{grid-template-columns:1fr}}.hero{{padding-top:100px}}.wrap{{padding:0 max(16px,calc(var(--frame) * .5))}}}}
 @media(max-width:900px){{.shotframe.tall.product-shot img{{height:auto;max-height:52vh}}}}
-.no-motion .ps-sticky{{position:static;height:auto;display:block;overflow:visible}}.no-motion .ps-stage{{min-height:0;display:grid;gap:clamp(40px,6vw,80px)}}.no-motion .ps-s{{position:static;inset:auto;opacity:1;transform:none;pointer-events:auto}}.no-motion .ps-dots{{display:none}}.no-motion *,.no-motion *::before,.no-motion *::after{{transition:none!important;animation:none!important}}@media(prefers-reduced-motion:reduce){{*{{transition:none!important;animation:none!important}}}}
+.reduced-motion .ps-sticky{{position:static;height:auto;display:block;overflow:visible}}.reduced-motion .ps-stage{{min-height:0;display:grid;gap:clamp(40px,6vw,80px)}}.reduced-motion .ps-s{{position:static;inset:auto;opacity:1;transform:none;pointer-events:auto}}.reduced-motion .ps-dots{{display:none}}.reduced-motion *,.reduced-motion *::before,.reduced-motion *::after{{transition:none!important;animation:none!important}}@media(prefers-reduced-motion:reduce){{*{{transition:none!important;animation:none!important}}}}
 '''
     moves_attr = lambda n: f' data-move="{n}"'
     def meta_text(value):
@@ -1654,7 +1664,9 @@ function Sig(){{ if(!window.gsap||!window.ScrollTrigger) return; gsap.registerPl
   document.querySelectorAll('[data-sig="typewall"]').forEach(sec=>{{ const ws=[...sec.querySelectorAll('.tw-w')]; sec.classList.add('tw-animated'); sec.style.height='150vh'; ScrollTrigger.create({{trigger:sec,start:'top top',end:'bottom bottom',onUpdate:st=>{{ const k=Math.round(st.progress*ws.length); ws.forEach((w,i)=>w.classList.toggle('on',i<k)); }}}}); }});
   document.querySelectorAll('[data-sig="parallax"]').forEach(el=>gsap.fromTo(el,{{y:40}},{{y:-40,ease:'none',scrollTrigger:{{trigger:el,start:'top bottom',end:'bottom top',scrub:true}}}}));
   ScrollTrigger.refresh(); }}
-const NOMOTION=/[?&]nomotion/.test(location.search)||matchMedia('(prefers-reduced-motion:reduce)').matches; const PREVIEW=!NOMOTION&&(self!==top||/[?&]swarm/.test(location.search));
+const REDUCED=matchMedia('(prefers-reduced-motion:reduce)').matches; const NOMOTION=/[?&]nomotion/.test(location.search)||REDUCED; const PREVIEW=!NOMOTION&&(self!==top||/[?&]swarm/.test(location.search));
+// ?nomotion=1 freezes the page for screenshots and the contract: the real layout, animation off. prefers-reduced-motion is the user's choice: static fallbacks for pinned, rail and marquee.
+if(REDUCED) document.documentElement.classList.add('reduced-motion');
 if(NOMOTION){{ document.documentElement.classList.add('no-motion'); document.querySelectorAll('[data-move]').forEach(el=>el.removeAttribute('data-move')); document.querySelectorAll('.tw-w,.sp-row').forEach(el=>el.classList.add('on')); document.querySelectorAll('.ps-s,.sp-f').forEach((el,i)=>el.classList.toggle('on',el.dataset.i==='0')); }}
 addEventListener('load',()=>{{ const nav=document.getElementById('nav'); const solidFrom=document.querySelector('.hero.has-media')?innerHeight*.7:0; if(solidFrom) nav.classList.add('on-photo'); const onS=()=>nav.classList.toggle('solid',!!document.querySelector('.hero.editorial-type') || scrollY>solidFrom); onS(); addEventListener('scroll',onS,{{passive:true}});
   if(NOMOTION) return;

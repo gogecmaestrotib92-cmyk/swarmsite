@@ -30,7 +30,8 @@ try {
   browser = await chromium.launch({ executablePath: process.env.CHROME_PATH || undefined, args: ['--no-sandbox'] });
 
   for (const width of [320, 390, 1440]) {
-    for (const mode of ['normal', 'nomotion', 'reduced']) {
+    // ?nomotion=1 freezes the real layout for screenshots; only prefers-reduced-motion gets the static fallback layout
+    for (const mode of ['normal', 'reduced']) {
       const page = await browser.newPage({ viewport: { width, height: 900 }, reducedMotion: mode === 'reduced' ? 'reduce' : 'no-preference' });
       await page.route(/^https?:\/\//, route => route.abort());
       await page.route('**/gsap.min.js', route => route.fulfill({ path: 'node_modules/gsap/dist/gsap.min.js', contentType: 'application/javascript' }));

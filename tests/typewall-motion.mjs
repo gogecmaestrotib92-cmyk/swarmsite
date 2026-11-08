@@ -19,7 +19,8 @@ try {
   assert.equal(render.status, 0, render.stderr);
   browser = await chromium.launch({ executablePath: process.env.CHROME_PATH || undefined, args: ['--no-sandbox'] });
   for (const width of [390, 1440]) {
-    for (const mode of ['normal', 'nomotion', 'reduced']) {
+    // ?nomotion=1 freezes the real layout for screenshots; only prefers-reduced-motion gets the static fallback layout
+    for (const mode of ['normal', 'reduced']) {
       const noMotion = mode !== 'normal';
       const page = await browser.newPage({ viewport: { width, height: 900 }, reducedMotion: mode === 'reduced' ? 'reduce' : 'no-preference' });
       await page.route(/^https?:\/\//, route => route.abort());

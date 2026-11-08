@@ -117,9 +117,9 @@ class TestimonialGrounding(unittest.TestCase):
     def test_multiple_homepage_sections_share_one_remaining_slot_without_losing_pairs(self):
         self.inv['sourceCoverage']['sections'].append({'id':'home-12','title':'More voices','testimonials':[
             self.good('A distinct source quotation.','Jordan','https://reviews.example/third')]})
-        self.doc={'beats':[{'id':f'feature-{i}','type':'features'} for i in range(47)]}
+        self.doc={'beats':[{'id':f'feature-{i}','type':'features'} for i in range(11)]}
         director.ground_testimonials(self.doc,self.inv)
-        self.assertEqual(len(self.doc['beats']),48)
+        self.assertEqual(len(self.doc['beats']),12)
         b=self.doc['beats'][-1]
         self.assertEqual(b['source_sections'],['home-11','home-12'])
         self.assertEqual([q['text'] for q in b['testimonials']],['First original review.','Second original review.','A distinct source quotation.'])
@@ -127,10 +127,10 @@ class TestimonialGrounding(unittest.TestCase):
         self.assertEqual(repr(self.doc),snapshot)
 
     def test_no_room_does_not_drop_existing_sections_and_is_explicit(self):
-        self.doc={'beats':[{'id':f'feature-{i}','type':'features'} for i in range(48)]}
+        self.doc={'beats':[{'id':f'feature-{i}','type':'features'} for i in range(12)]}
         director.ground_testimonials(self.doc,self.inv)
-        self.assertEqual(len(self.doc['beats']),48)
-        self.assertEqual([b['id'] for b in self.doc['beats']],[f'feature-{i}' for i in range(48)])
+        self.assertEqual(len(self.doc['beats']),12)
+        self.assertEqual([b['id'] for b in self.doc['beats']],[f'feature-{i}' for i in range(12)])
         self.assertTrue(any('no room' in n for n in self.doc['audit_notes']))
         snapshot=repr(self.doc); director.ground_testimonials(self.doc,self.inv)
         self.assertEqual(repr(self.doc),snapshot)
@@ -261,10 +261,10 @@ class TestimonialGrounding(unittest.TestCase):
             self.assertEqual(agents.J(directory,'direction.json'),before)
 
     def test_forty_eight_beat_limit_is_preserved(self):
-        self.doc['beats'] += [{'id':f'f{i}', 'type':'features'} for i in range(47)]
+        self.doc['beats'] += [{'id':f'f{i}', 'type':'features'} for i in range(11)]
         self.doc['beats'][0]['image']='source-photo'
         director.ground_testimonials(self.doc,self.inv)
-        self.assertEqual(len(self.doc['beats']),48)
+        self.assertEqual(len(self.doc['beats']),12)
         self.assertTrue(any('no room' in note for note in self.doc['audit_notes']))
 
     def test_copy_agent_cannot_modify_grounded_testimonials(self):

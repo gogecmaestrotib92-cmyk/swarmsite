@@ -17,7 +17,8 @@ try {
   const result = spawnSync(process.env.PYTHON || 'python3', ['lib/render/render_bp.py', dir, 'white-desert', html], { encoding: 'utf8' });
   assert.equal(result.status, 0, result.stderr);
   browser = await chromium.launch({ executablePath: process.env.CHROME_PATH || undefined, args: ['--no-sandbox'] });
-  for (const mode of ['normal', 'nomotion', 'reduced']) {
+  // ?nomotion=1 freezes the real layout for screenshots; only prefers-reduced-motion gets the static fallback layout
+  for (const mode of ['normal', 'reduced']) {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 }, reducedMotion: mode === 'reduced' ? 'reduce' : 'no-preference' });
     await page.route(/^https?:\/\//, route => route.abort());
     await page.goto(`${pathToFileURL(html)}${mode === 'nomotion' ? '?nomotion=1' : ''}`, { waitUntil: 'domcontentloaded' });

@@ -7,13 +7,14 @@ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'contract-content-length-'));
 try {
   for (const mode of ['valid', 'empty', 'duplicate']) {
     const content = i => `<h2>Meaningful section ${i + 1}</h2><p>Important content about feature ${i + 1} remains on the page.</p>`;
-    const sections = Array.from({length: 16}, (_, i) => `<section id="section-${i}">${mode === 'empty' && i === 3 ? '' : content(mode === 'duplicate' && i === 3 ? 2 : i)}</section>`).join('');
+    // 8 real sections: within the 5–12 promise, so only emptiness or duplication can fail the check
+    const sections = Array.from({length: 8}, (_, i) => `<section id="section-${i}">${mode === 'empty' && i === 3 ? '' : content(mode === 'duplicate' && i === 3 ? 2 : i)}</section>`).join('');
     const file = path.join(dir, 'page.html');
     fs.writeFileSync(file, `<!doctype html><style>html,body{margin:0}section{min-height:100vh;padding:2rem;box-sizing:border-box}</style>${sections}`);
     const run = spawnSync(process.execPath, ['lib/qa/contract.mjs', file, '--dir', dir], {encoding:'utf8', timeout: 120000, env:{...process.env, LIVETEST:'1'}});
     assert.equal(run.status, 0, run.stderr || run.error?.message);
     const report = JSON.parse(fs.readFileSync(path.join(dir, 'contract.json')));
-    assert.equal(report.failed.some(x => x.id === 'page-length'), false, 'length alone must not penalize real content');
+    assert.equal(report.failed.some(x => x.id === 'page-length'), false, '8 screens is within the 4–16 promise');
     assert.equal(report.failed.some(x => x.id === 'sections'), mode !== 'valid', 'empty or identical repeated sections must still fail');
   }
   // Closed accordion answers are invisible but still distinguish sections;
@@ -26,7 +27,7 @@ try {
     assert.equal(run.status, 0, run.stderr || run.error?.message);
     const report = JSON.parse(fs.readFileSync(path.join(dir, 'contract.json')));
     assert.equal(report.failed.some(x => x.id.endsWith('-no-empty-screens')), false, 'visible closed FAQ questions count as content');
-    assert.equal(report.failed.some(x => x.id === 'sections'), duplicate, 'different closed answers make FAQs distinct');
+    assert.equal(!!report.failed.find(x => x.id === 'sections')?.detail.includes('duplicate'), duplicate, 'different closed answers make FAQs distinct');
   }
   // Long real-style review lists use blockquote/figcaption instead of p/li.
   // Only actual nonempty, visible quote text should fill the measured screens.

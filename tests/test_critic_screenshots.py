@@ -50,10 +50,10 @@ class CriticScreenshotsTest(unittest.TestCase):
             self.assertNotIn('a ledger of real prices', system)
             content = sent['messages'][0]['content']
             names = [item['text'].removeprefix('SCREEN: ') for item in content if item['type'] == 'text' and item['text'].startswith('SCREEN: ')]
-            self.assertEqual(len(names), 28)
+            self.assertEqual(len(names), 20)
             for viewport in ('desktop', 'mobile'):
                 selected = [name for name in names if name.startswith(viewport + '-')]
-                self.assertEqual(len(selected), 14)
+                self.assertEqual(len(selected), 10)
                 self.assertIn(f'{viewport}-00-section.png', selected)
                 self.assertIn(f'{viewport}-14-section.png', selected)
 
@@ -93,18 +93,18 @@ class CriticScreenshotsTest(unittest.TestCase):
             self.assertIn('"fields": ["Email"]', prompt)
             self.assertIn('"fields": ["Phone"]', prompt)
 
-    def test_fast_capture_requests_both_viewports(self):
+    def test_fast_capture_is_desktop_only(self):
+        # intermediate rounds pay for one viewport; the final look pays for both
         with tempfile.TemporaryDirectory() as directory:
             def run(args, **kwargs):
                 self.assertIn('--fast', args)
-                self.assertNotIn('--desktop-only', args)
-                for name in ('desktop-00-top.png', 'mobile-00-top.png'):
-                    Path(directory, name).touch()
+                self.assertIn('--desktop-only', args)
+                Path(directory, 'desktop-00-top.png').touch()
                 return types.SimpleNamespace(returncode=0, stderr='', stdout='')
 
             with patch.object(critic.subprocess, 'run', side_effect=run):
                 files = critic.shots('page.html', directory, fast=True)
-            self.assertEqual([os.path.basename(f) for f in files], ['desktop-00-top.png', 'mobile-00-top.png'])
+            self.assertEqual([os.path.basename(f) for f in files], ['desktop-00-top.png'])
 
     def test_failed_capture_does_not_use_partial_screenshots(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -119,23 +119,24 @@ class CriticScreenshotsTest(unittest.TestCase):
     def test_single_viewport_keeps_first_and_last(self):
         files = [f'desktop-{section:02}-section.png' for section in range(35)]
         selected = critic.select_screenshots(files)
-        self.assertEqual(len(selected), 28)
+        self.assertEqual(len(selected), 20)
         self.assertEqual((selected[0], selected[-1]), (files[0], files[-1]))
 
     def test_section_overviews_are_prioritized_and_budget_is_balanced(self):
+        # 9 sections at two viewports (18 overviews) leave room for one extra frame per viewport inside the 20-image budget
         primary = [f'{viewport}-{section:02}-section.png' for viewport in ('desktop', 'mobile')
-                   for section in range(13)]
+                   for section in range(9)]
         slides = [f'{viewport}-04-tour-slide-{slide:02}-of-03.png' for viewport in ('desktop', 'mobile')
                   for slide in (1, 2, 3)]
         selected = critic.select_screenshots(primary + slides)
-        self.assertEqual(len(selected), 28)
+        self.assertEqual(len(selected), 20)
         self.assertTrue(set(primary).issubset(selected))
         for viewport in ('desktop', 'mobile'):
             self.assertIn(f'{viewport}-04-tour-slide-03-of-03.png', selected)
 
     def test_first_and_last_pinned_slides_are_kept_when_budget_allows(self):
         primary = [f'{viewport}-{section:02}-section.png' for viewport in ('desktop', 'mobile')
-                   for section in range(10)]
+                   for section in range(7)]
         slides = [f'{viewport}-04-tour-slide-{slide:02}-of-03.png' for viewport in ('desktop', 'mobile')
                   for slide in (1, 2, 3)]
         selected = critic.select_screenshots(primary + slides)
