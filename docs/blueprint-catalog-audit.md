@@ -49,6 +49,21 @@ Awwwards ima odvojene filtere za kategoriju, nagradu, oznake i tehnologiju; kand
 
 Kao prvi krug birati funkcionalne landing stranice koje imaju stvarni sadržaj, jasne CTA-ove i upotrebljivu mobilnu verziju, umesto oslanjanja samo na atraktivan hero ili nagradu. U svakoj ciljnoj kategoriji treba više različitih pristupa, npr. tipografski, foto i product-led, ali tek posle stvarne provere. Za klinike i druge specifične usluge pretražiti relevantne projekte i izvan širokih kategorija; ne pretpostavljati da u katalogu već postoji namenska kategorija.
 
+## Provereni kandidati po kategoriji
+
+Pregled u Chrome-u 8. novembra 2026: svih 12 stranica vratilo je HTTP 200, a svaka navedena Awwwards stranica sadrži direktan link ka odgovarajućem originalu. Kategorije ispod su radna klasifikacija za SwarmSite. Ovo su kandidati za istraživanje, ne aktivni blueprinti.
+
+| Kategorija | Kandidat | Original | Awwwards |
+| --- | --- | --- | --- |
+| Software / SaaS | GrowthBook | [growthbook.io](https://www.growthbook.io/) | [GrowthBook](https://www.awwwards.com/sites/growthbook) |
+| Software / AI | Wafer | [wafer.ai](https://www.wafer.ai/) | [Wafer.ai](https://www.awwwards.com/sites/wafer-ai) |
+| Restoran | Délice | [delice.ca](https://delice.ca/) | [Délice](https://www.awwwards.com/sites/delice) |
+| Restoran | Qissa | [qissa.co.uk](https://www.qissa.co.uk/) | [Qissa](https://www.awwwards.com/sites/qissa-a-tale-of-food) |
+| Hotel / resort | Velaa | [velaaprivateisland.com](https://www.velaaprivateisland.com/) | [Velaa Private Island](https://www.awwwards.com/sites/velaa-private-island) |
+| Kreativne usluge | Extrafazant | [extrafazant.nl](https://www.extrafazant.nl/) | [Extrafazant](https://www.awwwards.com/sites/extrafazant) |
+
+Ovim su provereni dostupnost i veza između navedenih stranica, ne puna upotrebljivost, pristupačnost, kvalitet mobilnog prikaza, licence asseta, održivost animacija ili podobnost za renderer. Osim niže opisanih preliminarnih merenja GrowthBooka, dizajni nisu izmereni niti je proveren generisani izlaz; status nagrada nije predmet ove provere. Kandidati zahtevaju postupak promocije iz ovog dokumenta.
+
 ## Prvi kandidat: GrowthBook
 
 [GrowthBook na Awwwards](https://www.awwwards.com/sites/growthbook) · [Originalni sajt](https://www.growthbook.io/) · predložena interna klasa: `software`. Ovo je kandidat za dalje istraživanje, ne aktivni blueprint. U nezavisnoj preliminarnoj browser proveri vidljivi H1 je 68 px na širini 1440 i 44 px na širini 390; jedan sadržajni H2 je 56 px odnosno 36 px. To nisu univerzalne veličine svih H2 na stranici: među vidljivim naslovima postoje i druge veličine, pa u budućem merenju treba beležiti konkretan element i ulogu.
