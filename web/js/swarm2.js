@@ -81,9 +81,9 @@
       ROLES.slice(0, n).forEach(([role, color], i) => { const c = new Cursor(frame, role, color, opts.shape); this.cursors.push(c); setTimeout(() => this.loop(c), 250 + i * 380); });
     }
     phase() {}
-    setPage(img, pageH) { this.page = img; this.pageH = pageH || img.naturalHeight; this.scale = this.frame.clientWidth / 1440; img.style.transition = 'transform 1.1s cubic-bezier(.2,.8,.2,1)'; }
+    setPage(img, pageH) { this.page = img; const imageHeight = img.naturalHeight * 1440 / (img.naturalWidth || 1440); this.pageH = Math.min(pageH || imageHeight, imageHeight); this.scale = this.frame.clientWidth / 1440; img.style.transition = 'transform 1.1s cubic-bezier(.2,.8,.2,1)'; }
     toLocal(rect) { const s = this.scale; return { x: rect.x * s, y: rect.y * s - this.pan, w: rect.w * s, h: Math.min(rect.h, 420) * s }; }
-    panTo(rect) { if (!this.page) return; const s = this.scale, H = this.frame.clientHeight, maxPan = Math.max(0, this.pageH * s - H); const want = Math.min(maxPan, Math.max(0, rect.y * s - H * .36)); if (Math.abs(want - this.pan) < 40) return; this.pan = want; this.page.style.transform = `translateY(${-this.pan}px)`; this.frame.querySelectorAll('.s2-x').forEach(e => e.remove()); }
+    panTo(rect) { if (!this.page) return; const s = this.scale = this.frame.clientWidth / 1440, H = this.frame.clientHeight, maxPan = Math.max(0, this.pageH * s - H); const want = Math.min(maxPan, Math.max(0, rect.y * s - H * .36)); if (this.pan <= maxPan && Math.abs(want - this.pan) < 40) return; this.pan = want; this.page.style.transform = `translateY(${-this.pan}px)`; this.frame.querySelectorAll('.s2-x').forEach(e => e.remove()); }
     push(evs) { for (const e of evs) this.queue.push(e); }
     stop() { this.alive = false; this.cursors.forEach(c => c.el.classList.remove('in')); this.spot.classList.remove('on'); setTimeout(() => this.frame.querySelectorAll('.s2-cur,.s2-ghost,.s2-trail,.s2-x,.s2-spot').forEach(e => e.remove()), 700); }
     park(c) { const i = this.cursors.indexOf(c); return { x: 24 + i * 34 + rnd(-3, 3), y: this.frame.clientHeight - 30 + rnd(-3, 3) }; }
@@ -106,7 +106,7 @@
     async real(c, ev) {
       const role = ALIAS[c.role] || c.role; const text = ev.text || '';
       if (c.el.classList.contains('off')) { const r0 = ev.rect && this.page ? this.toLocal(ev.rect) : null; c.x = (r0 ? r0.x : this.frame.clientWidth * .5) + rnd(-160, 160); c.y = (r0 ? r0.y : this.frame.clientHeight * .5) + rnd(-120, 120); c.hist = []; c.render(); c.el.classList.remove('off'); c.ghost.classList.remove('off'); await sleep(250); }
-      if (!(ev.rect && this.page)) { const p = this.park(c); await c.moveTo(p.x + rnd(-20, 20), p.y - rnd(40, 120)); c.say(text); await sleep(Math.min(2600, 900 + text.length * 25)); c.say(''); return; }
+      if (!(ev.rect && this.page && ev.rect.y < this.pageH)) { const p = this.park(c); await c.moveTo(p.x + rnd(-20, 20), p.y - rnd(40, 120)); c.say(text); await sleep(Math.min(2600, 900 + text.length * 25)); c.say(''); return; }
       this.panTo(ev.rect); await sleep(450); const r = this.toLocal(ev.rect); this.spotlight(r);
       await c.moveTo(r.x + Math.min(24, r.w * .2), r.y + Math.min(18, r.h * .5)); c.say(text);
       const G = { Reader: this.gRead, Copy: this.gCopy, Visual: this.gCrop, UX: this.gDrag, UI: this.gGuides, Critic: this.gInk, Contract: this.gStamp, Concept: this.gSticky, Render: this.gWipe };
