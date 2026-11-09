@@ -78,6 +78,27 @@ def route_fixes(fixes, direction):
             notes['concept'].append(note)
     return notes
 
+# Promises whose failure means the page is broken for a visitor, not merely off-style.
+HARD = ('no-overflow', 'no-empty-screens', 'contrast', 'actionable-cta', 'seo-text-kept', 'seo-links-kept')
+
+def scorecard(log, best_round):
+    """Taste and contract of the round that ships, side by side, and whether each clears its own bar.
+    Reported, not enforced: what ships is decided by the loop above. Here a high contract never stands in for taste —
+    the two are never added up. Bars: GATE_TECHNICAL (default 90, and no hard failure) and GATE_CREATIVE (default 70)."""
+    rec = next((r for r in log.get('rounds', []) if r.get('k') == best_round), None)
+    if not rec: return None
+    def bar(name, default):
+        try: return int(os.environ.get(name) or default)
+        except ValueError: return default
+    technical_min, creative_min = bar('GATE_TECHNICAL', 90), bar('GATE_CREATIVE', 70)
+    contract, taste = rec.get('contract'), rec.get('taste')
+    hard = [str(f.get('id')) for f in rec.get('broken') or [] if isinstance(f, dict) and any(h in str(f.get('id')) for h in HARD)]
+    number = lambda v: isinstance(v, (int, float)) and not isinstance(v, bool)
+    return {'round': best_round, 'taste': taste, 'contract': contract, 'blended': rec.get('score'), 'axes': rec.get('axes'),
+            'technical': {'pass': bool(number(contract) and contract >= technical_min and not hard), 'min': technical_min, 'hard_failures': hard},
+            'creative': {'pass': bool(number(taste) and taste >= creative_min), 'min': creative_min},
+            'enforced': False}
+
 def safe(name, fn, *a):
     t = time.time()
     try: n = fn(*a); ev(name, f'{n if isinstance(n, int) else "ok"} change(s) · {round(time.time() - t)}s'); return n
@@ -179,7 +200,7 @@ def _main(snapshot_dir):
         score = round(0.55 * taste + 0.45 * con['score']) if con.get('score', -1) >= 0 and taste >= 0 else taste
         ev('Critic', f'round {k}: taste {taste} · contract {con.get("score")} → {score}/100 · {len(fixes)} defects · {round(time.time() - t)}s'); ev('Critic', str(rep.get('verdict', ''))[:140])
         for f in cfail: fixes.append({'op': 'note', 'agent': owner_of(f['id']), 'beat': '', 'reason': f"CONTRACT BROKEN — {f['id']}: {f['detail']}"})
-        log['rounds'].append({'k': k, 'score': score, 'taste': taste, 'contract': con.get('score'), 'broken': cfail, 'fixes': fixes, 'verdict': rep.get('verdict')})
+        log['rounds'].append({'k': k, 'score': score, 'taste': taste, 'contract': con.get('score'), 'axes': rep.get('axes') if isinstance(rep.get('axes'), dict) else None, 'broken': cfail, 'fixes': fixes, 'verdict': rep.get('verdict')})
         # taste leads: the combined score already carries the contract at 45%; a broken promise only breaks a tie
         rank = (score, not cfail, -len(fixes))
         if best_key is None or rank > best_key:
@@ -249,8 +270,22 @@ def _main(snapshot_dir):
         log['coverage'] = {'error': str(e)[:200]}
         with open(os.path.join(slug_dir, 'coverage.json'), 'w', encoding='utf-8') as f:
             json.dump({'scope': 'single_page_preview', 'error': str(e)[:200]}, f)
+    # The skeleton of the page that ships (which forms, in which order): comparable across jobs without a model.
+    try:
+        import fingerprint as FP
+        with open(out, encoding='utf-8') as f: fp = FP.fingerprint(f.read())
+        with open(os.path.join(slug_dir, 'fingerprint.json'), 'w', encoding='utf-8') as f: json.dump(fp, f, indent=1)
+        log['fingerprint'] = {k: fp[k] for k in ('hero', 'body', 'digest', 'body_digest')}
+    except Exception as e: ev('Render', 'fingerprint unavailable: ' + str(e)[:80])
+    card = scorecard(log, best_round)
+    if card:
+        log['scores'] = card
+        with open(os.path.join(slug_dir, 'scores.json'), 'w', encoding='utf-8') as f: json.dump(card, f, indent=1)
+        tech = card['technical']
+        tech_note = f"clears {tech['min']}" if tech['pass'] else ('broken: ' + ', '.join(tech['hard_failures'][:2]) if tech['hard_failures'] else f"below {tech['min']}")
+        ev('Critic', f"design {card['taste']}/100 ({'clears' if card['creative']['pass'] else 'below'} {card['creative']['min']}) · technical {card['contract']}/100 ({tech_note})")
     log['best'] = best_score; log['best_round'] = best_round; log['best_blueprint'] = best_bp
     json.dump(log, open(os.path.join(slug_dir, 'swarm.json'), 'w'), indent=1, ensure_ascii=False)
-    print(json.dumps({"done": {"score": best_score, "rounds": len(log['rounds']), "best_blueprint": best_bp, "render_manifest": best_manifest}}), flush=True)
+    print(json.dumps({"done": {"score": best_score, "rounds": len(log['rounds']), "best_blueprint": best_bp, "render_manifest": best_manifest, "scores": log.get('scores')}}), flush=True)
 
 if __name__ == '__main__': main()
