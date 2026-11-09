@@ -66,18 +66,19 @@ class AssignedLookalikes(unittest.TestCase):
             p = Path(d); (p / 'direction.json').write_text(json.dumps(direction(decision))); (p / 'images.json').write_text(json.dumps(IMAGES))
             (p / 'assets.json').write_text('{}'); (p / 'brief.json').write_text('{}')
             render.build(d, 'cerebrium', str(p / 'index.html'))
-            return (p / 'index.html').read_text()
+            self.last_html = (p / 'index.html').read_text(); return self.last_html
 
     def test_uncertain_review_keeps_the_directed_hero_and_the_lookalike_story_picture(self):
         secs = sections(self.render('UNCERTAIN'))
         self.assertEqual(secs['top'][1], 1, 'UNCERTAIN is not NOT_PRODUCT: the hero keeps the picture the director chose')
-        self.assertEqual(secs['result'][1], 1, 'page 2 is assigned to its own slot; the look-alike hash must not count it as the hero picture')
+        self.assertEqual(secs['result'][1], 2, 'page 2 is assigned to its own slot, and the source\'s own "Before" page stands beside it')
+        self.assertIn('before-after', self.last_html)
         self.assertNotIn('pinned', secs['templates'][0], 'five text-only slides are cards, not a pinned ladder')
 
     def test_not_product_still_empties_the_hero(self):
         secs = sections(self.render('NOT_PRODUCT'))
         self.assertEqual(secs['top'][1], 0)
-        self.assertEqual(secs['result'][1], 1)
+        self.assertEqual(secs['result'][1], 2)
 
 
 if __name__ == '__main__':

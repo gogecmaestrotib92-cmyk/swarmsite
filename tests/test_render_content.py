@@ -180,7 +180,7 @@ class RenderContentTests(unittest.TestCase):
         for number, caption in facts['facts']:
             self.assertIn(number, sections.sections[facts['id']])
             self.assertIn(caption, sections.sections[facts['id']])
-        self.assertIn('font-size:clamp(42px,6vw,88px)', html)
+        self.assertIn('--fs:clamp(42px,6vw,88px)', html)  # the inline size lives in --fs so phones can fit the longest word
         self.assertIn('https://example.test/reservation', html)
 
     def test_recipe_honours_explicit_moves_for_matched_and_fallback_beats(self):

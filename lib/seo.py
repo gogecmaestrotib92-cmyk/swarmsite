@@ -58,7 +58,13 @@ def internal_links(inventory):
         if u.username or u.password or not u.hostname or '.' not in u.hostname: continue  # credentials in a URL or a local host never leave the capture
         if host and h != host: continue
         key = href.rstrip('/')
-        if key in seen or not text: continue
+        if key in seen: continue
+        # an anchor whose text is the URL itself (or empty) gets a readable label from its path: /blog/pdf-design-tips → "Pdf design tips"
+        if not text or re.fullmatch(r'(https?://)?[\w.-]+(/\S*)?', text):
+            seg = [x for x in u.path.split('/') if x and not re.fullmatch(r'\d+', x)]
+            text = (seg[-1] if seg else h).replace('-', ' ').replace('_', ' ').strip()
+            text = re.sub(r'\.[a-z]{2,5}$', '', text); text = text[:1].upper() + text[1:]
+        if not text: continue
         seen.add(key); out.append({'href': href, 'text': text[:80]})
     return out[:60]
 

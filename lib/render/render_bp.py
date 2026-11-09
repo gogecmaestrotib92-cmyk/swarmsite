@@ -97,6 +97,19 @@ def dark_logo_colours(data):
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 import seo as SEO
 
+def fit_headings(html):
+    """A headline never breaks inside a word ("Differen/t"). Each h1/h2 carries the length of its longest word so a phone
+    shrinks the type to fit that word instead of hyphenating it; the inline size moves into --fs so the fit is min(size, fit)."""
+    def one(m):
+        tag, attrs, inner = m.group(1), m.group(2), m.group(3)
+        words = re.sub(r'<[^>]+>', ' ', inner).replace('&nbsp;', ' ').split()
+        lw = max((len(re.sub(r'&[a-z]+;', 'x', w)) for w in words), default=6)
+        if 'style="' in attrs:
+            attrs = re.sub(r'style="([^"]*)"', lambda sm: 'style="' + re.sub(r'(?<![-\w])font-size:([^;"]+)', r'--fs:\1', sm.group(1)).rstrip(';') + f';--lw:{lw}"', attrs, count=1)
+        else: attrs += f' style="--lw:{lw}"'
+        return f'<{tag}{attrs}>{inner}</{tag}>'
+    return re.sub(r'<(h[1-3])((?:\s[^>]*)?class="(?:h1|h2)[^"]*"[^>]*)>(.*?)</\1>', one, html, flags=re.S)
+
 def build(slug_dir, bp_id, out_path=None):
     try:
         sys.path.insert(0, os.path.join(ROOT, 'lib/templates')); from recipes import RECIPES, FALLBACK
@@ -105,6 +118,18 @@ def build(slug_dir, bp_id, out_path=None):
     j = lambda n: json.load(open(os.path.join(slug_dir, n))) if os.path.exists(os.path.join(slug_dir, n)) else None
     d = j('direction.json'); assets = j('assets.json') or {}; brief = j('brief.json') or {}; inventory = j('inventory.json') or {}
     images = {i.get('id', str(n)): i for n, i in enumerate(j('images.json') or [])}
+    # A document page (white, portrait: a PDF render, a report, a menu) is read whole. A thin strip cut out of it
+    # is an illegible band of text in a card, so such a crop falls back to its full source page.
+    def is_document(it):
+        try: return (not it.get('shot')) and float(it.get('lum') or 0) >= 200 and 0 < float(it.get('w') or 0) / max(1, float(it.get('h') or 1)) < .9
+        except Exception: return False
+    for k_, it_ in list(images.items()):
+        src_ = images.get(it_.get('crop_of') or '')
+        if it_.get('detail') and src_ and src_.get('data') and is_document(src_):
+            try: thin = float(it_.get('h') or 0) < 480 or float(it_.get('w') or 0) / max(1, float(it_.get('h') or 1)) > 2.0
+            except Exception: thin = True
+            if thin: images[k_] = {**src_, 'id': k_, 'alt': it_.get('alt') or src_.get('alt'), 'detail': False, 'crop_of': src_.get('id'), 'doc': True}
+        elif is_document(it_): it_['doc'] = True
     bp = json.load(open(os.path.join(ROOT, 'lib/blueprints', bp_id + '.bp.json')))
     b = d['brand']; h = d['hero']; en = d.get('ending') if isinstance(d.get('ending'), dict) else {}
     T, C, G, M, BT, MO = bp['type'], bp['colour'], bp['grid'], bp['media'], bp['button'], bp['motion']
@@ -180,6 +205,7 @@ def build(slug_dir, bp_id, out_path=None):
         if not it.get('data') or is_empty(it) or it.get('shot') or is_used(it.get('id')) or it.get('w', 0) < minw or dark_background_texture(it): return False
         if symbolic_asset(it): return False
         ar = it.get('w', 1) / max(1, it.get('h', 1)); return .55 <= ar <= 2.0
+    placed = set()  # pictures actually put on the page (used also holds their look-alikes)
     def img(k=None, prefer_hero=False, want_shot=None):
         it = images.get(k) if k else None
         if it and is_empty(it): return ''
@@ -192,7 +218,7 @@ def build(slug_dir, bp_id, out_path=None):
             # hero: real photos first; software bodies: UI section shots first; places: photos first
             pool.sort(key=lambda i: (bool(i.get('shot')) if (prefer_hero or not soft) else not i.get('shot'), not (i.get('heroGrade') if prefer_hero else True), -(i.get('w', 0) * i.get('h', 0)))); it = pool[0] if pool else None
         if not it: return ''
-        used.update(family(it.get('id'))); return it.get('data', '')
+        used.update(family(it.get('id'))); placed.add(it.get('id')); return it.get('data', '')
 
     def pixel_dimensions(it):
         try:
@@ -605,8 +631,14 @@ def build(slug_dir, bp_id, out_path=None):
         # a component with detailed descriptions. Never silently trim it.
         if bt['type'] in ('features', 'steps', 'faq') or len(items) > 10:
             return cards(sec, bt)
+        # label + value + detail is a figure to compare, not a phrase to scroll past: a ticker shows one at a time and cuts words at the edge
+        if bt['type'] == 'cells':
+            # "39 · plays · sample" scrolls fine; "<30s · Average redesign — Under 30 sec on average" shows one figure at a time
+            # and cuts words at the edge, so measured facts with real sentences become a numbers grid (or cards when the details are long)
+            longest = max((len(' '.join(str(x) for x in c).split()) for c in bt.get('cells') or []), default=0)
+            if longest > 5: return numbers(sec, bt) if all(len(str(c[2] if len(c) > 2 else '').split()) <= 8 for c in bt.get('cells') or []) else cards(sec, bt)
         words_ = [f'{t}' if b_ is None or b_ == '' else f'{t} — {b_}' for t, b_ in items] or [bt.get('h2') or b['name']]
-        if any(len(str(w).split()) > 12 for w in words_): return cards(sec, bt)
+        if any(len(str(w).split()) > 6 for w in words_): return cards(sec, bt)
         while 0 < len(words_) < 6: words_ = words_ + words_  # a ticker needs a track longer than the screen: repeat short lists
         track = ''.join(f'<span class="mq-i">{e(w)}<i>✦</i></span>' for w in words_)
         head = ghead(sec, bt)
@@ -711,8 +743,34 @@ def build(slug_dir, bp_id, out_path=None):
         src = img(own['id'])
         if not src: return ''
         caption = photo_caption(bt)
+        # SIGNATURE for products whose output is a document: when the source itself labels an original ("before",
+        # "original", "antes") next to the assigned result page, the two stand side by side with the source's own labels.
+        before = before_for(own, bt) if own.get('doc') else None
+        if before:
+            bsrc = img(before['id'], True)  # force: a before page is a look-alike of the result by nature
+            if bsrc:
+                def tag(it, fallback):
+                    alt = str(it.get('alt') or '').strip()
+                    return alt if 0 < len(alt) <= 48 else fallback
+                pair = (f'<div class="ba-pair"><figure class="ba-before"><img src="{bsrc}" alt="{source_alt(bsrc)}"><figcaption>{e(tag(before, "Before"))}</figcaption></figure>'
+                        f'<figure class="ba-after"><img src="{src}" alt="{source_alt(src)}"><figcaption>{e(tag(own, "After"))}</figcaption></figure></div>')
+                return f'<section class="sec art-photo art-photo-pair band-{band_of(sec, bt)}" id="{e(bt["id"])}" data-sig="before-after"><div class="wrap">{caption}{pair}</div></section>'
         figure = f'<figure style="--photo-native:{width}px"><img src="{src}" alt="{source_alt(src)}"></figure>'
         return f'<section class="sec art-photo art-photo-{treatment} band-{band_of(sec, bt)}" id="{e(bt["id"])}"><div class="wrap art-photo-inner" style="--photo-native:{width}px">{caption}{figure}</div></section>'
+
+    def before_for(after, bt):
+        """The source's own 'before' for a result page: a free document picture whose alt says so, same orientation."""
+        if not after: return None
+        after_alt = str(after.get('alt') or '').lower()
+        if re.search(r'\b(before|original|antes|pre|old|prije|pre\b)', after_alt) and not re.search(r'\b(after|result|redesign|beautif|posle|después|nuevo)', after_alt): return None
+        for it in images.values():
+            if it is after or not it.get('data') or not it.get('doc') or it.get('detail'): continue
+            alt = str(it.get('alt') or '').lower()
+            if not re.search(r'\b(before|original|antes|pre|old|prije)\b', alt): continue
+            # a 'before' page is by nature a look-alike of the result: only its own placement counts as used
+            if it.get('id') in placed or (reserved.get(it.get('id')) and reserved.get(it.get('id')) != bt.get('id')): continue
+            return it
+        return None
 
     def story(sec, bt, flip=False):
         """Text beside a visual, alternating sides; the visual reveals with a clip."""
@@ -879,7 +937,14 @@ def build(slug_dir, bp_id, out_path=None):
     def numbers(sec, bt):
         items = beat_items(bt)
         if not items: return ''
-        cells_ = ''.join(f'<div><b class="num">{e(t)}</b><p>{e(x)}</p></div>' for t, x in items)
+        # a figure is the value alone, big; its label and detail sit under it (never "<30s · Average redesign" as one headline)
+        def cell(t, x):
+            if bt['type'] == 'cells':
+                parts = str(t).split(' · ', 1)
+                if len(parts) == 2:
+                    return f'<div><b class="num">{e(parts[0])}</b><p class="num-label">{e(parts[1])}</p>{"<p>" + e(x) + "</p>" if x else ""}</div>'
+            return f'<div><b class="num">{e(t)}</b><p>{e(x)}</p></div>'
+        cells_ = ''.join(cell(t, x) for t, x in items)
         return f'<section class="sec numbers band-{band_of(sec, bt)}" id="{e(bt["id"])}"><div class="wrap">{ghead(sec, bt)}<div class="nums" style="--n:{min(4, len(items))}">{cells_}</div></div></section>'
     def stickers(sec, bt):
         items = beat_items(bt)
@@ -1517,9 +1582,13 @@ img,video{{display:block;max-width:100%}}a{{color:inherit;text-decoration:none}}
 .big-p{{font-family:{'var(--display)' if disp_kind == 'serif' else 'var(--body)'};font-weight:{300 if disp_kind != 'serif' and D.get('w', 400) <= 300 else 400};line-height:1.25;max-width:min(100%,{min(1100, (BO.get('maxw') or 520) * 1.6)}px);margin-top:18px;letter-spacing:-.01em}}
 .btn{{display:inline-flex;align-items:center;gap:10px;min-height:var(--btn-h);padding:var(--btn-pad);border-radius:var(--btn-r);font-family:var(--body);font-size:var(--btn-px);font-weight:{BT.get('w', 500)};text-transform:var(--btn-tt);background:{button_bg};color:{button_fg};border:1px solid transparent;transition:transform var(--fast) var(--ease),background var(--fast)}}
 .btn.ghost{{background:transparent;color:var(--ink);border-color:var(--ink)}}{' .band-alt .btn.ghost{color:var(--alt-ink);border-color:var(--alt-ink)} .band-accent .btn.ghost{color:var(--on-accent);border-color:var(--on-accent)}' if policy else ''}{' .band-alt .btn:not(.ghost):not(.light){background:var(--alt-button);color:var(--alt-button-ink)} .band-accent .btn:not(.ghost):not(.light){background:var(--accent-button);color:var(--accent-button-ink)}' if policy else ''}.btn.light{{color:var(--on-photo);border-color:var(--on-photo);background:transparent}}.btn.light:not(.ghost){{background:var(--on-photo);color:#111;border-color:var(--on-photo)}}.btn:active{{transform:scale(.97)}}.btn .ar{{transition:transform var(--fast) var(--ease)}}.btn:hover .ar{{transform:translateX(4px)}}
+.h1,.h2{{hyphens:manual}}.h1[style*="--fs"],.h2[style*="--fs"]{{font-size:var(--fs)}}
+/* a headline shrinks to fit its longest word before it ever breaks inside one ("Differen/t"); overflow-wrap stays as the last resort for a word longer than the screen */
+.h1[style*="--fs"][style*="--lw"]{{font-size:min(var(--fs),calc((100vw - 2 * min(var(--frame,24px),24px)) / var(--lw,8) * 1.72))!important}}.h2[style*="--fs"][style*="--lw"]{{font-size:min(var(--fs),calc((100vw - 2 * min(var(--frame,24px),24px)) / var(--lw,8) * 1.72))!important}}
+.art-photo-pair .ba-pair{{display:grid;grid-template-columns:1fr 1fr;gap:var(--gutter);margin-top:clamp(28px,4vw,56px);align-items:start}}.art-photo-pair figure{{margin:0;border-radius:var(--radius);overflow:hidden;background:rgba(127,127,127,.08);border:1px solid var(--line)}}.art-photo-pair figure img{{display:block;width:100%;height:auto}}.art-photo-pair figcaption{{font-family:var(--mono,ui-monospace,monospace);font-size:12px;letter-spacing:.08em;text-transform:uppercase;padding:12px 16px;border-top:1px solid var(--line);color:var(--muted)}}.art-photo-pair .ba-before img{{filter:saturate(.85)}}.art-photo-pair .ba-after{{box-shadow:0 30px 80px -30px rgba(0,0,0,.45)}}@media(max-width:700px){{.art-photo-pair .ba-pair{{grid-template-columns:1fr}}}}
 .section-extras{{position:relative;z-index:1;margin-top:28px;overflow-wrap:anywhere}}.section-note{{max-width:var(--body-max);line-height:1.5}}.section-actions{{display:flex;flex-wrap:wrap;gap:12px}}.section-note+.section-actions{{margin-top:16px}}.section-actions .btn{{max-width:100%;overflow-wrap:anywhere}}.overlay .section-extras{{color:#fff;padding-bottom:clamp(40px,6vw,80px)}}.overlay .section-actions .btn,.band-accent .section-actions .btn{{background:#fff;color:#111}}
 .source-actions{{position:relative;z-index:1;margin-top:24px;overflow-wrap:anywhere}}.overlay .source-actions{{color:#fff;padding-bottom:clamp(40px,6vw,80px)}}.source-actions>div+div{{margin-top:8px}}.source-actions-label{{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}}.source-actions ul{{list-style:none;display:flex;flex-wrap:wrap;gap:0 24px;margin:0}}.source-actions a{{display:inline-flex;align-items:center;min-height:44px;font-size:clamp(14px,1vw,16px);text-decoration:underline;text-underline-offset:.22em;overflow-wrap:anywhere}}
-.nav{{position:fixed;inset:0 0 auto 0;z-index:50;padding:18px 0;transition:background var(--slow),color var(--slow)}}.nav .wrap{{display:flex;align-items:center;justify-content:space-between;gap:24px}}.nav .links{{display:flex;gap:28px;font-size:15px}}.nav.solid{{background:color-mix(in srgb,var(--paper) 86%,transparent);color:var(--ink);backdrop-filter:blur(14px)}}.nav.solid .btn{{background:var(--ink);color:var(--paper);border-color:var(--ink)}}.nav.on-photo:not(.solid){{color:var(--on-photo)}}.nav.on-photo:not(.solid) .btn{{background:var(--on-photo);color:#111}}.nav .logo-surface{{display:inline-flex;align-items:center;max-width:100%;box-sizing:border-box}}.nav.logo-plate-solid:not(.on-photo) .logo-surface,.nav.logo-plate-solid.solid .logo-surface,.nav.logo-plate-photo.on-photo:not(.solid) .logo-surface{{background:#fff;padding:4px 8px;border-radius:6px}}.nav .logo{{height:{min(56, max(28, (bp.get('nav') or {}).get('h', 56) - 20))}px;width:auto;max-width:100%}}.nav .wordmark{{font-family:var(--display);font-size:22px}}
+.nav{{position:fixed;inset:0 0 auto 0;z-index:50;padding:18px 0;transition:background var(--slow),color var(--slow)}}.nav .wrap{{display:flex;align-items:center;justify-content:space-between;gap:24px}}.nav .wrap>a:first-child{{white-space:nowrap;flex-shrink:0}}.nav .links{{display:flex;gap:28px;font-size:15px}}.nav.solid{{background:color-mix(in srgb,var(--paper) 86%,transparent);color:var(--ink);backdrop-filter:blur(14px)}}.nav.solid .btn{{background:var(--ink);color:var(--paper);border-color:var(--ink)}}.nav.on-photo:not(.solid){{color:var(--on-photo)}}.nav.on-photo:not(.solid) .btn{{background:var(--on-photo);color:#111}}.nav .logo-surface{{display:inline-flex;align-items:center;max-width:100%;box-sizing:border-box}}.nav.logo-plate-solid:not(.on-photo) .logo-surface,.nav.logo-plate-solid.solid .logo-surface,.nav.logo-plate-photo.on-photo:not(.solid) .logo-surface{{background:#fff;padding:4px 8px;border-radius:6px}}.nav .logo{{height:{min(56, max(28, (bp.get('nav') or {}).get('h', 56) - 20))}px;width:auto;max-width:100%}}.nav .wordmark{{font-family:var(--display);font-size:22px}}
 .hero{{position:relative;display:grid;align-content:end;overflow:hidden;padding-top:120px}}.hero .media{{position:absolute;inset:0;z-index:0;background:var(--ink)}}.hero .media img,.hero .media video{{width:100%;height:100%;object-fit:cover}}.hero.has-media .media::after{{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.46),transparent 75%),linear-gradient(180deg,rgba(0,0,0,.42),rgba(0,0,0,.22) 40%,rgba(0,0,0,.58))}}
 .hero .hero-in{{position:relative;z-index:1;padding-bottom:clamp(40px,6vw,80px)}}.hero .h1{{font-size:var(--hero-size);overflow-wrap:anywhere}}@media(max-width:600px){{.hero .h1{{font-size:min(var(--hero-size),16vw)}}}}.hero.has-media{{color:var(--on-photo)}}.hero.has-media .cat .lab{{color:var(--on-photo);font-size:max(13px,var(--lab-px))}}.hero.has-media .h1,.hero.has-media .lede,.hero.has-media .cat{{text-shadow:0 1px 8px rgba(0,0,0,.55)}}.hero.has-media .btn.ghost{{color:var(--on-photo);border-color:var(--on-photo)}}.hero .cat{{display:flex;gap:26px;flex-wrap:wrap;margin-bottom:22px}}.hero .al-center{{text-align:center;justify-items:center;display:grid}}.hero .place-start{{align-self:start;padding-top:40px}}.hero .ctas{{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px}}
 .hero.shot{{align-content:start;padding-top:104px;min-height:auto!important}}.hero.shot .hero-in{{padding-bottom:0}}.hero.shot .cat{{margin-bottom:14px}}.hero.shot .lede{{margin-top:14px}}.hero.shot .ctas{{margin-top:20px}}.hero .shotwrap{{padding-top:clamp(22px,3vw,36px);padding-bottom:0}}.shotframe{{border-radius:max(12px,var(--radius)) max(12px,var(--radius)) 0 0;overflow:hidden;border:1px solid var(--line);border-bottom:0;box-shadow:0 30px 80px color-mix(in srgb,var(--ink) 14%,transparent)}}.shotframe img{{width:100%;max-height:72vh;object-fit:cover;object-position:top center}}
@@ -1618,7 +1687,7 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
 .reduced-motion .rail-in{{width:auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}}.reduced-motion .rc{{width:auto}}
 @media(max-width:900px),(prefers-reduced-motion:reduce){{.rail-in{{width:auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}}.rc{{width:auto}}}}
 .facts-cards .card{{border-top:1px solid var(--line);padding-top:clamp(16px,2vw,28px)}}.facts-cards .card .h3{{font-family:var(--display);font-weight:var(--h1-w);font-size:clamp(40px,5.2vw,84px);line-height:1;letter-spacing:-.03em;overflow-wrap:anywhere}}.facts-cards .card p{{margin-top:12px}}
-.nums{{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:var(--gutter);border-top:1px solid var(--line);padding-top:28px}}.nums .num{{display:block;font-family:var(--display);font-weight:var(--h1-w);font-size:clamp(48px,7vw,120px);line-height:.95;letter-spacing:-.03em;overflow-wrap:anywhere}}.nums p{{margin-top:12px;color:var(--muted)}}@media(max-width:600px){{.numbers .nums{{grid-template-columns:1fr}}}}
+.nums{{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:var(--gutter);border-top:1px solid var(--line);padding-top:28px}}.nums .num{{display:block;font-family:var(--display);font-weight:var(--h1-w);font-size:clamp(48px,7vw,120px);line-height:.95;letter-spacing:-.03em;overflow-wrap:anywhere}}.nums p{{margin-top:12px;color:var(--muted)}}.nums .num-label{{color:inherit;font-weight:500;margin-top:10px}}.nums .num-label+p{{margin-top:4px;font-size:.92em}}@media(max-width:600px){{.numbers .nums{{grid-template-columns:1fr}}}}
 .stickers{{padding:clamp(72px,10vw,140px) 0}}.stks{{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:30px;max-width:900px;margin-left:auto;margin-right:auto}}.stk{{display:inline-block;padding:14px 22px;border-radius:999px;background:#fff;color:#111;font-family:var(--display);font-weight:var(--h3-w);font-size:clamp(16px,1.6vw,24px);transform:rotate(var(--r));box-shadow:0 10px 30px rgba(0,0,0,.18)}}.stickers .h2{{text-align:center;margin:0 auto}}.stickers .lede{{color:{'var(--on-accent)' if policy else 'rgba(255,255,255,.85)'};text-align:center}}
 .prs{{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:var(--gutter)}}.prs>*,.nums>*,.cl>*,.grid>*,.cols>*,.rc{{min-width:0}}.sec img{{max-width:100%}}.pr figure{{margin:0;aspect-ratio:.8;border-radius:var(--radius);overflow:hidden;background:color-mix(in srgb,var(--ink) 6%,var(--paper))}}.pr figure img{{width:100%;height:100%;object-fit:cover}}.pr-t{{display:flex;justify-content:space-between;gap:12px;margin-top:12px;align-items:baseline}}.pr-t b{{font-weight:500;white-space:nowrap}}
 @media(max-width:900px){{.collage .cl,.nums,.prs{{grid-template-columns:1fr 1fr}}.collage .c1{{grid-row:auto}}.overlay{{min-height:70svh}}}}
@@ -1740,6 +1809,7 @@ addEventListener('load',()=>{{ const nav=document.getElementById('nav'); const s
   if(NOMOTION) return;
   try{{ if(PREVIEW) new Swarm({{agents:innerWidth<900?8:18,speed:1,hud:true,sectionSelector:'section,footer',boxSel:'.btn,.card,figure,.rows li,.form input',onDone:()=>{{ try{{ scrollTo(0,0); Moves.init(); Sig(); }}catch(e){{}} }}}}).run(); else {{ Moves.init(); Sig(); }} }}catch(e){{ try{{Moves.init(); Sig();}}catch(_){{}} }} }});
 </script></body></html>'''
+    html = fit_headings(html)
     out_path = out_path or os.path.join(slug_dir, f'index.{bp_id}.html'); open(out_path, 'w').write(html); return out_path
 
 if __name__ == '__main__':
