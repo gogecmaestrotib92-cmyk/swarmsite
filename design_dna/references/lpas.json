@@ -1,0 +1,811 @@
+{
+ "built_from": {
+  "design_dna/evidence.json#/references/lpas": "sha256:4952dd4d48d421cea32c38304b27ca1c20c3ad671e90a627433238d62111e569",
+  "lib/blueprints/lpas.bp.json": "sha256:e8ec6b26d1d9958eeb383a589a40cd93a2a52688079963a28f8f9f838d98e8ec",
+  "lib/blueprints/raw/lpas.json": "sha256:928f88380fb18af624b905200db15aae7c68d7044a3fe3f48fab43c1fa6dc78a"
+ },
+ "completeness": {
+  "composition": "measured-desktop",
+  "experience": "prose-only",
+  "imagery": "measured-desktop",
+  "mobile": "missing",
+  "motion": "partial",
+  "screenshots": "missing",
+  "typography": "measured"
+ },
+ "composition": {
+  "basis": "measured",
+  "fraction_base": {
+   "basis": "assumed",
+   "source": "lib/blueprint/normalize.py",
+   "w": 1440
+  },
+  "grid": {
+   "col": null,
+   "container": 1330,
+   "frame": null,
+   "gutter": 50,
+   "not_recorded": [
+    "col",
+    "frame"
+   ],
+   "raw_fields": {
+    "container": "lib/blueprints/raw/lpas.json#/container",
+    "gutter": "lib/blueprints/raw/lpas.json#/gutter"
+   },
+   "source": {
+    "blueprint": "lib/blueprints/lpas.bp.json#/grid",
+    "raw": "lib/blueprints/raw/lpas.json"
+   }
+  },
+  "sections": [
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": null,
+     "leading": 1.0,
+     "not_recorded": [
+      "align",
+      "case",
+      "tracking"
+     ],
+     "px": 75,
+     "source": "lib/blueprints/raw/lpas.json#/sections/0/heads/0",
+     "tracking": null,
+     "weight": 400,
+     "wf": 0.625,
+     "x": 0.035,
+     "y": 0.093
+    },
+    "media": [
+     {
+      "ar": 1.9,
+      "bleed": true,
+      "kind": "video",
+      "source": "lib/blueprints/raw/lpas.json#/sections/0/imgs/0",
+      "wf": 1.0,
+      "xf": null
+     },
+     {
+      "ar": 1.37,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/lpas.json#/sections/0/imgs/1",
+      "wf": 0.556,
+      "xf": 0.807
+     },
+     {
+      "ar": 1.38,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/lpas.json#/sections/0/imgs/2",
+      "wf": 0.565,
+      "xf": 1.251
+     }
+    ],
+    "role": "pinned-hero-rail",
+    "screens": 6.71,
+    "source": {
+     "blueprint": "lib/blueprints/lpas.bp.json#/sections/0",
+     "raw": "lib/blueprints/raw/lpas.json#/sections/0"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": null,
+     "leading": 1.1,
+     "not_recorded": [
+      "align",
+      "case",
+      "tracking",
+      "weight"
+     ],
+     "px": 56,
+     "source": "lib/blueprints/raw/lpas.json#/sections/1/heads/0",
+     "tracking": null,
+     "weight": null,
+     "wf": 0.457,
+     "x": 0.035,
+     "y": 0.0
+    },
+    "media": [],
+    "role": "manifesto",
+    "screens": 0.5,
+    "source": {
+     "blueprint": "lib/blueprints/lpas.bp.json#/sections/1",
+     "raw": "lib/blueprints/raw/lpas.json#/sections/1"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": null,
+     "leading": 1.1,
+     "not_recorded": [
+      "align",
+      "case",
+      "tracking",
+      "weight",
+      "wf",
+      "x",
+      "y"
+     ],
+     "px": 38,
+     "source": "lib/blueprints/raw/lpas.json#/sections/2/heads/0",
+     "tracking": null,
+     "weight": null,
+     "wf": null,
+     "x": null,
+     "y": null
+    },
+    "media": [
+     {
+      "ar": 1.6,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/lpas.json#/sections/2/imgs/0",
+      "wf": 0.466,
+      "xf": 0.03
+     },
+     {
+      "ar": 1.6,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/lpas.json#/sections/2/imgs/1",
+      "wf": 0.229,
+      "xf": 0.496
+     },
+     {
+      "ar": 1.6,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/lpas.json#/sections/2/imgs/2",
+      "wf": 0.229,
+      "xf": 0.728
+     }
+    ],
+    "role": "work-grid-sticky",
+    "screens": 1.47,
+    "source": {
+     "blueprint": "lib/blueprints/lpas.bp.json#/sections/2",
+     "raw": "lib/blueprints/raw/lpas.json#/sections/2"
+    },
+    "sticky": true
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": null,
+     "leading": 1.3,
+     "not_recorded": [
+      "align",
+      "case",
+      "tracking",
+      "weight",
+      "wf",
+      "x",
+      "y"
+     ],
+     "px": 28,
+     "source": "lib/blueprints/raw/lpas.json#/sections/3/heads/0",
+     "tracking": null,
+     "weight": null,
+     "wf": null,
+     "x": null,
+     "y": null
+    },
+    "media": [],
+    "role": "updates-list",
+    "screens": 0.6,
+    "source": {
+     "blueprint": "lib/blueprints/lpas.bp.json#/sections/3",
+     "raw": "lib/blueprints/raw/lpas.json#/sections/3"
+    },
+    "sticky": null
+   },
+   {
+    "bg": "#ffffff",
+    "head": {
+     "align": null,
+     "case": null,
+     "leading": null,
+     "not_recorded": [
+      "align",
+      "case",
+      "leading",
+      "tracking",
+      "weight"
+     ],
+     "px": 16,
+     "source": "lib/blueprints/raw/lpas.json#/sections/4/heads/0",
+     "tracking": null,
+     "weight": null,
+     "wf": 0.119,
+     "x": 0.035,
+     "y": 0.25
+    },
+    "media": [
+     {
+      "ar": 1.89,
+      "bleed": true,
+      "kind": null,
+      "source": "lib/blueprints/raw/lpas.json#/sections/4/imgs/0",
+      "wf": 1.385,
+      "xf": -0.198
+     }
+    ],
+    "role": "footer-photo-offices",
+    "screens": 1.99,
+    "source": {
+     "blueprint": "lib/blueprints/lpas.bp.json#/sections/4",
+     "raw": "lib/blueprints/raw/lpas.json#/sections/4"
+    },
+    "sticky": null
+   }
+  ],
+  "summary": {
+   "bleed_section_share": {
+    "count": 2,
+    "evidence": [
+     "composition.sections"
+    ],
+    "how": "sections holding a medium flagged bleed in the capture or at least 98% of the viewport wide ÷ all sections",
+    "matched": [
+     "composition.sections[0].media[0].bleed",
+     "composition.sections[4].media[0].bleed"
+    ],
+    "of": 5,
+    "value": 0.4
+   },
+   "offset_heading_share": {
+    "count": 0,
+    "evidence": [
+     "composition.sections[0].head.x",
+     "composition.sections[1].head.x",
+     "composition.sections[4].head.x"
+    ],
+    "how": "headings whose left edge is at or right of 30% of the viewport width ÷ headings with a recorded position",
+    "matched": [],
+    "of": 3,
+    "value": 0.0
+   },
+   "pacing": {
+    "evidence": [
+     "composition.sections[0].screens",
+     "composition.sections[1].screens",
+     "composition.sections[2].screens",
+     "composition.sections[3].screens",
+     "composition.sections[4].screens"
+    ],
+    "how": "section heights in screens, in page order",
+    "value": [
+     6.71,
+     0.5,
+     1.47,
+     0.6,
+     1.99
+    ]
+   },
+   "page_screens": {
+    "source": {
+     "blueprint": "lib/blueprints/lpas.bp.json#/screens",
+     "raw": "lib/blueprints/raw/lpas.json#/screens"
+    },
+    "value": 12
+   },
+   "sections": {
+    "evidence": [
+     "composition.sections"
+    ],
+    "how": "number of sections in the record",
+    "value": 5
+   },
+   "sections_screens_total": {
+    "evidence": [
+     "composition.sections[0].screens",
+     "composition.sections[1].screens",
+     "composition.sections[2].screens",
+     "composition.sections[3].screens",
+     "composition.sections[4].screens"
+    ],
+    "how": "sum of section heights in screens; sections can overlap or leave gaps, so this is not the page length",
+    "value": 11.27
+   }
+  },
+  "surface": {
+   "mode": "light",
+   "paper": "#ffffff",
+   "paper_luminance": 1.0,
+   "source": {
+    "blueprint": "lib/blueprints/lpas.bp.json#/colour/paper",
+    "raw": "lib/blueprints/raw/lpas.json#/palette/0"
+   }
+  }
+ },
+ "evidence": {
+  "blueprint": "lib/blueprints/lpas.bp.json",
+  "caveats": [],
+  "mirrors": null,
+  "raw": "lib/blueprints/raw/lpas.json",
+  "screenshots": {
+   "desktop": [],
+   "dir": null,
+   "mobile": [],
+   "profile": null,
+   "unclassified": []
+  },
+  "scroll_capture": null
+ },
+ "experience": {
+  "not_measured": [
+   "narrative",
+   "interaction",
+   "mobile"
+  ],
+  "pacing_screens": {
+   "evidence": [
+    "composition.summary.pacing"
+   ],
+   "value": [
+    6.71,
+    0.5,
+    1.47,
+    0.6,
+    1.99
+   ]
+  },
+  "section_notes": [
+   {
+    "kind": "prose",
+    "section": 0,
+    "source": "lib/blueprints/lpas.bp.json#/sections/0/note",
+    "text": "dimmed bleed video, 75px sans h1 900 wide at x=50; on scroll, 800x582 project cards with 56px titles slide in from the right (x=1162, 1802…) — the hero is a horizontal rail",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 1,
+    "source": "lib/blueprints/lpas.bp.json#/sections/1/note",
+    "text": "56px four-sentence manifesto 658 wide; 14px stacked verbs; 16px paragraph 791 wide",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 2,
+    "source": "lib/blueprints/lpas.bp.json#/sections/2/note",
+    "text": "38px title; one big 16:10 image left (671), two small 16:10 right (330) — 2:1:1 split, sticky title",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 3,
+    "source": "lib/blueprints/lpas.bp.json#/sections/3/note",
+    "text": "28px title, dated rows (16px source/date + 14px text 457 wide)",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 4,
+    "source": "lib/blueprints/lpas.bp.json#/sections/4/note",
+    "text": "2-screen footer: oversized bleed photo, office columns 171 wide at 267px pitch",
+    "withheld": null
+   }
+  ]
+ },
+ "fits": {
+  "also": [],
+  "archetype": "studio-grid-26",
+  "archetype_source": "lib/blueprints/lpas.bp.json#/archetype",
+  "kinds": [
+   "service"
+  ],
+  "kinds_source": "lib/blueprints/lpas.bp.json#/class",
+  "needs": {
+   "derived_by": "rule",
+   "evidence": [
+    "imagery.image_sections",
+    "imagery.video_first_section"
+   ],
+   "images_min": 3,
+   "rule": "derive_needs",
+   "video": true
+  },
+  "temper": [
+   {
+    "derived_by": "rule",
+    "principle": "single-family",
+    "rule": "rule_single_family",
+    "tag": "one-family"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "full-bleed-media",
+    "rule": "rule_full_bleed_media",
+    "tag": "full-bleed"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "landscape-media",
+    "rule": "rule_landscape_media",
+    "tag": "landscape-imagery"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "image-led",
+    "rule": "rule_image_led",
+    "tag": "image-led"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "video-first-section",
+    "rule": "rule_video_first_section",
+    "tag": "video-led"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "pinned-sections",
+    "rule": "rule_pinned_sections",
+    "tag": "pinned"
+   }
+  ]
+ },
+ "id": "lpas",
+ "imagery": {
+  "aspects": {
+   "evidence": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[0].media[1].ar",
+    "composition.sections[0].media[2].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[2].media[2].ar",
+    "composition.sections[4].media[0].ar"
+   ],
+   "how": "distinct aspect ratios (width ÷ height) of large media; large = at least 20% of the viewport width",
+   "value": [
+    1.37,
+    1.38,
+    1.6,
+    1.89,
+    1.9
+   ]
+  },
+  "basis": "measured",
+  "image_sections": {
+   "evidence": [
+    "composition.sections"
+   ],
+   "how": "sections holding at least one large still: not tagged video or canvas, aspect between 0.4 and 2.5",
+   "matched": [
+    "composition.sections[0].media[1]",
+    "composition.sections[2].media[0]",
+    "composition.sections[4].media[0]"
+   ],
+   "of": 5,
+   "share": 0.6,
+   "value": 3
+  },
+  "landscape_share": {
+   "count": 7,
+   "evidence": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[0].media[1].ar",
+    "composition.sections[0].media[2].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[2].media[2].ar",
+    "composition.sections[4].media[0].ar"
+   ],
+   "how": "large media with aspect ≥ 1.2 ÷ large media",
+   "matched": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[0].media[1].ar",
+    "composition.sections[0].media[2].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[2].media[2].ar",
+    "composition.sections[4].media[0].ar"
+   ],
+   "of": 7,
+   "value": 1.0
+  },
+  "media_recorded": {
+   "evidence": [
+    "composition.sections"
+   ],
+   "how": "media elements kept in the record: wider than 100px, at most 4 per section",
+   "value": 7
+  },
+  "portrait_share": {
+   "count": 0,
+   "evidence": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[0].media[1].ar",
+    "composition.sections[0].media[2].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[2].media[2].ar",
+    "composition.sections[4].media[0].ar"
+   ],
+   "how": "large media with aspect ≤ 0.9 ÷ large media",
+   "matched": [],
+   "of": 7,
+   "value": 0.0
+  },
+  "video_first_section": {
+   "evidence": [
+    "composition.sections[0].media"
+   ],
+   "how": "the first section holds a medium the capture tagged VIDEO",
+   "matched": [
+    "composition.sections[0].media[0].kind"
+   ],
+   "value": true
+  }
+ },
+ "implementation": {
+  "ir_seeds": [],
+  "recipe": "lib/templates/recipes.py#lpas"
+ },
+ "motion": {
+  "animated": 44,
+  "custom_cursor": null,
+  "keyframes": [
+   "textAnimation",
+   "rotate",
+   "moveLeft",
+   "menuItemsFadeIn"
+  ],
+  "libs": {
+   "lenis": true
+  },
+  "not_measured": [
+   "scroll",
+   "pinning",
+   "sequence",
+   "interaction",
+   "reduced-motion"
+  ],
+  "note": {
+   "kind": "prose",
+   "source": "lib/blueprints/lpas.bp.json#/motion/idea",
+   "text": "26-column grid; one sans at 9 sizes; pinned 6.7-screen hero where project cards slide in from the right over a dimmed video (brightness .5); sticky work section",
+   "withheld": null
+  },
+  "source": "lib/blueprints/raw/lpas.json#/motion",
+  "tracked": null,
+  "transitions": [
+   "width, border-radius|0.3s|cubic-bezier(0, 0, 0.13, 0.99)",
+   "all|1.2s|cubic-bezier(0.14, 0.83, 0.4, 1)",
+   "padding-left|0.3s|cubic-bezier(0, 0, 0.13, 0.99)"
+  ]
+ },
+ "principles": [
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "typography.families.value"
+   ],
+   "id": "single-family",
+   "rule": "rule_single_family",
+   "statement": "One type family was recorded on the whole page. Threshold: exactly one family in the capture's font list."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "composition.summary.bleed_section_share",
+    "composition.sections[0].media[0].bleed",
+    "composition.sections[4].media[0].bleed"
+   ],
+   "id": "full-bleed-media",
+   "rule": "rule_full_bleed_media",
+   "statement": "2 of 5 sections hold a medium that spans the viewport (flagged bleed in the capture, or at least 98% of the viewport wide). Threshold: share ≥ 30%."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "imagery.landscape_share",
+    "composition.sections[0].media[0].ar",
+    "composition.sections[0].media[1].ar",
+    "composition.sections[0].media[2].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[2].media[2].ar",
+    "composition.sections[4].media[0].ar"
+   ],
+   "id": "landscape-media",
+   "rule": "rule_landscape_media",
+   "statement": "7 of 7 large media are landscape (aspect ≥ 1.2; large = at least 20% of the viewport width). Threshold: share ≥ 60% and at least 3 large media."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "imagery.image_sections",
+    "composition.sections[0].media[1]",
+    "composition.sections[2].media[0]",
+    "composition.sections[4].media[0]"
+   ],
+   "id": "image-led",
+   "rule": "rule_image_led",
+   "statement": "3 of 5 sections hold a large still image. Threshold: share ≥ 60%."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "imagery.video_first_section",
+    "composition.sections[0].media[0].kind"
+   ],
+   "id": "video-first-section",
+   "rule": "rule_video_first_section",
+   "statement": "The first measured section holds a video element. Threshold: a medium tagged VIDEO in the first section of the capture."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "composition.sections[0].role",
+    "composition.sections[2].role",
+    "composition.sections[2].sticky",
+    "composition.sections[0].screens"
+   ],
+   "id": "pinned-sections",
+   "rule": "rule_pinned_sections",
+   "statement": "2 of 5 sections are marked pinned or sticky: 2 by a role name written into the capture by hand, 1 by the capture's sticky flag; the tallest of them runs 6.71 screens. Threshold: at least one such section. The scroll behaviour itself was not measured."
+  }
+ ],
+ "rights": {
+  "fonts": [
+   {
+    "face": "Manrope",
+    "licence": "OFL",
+    "role": "delivery",
+    "source": "lib/typography/fonts.json#/fonts/11/license"
+   },
+   {
+    "face": "Aeonik",
+    "licence": "unknown",
+    "role": "source",
+    "source": null
+   }
+  ],
+  "screenshots": "research-only",
+  "source_text": "excluded"
+ },
+ "schema_version": 1,
+ "source": {
+  "captured_at": null,
+  "description": null,
+  "dpr": null,
+  "url": "https://lpas.com/",
+  "url_source": "lib/blueprints/lpas.bp.json#/source",
+  "viewport": {
+   "h": 756,
+   "h_source": "lib/blueprints/raw/lpas.json#/vh",
+   "w": null,
+   "w_source": null
+  }
+ },
+ "status": "measured-desktop",
+ "typography": {
+  "basis": "measured",
+  "body": {
+   "case": null,
+   "delivery_class": "sans",
+   "delivery_face": "Manrope",
+   "delivery_fallback": false,
+   "leading": 1.35,
+   "not_recorded": [
+    "case",
+    "tracking",
+    "weight"
+   ],
+   "px": 16,
+   "source": {
+    "blueprint": "lib/blueprints/lpas.bp.json#/type/body",
+    "raw": "lib/blueprints/raw/lpas.json#/sections/1/paras/0"
+   },
+   "source_face": "Aeonik",
+   "tracking": null,
+   "weight": null
+  },
+  "display": {
+   "case": null,
+   "delivery_class": "sans",
+   "delivery_face": "Manrope",
+   "delivery_fallback": false,
+   "leading": 1.0,
+   "not_recorded": [
+    "case",
+    "tracking"
+   ],
+   "px": 75,
+   "source": {
+    "blueprint": "lib/blueprints/lpas.bp.json#/type/display",
+    "raw": "lib/blueprints/raw/lpas.json#/sections/0/heads/0"
+   },
+   "source_face": "Aeonik",
+   "tracking": null,
+   "weight": 400
+  },
+  "families": {
+   "source": "lib/blueprints/raw/lpas.json#/fonts",
+   "value": [
+    "Aeonik"
+   ]
+  },
+  "h2": {
+   "case": null,
+   "delivery_class": "sans",
+   "delivery_face": "Manrope",
+   "delivery_fallback": false,
+   "leading": 1.1,
+   "not_recorded": [
+    "case",
+    "tracking",
+    "weight"
+   ],
+   "px": 56,
+   "source": {
+    "blueprint": "lib/blueprints/lpas.bp.json#/type/h2",
+    "raw": "lib/blueprints/raw/lpas.json#/sections/0/heads/1"
+   },
+   "source_face": "Aeonik",
+   "tracking": null,
+   "weight": null
+  },
+  "h3": {
+   "case": null,
+   "delivery_class": "sans",
+   "delivery_face": "Manrope",
+   "delivery_fallback": false,
+   "leading": 1.1,
+   "not_recorded": [
+    "case",
+    "tracking",
+    "weight"
+   ],
+   "px": 38,
+   "source": {
+    "blueprint": "lib/blueprints/lpas.bp.json#/type/h3",
+    "raw": "lib/blueprints/raw/lpas.json#/sections/2/heads/0"
+   },
+   "source_face": "Aeonik",
+   "tracking": null,
+   "weight": null
+  },
+  "label": null,
+  "levels_missing": {
+   "label": "not-in-capture"
+  },
+  "ratios": {
+   "display_to_body": {
+    "evidence": [
+     "typography.display.px",
+     "typography.body.px"
+    ],
+    "how": "display px ÷ body px",
+    "value": 4.69
+   },
+   "display_to_h2": {
+    "evidence": [
+     "typography.display.px",
+     "typography.h2.px"
+    ],
+    "how": "display px ÷ h2 px",
+    "value": 1.34
+   }
+  }
+ }
+}
