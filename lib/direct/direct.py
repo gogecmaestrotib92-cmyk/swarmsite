@@ -103,6 +103,7 @@ def validate(doc):
         if b.get('h2') and len(re.sub(r'<[^>]+>', '', b['h2']).split()) > 6: errs.append(f'h2 too long: "{b["h2"]}"')
     ids = [b.get('id') for b in doc.get('beats', [])]
     if len(set(ids)) != len(ids): errs.append('beat ids must be unique')
+    errs += HOUSE.violations(doc)  # the house structure is the page: no extra beat types, no duplicates of a single slot
     return errs
 
 def brief_text(b, inv=None):
@@ -483,10 +484,14 @@ def direct(slug_dir, model='claude-sonnet-5-5'):
         doc = call.input; errs = validate(doc)
         if not errs: break
         last = '; '.join(errs)
-        messages += [{"role": "assistant", "content": msg.content}, {"role": "user", "content": [{"type": "tool_result", "tool_use_id": call.id, "content": f"Rejected: {last}. Call write_direction again with a corrected document."}]}]
+        messages += [{"role": "assistant", "content": msg.content}, {"role": "user", "content": [{"type": "tool_result", "tool_use_id": getattr(call, "id", "") or "call", "content": f"Rejected: {last}. Call write_direction again with a corrected document."}]}]
     if doc is None: raise SystemExit(f'direct: no document ({last})')
     errs = validate(doc)
-    if errs: raise SystemExit(f"direct: invalid document after retries ({'; '.join(errs)})")
+    soft = set(HOUSE.violations(doc))
+    hard = [e for e in errs if e not in soft]
+    if hard: raise SystemExit(f"direct: invalid document after retries ({'; '.join(hard)})")
+    if soft:  # the director could not fold everything into the house after three tries: keep the page, lock appends the extras, the owner sees why
+        doc.setdefault('audit_notes', []).append('House structure not fully met: ' + '; '.join(sorted(soft)))
     doc = ground_faq(doc, inv)
     doc = ground_testimonials(doc, inv)
     doc = HOUSE.lock(doc)  # the house decides order and moves; the director filled the slots

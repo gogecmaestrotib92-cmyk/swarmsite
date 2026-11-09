@@ -49,3 +49,12 @@ class House(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class HouseViolations(unittest.TestCase):
+    def test_duplicate_single_slot_and_foreign_types_are_named(self):
+        errs = house.violations({'kind': 'place', 'beats': [{'type': 'ledger'}] * 5 + [{'type': 'form'}]})
+        self.assertEqual(len(errs), 1); self.assertIn('5', errs[0]); self.assertIn('offer', errs[0])
+        errs = house.violations({'kind': 'software', 'beats': [{'type': 'photo'}, {'type': 'features'}, {'type': 'ledger'}]})
+        self.assertEqual(len(errs), 1); self.assertIn('no "ledger" slot', errs[0])
+        self.assertEqual(house.violations({'kind': 'place', 'beats': [{'type': 'photo'}, {'type': 'photo'}, {'type': 'ledger'}]}), [])

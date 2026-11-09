@@ -45,7 +45,8 @@ class DirectorCoverageTests(unittest.TestCase):
     def test_limit_scales_past_seven_without_permitting_unbounded_document(self):
         doc = {'kind': 'software', 'blueprint': 'butter', 'hero': {'h1': 'A clear heading'},
                'beats': [{'id': f'b{i}', 'type': 'features'} for i in range(12)]}
-        self.assertEqual(direct.validate(doc), [])
+        hard = lambda d: [e for e in direct.validate(d) if 'house' not in e]  # house-structure notes are soft; this test is about the hard cap
+        self.assertEqual(hard(doc), [])
         doc['beats'] += [{'id': f'b{i}', 'type': 'features'} for i in range(12, 14)]
         self.assertTrue(any('3-12' in e for e in direct.validate(doc)))  # one page: one idea per screen, at most 12 screens
         self.assertEqual(direct.TOOL['input_schema']['properties']['beats']['maxItems'], 12)

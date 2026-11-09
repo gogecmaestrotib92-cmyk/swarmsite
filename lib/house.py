@@ -107,3 +107,24 @@ def lock(doc):
     doc['beats'] = beats
     doc['house'] = kind
     return doc
+
+
+def violations(doc):
+    """What the director must fix before the house accepts the document: beats of a type the house has no slot for,
+    or more beats of a type than the house has slots (five menu ledgers in a row, three photo stories, a pricing
+    ledger on a software page). The message tells the director where that content belongs instead."""
+    kind = doc.get('kind') or 'service'
+    slots = HOUSE.get(kind) or HOUSE['service']
+    allowed = {}
+    for sid, t, _, _, _ in slots: allowed.setdefault(t, []).append(sid)
+    counts = {}
+    for b in doc.get('beats') or []: counts[b.get('type')] = counts.get(b.get('type'), 0) + 1
+    errs = []
+    nearest = {'quote': 'testimonials', 'facts': 'cells', 'steps': 'features (order the features as the steps)', 'ledger': 'features (software has no pricing section; put plan names into features or drop)'}
+    for t, n in counts.items():
+        if t not in allowed:
+            hint = nearest.get(t, 'the closest house slot')
+            errs.append(f'{kind} house has no "{t}" slot — rewrite that content as {hint} or drop it')
+        elif n > len(allowed[t]):
+            errs.append(f'{kind} house has {len(allowed[t])} "{t}" slot(s) ({", ".join(allowed[t])}) but the document has {n}: merge them into one beat of 3–6 items (a menu is one offer beat with its best 6 lines and the link to the full menu)')
+    return errs
