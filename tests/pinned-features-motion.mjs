@@ -12,8 +12,9 @@ try {
   const direction = JSON.parse(fs.readFileSync('tests/direction.sample.json'));
   const features = direction.beats.find(beat => beat.type === 'features');
   features.features = [
-    { title: '24/7 support', body: 'Real first detail' },
-    { title: 'Second offer', body: 'Real second detail' },
+    // features pin only when most of them bring their own picture (a text-only pinned ladder falls back to cards)
+    { title: '24/7 support', body: 'Real first detail', image: 'long-table' },
+    { title: 'Second offer', body: 'Real second detail', image: 'basta-table' },
     { title: 'Third offer', body: 'Real third detail' },
     { title: 'Fourth offer', body: 'Real fourth detail' }
   ];
@@ -41,7 +42,7 @@ try {
       await page.goto(`${pathToFileURL(html)}${mode === 'nomotion' ? '?nomotion=1' : ''}`, { waitUntil: 'load' });
       const section = page.locator(`#${features.id}`);
       assert.equal(await section.getAttribute('data-sig'), 'pinned');
-      assert.equal(await section.locator('.ps-v img').count(), 0);
+      assert.equal(await section.locator('.ps-v img').count(), 2);
       const slides = await section.locator('.ps-s').evaluateAll(elements => elements.map(el => {
         const rect = el.getBoundingClientRect(), style = getComputedStyle(el);
         return { top: rect.top, bottom: rect.bottom, position: style.position,

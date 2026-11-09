@@ -123,16 +123,22 @@ def build(slug_dir, bp_id, out_path=None):
             px = list(im.tobytes()); return ''.join('1' if px[r * 9 + c] > px[r * 9 + c + 1] else '0' for r in range(8) for c in range(8))
         except Exception: return None
     hashes = {k: dhash(i) for k, i in images.items() if i.get('data') and not is_empty(i)}
-    def family(k):
+    def family(k, twins=True):
         it = images.get(k) or {}; fam = {k}
         if it.get('detail'): return fam  # a detail crop is its own picture
         if it.get('crop_of'): fam.add(it['crop_of'])
-        h0 = hashes.get(k)
+        h0 = hashes.get(k) if twins else None
         if h0:
             for k2, h2 in hashes.items():
-                if h2 and not images[k2].get('detail') and sum(a != b for a, b in zip(h0, h2)) <= 10: fam.add(k2)
+                if not h2 or images[k2].get('detail') or sum(a != b for a, b in zip(h0, h2)) > 10: continue
+                # two pages of one document, two shots of one screen: a 64-bit hash calls them twins. When the
+                # director assigned both to different slots on purpose, that decision beats the look-alike guess.
+                if k2 != k and reserved.get(k2) and reserved.get(k) and reserved.get(k2) != reserved.get(k): continue
+                fam.add(k2)
         return fam
-    def is_used(k): return bool(family(k) & used)
+    # an assigned picture is used only when it (or its crop source) was placed; look-alikes of a placed picture
+    # block the unassigned pool, not a slot the director filled on purpose
+    def is_used(k): return bool(family(k, twins=not reserved.get(k)) & used)
     reserved = {}  # image id → beat id that owns it
     for bt0 in d.get('beats', []):
         for k0 in (bt0.get('image'), (bt0.get('ui') or {}).get('lead')):
@@ -434,7 +440,9 @@ def build(slug_dir, bp_id, out_path=None):
         vid = os.path.join(slug_dir, 'hero.mp4')
         hm = images.get(h.get('media')) or {}
         empty_hero = bool(hm and is_empty(hm))
-        rejected_product = d.get('kind') == 'software' and h.get('visual_verified') is False
+        # the reviewer's NOT_PRODUCT verdict empties the hero (a stadium is not a product demo); UNCERTAIN keeps the
+        # picture the director chose, rendered as a framed poster rather than a verified native-size screenshot
+        rejected_product = d.get('kind') == 'software' and h.get('visual_verified') is False and (h.get('visual_review') or {}).get('decision', 'NOT_PRODUCT') == 'NOT_PRODUCT'
         verified_dimensions = pixel_dimensions(hm) if d.get('kind') == 'software' and h.get('visual_verified') is True and hm else None
         hero_min_width = 360 if verified_dimensions and verified_dimensions[0] >= 360 else (700 if soft else 1000)
         if verified_dimensions: hm = {**hm, 'w': verified_dimensions[0], 'h': verified_dimensions[1]}
@@ -635,6 +643,11 @@ def build(slug_dir, bp_id, out_path=None):
         if bt.get('note') or bt.get('cta') or bt.get('cta2') or has_source_actions:
             return static_fallback()
         if len(items) < 2 or len(items) > 5: return static_fallback()
+        # Five screens of text with nothing to look at is not a signature move (the critic called it a text ladder):
+        # features pin only when most of them bring their own picture
+        if bt['type'] == 'features':
+            pictured = sum(1 for f in bt.get('features') or [] if isinstance(f, dict) and isinstance(f.get('image'), str) and images.get(f['image'], {}).get('data'))
+            if pictured < 2 or pictured * 2 < len(items): return static_fallback()
         # A section-level photo is not evidence that it depicts an individual offer.
         vis = [] if bt['type'] in ('features', 'facts') else pick_visuals(bt, len(items), strict=True)
         slides = ''
