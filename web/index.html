@@ -174,6 +174,9 @@ addEventListener('DOMContentLoaded',()=>{if(window.Moves)Moves.init();else addEv
 </script>
 <script src="/js/swarm.js?v=agent9" defer></script>
 <script>addEventListener('load',()=>{ try{ if(!window.Swarm||matchMedia('(prefers-reduced-motion:reduce)').matches) return;
-  const mobile=innerWidth<900; new Swarm({agents:mobile?8:18,speed:1,hud:true,skin:'character',sectionSelector:'[data-agent]',boxSel:'.pill,.urlbox,.step,.ba .row>div,.path,.faq details,.nav .wrap'}).run(); }catch(e){} });</script>
+  // The full-page rebuild is a desktop show. On a phone it hides the headline, hijacks the scroll and
+  // leaves people wondering what to tap (tester feedback), so phones get the finished page at once.
+  if(innerWidth<900||matchMedia('(pointer:coarse)').matches) return;
+  new Swarm({agents:18,speed:1,hud:true,skin:'character',sectionSelector:'[data-agent]',boxSel:'.pill,.urlbox,.step,.ba .row>div,.path,.faq details,.nav .wrap'}).run(); }catch(e){} });</script>
 
 </body></html>

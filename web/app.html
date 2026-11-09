@@ -37,6 +37,8 @@ a{color:inherit;text-decoration:none}
 .brief .lab{min-width:44px}.brief input[type=text],.brief input:not([type]){border:1px solid var(--line);border-radius:10px;padding:11px 12px;font:500 15px var(--sans);min-height:44px}
 .chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:13.5px;min-height:36px;cursor:pointer}.chip input{accent-color:var(--ink)}
 .brief.hide{display:none}
+.brief-more{display:grid;gap:26px}.brief-more>summary{cursor:pointer;list-style:none;font:500 15px var(--sans);color:#69645f;padding:4px 0;display:flex;align-items:center;gap:10px}.brief-more>summary::-webkit-details-marker{display:none}.brief-more>summary::before{content:"+";display:inline-grid;place-items:center;width:22px;height:22px;border:1px solid var(--line);border-radius:50%;font-size:15px;color:#111}.brief-more[open]>summary::before{content:"−"}.brief-more>summary .brief-more-t{white-space:nowrap;color:#111}.brief-more>summary .optional{font-weight:400;font-size:13px;line-height:1.3}
+
 .steps{width:min(720px,94vw);display:grid;gap:0;text-align:left;border:1px solid var(--line);border-radius:18px;background:#fff;overflow:hidden}
 .step{display:grid;grid-template-columns:22px 1fr auto;gap:14px;align-items:center;padding:13px 18px;border-top:1px solid var(--line);font-size:15px}
 .step:first-child{border-top:0}.step .dot{width:10px;height:10px;border-radius:50%;background:#D8D8D5;justify-self:center}
@@ -74,9 +76,10 @@ a{color:inherit;text-decoration:none}
   <p class="brief-caption">Choose what to keep. Your agents will shape the rest.</p>
   <form class="brief" id="brief" onsubmit="return false">
     <fieldset class="option-group"><legend>Does this page already rank on Google?</legend><div class="row">
-      <label class="chip"><input type="radio" name="mode" value="seo-safe" checked><span>Yes — keep my SEO (same words, headings, links, meta)</span></label>
-      <label class="chip"><input type="radio" name="mode" value="free"><span>No — free redesign</span></label>
+      <label class="chip"><input type="radio" name="mode" value="seo-safe" checked><span>Yes — keep my SEO</span></label>
+      <label class="chip"><input type="radio" name="mode" value="free"><span>No — redesign freely</span></label>
     </div></fieldset>
+    <details class="brief-more" id="briefMore"><summary><span class="brief-more-t">More options</span><span class="optional">font, colours, type of site, notes</span></summary>
     <fieldset class="option-group"><legend>What should we keep?</legend><div class="row">
       <label class="chip"><input type="checkbox" name="keepFont" checked><span>Original font</span></label>
       <label class="chip"><input type="checkbox" name="keepColours" checked><span>Original colours</span></label>
@@ -91,6 +94,7 @@ a{color:inherit;text-decoration:none}
     </div></fieldset>
     <div class="row col"><label for="keepNote">Anything else to keep? <span class="optional">Optional</span></label><input id="keepNote" name="keep" placeholder="e.g. a headline, prices or a photo" maxlength="300"></div>
     <div class="row col"><label for="goalNote">What should visitors do? <span class="optional">Optional</span></label><input id="goalNote" name="goal" placeholder="e.g. Book a table or start a trial" maxlength="80"></div>
+    </details>
     <div class="brief-action"><button class="pill ink" id="go">Start my preview <span aria-hidden="true">↗</span></button><p>Your current website stays unchanged.</p></div>
   </form>
   <div class="frame" id="frame"><div class="skel" id="skel"></div><img id="before" alt=""><div class="hud"><span class="lab" id="hudL">agents waking up</span><span class="lab" id="hudR">0 / 6</span></div></div>
@@ -156,6 +160,7 @@ function showResult(job){ const r=job.result; const pv=new URL(`${window.SWARMSI
 async function poll(id){ try{ const r=await fetch(`${API}/jobs/${id}`); if(!r.ok) throw new Error('job not found'); const job=await r.json(); renderSteps(job);
     if(job.status==='done'){ if(sw) sw.stop(); showResult(job); return; } if(job.status==='failed'){ if(sw) sw.stop(); const message=String(job.error||'unknown'); const providerUnavailable=/your credit balance is too low to access the anthropic api/i.test(message) || message==='The AI service is temporarily unavailable. Please try again later.'; $('#err').textContent=providerUnavailable?'The AI service is temporarily unavailable. Please try again later.':'Something broke: '+message+'. Try again or send us the URL.'; $('#h').textContent='That one didn’t go through.'; return; }
   }catch(e){ $('#err').textContent=e.message; } setTimeout(()=>poll(id), 3000); }
+if(innerWidth>700){const m=document.getElementById('briefMore'); if(m) m.open=true;}
 function briefData(){ const f=$('#brief'); const d={keepFont:f.keepFont.checked,keepColours:f.keepColours.checked,keepLogo:f.keepLogo.checked,mode:(f.querySelector('[name=mode]:checked')||{}).value||'seo-safe',kind:(f.querySelector('[name=kind]:checked')||{}).value||'',keep:f.keep.value.trim(),goal:f.goal.value.trim()}; return d; }
 async function launch(url){
   const button=$('#go'); if(button.disabled) return; button.disabled=true; $('#err').textContent='';
