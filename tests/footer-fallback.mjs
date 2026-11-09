@@ -23,7 +23,7 @@ try {
   const html=await build('fallback',ending);
   for(const width of [1440,390]) {
    const page=await browser.newPage({viewport:{width,height:844}});await page.route(/^https?:\/\//,r=>r.abort());await page.goto(`${pathToFileURL(html)}?nomotion=1`);
-   const footer=page.locator('footer#end');assert.equal(await footer.count(),1);assert.equal(await footer.locator('.big-p').innerText(),'Acme & Co');
+   const footer=page.locator('footer#end');assert.equal(await footer.count(),1);assert.equal(await footer.locator('.big-p').count(),0);assert.equal(await footer.locator('.end-mark .gw').innerText(),'Acme & Co'); /* the brand's name is the giant mark at the foot, not a tagline */
    assert.equal(await footer.getByRole('link',{name:'Features'}).getAttribute('href'),'#features');assert.equal(await footer.getByRole('link',{name:'Contact'}).getAttribute('href'),'https://example.com/contact');
    assert.equal(await footer.getByRole('link',{name:'Missing'}).count(),0);assert.equal(await footer.getByRole('link',{name:'Unknown'}).count(),0);assert.equal(await footer.getByRole('link',{name:'Unsafe'}).count(),0);
    assert.equal(await footer.locator('.fcols, .legal').count(),0);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),width);
