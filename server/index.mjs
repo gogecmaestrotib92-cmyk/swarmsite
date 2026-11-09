@@ -246,8 +246,16 @@ function eventsDirect(dir) { const d = J(path.join(dir, 'direction.json')) || {}
   (d.beats || []).forEach((b, i) => ev.push({ role: 'Concept', text: `beat ${i + 1}: ${b.type}${b.h2 ? ' — ' + b.h2.slice(0, 40) : ''}`, rect: g.sections?.[i + 1]?.rect }));
   (d.audit_notes || []).slice(0, 2).forEach(n => ev.push({ role: 'QA', text: `owner to confirm: ${String(n).slice(0, 60)}` }));
   return ev; }
-function eventsRender(dir) { const html = (() => { try { return fs.readFileSync(path.join(dir, 'index.html'), 'utf8'); } catch { return ''; } })(); const moves = [...new Set([...html.matchAll(/data-move="([^"]+)"/g)].map(m => m[1]))];
-  const ev = [{ role: 'Motion', text: `moves: ${moves.slice(0, 5).join(', ')}` }, { role: 'Type', text: 'type scale set · h1 clamp(52px, 7.4vw, 124px)' }, { role: 'Photos', text: `${(html.match(/<img /g) || []).length} photos placed` }, { role: 'Ending', text: 'ending + contact written' }, { role: 'Motion', text: `page ${Math.round(html.length / 1024)} KB · lenis on` }];
+function eventsRender(dir) { const html = (() => { try { return fs.readFileSync(path.join(dir, 'index.html'), 'utf8'); } catch { return ''; } })(); const moves = [...new Set([...html.matchAll(/data-move="([a-z][a-z0-9-]{1,40})"/g)].map(m => m[1]))]; // real move names on elements, not the placeholder inside the inlined script's own documentation
+  // every line is read off the page that was built: nothing here is a fixed sentence
+  const face = (html.match(/--display:'([^']{1,60})'/) || [])[1]; const heroSize = (html.match(/--hero-size:(clamp\([^)]{1,60}\))/) || [])[1];
+  const sections = (html.match(/<section[\s>]/g) || []).length; const pictures = (html.match(/<img /g) || []).length; const smooth = /<script src="[^"]*lenis[^"]*"/i.test(html);
+  const ev = [];
+  if (moves.length) ev.push({ role: 'Motion', text: `moves: ${moves.slice(0, 5).join(', ')}` });
+  if (face) ev.push({ role: 'Type', text: `display face ${face}${heroSize ? ' · h1 ' + heroSize : ''}`.slice(0, 120) });
+  ev.push({ role: 'Photos', text: `${pictures} ${pictures === 1 ? 'picture' : 'pictures'} placed` });
+  if (sections) ev.push({ role: 'Render', text: `${sections} sections built` });
+  ev.push({ role: 'Render', text: `page ${Math.round(html.length / 1024)} KB${smooth ? ' · smooth scroll on' : ''}` });
   return ev; }
 function eventsQA(qa) { return String(qa || '').split('\n').filter(Boolean).slice(0, 8).map(l => ({ role: 'QA', text: l.replace(/^\[(high|med|low)\]\s*/, '').slice(0, 70) })); }
 
