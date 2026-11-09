@@ -507,8 +507,16 @@ def build(slug_dir, bp_id, out_path=None):
         if d.get('kind') == 'software' and h.get('visual_verified') is True: cand = hm or None
         # An explicitly assigned empty capture is not evidence for replacing
         # it with another section's picture.
-        src = '' if empty_hero or rejected_product else (img(cand['id'], True) if cand else ('' if d.get('kind') == 'software' and h.get('visual_verified') is True else img(None, True)))
-        if d.get('kind') == 'software' and h.get('visual_verified') is True and not src: media = []; light = False
+        # Last resort, when nothing was assigned and no photograph qualifies above. A software or product page may still show
+        # what it has in a frame (a screenshot is framed, never stretched). A place or a service gets a hero picture only if
+        # one can carry a hero: the old fallback took any image at all, so a restaurant whose one captured image was an 800px
+        # funding notice got it stretched across the first screen behind the headline. No such picture → the words are the hero.
+        verified_software = d.get('kind') == 'software' and h.get('visual_verified') is True
+        src = '' if empty_hero or rejected_product else (img(cand['id'], True) if cand else ('' if verified_software or not soft else img(None, True)))
+        if verified_software and not src: media = []; light = False
+        # no picture and no film: the blueprint's photo hero has nothing to show, so it is not a media hero (an empty dark
+        # frame) but the typographic one below
+        if not src and not os.path.exists(vid): media = []; light = False
         has_video = bool(media and os.path.exists(vid))
         if has_video:
             poster = f' poster="{src}"' if src else ''
