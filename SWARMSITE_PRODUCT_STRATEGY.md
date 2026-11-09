@@ -47,6 +47,8 @@ How to read the claims:
 
 **And the user decides how much may change [V]:** "keep my SEO" (default) keeps the words, the headings' keywords, every internal link and the meta, and reports the kept share on the result; "redesign freely" lets headings and copy change while facts stay true. What can be promised is what is measured — words, headings, links, meta carried over. Rankings themselves cannot be promised by anyone.
 
+**Checked 2026-11-09 [P]:** the engine's own contract reported three of the four production jobs made in "keep my SEO" mode as having lost internal links, and one restaurant as keeping 51% of the source's words. On inspection every reported loss was a measurement error: anchors within the source page itself counted as links, one link compared without decoding `&amp;`, and a cookie banner counted as page copy. No real loss was found in the four. The measurement is being corrected. Until the corrected check has run on more sites, the honest wording is "measured and reported", not "guaranteed".
+
 ---
 
 ## 2. Competitive landscape and differentiation

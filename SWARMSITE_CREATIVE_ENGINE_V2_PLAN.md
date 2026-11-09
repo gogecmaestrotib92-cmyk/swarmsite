@@ -13,6 +13,8 @@ How to read the claims:
 | **[H]** | Hypothesis — not yet tested |
 | **[R]** | Recommendation |
 
+**Status on branch `engine-v2` (2026-11-09, after the owner said go):** measurement (separate scorecard, fingerprint, cost in dollars), the house-as-requirements flag, the benchmark tooling with 8 of 30 sites, five input checks in the renderer, and measured progress lines are built and committed. The first benchmark run changed the ranking of causes — read §1.6 before §2.
+
 ---
 
 ## 0. Summary
@@ -200,11 +202,41 @@ The 20 most recent finished jobs, 2026-11-08 16:55 to 2026-11-09 19:03. **[P]**
 
 The critic's scale is uncalibrated against people, so the absolute numbers mean little. The pattern — high contract, low originality, repairs that do not move taste — is the finding.
 
+### 1.6 First benchmark run: the lock on real content
+
+Added after the plan was accepted. Three variants of the same eight frozen production directions, through today's renderer, no model call (`bench/run.py`). **[X]**
+
+| Variant | Contract median | Sections | Ledger + index list + cards | Distinct forms | Mean similarity between pages |
+|---|---|---|---|---|---|
+| `shipped` — the direction as the job left it | 92 | 62 | 61% | 11 | 0.25 |
+| `house` — the lock applied | 92 | 62 | 60% | 10 | 0.27 |
+| `recipe` — lock off, moves cleared, the recipe's slots decide | 92 | 62 | 63% | 11 | 0.31 |
+
+- **With the lock on or off, real pages are built from the same few forms in nearly the same share.** Three forms are six sections in ten in every variant.
+- The 12 → 4 collapse in §1.3 is real, but it was measured on identical sample content. Across real sites the content differs, and that difference — not the lock — is what separates one page from the next. Taking the lock off adds almost no variety.
+- Together with the production before/after in §2, this moves the weight: **the closed vocabulary (cause 2) is the first cause, for sameness and for the taste ceiling. The lock (cause 1) matters for variation between blueprints on the same content, and little else.**
+- Limits: the variants only re-render. A real run with `SWARM_HOUSE=requirements` would also let the director use other beat types and the Concept choose moves; that needs model calls and has not been run. Eight sites.
+
+A second finding from the same run — **the contract reports the SEO-safe promise as broken on three of four jobs, and the report is wrong.** The four jobs made in SEO-safe mode: **[P]**
+
+| Site | Reported by the contract | What it is |
+|---|---|---|
+| automateed.com | 97% of words, 29 / 29 links | Correct |
+| pdfbeautifier.com | 22 / 24 links | The two "lost" links are anchors on the source page itself (`/#templates`, `/#faq`). Nothing lost. |
+| courtsensei.com | 17 / 24 links | Six are same-page anchors (`/#features`, `/#how`, …). The seventh is on the new page six times, written `&amp;` in the HTML, which the contract compares without decoding. Nothing lost. |
+| balamorestaurante.es | 7 / 8 links, **51% of words** | The link is the skip link `#content`. The 34 "lost" words are the cookie banner's (`aceptar`, `configurar`, `ajustes`, …): capture stores the whole body text, banner included, as the page's copy. Nothing lost. |
+
+- No real loss of links or words was found in any of the four.
+- The renderer and the contract disagree on what an internal link is: the renderer's list (`lib/seo.py:44-69`) leaves same-page anchors out, the contract (`lib/qa/contract.mjs:243-245`) counts them and does not decode entities.
+- The capture (`lib/audit/inventory.js:60`) takes `document.body.innerText` as the copy, so consent banners count as source words everywhere that text is used — the contract, the director's prompt, the audit's word counts.
+- What stands from the first reading: one blended score absorbed these failures without anyone looking, true or false. The scorecard now names them, which is how these were found.
+- Fixes: decode and drop same-page anchors in the contract; keep consent text apart in the capture. Until the corrected contract has run on more sites, "keep my SEO" is measured and reported, not guaranteed.
+
 ---
 
 ## 2. Root-cause analysis
 
-Ranked by how much of the observed sameness each explains.
+Ranked by how much of the observed sameness each was expected to explain when the plan was written. **Revised by §1.6: for real sites read cause 2 first and cause 1 second.**
 
 ### Cause 1 — Composition is decided by a table, before and after any creative thinking
 
@@ -333,8 +365,8 @@ Layers are responsibilities, not agents. Model calls in the experimental path: r
 
 | # | Change | Size | Tests which cause |
 |---|---|---|---|
-| S1 | Store taste and contract separately in the job result; add the structural fingerprint; build the blind pairwise comparison page | small, no engine change | — (measurement) |
-| S2 | `SWARM_HOUSE=requirements` flag: `violations()` still checks content, `lock()` no longer writes moves or order; Concept's moves are honoured; recipe slots live again | small, flag default off | Cause 1 |
+| S1 | Store taste and contract separately in the job result; add the structural fingerprint; build the blind pairwise comparison page — **built** | small, no engine change | — (measurement) |
+| S2 | `SWARM_HOUSE=requirements` flag: the house states requirements and rejects no beat type, `lock()` no longer writes moves or order; Concept's moves are honoured; recipe slots live again — **built; render-only comparison in §1.6; a run with model calls is still to do** | small, flag default off | Cause 1 |
 | S3 | Reference-grounded direction: Design DNA records + retrieval; three concepts; critic receives the concept, the original screenshot and separate scores with a failure type | medium | Causes 3, 4, 5 |
 | S4 | Composition IR for the hero only, transplanted into the production page | medium | Cause 2, cheaply |
 | S5 | Full-page IR; section components called as IR nodes | large; requires hoisting the renderer's closures | Cause 2, fully |
