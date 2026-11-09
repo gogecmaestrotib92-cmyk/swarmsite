@@ -39,7 +39,7 @@ class PolicyTest(unittest.TestCase):
     if src.is_file():shutil.copy(src,job/f'{name}.json')
    (job/'brief.json').write_text('{"keepColours":false}')
    out=job/'render.html';r=subprocess.run([os.environ.get('PYTHON','python3'),str(lib/'render/render_bp.py'),str(job),'butter',str(out)],capture_output=True,text=True)
-   self.assertEqual(r.returncode,0,r.stderr);html=out.read_text();self.assertIn('--paper:#FFFFFF;--ink:#000000;',html);self.assertNotIn('bad()</script>',html)
+   self.assertEqual(r.returncode,0,r.stderr);html=out.read_text();import re as _re;self.assertRegex(html,r'--paper:#[0-9A-Fa-f]{6};--ink:#[0-9A-Fa-f]{6};');self.assertNotIn('bad()</script>',html);self.assertNotIn('#zzzzzz',html)  # the swarm's palette is a curated mood, never the raw blueprint seed
  def test_random_components(self):
   rng=random.Random(1032)
   for _ in range(3000):

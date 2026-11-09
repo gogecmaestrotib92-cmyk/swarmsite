@@ -54,7 +54,7 @@ a{color:inherit;text-decoration:none}
 .result.on{display:flex}
 .draft-bar{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--line);background:#fff;font:500 14px var(--sans);color:#111}.draft-bar[hidden]{display:none}.draft-bar .lab{margin-left:auto}.draft-dots{display:inline-flex;gap:4px}.draft-dots i{width:7px;height:7px;border-radius:50%;background:#7C3AED;animation:draftpulse 1.2s ease-in-out infinite}.draft-dots i:nth-child(2){background:#E63946;animation-delay:.2s}.draft-dots i:nth-child(3){background:#0EA5E9;animation-delay:.4s}@keyframes draftpulse{0%,100%{opacity:.35;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
 
-.result iframe{flex:1;border:0;width:100%;background:#fff}
+.result .preview-stage{position:relative;flex:1;display:flex;min-height:0}.result iframe{flex:1;border:0;width:100%;background:#fff}.draft-swarm{position:absolute;inset:0;pointer-events:none;overflow:hidden}.draft-swarm:empty{display:none}
 .bar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid var(--line);background:#fff;flex-wrap:wrap}
 .bar .l{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}.seg button{border:0;background:#fff;padding:8px 14px;font:500 13px var(--sans);cursor:pointer;min-height:40px}.seg button.on{background:var(--ink);color:#fff}
@@ -112,7 +112,7 @@ a{color:inherit;text-decoration:none}
 
 <div class="result" id="result">
   <div class="draft-bar" id="draftBar" hidden><span class="draft-dots" aria-hidden="true"><i></i><i></i><i></i></span><span id="draftText">Your first version is up — the agents are still polishing it</span><span class="lab" id="draftRound"></span></div>
-  <iframe id="preview" title="Your rebuilt site"></iframe>
+  <div class="preview-stage"><iframe id="preview" title="Your rebuilt site"></iframe><div class="draft-swarm" id="draftSwarm" aria-hidden="true"></div></div>
   <div class="bar">
     <div class="l"><span class="lab" id="meta"></span><div class="seg" id="variants"></div><div class="seg"><button class="on" data-v="desktop">Desktop</button><button data-v="mobile">Phone</button></div></div>
     <div class="l"><details class="coverage" id="coverage" hidden><summary class="pill">Content check</summary><div class="coverage-panel" id="coveragePanel"></div></details><a class="pill" id="openNew" target="_blank" rel="noopener">Open full screen ↗</a><a class="pill ink" href="/#paths">What's next →</a></div>
@@ -132,7 +132,7 @@ $('#coverage').addEventListener('toggle',positionCoverage); window.addEventListe
 function renderSteps(job){ const el=$('#steps'), rows=document.createDocumentFragment(); for(const s of job.steps){const row=document.createElement('div'); row.className='step'; if(['pending','running','done','failed'].includes(s.status)) row.classList.add(s.status); const dot=document.createElement('span'); dot.className='dot'; const label=document.createElement('span'); label.textContent=s.label; const note=document.createElement('span'); note.className='note'; note.textContent=s.status==='done'?(s.note||'done'):s.status==='running'?'working…':''; row.append(dot,label,note); rows.appendChild(row);} el.replaceChildren(rows);
   const done=job.steps.filter(s=>s.status==='done').length; $('#hudR').textContent=`${done} / ${job.steps.length}`; const cur=job.steps.find(s=>s.status==='running'); if(sw) sw.phase(cur?cur.id:(job.status==='done'?'done':'queued')); $('#hudL').textContent=cur?cur.label.toLowerCase():(job.status==='done'?'done':'queued'); $('#h').textContent=cur?cur.label.split(':')[0]+'…':(job.status==='queued'?'In the queue…':job.status==='done'?'Your preview is ready':'Reading your site…');
   if((job.result?.beforeFullUrl||job.result?.beforeUrl) && !$('#before').src){ const im=$('#before'); im.src=job.result.beforeFullUrl||job.result.beforeUrl; im.onload=()=>{ im.classList.add('in'); $('#skel').remove(); if(sw) sw.setPage(im, job.result.pageHeight||im.naturalHeight); }; }
-  const evs=job.result?.events||[], offset=Number(job.result?.eventsOffset||0), end=offset+evs.length; if(end>seen){ if(sw) sw.push(evs.slice(Math.max(0,seen-offset))); seen=end; const log=document.createDocumentFragment(); for(const event of evs.slice(-6)){const row=document.createElement('span'), dot=document.createElement('b'); dot.style.background=COL[event.role]||'#999'; row.append(dot,document.createTextNode(`${event.role} · ${event.text}`)); log.appendChild(row);} $('#log').replaceChildren(log); } }
+  const evs=job.result?.events||[], offset=Number(job.result?.eventsOffset||0), end=offset+evs.length; if(end>seen){ const fresh=evs.slice(Math.max(0,seen-offset)); if(sw) sw.push(fresh); if(draftSw) draftSw.push(fresh); seen=end; const log=document.createDocumentFragment(); for(const event of evs.slice(-6)){const row=document.createElement('span'), dot=document.createElement('b'); dot.style.background=COL[event.role]||'#999'; row.append(dot,document.createTextNode(`${event.role} · ${event.text}`)); log.appendChild(row);} $('#log').replaceChildren(log); } }
 function renderCoverage(report,auditNotes){
   const root=$('#coverage'), panel=$('#coveragePanel'); root.querySelector('summary').textContent='Content check'; root.hidden=true; root.open=false; panel.replaceChildren();
   if(!report || report.scope!=='single_page_preview' || !Array.isArray(report.sections) || !Array.isArray(report.routes)) return;
@@ -164,7 +164,7 @@ function showResult(job){ const r=job.result; const pv=new URL(`${window.SWARMSI
   document.querySelectorAll('.seg button[data-v]').forEach(b=>b.onclick=()=>{ document.querySelectorAll('.seg button[data-v]').forEach(x=>x.classList.remove('on')); b.classList.add('on'); const f=$('#preview'); if(b.dataset.v==='mobile'){ f.style.width='390px'; f.style.margin='0 auto'; f.style.borderLeft=f.style.borderRight='1px solid #ddd'; } else { f.style.width='100%'; f.style.border='0'; } });
 }
 
-let draftShown=-1, notifyDone=false;
+let draftShown=-1, notifyDone=false, draftSw=null;
 $('#notifyGo').onclick=async()=>{ const email=$('#notifyEmail').value.trim(); if(!email) return; const id=new URLSearchParams(location.search).get('job'); if(!id) return; $('#notifyGo').disabled=true;
   try{ const r=await fetch(`${API}/jobs/${id}/notify`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email})}); if(!r.ok) throw new Error('could not save'); $('#notifyNote').textContent='We’ll email you the link. You can close this tab.'; $('#notifyEmail').disabled=true; notifyDone=true; }
   catch(e){ $('#notifyNote').textContent='Could not save that address — try again.'; $('#notifyGo').disabled=false; } };
@@ -172,9 +172,11 @@ function showDraft(job){ const d=job.result.draft; if(!d || d.round===draftShown
   const u=new URL(`${window.SWARMSITE_API}/p/${job.id}/draft`, location.href); u.searchParams.set('r', String(d.round)); u.searchParams.set('t', String(d.at||Date.now()));
   $('#preview').src=u.href; $('#openNew').href=u.href; $('#meta').textContent='draft · still refining'; $('#variants').replaceChildren(); $('#coverage').hidden=true;
   $('#draftText').textContent=d.round===0?'Instant first version — your page in our template. The agents are now designing it properly':d.round===1?'The agents’ first design is up — they are still polishing it':'Updated — a better round just landed'; $('#draftRound').textContent=d.round===0?'v0':`round ${d.round}`;
-  $('#draftBar').hidden=false; $('#stage').hidden=true; $('#result').classList.add('on'); layoutResult(); }
+  $('#draftBar').hidden=false; $('#stage').hidden=true; $('#result').classList.add('on'); layoutResult();
+  // the same crew keeps working over the draft until the final page lands
+  if(!draftSw && window.Swarm2) draftSw=Swarm2.mount($('#draftSwarm'),{count:innerWidth<700?5:9,shape:'character'}); }
 async function poll(id){ try{ const r=await fetch(`${API}/jobs/${id}`); if(!r.ok) throw new Error('job not found'); const job=await r.json(); renderSteps(job);
-    if(job.status==='done'){ if(sw) sw.stop(); $('#draftBar').hidden=true; showResult(job); return; }
+    if(job.status==='done'){ if(sw) sw.stop(); if(draftSw){ draftSw.stop(); draftSw=null; } $('#draftBar').hidden=true; showResult(job); return; }
     if(job.status==='running' && job.result?.draft) showDraft(job);
     if(job.status==='queued' && job.queue){ const q=job.queue; $('#h').textContent=q.ahead?`In the queue · ${q.ahead} ahead`:'In the queue…'; $('#micro').textContent=q.ahead?`${q.capacity>1?q.capacity+' teams of agents are working':'one site at a time'} · your turn in about ${q.eta_min} min · this page remembers the job`:'Starting any second'; }
     if(['queued','running'].includes(job.status) && job.notify?.available && !notifyDone){ $('#notify').hidden=false; if(job.notify.email){ $('#notifyNote').textContent='We’ll email you the link.'; $('#notifyEmail').disabled=true; $('#notifyGo').disabled=true; notifyDone=true; } } if(job.status==='failed'){ if(sw) sw.stop(); const message=String(job.error||'unknown'); const providerUnavailable=/your credit balance is too low to access the anthropic api/i.test(message) || message==='The AI service is temporarily unavailable. Please try again later.'; $('#err').textContent=providerUnavailable?'The AI service is temporarily unavailable. Please try again later.':'Something broke: '+message+'. Try again or send us the URL.'; $('#h').textContent='That one didn’t go through.'; return; }
@@ -190,7 +192,7 @@ async function launch(url){
     const j=await r.json(); if(!r.ok || !j.id) throw new Error('Could not start preview');
     history.replaceState(null,'',`/app?url=${encodeURIComponent(url)}&job=${j.id}`); poll(j.id);
   } catch(e) {
-    if(sw){sw.stop();sw=null} $('#brief').classList.remove('hide'); $('#h').textContent='Set the direction.';
+    if(sw){sw.stop();sw=null} if(draftSw){draftSw.stop();draftSw=null} $('#brief').classList.remove('hide'); $('#h').textContent='Set the direction.';
     $('#err').textContent='We couldn’t start your preview. Check your connection and try again.';
     setTimeout(()=>{button.disabled=false},750);
   }

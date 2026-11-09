@@ -10,6 +10,7 @@ sys.path.insert(0, os.path.join(ROOT, 'lib'))
 from visual_quality import empty_visual
 from visual_semantics import ledger_lead_fingerprint
 from colour_policy import resolve as resolve_colours, norm as normalise_colour, contrast as colour_contrast
+import moods as MOODS
 
 e = lambda s: H.escape(str(s if s is not None else ''), quote=True)
 
@@ -273,7 +274,10 @@ def build(slug_dir, bp_id, out_path=None):
     # Opting out uses measured blueprint tokens without deriving a palette
     # from an unvalidated seed; invalid foregrounds are repaired for contrast.
     use_blueprint_palette = brief.get('keepColours', True) is False
-    policy = resolve_colours(C) if use_blueprint_palette else None
+    # the owner let the swarm pick colours: a curated mood of the blueprint's mode, nearest in hue to the brand's own accent
+    mood = MOODS.choose(d.get('kind') or bp.get('class'), inventory, C.get('mode')) if use_blueprint_palette else None
+    policy = resolve_colours({**C, **{k: mood[k] for k in ('paper', 'ink', 'accent', 'alt')}}) if mood else None
+    if mood: print(json.dumps({'event': {'role': 'Concept', 'text': f"mood: {mood['id']} · {mood['why']}"}}), file=sys.stderr)
     if policy:
         paper, ink, accent = policy['paper'], policy['ink'], policy['accent']
         on_photo = '#F4EFE3'
@@ -1556,7 +1560,11 @@ def build(slug_dir, bp_id, out_path=None):
     nav_links = ''.join(f'<a href="{e(hr)}">{e(l)}</a>' for hr, l in d.get('nav', {}).get('links', [])[:4])
     moves = open(os.path.join(ROOT, 'lib/motion/moves.js')).read(); swarm = open(os.path.join(ROOT, 'lib/motion/swarm.js')).read()
     frame = G.get('frame') or G.get('gutter') or 40; container = G.get('container') or 1300; radius = M.get('radius', 0)
-    palette_css = (f"--button:{policy['button']};--button-ink:{policy['button_ink']};--alt:{policy['alt']};--alt-ink:{policy['alt_ink']};--on-accent:{policy['accent_ink']};--alt-button:{policy['alt_button']};--alt-button-ink:{policy['alt_button_ink']};--accent-button:{policy['accent_button']};--accent-button-ink:{policy['accent_button_ink']};" if policy else '')
+    try:
+        _acc, _pap = normalise_colour(accent), normalise_colour(paper)
+        accent_word = _acc if _acc and _pap and _acc.lower() != normalise_colour(ink).lower() and colour_contrast(_acc, _pap) >= 3 else 'inherit'
+    except Exception: accent_word = 'inherit'
+    palette_css = (f"--accent-word:{accent_word};" + f"--button:{policy['button']};--button-ink:{policy['button_ink']};--alt:{policy['alt']};--alt-ink:{policy['alt_ink']};--on-accent:{policy['accent_ink']};--alt-button:{policy['alt_button']};--alt-button-ink:{policy['alt_button_ink']};--accent-button:{policy['accent_button']};--accent-button-ink:{policy['accent_button_ink']};" if policy else '')
     button_bg = 'var(--button)' if policy else f"var(--{'accent' if lum(accent) < .8 and abs(lum(accent) - lum(ink)) > .18 else 'ink'})"
     button_fg = ('var(--button-ink)' if policy else ('var(--paper)' if not (lum(accent) < .8 and abs(lum(accent) - lum(ink)) > .18) else ('#111' if lum(accent) > .55 else '#fff')))
     if not policy:
@@ -1576,7 +1584,7 @@ body{{background:var(--paper);color:var(--ink);font-family:var(--body);font-size
 img,video{{display:block;max-width:100%}}a{{color:inherit;text-decoration:none}}
 .wrap{{max-width:var(--container);margin:0 auto;padding:0 var(--frame);width:100%}}
 .lab{{font-family:var(--label);font-size:var(--lab-px);letter-spacing:var(--lab-ls);text-transform:uppercase;color:var(--muted);display:inline-block}}.lab.light{{color:rgba(244,239,227,.78)}}
-.h1{{font-family:var(--display);font-weight:var(--h1-w);font-size:var(--h1);line-height:var(--h1-lh);letter-spacing:var(--h1-ls);text-transform:var(--h1-tt)}}.h1 em{{font-style:italic;font-weight:inherit}}
+.h1{{font-family:var(--display);font-weight:var(--h1-w);font-size:var(--h1);line-height:var(--h1-lh);letter-spacing:var(--h1-ls);text-transform:var(--h1-tt)}}.h1 em{{font-style:italic;font-weight:inherit;color:var(--accent-word,inherit)}}
 .h2{{font-family:var(--display);font-weight:var(--h2-w);font-size:var(--h2);line-height:var(--h2-lh);letter-spacing:var(--h2-ls)}}.h3{{font-family:var(--display);font-weight:var(--h3-w);font-size:var(--h3);line-height:1.12;letter-spacing:-.01em}}
 .lede{{font-size:calc(var(--body-px) + 3px);line-height:1.4;max-width:var(--body-max);margin-top:22px}}.lede.light{{color:var(--on-photo);opacity:.88}}
 .big-p{{font-family:{'var(--display)' if disp_kind == 'serif' else 'var(--body)'};font-weight:{300 if disp_kind != 'serif' and D.get('w', 400) <= 300 else 400};line-height:1.25;max-width:min(100%,{min(1100, (BO.get('maxw') or 520) * 1.6)}px);margin-top:18px;letter-spacing:-.01em}}
