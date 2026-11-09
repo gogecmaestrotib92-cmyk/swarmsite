@@ -9,6 +9,7 @@ sys.path.insert(0, os.path.join(ROOT, 'lib'))
 from source_context import model_pages, model_analysis
 import budget as B
 import seo as SEO
+import house as HOUSE
 RULES = ['lib/rules/copy.md', 'lib/rules/rhythm.md', 'lib/rules/master-run-01-frans.md', 'lib/rules/interaction.md']
 
 SCHEMA = r'''
@@ -451,7 +452,8 @@ def direct(slug_dir, model='claude-sonnet-5-5'):
     subpages = model_pages({**inv, 'sourcePages': (inv.get('sourcePages') or [])[:12]}) if analysis else model_pages(inv)
     homepage = {k: v for k, v in inv.items() if k not in ('sourcePages', 'sourceCoverage')}
     catalog = source_catalog(inv)
-    user = f"""RULES\n{rules}\n\nSCHEMA\n{SCHEMA}\n\nBUSINESS UNDERSTANDING (source-grounded design interpretation, verify claims against evidence)\n{json.dumps(understanding, ensure_ascii=False)}\n\nSOURCE HOMEPAGE CONTENT AND ROUTE CATALOG (visible source, not generated pages; retain every distinct meaningful homepage topic; record source_sections IDs)\n{json.dumps(catalog, ensure_ascii=False)}\n\nBATCHED SOURCE OBSERVATIONS (model interpretation; check against source evidence; omissions are marked)\n{json.dumps(analysis, ensure_ascii=False)}\n\nFACT SHEET (reader interpretation; verify words and figures against source evidence)\n{factsheet}\n\nSOURCE SUBPAGES (bounded excerpts, {len(subpages)} of {len(inv.get("sourcePages") or [])} captured pages shown; these pages are read, not rebuilt)\n{json.dumps(subpages, ensure_ascii=False)}\n\nHOME PAGE INVENTORY\n{json.dumps(homepage, ensure_ascii=False)[:60000]}\n\nBRAND ASSETS\n{json.dumps({k: v for k, v in (assets or {}).items() if k != 'logo'}, ensure_ascii=False)[:6000]}\n\nIMAGES (ids you may use)\n{json.dumps(imgs, ensure_ascii=False)[:6000]}\n\nAUDIT\n{json.dumps(audit, ensure_ascii=False)[:8000] if audit else 'n/a'}\n\nOWNER'S BRIEF (hard constraints, override everything above)\n{brief_text(brief, inv)}\n\nCall write_direction with the complete document."""
+    house_block = '\n\n'.join(HOUSE.describe(k) for k in ('software', 'place', 'service', 'product'))
+    user = f"""RULES\n{rules}\n\nHOUSE STRUCTURES (pick the one for the site's kind; the architecture is ours, the facts are theirs)\n{house_block}\n\nSCHEMA\n{SCHEMA}\n\nBUSINESS UNDERSTANDING (source-grounded design interpretation, verify claims against evidence)\n{json.dumps(understanding, ensure_ascii=False)}\n\nSOURCE HOMEPAGE CONTENT AND ROUTE CATALOG (visible source, not generated pages; retain every distinct meaningful homepage topic; record source_sections IDs)\n{json.dumps(catalog, ensure_ascii=False)}\n\nBATCHED SOURCE OBSERVATIONS (model interpretation; check against source evidence; omissions are marked)\n{json.dumps(analysis, ensure_ascii=False)}\n\nFACT SHEET (reader interpretation; verify words and figures against source evidence)\n{factsheet}\n\nSOURCE SUBPAGES (bounded excerpts, {len(subpages)} of {len(inv.get("sourcePages") or [])} captured pages shown; these pages are read, not rebuilt)\n{json.dumps(subpages, ensure_ascii=False)}\n\nHOME PAGE INVENTORY\n{json.dumps(homepage, ensure_ascii=False)[:60000]}\n\nBRAND ASSETS\n{json.dumps({k: v for k, v in (assets or {}).items() if k != 'logo'}, ensure_ascii=False)[:6000]}\n\nIMAGES (ids you may use)\n{json.dumps(imgs, ensure_ascii=False)[:6000]}\n\nAUDIT\n{json.dumps(audit, ensure_ascii=False)[:8000] if audit else 'n/a'}\n\nOWNER'S BRIEF (hard constraints, override everything above)\n{brief_text(brief, inv)}\n\nCall write_direction with the complete document."""
     client = anthropic.Anthropic()
     import base64, glob
     bps = []
@@ -487,6 +489,7 @@ def direct(slug_dir, model='claude-sonnet-5-5'):
     if errs: raise SystemExit(f"direct: invalid document after retries ({'; '.join(errs)})")
     doc = ground_faq(doc, inv)
     doc = ground_testimonials(doc, inv)
+    doc = HOUSE.lock(doc)  # the house decides order and moves; the director filled the slots
     out = os.path.join(slug_dir, 'direction.json'); json.dump(doc, open(out, 'w'), indent=1, ensure_ascii=False)
     return doc
 

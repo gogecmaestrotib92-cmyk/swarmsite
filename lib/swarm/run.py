@@ -6,11 +6,20 @@ Usage: python3 lib/swarm/run.py out/<slug> <blueprint-id> --out bp-<id>.html [--
 import json, os, sys, time, subprocess, traceback, shutil, tempfile, hashlib
 from concurrent.futures import ThreadPoolExecutor
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-sys.path.insert(0, os.path.join(ROOT, 'lib/swarm')); sys.path.insert(0, os.path.join(ROOT, 'lib/qa'))
+sys.path.insert(0, os.path.join(ROOT, 'lib/swarm')); sys.path.insert(0, os.path.join(ROOT, 'lib/qa')); sys.path.insert(0, os.path.join(ROOT, 'lib'))
 import agents as A
 import critic as C
 import coverage_report as Coverage
 import pattern_stage as Patterns
+import house as HOUSE
+
+def relock(slug_dir):
+    """The house owns order and moves; agents own copy, pictures and layout details. Re-applied after every agent pass."""
+    try:
+        with A._document_lock:
+            d = A.J(slug_dir, 'direction.json')
+            if d and d.get('house'): A.W(slug_dir, 'direction.json', HOUSE.lock(d))
+    except Exception as e: print(json.dumps({'event': {'role': 'Render', 'text': 'house lock skipped: ' + str(e)[:80]}}), flush=True)
 
 def ev(role, text): print(json.dumps({"event": {"role": role, "text": str(text)[:140]}}, ensure_ascii=False), flush=True)
 
@@ -123,6 +132,7 @@ def _main(snapshot_dir):
     if fs_: ev('Reader', f"{fs_.get('what', '')[:90]}"); ev('Reader', f"{len(fs_.get('facts', []))} facts · {len(fs_.get('offers', []))} offers · {len(fs_.get('quotes', []))} quotes")
     # round 0: the specialists shape the director's document
     safe('Concept', A.concept, slug_dir, '', bp)
+    relock(slug_dir)
     d = A.J(slug_dir, 'direction.json'); sw = d.get('swarm') or {}
     if sw.get('idea'): ev('Concept', 'idea: ' + sw['idea'])
     ev('Concept', 'moves: ' + ', '.join(f"{b['id']}→{(b.get('ui') or {}).get('move', 'auto')}" for b in d['beats']))
@@ -188,6 +198,7 @@ def _main(snapshot_dir):
             safe('Concept', A.concept, slug_dir, why, bp)
             with ThreadPoolExecutor(max_workers=3) as ex:
                 list(ex.map(lambda j: safe(*j), [('UX', A.ux, slug_dir, why), ('Visual', A.visual, slug_dir, why), ('UI', A.ui, slug_dir, why, bp)]))
+            relock(slug_dir)
             d = A.J(slug_dir, 'direction.json'); sw = d.get('swarm') or {}
             if sw.get('idea'): ev('Concept', 'idea: ' + sw['idea'])
             render_manifest = checked_render(slug_dir, bp, out); ev('Render', f'{bp} · restart'); continue

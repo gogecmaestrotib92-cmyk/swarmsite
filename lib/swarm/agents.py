@@ -203,7 +203,8 @@ def concept(slug_dir, notes='', blueprint_id=None):
     targets = [m.group(1) for line in notes.splitlines()
                if (m := re.match(r'^\[[^\]]+\] beat=(\S*)', line))]
     feedback_rule = ('\nRepair only sections named in the notes. Return only moves that will actually address a structural issue and differ from current_move; return an empty beats array if no available move can address the issue. Do not change the hero or invent a visual. Other agents handle typography, image assignment, and content.' if targets and all(targets) else '')
-    content = [{"type": "text", "text": f"LANGUAGE OF THE SITE (write the idea in it): {fs_.get('language') or d.get('lang') or 'en'}\nKIND: {d.get('kind')} · BLUEPRINT: {blueprint_id or 'unavailable'} · MODE: {d.get('mode')}\nWHAT: {fs_.get('what', '')}\nBEST SENTENCE: {fs_.get('best_sentence', '')}\nHERO: {json.dumps({k: d['hero'].get(k) for k in ('h1', 'lede', 'media')}, ensure_ascii=False)}\nBEATS: {json.dumps(beats, ensure_ascii=False)}\nDISTINCT VISUALS: {distinct} (ids: {[i['id'] for i in imgs][:16]}){business_context(slug_dir)}{selected_blueprint_context(blueprint_id)}\nCRITIC NOTES: {notes or 'none'}{feedback_rule}\nCall set_concept."}]
+    house_note = "\nHOUSE STRUCTURE: the order of beats and each beat's move are fixed by the house template; propose the idea, the hero_move and rhythm only — beat moves you return are ignored." if d.get('house') else ""
+    content = [{"type": "text", "text": f"LANGUAGE OF THE SITE (write the idea in it): {fs_.get('language') or d.get('lang') or 'en'}\nKIND: {d.get('kind')} · BLUEPRINT: {blueprint_id or 'unavailable'} · MODE: {d.get('mode')}\nWHAT: {fs_.get('what', '')}\nBEST SENTENCE: {fs_.get('best_sentence', '')}\nHERO: {json.dumps({k: d['hero'].get(k) for k in ('h1', 'lede', 'media')}, ensure_ascii=False)}\nBEATS: {json.dumps(beats, ensure_ascii=False)}\nDISTINCT VISUALS: {distinct} (ids: {[i['id'] for i in imgs][:16]}){business_context(slug_dir)}{selected_blueprint_context(blueprint_id)}\nCRITIC NOTES: {notes or 'none'}{feedback_rule}\nCall set_concept.{house_note}"}]
     r = ask(CONCEPT_SYSTEM, content, CONCEPT_TOOL)
     if r and targets and all(targets):
         r.pop('hero_move', None)
@@ -269,7 +270,7 @@ def ux(slug_dir, notes=''):
 def apply_ux(slug_dir, r):
     d = J(slug_dir, 'direction.json'); ids = by_id(d); changed = 0
     order = [i for i in r.get('order', []) if i in ids]
-    if order and len(order) == len(ids) and set(order) == set(ids):
+    if order and len(order) == len(ids) and set(order) == set(ids) and not d.get('house'):  # the house structure owns the order
         d['beats'] = [ids[i] for i in order]; changed += 1
     g = r.get('goal_cta')
     if g and 1 <= words(g) <= 5:

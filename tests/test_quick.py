@@ -38,12 +38,13 @@ class QuickDirector(unittest.TestCase):
             render.build(d, direction['blueprint'], str(p / 'index.html'))
             return direction, (p / 'index.html').read_text()
 
-    def test_restaurant_pours_into_the_place_template_in_source_order(self):
+    def test_restaurant_pours_into_the_place_template_in_house_order(self):
         direction, html = self.build({'industry': 'restaurant'})
         self.assertEqual(direction['kind'], 'place'); self.assertEqual(direction['blueprint'], 'white-desert')
         self.assertEqual(direction['hero']['h1'], 'Restoran Franš')
         types = [b['type'] for b in direction['beats']]
-        self.assertEqual(types[0], 'steps', 'a "how" heading with three sentences is a steps beat')
+        self.assertIn('steps', types, 'a "how" heading with three sentences is a steps beat')
+        self.assertEqual(types[0], 'photo', 'the house order for a place opens with the story, whatever the source order')
         self.assertIn('faq', types)
         self.assertEqual(len(direction['beats'][types.index('faq')]['items']), 2)
         for needle in ('Restoran Franš', 'Kako rezervišete', 'Da li imate baštu?', 'Jelovnik koji traje'):

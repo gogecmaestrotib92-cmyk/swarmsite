@@ -9,8 +9,10 @@ Usage: python3 quick.py <job dir>   → writes <dir>/direction.json, prints a on
 """
 import json, os, re, sys
 from urllib.parse import urlparse
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+import house as HOUSE
 
-HOUSE = {'software': 'cerebrium', 'place': 'white-desert', 'service': 'atelier', 'product': 'halfdays'}
+BLUEPRINT_FOR = {'software': 'cerebrium', 'place': 'white-desert', 'service': 'atelier', 'product': 'halfdays'}
 KIND = {'data_product': 'software', 'saas': 'software', 'restaurant': 'place', 'agency': 'service', 'services': 'service',
         'nonprofit': 'service', 'ecommerce': 'product', 'unknown': 'service'}
 MODE = {'cerebrium': 'dark', 'white-desert': 'light', 'atelier': 'light', 'halfdays': 'light'}
@@ -58,7 +60,7 @@ def quick(slug_dir):
     J = lambda n: json.load(open(os.path.join(slug_dir, n))) if os.path.exists(os.path.join(slug_dir, n)) else None
     inv = J('inventory.json') or {}; audit = J('audit.json') or {}; images = J('images.json') or []; brief = J('brief.json') or {}
     kind = KIND.get(str(audit.get('industry') or 'unknown'), 'service')
-    bp = HOUSE[kind]
+    bp = BLUEPRINT_FOR[kind]
     name = brand_name(inv)
     copy = inv.get('copy') or {}; seo = inv.get('seo') or {}
     secs = [s for s in ((inv.get('sourceCoverage') or {}).get('sections') or []) if isinstance(s, dict) and s.get('title')]
@@ -135,7 +137,7 @@ def quick(slug_dir):
          'nav': {'links': nav_links, 'cta': cta}, 'hero': hero, 'beats': beats, 'ending': ending,
          'audit_notes': ['Instant first version: the page poured into the house template in source order; the director and the swarm replace it.'],
          'quick': True}
-    return d
+    return HOUSE.lock(d)  # even the instant version follows the house order
 
 
 if __name__ == '__main__':
