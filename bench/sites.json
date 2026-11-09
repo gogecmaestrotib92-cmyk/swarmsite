@@ -1,0 +1,155 @@
+{
+ "schema_version": 1,
+ "note": "The fixed benchmark set. A site enters once, with the job its artefacts were frozen from; it is never swapped out after results exist. Sites the engine was tuned on (tuned_on) may not be in the hold-out. direction_era says whether the frozen direction was written under the SEO-safe rules: for the ones that were not, SEO promise failures in a re-render are expected and are not production failures.",
+ "target": {
+  "total": 30,
+  "dev": 20,
+  "holdout": 10,
+  "by_group": {
+   "software-product landing pages": 14,
+   "restaurants": 6,
+   "premium services": 4,
+   "product / small e-commerce": 3,
+   "boutique hotels / other places": 3
+  }
+ },
+ "api": "https://swarmsite-production.up.railway.app",
+ "sites": [
+  {
+   "id": "automateed",
+   "url": "https://Automateed.com",
+   "job": "7875a9c0-dd3a-4e80-a04d-71fe01aacc43",
+   "captured": "2026-11-09",
+   "kind": "software",
+   "subtype": "ai-writing-tool",
+   "blueprint": "butter",
+   "mode": "seo-safe",
+   "group": "dev",
+   "tuned_on": false,
+   "assets": {
+    "photographs": 10,
+    "section_shots": 10
+   },
+   "direction_era": "SEO-safe era"
+  },
+  {
+   "id": "balamorestaurante",
+   "url": "https://balamorestaurante.es/",
+   "job": "4b6358fd-27d5-4b8d-86ba-4d8d13c4b9cb",
+   "captured": "2026-11-09",
+   "kind": "place",
+   "subtype": "restaurant",
+   "blueprint": "tengile",
+   "mode": "seo-safe",
+   "group": "dev",
+   "tuned_on": true,
+   "assets": {
+    "photographs": 1,
+    "section_shots": 0
+   },
+   "direction_era": "SEO-safe era"
+  },
+  {
+   "id": "courtsensei",
+   "url": "https://courtsensei.com",
+   "job": "1f92caf4-dbd8-452c-b750-0d3ad11455b3",
+   "captured": "2026-11-09",
+   "kind": "software",
+   "subtype": "sports-coaching-app",
+   "blueprint": "butter",
+   "mode": "seo-safe",
+   "group": "dev",
+   "tuned_on": true,
+   "assets": {
+    "photographs": 1,
+    "section_shots": 8
+   },
+   "direction_era": "SEO-safe era"
+  },
+  {
+   "id": "pdfbeautifier",
+   "url": "https://pdfbeautifier.com",
+   "job": "e04de5d3-0b3e-4e81-8f51-bf13d6abd749",
+   "captured": "2026-11-09",
+   "kind": "software",
+   "subtype": "document-tool",
+   "blueprint": "deepbook",
+   "mode": "seo-safe",
+   "group": "dev",
+   "tuned_on": true,
+   "assets": {
+    "photographs": 3,
+    "section_shots": 2
+   },
+   "direction_era": "SEO-safe era"
+  },
+  {
+   "id": "restaurantebutarque",
+   "url": "https://restaurantebutarque.es/",
+   "job": "cb424437-f5f2-4e95-bbb8-d3950f8fa11d",
+   "captured": "2026-11-08",
+   "kind": "place",
+   "subtype": "restaurant",
+   "blueprint": "tengile",
+   "mode": "seo-safe",
+   "group": "dev",
+   "tuned_on": false,
+   "assets": {
+    "photographs": 4,
+    "section_shots": 9
+   },
+   "direction_era": "before SEO-safe mode existed (2026-11-08)"
+  },
+  {
+   "id": "scanmysaas",
+   "url": "https://www.scanmysaas.com/",
+   "job": "effcdbda-8ec5-4171-ac10-b55a77b77187",
+   "captured": "2026-11-08",
+   "kind": "software",
+   "subtype": "developer-tool",
+   "blueprint": "deepbook",
+   "mode": "seo-safe",
+   "group": "dev",
+   "tuned_on": false,
+   "assets": {
+    "photographs": 0,
+    "section_shots": 5
+   },
+   "direction_era": "before SEO-safe mode existed (2026-11-08)"
+  },
+  {
+   "id": "simscore",
+   "url": "https://simscore.ai/",
+   "job": "dd5dd8ce-a4bd-4ae7-be9e-aae6fc829a33",
+   "captured": "2026-11-09",
+   "kind": "software",
+   "subtype": "analytics-tool",
+   "blueprint": "deepbook",
+   "mode": "free",
+   "group": "dev",
+   "tuned_on": false,
+   "assets": {
+    "photographs": 2,
+    "section_shots": 0
+   },
+   "direction_era": "SEO-safe era"
+  },
+  {
+   "id": "sportbotai",
+   "url": "https://www.sportbotai.com",
+   "job": "7ab1eaab-702f-455e-90d1-9bcfcc65558b",
+   "captured": "2026-11-08",
+   "kind": "software",
+   "subtype": "sports-analytics",
+   "blueprint": "deepbook",
+   "mode": "seo-safe",
+   "group": "dev",
+   "tuned_on": true,
+   "assets": {
+    "photographs": 3,
+    "section_shots": 9
+   },
+   "direction_era": "before SEO-safe mode existed (2026-11-08)"
+  }
+ ]
+}
