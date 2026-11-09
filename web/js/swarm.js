@@ -206,12 +206,12 @@
     async run() {
       this.t0 = performance.now();
       this.snapshot(); this.blank(); this.mountUI(); this.progress('Touring');
-      scrollTo(0, 0);
+      if (!this.opts.noScroll) scrollTo(0, 0);
       await sleep(600);
       for (const sec of this.sections) {
         if (this.skip) break;
         sec.el.classList.remove('sw-sec-pending');
-        await this.tour(sec.el);
+        if (!this.opts.noScroll) await this.tour(sec.el);
         this.progress(sec.name);
         // order: boxes → text (top to bottom) → imgs ; run with a pool of cursors
         const queue = [...sec.layers.filter(l => l.kind === 'box'), ...sec.layers.filter(l => l.kind === 'text').sort((a, b) => this.pageXY(a.el).y - this.pageXY(b.el).y), ...sec.layers.filter(l => l.kind === 'img')];

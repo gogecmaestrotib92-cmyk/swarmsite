@@ -104,10 +104,12 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}
 
 <section class="hero" id="top" data-move="hero-intro" data-agent="Hero">
   <div class="wrap">
+    <div class="hero-top" data-agent="Hero">
     <span class="lab hero-label"><span class="live-dot"></span> AN INDEPENDENT TEAM OF AI AGENTS</span>
     <h1 class="h1" data-move="word-blur-in">A better website.<br><em>Built from yours.</em></h1>
     <p class="sub">AI agents study your site and redesign your landing page, with a studio-inspired approach to layout, typography and color.</p>
     <div class="url-stage"><div class="hero-crew" aria-hidden="true"><span class="crew-robot crew-blue"><i class="pose pose-1"></i><i class="pose pose-2"></i><i class="pose pose-3"></i><i class="pose pose-4"></i></span><span class="crew-robot crew-rose"><i class="pose pose-1"></i><i class="pose pose-2"></i><i class="pose pose-3"></i><i class="pose pose-4"></i></span><span class="crew-robot crew-ivory"><i class="pose pose-1"></i><i class="pose pose-2"></i><i class="pose pose-3"></i><i class="pose pose-4"></i></span><span class="crew-robot crew-sage"><i class="pose pose-1"></i><i class="pose pose-2"></i><i class="pose pose-3"></i><i class="pose pose-4"></i></span></div><form class="urlbox" onsubmit="go(event)"><span class="pre" aria-hidden="true">https://</span><input id="url" aria-label="Website URL" placeholder="yourwebsite.com" autocomplete="url" inputmode="url" required><button class="pill ink" type="submit">Create my preview →</button></form></div>
+    </div>
     <div class="process" id="how">
       <div class="process-heading"><span class="lab">HOW IT WORKS</span><h2>Your content.<br><em>A new direction.</em></h2><p>We use what makes your business yours as the starting point for a more considered design.</p></div>
       <div class="steps">
@@ -172,11 +174,13 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}
 function go(e){e.preventDefault();const v=document.getElementById('url').value.trim();if(!v)return;location.href='/app?url='+encodeURIComponent(v.replace(/^https?:\/\//,''));}
 addEventListener('DOMContentLoaded',()=>{if(window.Moves)Moves.init();else addEventListener('load',()=>Moves.init());});
 </script>
-<script src="/js/swarm.js?v=agent9" defer></script>
+<script src="/js/swarm.js?v=agent10" defer></script>
 <script>addEventListener('load',()=>{ try{ if(!window.Swarm||matchMedia('(prefers-reduced-motion:reduce)').matches) return;
   // The full-page rebuild is a desktop show. On a phone it hides the headline, hijacks the scroll and
   // leaves people wondering what to tap (tester feedback), so phones get the finished page at once.
   if(innerWidth<900||matchMedia('(pointer:coarse)').matches) return;
-  new Swarm({agents:18,speed:1,hud:true,skin:'character',sectionSelector:'[data-agent]',boxSel:'.pill,.urlbox,.step,.ba .row>div,.path,.faq details,.nav .wrap'}).run(); }catch(e){} });</script>
+  // Desktop: the crew builds only the first screen (label, headline, sub, URL box), never scrolls the page
+  // and shows no HUD; the rest of the landing is readable from the first paint.
+  new Swarm({agents:10,speed:1.4,hud:false,noScroll:true,skin:'character',sectionSelector:'.hero-top',boxSel:'.urlbox'}).run(); }catch(e){} });</script>
 
 </body></html>
