@@ -246,12 +246,20 @@ function eventsDirect(dir) { const d = J(path.join(dir, 'direction.json')) || {}
   (d.beats || []).forEach((b, i) => ev.push({ role: 'Concept', text: `beat ${i + 1}: ${b.type}${b.h2 ? ' — ' + b.h2.slice(0, 40) : ''}`, rect: g.sections?.[i + 1]?.rect }));
   (d.audit_notes || []).slice(0, 2).forEach(n => ev.push({ role: 'QA', text: `owner to confirm: ${String(n).slice(0, 60)}` }));
   return ev; }
-function eventsRender(dir) { const html = (() => { try { return fs.readFileSync(path.join(dir, 'index.html'), 'utf8'); } catch { return ''; } })(); const moves = [...new Set([...html.matchAll(/data-move="([^"]+)"/g)].map(m => m[1]))];
-  const ev = [{ role: 'Motion', text: `moves: ${moves.slice(0, 5).join(', ')}` }, { role: 'Type', text: 'type scale set · h1 clamp(52px, 7.4vw, 124px)' }, { role: 'Photos', text: `${(html.match(/<img /g) || []).length} photos placed` }, { role: 'Ending', text: 'ending + contact written' }, { role: 'Motion', text: `page ${Math.round(html.length / 1024)} KB · lenis on` }];
+function eventsRender(dir) { const html = (() => { try { return fs.readFileSync(path.join(dir, 'index.html'), 'utf8'); } catch { return ''; } })(); const moves = [...new Set([...html.matchAll(/data-move="([a-z][a-z0-9-]{1,40})"/g)].map(m => m[1]))]; // real move names on elements, not the placeholder inside the inlined script's own documentation
+  // every line is read off the page that was built: nothing here is a fixed sentence
+  const face = (html.match(/--display:'([^']{1,60})'/) || [])[1]; const heroSize = (html.match(/--hero-size:(clamp\([^)]{1,60}\))/) || [])[1];
+  const sections = (html.match(/<section[\s>]/g) || []).length; const pictures = (html.match(/<img /g) || []).length; const smooth = /<script src="[^"]*lenis[^"]*"/i.test(html);
+  const ev = [];
+  if (moves.length) ev.push({ role: 'Motion', text: `moves: ${moves.slice(0, 5).join(', ')}` });
+  if (face) ev.push({ role: 'Type', text: `display face ${face}${heroSize ? ' · h1 ' + heroSize : ''}`.slice(0, 120) });
+  ev.push({ role: 'Photos', text: `${pictures} ${pictures === 1 ? 'picture' : 'pictures'} placed` });
+  if (sections) ev.push({ role: 'Render', text: `${sections} sections built` });
+  ev.push({ role: 'Render', text: `page ${Math.round(html.length / 1024)} KB${smooth ? ' · smooth scroll on' : ''}` });
   return ev; }
 function eventsQA(qa) { return String(qa || '').split('\n').filter(Boolean).slice(0, 8).map(l => ({ role: 'QA', text: l.replace(/^\[(high|med|low)\]\s*/, '').slice(0, 70) })); }
 
-const ARTS = ['brief.json', 'critic.json', 'contract.json', 'coverage.json', 'factsheet.json', 'swarm.json', 'inventory.json', 'assets.json', 'images.json', 'geometry.json', 'audit.json', 'direction.json', 'mobile.json', 'index.html'];
+const ARTS = ['brief.json', 'critic.json', 'contract.json', 'scores.json', 'fingerprint.json', 'coverage.json', 'factsheet.json', 'swarm.json', 'inventory.json', 'assets.json', 'images.json', 'geometry.json', 'audit.json', 'direction.json', 'mobile.json', 'index.html'];
 async function uploadArtefacts(job, dir, diagnostics = false) { let uploaded = true; for (const f of ARTS) { const fp = path.join(dir, f); if (fs.existsSync(fp)) { try { await upload(fp, `${job.id}/${!diagnostics && job._previewVersion ? `v-${job._previewVersion}/` : ''}art/${f}`, f.endsWith('.html') ? 'text/html' : 'application/json'); } catch (e) { uploaded = false; console.warn('art', f, e.message); } } } return uploaded; }
 const BP = { software: ['butter', 'cerebrium', 'deepbook'], place: ['tengile', 'white-desert', 'belgrade-arbor', 'units'], service: ['lpas', 'aino', 'atelier'], product: ['crav', 'halfdays'] };
 async function checkpointCrawl(job, dir) {
@@ -409,7 +417,7 @@ async function process_(job) {
         const done = last.find(j => j.done)?.done; const crit = J(path.join(dir, 'critic.json'));
         if (!done?.best_blueprint || !done?.render_manifest || !job._bps.includes(done.best_blueprint)) throw new Error('selected blueprint identity unavailable');
         job._primary = done.best_blueprint; job._manifest = done.render_manifest; job._reviewedOut = out;
-        job._critic = crit ? { score: crit.best ?? crit.score, fixes: (crit.fixes || []).length, verdict: crit.verdict, rounds: done?.rounds } : null;
+        job._critic = crit ? { score: crit.best ?? crit.score, taste: crit.taste ?? null, contract: crit.contract ?? null, axes: crit.axes ?? null, fixes: (crit.fixes || []).length, verdict: crit.verdict, rounds: done?.rounds } : null;
       } catch (e) { console.warn('swarm', e.message.slice(0, 300)); await emit(job, [{ role: 'QA', text: 'swarm loop failed: ' + e.message.slice(0, 80) }]); throw e; } }
     // the primary blueprint IS the page
     if (!job._primary) throw new Error('no blueprint rendered');
@@ -429,7 +437,7 @@ async function process_(job) {
     job._bps = published.blueprints; job._previewVersion = published.version; const previewUrl = `${SELF}/p/${job.id}?v=${published.version}`;
     const beforeUrl = fs.existsSync(path.join(dir, 'before-hero.jpg')) ? await upload(path.join(dir, 'before-hero.jpg'), `${job.id}/before.jpg`, 'image/jpeg') : null;
     const direction = JSON.parse(fs.readFileSync(path.join(dir, 'direction.json'), 'utf8'));
-    return { ...(job._result || {}), previewUrl, previewVersion:published.version, beforeUrl, qa, budget: J(path.join(dir, 'budget.json')), seo: (J(path.join(dir, 'contract.json')) || {}).seo || null, coverage: J(path.join(dir, 'coverage.json')), blueprints: job._bps || [], critic: job._critic || null, direction: { kind: direction.kind, concept: direction.concept, voice: direction.voice, brand: direction.brand, beats: direction.beats.map(b => b.type), audit_notes: direction.audit_notes }, seconds: Math.round((Date.now() - t0) / 1000) };
+    return { ...(job._result || {}), previewUrl, previewVersion:published.version, beforeUrl, qa, budget: J(path.join(dir, 'budget.json')), seo: (J(path.join(dir, 'contract.json')) || {}).seo || null, coverage: J(path.join(dir, 'coverage.json')), blueprints: job._bps || [], critic: job._critic || null, scores: J(path.join(dir, 'scores.json')), fingerprint: (f => f ? { hero: f.hero, body: f.body, digest: f.digest } : null)(J(path.join(dir, 'fingerprint.json'))), direction: { kind: direction.kind, concept: direction.concept, voice: direction.voice, brand: direction.brand, beats: direction.beats.map(b => b.type), audit_notes: direction.audit_notes }, seconds: Math.round((Date.now() - t0) / 1000) };
   });
   job._artifactsUploaded = await uploadArtefacts(job, dir);
   result.artifactsAvailable = job._artifactsUploaded; result.artifactsVersion = job._previewVersion;

@@ -5,7 +5,22 @@ each, the way a studio has a way of building a page. The director fills the slot
 matches, or, when the source has no such section, from the factsheet's verified facts. A slot is skipped only
 when no facts can carry it. The renderer then locks order and moves, so two runs of one site differ in copy and
 pictures, never in architecture. Everything here is deterministic.
+
+Two voices, chosen with SWARM_HOUSE:
+  lock          (default, production) the above: order and move of every section are the house's.
+  requirements  the house says what a page of this kind must carry and recommends an order; it fixes neither order
+                nor form. The director may use any beat type, the UX agent orders, the Concept and the recipe choose
+                the moves. `lock()` then leaves a document as it is and does not mark it `house`, which is the flag
+                the agents read as "order and moves are not yours".
 """
+import os
+
+
+def mode():
+    """'lock' unless SWARM_HOUSE asks for 'requirements'. Anything unknown is 'lock': production never changes by accident."""
+    value = (os.environ.get('SWARM_HOUSE') or '').strip().lower()
+    return 'requirements' if value in ('requirements', 'req') else 'lock'
+
 
 # slot: id prefix, beat type, the move the renderer gets, what fills it, whether the director may compose it from facts
 # Evidence: dna/house/{software,place,service,product}.md — 6–8 awarded or reference landings per kind, section by section.
@@ -62,9 +77,40 @@ HERO = {
 }
 TYPE_ORDER = {kind: [t for _, t, _, _, _ in slots] for kind, slots in HOUSE.items()}
 
+# How much a page of this kind needs each slot when the source can fill it. Read from the same evidence as the slots
+# (dna/house/*.md: how many of the reference landings carry it); a starting point to adjust against the benchmark.
+#   required     the page is incomplete without it when the source has it
+#   recommended  most reference pages carry it
+#   optional     carry it when the source offers it
+NEED = {
+    'software': {'proof': 'recommended', 'features': 'required', 'trust': 'recommended', 'figures': 'optional', 'faq': 'optional'},
+    'place': {'story': 'required', 'offer': 'required', 'whats-on': 'optional', 'proof': 'optional', 'gallery': 'recommended', 'faq': 'optional', 'book': 'required'},
+    'service': {'work': 'recommended', 'services': 'required', 'people': 'recommended', 'credentials': 'optional', 'faq': 'optional', 'contact': 'required'},
+    'product': {'story': 'recommended', 'features': 'required', 'gallery': 'recommended', 'offer': 'required', 'voice': 'optional', 'trust': 'recommended'},
+}
 
-def describe(kind):
-    """The block the director reads: the architecture is given, the director fills it."""
+
+def requirements(kind):
+    """What a page of this kind must carry, without any layout: no move, no lock. `position` is the recommended order."""
+    slots = HOUSE.get(kind) or HOUSE['service']; need = NEED.get(kind if kind in HOUSE else 'service', {})
+    return [{'id': sid, 'type': typ, 'need': need.get(sid, 'optional'), 'what': what, 'compose': bool(compose), 'position': i}
+            for i, (sid, typ, _, what, compose) in enumerate(slots, 1)]
+
+
+def describe(kind, mode=None):
+    """The block the director reads. In lock mode the architecture is given and the director fills it; in requirements
+    mode the block states what the page must carry and leaves order and form to the director."""
+    if (mode or globals()['mode']()) == 'requirements':
+        lines = [f'CONTENT REQUIREMENTS for a {kind} site — what the page must carry when the source has it. The order below is the one we recommend; '
+                 'order the page the way that tells this business best, and use any beat type the content calls for:',
+                 'hero — ' + HERO.get(kind, HERO['service'])]
+        for r in requirements(kind):
+            lines.append(f'- {r["id"]} (usually type "{r["type"]}") — {r["need"].upper()} — {r["what"]}.'
+                         + (' If the source has no such section, it may be composed from the factsheet facts only.' if r['compose'] else ' Only from the source; leave it out when the source has none.'))
+        lines.append('The page always closes with the CTA band (headline echoing the hero, one or two actions) and the footer; those are not beats.')
+        lines.append('A requirement is left out only when neither the source nor the factsheet can fill it truthfully. Never pad: three true items beat six thin ones.')
+        lines.append('SEO-safe mode keeps the source headings, words and links; free mode may rewrite them.')
+        return '\n'.join(lines)
     slots = HOUSE.get(kind) or HOUSE['service']
     lines = [f'HOUSE STRUCTURE for a {kind} site — this is the page. Fill these slots in this order; do not add other beats and do not reorder them:',
              '0. hero — ' + HERO.get(kind, HERO['service'])]
@@ -76,10 +122,15 @@ def describe(kind):
     return '\n'.join(lines)
 
 
-def lock(doc):
+def lock(doc, mode=None):
     """After the director: order the beats by the house order for the kind and set each slot's move.
-    Beats of a type the house does not know keep their place after the known ones (a 'facts' beat, say)."""
+    Beats of a type the house does not know keep their place after the known ones (a 'facts' beat, say).
+    In requirements mode nothing is ordered or set: the document is only marked with the kind whose requirements it
+    was written against, and loses a `house` mark it may carry from an earlier, locked pass."""
     kind = doc.get('kind') or 'service'
+    if (mode or globals()['mode']()) == 'requirements':
+        doc.pop('house', None); doc['house_requirements'] = kind if kind in HOUSE else 'service'
+        return doc
     slots = HOUSE.get(kind) or HOUSE['service']
     positions = {}
     for i, (_, t, _, _, _) in enumerate(slots): positions.setdefault(t, []).append(i)
@@ -106,13 +157,16 @@ def lock(doc):
         b['ui'] = ui
     doc['beats'] = beats
     doc['house'] = kind
+    doc.pop('house_requirements', None)
     return doc
 
 
-def violations(doc):
+def violations(doc, mode=None):
     """What the director must fix before the house accepts the document: beats of a type the house has no slot for,
     or more beats of a type than the house has slots (five menu ledgers in a row, three photo stories, a pricing
-    ledger on a software page). The message tells the director where that content belongs instead."""
+    ledger on a software page). The message tells the director where that content belongs instead.
+    In requirements mode the house rejects no beat type and no count: it states content, not structure."""
+    if (mode or globals()['mode']()) == 'requirements': return []
     kind = doc.get('kind') or 'service'
     slots = HOUSE.get(kind) or HOUSE['service']
     allowed = {}

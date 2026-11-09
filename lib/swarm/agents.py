@@ -22,12 +22,12 @@ def ask(system, content, tool, model=None, max_tokens=4000, timeout=None, usage_
     who = tool.get('name', '?')
     B.check(who)
     msg = client.messages.create(model=model or MODEL, max_tokens=max_tokens, system=system, messages=[{"role": "user", "content": content}], tools=[tool], tool_choice={"type": "auto"})
-    B.charge(getattr(msg, 'usage', None), who)
+    B.charge(getattr(msg, 'usage', None), who, model or MODEL)
     if usage_callback: usage_callback(getattr(msg, 'usage', None))
     call = next((b for b in msg.content if getattr(b, 'type', '') == 'tool_use'), None)
     if call is None:  # one nudge
         msg2 = client.messages.create(model=model or MODEL, max_tokens=max_tokens, system=system, messages=[{"role": "user", "content": content}, {"role": "assistant", "content": msg.content}, {"role": "user", "content": f"Call {tool['name']} now."}], tools=[tool], tool_choice={"type": "auto"})
-        B.charge(getattr(msg2, 'usage', None), who)
+        B.charge(getattr(msg2, 'usage', None), who, model or MODEL)
         if usage_callback: usage_callback(getattr(msg2, 'usage', None))
         call = next((b for b in msg2.content if getattr(b, 'type', '') == 'tool_use'), None)
     return call.input if call else None
@@ -687,6 +687,7 @@ def apply_visual(slug_dir, r):
             except Exception as e: return {'error': str(e)[:120]}, g['beat']
         if asks:
             with ThreadPoolExecutor(max_workers=3) as ex: gens = list(ex.map(one, asks))
+            B.charge_image(sum(1 for it, _ in gens if not it.get('error')))  # a picture that came back was paid for, placed or not
         for it, beat in gens:
             if it.get('error'): continue
             if is_empty(it):

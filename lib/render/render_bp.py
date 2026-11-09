@@ -291,11 +291,17 @@ def build(slug_dir, bp_id, out_path=None):
         band_paper, band_ink = ink, paper
     else:
         # ---- colour: owner's palette through the blueprint's relationships ----
-        keep_col = brief.get('keepColours', True) and (b.get('accent') or b.get('ink'))
+        # The brand colours are written by the director from a stranger's page and land inside <style>: a value that is
+        # not a hex colour is not a colour. A valid #RRGGBB keeps its own spelling, #RGB is expanded, anything else is dropped.
+        def brand_hex(value):
+            colour = normalise_colour(value)
+            return (value.strip() if colour and len(value.strip()) == 7 else colour)
+        brand_accent, brand_ink, brand_paper = (brand_hex(b.get(k)) for k in ('accent', 'ink', 'paper'))
+        keep_col = brief.get('keepColours', True) and (brand_accent or brand_ink)
         mode = C.get('mode', 'light')
-        seed = (b.get('accent') or b.get('ink') or C.get('accent') or C.get('ink') or '#222222') if keep_col else (C.get('accent') or C.get('ink') or '#222222')
+        seed = (brand_accent or brand_ink or C.get('accent') or C.get('ink') or '#222222') if keep_col else (C.get('accent') or C.get('ink') or '#222222')
         pal = mkpal(seed, d.get('concept', 'C1'), mode)['tokens']
-        paper = (b.get('paper') if keep_col and b.get('paper') else pal['paper']); ink = (b.get('ink') if keep_col and b.get('ink') else pal['ink'])
+        paper = (brand_paper if keep_col and brand_paper else pal['paper']); ink = (brand_ink if keep_col and brand_ink else pal['ink'])
         if mode == 'dark' and lum(paper) > 0.5: paper, ink = ink, paper
         if mode == 'light' and lum(paper) < 0.5: paper, ink = ink, paper
         accent = pal['accent']
@@ -448,9 +454,13 @@ def build(slug_dir, bp_id, out_path=None):
             bt['label'] = f"{pos[bt['id']]:02d} — {core}" if core and re.match(r'^\s*0?\d{1,2}\b', str(bt['label'])) else (core or bt['label'])
 
     def band_of(sec, bt=None):
-        return (bt or {}).get('band') or sec.get('band') or 'paper'
+        # the band becomes a class name: only the bands the stylesheet knows, never a string a model wrote freely
+        for value in ((bt or {}).get('band'), sec.get('band')):
+            if value in ('paper', 'dark', 'alt', 'accent'): return value
+        return 'paper'
     def head_style(sec, key='head', bt=None):
         hd = sec.get(key) or {}; override = ((bt or {}).get('ui') or {}).get('h2_px')
+        if isinstance(override, bool) or not isinstance(override, (int, float)) or not 12 <= override <= 400: override = None  # a size is a number; anything else is no choice
         px_ = override or hd.get('px') or H2.get('px')
         # Some measured sections have a label or body as their largest text.
         # Those measurements do not describe the H2 we add to a content beat.
@@ -508,7 +518,8 @@ def build(slug_dir, bp_id, out_path=None):
         else: m = ''
         hd = bp['sections'][0].get('head') or D
         y = hd.get('y'); place = 'end' if (y or .6) > .5 else 'start'
-        al = (h.get('ui') or {}).get('align') or ('center' if hd.get('al') == 'center' else 'start')
+        al = (h.get('ui') or {}).get('align')  # becomes a class name: one of the two alignments or the blueprint's own
+        if al not in ('start', 'center'): al = 'center' if hd.get('al') == 'center' else 'start'
         h1 = e(h['h1']).replace('&lt;em&gt;', '<em>').replace('&lt;/em&gt;', '</em>')
         nw = len(re.sub(r'<[^>]+>', '', h['h1']).split()); hpx = hd.get('px') or D.get('px', 72)
         if nw >= 6: hpx = min(hpx, 84)
@@ -1268,7 +1279,8 @@ def build(slug_dir, bp_id, out_path=None):
         # cards used when the ticker cannot carry the beat's full content.
         # Preserve deliberate one-column card layouts selected as cards.
         ticker_fallback = ui_.get('move') == 'marquee' and ui_.get('cols') == 1 and k >= 3
-        if not ticker_fallback: n = ui_.get('cols') or n
+        chosen_cols = ui_.get('cols')  # written into a style attribute: a whole number of columns or nothing
+        if not ticker_fallback and isinstance(chosen_cols, int) and not isinstance(chosen_cols, bool) and 1 <= chosen_cols <= 4: n = chosen_cols
         variant = ui_.get('variant', '')
         if variant == 'wide2': n = 2
         items = []
@@ -1646,7 +1658,14 @@ def build(slug_dir, bp_id, out_path=None):
     plate_solid = bool(logo_colours and paper_colour and any(min(colour_contrast(c, paper_colour), colour_contrast(c, darkest_nav)) < 3 for c in logo_colours))
     logo_class = (' logo-plate-photo' if logo_colours else '') + (' logo-plate-solid' if plate_solid else '')
     mark = f'<span class="logo-surface"><img class="logo" src="{logo}" alt="{e(b["name"])}"></span>' if logo and brief.get('keepLogo', True) else f'<span class="wordmark">{e(b["name"])}</span>'
-    nav_links = ''.join(f'<a href="{e(hr)}">{e(l)}</a>' for hr, l in d.get('nav', {}).get('links', [])[:4])
+    # A nav link goes to a section of this page or to a real web/mail/phone address. Anything else (javascript:, data:,
+    # a malformed pair) is not a link the page offers.
+    def nav_href(target):
+        target = str(target or '').strip()
+        return target if re.fullmatch(r'#\S{1,120}', target) else safe_url(target)  # an in-page anchor (ids may be non-ASCII; the value is escaped) or a safe address
+    nav_pairs = [(nav_href(pair[0]), str(pair[1]).strip()) for pair in ((d.get('nav') or {}).get('links') or [])[:6]
+                 if isinstance(pair, (list, tuple)) and len(pair) == 2 and isinstance(pair[1], str)]
+    nav_links = ''.join(f'<a href="{e(hr)}">{e(l)}</a>' for hr, l in [p for p in nav_pairs if p[0] and p[1]][:4])
     moves = open(os.path.join(ROOT, 'lib/motion/moves.js')).read(); swarm = open(os.path.join(ROOT, 'lib/motion/swarm.js')).read()
     frame = G.get('frame') or G.get('gutter') or 40; container = G.get('container') or 1300; radius = M.get('radius', 0)
     try:

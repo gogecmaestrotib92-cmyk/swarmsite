@@ -1,0 +1,1334 @@
+{
+ "built_from": {
+  "design_dna/evidence.json#/references/belgrade-arbor": "sha256:4952dd4d48d421cea32c38304b27ca1c20c3ad671e90a627433238d62111e569",
+  "lib/blueprints/belgrade-arbor.bp.json": "sha256:4bc73caa1de3e48cbff7bc72091a408ab3319616367aaf5084876d18d3080336",
+  "lib/blueprints/raw/belgrade-arbor.json": "sha256:b197e85d79af13f80e5a825b19feda65121cfb039195468e0883a38d94690d42"
+ },
+ "completeness": {
+  "composition": "measured-desktop",
+  "experience": "prose-only",
+  "imagery": "measured-desktop",
+  "mobile": "missing",
+  "motion": "partial",
+  "screenshots": "missing",
+  "typography": "measured"
+ },
+ "composition": {
+  "basis": "measured",
+  "fraction_base": {
+   "basis": "assumed",
+   "source": "lib/blueprint/normalize.py",
+   "w": 1440
+  },
+  "grid": {
+   "col": null,
+   "container": 1312,
+   "frame": null,
+   "gutter": 64,
+   "not_recorded": [
+    "col",
+    "frame"
+   ],
+   "raw_fields": {
+    "container": "lib/blueprints/raw/belgrade-arbor.json#/container",
+    "gutter": "lib/blueprints/raw/belgrade-arbor.json#/gutter"
+   },
+   "source": {
+    "blueprint": "lib/blueprints/belgrade-arbor.bp.json#/grid",
+    "raw": "lib/blueprints/raw/belgrade-arbor.json"
+   }
+  },
+  "sections": [
+   {
+    "bg": null,
+    "head": {
+     "align": "center",
+     "case": "uppercase",
+     "leading": null,
+     "not_recorded": [
+      "leading",
+      "tracking",
+      "y"
+     ],
+     "px": 151,
+     "source": "lib/blueprints/raw/belgrade-arbor.json#/sections/0/heads/0",
+     "tracking": null,
+     "weight": 400,
+     "wf": 0.912,
+     "x": 0.044,
+     "y": null
+    },
+    "media": [
+     {
+      "ar": 1.9,
+      "bleed": true,
+      "kind": "video",
+      "source": "lib/blueprints/raw/belgrade-arbor.json#/sections/0/imgs/0",
+      "wf": 1.0,
+      "xf": null
+     }
+    ],
+    "role": "hero-video-wordmark",
+    "screens": 1.0,
+    "source": {
+     "blueprint": "lib/blueprints/belgrade-arbor.bp.json#/sections/0",
+     "raw": "lib/blueprints/raw/belgrade-arbor.json#/sections/0"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": null,
+     "leading": 1.1,
+     "not_recorded": [
+      "align",
+      "case"
+     ],
+     "px": 56,
+     "source": "lib/blueprints/raw/belgrade-arbor.json#/sections/1/heads/0",
+     "tracking": 0.0196,
+     "weight": 300,
+     "wf": 0.456,
+     "x": 0.044,
+     "y": 0.022
+    },
+    "media": [
+     {
+      "ar": 1.91,
+      "bleed": true,
+      "kind": null,
+      "source": "lib/blueprints/raw/belgrade-arbor.json#/sections/1/imgs/0",
+      "wf": 1.2,
+      "xf": -0.1
+     }
+    ],
+    "role": "pinned-intro",
+    "screens": 9.0,
+    "source": {
+     "blueprint": "lib/blueprints/belgrade-arbor.bp.json#/sections/1",
+     "raw": "lib/blueprints/raw/belgrade-arbor.json#/sections/1"
+    },
+    "sticky": true
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": "uppercase",
+     "leading": null,
+     "not_recorded": [
+      "align",
+      "leading",
+      "tracking",
+      "weight"
+     ],
+     "px": 160,
+     "source": "lib/blueprints/raw/belgrade-arbor.json#/sections/2/heads/0",
+     "tracking": null,
+     "weight": null,
+     "wf": 0.559,
+     "x": 0.397,
+     "y": 0.63
+    },
+    "media": [
+     {
+      "ar": 1.34,
+      "bleed": true,
+      "kind": null,
+      "source": "lib/blueprints/raw/belgrade-arbor.json#/sections/2/imgs/0",
+      "wf": 1.0,
+      "xf": null
+     },
+     {
+      "ar": 4.37,
+      "bleed": false,
+      "kind": "video",
+      "source": "lib/blueprints/raw/belgrade-arbor.json#/sections/2/imgs/1",
+      "wf": 0.456,
+      "xf": null
+     }
+    ],
+    "role": "chapter-title-photo",
+    "screens": 1.0,
+    "source": {
+     "blueprint": "lib/blueprints/belgrade-arbor.bp.json#/sections/2",
+     "raw": "lib/blueprints/raw/belgrade-arbor.json#/sections/2"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": null,
+    "media": [
+     {
+      "ar": 1.78,
+      "bleed": false,
+      "kind": "canvas",
+      "source": "lib/blueprints/raw/belgrade-arbor.json#/sections/3/imgs/0",
+      "wf": 0.6,
+      "xf": 0.4
+     }
+    ],
+    "role": "map-3d",
+    "screens": 1.42,
+    "source": {
+     "blueprint": "lib/blueprints/belgrade-arbor.bp.json#/sections/3",
+     "raw": "lib/blueprints/raw/belgrade-arbor.json#/sections/3"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": "uppercase",
+     "leading": null,
+     "not_recorded": [
+      "align",
+      "leading",
+      "tracking",
+      "weight"
+     ],
+     "px": 160,
+     "source": "lib/blueprints/raw/belgrade-arbor.json#/sections/4/heads/0",
+     "tracking": null,
+     "weight": null,
+     "wf": 0.911,
+     "x": 0.044,
+     "y": 0.543
+    },
+    "media": [
+     {
+      "ar": 1.26,
+      "bleed": true,
+      "kind": null,
+      "source": "lib/blueprints/raw/belgrade-arbor.json#/sections/4/imgs/0",
+      "wf": 1.0,
+      "xf": null
+     }
+    ],
+    "role": "chapter-title-photo",
+    "screens": 1.09,
+    "source": {
+     "blueprint": "lib/blueprints/belgrade-arbor.bp.json#/sections/4",
+     "raw": "lib/blueprints/raw/belgrade-arbor.json#/sections/4"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": null,
+    "media": [
+     {
+      "ar": 0.95,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/belgrade-arbor.json#/sections/5/imgs/0",
+      "wf": 0.6,
+      "xf": 0.45
+     },
+     {
+      "ar": 0.95,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/belgrade-arbor.json#/sections/5/imgs/1",
+      "wf": 0.6,
+      "xf": 1.05
+     }
+    ],
+    "role": "card-rail",
+    "screens": 1.0,
+    "source": {
+     "blueprint": "lib/blueprints/belgrade-arbor.bp.json#/sections/5",
+     "raw": "lib/blueprints/raw/belgrade-arbor.json#/sections/5"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": "uppercase",
+     "leading": null,
+     "not_recorded": [
+      "align",
+      "leading",
+      "tracking",
+      "weight"
+     ],
+     "px": 160,
+     "source": "lib/blueprints/raw/belgrade-arbor.json#/sections/6/heads/0",
+     "tracking": null,
+     "weight": null,
+     "wf": 0.911,
+     "x": 0.044,
+     "y": 0.088
+    },
+    "media": [
+     {
+      "ar": 1.18,
+      "bleed": true,
+      "kind": null,
+      "source": "lib/blueprints/raw/belgrade-arbor.json#/sections/6/imgs/0",
+      "wf": 1.0,
+      "xf": null
+     }
+    ],
+    "role": "chapter-title-photo",
+    "screens": 1.2,
+    "source": {
+     "blueprint": "lib/blueprints/belgrade-arbor.bp.json#/sections/6",
+     "raw": "lib/blueprints/raw/belgrade-arbor.json#/sections/6"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": null,
+    "media": [
+     {
+      "ar": 0.67,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/belgrade-arbor.json#/sections/7/imgs/0",
+      "wf": 0.5,
+      "xf": 0.0
+     }
+    ],
+    "role": "photo-half-text",
+    "screens": 1.0,
+    "source": {
+     "blueprint": "lib/blueprints/belgrade-arbor.bp.json#/sections/7",
+     "raw": "lib/blueprints/raw/belgrade-arbor.json#/sections/7"
+    },
+    "sticky": null
+   },
+   {
+    "bg": "#314759",
+    "head": {
+     "align": "center",
+     "case": "uppercase",
+     "leading": null,
+     "not_recorded": [
+      "leading",
+      "tracking"
+     ],
+     "px": 240,
+     "source": "lib/blueprints/raw/belgrade-arbor.json#/sections/8/heads/0",
+     "tracking": null,
+     "weight": 300,
+     "wf": 0.955,
+     "x": 0.023,
+     "y": 0.011
+    },
+    "media": [
+     {
+      "ar": 1.42,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/belgrade-arbor.json#/sections/8/imgs/0",
+      "wf": 0.397,
+      "xf": 0.559
+     },
+     {
+      "ar": 1.02,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/belgrade-arbor.json#/sections/8/imgs/1",
+      "wf": 0.333,
+      "xf": 0.59
+     },
+     {
+      "ar": 0.75,
+      "bleed": false,
+      "kind": "video",
+      "source": "lib/blueprints/raw/belgrade-arbor.json#/sections/8/imgs/2",
+      "wf": 0.433,
+      "xf": 0.45
+     }
+    ],
+    "role": "giant-title-collage",
+    "screens": 1.18,
+    "source": {
+     "blueprint": "lib/blueprints/belgrade-arbor.bp.json#/sections/8",
+     "raw": "lib/blueprints/raw/belgrade-arbor.json#/sections/8"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": "uppercase",
+     "leading": null,
+     "not_recorded": [
+      "align",
+      "leading",
+      "tracking",
+      "weight"
+     ],
+     "px": 128,
+     "source": "lib/blueprints/raw/belgrade-arbor.json#/sections/9/heads/0",
+     "tracking": null,
+     "weight": null,
+     "wf": 0.474,
+     "x": 0.482,
+     "y": 0.672
+    },
+    "media": [
+     {
+      "ar": 1.34,
+      "bleed": true,
+      "kind": null,
+      "source": "lib/blueprints/raw/belgrade-arbor.json#/sections/9/imgs/0",
+      "wf": 1.0,
+      "xf": null
+     }
+    ],
+    "role": "chapter-title-photo",
+    "screens": 1.0,
+    "source": {
+     "blueprint": "lib/blueprints/belgrade-arbor.bp.json#/sections/9",
+     "raw": "lib/blueprints/raw/belgrade-arbor.json#/sections/9"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": null,
+    "media": [
+     {
+      "ar": 0.95,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/belgrade-arbor.json#/sections/10/imgs/0",
+      "wf": 0.6,
+      "xf": 0.45
+     },
+     {
+      "ar": 0.95,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/belgrade-arbor.json#/sections/10/imgs/1",
+      "wf": 0.6,
+      "xf": 0.7
+     }
+    ],
+    "role": "card-rail",
+    "screens": 1.0,
+    "source": {
+     "blueprint": "lib/blueprints/belgrade-arbor.bp.json#/sections/10",
+     "raw": "lib/blueprints/raw/belgrade-arbor.json#/sections/10"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": "center",
+     "case": "uppercase",
+     "leading": null,
+     "not_recorded": [
+      "leading",
+      "tracking",
+      "weight"
+     ],
+     "px": 120,
+     "source": "lib/blueprints/raw/belgrade-arbor.json#/sections/11/heads/0",
+     "tracking": null,
+     "weight": null,
+     "wf": 1.0,
+     "x": 0.0,
+     "y": 0.037
+    },
+    "media": [
+     {
+      "ar": 3.58,
+      "bleed": true,
+      "kind": null,
+      "source": "lib/blueprints/raw/belgrade-arbor.json#/sections/11/imgs/0",
+      "wf": 1.878,
+      "xf": null
+     },
+     {
+      "ar": 1.0,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/belgrade-arbor.json#/sections/11/imgs/1",
+      "wf": 0.972,
+      "xf": -0.485
+     },
+     {
+      "ar": 1.0,
+      "bleed": true,
+      "kind": null,
+      "source": "lib/blueprints/raw/belgrade-arbor.json#/sections/11/imgs/2",
+      "wf": 1.249,
+      "xf": -0.624
+     }
+    ],
+    "role": "pinned-zoom",
+    "screens": 4.35,
+    "source": {
+     "blueprint": "lib/blueprints/belgrade-arbor.bp.json#/sections/11",
+     "raw": "lib/blueprints/raw/belgrade-arbor.json#/sections/11"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": null,
+    "media": [
+     {
+      "ar": 0.62,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/belgrade-arbor.json#/sections/12/imgs/0",
+      "wf": 0.55,
+      "xf": -0.025
+     }
+    ],
+    "role": "photo-half-text",
+    "screens": 1.1,
+    "source": {
+     "blueprint": "lib/blueprints/belgrade-arbor.bp.json#/sections/12",
+     "raw": "lib/blueprints/raw/belgrade-arbor.json#/sections/12"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": null,
+    "media": [
+     {
+      "ar": 1.36,
+      "bleed": true,
+      "kind": null,
+      "source": "lib/blueprints/raw/belgrade-arbor.json#/sections/13/imgs/0",
+      "wf": 1.0,
+      "xf": null
+     },
+     {
+      "ar": 0.69,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/belgrade-arbor.json#/sections/13/imgs/1",
+      "wf": 0.208,
+      "xf": 0.0
+     },
+     {
+      "ar": 2.11,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/belgrade-arbor.json#/sections/13/imgs/2",
+      "wf": 0.694,
+      "xf": 0.306
+     }
+    ],
+    "role": "footer-photo",
+    "screens": 1.38,
+    "source": {
+     "blueprint": "lib/blueprints/belgrade-arbor.bp.json#/sections/13",
+     "raw": "lib/blueprints/raw/belgrade-arbor.json#/sections/13"
+    },
+    "sticky": null
+   }
+  ],
+  "summary": {
+   "bleed_section_share": {
+    "count": 8,
+    "evidence": [
+     "composition.sections"
+    ],
+    "how": "sections holding a medium flagged bleed in the capture or at least 98% of the viewport wide ÷ all sections",
+    "matched": [
+     "composition.sections[0].media[0].bleed",
+     "composition.sections[1].media[0].bleed",
+     "composition.sections[2].media[0].bleed",
+     "composition.sections[4].media[0].bleed",
+     "composition.sections[6].media[0].bleed",
+     "composition.sections[9].media[0].bleed",
+     "composition.sections[11].media[0].bleed",
+     "composition.sections[13].media[0].bleed"
+    ],
+    "of": 14,
+    "value": 0.57
+   },
+   "offset_heading_share": {
+    "count": 2,
+    "evidence": [
+     "composition.sections[0].head.x",
+     "composition.sections[1].head.x",
+     "composition.sections[2].head.x",
+     "composition.sections[4].head.x",
+     "composition.sections[6].head.x",
+     "composition.sections[8].head.x",
+     "composition.sections[9].head.x",
+     "composition.sections[11].head.x"
+    ],
+    "how": "headings whose left edge is at or right of 30% of the viewport width ÷ headings with a recorded position",
+    "matched": [
+     "composition.sections[2].head.x",
+     "composition.sections[9].head.x"
+    ],
+    "of": 8,
+    "value": 0.25
+   },
+   "pacing": {
+    "evidence": [
+     "composition.sections[0].screens",
+     "composition.sections[1].screens",
+     "composition.sections[2].screens",
+     "composition.sections[3].screens",
+     "composition.sections[4].screens",
+     "composition.sections[5].screens",
+     "composition.sections[6].screens",
+     "composition.sections[7].screens",
+     "composition.sections[8].screens",
+     "composition.sections[9].screens",
+     "composition.sections[10].screens",
+     "composition.sections[11].screens",
+     "composition.sections[12].screens",
+     "composition.sections[13].screens"
+    ],
+    "how": "section heights in screens, in page order",
+    "value": [
+     1.0,
+     9.0,
+     1.0,
+     1.42,
+     1.09,
+     1.0,
+     1.2,
+     1.0,
+     1.18,
+     1.0,
+     1.0,
+     4.35,
+     1.1,
+     1.38
+    ]
+   },
+   "page_screens": {
+    "source": {
+     "blueprint": "lib/blueprints/belgrade-arbor.bp.json#/screens",
+     "raw": "lib/blueprints/raw/belgrade-arbor.json#/screens"
+    },
+    "value": 23.4
+   },
+   "sections": {
+    "evidence": [
+     "composition.sections"
+    ],
+    "how": "number of sections in the record",
+    "value": 14
+   },
+   "sections_screens_total": {
+    "evidence": [
+     "composition.sections[0].screens",
+     "composition.sections[1].screens",
+     "composition.sections[2].screens",
+     "composition.sections[3].screens",
+     "composition.sections[4].screens",
+     "composition.sections[5].screens",
+     "composition.sections[6].screens",
+     "composition.sections[7].screens",
+     "composition.sections[8].screens",
+     "composition.sections[9].screens",
+     "composition.sections[10].screens",
+     "composition.sections[11].screens",
+     "composition.sections[12].screens",
+     "composition.sections[13].screens"
+    ],
+    "how": "sum of section heights in screens; sections can overlap or leave gaps, so this is not the page length",
+    "value": 26.72
+   }
+  },
+  "surface": {
+   "mode": "light",
+   "paper": "#fdfbef",
+   "paper_luminance": 0.983,
+   "source": {
+    "blueprint": "lib/blueprints/belgrade-arbor.bp.json#/colour/paper",
+    "raw": "lib/blueprints/raw/belgrade-arbor.json#/palette/0"
+   }
+  }
+ },
+ "evidence": {
+  "blueprint": "lib/blueprints/belgrade-arbor.bp.json",
+  "caveats": [],
+  "mirrors": null,
+  "raw": "lib/blueprints/raw/belgrade-arbor.json",
+  "screenshots": {
+   "desktop": [],
+   "dir": null,
+   "mobile": [],
+   "profile": null,
+   "unclassified": []
+  },
+  "scroll_capture": null
+ },
+ "experience": {
+  "not_measured": [
+   "narrative",
+   "interaction",
+   "mobile"
+  ],
+  "pacing_screens": {
+   "evidence": [
+    "composition.summary.pacing"
+   ],
+   "value": [
+    1.0,
+    9.0,
+    1.0,
+    1.42,
+    1.09,
+    1.0,
+    1.2,
+    1.0,
+    1.18,
+    1.0,
+    1.0,
+    4.35,
+    1.1,
+    1.38
+   ]
+  },
+  "section_notes": [
+   {
+    "kind": "prose",
+    "section": 0,
+    "source": "lib/blueprints/belgrade-arbor.bp.json#/sections/0/note",
+    "text": "bleed video, 151px uppercase serif wordmark pinned to the bottom of the screen",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 1,
+    "source": "lib/blueprints/belgrade-arbor.bp.json#/sections/1/note",
+    "text": "9-screen pinned chapter: two 56px light serif columns (656 each), oversized photo (1728 wide, overscan) scrubs behind",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 2,
+    "source": "lib/blueprints/belgrade-arbor.bp.json#/sections/2/note",
+    "text": "chapter opener: bleed photo, 160px uppercase serif title bottom-right, 16px text 437 wide",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 3,
+    "source": "lib/blueprints/belgrade-arbor.bp.json#/sections/3/note",
+    "text": "3D canvas map 864x486 right, list of places left — not reproducible; substitute static map + list",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 5,
+    "source": "lib/blueprints/belgrade-arbor.bp.json#/sections/5/note",
+    "text": "56px serif number/label left (576), horizontal rail of 864x907 cards starting at x=648, scrubbed by scroll",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 7,
+    "source": "lib/blueprints/belgrade-arbor.bp.json#/sections/7/note",
+    "text": "left half tall photo, right half 56px serif + body + pill",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 8,
+    "source": "lib/blueprints/belgrade-arbor.bp.json#/sections/8/note",
+    "text": "navy band, 240px light serif title, overlapping photo/video collage right of centre",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 11,
+    "source": "lib/blueprints/belgrade-arbor.bp.json#/sections/11/note",
+    "text": "4.3-screen pinned zoom: aerial photos scale up around the centre while title holds",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 12,
+    "source": "lib/blueprints/belgrade-arbor.bp.json#/sections/12/note",
+    "text": "solid sand pill = the one filled button on the page",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 13,
+    "source": "lib/blueprints/belgrade-arbor.bp.json#/sections/13/note",
+    "text": "footer on a bleed photo; 56px serif statement; 16px links",
+    "withheld": null
+   }
+  ]
+ },
+ "fits": {
+  "also": [],
+  "archetype": "real-estate-cinematic",
+  "archetype_source": "lib/blueprints/belgrade-arbor.bp.json#/archetype",
+  "kinds": [
+   "place"
+  ],
+  "kinds_source": "lib/blueprints/belgrade-arbor.bp.json#/class",
+  "needs": {
+   "derived_by": "rule",
+   "evidence": [
+    "imagery.image_sections",
+    "imagery.video_first_section"
+   ],
+   "images_min": 12,
+   "rule": "derive_needs",
+   "video": true
+  },
+  "temper": [
+   {
+    "derived_by": "rule",
+    "principle": "scale-contrast-high",
+    "rule": "rule_scale_contrast_high",
+    "tag": "high-contrast-type"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "display-light-weight",
+    "rule": "rule_display_light_weight",
+    "tag": "light-weight"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "display-uppercase",
+    "rule": "rule_display_uppercase",
+    "tag": "uppercase"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "offset-headings",
+    "rule": "rule_offset_headings",
+    "tag": "asymmetric"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "full-bleed-media",
+    "rule": "rule_full_bleed_media",
+    "tag": "full-bleed"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "image-led",
+    "rule": "rule_image_led",
+    "tag": "image-led"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "video-first-section",
+    "rule": "rule_video_first_section",
+    "tag": "video-led"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "pinned-sections",
+    "rule": "rule_pinned_sections",
+    "tag": "pinned"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "long-page",
+    "rule": "rule_long_page",
+    "tag": "long"
+   }
+  ]
+ },
+ "id": "belgrade-arbor",
+ "imagery": {
+  "aspects": {
+   "evidence": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[1].media[0].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[3].media[0].ar",
+    "composition.sections[4].media[0].ar",
+    "composition.sections[5].media[0].ar",
+    "composition.sections[5].media[1].ar",
+    "composition.sections[6].media[0].ar",
+    "composition.sections[7].media[0].ar",
+    "composition.sections[8].media[0].ar",
+    "composition.sections[8].media[1].ar",
+    "composition.sections[8].media[2].ar",
+    "composition.sections[9].media[0].ar",
+    "composition.sections[10].media[0].ar",
+    "composition.sections[10].media[1].ar",
+    "composition.sections[11].media[0].ar",
+    "composition.sections[11].media[1].ar",
+    "composition.sections[11].media[2].ar",
+    "composition.sections[12].media[0].ar",
+    "composition.sections[13].media[0].ar",
+    "composition.sections[13].media[1].ar",
+    "composition.sections[13].media[2].ar"
+   ],
+   "how": "distinct aspect ratios (width ÷ height) of large media; large = at least 20% of the viewport width",
+   "value": [
+    0.62,
+    0.67,
+    0.69,
+    0.75,
+    0.95,
+    1.0,
+    1.02,
+    1.18,
+    1.26,
+    1.34,
+    1.36,
+    1.42,
+    1.78,
+    1.9,
+    1.91,
+    2.11,
+    3.58,
+    4.37
+   ]
+  },
+  "basis": "measured",
+  "image_sections": {
+   "evidence": [
+    "composition.sections"
+   ],
+   "how": "sections holding at least one large still: not tagged video or canvas, aspect between 0.4 and 2.5",
+   "matched": [
+    "composition.sections[1].media[0]",
+    "composition.sections[2].media[0]",
+    "composition.sections[4].media[0]",
+    "composition.sections[5].media[0]",
+    "composition.sections[6].media[0]",
+    "composition.sections[7].media[0]",
+    "composition.sections[8].media[0]",
+    "composition.sections[9].media[0]",
+    "composition.sections[10].media[0]",
+    "composition.sections[11].media[1]",
+    "composition.sections[12].media[0]",
+    "composition.sections[13].media[0]"
+   ],
+   "of": 14,
+   "share": 0.86,
+   "value": 12
+  },
+  "landscape_share": {
+   "count": 11,
+   "evidence": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[1].media[0].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[3].media[0].ar",
+    "composition.sections[4].media[0].ar",
+    "composition.sections[5].media[0].ar",
+    "composition.sections[5].media[1].ar",
+    "composition.sections[6].media[0].ar",
+    "composition.sections[7].media[0].ar",
+    "composition.sections[8].media[0].ar",
+    "composition.sections[8].media[1].ar",
+    "composition.sections[8].media[2].ar",
+    "composition.sections[9].media[0].ar",
+    "composition.sections[10].media[0].ar",
+    "composition.sections[10].media[1].ar",
+    "composition.sections[11].media[0].ar",
+    "composition.sections[11].media[1].ar",
+    "composition.sections[11].media[2].ar",
+    "composition.sections[12].media[0].ar",
+    "composition.sections[13].media[0].ar",
+    "composition.sections[13].media[1].ar",
+    "composition.sections[13].media[2].ar"
+   ],
+   "how": "large media with aspect ≥ 1.2 ÷ large media",
+   "matched": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[1].media[0].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[3].media[0].ar",
+    "composition.sections[4].media[0].ar",
+    "composition.sections[8].media[0].ar",
+    "composition.sections[9].media[0].ar",
+    "composition.sections[11].media[0].ar",
+    "composition.sections[13].media[0].ar",
+    "composition.sections[13].media[2].ar"
+   ],
+   "of": 23,
+   "value": 0.48
+  },
+  "media_recorded": {
+   "evidence": [
+    "composition.sections"
+   ],
+   "how": "media elements kept in the record: wider than 100px, at most 4 per section",
+   "value": 23
+  },
+  "portrait_share": {
+   "count": 4,
+   "evidence": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[1].media[0].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[3].media[0].ar",
+    "composition.sections[4].media[0].ar",
+    "composition.sections[5].media[0].ar",
+    "composition.sections[5].media[1].ar",
+    "composition.sections[6].media[0].ar",
+    "composition.sections[7].media[0].ar",
+    "composition.sections[8].media[0].ar",
+    "composition.sections[8].media[1].ar",
+    "composition.sections[8].media[2].ar",
+    "composition.sections[9].media[0].ar",
+    "composition.sections[10].media[0].ar",
+    "composition.sections[10].media[1].ar",
+    "composition.sections[11].media[0].ar",
+    "composition.sections[11].media[1].ar",
+    "composition.sections[11].media[2].ar",
+    "composition.sections[12].media[0].ar",
+    "composition.sections[13].media[0].ar",
+    "composition.sections[13].media[1].ar",
+    "composition.sections[13].media[2].ar"
+   ],
+   "how": "large media with aspect ≤ 0.9 ÷ large media",
+   "matched": [
+    "composition.sections[7].media[0].ar",
+    "composition.sections[8].media[2].ar",
+    "composition.sections[12].media[0].ar",
+    "composition.sections[13].media[1].ar"
+   ],
+   "of": 23,
+   "value": 0.17
+  },
+  "video_first_section": {
+   "evidence": [
+    "composition.sections[0].media"
+   ],
+   "how": "the first section holds a medium the capture tagged VIDEO",
+   "matched": [
+    "composition.sections[0].media[0].kind"
+   ],
+   "value": true
+  }
+ },
+ "implementation": {
+  "ir_seeds": [],
+  "recipe": "lib/templates/recipes.py#belgrade-arbor"
+ },
+ "motion": {
+  "animated": 12,
+  "custom_cursor": null,
+  "keyframes": [
+   "spin",
+   "enter",
+   "exit"
+  ],
+  "libs": {
+   "lenis": true,
+   "webgl": true
+  },
+  "not_measured": [
+   "scroll",
+   "pinning",
+   "sequence",
+   "interaction",
+   "reduced-motion"
+  ],
+  "note": {
+   "kind": "prose",
+   "source": "lib/blueprints/belgrade-arbor.bp.json#/motion/idea",
+   "text": "one pinned 9-screen intro; every chapter opens with a 160px uppercase serif title over a bleed photo; horizontal card rails (864x907) scrub with scroll; a 3D map canvas",
+   "withheld": null
+  },
+  "source": "lib/blueprints/raw/belgrade-arbor.json#/motion",
+  "tracked": null,
+  "transitions": [
+   "all|0.65s|cubic-bezier(0.4, 0, 0.2, 1)",
+   "all|0.5s|cubic-bezier(0.4, 0, 0.2, 1)",
+   "opacity|0.22s|cubic-bezier(0.4, 0, 0.2, 1)"
+  ]
+ },
+ "principles": [
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "typography.ratios.display_to_body",
+    "typography.display.px",
+    "typography.body.px"
+   ],
+   "id": "scale-contrast-high",
+   "rule": "rule_scale_contrast_high",
+   "statement": "The largest measured heading is 15× the body size (240px over 16px). Threshold: ratio ≥ 7."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "typography.display.weight"
+   ],
+   "id": "display-light-weight",
+   "rule": "rule_display_light_weight",
+   "statement": "The largest measured heading is set light, weight 300. Threshold: weight ≤ 300."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "typography.display.case"
+   ],
+   "id": "display-uppercase",
+   "rule": "rule_display_uppercase",
+   "statement": "The largest measured heading is set in uppercase. Threshold: text-transform uppercase recorded in the capture."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "composition.summary.offset_heading_share",
+    "composition.sections[2].head.x",
+    "composition.sections[9].head.x"
+   ],
+   "id": "offset-headings",
+   "rule": "rule_offset_headings",
+   "statement": "2 of 8 headings with a recorded position start at or right of 30% of the viewport width. Threshold: share ≥ 25% and at least 2 headings."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "composition.summary.bleed_section_share",
+    "composition.sections[0].media[0].bleed",
+    "composition.sections[1].media[0].bleed",
+    "composition.sections[2].media[0].bleed",
+    "composition.sections[4].media[0].bleed",
+    "composition.sections[6].media[0].bleed",
+    "composition.sections[9].media[0].bleed",
+    "composition.sections[11].media[0].bleed",
+    "composition.sections[13].media[0].bleed"
+   ],
+   "id": "full-bleed-media",
+   "rule": "rule_full_bleed_media",
+   "statement": "8 of 14 sections hold a medium that spans the viewport (flagged bleed in the capture, or at least 98% of the viewport wide). Threshold: share ≥ 30%."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "imagery.image_sections",
+    "composition.sections[1].media[0]",
+    "composition.sections[2].media[0]",
+    "composition.sections[4].media[0]",
+    "composition.sections[5].media[0]",
+    "composition.sections[6].media[0]",
+    "composition.sections[7].media[0]",
+    "composition.sections[8].media[0]",
+    "composition.sections[9].media[0]",
+    "composition.sections[10].media[0]",
+    "composition.sections[11].media[1]",
+    "composition.sections[12].media[0]",
+    "composition.sections[13].media[0]"
+   ],
+   "id": "image-led",
+   "rule": "rule_image_led",
+   "statement": "12 of 14 sections hold a large still image. Threshold: share ≥ 60%."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "imagery.video_first_section",
+    "composition.sections[0].media[0].kind"
+   ],
+   "id": "video-first-section",
+   "rule": "rule_video_first_section",
+   "statement": "The first measured section holds a video element. Threshold: a medium tagged VIDEO in the first section of the capture."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "composition.sections[1].role",
+    "composition.sections[11].role",
+    "composition.sections[1].sticky",
+    "composition.sections[1].screens"
+   ],
+   "id": "pinned-sections",
+   "rule": "rule_pinned_sections",
+   "statement": "2 of 14 sections are marked pinned or sticky: 2 by a role name written into the capture by hand, 1 by the capture's sticky flag; the tallest of them runs 9 screens. Threshold: at least one such section. The scroll behaviour itself was not measured."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "composition.summary.page_screens.value"
+   ],
+   "id": "long-page",
+   "rule": "rule_long_page",
+   "statement": "The page runs 23.4 screens at the capture height. Threshold: ≥ 15 screens."
+  }
+ ],
+ "rights": {
+  "fonts": [
+   {
+    "face": "Instrument Serif",
+    "licence": "OFL",
+    "role": "delivery",
+    "source": "lib/typography/fonts.json#/fonts/2/license"
+   },
+   {
+    "face": "Work Sans",
+    "licence": "unknown",
+    "role": "delivery",
+    "source": null
+   },
+   {
+    "face": "Work Sans",
+    "licence": "unknown",
+    "role": "source",
+    "source": null
+   },
+   {
+    "face": "editorialOld",
+    "licence": "unknown",
+    "role": "source",
+    "source": null
+   }
+  ],
+  "screenshots": "research-only",
+  "source_text": "excluded"
+ },
+ "schema_version": 1,
+ "source": {
+  "captured_at": null,
+  "description": null,
+  "dpr": null,
+  "url": "https://belgradearbor.rs/en",
+  "url_source": "lib/blueprints/belgrade-arbor.bp.json#/source",
+  "viewport": {
+   "h": 756,
+   "h_source": "lib/blueprints/raw/belgrade-arbor.json#/vh",
+   "w": null,
+   "w_source": null
+  }
+ },
+ "status": "measured-desktop",
+ "typography": {
+  "basis": "measured",
+  "body": {
+   "case": null,
+   "delivery_class": "sans",
+   "delivery_face": "Work Sans",
+   "delivery_fallback": false,
+   "leading": null,
+   "not_recorded": [
+    "case",
+    "leading",
+    "tracking",
+    "weight"
+   ],
+   "px": 16,
+   "source": {
+    "blueprint": "lib/blueprints/belgrade-arbor.bp.json#/type/body",
+    "raw": "lib/blueprints/raw/belgrade-arbor.json#/sections/9/paras/0"
+   },
+   "source_face": "Work Sans",
+   "tracking": null,
+   "weight": null
+  },
+  "display": {
+   "case": "uppercase",
+   "delivery_class": "serif",
+   "delivery_face": "Instrument Serif",
+   "delivery_fallback": false,
+   "leading": null,
+   "not_recorded": [
+    "leading",
+    "tracking"
+   ],
+   "px": 240,
+   "source": {
+    "blueprint": "lib/blueprints/belgrade-arbor.bp.json#/type/display",
+    "raw": "lib/blueprints/raw/belgrade-arbor.json#/sections/8/heads/0"
+   },
+   "source_face": "editorialOld",
+   "tracking": null,
+   "weight": 300
+  },
+  "families": {
+   "source": "lib/blueprints/raw/belgrade-arbor.json#/fonts",
+   "value": [
+    "Work Sans",
+    "editorialOld (PP Editorial Old)"
+   ]
+  },
+  "h2": {
+   "case": "uppercase",
+   "delivery_class": "serif",
+   "delivery_face": "Instrument Serif",
+   "delivery_fallback": false,
+   "leading": null,
+   "not_recorded": [
+    "leading",
+    "tracking",
+    "weight"
+   ],
+   "px": 160,
+   "source": {
+    "blueprint": "lib/blueprints/belgrade-arbor.bp.json#/type/h2",
+    "raw": "lib/blueprints/raw/belgrade-arbor.json#/sections/2/heads/0"
+   },
+   "source_face": "editorialOld",
+   "tracking": null,
+   "weight": null
+  },
+  "h3": {
+   "case": "uppercase",
+   "delivery_class": "serif",
+   "delivery_face": "Instrument Serif",
+   "delivery_fallback": false,
+   "leading": null,
+   "not_recorded": [
+    "leading",
+    "tracking"
+   ],
+   "px": 151,
+   "source": {
+    "blueprint": "lib/blueprints/belgrade-arbor.bp.json#/type/h3",
+    "raw": "lib/blueprints/raw/belgrade-arbor.json#/sections/0/heads/0"
+   },
+   "source_face": "editorialOld",
+   "tracking": null,
+   "weight": 400
+  },
+  "label": null,
+  "levels_missing": {
+   "label": "not-in-capture"
+  },
+  "ratios": {
+   "display_to_body": {
+    "evidence": [
+     "typography.display.px",
+     "typography.body.px"
+    ],
+    "how": "display px ÷ body px",
+    "value": 15.0
+   },
+   "display_to_h2": {
+    "evidence": [
+     "typography.display.px",
+     "typography.h2.px"
+    ],
+    "how": "display px ÷ h2 px",
+    "value": 1.5
+   }
+  }
+ }
+}

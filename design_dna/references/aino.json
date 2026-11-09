@@ -1,0 +1,855 @@
+{
+ "built_from": {
+  "design_dna/evidence.json#/references/aino": "sha256:4952dd4d48d421cea32c38304b27ca1c20c3ad671e90a627433238d62111e569",
+  "lib/blueprints/aino.bp.json": "sha256:1911282c6e800f442bcfcd87c2cf20e3ef5468bdc2ad76138f0325bf6d1de04c",
+  "lib/blueprints/raw/aino.json": "sha256:453224e7d5cca07d6b0b0864636b32177df1179f763fcfd16a99ada928537a6d"
+ },
+ "completeness": {
+  "composition": "measured-desktop",
+  "experience": "prose-only",
+  "imagery": "measured-desktop",
+  "mobile": "missing",
+  "motion": "partial",
+  "screenshots": "missing",
+  "typography": "partial"
+ },
+ "composition": {
+  "basis": "measured",
+  "fraction_base": {
+   "basis": "recorded",
+   "source": "lib/blueprints/raw/aino.json#/vw",
+   "w": 1440
+  },
+  "grid": {
+   "col": 340,
+   "container": 1408,
+   "frame": 16,
+   "gutter": 16,
+   "not_recorded": [],
+   "raw_fields": {
+    "col": "lib/blueprints/raw/aino.json#/col",
+    "container": "lib/blueprints/raw/aino.json#/container",
+    "frame": "lib/blueprints/raw/aino.json#/frame",
+    "gutter": "lib/blueprints/raw/aino.json#/gutter"
+   },
+   "source": {
+    "blueprint": "lib/blueprints/aino.bp.json#/grid",
+    "raw": "lib/blueprints/raw/aino.json"
+   }
+  },
+  "sections": [
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": "uppercase",
+     "leading": 1.39,
+     "not_recorded": [
+      "align"
+     ],
+     "px": 13,
+     "source": "lib/blueprints/raw/aino.json#/sections/0/heads/0",
+     "tracking": 0.0415,
+     "weight": 500,
+     "wf": 0.483,
+     "x": 0.011,
+     "y": 0.962
+    },
+    "media": [
+     {
+      "ar": 0.8,
+      "bleed": false,
+      "kind": "image",
+      "source": "lib/blueprints/raw/aino.json#/sections/0/imgs/0",
+      "wf": 0.483,
+      "xf": 0.011
+     },
+     {
+      "ar": 0.8,
+      "bleed": false,
+      "kind": "video",
+      "source": "lib/blueprints/raw/aino.json#/sections/0/imgs/1",
+      "wf": 0.483,
+      "xf": 0.506
+     }
+    ],
+    "role": "work-2up",
+    "screens": 1.22,
+    "source": {
+     "blueprint": "lib/blueprints/aino.bp.json#/sections/0",
+     "raw": "lib/blueprints/raw/aino.json#/sections/0"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": null,
+     "leading": 1.03,
+     "not_recorded": [
+      "align",
+      "case"
+     ],
+     "px": 38,
+     "source": "lib/blueprints/raw/aino.json#/sections/1/heads/0",
+     "tracking": -0.0297,
+     "weight": 720,
+     "wf": 0.607,
+     "x": 0.011,
+     "y": 0.0
+    },
+    "media": [],
+    "role": "statement",
+    "screens": 0.26,
+    "source": {
+     "blueprint": "lib/blueprints/aino.bp.json#/sections/1",
+     "raw": "lib/blueprints/raw/aino.json#/sections/1"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": null,
+    "media": [
+     {
+      "ar": 0.8,
+      "bleed": false,
+      "kind": "image",
+      "source": "lib/blueprints/raw/aino.json#/sections/2/imgs/0",
+      "wf": 0.483,
+      "xf": 0.011
+     },
+     {
+      "ar": 0.8,
+      "bleed": false,
+      "kind": "image",
+      "source": "lib/blueprints/raw/aino.json#/sections/2/imgs/1",
+      "wf": 0.236,
+      "xf": 0.753
+     }
+    ],
+    "role": "work-asym",
+    "screens": 1.22,
+    "source": {
+     "blueprint": "lib/blueprints/aino.bp.json#/sections/2",
+     "raw": "lib/blueprints/raw/aino.json#/sections/2"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": null,
+    "media": [
+     {
+      "ar": 0.84,
+      "bleed": false,
+      "kind": "image",
+      "source": "lib/blueprints/raw/aino.json#/sections/3/imgs/0",
+      "wf": 0.483,
+      "xf": 0.011
+     },
+     {
+      "ar": 0.84,
+      "bleed": false,
+      "kind": "image",
+      "source": "lib/blueprints/raw/aino.json#/sections/3/imgs/1",
+      "wf": 0.483,
+      "xf": 0.506
+     }
+    ],
+    "role": "work-2up",
+    "screens": 1.16,
+    "source": {
+     "blueprint": "lib/blueprints/aino.bp.json#/sections/3",
+     "raw": "lib/blueprints/raw/aino.json#/sections/3"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": null,
+    "media": [
+     {
+      "ar": 1.78,
+      "bleed": false,
+      "kind": "image",
+      "source": "lib/blueprints/raw/aino.json#/sections/4/imgs/0",
+      "wf": 0.978,
+      "xf": 0.011
+     }
+    ],
+    "role": "work-full",
+    "screens": 1.11,
+    "source": {
+     "blueprint": "lib/blueprints/aino.bp.json#/sections/4",
+     "raw": "lib/blueprints/raw/aino.json#/sections/4"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": null,
+    "media": [
+     {
+      "ar": 0.8,
+      "bleed": false,
+      "kind": "image",
+      "source": "lib/blueprints/raw/aino.json#/sections/5/imgs/0",
+      "wf": 0.236,
+      "xf": 0.011
+     },
+     {
+      "ar": 0.8,
+      "bleed": false,
+      "kind": "image",
+      "source": "lib/blueprints/raw/aino.json#/sections/5/imgs/1",
+      "wf": 0.236,
+      "xf": 0.258
+     },
+     {
+      "ar": 0.8,
+      "bleed": false,
+      "kind": "image",
+      "source": "lib/blueprints/raw/aino.json#/sections/5/imgs/2",
+      "wf": 0.236,
+      "xf": 0.506
+     }
+    ],
+    "role": "work-3up",
+    "screens": 0.63,
+    "source": {
+     "blueprint": "lib/blueprints/aino.bp.json#/sections/5",
+     "raw": "lib/blueprints/raw/aino.json#/sections/5"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": null,
+    "media": [
+     {
+      "ar": 1.33,
+      "bleed": false,
+      "kind": "image",
+      "source": "lib/blueprints/raw/aino.json#/sections/6/imgs/0",
+      "wf": 0.978,
+      "xf": 0.011
+     }
+    ],
+    "role": "work-full",
+    "screens": 1.46,
+    "source": {
+     "blueprint": "lib/blueprints/aino.bp.json#/sections/6",
+     "raw": "lib/blueprints/raw/aino.json#/sections/6"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": "uppercase",
+     "leading": null,
+     "not_recorded": [
+      "align",
+      "leading",
+      "tracking",
+      "weight",
+      "wf",
+      "x",
+      "y"
+     ],
+     "px": 13,
+     "source": "lib/blueprints/raw/aino.json#/sections/7/heads/0",
+     "tracking": null,
+     "weight": null,
+     "wf": null,
+     "x": null,
+     "y": null
+    },
+    "media": [],
+    "role": "services-footer",
+    "screens": 0.28,
+    "source": {
+     "blueprint": "lib/blueprints/aino.bp.json#/sections/7",
+     "raw": "lib/blueprints/raw/aino.json#/sections/7"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": null,
+    "media": [
+     {
+      "ar": 6.77,
+      "bleed": false,
+      "kind": "image",
+      "source": "lib/blueprints/raw/aino.json#/sections/8/imgs/0",
+      "wf": 0.978,
+      "xf": null
+     }
+    ],
+    "role": "footer",
+    "screens": 0.36,
+    "source": {
+     "blueprint": "lib/blueprints/aino.bp.json#/sections/8",
+     "raw": "lib/blueprints/raw/aino.json#/sections/8"
+    },
+    "sticky": null
+   }
+  ],
+  "summary": {
+   "bleed_section_share": {
+    "count": 0,
+    "evidence": [
+     "composition.sections"
+    ],
+    "how": "sections holding a medium flagged bleed in the capture or at least 98% of the viewport wide ÷ all sections",
+    "matched": [],
+    "of": 9,
+    "value": 0.0
+   },
+   "offset_heading_share": {
+    "count": 0,
+    "evidence": [
+     "composition.sections[0].head.x",
+     "composition.sections[1].head.x"
+    ],
+    "how": "headings whose left edge is at or right of 30% of the viewport width ÷ headings with a recorded position",
+    "matched": [],
+    "of": 2,
+    "value": 0.0
+   },
+   "pacing": {
+    "evidence": [
+     "composition.sections[0].screens",
+     "composition.sections[1].screens",
+     "composition.sections[2].screens",
+     "composition.sections[3].screens",
+     "composition.sections[4].screens",
+     "composition.sections[5].screens",
+     "composition.sections[6].screens",
+     "composition.sections[7].screens",
+     "composition.sections[8].screens"
+    ],
+    "how": "section heights in screens, in page order",
+    "value": [
+     1.22,
+     0.26,
+     1.22,
+     1.16,
+     1.11,
+     0.63,
+     1.46,
+     0.28,
+     0.36
+    ]
+   },
+   "page_screens": {
+    "source": {
+     "blueprint": "lib/blueprints/aino.bp.json#/screens",
+     "raw": "lib/blueprints/raw/aino.json#/screens"
+    },
+    "value": 8.9
+   },
+   "sections": {
+    "evidence": [
+     "composition.sections"
+    ],
+    "how": "number of sections in the record",
+    "value": 9
+   },
+   "sections_screens_total": {
+    "evidence": [
+     "composition.sections[0].screens",
+     "composition.sections[1].screens",
+     "composition.sections[2].screens",
+     "composition.sections[3].screens",
+     "composition.sections[4].screens",
+     "composition.sections[5].screens",
+     "composition.sections[6].screens",
+     "composition.sections[7].screens",
+     "composition.sections[8].screens"
+    ],
+    "how": "sum of section heights in screens; sections can overlap or leave gaps, so this is not the page length",
+    "value": 7.7
+   }
+  },
+  "surface": {
+   "mode": "dark",
+   "paper": "#181818",
+   "paper_luminance": 0.094,
+   "source": {
+    "blueprint": "lib/blueprints/aino.bp.json#/colour/paper",
+    "raw": "lib/blueprints/raw/aino.json#/palette/0"
+   }
+  }
+ },
+ "evidence": {
+  "blueprint": "lib/blueprints/aino.bp.json",
+  "caveats": [],
+  "mirrors": null,
+  "raw": "lib/blueprints/raw/aino.json",
+  "screenshots": {
+   "desktop": [],
+   "dir": null,
+   "mobile": [],
+   "profile": null,
+   "unclassified": []
+  },
+  "scroll_capture": null
+ },
+ "experience": {
+  "not_measured": [
+   "narrative",
+   "interaction",
+   "mobile"
+  ],
+  "pacing_screens": {
+   "evidence": [
+    "composition.summary.pacing"
+   ],
+   "value": [
+    1.22,
+    0.26,
+    1.22,
+    1.16,
+    1.11,
+    0.63,
+    1.46,
+    0.28,
+    0.36
+   ]
+  },
+  "section_notes": [
+   {
+    "kind": "prose",
+    "section": 0,
+    "source": "lib/blueprints/aino.bp.json#/sections/0/note",
+    "text": "two 4:5 tiles, index label under each (A002 NAME)",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 1,
+    "source": "lib/blueprints/aino.bp.json#/sections/1/note",
+    "text": "the only sentence on the page; h1 38px bold 874px + two small pills",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 2,
+    "source": "lib/blueprints/aino.bp.json#/sections/2/note",
+    "text": "big tile left, small tile top-right (1 col), empty middle",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 4,
+    "source": "lib/blueprints/aino.bp.json#/sections/4/note",
+    "text": "one 16:9 tile full width",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 5,
+    "source": "lib/blueprints/aino.bp.json#/sections/5/note",
+    "text": "three 1-col tiles, fourth column empty",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 7,
+    "source": "lib/blueprints/aino.bp.json#/sections/7/note",
+    "text": "4 equal columns of 13px uppercase lists",
+    "withheld": null
+   }
+  ]
+ },
+ "fits": {
+  "also": [],
+  "archetype": "index-grid",
+  "archetype_source": "lib/blueprints/aino.bp.json#/archetype",
+  "kinds": [
+   "service"
+  ],
+  "kinds_source": "lib/blueprints/aino.bp.json#/class",
+  "needs": {
+   "derived_by": "rule",
+   "evidence": [
+    "imagery.image_sections",
+    "imagery.video_first_section"
+   ],
+   "images_min": 6,
+   "rule": "derive_needs",
+   "video": true
+  },
+  "temper": [
+   {
+    "derived_by": "rule",
+    "principle": "display-heavy-weight",
+    "rule": "rule_display_heavy_weight",
+    "tag": "heavy-weight"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "tight-tracking",
+    "rule": "rule_tight_tracking",
+    "tag": "tight-tracking"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "portrait-media",
+    "rule": "rule_portrait_media",
+    "tag": "portrait-imagery"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "image-led",
+    "rule": "rule_image_led",
+    "tag": "image-led"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "video-first-section",
+    "rule": "rule_video_first_section",
+    "tag": "video-led"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "dark-page",
+    "rule": "rule_dark_page",
+    "tag": "dark"
+   }
+  ]
+ },
+ "id": "aino",
+ "imagery": {
+  "aspects": {
+   "evidence": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[0].media[1].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[3].media[0].ar",
+    "composition.sections[3].media[1].ar",
+    "composition.sections[4].media[0].ar",
+    "composition.sections[5].media[0].ar",
+    "composition.sections[5].media[1].ar",
+    "composition.sections[5].media[2].ar",
+    "composition.sections[6].media[0].ar",
+    "composition.sections[8].media[0].ar"
+   ],
+   "how": "distinct aspect ratios (width ÷ height) of large media; large = at least 20% of the viewport width",
+   "value": [
+    0.8,
+    0.84,
+    1.33,
+    1.78,
+    6.77
+   ]
+  },
+  "basis": "measured",
+  "image_sections": {
+   "evidence": [
+    "composition.sections"
+   ],
+   "how": "sections holding at least one large still: not tagged video or canvas, aspect between 0.4 and 2.5",
+   "matched": [
+    "composition.sections[0].media[0]",
+    "composition.sections[2].media[0]",
+    "composition.sections[3].media[0]",
+    "composition.sections[4].media[0]",
+    "composition.sections[5].media[0]",
+    "composition.sections[6].media[0]"
+   ],
+   "of": 9,
+   "share": 0.67,
+   "value": 6
+  },
+  "landscape_share": {
+   "count": 3,
+   "evidence": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[0].media[1].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[3].media[0].ar",
+    "composition.sections[3].media[1].ar",
+    "composition.sections[4].media[0].ar",
+    "composition.sections[5].media[0].ar",
+    "composition.sections[5].media[1].ar",
+    "composition.sections[5].media[2].ar",
+    "composition.sections[6].media[0].ar",
+    "composition.sections[8].media[0].ar"
+   ],
+   "how": "large media with aspect ≥ 1.2 ÷ large media",
+   "matched": [
+    "composition.sections[4].media[0].ar",
+    "composition.sections[6].media[0].ar",
+    "composition.sections[8].media[0].ar"
+   ],
+   "of": 12,
+   "value": 0.25
+  },
+  "media_recorded": {
+   "evidence": [
+    "composition.sections"
+   ],
+   "how": "media elements kept in the record: wider than 100px, at most 4 per section",
+   "value": 12
+  },
+  "portrait_share": {
+   "count": 9,
+   "evidence": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[0].media[1].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[3].media[0].ar",
+    "composition.sections[3].media[1].ar",
+    "composition.sections[4].media[0].ar",
+    "composition.sections[5].media[0].ar",
+    "composition.sections[5].media[1].ar",
+    "composition.sections[5].media[2].ar",
+    "composition.sections[6].media[0].ar",
+    "composition.sections[8].media[0].ar"
+   ],
+   "how": "large media with aspect ≤ 0.9 ÷ large media",
+   "matched": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[0].media[1].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[3].media[0].ar",
+    "composition.sections[3].media[1].ar",
+    "composition.sections[5].media[0].ar",
+    "composition.sections[5].media[1].ar",
+    "composition.sections[5].media[2].ar"
+   ],
+   "of": 12,
+   "value": 0.75
+  },
+  "video_first_section": {
+   "evidence": [
+    "composition.sections[0].media"
+   ],
+   "how": "the first section holds a medium the capture tagged VIDEO",
+   "matched": [
+    "composition.sections[0].media[1].kind"
+   ],
+   "value": true
+  }
+ },
+ "implementation": {
+  "ir_seeds": [],
+  "recipe": "lib/templates/recipes.py#aino"
+ },
+ "motion": {
+  "animated": 4,
+  "custom_cursor": null,
+  "keyframes": [
+   "blinker",
+   "agent-pulse"
+  ],
+  "libs": {},
+  "not_measured": [
+   "scroll",
+   "pinning",
+   "sequence",
+   "interaction",
+   "reduced-motion"
+  ],
+  "note": {
+   "kind": "prose",
+   "source": "lib/blueprints/aino.bp.json#/motion/idea",
+   "text": "almost no motion: hover colour 0.1s, blinking clock; the rhythm IS the motion",
+   "withheld": null
+  },
+  "source": "lib/blueprints/raw/aino.json#/motion",
+  "tracked": 72,
+  "transitions": [
+   "background-color, color|0.1s, 0.1s|ease-out, ease-out"
+  ]
+ },
+ "principles": [
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "typography.display.weight"
+   ],
+   "id": "display-heavy-weight",
+   "rule": "rule_display_heavy_weight",
+   "statement": "The largest measured heading is set heavy, weight 720. Threshold: weight ≥ 700."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "typography.display.tracking",
+    "typography.display.px"
+   ],
+   "id": "tight-tracking",
+   "rule": "rule_tight_tracking",
+   "statement": "The largest measured heading is tracked tight, -0.0297em at 38px. Threshold: ≤ -0.02em."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "imagery.portrait_share",
+    "composition.sections[0].media[0].ar",
+    "composition.sections[0].media[1].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[3].media[0].ar",
+    "composition.sections[3].media[1].ar",
+    "composition.sections[5].media[0].ar",
+    "composition.sections[5].media[1].ar",
+    "composition.sections[5].media[2].ar"
+   ],
+   "id": "portrait-media",
+   "rule": "rule_portrait_media",
+   "statement": "9 of 12 large media are portrait (aspect ≤ 0.9; large = at least 20% of the viewport width). Threshold: share ≥ 60% and at least 3 large media."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "imagery.image_sections",
+    "composition.sections[0].media[0]",
+    "composition.sections[2].media[0]",
+    "composition.sections[3].media[0]",
+    "composition.sections[4].media[0]",
+    "composition.sections[5].media[0]",
+    "composition.sections[6].media[0]"
+   ],
+   "id": "image-led",
+   "rule": "rule_image_led",
+   "statement": "6 of 9 sections hold a large still image. Threshold: share ≥ 60%."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "imagery.video_first_section",
+    "composition.sections[0].media[1].kind"
+   ],
+   "id": "video-first-section",
+   "rule": "rule_video_first_section",
+   "statement": "The first measured section holds a video element. Threshold: a medium tagged VIDEO in the first section of the capture."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "composition.surface.paper",
+    "composition.surface.paper_luminance"
+   ],
+   "id": "dark-page",
+   "rule": "rule_dark_page",
+   "statement": "The page surface is dark: the background colour with the largest share, #181818, has relative luminance 0.09. Threshold: luminance < 0.3."
+  }
+ ],
+ "rights": {
+  "fonts": [
+   {
+    "face": "Geist",
+    "licence": "unknown",
+    "role": "delivery",
+    "source": null
+   },
+   {
+    "face": "Hanken Grotesk",
+    "licence": "unknown",
+    "role": "delivery",
+    "source": null
+   },
+   {
+    "face": "abcplus",
+    "licence": "unknown",
+    "role": "source",
+    "source": null
+   }
+  ],
+  "screenshots": "research-only",
+  "source_text": "excluded"
+ },
+ "schema_version": 1,
+ "source": {
+  "captured_at": null,
+  "description": null,
+  "dpr": null,
+  "url": "https://aino.agency/",
+  "url_source": "lib/blueprints/aino.bp.json#/source",
+  "viewport": {
+   "h": 756,
+   "h_source": "lib/blueprints/raw/aino.json#/vh",
+   "w": 1440,
+   "w_source": "lib/blueprints/raw/aino.json#/vw"
+  }
+ },
+ "status": "measured-desktop",
+ "typography": {
+  "basis": "measured",
+  "body": null,
+  "display": {
+   "case": null,
+   "delivery_class": "sans",
+   "delivery_face": "Hanken Grotesk",
+   "delivery_fallback": false,
+   "leading": 1.03,
+   "not_recorded": [
+    "case"
+   ],
+   "px": 38,
+   "source": {
+    "blueprint": "lib/blueprints/aino.bp.json#/type/display",
+    "raw": "lib/blueprints/raw/aino.json#/sections/1/heads/0"
+   },
+   "source_face": "abcplus",
+   "tracking": -0.0297,
+   "weight": 720
+  },
+  "families": {
+   "source": "lib/blueprints/raw/aino.json#/fonts",
+   "value": [
+    "abcplus",
+    "mono"
+   ]
+  },
+  "h2": null,
+  "h3": null,
+  "label": {
+   "case": "uppercase",
+   "delivery_class": "sans",
+   "delivery_face": "Geist",
+   "delivery_fallback": true,
+   "leading": null,
+   "not_recorded": [
+    "leading",
+    "tracking",
+    "weight"
+   ],
+   "px": 13,
+   "source": {
+    "blueprint": "lib/blueprints/aino.bp.json#/type/label",
+    "raw": "lib/blueprints/raw/aino.json#/sections/8/labels/0"
+   },
+   "source_face": null,
+   "tracking": null,
+   "weight": null
+  },
+  "levels_missing": {
+   "body": "not-in-capture",
+   "h2": "blueprint-copies-display",
+   "h3": "not-in-capture"
+  },
+  "ratios": {
+   "display_to_body": null,
+   "display_to_h2": null
+  }
+ }
+}

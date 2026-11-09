@@ -1,0 +1,738 @@
+{
+ "built_from": {
+  "design_dna/evidence.json#/references/units": "sha256:4952dd4d48d421cea32c38304b27ca1c20c3ad671e90a627433238d62111e569",
+  "lib/blueprints/raw/units.json": "sha256:19f0f59f7d2cf61938a755d64ec6a8ca0b04e2d7d37505ca514b0bcdd160b648",
+  "lib/blueprints/units.bp.json": "sha256:34a58685c70c44c1be46c9e80933a0831e6083cf03065bd07029eeb278221a26"
+ },
+ "completeness": {
+  "composition": "measured-desktop",
+  "experience": "prose-only",
+  "imagery": "measured-desktop",
+  "mobile": "missing",
+  "motion": "partial",
+  "screenshots": "missing",
+  "typography": "measured"
+ },
+ "composition": {
+  "basis": "measured",
+  "fraction_base": {
+   "basis": "assumed",
+   "source": "lib/blueprint/normalize.py",
+   "w": 1440
+  },
+  "grid": {
+   "col": null,
+   "container": 1252,
+   "frame": 167,
+   "gutter": 24,
+   "not_recorded": [
+    "col"
+   ],
+   "raw_fields": {
+    "container": "lib/blueprints/raw/units.json#/container",
+    "frame": "lib/blueprints/raw/units.json#/frame",
+    "gutter": "lib/blueprints/raw/units.json#/gutter"
+   },
+   "source": {
+    "blueprint": "lib/blueprints/units.bp.json#/grid",
+    "raw": "lib/blueprints/raw/units.json"
+   }
+  },
+  "sections": [
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": null,
+     "leading": 1.05,
+     "not_recorded": [
+      "align",
+      "case",
+      "tracking",
+      "wf",
+      "x",
+      "y"
+     ],
+     "px": 33,
+     "source": "lib/blueprints/raw/units.json#/sections/0/heads/0",
+     "tracking": null,
+     "weight": 850,
+     "wf": null,
+     "x": null,
+     "y": null
+    },
+    "media": [
+     {
+      "ar": 1.77,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/units.json#/sections/0/imgs/0",
+      "wf": 0.869,
+      "xf": 0.116
+     }
+    ],
+    "role": "hero-photo-inset",
+    "screens": 0.93,
+    "source": {
+     "blueprint": "lib/blueprints/units.bp.json#/sections/0",
+     "raw": "lib/blueprints/raw/units.json#/sections/0"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": null,
+    "media": [
+     {
+      "ar": 1.53,
+      "bleed": false,
+      "kind": "canvas",
+      "source": "lib/blueprints/raw/units.json#/sections/1/imgs/0",
+      "wf": 0.502,
+      "xf": 0.483
+     }
+    ],
+    "role": "intro-map",
+    "screens": 0.63,
+    "source": {
+     "blueprint": "lib/blueprints/units.bp.json#/sections/1",
+     "raw": "lib/blueprints/raw/units.json#/sections/1"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": null,
+    "media": [
+     {
+      "ar": 0.89,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/units.json#/sections/2/imgs/0",
+      "wf": 0.281,
+      "xf": 0.428
+     },
+     {
+      "ar": 0.95,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/units.json#/sections/2/imgs/1",
+      "wf": 0.281,
+      "xf": 0.726
+     },
+     {
+      "ar": 1.02,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/units.json#/sections/2/imgs/2",
+      "wf": 0.281,
+      "xf": 1.022
+     }
+    ],
+    "role": "pinned-cards",
+    "screens": 4.98,
+    "source": {
+     "blueprint": "lib/blueprints/units.bp.json#/sections/2",
+     "raw": "lib/blueprints/raw/units.json#/sections/2"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": null,
+    "media": [],
+    "role": "text-icons-cta",
+    "screens": 1.11,
+    "source": {
+     "blueprint": "lib/blueprints/units.bp.json#/sections/3",
+     "raw": "lib/blueprints/raw/units.json#/sections/3"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": null,
+    "media": [
+     {
+      "ar": 0.67,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/units.json#/sections/4/imgs/0",
+      "wf": 0.279,
+      "xf": 0.116
+     },
+     {
+      "ar": 0.67,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/units.json#/sections/4/imgs/1",
+      "wf": 0.279,
+      "xf": 0.706
+     }
+    ],
+    "role": "photo-text-photo",
+    "screens": 0.8,
+    "source": {
+     "blueprint": "lib/blueprints/units.bp.json#/sections/4",
+     "raw": "lib/blueprints/raw/units.json#/sections/4"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": null,
+    "media": [
+     {
+      "ar": 1.18,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/units.json#/sections/5/imgs/0",
+      "wf": 0.237,
+      "xf": 0.137
+     },
+     {
+      "ar": 1.18,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/units.json#/sections/5/imgs/1",
+      "wf": 0.237,
+      "xf": 0.432
+     },
+     {
+      "ar": 1.18,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/units.json#/sections/5/imgs/2",
+      "wf": 0.237,
+      "xf": 0.727
+     }
+    ],
+    "role": "cards-3up-contained",
+    "screens": 0.68,
+    "source": {
+     "blueprint": "lib/blueprints/units.bp.json#/sections/5",
+     "raw": "lib/blueprints/raw/units.json#/sections/5"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": null,
+    "media": [
+     {
+      "ar": 0.81,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/units.json#/sections/6/imgs/0",
+      "wf": 0.186,
+      "xf": null
+     }
+    ],
+    "role": "photo-marquee",
+    "screens": 0.55,
+    "source": {
+     "blueprint": "lib/blueprints/units.bp.json#/sections/6",
+     "raw": "lib/blueprints/raw/units.json#/sections/6"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": null,
+    "media": [],
+    "role": "footer",
+    "screens": 0.83,
+    "source": {
+     "blueprint": "lib/blueprints/units.bp.json#/sections/7",
+     "raw": "lib/blueprints/raw/units.json#/sections/7"
+    },
+    "sticky": null
+   }
+  ],
+  "summary": {
+   "bleed_section_share": {
+    "count": 0,
+    "evidence": [
+     "composition.sections"
+    ],
+    "how": "sections holding a medium flagged bleed in the capture or at least 98% of the viewport wide ÷ all sections",
+    "matched": [],
+    "of": 8,
+    "value": 0.0
+   },
+   "offset_heading_share": {
+    "count": 0,
+    "evidence": [],
+    "how": "headings whose left edge is at or right of 30% of the viewport width ÷ headings with a recorded position",
+    "matched": [],
+    "of": 0,
+    "value": null
+   },
+   "pacing": {
+    "evidence": [
+     "composition.sections[0].screens",
+     "composition.sections[1].screens",
+     "composition.sections[2].screens",
+     "composition.sections[3].screens",
+     "composition.sections[4].screens",
+     "composition.sections[5].screens",
+     "composition.sections[6].screens",
+     "composition.sections[7].screens"
+    ],
+    "how": "section heights in screens, in page order",
+    "value": [
+     0.93,
+     0.63,
+     4.98,
+     1.11,
+     0.8,
+     0.68,
+     0.55,
+     0.83
+    ]
+   },
+   "page_screens": {
+    "source": {
+     "blueprint": "lib/blueprints/units.bp.json#/screens",
+     "raw": "lib/blueprints/raw/units.json#/screens"
+    },
+    "value": 11
+   },
+   "sections": {
+    "evidence": [
+     "composition.sections"
+    ],
+    "how": "number of sections in the record",
+    "value": 8
+   },
+   "sections_screens_total": {
+    "evidence": [
+     "composition.sections[0].screens",
+     "composition.sections[1].screens",
+     "composition.sections[2].screens",
+     "composition.sections[3].screens",
+     "composition.sections[4].screens",
+     "composition.sections[5].screens",
+     "composition.sections[6].screens",
+     "composition.sections[7].screens"
+    ],
+    "how": "sum of section heights in screens; sections can overlap or leave gaps, so this is not the page length",
+    "value": 10.51
+   }
+  },
+  "surface": {
+   "mode": "light",
+   "paper": "#f4e9e1",
+   "paper_luminance": 0.921,
+   "source": {
+    "blueprint": "lib/blueprints/units.bp.json#/colour/paper",
+    "raw": "lib/blueprints/raw/units.json#/palette/0"
+   }
+  }
+ },
+ "evidence": {
+  "blueprint": "lib/blueprints/units.bp.json",
+  "caveats": [],
+  "mirrors": null,
+  "raw": "lib/blueprints/raw/units.json",
+  "screenshots": {
+   "desktop": [],
+   "dir": null,
+   "mobile": [],
+   "profile": null,
+   "unclassified": []
+  },
+  "scroll_capture": null
+ },
+ "experience": {
+  "not_measured": [
+   "narrative",
+   "interaction",
+   "mobile"
+  ],
+  "pacing_screens": {
+   "evidence": [
+    "composition.summary.pacing"
+   ],
+   "value": [
+    0.93,
+    0.63,
+    4.98,
+    1.11,
+    0.8,
+    0.68,
+    0.55,
+    0.83
+   ]
+  },
+  "section_notes": [
+   {
+    "kind": "prose",
+    "section": 0,
+    "source": "lib/blueprints/units.bp.json#/sections/0/note",
+    "text": "inset 16:9 photo card (167 frame), headline + pill over it",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 1,
+    "source": "lib/blueprints/units.bp.json#/sections/1/note",
+    "text": "15px paragraph 446 wide left, map 723x473 right, small coral pill tags",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 2,
+    "source": "lib/blueprints/units.bp.json#/sections/2/note",
+    "text": "5-screen pinned: list of amenities left, 405px photo cards slide in from the right",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 4,
+    "source": "lib/blueprints/units.bp.json#/sections/4/note",
+    "text": "portrait photo | text column 342 | portrait photo",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 5,
+    "source": "lib/blueprints/units.bp.json#/sections/5/note",
+    "text": "three 342x289 illustration cards with text",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 6,
+    "source": "lib/blueprints/units.bp.json#/sections/6/note",
+    "text": "marquee of 268x330 photos, big pill",
+    "withheld": null
+   }
+  ]
+ },
+ "fits": {
+  "also": [],
+  "archetype": "coliving-pastel-cards",
+  "archetype_source": "lib/blueprints/units.bp.json#/archetype",
+  "kinds": [
+   "place"
+  ],
+  "kinds_source": "lib/blueprints/units.bp.json#/class",
+  "needs": {
+   "derived_by": "rule",
+   "evidence": [
+    "imagery.image_sections",
+    "imagery.video_first_section"
+   ],
+   "images_min": 4,
+   "rule": "derive_needs",
+   "video": false
+  },
+  "temper": [
+   {
+    "derived_by": "rule",
+    "principle": "scale-contrast-low",
+    "rule": "rule_scale_contrast_low",
+    "tag": "even-type"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "display-heavy-weight",
+    "rule": "rule_display_heavy_weight",
+    "tag": "heavy-weight"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "pinned-sections",
+    "rule": "rule_pinned_sections",
+    "tag": "pinned"
+   }
+  ]
+ },
+ "id": "units",
+ "imagery": {
+  "aspects": {
+   "evidence": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[1].media[0].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[2].media[2].ar",
+    "composition.sections[4].media[0].ar",
+    "composition.sections[4].media[1].ar",
+    "composition.sections[5].media[0].ar",
+    "composition.sections[5].media[1].ar",
+    "composition.sections[5].media[2].ar"
+   ],
+   "how": "distinct aspect ratios (width ÷ height) of large media; large = at least 20% of the viewport width",
+   "value": [
+    0.67,
+    0.89,
+    0.95,
+    1.02,
+    1.18,
+    1.53,
+    1.77
+   ]
+  },
+  "basis": "measured",
+  "image_sections": {
+   "evidence": [
+    "composition.sections"
+   ],
+   "how": "sections holding at least one large still: not tagged video or canvas, aspect between 0.4 and 2.5",
+   "matched": [
+    "composition.sections[0].media[0]",
+    "composition.sections[2].media[0]",
+    "composition.sections[4].media[0]",
+    "composition.sections[5].media[0]"
+   ],
+   "of": 8,
+   "share": 0.5,
+   "value": 4
+  },
+  "landscape_share": {
+   "count": 2,
+   "evidence": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[1].media[0].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[2].media[2].ar",
+    "composition.sections[4].media[0].ar",
+    "composition.sections[4].media[1].ar",
+    "composition.sections[5].media[0].ar",
+    "composition.sections[5].media[1].ar",
+    "composition.sections[5].media[2].ar"
+   ],
+   "how": "large media with aspect ≥ 1.2 ÷ large media",
+   "matched": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[1].media[0].ar"
+   ],
+   "of": 10,
+   "value": 0.2
+  },
+  "media_recorded": {
+   "evidence": [
+    "composition.sections"
+   ],
+   "how": "media elements kept in the record: wider than 100px, at most 4 per section",
+   "value": 11
+  },
+  "portrait_share": {
+   "count": 3,
+   "evidence": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[1].media[0].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[2].media[2].ar",
+    "composition.sections[4].media[0].ar",
+    "composition.sections[4].media[1].ar",
+    "composition.sections[5].media[0].ar",
+    "composition.sections[5].media[1].ar",
+    "composition.sections[5].media[2].ar"
+   ],
+   "how": "large media with aspect ≤ 0.9 ÷ large media",
+   "matched": [
+    "composition.sections[2].media[0].ar",
+    "composition.sections[4].media[0].ar",
+    "composition.sections[4].media[1].ar"
+   ],
+   "of": 10,
+   "value": 0.3
+  },
+  "video_first_section": {
+   "evidence": [
+    "composition.sections[0].media"
+   ],
+   "how": "the first section holds a medium the capture tagged VIDEO",
+   "matched": [],
+   "value": false
+  }
+ },
+ "implementation": {
+  "ir_seeds": [],
+  "recipe": "lib/templates/recipes.py#units"
+ },
+ "motion": {
+  "animated": 19,
+  "custom_cursor": null,
+  "keyframes": null,
+  "libs": {
+   "gsap": true,
+   "lenis": true,
+   "scrollTrigger": true
+  },
+  "not_measured": [
+   "scroll",
+   "pinning",
+   "sequence",
+   "interaction",
+   "reduced-motion"
+  ],
+  "note": {
+   "kind": "prose",
+   "source": "lib/blueprints/units.bp.json#/motion/idea",
+   "text": "page background colour crossfades per section (1.8s), pastel bands, pill buttons, pinned 5-screen feature list with 405px photo cards sliding",
+   "withheld": null
+  },
+  "source": "lib/blueprints/raw/units.json#/motion",
+  "tracked": null,
+  "transitions": [
+   "background|1.8s|cubic-bezier(0.19, 1, 0.22, 1)",
+   "all|0.7s|cubic-bezier(0.19, 1, 0.22, 1)",
+   "transform|0.4s|cubic-bezier(0.19, 1, 0.22, 1)"
+  ]
+ },
+ "principles": [
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "typography.ratios.display_to_body",
+    "typography.display.px",
+    "typography.body.px"
+   ],
+   "id": "scale-contrast-low",
+   "rule": "rule_scale_contrast_low",
+   "statement": "The largest measured heading is only 2.2× the body size (33px over 15px). Threshold: ratio ≤ 3."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "typography.display.weight"
+   ],
+   "id": "display-heavy-weight",
+   "rule": "rule_display_heavy_weight",
+   "statement": "The largest measured heading is set heavy, weight 850. Threshold: weight ≥ 700."
+  },
+  {
+   "confidence": "observed",
+   "derived_by": "rule",
+   "evidence": [
+    "composition.sections[2].role",
+    "composition.sections[2].screens"
+   ],
+   "id": "pinned-sections",
+   "rule": "rule_pinned_sections",
+   "statement": "1 of 8 sections are marked pinned or sticky: 1 by a role name written into the capture by hand, 0 by the capture's sticky flag; the tallest of them runs 4.98 screens. Threshold: at least one such section. The scroll behaviour itself was not measured."
+  }
+ ],
+ "rights": {
+  "fonts": [
+   {
+    "face": "Geist",
+    "licence": "unknown",
+    "role": "delivery",
+    "source": null
+   },
+   {
+    "face": "Manrope",
+    "licence": "OFL",
+    "role": "delivery",
+    "source": "lib/typography/fonts.json#/fonts/11/license"
+   },
+   {
+    "face": "Aeonik Pro",
+    "licence": "unknown",
+    "role": "source",
+    "source": null
+   },
+   {
+    "face": "Bunch",
+    "licence": "unknown",
+    "role": "source",
+    "source": null
+   }
+  ],
+  "screenshots": "research-only",
+  "source_text": "excluded"
+ },
+ "schema_version": 1,
+ "source": {
+  "captured_at": null,
+  "description": null,
+  "dpr": null,
+  "url": "https://units.gr/en/homepage/",
+  "url_source": "lib/blueprints/units.bp.json#/source",
+  "viewport": {
+   "h": 756,
+   "h_source": "lib/blueprints/raw/units.json#/vh",
+   "w": null,
+   "w_source": null
+  }
+ },
+ "status": "measured-desktop",
+ "typography": {
+  "basis": "measured",
+  "body": {
+   "case": null,
+   "delivery_class": "sans",
+   "delivery_face": "Manrope",
+   "delivery_fallback": false,
+   "leading": null,
+   "not_recorded": [
+    "case",
+    "leading",
+    "tracking",
+    "weight"
+   ],
+   "px": 15,
+   "source": {
+    "blueprint": "lib/blueprints/units.bp.json#/type/body",
+    "raw": "lib/blueprints/raw/units.json#/sections/3/paras/0"
+   },
+   "source_face": "Aeonik Pro",
+   "tracking": null,
+   "weight": null
+  },
+  "display": {
+   "case": null,
+   "delivery_class": "sans",
+   "delivery_face": "Geist",
+   "delivery_fallback": true,
+   "leading": 1.05,
+   "not_recorded": [
+    "case",
+    "tracking"
+   ],
+   "px": 33,
+   "source": {
+    "blueprint": "lib/blueprints/units.bp.json#/type/display",
+    "raw": "lib/blueprints/raw/units.json#/sections/0/heads/0"
+   },
+   "source_face": "Bunch",
+   "tracking": null,
+   "weight": 850
+  },
+  "families": {
+   "source": "lib/blueprints/raw/units.json#/fonts",
+   "value": [
+    "Aeonik Pro",
+    "Bunch"
+   ]
+  },
+  "h2": null,
+  "h3": null,
+  "label": null,
+  "levels_missing": {
+   "h2": "blueprint-copies-display",
+   "h3": "not-in-capture",
+   "label": "not-in-capture"
+  },
+  "ratios": {
+   "display_to_body": {
+    "evidence": [
+     "typography.display.px",
+     "typography.body.px"
+    ],
+    "how": "display px ÷ body px",
+    "value": 2.2
+   },
+   "display_to_h2": null
+  }
+ }
+}

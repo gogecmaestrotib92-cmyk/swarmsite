@@ -11,3 +11,7 @@ out/*/hero.mp4
 .env
 .env.local
 .env.*.local
+
+# benchmark inputs and outputs: third-party text and images, regenerated with bench/fetch.py and bench/run.py
+bench/seed/
+bench/runs/

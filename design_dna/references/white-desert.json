@@ -1,0 +1,1119 @@
+{
+ "built_from": {
+  "design_dna/evidence.json#/references/white-desert": "sha256:4952dd4d48d421cea32c38304b27ca1c20c3ad671e90a627433238d62111e569",
+  "lib/blueprints/raw/white-desert.json": "sha256:cc0a6f14b1326ea4d0330ef8aa0be4e2d95e66bf46565d282f968bcc5f4d92b2",
+  "lib/blueprints/white-desert.bp.json": "sha256:8e7aed99cd2e493ab82651cf28e722491e37cccf506f06e24696f9d56ae18131"
+ },
+ "completeness": {
+  "composition": "measured-desktop",
+  "experience": "prose-only",
+  "imagery": "measured-desktop",
+  "mobile": "missing",
+  "motion": "partial",
+  "screenshots": "missing",
+  "typography": "measured"
+ },
+ "composition": {
+  "basis": "measured",
+  "fraction_base": {
+   "basis": "assumed",
+   "source": "lib/blueprint/normalize.py",
+   "w": 1440
+  },
+  "grid": {
+   "col": null,
+   "container": 1320,
+   "frame": null,
+   "gutter": 60,
+   "not_recorded": [
+    "col",
+    "frame"
+   ],
+   "raw_fields": {
+    "container": "lib/blueprints/raw/white-desert.json#/container",
+    "gutter": "lib/blueprints/raw/white-desert.json#/gutter"
+   },
+   "source": {
+    "blueprint": "lib/blueprints/white-desert.bp.json#/grid",
+    "raw": "lib/blueprints/raw/white-desert.json"
+   }
+  },
+  "sections": [
+   {
+    "bg": null,
+    "head": {
+     "align": "center",
+     "case": "uppercase",
+     "leading": 1.0,
+     "not_recorded": [
+      "tracking",
+      "y"
+     ],
+     "px": 256,
+     "source": "lib/blueprints/raw/white-desert.json#/sections/0/heads/0",
+     "tracking": null,
+     "weight": 400,
+     "wf": 0.809,
+     "x": 0.096,
+     "y": null
+    },
+    "media": [
+     {
+      "ar": 1.9,
+      "bleed": true,
+      "kind": "video",
+      "source": "lib/blueprints/raw/white-desert.json#/sections/0/imgs/0",
+      "wf": 1.0,
+      "xf": null
+     },
+     {
+      "ar": 0.89,
+      "bleed": false,
+      "kind": "image",
+      "source": "lib/blueprints/raw/white-desert.json#/sections/0/imgs/1",
+      "wf": 0.131,
+      "xf": 0.828
+     }
+    ],
+    "role": "hero-video-giant",
+    "screens": 2.0,
+    "source": {
+     "blueprint": "lib/blueprints/white-desert.bp.json#/sections/0",
+     "raw": "lib/blueprints/raw/white-desert.json#/sections/0"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": "uppercase",
+     "leading": 1.0,
+     "not_recorded": [
+      "align",
+      "tracking"
+     ],
+     "px": 42,
+     "source": "lib/blueprints/raw/white-desert.json#/sections/1/heads/0",
+     "tracking": null,
+     "weight": 400,
+     "wf": 0.492,
+     "x": 0.336,
+     "y": 0.476
+    },
+    "media": [],
+    "role": "statement-uppercase",
+    "screens": 1.04,
+    "source": {
+     "blueprint": "lib/blueprints/white-desert.bp.json#/sections/1",
+     "raw": "lib/blueprints/raw/white-desert.json#/sections/1"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": null,
+    "media": [
+     {
+      "ar": 1.27,
+      "bleed": true,
+      "kind": null,
+      "source": "lib/blueprints/raw/white-desert.json#/sections/2/imgs/0",
+      "wf": 1.0,
+      "xf": null
+     }
+    ],
+    "role": "photo-bleed-tall",
+    "screens": 1.5,
+    "source": {
+     "blueprint": "lib/blueprints/white-desert.bp.json#/sections/2",
+     "raw": "lib/blueprints/raw/white-desert.json#/sections/2"
+    },
+    "sticky": null
+   },
+   {
+    "bg": "#ffffff",
+    "head": {
+     "align": "center",
+     "case": "uppercase",
+     "leading": 1.0,
+     "not_recorded": [
+      "tracking",
+      "wf",
+      "x",
+      "y"
+     ],
+     "px": 60,
+     "source": "lib/blueprints/raw/white-desert.json#/sections/3/heads/0",
+     "tracking": null,
+     "weight": 400,
+     "wf": null,
+     "x": null,
+     "y": null
+    },
+    "media": [],
+    "role": "section-title",
+    "screens": 0.71,
+    "source": {
+     "blueprint": "lib/blueprints/white-desert.bp.json#/sections/3",
+     "raw": "lib/blueprints/raw/white-desert.json#/sections/3"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": null,
+     "leading": null,
+     "not_recorded": [
+      "align",
+      "case",
+      "leading",
+      "tracking"
+     ],
+     "px": 42,
+     "source": "lib/blueprints/raw/white-desert.json#/sections/4/heads/0",
+     "tracking": null,
+     "weight": 500,
+     "wf": 0.201,
+     "x": 0.039,
+     "y": 0.068
+    },
+    "media": [
+     {
+      "ar": 1.12,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/white-desert.json#/sections/4/imgs/0",
+      "wf": 0.5,
+      "xf": 0.008
+     },
+     {
+      "ar": 1.12,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/white-desert.json#/sections/4/imgs/1",
+      "wf": 0.5,
+      "xf": 0.5
+     }
+    ],
+    "role": "cards-2up-wide",
+    "screens": 0.85,
+    "source": {
+     "blueprint": "lib/blueprints/white-desert.bp.json#/sections/4",
+     "raw": "lib/blueprints/raw/white-desert.json#/sections/4"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": null,
+    "media": [],
+    "role": "quote-centre",
+    "screens": 1.26,
+    "source": {
+     "blueprint": "lib/blueprints/white-desert.bp.json#/sections/5",
+     "raw": "lib/blueprints/raw/white-desert.json#/sections/5"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": "uppercase",
+     "leading": null,
+     "not_recorded": [
+      "align",
+      "leading",
+      "tracking"
+     ],
+     "px": 140,
+     "source": "lib/blueprints/raw/white-desert.json#/sections/6/heads/0",
+     "tracking": null,
+     "weight": 500,
+     "wf": 0.617,
+     "x": 0.191,
+     "y": 0.032
+    },
+    "media": [
+     {
+      "ar": 1.9,
+      "bleed": true,
+      "kind": null,
+      "source": "lib/blueprints/raw/white-desert.json#/sections/6/imgs/0",
+      "wf": 1.0,
+      "xf": null
+     },
+     {
+      "ar": 1.36,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/white-desert.json#/sections/6/imgs/1",
+      "wf": 0.472,
+      "xf": 1.014
+     }
+    ],
+    "role": "pinned-sequence",
+    "screens": 11.83,
+    "source": {
+     "blueprint": "lib/blueprints/white-desert.bp.json#/sections/6",
+     "raw": "lib/blueprints/raw/white-desert.json#/sections/6"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": "center",
+     "case": "uppercase",
+     "leading": 0.9,
+     "not_recorded": [
+      "tracking"
+     ],
+     "px": 320,
+     "source": "lib/blueprints/raw/white-desert.json#/sections/7/heads/0",
+     "tracking": null,
+     "weight": 400,
+     "wf": 0.983,
+     "x": 0.008,
+     "y": 0.327
+    },
+    "media": [],
+    "role": "giant-wordmark",
+    "screens": 0.57,
+    "source": {
+     "blueprint": "lib/blueprints/white-desert.bp.json#/sections/7",
+     "raw": "lib/blueprints/raw/white-desert.json#/sections/7"
+    },
+    "sticky": null
+   },
+   {
+    "bg": "#ffffff",
+    "head": {
+     "align": "center",
+     "case": "uppercase",
+     "leading": null,
+     "not_recorded": [
+      "leading",
+      "tracking",
+      "weight",
+      "wf",
+      "x",
+      "y"
+     ],
+     "px": 42,
+     "source": "lib/blueprints/raw/white-desert.json#/sections/8/heads/0",
+     "tracking": null,
+     "weight": null,
+     "wf": null,
+     "x": null,
+     "y": null
+    },
+    "media": [
+     {
+      "ar": 0.84,
+      "bleed": true,
+      "kind": null,
+      "source": "lib/blueprints/raw/white-desert.json#/sections/8/imgs/0",
+      "wf": 1.0,
+      "xf": null
+     },
+     {
+      "ar": 1.78,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/white-desert.json#/sections/8/imgs/1",
+      "wf": 0.216,
+      "xf": 0.67
+     }
+    ],
+    "role": "itinerary-overlay",
+    "screens": 2.6,
+    "source": {
+     "blueprint": "lib/blueprints/white-desert.bp.json#/sections/8",
+     "raw": "lib/blueprints/raw/white-desert.json#/sections/8"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": "center",
+     "case": "uppercase",
+     "leading": null,
+     "not_recorded": [
+      "leading",
+      "tracking",
+      "weight",
+      "wf",
+      "x",
+      "y"
+     ],
+     "px": 42,
+     "source": "lib/blueprints/raw/white-desert.json#/sections/9/heads/0",
+     "tracking": null,
+     "weight": null,
+     "wf": null,
+     "x": null,
+     "y": null
+    },
+    "media": [
+     {
+      "ar": 1.9,
+      "bleed": true,
+      "kind": null,
+      "source": "lib/blueprints/raw/white-desert.json#/sections/9/imgs/0",
+      "wf": 1.0,
+      "xf": null
+     }
+    ],
+    "role": "cta-photo",
+    "screens": 1.0,
+    "source": {
+     "blueprint": "lib/blueprints/white-desert.bp.json#/sections/9",
+     "raw": "lib/blueprints/raw/white-desert.json#/sections/9"
+    },
+    "sticky": null
+   },
+   {
+    "bg": "#e9e7e1",
+    "head": null,
+    "media": [
+     {
+      "ar": 4.13,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/white-desert.json#/sections/10/imgs/0",
+      "wf": 0.315,
+      "xf": 0.669
+     }
+    ],
+    "role": "footer-sand",
+    "screens": 1.25,
+    "source": {
+     "blueprint": "lib/blueprints/white-desert.bp.json#/sections/10",
+     "raw": "lib/blueprints/raw/white-desert.json#/sections/10"
+    },
+    "sticky": null
+   }
+  ],
+  "summary": {
+   "bleed_section_share": {
+    "count": 5,
+    "evidence": [
+     "composition.sections"
+    ],
+    "how": "sections holding a medium flagged bleed in the capture or at least 98% of the viewport wide ÷ all sections",
+    "matched": [
+     "composition.sections[0].media[0].bleed",
+     "composition.sections[2].media[0].bleed",
+     "composition.sections[6].media[0].bleed",
+     "composition.sections[8].media[0].bleed",
+     "composition.sections[9].media[0].bleed"
+    ],
+    "of": 11,
+    "value": 0.45
+   },
+   "offset_heading_share": {
+    "count": 1,
+    "evidence": [
+     "composition.sections[0].head.x",
+     "composition.sections[1].head.x",
+     "composition.sections[4].head.x",
+     "composition.sections[6].head.x",
+     "composition.sections[7].head.x"
+    ],
+    "how": "headings whose left edge is at or right of 30% of the viewport width ÷ headings with a recorded position",
+    "matched": [
+     "composition.sections[1].head.x"
+    ],
+    "of": 5,
+    "value": 0.2
+   },
+   "pacing": {
+    "evidence": [
+     "composition.sections[0].screens",
+     "composition.sections[1].screens",
+     "composition.sections[2].screens",
+     "composition.sections[3].screens",
+     "composition.sections[4].screens",
+     "composition.sections[5].screens",
+     "composition.sections[6].screens",
+     "composition.sections[7].screens",
+     "composition.sections[8].screens",
+     "composition.sections[9].screens",
+     "composition.sections[10].screens"
+    ],
+    "how": "section heights in screens, in page order",
+    "value": [
+     2.0,
+     1.04,
+     1.5,
+     0.71,
+     0.85,
+     1.26,
+     11.83,
+     0.57,
+     2.6,
+     1.0,
+     1.25
+    ]
+   },
+   "page_screens": {
+    "source": {
+     "blueprint": "lib/blueprints/white-desert.bp.json#/screens",
+     "raw": "lib/blueprints/raw/white-desert.json#/screens"
+    },
+    "value": 25.6
+   },
+   "sections": {
+    "evidence": [
+     "composition.sections"
+    ],
+    "how": "number of sections in the record",
+    "value": 11
+   },
+   "sections_screens_total": {
+    "evidence": [
+     "composition.sections[0].screens",
+     "composition.sections[1].screens",
+     "composition.sections[2].screens",
+     "composition.sections[3].screens",
+     "composition.sections[4].screens",
+     "composition.sections[5].screens",
+     "composition.sections[6].screens",
+     "composition.sections[7].screens",
+     "composition.sections[8].screens",
+     "composition.sections[9].screens",
+     "composition.sections[10].screens"
+    ],
+    "how": "sum of section heights in screens; sections can overlap or leave gaps, so this is not the page length",
+    "value": 24.61
+   }
+  },
+  "surface": {
+   "mode": "light",
+   "paper": "#ffffff",
+   "paper_luminance": 1.0,
+   "source": {
+    "blueprint": "lib/blueprints/white-desert.bp.json#/colour/paper",
+    "raw": "lib/blueprints/raw/white-desert.json#/palette/0"
+   }
+  }
+ },
+ "evidence": {
+  "blueprint": "lib/blueprints/white-desert.bp.json",
+  "caveats": [],
+  "mirrors": null,
+  "raw": "lib/blueprints/raw/white-desert.json",
+  "screenshots": {
+   "desktop": [],
+   "dir": null,
+   "mobile": [],
+   "profile": null,
+   "unclassified": []
+  },
+  "scroll_capture": null
+ },
+ "experience": {
+  "not_measured": [
+   "narrative",
+   "interaction",
+   "mobile"
+  ],
+  "pacing_screens": {
+   "evidence": [
+    "composition.summary.pacing"
+   ],
+   "value": [
+    2.0,
+    1.04,
+    1.5,
+    0.71,
+    0.85,
+    1.26,
+    11.83,
+    0.57,
+    2.6,
+    1.0,
+    1.25
+   ]
+  },
+  "section_notes": [
+   {
+    "kind": "prose",
+    "section": 0,
+    "source": "lib/blueprints/white-desert.bp.json#/sections/0/note",
+    "text": "2-screen hero: full-bleed video, 256px condensed uppercase wordmark centered, 18px serif lede 294 wide, small inset photo",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 1,
+    "source": "lib/blueprints/white-desert.bp.json#/sections/1/note",
+    "text": "42px uppercase serif, 708 wide, offset right of centre (x=484), a full screen for one sentence",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 2,
+    "source": "lib/blueprints/white-desert.bp.json#/sections/2/note",
+    "text": "tall bleed photo with caption words in Oswald 18",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 3,
+    "source": "lib/blueprints/white-desert.bp.json#/sections/3/note",
+    "text": "white band, 320px top pad, centred 60px uppercase serif title",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 4,
+    "source": "lib/blueprints/white-desert.bp.json#/sections/4/note",
+    "text": "two half-width trip cards 720x643, italic serif 42 title top-left inside, 16px body; carousel continues (third at x=897)",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 5,
+    "source": "lib/blueprints/white-desert.bp.json#/sections/5/note",
+    "text": "22px serif paragraph 472 wide, 320px pads",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 6,
+    "source": "lib/blueprints/white-desert.bp.json#/sections/6/note",
+    "text": "pinned 11.8-screen sequence: bleed photos swap behind, camp cards slide horizontally from right (x=1460), 140px uppercase serif title",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 7,
+    "source": "lib/blueprints/white-desert.bp.json#/sections/7/note",
+    "text": "320px condensed route code as a section divider",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 8,
+    "source": "lib/blueprints/white-desert.bp.json#/sections/8/note",
+    "text": "tall bleed photo with time-stamped itinerary rows (42px times left) and small video thumb right",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 9,
+    "source": "lib/blueprints/white-desert.bp.json#/sections/9/note",
+    "text": "full-screen photo, centred uppercase serif + outlined button",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 10,
+    "source": "lib/blueprints/white-desert.bp.json#/sections/10/note",
+    "text": "sand footer with a quote, 10px uppercase attribution, badges",
+    "withheld": null
+   }
+  ]
+ },
+ "fits": {
+  "also": [],
+  "archetype": "cinematic-travel",
+  "archetype_source": "lib/blueprints/white-desert.bp.json#/archetype",
+  "kinds": [
+   "place"
+  ],
+  "kinds_source": "lib/blueprints/white-desert.bp.json#/class",
+  "needs": {
+   "derived_by": "rule",
+   "evidence": [
+    "imagery.image_sections",
+    "imagery.video_first_section"
+   ],
+   "images_min": 5,
+   "rule": "derive_needs",
+   "video": true
+  },
+  "temper": [
+   {
+    "derived_by": "rule",
+    "principle": "scale-contrast-high",
+    "rule": "rule_scale_contrast_high",
+    "tag": "high-contrast-type"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "display-uppercase",
+    "rule": "rule_display_uppercase",
+    "tag": "uppercase"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "tight-leading",
+    "rule": "rule_tight_leading",
+    "tag": "tight-leading"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "full-bleed-media",
+    "rule": "rule_full_bleed_media",
+    "tag": "full-bleed"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "landscape-media",
+    "rule": "rule_landscape_media",
+    "tag": "landscape-imagery"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "video-first-section",
+    "rule": "rule_video_first_section",
+    "tag": "video-led"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "pinned-sections",
+    "rule": "rule_pinned_sections",
+    "tag": "pinned"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "long-page",
+    "rule": "rule_long_page",
+    "tag": "long"
+   }
+  ]
+ },
+ "id": "white-desert",
+ "imagery": {
+  "aspects": {
+   "evidence": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[4].media[0].ar",
+    "composition.sections[4].media[1].ar",
+    "composition.sections[6].media[0].ar",
+    "composition.sections[6].media[1].ar",
+    "composition.sections[8].media[0].ar",
+    "composition.sections[8].media[1].ar",
+    "composition.sections[9].media[0].ar",
+    "composition.sections[10].media[0].ar"
+   ],
+   "how": "distinct aspect ratios (width ÷ height) of large media; large = at least 20% of the viewport width",
+   "value": [
+    0.84,
+    1.12,
+    1.27,
+    1.36,
+    1.78,
+    1.9,
+    4.13
+   ]
+  },
+  "basis": "measured",
+  "image_sections": {
+   "evidence": [
+    "composition.sections"
+   ],
+   "how": "sections holding at least one large still: not tagged video or canvas, aspect between 0.4 and 2.5",
+   "matched": [
+    "composition.sections[2].media[0]",
+    "composition.sections[4].media[0]",
+    "composition.sections[6].media[0]",
+    "composition.sections[8].media[0]",
+    "composition.sections[9].media[0]"
+   ],
+   "of": 11,
+   "share": 0.45,
+   "value": 5
+  },
+  "landscape_share": {
+   "count": 7,
+   "evidence": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[4].media[0].ar",
+    "composition.sections[4].media[1].ar",
+    "composition.sections[6].media[0].ar",
+    "composition.sections[6].media[1].ar",
+    "composition.sections[8].media[0].ar",
+    "composition.sections[8].media[1].ar",
+    "composition.sections[9].media[0].ar",
+    "composition.sections[10].media[0].ar"
+   ],
+   "how": "large media with aspect ≥ 1.2 ÷ large media",
+   "matched": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[6].media[0].ar",
+    "composition.sections[6].media[1].ar",
+    "composition.sections[8].media[1].ar",
+    "composition.sections[9].media[0].ar",
+    "composition.sections[10].media[0].ar"
+   ],
+   "of": 10,
+   "value": 0.7
+  },
+  "media_recorded": {
+   "evidence": [
+    "composition.sections"
+   ],
+   "how": "media elements kept in the record: wider than 100px, at most 4 per section",
+   "value": 11
+  },
+  "portrait_share": {
+   "count": 1,
+   "evidence": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[4].media[0].ar",
+    "composition.sections[4].media[1].ar",
+    "composition.sections[6].media[0].ar",
+    "composition.sections[6].media[1].ar",
+    "composition.sections[8].media[0].ar",
+    "composition.sections[8].media[1].ar",
+    "composition.sections[9].media[0].ar",
+    "composition.sections[10].media[0].ar"
+   ],
+   "how": "large media with aspect ≤ 0.9 ÷ large media",
+   "matched": [
+    "composition.sections[8].media[0].ar"
+   ],
+   "of": 10,
+   "value": 0.1
+  },
+  "video_first_section": {
+   "evidence": [
+    "composition.sections[0].media"
+   ],
+   "how": "the first section holds a medium the capture tagged VIDEO",
+   "matched": [
+    "composition.sections[0].media[0].kind"
+   ],
+   "value": true
+  }
+ },
+ "implementation": {
+  "ir_seeds": [],
+  "recipe": "lib/templates/recipes.py#white-desert"
+ },
+ "motion": {
+  "animated": null,
+  "custom_cursor": true,
+  "keyframes": [
+   "page-exit",
+   "page-enter",
+   "reveal-opacity",
+   "reveal-transform"
+  ],
+  "libs": {
+   "lenis": true
+  },
+  "not_measured": [
+   "scroll",
+   "pinning",
+   "sequence",
+   "interaction",
+   "reduced-motion"
+  ],
+  "note": {
+   "kind": "prose",
+   "source": "lib/blueprints/white-desert.bp.json#/motion/idea",
+   "text": "page transitions, reveal keyframes, a long pinned camps sequence (11.8 screens), giant condensed wordmarks",
+   "withheld": null
+  },
+  "source": "lib/blueprints/raw/white-desert.json#/motion",
+  "tracked": null,
+  "transitions": [
+   "all|0.3s|cubic-bezier(0.5, 1, 0.89, 1)",
+   "transform|0.6s|cubic-bezier(0.4, 0, 0.2, 1)",
+   "all|0.45s|cubic-bezier(0.76, 0, 0.24, 1)",
+   "transform|1s|cubic-bezier(0.16, 1, 0.3, 1)"
+  ]
+ },
+ "principles": [
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "typography.ratios.display_to_body",
+    "typography.display.px",
+    "typography.body.px"
+   ],
+   "id": "scale-contrast-high",
+   "rule": "rule_scale_contrast_high",
+   "statement": "The largest measured heading is 14.55× the body size (320px over 22px). Threshold: ratio ≥ 7."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "typography.display.case"
+   ],
+   "id": "display-uppercase",
+   "rule": "rule_display_uppercase",
+   "statement": "The largest measured heading is set in uppercase. Threshold: text-transform uppercase recorded in the capture."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "typography.display.leading"
+   ],
+   "id": "tight-leading",
+   "rule": "rule_tight_leading",
+   "statement": "The largest measured heading has a line height of 0.9. Threshold: ≤ 0.95."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "composition.summary.bleed_section_share",
+    "composition.sections[0].media[0].bleed",
+    "composition.sections[2].media[0].bleed",
+    "composition.sections[6].media[0].bleed",
+    "composition.sections[8].media[0].bleed",
+    "composition.sections[9].media[0].bleed"
+   ],
+   "id": "full-bleed-media",
+   "rule": "rule_full_bleed_media",
+   "statement": "5 of 11 sections hold a medium that spans the viewport (flagged bleed in the capture, or at least 98% of the viewport wide). Threshold: share ≥ 30%."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "imagery.landscape_share",
+    "composition.sections[0].media[0].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[6].media[0].ar",
+    "composition.sections[6].media[1].ar",
+    "composition.sections[8].media[1].ar",
+    "composition.sections[9].media[0].ar",
+    "composition.sections[10].media[0].ar"
+   ],
+   "id": "landscape-media",
+   "rule": "rule_landscape_media",
+   "statement": "7 of 10 large media are landscape (aspect ≥ 1.2; large = at least 20% of the viewport width). Threshold: share ≥ 60% and at least 3 large media."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "imagery.video_first_section",
+    "composition.sections[0].media[0].kind"
+   ],
+   "id": "video-first-section",
+   "rule": "rule_video_first_section",
+   "statement": "The first measured section holds a video element. Threshold: a medium tagged VIDEO in the first section of the capture."
+  },
+  {
+   "confidence": "observed",
+   "derived_by": "rule",
+   "evidence": [
+    "composition.sections[6].role",
+    "composition.sections[6].screens"
+   ],
+   "id": "pinned-sections",
+   "rule": "rule_pinned_sections",
+   "statement": "1 of 11 sections are marked pinned or sticky: 1 by a role name written into the capture by hand, 0 by the capture's sticky flag; the tallest of them runs 11.83 screens. Threshold: at least one such section. The scroll behaviour itself was not measured."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "composition.summary.page_screens.value"
+   ],
+   "id": "long-page",
+   "rule": "rule_long_page",
+   "statement": "The page runs 25.6 screens at the capture height. Threshold: ≥ 15 screens."
+  }
+ ],
+ "rights": {
+  "fonts": [
+   {
+    "face": "Geist",
+    "licence": "unknown",
+    "role": "delivery",
+    "source": null
+   },
+   {
+    "face": "Instrument Serif",
+    "licence": "OFL",
+    "role": "delivery",
+    "source": "lib/typography/fonts.json#/fonts/2/license"
+   },
+   {
+    "face": "Oswald",
+    "licence": "unknown",
+    "role": "delivery",
+    "source": null
+   },
+   {
+    "face": "Cardinal Classic Long",
+    "licence": "unknown",
+    "role": "source",
+    "source": null
+   },
+   {
+    "face": "Inter Tight",
+    "licence": "unknown",
+    "role": "source",
+    "source": null
+   },
+   {
+    "face": "Oswald",
+    "licence": "unknown",
+    "role": "source",
+    "source": null
+   }
+  ],
+  "screenshots": "research-only",
+  "source_text": "excluded"
+ },
+ "schema_version": 1,
+ "source": {
+  "captured_at": null,
+  "description": null,
+  "dpr": null,
+  "url": "https://white-desert.com/",
+  "url_source": "lib/blueprints/white-desert.bp.json#/source",
+  "viewport": {
+   "h": 756,
+   "h_source": "lib/blueprints/raw/white-desert.json#/vh",
+   "w": null,
+   "w_source": null
+  }
+ },
+ "status": "measured-desktop",
+ "typography": {
+  "basis": "measured",
+  "body": {
+   "case": null,
+   "delivery_class": "serif",
+   "delivery_face": "Instrument Serif",
+   "delivery_fallback": false,
+   "leading": 1.2,
+   "not_recorded": [
+    "case",
+    "tracking",
+    "weight"
+   ],
+   "px": 22,
+   "source": {
+    "blueprint": "lib/blueprints/white-desert.bp.json#/type/body",
+    "raw": "lib/blueprints/raw/white-desert.json#/sections/5/paras/0"
+   },
+   "source_face": "Cardinal Classic Long",
+   "tracking": null,
+   "weight": null
+  },
+  "display": {
+   "case": "uppercase",
+   "delivery_class": "sans",
+   "delivery_face": "Oswald",
+   "delivery_fallback": false,
+   "leading": 0.9,
+   "not_recorded": [
+    "tracking"
+   ],
+   "px": 320,
+   "source": {
+    "blueprint": "lib/blueprints/white-desert.bp.json#/type/display",
+    "raw": "lib/blueprints/raw/white-desert.json#/sections/7/heads/0"
+   },
+   "source_face": "Oswald",
+   "tracking": null,
+   "weight": 400
+  },
+  "families": {
+   "source": "lib/blueprints/raw/white-desert.json#/fonts",
+   "value": [
+    "Inter Tight",
+    "Cardinal Classic Long",
+    "Oswald"
+   ]
+  },
+  "h2": {
+   "case": "uppercase",
+   "delivery_class": "sans",
+   "delivery_face": "Oswald",
+   "delivery_fallback": false,
+   "leading": 1.0,
+   "not_recorded": [
+    "tracking"
+   ],
+   "px": 256,
+   "source": {
+    "blueprint": "lib/blueprints/white-desert.bp.json#/type/h2",
+    "raw": "lib/blueprints/raw/white-desert.json#/sections/0/heads/0"
+   },
+   "source_face": "Oswald",
+   "tracking": null,
+   "weight": 400
+  },
+  "h3": {
+   "case": "uppercase",
+   "delivery_class": "serif",
+   "delivery_face": "Instrument Serif",
+   "delivery_fallback": false,
+   "leading": null,
+   "not_recorded": [
+    "leading",
+    "tracking"
+   ],
+   "px": 140,
+   "source": {
+    "blueprint": "lib/blueprints/white-desert.bp.json#/type/h3",
+    "raw": "lib/blueprints/raw/white-desert.json#/sections/6/heads/0"
+   },
+   "source_face": "Cardinal Classic Long",
+   "tracking": null,
+   "weight": 500
+  },
+  "label": {
+   "case": "uppercase",
+   "delivery_class": "sans",
+   "delivery_face": "Geist",
+   "delivery_fallback": false,
+   "leading": null,
+   "not_recorded": [
+    "leading",
+    "weight"
+   ],
+   "px": 10,
+   "source": {
+    "blueprint": "lib/blueprints/white-desert.bp.json#/type/label",
+    "raw": "lib/blueprints/raw/white-desert.json#/sections/10/labels/0"
+   },
+   "source_face": "Inter Tight",
+   "tracking": 0.1,
+   "weight": null
+  },
+  "levels_missing": {},
+  "ratios": {
+   "display_to_body": {
+    "evidence": [
+     "typography.display.px",
+     "typography.body.px"
+    ],
+    "how": "display px ÷ body px",
+    "value": 14.55
+   },
+   "display_to_h2": {
+    "evidence": [
+     "typography.display.px",
+     "typography.h2.px"
+    ],
+    "how": "display px ÷ h2 px",
+    "value": 1.25
+   }
+  }
+ }
+}

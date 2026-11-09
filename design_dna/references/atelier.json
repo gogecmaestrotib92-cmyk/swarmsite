@@ -1,0 +1,668 @@
+{
+ "built_from": {
+  "design_dna/evidence.json#/references/atelier": "sha256:11b5c7cf3016bb1d87dc238f6508ca52d9cb71cb78ef7e1cb818977c07569f14",
+  "lib/blueprints/atelier.bp.json": "sha256:255fcc10142aa46f4ee83d7935e292e4dd34d3588fdf7b9ca25fedf6c4b78da7"
+ },
+ "completeness": {
+  "composition": "authored",
+  "experience": "authored",
+  "imagery": "authored",
+  "mobile": "missing",
+  "motion": "authored",
+  "screenshots": "missing",
+  "typography": "authored"
+ },
+ "composition": {
+  "basis": "authored",
+  "fraction_base": null,
+  "grid": {
+   "col": null,
+   "container": 1330,
+   "frame": 50,
+   "gutter": 50,
+   "not_recorded": [
+    "col"
+   ],
+   "raw_fields": {},
+   "source": {
+    "blueprint": "lib/blueprints/atelier.bp.json#/grid",
+    "raw": null
+   }
+  },
+  "sections": [
+   {
+    "bg": null,
+    "head": {
+     "align": "start",
+     "case": null,
+     "leading": 1.0,
+     "not_recorded": [
+      "case"
+     ],
+     "px": 75,
+     "source": "lib/blueprints/atelier.bp.json#/sections/0/head",
+     "tracking": 0,
+     "weight": 400,
+     "wf": 0.625,
+     "x": 0.035,
+     "y": 0.093
+    },
+    "media": [
+     {
+      "ar": 1.9,
+      "bleed": true,
+      "kind": "video",
+      "source": "lib/blueprints/atelier.bp.json#/sections/0/media/0",
+      "wf": 1.0,
+      "xf": 0.0
+     },
+     {
+      "ar": 1.37,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/atelier.bp.json#/sections/0/media/1",
+      "wf": 0.556,
+      "xf": 0.807
+     },
+     {
+      "ar": 1.38,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/atelier.bp.json#/sections/0/media/2",
+      "wf": 0.565,
+      "xf": 1.251
+     }
+    ],
+    "role": "pinned-hero-rail",
+    "screens": 6.71,
+    "source": {
+     "blueprint": "lib/blueprints/atelier.bp.json#/sections/0",
+     "raw": null
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": "start",
+     "case": null,
+     "leading": 1.1,
+     "not_recorded": [
+      "case"
+     ],
+     "px": 56,
+     "source": "lib/blueprints/atelier.bp.json#/sections/1/head",
+     "tracking": 0,
+     "weight": 400,
+     "wf": 0.457,
+     "x": 0.035,
+     "y": 0.0
+    },
+    "media": [],
+    "role": "manifesto",
+    "screens": 0.5,
+    "source": {
+     "blueprint": "lib/blueprints/atelier.bp.json#/sections/1",
+     "raw": null
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": "start",
+     "case": null,
+     "leading": 1.1,
+     "not_recorded": [
+      "case",
+      "wf",
+      "x",
+      "y"
+     ],
+     "px": 38,
+     "source": "lib/blueprints/atelier.bp.json#/sections/2/head",
+     "tracking": 0,
+     "weight": 400,
+     "wf": null,
+     "x": null,
+     "y": null
+    },
+    "media": [
+     {
+      "ar": 1.6,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/atelier.bp.json#/sections/2/media/0",
+      "wf": 0.466,
+      "xf": 0.03
+     },
+     {
+      "ar": 1.6,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/atelier.bp.json#/sections/2/media/1",
+      "wf": 0.229,
+      "xf": 0.496
+     },
+     {
+      "ar": 1.6,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/atelier.bp.json#/sections/2/media/2",
+      "wf": 0.229,
+      "xf": 0.728
+     }
+    ],
+    "role": "work-grid-sticky",
+    "screens": 1.47,
+    "source": {
+     "blueprint": "lib/blueprints/atelier.bp.json#/sections/2",
+     "raw": null
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": "start",
+     "case": null,
+     "leading": 1.3,
+     "not_recorded": [
+      "case",
+      "wf",
+      "x",
+      "y"
+     ],
+     "px": 28,
+     "source": "lib/blueprints/atelier.bp.json#/sections/3/head",
+     "tracking": 0,
+     "weight": 400,
+     "wf": null,
+     "x": null,
+     "y": null
+    },
+    "media": [],
+    "role": "updates-list",
+    "screens": 0.6,
+    "source": {
+     "blueprint": "lib/blueprints/atelier.bp.json#/sections/3",
+     "raw": null
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": "start",
+     "case": null,
+     "leading": 1.05,
+     "not_recorded": [
+      "case"
+     ],
+     "px": 16,
+     "source": "lib/blueprints/atelier.bp.json#/sections/4/head",
+     "tracking": 0,
+     "weight": 400,
+     "wf": 0.119,
+     "x": 0.035,
+     "y": 0.25
+    },
+    "media": [
+     {
+      "ar": 1.89,
+      "bleed": true,
+      "kind": null,
+      "source": "lib/blueprints/atelier.bp.json#/sections/4/media/0",
+      "wf": 1.385,
+      "xf": -0.198
+     }
+    ],
+    "role": "footer-photo-offices",
+    "screens": 1.99,
+    "source": {
+     "blueprint": "lib/blueprints/atelier.bp.json#/sections/4",
+     "raw": null
+    },
+    "sticky": null
+   }
+  ],
+  "summary": {
+   "bleed_section_share": {
+    "count": 2,
+    "evidence": [
+     "composition.sections"
+    ],
+    "how": "sections holding a medium flagged bleed in the capture or at least 98% of the viewport wide ÷ all sections",
+    "matched": [
+     "composition.sections[0].media[0].bleed",
+     "composition.sections[4].media[0].bleed"
+    ],
+    "of": 5,
+    "value": 0.4
+   },
+   "offset_heading_share": {
+    "count": 0,
+    "evidence": [
+     "composition.sections[0].head.x",
+     "composition.sections[1].head.x",
+     "composition.sections[4].head.x"
+    ],
+    "how": "headings whose left edge is at or right of 30% of the viewport width ÷ headings with a recorded position",
+    "matched": [],
+    "of": 3,
+    "value": 0.0
+   },
+   "pacing": {
+    "evidence": [
+     "composition.sections[0].screens",
+     "composition.sections[1].screens",
+     "composition.sections[2].screens",
+     "composition.sections[3].screens",
+     "composition.sections[4].screens"
+    ],
+    "how": "section heights in screens, in page order",
+    "value": [
+     6.71,
+     0.5,
+     1.47,
+     0.6,
+     1.99
+    ]
+   },
+   "page_screens": {
+    "source": {
+     "blueprint": "lib/blueprints/atelier.bp.json#/screens",
+     "raw": null
+    },
+    "value": 12
+   },
+   "sections": {
+    "evidence": [
+     "composition.sections"
+    ],
+    "how": "number of sections in the record",
+    "value": 5
+   },
+   "sections_screens_total": {
+    "evidence": [
+     "composition.sections[0].screens",
+     "composition.sections[1].screens",
+     "composition.sections[2].screens",
+     "composition.sections[3].screens",
+     "composition.sections[4].screens"
+    ],
+    "how": "sum of section heights in screens; sections can overlap or leave gaps, so this is not the page length",
+    "value": 11.27
+   }
+  },
+  "surface": {
+   "mode": "light",
+   "paper": "#ffffff",
+   "paper_luminance": 1.0,
+   "source": {
+    "blueprint": "lib/blueprints/atelier.bp.json#/colour/paper",
+    "raw": null
+   }
+  }
+ },
+ "evidence": {
+  "blueprint": "lib/blueprints/atelier.bp.json",
+  "caveats": [],
+  "mirrors": {
+   "blueprint": "lib/blueprints/lpas.bp.json",
+   "differs_at": [
+    "/id",
+    "/source",
+    "/type/display/fam"
+   ],
+   "id": "lpas"
+  },
+  "raw": null,
+  "screenshots": {
+   "desktop": [],
+   "dir": null,
+   "mobile": [],
+   "profile": null,
+   "unclassified": []
+  },
+  "scroll_capture": null
+ },
+ "experience": {
+  "not_measured": [
+   "narrative",
+   "interaction",
+   "mobile"
+  ],
+  "pacing_screens": {
+   "evidence": [
+    "composition.summary.pacing"
+   ],
+   "value": [
+    6.71,
+    0.5,
+    1.47,
+    0.6,
+    1.99
+   ]
+  },
+  "section_notes": [
+   {
+    "kind": "prose",
+    "section": 0,
+    "source": "lib/blueprints/atelier.bp.json#/sections/0/note",
+    "text": "dimmed bleed video, 75px sans h1 900 wide at x=50; on scroll, 800x582 project cards with 56px titles slide in from the right (x=1162, 1802…) — the hero is a horizontal rail",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 1,
+    "source": "lib/blueprints/atelier.bp.json#/sections/1/note",
+    "text": "56px four-sentence manifesto 658 wide; 14px stacked verbs; 16px paragraph 791 wide",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 2,
+    "source": "lib/blueprints/atelier.bp.json#/sections/2/note",
+    "text": "38px title; one big 16:10 image left (671), two small 16:10 right (330) — 2:1:1 split, sticky title",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 3,
+    "source": "lib/blueprints/atelier.bp.json#/sections/3/note",
+    "text": "28px title, dated rows (16px source/date + 14px text 457 wide)",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 4,
+    "source": "lib/blueprints/atelier.bp.json#/sections/4/note",
+    "text": "2-screen footer: oversized bleed photo, office columns 171 wide at 267px pitch",
+    "withheld": null
+   }
+  ]
+ },
+ "fits": {
+  "also": [],
+  "archetype": "studio-grid-26",
+  "archetype_source": "lib/blueprints/atelier.bp.json#/archetype",
+  "kinds": [
+   "service"
+  ],
+  "kinds_source": "lib/blueprints/atelier.bp.json#/class",
+  "needs": null,
+  "temper": []
+ },
+ "id": "atelier",
+ "imagery": {
+  "aspects": {
+   "evidence": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[0].media[1].ar",
+    "composition.sections[0].media[2].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[2].media[2].ar",
+    "composition.sections[4].media[0].ar"
+   ],
+   "how": "distinct aspect ratios (width ÷ height) of large media; large = at least 20% of the viewport width",
+   "value": [
+    1.37,
+    1.38,
+    1.6,
+    1.89,
+    1.9
+   ]
+  },
+  "basis": "authored",
+  "image_sections": {
+   "evidence": [
+    "composition.sections"
+   ],
+   "how": "sections holding at least one large still: not tagged video or canvas, aspect between 0.4 and 2.5",
+   "matched": [
+    "composition.sections[0].media[1]",
+    "composition.sections[2].media[0]",
+    "composition.sections[4].media[0]"
+   ],
+   "of": 5,
+   "share": 0.6,
+   "value": 3
+  },
+  "landscape_share": {
+   "count": 7,
+   "evidence": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[0].media[1].ar",
+    "composition.sections[0].media[2].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[2].media[2].ar",
+    "composition.sections[4].media[0].ar"
+   ],
+   "how": "large media with aspect ≥ 1.2 ÷ large media",
+   "matched": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[0].media[1].ar",
+    "composition.sections[0].media[2].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[2].media[2].ar",
+    "composition.sections[4].media[0].ar"
+   ],
+   "of": 7,
+   "value": 1.0
+  },
+  "media_recorded": {
+   "evidence": [
+    "composition.sections"
+   ],
+   "how": "media elements kept in the record: wider than 100px, at most 4 per section",
+   "value": 7
+  },
+  "portrait_share": {
+   "count": 0,
+   "evidence": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[0].media[1].ar",
+    "composition.sections[0].media[2].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[2].media[2].ar",
+    "composition.sections[4].media[0].ar"
+   ],
+   "how": "large media with aspect ≤ 0.9 ÷ large media",
+   "matched": [],
+   "of": 7,
+   "value": 0.0
+  },
+  "video_first_section": {
+   "evidence": [
+    "composition.sections[0].media"
+   ],
+   "how": "the first section holds a medium the capture tagged VIDEO",
+   "matched": [
+    "composition.sections[0].media[0].kind"
+   ],
+   "value": true
+  }
+ },
+ "implementation": {
+  "ir_seeds": [],
+  "recipe": "lib/templates/recipes.py#atelier"
+ },
+ "motion": {
+  "animated": null,
+  "custom_cursor": null,
+  "keyframes": null,
+  "libs": null,
+  "not_measured": [
+   "scroll",
+   "pinning",
+   "sequence",
+   "interaction",
+   "reduced-motion"
+  ],
+  "note": {
+   "kind": "prose",
+   "source": "lib/blueprints/atelier.bp.json#/motion/idea",
+   "text": "26-column grid; one sans at 9 sizes; pinned 6.7-screen hero where project cards slide in from the right over a dimmed video (brightness .5); sticky work section",
+   "withheld": null
+  },
+  "source": null,
+  "tracked": null,
+  "transitions": null
+ },
+ "principles": [],
+ "rights": {
+  "fonts": [
+   {
+    "face": "Instrument Serif",
+    "licence": "OFL",
+    "role": "delivery",
+    "source": "lib/typography/fonts.json#/fonts/2/license"
+   },
+   {
+    "face": "Manrope",
+    "licence": "OFL",
+    "role": "delivery",
+    "source": "lib/typography/fonts.json#/fonts/11/license"
+   },
+   {
+    "face": "Aeonik",
+    "licence": "unknown",
+    "role": "source",
+    "source": null
+   },
+   {
+    "face": "Instrument Serif",
+    "licence": "OFL",
+    "role": "source",
+    "source": "lib/typography/fonts.json#/fonts/2/license"
+   }
+  ],
+  "screenshots": "research-only",
+  "source_text": "excluded"
+ },
+ "schema_version": 1,
+ "source": {
+  "captured_at": null,
+  "description": {
+   "kind": "prose",
+   "source": "lib/blueprints/atelier.bp.json#/source",
+   "text": "original — editorial studio, light, serif display",
+   "withheld": null
+  },
+  "dpr": null,
+  "url": null,
+  "url_source": null,
+  "viewport": {
+   "h": null,
+   "h_source": null,
+   "w": null,
+   "w_source": null
+  }
+ },
+ "status": "authored",
+ "typography": {
+  "basis": "authored",
+  "body": {
+   "case": null,
+   "delivery_class": "sans",
+   "delivery_face": "Manrope",
+   "delivery_fallback": false,
+   "leading": 1.35,
+   "not_recorded": [
+    "case",
+    "tracking",
+    "weight"
+   ],
+   "px": 16,
+   "source": {
+    "blueprint": "lib/blueprints/atelier.bp.json#/type/body",
+    "raw": null
+   },
+   "source_face": "Aeonik",
+   "tracking": null,
+   "weight": null
+  },
+  "display": {
+   "case": null,
+   "delivery_class": "serif",
+   "delivery_face": "Instrument Serif",
+   "delivery_fallback": false,
+   "leading": 1.0,
+   "not_recorded": [
+    "case"
+   ],
+   "px": 75,
+   "source": {
+    "blueprint": "lib/blueprints/atelier.bp.json#/type/display",
+    "raw": null
+   },
+   "source_face": "Instrument Serif",
+   "tracking": 0,
+   "weight": 400
+  },
+  "families": null,
+  "h2": {
+   "case": null,
+   "delivery_class": "sans",
+   "delivery_face": "Manrope",
+   "delivery_fallback": false,
+   "leading": 1.1,
+   "not_recorded": [
+    "case"
+   ],
+   "px": 56,
+   "source": {
+    "blueprint": "lib/blueprints/atelier.bp.json#/type/h2",
+    "raw": null
+   },
+   "source_face": "Aeonik",
+   "tracking": 0,
+   "weight": 400
+  },
+  "h3": {
+   "case": null,
+   "delivery_class": "sans",
+   "delivery_face": "Manrope",
+   "delivery_fallback": false,
+   "leading": 1.1,
+   "not_recorded": [
+    "case"
+   ],
+   "px": 38,
+   "source": {
+    "blueprint": "lib/blueprints/atelier.bp.json#/type/h3",
+    "raw": null
+   },
+   "source_face": "Aeonik",
+   "tracking": 0,
+   "weight": 400
+  },
+  "label": null,
+  "levels_missing": {
+   "label": "not-in-blueprint"
+  },
+  "ratios": {
+   "display_to_body": {
+    "evidence": [
+     "typography.display.px",
+     "typography.body.px"
+    ],
+    "how": "display px ÷ body px",
+    "value": 4.69
+   },
+   "display_to_h2": {
+    "evidence": [
+     "typography.display.px",
+     "typography.h2.px"
+    ],
+    "how": "display px ÷ h2 px",
+    "value": 1.34
+   }
+  }
+ }
+}

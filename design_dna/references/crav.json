@@ -1,0 +1,935 @@
+{
+ "built_from": {
+  "design_dna/evidence.json#/references/crav": "sha256:4952dd4d48d421cea32c38304b27ca1c20c3ad671e90a627433238d62111e569",
+  "lib/blueprints/crav.bp.json": "sha256:d2a75e90d404710d612c949868f3da2f8e69750ac48e7ae12da1052c7e320d18",
+  "lib/blueprints/raw/crav.json": "sha256:f52cd5256e24af9cde7eb86000ee309937b2787642c42a43af0024be7139dd8d"
+ },
+ "completeness": {
+  "composition": "measured-desktop",
+  "experience": "prose-only",
+  "imagery": "measured-desktop",
+  "mobile": "missing",
+  "motion": "partial",
+  "screenshots": "missing",
+  "typography": "measured"
+ },
+ "composition": {
+  "basis": "measured",
+  "fraction_base": {
+   "basis": "assumed",
+   "source": "lib/blueprint/normalize.py",
+   "w": 1440
+  },
+  "grid": {
+   "col": null,
+   "container": 1353,
+   "frame": 36,
+   "gutter": null,
+   "not_recorded": [
+    "col",
+    "gutter"
+   ],
+   "raw_fields": {
+    "container": "lib/blueprints/raw/crav.json#/container",
+    "frame": "lib/blueprints/raw/crav.json#/frame"
+   },
+   "source": {
+    "blueprint": "lib/blueprints/crav.bp.json#/grid",
+    "raw": "lib/blueprints/raw/crav.json"
+   }
+  },
+  "sections": [
+   {
+    "bg": null,
+    "head": {
+     "align": "center",
+     "case": null,
+     "leading": 0.8,
+     "not_recorded": [
+      "case",
+      "tracking",
+      "weight",
+      "y"
+     ],
+     "px": 432,
+     "source": "lib/blueprints/raw/crav.json#/sections/0/heads/0",
+     "tracking": null,
+     "weight": null,
+     "wf": 0.95,
+     "x": 0.02,
+     "y": null
+    },
+    "media": [
+     {
+      "ar": 1.0,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/crav.json#/sections/0/imgs/0",
+      "wf": 0.4,
+      "xf": 0.295
+     }
+    ],
+    "role": "hero-poster",
+    "screens": 1.0,
+    "source": {
+     "blueprint": "lib/blueprints/crav.bp.json#/sections/0",
+     "raw": "lib/blueprints/raw/crav.json#/sections/0"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": "center",
+     "case": "uppercase",
+     "leading": 0.75,
+     "not_recorded": [
+      "tracking",
+      "weight"
+     ],
+     "px": 216,
+     "source": "lib/blueprints/raw/crav.json#/sections/1/heads/0",
+     "tracking": null,
+     "weight": null,
+     "wf": 0.658,
+     "x": 0.166,
+     "y": 0.127
+    },
+    "media": [
+     {
+      "ar": 0.9,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/crav.json#/sections/1/imgs/0",
+      "wf": 0.242,
+      "xf": 0.028
+     },
+     {
+      "ar": 0.83,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/crav.json#/sections/1/imgs/1",
+      "wf": 0.221,
+      "xf": 0.174
+     }
+    ],
+    "role": "statement-stickers",
+    "screens": 1.73,
+    "source": {
+     "blueprint": "lib/blueprints/crav.bp.json#/sections/1",
+     "raw": "lib/blueprints/raw/crav.json#/sections/1"
+    },
+    "sticky": null
+   },
+   {
+    "bg": "#f91814",
+    "head": {
+     "align": "center",
+     "case": "uppercase",
+     "leading": 0.75,
+     "not_recorded": [
+      "tracking",
+      "weight",
+      "wf",
+      "x",
+      "y"
+     ],
+     "px": 216,
+     "source": "lib/blueprints/raw/crav.json#/sections/2/heads/0",
+     "tracking": null,
+     "weight": null,
+     "wf": null,
+     "x": null,
+     "y": null
+    },
+    "media": [
+     {
+      "ar": 0.94,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/crav.json#/sections/2/imgs/0",
+      "wf": 0.208,
+      "xf": 0.041
+     },
+     {
+      "ar": 1.07,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/crav.json#/sections/2/imgs/1",
+      "wf": 0.226,
+      "xf": 0.742
+     }
+    ],
+    "role": "band-red",
+    "screens": 2.28,
+    "source": {
+     "blueprint": "lib/blueprints/crav.bp.json#/sections/2",
+     "raw": "lib/blueprints/raw/crav.json#/sections/2"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": null,
+    "media": [
+     {
+      "ar": 1.18,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/crav.json#/sections/3/imgs/0",
+      "wf": 0.99,
+      "xf": null
+     }
+    ],
+    "role": "photo-bleed",
+    "screens": 1.6,
+    "source": {
+     "blueprint": "lib/blueprints/crav.bp.json#/sections/3",
+     "raw": "lib/blueprints/raw/crav.json#/sections/3"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": null,
+    "media": [
+     {
+      "ar": 1.13,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/crav.json#/sections/4/imgs/0",
+      "wf": 0.18,
+      "xf": 0.635
+     },
+     {
+      "ar": 2.07,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/crav.json#/sections/4/imgs/1",
+      "wf": 0.23,
+      "xf": 0.165
+     },
+     {
+      "ar": 1.76,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/crav.json#/sections/4/imgs/2",
+      "wf": 0.2,
+      "xf": 0.605
+     }
+    ],
+    "role": "sticker-row",
+    "screens": 1.06,
+    "source": {
+     "blueprint": "lib/blueprints/crav.bp.json#/sections/4",
+     "raw": "lib/blueprints/raw/crav.json#/sections/4"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": null,
+    "media": [],
+    "role": "curve-divider",
+    "screens": 2.59,
+    "source": {
+     "blueprint": "lib/blueprints/crav.bp.json#/sections/5",
+     "raw": "lib/blueprints/raw/crav.json#/sections/5"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": null,
+     "leading": 0.85,
+     "not_recorded": [
+      "align",
+      "case",
+      "tracking",
+      "weight"
+     ],
+     "px": 216,
+     "source": "lib/blueprints/raw/crav.json#/sections/6/heads/0",
+     "tracking": null,
+     "weight": null,
+     "wf": 0.8,
+     "x": 0.025,
+     "y": 0.119
+    },
+    "media": [],
+    "role": "statement-left",
+    "screens": 0.72,
+    "source": {
+     "blueprint": "lib/blueprints/crav.bp.json#/sections/6",
+     "raw": "lib/blueprints/raw/crav.json#/sections/6"
+    },
+    "sticky": null
+   },
+   {
+    "bg": "#f5e3cd",
+    "head": {
+     "align": null,
+     "case": "uppercase",
+     "leading": 0.75,
+     "not_recorded": [
+      "align",
+      "tracking",
+      "weight"
+     ],
+     "px": 216,
+     "source": "lib/blueprints/raw/crav.json#/sections/7/heads/0",
+     "tracking": null,
+     "weight": null,
+     "wf": 0.35,
+     "x": 0.025,
+     "y": 0.389
+    },
+    "media": [
+     {
+      "ar": 0.98,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/crav.json#/sections/7/imgs/0",
+      "wf": 0.431,
+      "xf": 0.279
+     },
+     {
+      "ar": 1.02,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/crav.json#/sections/7/imgs/1",
+      "wf": 0.439,
+      "xf": -0.081
+     },
+     {
+      "ar": 0.7,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/crav.json#/sections/7/imgs/2",
+      "wf": 0.423,
+      "xf": 0.567
+     }
+    ],
+    "role": "band-cream-collage",
+    "screens": 1.34,
+    "source": {
+     "blueprint": "lib/blueprints/crav.bp.json#/sections/7",
+     "raw": "lib/blueprints/raw/crav.json#/sections/7"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": "center",
+     "case": null,
+     "leading": 0.5,
+     "not_recorded": [
+      "case",
+      "tracking",
+      "weight"
+     ],
+     "px": 504,
+     "source": "lib/blueprints/raw/crav.json#/sections/8/heads/0",
+     "tracking": null,
+     "weight": null,
+     "wf": 0.94,
+     "x": 0.025,
+     "y": 0.563
+    },
+    "media": [
+     {
+      "ar": 0.88,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/crav.json#/sections/8/imgs/0",
+      "wf": 0.115,
+      "xf": null
+     },
+     {
+      "ar": 0.99,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/crav.json#/sections/8/imgs/1",
+      "wf": 0.119,
+      "xf": null
+     },
+     {
+      "ar": 1.0,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/crav.json#/sections/8/imgs/2",
+      "wf": 0.169,
+      "xf": null
+     }
+    ],
+    "role": "footer-giant",
+    "screens": 1.06,
+    "source": {
+     "blueprint": "lib/blueprints/crav.bp.json#/sections/8",
+     "raw": "lib/blueprints/raw/crav.json#/sections/8"
+    },
+    "sticky": null
+   }
+  ],
+  "summary": {
+   "bleed_section_share": {
+    "count": 1,
+    "evidence": [
+     "composition.sections"
+    ],
+    "how": "sections holding a medium flagged bleed in the capture or at least 98% of the viewport wide ÷ all sections",
+    "matched": [
+     "composition.sections[3].media[0].wf"
+    ],
+    "of": 9,
+    "value": 0.11
+   },
+   "offset_heading_share": {
+    "count": 0,
+    "evidence": [
+     "composition.sections[0].head.x",
+     "composition.sections[1].head.x",
+     "composition.sections[6].head.x",
+     "composition.sections[7].head.x",
+     "composition.sections[8].head.x"
+    ],
+    "how": "headings whose left edge is at or right of 30% of the viewport width ÷ headings with a recorded position",
+    "matched": [],
+    "of": 5,
+    "value": 0.0
+   },
+   "pacing": {
+    "evidence": [
+     "composition.sections[0].screens",
+     "composition.sections[1].screens",
+     "composition.sections[2].screens",
+     "composition.sections[3].screens",
+     "composition.sections[4].screens",
+     "composition.sections[5].screens",
+     "composition.sections[6].screens",
+     "composition.sections[7].screens",
+     "composition.sections[8].screens"
+    ],
+    "how": "section heights in screens, in page order",
+    "value": [
+     1.0,
+     1.73,
+     2.28,
+     1.6,
+     1.06,
+     2.59,
+     0.72,
+     1.34,
+     1.06
+    ]
+   },
+   "page_screens": {
+    "source": {
+     "blueprint": "lib/blueprints/crav.bp.json#/screens",
+     "raw": "lib/blueprints/raw/crav.json#/screens"
+    },
+    "value": 13.6
+   },
+   "sections": {
+    "evidence": [
+     "composition.sections"
+    ],
+    "how": "number of sections in the record",
+    "value": 9
+   },
+   "sections_screens_total": {
+    "evidence": [
+     "composition.sections[0].screens",
+     "composition.sections[1].screens",
+     "composition.sections[2].screens",
+     "composition.sections[3].screens",
+     "composition.sections[4].screens",
+     "composition.sections[5].screens",
+     "composition.sections[6].screens",
+     "composition.sections[7].screens",
+     "composition.sections[8].screens"
+    ],
+    "how": "sum of section heights in screens; sections can overlap or leave gaps, so this is not the page length",
+    "value": 13.38
+   }
+  },
+  "surface": {
+   "mode": "light",
+   "paper": "#f5e3cd",
+   "paper_luminance": 0.899,
+   "source": {
+    "blueprint": "lib/blueprints/crav.bp.json#/colour/paper",
+    "raw": "lib/blueprints/raw/crav.json#/palette/0"
+   }
+  }
+ },
+ "evidence": {
+  "blueprint": "lib/blueprints/crav.bp.json",
+  "caveats": [],
+  "mirrors": null,
+  "raw": "lib/blueprints/raw/crav.json",
+  "screenshots": {
+   "desktop": [],
+   "dir": null,
+   "mobile": [],
+   "profile": null,
+   "unclassified": []
+  },
+  "scroll_capture": null
+ },
+ "experience": {
+  "not_measured": [
+   "narrative",
+   "interaction",
+   "mobile"
+  ],
+  "pacing_screens": {
+   "evidence": [
+    "composition.summary.pacing"
+   ],
+   "value": [
+    1.0,
+    1.73,
+    2.28,
+    1.6,
+    1.06,
+    2.59,
+    0.72,
+    1.34,
+    1.06
+   ]
+  },
+  "section_notes": [
+   {
+    "kind": "prose",
+    "section": 0,
+    "source": "lib/blueprints/crav.bp.json#/sections/0/note",
+    "text": "432px condensed headline full width, product cutout 576px over it, 40px chunky labels",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 1,
+    "source": "lib/blueprints/crav.bp.json#/sections/1/note",
+    "text": "216px centred 3-line headline, cutouts pinned at the left edge",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 2,
+    "source": "lib/blueprints/crav.bp.json#/sections/2/note",
+    "text": "full-bleed red band, headline centred, cutouts at both edges",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 4,
+    "source": "lib/blueprints/crav.bp.json#/sections/4/note",
+    "text": "row of small contained stickers/badges",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 5,
+    "source": "lib/blueprints/crav.bp.json#/sections/5/note",
+    "text": "big SVG path curve separating bands",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 7,
+    "source": "lib/blueprints/crav.bp.json#/sections/7/note",
+    "text": "cream band, headline left 504 wide, overlapping photo + cutouts",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 8,
+    "source": "lib/blueprints/crav.bp.json#/sections/8/note",
+    "text": "504px wordmark cropped at the bottom, stickers around, 26px columns",
+    "withheld": null
+   }
+  ]
+ },
+ "fits": {
+  "also": [],
+  "archetype": "loud-brand-poster",
+  "archetype_source": "lib/blueprints/crav.bp.json#/archetype",
+  "kinds": [
+   "product"
+  ],
+  "kinds_source": "lib/blueprints/crav.bp.json#/class",
+  "needs": {
+   "derived_by": "rule",
+   "evidence": [
+    "imagery.image_sections",
+    "imagery.video_first_section"
+   ],
+   "images_min": 6,
+   "rule": "derive_needs",
+   "video": false
+  },
+  "temper": [
+   {
+    "derived_by": "rule",
+    "principle": "scale-contrast-high",
+    "rule": "rule_scale_contrast_high",
+    "tag": "high-contrast-type"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "tight-leading",
+    "rule": "rule_tight_leading",
+    "tag": "tight-leading"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "image-led",
+    "rule": "rule_image_led",
+    "tag": "image-led"
+   }
+  ]
+ },
+ "id": "crav",
+ "imagery": {
+  "aspects": {
+   "evidence": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[1].media[0].ar",
+    "composition.sections[1].media[1].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[3].media[0].ar",
+    "composition.sections[4].media[1].ar",
+    "composition.sections[4].media[2].ar",
+    "composition.sections[7].media[0].ar",
+    "composition.sections[7].media[1].ar",
+    "composition.sections[7].media[2].ar"
+   ],
+   "how": "distinct aspect ratios (width ÷ height) of large media; large = at least 20% of the viewport width",
+   "value": [
+    0.7,
+    0.83,
+    0.9,
+    0.94,
+    0.98,
+    1.0,
+    1.02,
+    1.07,
+    1.18,
+    1.76,
+    2.07
+   ]
+  },
+  "basis": "measured",
+  "image_sections": {
+   "evidence": [
+    "composition.sections"
+   ],
+   "how": "sections holding at least one large still: not tagged video or canvas, aspect between 0.4 and 2.5",
+   "matched": [
+    "composition.sections[0].media[0]",
+    "composition.sections[1].media[0]",
+    "composition.sections[2].media[0]",
+    "composition.sections[3].media[0]",
+    "composition.sections[4].media[1]",
+    "composition.sections[7].media[0]"
+   ],
+   "of": 9,
+   "share": 0.67,
+   "value": 6
+  },
+  "landscape_share": {
+   "count": 2,
+   "evidence": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[1].media[0].ar",
+    "composition.sections[1].media[1].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[3].media[0].ar",
+    "composition.sections[4].media[1].ar",
+    "composition.sections[4].media[2].ar",
+    "composition.sections[7].media[0].ar",
+    "composition.sections[7].media[1].ar",
+    "composition.sections[7].media[2].ar"
+   ],
+   "how": "large media with aspect ≥ 1.2 ÷ large media",
+   "matched": [
+    "composition.sections[4].media[1].ar",
+    "composition.sections[4].media[2].ar"
+   ],
+   "of": 11,
+   "value": 0.18
+  },
+  "media_recorded": {
+   "evidence": [
+    "composition.sections"
+   ],
+   "how": "media elements kept in the record: wider than 100px, at most 4 per section",
+   "value": 15
+  },
+  "portrait_share": {
+   "count": 3,
+   "evidence": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[1].media[0].ar",
+    "composition.sections[1].media[1].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[3].media[0].ar",
+    "composition.sections[4].media[1].ar",
+    "composition.sections[4].media[2].ar",
+    "composition.sections[7].media[0].ar",
+    "composition.sections[7].media[1].ar",
+    "composition.sections[7].media[2].ar"
+   ],
+   "how": "large media with aspect ≤ 0.9 ÷ large media",
+   "matched": [
+    "composition.sections[1].media[0].ar",
+    "composition.sections[1].media[1].ar",
+    "composition.sections[7].media[2].ar"
+   ],
+   "of": 11,
+   "value": 0.27
+  },
+  "video_first_section": {
+   "evidence": [
+    "composition.sections[0].media"
+   ],
+   "how": "the first section holds a medium the capture tagged VIDEO",
+   "matched": [],
+   "value": false
+  }
+ },
+ "implementation": {
+  "ir_seeds": [],
+  "recipe": "lib/templates/recipes.py#crav"
+ },
+ "motion": {
+  "animated": 11,
+  "custom_cursor": null,
+  "keyframes": null,
+  "libs": {
+   "lenis": true
+  },
+  "not_measured": [
+   "scroll",
+   "pinning",
+   "sequence",
+   "interaction",
+   "reduced-motion"
+  ],
+  "note": {
+   "kind": "prose",
+   "source": "lib/blueprints/crav.bp.json#/motion/idea",
+   "text": "poster site: condensed display at 216–504px, stickers/cutouts scattered with rotation, colour bands (cream/red/yellow), SVG curved divider, wobbly outline filter on cutouts",
+   "withheld": null
+  },
+  "source": "lib/blueprints/raw/crav.json#/motion",
+  "tracked": null,
+  "transitions": [
+   "all|0.3s|cubic-bezier(0.4, 0, 0.2, 1)",
+   "transform, translate, scale, rotate|0.3s|cubic-bezier(0.4, 0, 0.2, 1)"
+  ]
+ },
+ "principles": [
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "typography.ratios.display_to_body",
+    "typography.display.px",
+    "typography.body.px"
+   ],
+   "id": "scale-contrast-high",
+   "rule": "rule_scale_contrast_high",
+   "statement": "The largest measured heading is 12.6× the body size (504px over 40px). Threshold: ratio ≥ 7."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "typography.display.leading"
+   ],
+   "id": "tight-leading",
+   "rule": "rule_tight_leading",
+   "statement": "The largest measured heading has a line height of 0.5. Threshold: ≤ 0.95."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "imagery.image_sections",
+    "composition.sections[0].media[0]",
+    "composition.sections[1].media[0]",
+    "composition.sections[2].media[0]",
+    "composition.sections[3].media[0]",
+    "composition.sections[4].media[1]",
+    "composition.sections[7].media[0]"
+   ],
+   "id": "image-led",
+   "rule": "rule_image_led",
+   "statement": "6 of 9 sections hold a large still image. Threshold: share ≥ 60%."
+  }
+ ],
+ "rights": {
+  "fonts": [
+   {
+    "face": "Modak",
+    "licence": "unknown",
+    "role": "delivery",
+    "source": null
+   },
+   {
+    "face": "Mouse Memoirs",
+    "licence": "unknown",
+    "role": "delivery",
+    "source": null
+   },
+   {
+    "face": "Modak",
+    "licence": "unknown",
+    "role": "source",
+    "source": null
+   },
+   {
+    "face": "Mouse Memoirs",
+    "licence": "unknown",
+    "role": "source",
+    "source": null
+   }
+  ],
+  "screenshots": "research-only",
+  "source_text": "excluded"
+ },
+ "schema_version": 1,
+ "source": {
+  "captured_at": null,
+  "description": null,
+  "dpr": null,
+  "url": "https://www.cravburgers.shop/",
+  "url_source": "lib/blueprints/crav.bp.json#/source",
+  "viewport": {
+   "h": 756,
+   "h_source": "lib/blueprints/raw/crav.json#/vh",
+   "w": null,
+   "w_source": null
+  }
+ },
+ "status": "measured-desktop",
+ "typography": {
+  "basis": "measured",
+  "body": {
+   "case": null,
+   "delivery_class": "sans",
+   "delivery_face": "Modak",
+   "delivery_fallback": false,
+   "leading": 0.9,
+   "not_recorded": [
+    "case",
+    "tracking",
+    "weight"
+   ],
+   "px": 40,
+   "source": {
+    "blueprint": "lib/blueprints/crav.bp.json#/type/body",
+    "raw": "lib/blueprints/raw/crav.json#/sections/0/paras/0"
+   },
+   "source_face": "Modak",
+   "tracking": null,
+   "weight": null
+  },
+  "display": {
+   "case": null,
+   "delivery_class": "sans",
+   "delivery_face": "Modak",
+   "delivery_fallback": false,
+   "leading": 0.5,
+   "not_recorded": [
+    "case",
+    "tracking",
+    "weight"
+   ],
+   "px": 504,
+   "source": {
+    "blueprint": "lib/blueprints/crav.bp.json#/type/display",
+    "raw": "lib/blueprints/raw/crav.json#/sections/8/heads/0"
+   },
+   "source_face": "Modak",
+   "tracking": null,
+   "weight": null
+  },
+  "families": {
+   "source": "lib/blueprints/raw/crav.json#/fonts",
+   "value": [
+    "Mouse Memoirs",
+    "Modak"
+   ]
+  },
+  "h2": {
+   "case": null,
+   "delivery_class": "sans",
+   "delivery_face": "Mouse Memoirs",
+   "delivery_fallback": false,
+   "leading": 0.8,
+   "not_recorded": [
+    "case",
+    "tracking",
+    "weight"
+   ],
+   "px": 432,
+   "source": {
+    "blueprint": "lib/blueprints/crav.bp.json#/type/h2",
+    "raw": "lib/blueprints/raw/crav.json#/sections/0/heads/0"
+   },
+   "source_face": "Mouse Memoirs",
+   "tracking": null,
+   "weight": null
+  },
+  "h3": {
+   "case": "uppercase",
+   "delivery_class": "sans",
+   "delivery_face": "Mouse Memoirs",
+   "delivery_fallback": false,
+   "leading": 0.75,
+   "not_recorded": [
+    "tracking",
+    "weight"
+   ],
+   "px": 216,
+   "source": {
+    "blueprint": "lib/blueprints/crav.bp.json#/type/h3",
+    "raw": "lib/blueprints/raw/crav.json#/sections/1/heads/0"
+   },
+   "source_face": "Mouse Memoirs",
+   "tracking": null,
+   "weight": null
+  },
+  "label": null,
+  "levels_missing": {
+   "label": "not-in-capture"
+  },
+  "ratios": {
+   "display_to_body": {
+    "evidence": [
+     "typography.display.px",
+     "typography.body.px"
+    ],
+    "how": "display px ÷ body px",
+    "value": 12.6
+   },
+   "display_to_h2": {
+    "evidence": [
+     "typography.display.px",
+     "typography.h2.px"
+    ],
+    "how": "display px ÷ h2 px",
+    "value": 1.17
+   }
+  }
+ }
+}

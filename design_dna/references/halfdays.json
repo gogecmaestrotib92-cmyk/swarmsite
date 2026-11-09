@@ -1,0 +1,791 @@
+{
+ "built_from": {
+  "design_dna/evidence.json#/references/halfdays": "sha256:4952dd4d48d421cea32c38304b27ca1c20c3ad671e90a627433238d62111e569",
+  "lib/blueprints/halfdays.bp.json": "sha256:5fe417416b3acde48e2be550c72ccbfc14b67c1af079b44cb6b9e7ccd676b6a8",
+  "lib/blueprints/raw/halfdays.json": "sha256:c2c09a9a25bb457e4534741cc6f8f97dacefd0dabb86c8af9ba12f76eccfe517"
+ },
+ "completeness": {
+  "composition": "measured-desktop",
+  "experience": "prose-only",
+  "imagery": "measured-desktop",
+  "mobile": "missing",
+  "motion": "partial",
+  "screenshots": "missing",
+  "typography": "measured"
+ },
+ "composition": {
+  "basis": "measured",
+  "fraction_base": {
+   "basis": "assumed",
+   "source": "lib/blueprint/normalize.py",
+   "w": 1440
+  },
+  "grid": {
+   "col": null,
+   "container": 1385,
+   "frame": 20,
+   "gutter": 12,
+   "not_recorded": [
+    "col"
+   ],
+   "raw_fields": {
+    "container": "lib/blueprints/raw/halfdays.json#/container",
+    "frame": "lib/blueprints/raw/halfdays.json#/frame",
+    "gutter": "lib/blueprints/raw/halfdays.json#/gutter"
+   },
+   "source": {
+    "blueprint": "lib/blueprints/halfdays.bp.json#/grid",
+    "raw": "lib/blueprints/raw/halfdays.json"
+   }
+  },
+  "sections": [
+   {
+    "bg": null,
+    "head": {
+     "align": "left",
+     "case": null,
+     "leading": 0.9,
+     "not_recorded": [
+      "case"
+     ],
+     "px": 44,
+     "source": "lib/blueprints/raw/halfdays.json#/sections/0/heads/0",
+     "tracking": -0.04,
+     "weight": 500,
+     "wf": 0.32,
+     "x": 0.014,
+     "y": 0.115
+    },
+    "media": [
+     {
+      "ar": 1.78,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/halfdays.json#/sections/0/imgs/0",
+      "wf": 0.99,
+      "xf": null
+     }
+    ],
+    "role": "hero-photo-left",
+    "screens": 1.06,
+    "source": {
+     "blueprint": "lib/blueprints/halfdays.bp.json#/sections/0",
+     "raw": "lib/blueprints/raw/halfdays.json#/sections/0"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": null,
+    "media": [
+     {
+      "ar": 0.72,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/halfdays.json#/sections/1/imgs/0",
+      "wf": 0.154,
+      "xf": 0.014
+     },
+     {
+      "ar": 0.72,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/halfdays.json#/sections/1/imgs/1",
+      "wf": 0.154,
+      "xf": 0.175
+     },
+     {
+      "ar": 0.72,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/halfdays.json#/sections/1/imgs/2",
+      "wf": 0.154,
+      "xf": 0.337
+     }
+    ],
+    "role": "product-row-small",
+    "screens": 0.44,
+    "source": {
+     "blueprint": "lib/blueprints/halfdays.bp.json#/sections/1",
+     "raw": "lib/blueprints/raw/halfdays.json#/sections/1"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": null,
+    "media": [
+     {
+      "ar": 0.67,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/halfdays.json#/sections/2/imgs/0",
+      "wf": 0.408,
+      "xf": 0.0
+     },
+     {
+      "ar": 0.67,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/halfdays.json#/sections/2/imgs/1",
+      "wf": 0.408,
+      "xf": 0.416
+     },
+     {
+      "ar": 0.67,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/halfdays.json#/sections/2/imgs/2",
+      "wf": 0.408,
+      "xf": 0.832
+     }
+    ],
+    "role": "photo-3up-tall",
+    "screens": 1.36,
+    "source": {
+     "blueprint": "lib/blueprints/halfdays.bp.json#/sections/2",
+     "raw": "lib/blueprints/raw/halfdays.json#/sections/2"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": "uppercase",
+     "leading": 1.0,
+     "not_recorded": [
+      "align"
+     ],
+     "px": 26,
+     "source": "lib/blueprints/raw/halfdays.json#/sections/3/heads/0",
+     "tracking": -0.01,
+     "weight": 500,
+     "wf": 0.315,
+     "x": 0.66,
+     "y": 0.052
+    },
+    "media": [
+     {
+      "ar": 1.05,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/halfdays.json#/sections/3/imgs/0",
+      "wf": 0.377,
+      "xf": 0.014
+     },
+     {
+      "ar": 0.66,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/halfdays.json#/sections/3/imgs/1",
+      "wf": 0.236,
+      "xf": 0.408
+     }
+    ],
+    "role": "story-photos-text",
+    "screens": 0.76,
+    "source": {
+     "blueprint": "lib/blueprints/halfdays.bp.json#/sections/3",
+     "raw": "lib/blueprints/raw/halfdays.json#/sections/3"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": "uppercase",
+     "leading": 1.2,
+     "not_recorded": [
+      "align"
+     ],
+     "px": 24,
+     "source": "lib/blueprints/raw/halfdays.json#/sections/4/heads/0",
+     "tracking": -0.02,
+     "weight": 500,
+     "wf": 0.156,
+     "x": 0.014,
+     "y": 0.459
+    },
+    "media": [
+     {
+      "ar": 0.67,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/halfdays.json#/sections/4/imgs/0",
+      "wf": 0.144,
+      "xf": 0.177
+     },
+     {
+      "ar": 0.67,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/halfdays.json#/sections/4/imgs/1",
+      "wf": 0.144,
+      "xf": 0.329
+     },
+     {
+      "ar": 0.67,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/halfdays.json#/sections/4/imgs/2",
+      "wf": 0.144,
+      "xf": 0.481
+     }
+    ],
+    "role": "product-row-titled",
+    "screens": 0.61,
+    "source": {
+     "blueprint": "lib/blueprints/halfdays.bp.json#/sections/4",
+     "raw": "lib/blueprints/raw/halfdays.json#/sections/4"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": null,
+    "media": [],
+    "role": "footer-newsletter",
+    "screens": 0.55,
+    "source": {
+     "blueprint": "lib/blueprints/halfdays.bp.json#/sections/5",
+     "raw": "lib/blueprints/raw/halfdays.json#/sections/5"
+    },
+    "sticky": null
+   }
+  ],
+  "summary": {
+   "bleed_section_share": {
+    "count": 1,
+    "evidence": [
+     "composition.sections"
+    ],
+    "how": "sections holding a medium flagged bleed in the capture or at least 98% of the viewport wide ÷ all sections",
+    "matched": [
+     "composition.sections[0].media[0].wf"
+    ],
+    "of": 6,
+    "value": 0.17
+   },
+   "offset_heading_share": {
+    "count": 1,
+    "evidence": [
+     "composition.sections[0].head.x",
+     "composition.sections[3].head.x",
+     "composition.sections[4].head.x"
+    ],
+    "how": "headings whose left edge is at or right of 30% of the viewport width ÷ headings with a recorded position",
+    "matched": [
+     "composition.sections[3].head.x"
+    ],
+    "of": 3,
+    "value": 0.33
+   },
+   "pacing": {
+    "evidence": [
+     "composition.sections[0].screens",
+     "composition.sections[1].screens",
+     "composition.sections[2].screens",
+     "composition.sections[3].screens",
+     "composition.sections[4].screens",
+     "composition.sections[5].screens"
+    ],
+    "how": "section heights in screens, in page order",
+    "value": [
+     1.06,
+     0.44,
+     1.36,
+     0.76,
+     0.61,
+     0.55
+    ]
+   },
+   "page_screens": {
+    "source": {
+     "blueprint": "lib/blueprints/halfdays.bp.json#/screens",
+     "raw": "lib/blueprints/raw/halfdays.json#/screens"
+    },
+    "value": 4.9
+   },
+   "sections": {
+    "evidence": [
+     "composition.sections"
+    ],
+    "how": "number of sections in the record",
+    "value": 6
+   },
+   "sections_screens_total": {
+    "evidence": [
+     "composition.sections[0].screens",
+     "composition.sections[1].screens",
+     "composition.sections[2].screens",
+     "composition.sections[3].screens",
+     "composition.sections[4].screens",
+     "composition.sections[5].screens"
+    ],
+    "how": "sum of section heights in screens; sections can overlap or leave gaps, so this is not the page length",
+    "value": 4.78
+   }
+  },
+  "surface": {
+   "mode": "light",
+   "paper": "#ffffff",
+   "paper_luminance": 1.0,
+   "source": {
+    "blueprint": "lib/blueprints/halfdays.bp.json#/colour/paper",
+    "raw": "lib/blueprints/raw/halfdays.json#/palette/0"
+   }
+  }
+ },
+ "evidence": {
+  "blueprint": "lib/blueprints/halfdays.bp.json",
+  "caveats": [],
+  "mirrors": null,
+  "raw": "lib/blueprints/raw/halfdays.json",
+  "screenshots": {
+   "desktop": [],
+   "dir": null,
+   "mobile": [],
+   "profile": null,
+   "unclassified": []
+  },
+  "scroll_capture": null
+ },
+ "experience": {
+  "not_measured": [
+   "narrative",
+   "interaction",
+   "mobile"
+  ],
+  "pacing_screens": {
+   "evidence": [
+    "composition.summary.pacing"
+   ],
+   "value": [
+    1.06,
+    0.44,
+    1.36,
+    0.76,
+    0.61,
+    0.55
+   ]
+  },
+  "section_notes": [
+   {
+    "kind": "prose",
+    "section": 0,
+    "source": "lib/blueprints/halfdays.bp.json#/sections/0/note",
+    "text": "16:9 bleed photo, 44px headline top-left (x=20,y=92 under nav) 461 wide, yellow 13px label",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 1,
+    "source": "lib/blueprints/halfdays.bp.json#/sections/1/note",
+    "text": "row of 222x307 product tiles (6 across), 12px gaps",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 2,
+    "source": "lib/blueprints/halfdays.bp.json#/sections/2/note",
+    "text": "three 2:3 editorial photos 587 wide, edge to edge, horizontal scroll",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 3,
+    "source": "lib/blueprints/halfdays.bp.json#/sections/3/note",
+    "text": "two photos left (square + portrait), 26px uppercase title + 16px paragraph right column 454 wide",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 4,
+    "source": "lib/blueprints/halfdays.bp.json#/sections/4/note",
+    "text": "title column left (225), product tiles 207x311 with 14px names",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 5,
+    "source": "lib/blueprints/halfdays.bp.json#/sections/5/note",
+    "text": "dark footer: 22px line, newsletter field + 56px white button, 10px uppercase meta",
+    "withheld": null
+   }
+  ]
+ },
+ "fits": {
+  "also": [],
+  "archetype": "apparel-shop-grid",
+  "archetype_source": "lib/blueprints/halfdays.bp.json#/archetype",
+  "kinds": [
+   "product"
+  ],
+  "kinds_source": "lib/blueprints/halfdays.bp.json#/class",
+  "needs": {
+   "derived_by": "rule",
+   "evidence": [
+    "imagery.image_sections",
+    "imagery.video_first_section"
+   ],
+   "images_min": 3,
+   "rule": "derive_needs",
+   "video": false
+  },
+  "temper": [
+   {
+    "derived_by": "rule",
+    "principle": "scale-contrast-low",
+    "rule": "rule_scale_contrast_low",
+    "tag": "even-type"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "tight-tracking",
+    "rule": "rule_tight_tracking",
+    "tag": "tight-tracking"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "tight-leading",
+    "rule": "rule_tight_leading",
+    "tag": "tight-leading"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "single-family",
+    "rule": "rule_single_family",
+    "tag": "one-family"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "portrait-media",
+    "rule": "rule_portrait_media",
+    "tag": "portrait-imagery"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "short-page",
+    "rule": "rule_short_page",
+    "tag": "compact"
+   }
+  ]
+ },
+ "id": "halfdays",
+ "imagery": {
+  "aspects": {
+   "evidence": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[2].media[2].ar",
+    "composition.sections[3].media[0].ar",
+    "composition.sections[3].media[1].ar"
+   ],
+   "how": "distinct aspect ratios (width ÷ height) of large media; large = at least 20% of the viewport width",
+   "value": [
+    0.66,
+    0.67,
+    1.05,
+    1.78
+   ]
+  },
+  "basis": "measured",
+  "image_sections": {
+   "evidence": [
+    "composition.sections"
+   ],
+   "how": "sections holding at least one large still: not tagged video or canvas, aspect between 0.4 and 2.5",
+   "matched": [
+    "composition.sections[0].media[0]",
+    "composition.sections[2].media[0]",
+    "composition.sections[3].media[0]"
+   ],
+   "of": 6,
+   "share": 0.5,
+   "value": 3
+  },
+  "landscape_share": {
+   "count": 1,
+   "evidence": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[2].media[2].ar",
+    "composition.sections[3].media[0].ar",
+    "composition.sections[3].media[1].ar"
+   ],
+   "how": "large media with aspect ≥ 1.2 ÷ large media",
+   "matched": [
+    "composition.sections[0].media[0].ar"
+   ],
+   "of": 6,
+   "value": 0.17
+  },
+  "media_recorded": {
+   "evidence": [
+    "composition.sections"
+   ],
+   "how": "media elements kept in the record: wider than 100px, at most 4 per section",
+   "value": 12
+  },
+  "portrait_share": {
+   "count": 4,
+   "evidence": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[2].media[2].ar",
+    "composition.sections[3].media[0].ar",
+    "composition.sections[3].media[1].ar"
+   ],
+   "how": "large media with aspect ≤ 0.9 ÷ large media",
+   "matched": [
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[2].media[2].ar",
+    "composition.sections[3].media[1].ar"
+   ],
+   "of": 6,
+   "value": 0.67
+  },
+  "video_first_section": {
+   "evidence": [
+    "composition.sections[0].media"
+   ],
+   "how": "the first section holds a medium the capture tagged VIDEO",
+   "matched": [],
+   "value": false
+  }
+ },
+ "implementation": {
+  "ir_seeds": [],
+  "recipe": "lib/templates/recipes.py#halfdays"
+ },
+ "motion": {
+  "animated": null,
+  "custom_cursor": null,
+  "keyframes": null,
+  "libs": {},
+  "not_measured": [
+   "scroll",
+   "pinning",
+   "sequence",
+   "interaction",
+   "reduced-motion"
+  ],
+  "note": {
+   "kind": "prose",
+   "source": "lib/blueprints/halfdays.bp.json#/motion/idea",
+   "text": "shop: almost no motion, product grids, 20px frame, uppercase 24–26px section titles, white page, black 56px buttons, yellow accent label",
+   "withheld": null
+  },
+  "source": "lib/blueprints/raw/halfdays.json#/motion",
+  "tracked": null,
+  "transitions": [
+   "all|0.4s|cubic-bezier(0.29, 0.63, 0.44, 1)",
+   "transform|0.3s|ease-in-out"
+  ]
+ },
+ "principles": [
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "typography.ratios.display_to_body",
+    "typography.display.px",
+    "typography.body.px"
+   ],
+   "id": "scale-contrast-low",
+   "rule": "rule_scale_contrast_low",
+   "statement": "The largest measured heading is only 2.75× the body size (44px over 16px). Threshold: ratio ≤ 3."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "typography.display.tracking",
+    "typography.display.px"
+   ],
+   "id": "tight-tracking",
+   "rule": "rule_tight_tracking",
+   "statement": "The largest measured heading is tracked tight, -0.04em at 44px. Threshold: ≤ -0.02em."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "typography.display.leading"
+   ],
+   "id": "tight-leading",
+   "rule": "rule_tight_leading",
+   "statement": "The largest measured heading has a line height of 0.9. Threshold: ≤ 0.95."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "typography.families.value"
+   ],
+   "id": "single-family",
+   "rule": "rule_single_family",
+   "statement": "One type family was recorded on the whole page. Threshold: exactly one family in the capture's font list."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "imagery.portrait_share",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[2].media[2].ar",
+    "composition.sections[3].media[1].ar"
+   ],
+   "id": "portrait-media",
+   "rule": "rule_portrait_media",
+   "statement": "4 of 6 large media are portrait (aspect ≤ 0.9; large = at least 20% of the viewport width). Threshold: share ≥ 60% and at least 3 large media."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "composition.summary.page_screens.value"
+   ],
+   "id": "short-page",
+   "rule": "rule_short_page",
+   "statement": "The page runs 4.9 screens at the capture height. Threshold: ≤ 6 screens."
+  }
+ ],
+ "rights": {
+  "fonts": [
+   {
+    "face": "Geist",
+    "licence": "unknown",
+    "role": "delivery",
+    "source": null
+   },
+   {
+    "face": "SuisseIntl",
+    "licence": "unknown",
+    "role": "source",
+    "source": null
+   }
+  ],
+  "screenshots": "research-only",
+  "source_text": "excluded"
+ },
+ "schema_version": 1,
+ "source": {
+  "captured_at": null,
+  "description": null,
+  "dpr": null,
+  "url": "https://www.halfdays.com/",
+  "url_source": "lib/blueprints/halfdays.bp.json#/source",
+  "viewport": {
+   "h": 756,
+   "h_source": "lib/blueprints/raw/halfdays.json#/vh",
+   "w": null,
+   "w_source": null
+  }
+ },
+ "status": "measured-desktop",
+ "typography": {
+  "basis": "measured",
+  "body": {
+   "case": null,
+   "delivery_class": "sans",
+   "delivery_face": "Geist",
+   "delivery_fallback": true,
+   "leading": 1.35,
+   "not_recorded": [
+    "case",
+    "tracking",
+    "weight"
+   ],
+   "px": 16,
+   "source": {
+    "blueprint": "lib/blueprints/halfdays.bp.json#/type/body",
+    "raw": "lib/blueprints/raw/halfdays.json#/sections/3/paras/0"
+   },
+   "source_face": "SuisseIntl",
+   "tracking": null,
+   "weight": null
+  },
+  "display": {
+   "case": null,
+   "delivery_class": "sans",
+   "delivery_face": "Geist",
+   "delivery_fallback": true,
+   "leading": 0.9,
+   "not_recorded": [
+    "case"
+   ],
+   "px": 44,
+   "source": {
+    "blueprint": "lib/blueprints/halfdays.bp.json#/type/display",
+    "raw": "lib/blueprints/raw/halfdays.json#/sections/0/heads/0"
+   },
+   "source_face": "SuisseIntl",
+   "tracking": -0.04,
+   "weight": 500
+  },
+  "families": {
+   "source": "lib/blueprints/raw/halfdays.json#/fonts",
+   "value": [
+    "SuisseIntl"
+   ]
+  },
+  "h2": null,
+  "h3": {
+   "case": "uppercase",
+   "delivery_class": "sans",
+   "delivery_face": "Geist",
+   "delivery_fallback": true,
+   "leading": 1.0,
+   "not_recorded": [],
+   "px": 26,
+   "source": {
+    "blueprint": "lib/blueprints/halfdays.bp.json#/type/h3",
+    "raw": "lib/blueprints/raw/halfdays.json#/sections/3/heads/0"
+   },
+   "source_face": "SuisseIntl",
+   "tracking": -0.01,
+   "weight": 500
+  },
+  "label": {
+   "case": "uppercase",
+   "delivery_class": "sans",
+   "delivery_face": "Geist",
+   "delivery_fallback": true,
+   "leading": null,
+   "not_recorded": [
+    "leading",
+    "weight"
+   ],
+   "px": 13,
+   "source": {
+    "blueprint": "lib/blueprints/halfdays.bp.json#/type/label",
+    "raw": "lib/blueprints/raw/halfdays.json#/sections/0/labels/0"
+   },
+   "source_face": "SuisseIntl",
+   "tracking": 0.08,
+   "weight": null
+  },
+  "levels_missing": {
+   "h2": "blueprint-copies-display"
+  },
+  "ratios": {
+   "display_to_body": {
+    "evidence": [
+     "typography.display.px",
+     "typography.body.px"
+    ],
+    "how": "display px ÷ body px",
+    "value": 2.75
+   },
+   "display_to_h2": null
+  }
+ }
+}
