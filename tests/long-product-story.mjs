@@ -62,7 +62,8 @@ try {
   }
   for(const [label,visual,change] of [
     ['missing','missing',()=>{}],['too-small','small',()=>{}],['not-shot','photo',()=>{}],
-    ['short-list','wide',d=>d.beats[0].features.pop() && d.beats[0].features.pop() && d.beats[0].features.pop()],
+    // the product story is the house form for any software features list of three or more; two is a short list
+    ['short-list','wide',d=>{ while(d.beats[0].features.length>2) d.beats[0].features.pop(); }],
     ['individual-image','wide',d=>d.beats[0].features[0].image='photo'],
     ['reserved-for-other-beat','wide',d=>d.beats.unshift({id:'owner',type:'photo',h2:'Image owner',image:'wide'})],
     ['pinned-intent','wide',d=>d.beats[0].ui.move='pinned-sequence'],
