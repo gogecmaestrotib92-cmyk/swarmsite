@@ -1,0 +1,125 @@
+{
+ "ir": "0.1",
+ "note": "The room itself, tall, on the right edge; the headline crosses into it on a plate of the page's own paper.",
+ "hero": {
+  "surface": "paper",
+  "height": "screen",
+  "rows": [
+   "auto",
+   "1fr",
+   "auto",
+   "auto"
+  ],
+  "gap": "md",
+  "nodes": [
+   {
+    "id": "cat",
+    "t": "text",
+    "src": "hero.category",
+    "as": "label",
+    "at": {
+     "col": [
+      1,
+      7
+     ],
+     "row": 1
+    }
+   },
+   {
+    "id": "h1",
+    "t": "text",
+    "src": "hero.h1",
+    "as": "h1",
+    "size": "mega",
+    "measure": 8,
+    "plate": "paper",
+    "at": {
+     "col": [
+      1,
+      10
+     ],
+     "row": 2,
+     "z": 2,
+     "self": "end"
+    }
+   },
+   {
+    "id": "room",
+    "t": "media",
+    "src": "img:p3-img2",
+    "fit": "cover",
+    "ratio": "3/4",
+    "focal": [
+     0.5,
+     0.42
+    ],
+    "bleed": "right",
+    "at": {
+     "col": [
+      8,
+      13
+     ],
+     "row": [
+      1,
+      5
+     ],
+     "z": 0
+    }
+   },
+   {
+    "id": "lede",
+    "t": "text",
+    "src": "hero.lede",
+    "as": "lede",
+    "measure": 44,
+    "at": {
+     "col": [
+      1,
+      6
+     ],
+     "row": 3
+    }
+   },
+   {
+    "id": "go",
+    "t": "actions",
+    "src": [
+     "hero.cta",
+     "hero.cta2"
+    ],
+    "at": {
+     "col": [
+      1,
+      5
+     ],
+     "row": 4
+    }
+   },
+   {
+    "id": "fact",
+    "t": "text",
+    "src": "hero.fact",
+    "as": "label",
+    "at": {
+     "col": [
+      5,
+      8
+     ],
+     "row": 4,
+     "self": "center"
+    }
+   }
+  ],
+  "sm": {
+   "order": [
+    "cat",
+    "h1",
+    "room",
+    "lede",
+    "go",
+    "fact"
+   ]
+  },
+  "enter": "none"
+ }
+}

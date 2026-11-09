@@ -1,0 +1,126 @@
+{
+ "ir": "0.1",
+ "note": "The ball as the one object, square, off the left edge; the headline large beside it, stepping onto the picture.",
+ "hero": {
+  "surface": "paper",
+  "height": "screen",
+  "rows": [
+   "auto",
+   "1fr",
+   "auto",
+   "auto"
+  ],
+  "gap": "md",
+  "nodes": [
+   {
+    "id": "cat",
+    "t": "text",
+    "src": "hero.category",
+    "as": "label",
+    "at": {
+     "col": [
+      1,
+      7
+     ],
+     "row": 1
+    }
+   },
+   {
+    "id": "fact",
+    "t": "text",
+    "src": "hero.fact",
+    "as": "label",
+    "align": "end",
+    "at": {
+     "col": [
+      8,
+      13
+     ],
+     "row": 1
+    }
+   },
+   {
+    "id": "h1",
+    "t": "text",
+    "src": "hero.h1",
+    "as": "h1",
+    "size": "mega",
+    "measure": 9,
+    "plate": "paper",
+    "at": {
+     "col": [
+      5,
+      13
+     ],
+     "row": 2,
+     "z": 2,
+     "self": "end"
+    }
+   },
+   {
+    "id": "ball",
+    "t": "media",
+    "src": "img:img2",
+    "fit": "cover",
+    "ratio": "1/1",
+    "focal": [
+     0.55,
+     0.5
+    ],
+    "bleed": "left",
+    "at": {
+     "col": [
+      1,
+      6
+     ],
+     "row": [
+      2,
+      5
+     ],
+     "z": 0,
+     "self": "end"
+    }
+   },
+   {
+    "id": "lede",
+    "t": "text",
+    "src": "hero.lede",
+    "as": "lede",
+    "measure": 46,
+    "at": {
+     "col": [
+      7,
+      12
+     ],
+     "row": 3
+    }
+   },
+   {
+    "id": "go",
+    "t": "actions",
+    "src": [
+     "hero.cta",
+     "hero.cta2"
+    ],
+    "at": {
+     "col": [
+      7,
+      13
+     ],
+     "row": 4
+    }
+   }
+  ],
+  "sm": {
+   "order": [
+    "cat",
+    "h1",
+    "ball",
+    "lede",
+    "go",
+    "fact"
+   ]
+  },
+  "enter": "none"
+ }
+}
