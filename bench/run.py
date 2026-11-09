@@ -8,6 +8,7 @@ how the page is composed, never from a different capture or different words.
   recipe    no house, per-section moves cleared: the chosen recipe's own slots decide the forms
   composed  shipped, with the hero replaced by the hand- or model-written composition in bench/compositions/<site>.json
             (sites without a composition are skipped; a composition the validator refuses is an error, never a fallback)
+  modelled  the same, with the composition a model wrote (bench/compose.py → bench/runs/_compositions/<site>.json)
 
 Usage: python3 bench/run.py <variant> [site-id ...] [--no-shots]
 Writes bench/runs/<variant>/<site>/{page.html, contract.json, fingerprint.json, result.json, desktop.jpg, mobile.jpg}
@@ -37,7 +38,8 @@ def recipe(d):
         if isinstance(beat.get('ui'), dict): beat['ui'].pop('move', None)
     return d
 
-VARIANTS = {'shipped': shipped, 'house': house, 'recipe': recipe, 'composed': shipped}
+VARIANTS = {'shipped': shipped, 'house': house, 'recipe': recipe, 'composed': shipped, 'modelled': shipped}
+COMPOSITIONS = {'composed': os.path.join(HERE, 'compositions'), 'modelled': os.path.join(HERE, 'runs', '_compositions')}
 
 
 def environment():
@@ -64,8 +66,8 @@ def run_site(site, variant, shots=True):
     result['seconds']['render'] = round(time.time() - t, 1)
     if r.returncode: result['error'] = 'render: ' + r.stderr[-300:]; return result
     with open(page, encoding='utf-8') as f: html = f.read()
-    if variant == 'composed':
-        composition = os.path.join(HERE, 'compositions', site['id'] + '.json')
+    if variant in COMPOSITIONS:
+        composition = os.path.join(COMPOSITIONS[variant], site['id'] + '.json')
         with open(composition) as f: ir = json.load(f)
         with open(os.path.join(work, 'images.json')) as f: images = json.load(f)
         html, report = IR.transplant(html, ir, images)
@@ -121,7 +123,7 @@ def main():
     results = []
     for site in sites:
         if wanted and site['id'] not in wanted: continue
-        if variant == 'composed' and not os.path.exists(os.path.join(HERE, 'compositions', site['id'] + '.json')): continue
+        if variant in COMPOSITIONS and not os.path.exists(os.path.join(COMPOSITIONS[variant], site['id'] + '.json')): continue
         r = run_site(site, variant, shots); results.append(r)
         mark = '✗' if r.get('error') else '✓'
         print(f"{mark} {site['id']:22s} {site['blueprint']:14s} contract {r.get('contract')}  hard {r.get('hard_failures')}  " + (r.get('error') or ' | '.join((r.get('fingerprint') or {}).get('body', []))), flush=True)

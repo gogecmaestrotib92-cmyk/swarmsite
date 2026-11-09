@@ -79,7 +79,8 @@ def validate(ir, content):
     hero = ir['hero']
     extra = set(hero) - HERO_KEYS
     if extra: err('IR001', 'hero', f'unknown hero fields: {sorted(extra)}')
-    if hero.get('surface', 'paper') not in SURFACES: err('IR001', 'hero.surface', f'surface is one of {SURFACES}')
+    if hero.get('surface', 'paper') != 'paper':  # the nav belongs to the page and cannot follow another surface yet: white links on a white hero
+        err('IR001', 'hero.surface', 'in this version the first screen sits on the page\'s own surface ("paper"): the navigation above it cannot follow another one yet')
     if hero.get('height', 'auto') not in HEIGHTS: err('IR001', 'hero.height', f'height is one of {HEIGHTS}')
     if hero.get('gap', 'md') not in GAPS: err('IR001', 'hero.gap', f'gap is one of {GAPS}')
     if hero.get('enter', 'none') not in ENTER: err('IR070', 'hero.enter', f'enter is one of {ENTER}')
@@ -159,6 +160,10 @@ def validate(ir, content):
         elif kind == 'shape':
             if node.get('kind') != 'rule': err('IR001', where, 'the only shape is "rule"')
 
+    # a picture that is placed has to register: the contract asks for a first-screen visual at least 30% of the screen wide
+    pictures = [n for n in nodes if n.get('t') == 'media' and n.get('id') in areas]
+    if pictures and not any(span_px(areas[n['id']], content.get('page', {}), n.get('bleed', 'none')) >= 0.3 * 1440 for n in pictures):
+        err('IR066', 'hero.nodes', 'the pictures placed are all under 30% of the screen width: give one of them at least five columns, or compose with type alone')
     # content is constrained: everything the production hero says is placed, once
     for address in content['text']:
         n = placed_text.count(address)

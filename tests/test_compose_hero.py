@@ -76,6 +76,8 @@ class Validator(unittest.TestCase):
     def test_structure(self):
         self.assertEqual(codes({'ir': '9.9', 'hero': {}}), ['IR001'])
         ir = composition(); ir['hero']['surface'] = 'neon'; self.assertEqual(codes(ir), ['IR001'])
+        for surface in ('dark', 'alt', 'accent'):   # the nav above cannot follow another surface yet
+            ir = composition(); ir['hero']['surface'] = surface; self.assertEqual(codes(ir), ['IR001'], surface)
         ir = composition(); ir['hero']['rows'] = ['auto', '3fr']; self.assertEqual(codes(ir), ['IR001'])
         ir = composition(); ir['hero']['nodes'].append(dict(node(ir, 'h1'))); self.assertIn('IR001', codes(ir))   # duplicate id
         ir = composition(); node(ir, 'h1')['colour'] = '#f00'; self.assertEqual(codes(ir), ['IR001'])
@@ -121,10 +123,18 @@ class Validator(unittest.TestCase):
         small = copy.deepcopy(BASE); small['media']['hero.picture'] = dict(small['media']['hero.picture'], w=320, h=213)   # five columns at 4/3 is about 490×370 px: more than 1.35× this picture
         self.assertEqual(codes(composition(small), small), ['IR060'])
         narrow = composition(small); node(narrow, 'pic')['at'] = {'col': [10, 13], 'row': [2, 5], 'z': 0}; node(narrow, 'pic')['ratio'] = '3/2'
-        self.assertEqual(codes(narrow, small), [])
+        self.assertEqual(codes(narrow, small), ['IR066'], 'small enough to be sharp is too small to register: such a picture cannot be the first screen\'s picture')
+        medium = copy.deepcopy(BASE); medium['media']['hero.picture'] = dict(medium['media']['hero.picture'], w=700, h=467)
+        self.assertEqual(codes(composition(medium), medium), [], 'five columns at 4/3 is within 1.35× of a 700 px picture')
         unknown = copy.deepcopy(BASE); unknown['media']['hero.picture'] = dict(unknown['media']['hero.picture'], w=None, h=None)
         self.assertEqual(codes(composition(unknown), unknown), ['IR063'])
         ir = composition(); node(ir, 'pic').pop('ratio'); self.assertEqual(codes(ir), ['IR064'])
+
+    def test_a_placed_picture_is_large_enough_to_register(self):
+        ir = composition(); node(ir, 'pic')['at'] = {'col': [11, 13], 'row': [2, 5], 'z': 0}
+        self.assertEqual(codes(ir), ['IR066'])
+        ir = composition(); ir['hero']['nodes'] = [n for n in ir['hero']['nodes'] if n['id'] != 'pic']
+        self.assertEqual(codes(ir), [], 'no picture at all is a choice: type alone can carry a first screen')
 
     def test_a_picture_appears_once_and_is_real(self):
         elsewhere = copy.deepcopy(BASE); elsewhere['used_elsewhere'] = ['hero.picture']
