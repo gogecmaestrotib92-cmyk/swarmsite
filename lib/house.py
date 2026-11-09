@@ -14,7 +14,7 @@ HOUSE = {
     # social proof after features on 6/7; FAQ rare (2/7), exactly 5 questions, right before the CTA; figures never stand alone
     'software': [
         ('proof', 'photo', 'story', 'the product in use beside one result line (a before/after pair only when the source has an original and a result; a code snippet for a dev tool)', True),
-        ('features', 'features', 'cards', 'three to six capabilities in the order a user meets them (intake → plan → ship), title 2–4 words, one sentence, each with its own product crop when there is one; steps only when the source itself names steps', True),
+        ('features', 'features', 'pinned-sequence', 'three to six capabilities in the order a user meets them (intake → plan → ship), title 2–4 words, one sentence, each with its own product crop when there is one; steps only when the source itself names steps', True),
         ('trust', 'testimonials', None, 'one to three real customer quotes with names; when the source has none, real figures or badges (customers, uptime, compliance) as cells', False),
         ('figures', 'cells', 'marquee', 'only when there are no quotes: three to six real figures (customers, speed, limits, price) — value, label, one-line detail', True),
         ('faq', 'faq', 'cards', 'up to five questions a buyer asks before signing up, in the site\'s own words; skip under three real questions', True),

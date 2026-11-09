@@ -25,6 +25,7 @@ class House(unittest.TestCase):
         self.assertEqual(out['beats'][1]['ui']['move'], 'marquee')
         self.assertEqual(out['beats'][2]['ui']['move'], 'cards')
         self.assertEqual(out['beats'][3]['ui']['move'], 'pinned-sequence', 'a type without a house slot keeps the agents\' move')
+        self.assertEqual(out['beats'][1]['ui']['move'], 'marquee')
         self.assertEqual(out['house'], 'software')
 
     def test_service_without_work_photos_leads_with_services(self):

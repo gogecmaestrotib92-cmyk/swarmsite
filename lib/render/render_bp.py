@@ -1150,9 +1150,12 @@ def build(slug_dir, bp_id, out_path=None):
     def long_product_story_image(bt):
         # Never manufacture a visual or substitute another beat's image.
         if not soft or bt.get('type') != 'features' or len(bt.get('features') or []) < 3: return None
-        if any(not isinstance(f, dict) or f.get('image') for f in bt.get('features') or []): return None
+        feats = bt.get('features') or []
+        if any(not isinstance(f, dict) for f in feats): return None
+        pictured = sum(1 for f in feats if f.get('image') and images.get(f['image'], {}).get('data'))
+        if pictured: return None  # features with their own crops keep them: the pinned tour (most pictured) or cards, never a story that drops them
         ui_ = bt.get('ui') or {}
-        if ui_.get('move') not in (None, '', 'auto', 'cards', 'story'): return None
+        if ui_.get('move') not in (None, '', 'auto', 'cards', 'story', 'pinned-sequence'): return None
         image_id = ui_.get('lead') if 'lead' in ui_ else bt.get('image')
         shot = images.get(image_id) if isinstance(image_id, str) and image_id else None
         if not shot or shot.get('shot') is not True or not shot.get('data') or is_used(image_id) or not free_for(shot, bt) or dark_background_texture(shot) or symbolic_asset(shot): return None
@@ -1607,6 +1610,20 @@ img,video{{display:block;max-width:100%}}a{{color:inherit;text-decoration:none}}
 .h1[style*="--fs"][style*="--lw"]{{font-size:min(var(--fs),calc((100vw - 2 * min(var(--frame,24px),24px)) / var(--lw,8) * 1.72))!important}}.h2[style*="--fs"][style*="--lw"]{{font-size:min(var(--fs),calc((100vw - 2 * min(var(--frame,24px),24px)) / var(--lw,8) * 1.72))!important}}
 .art-photo-pair .ba-pair{{display:grid;grid-template-columns:1fr 1fr;gap:var(--gutter);margin-top:clamp(28px,4vw,56px);align-items:start}}.art-photo-pair figure{{margin:0;border-radius:var(--radius);overflow:hidden;background:rgba(127,127,127,.08);border:1px solid var(--line)}}.art-photo-pair figure img{{display:block;width:100%;height:auto}}.art-photo-pair figcaption{{font-family:var(--mono,ui-monospace,monospace);font-size:12px;letter-spacing:.08em;text-transform:uppercase;padding:12px 16px;border-top:1px solid var(--line);color:var(--muted)}}.art-photo-pair .ba-before img{{filter:saturate(.85)}}.art-photo-pair .ba-after{{box-shadow:0 30px 80px -30px rgba(0,0,0,.45)}}@media(max-width:700px){{.art-photo-pair .ba-pair{{grid-template-columns:1fr}}}}
 .doc-stack{{position:relative;width:min(100%,560px);margin-inline:auto;aspect-ratio:.78;perspective:1400px}}.doc-stack figure{{position:absolute;margin:0;inset:0;border-radius:6px;overflow:hidden;background:#fff;box-shadow:0 2px 0 rgba(255,255,255,.35) inset,0 30px 60px -20px rgba(0,0,0,.55),0 8px 18px -8px rgba(0,0,0,.35)}}.doc-stack figure img{{display:block;width:100%;height:100%;object-fit:cover;object-position:top}}.doc-stack .doc-back{{transform:translate(9%,-6%) rotate(4deg) scale(.96);filter:brightness(.86) saturate(.9);z-index:0}}.doc-stack .doc-front{{transform:translate(-4%,3%) rotate(-2.5deg);z-index:1}}.doc-stack::after{{content:"";position:absolute;inset:auto 10% -8% 10%;height:18%;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.45),transparent);z-index:-1;filter:blur(10px)}}@media(max-width:900px){{.doc-stack{{width:min(100%,420px);aspect-ratio:.82}}}}
+/* world layer */
+.world-dark{{background-image:radial-gradient(1200px 600px at 70% -10%,color-mix(in srgb,var(--accent) 14%,transparent),transparent 60%)}}
+.world-dark .shotframe,.world-dark .doc-stack,.world-dark .product-story-visual,.world-dark .ui-shot{{position:relative}}
+.world-dark .shotframe::before,.world-dark .product-story-visual::before{{content:"";position:absolute;inset:-12% -8%;z-index:-1;background:radial-gradient(closest-side,color-mix(in srgb,var(--accent) 28%,transparent),transparent 70%);filter:blur(30px);pointer-events:none}}
+.world-dark .sec{{position:relative}}.world-dark .sec::after{{content:"";position:absolute;inset:0;pointer-events:none;opacity:.06;mix-blend-mode:overlay;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='160' height='160' filter='url(%23n)' opacity='.9'/></svg>")}}
+.world-c1 .sec:not(.hero):not(.band-dark){{background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:64px 64px;background-position:center top}}
+.world-c1 .lab::before,.world-c2 .lab::before{{content:"";display:inline-block;width:8px;height:8px;border:1px solid currentColor;margin-right:8px;vertical-align:middle;opacity:.7}}
+.world-c1 .shotframe,.world-c1 .doc-stack figure,.world-c7 .shotframe{{outline:1px solid color-mix(in srgb,var(--accent) 35%,transparent);outline-offset:6px}}
+.world-c2 .grid>.card{{border-top:1px solid var(--line);padding-top:18px}}.world-c2 .gh{{border-bottom:1px solid var(--line);padding-bottom:18px}}
+.world-c4 .h2{{position:relative}}.world-c4 .gh .h2::after{{content:"";display:block;width:56px;height:1px;background:currentColor;opacity:.35;margin-top:14px}}
+.world-c6{{background-image:radial-gradient(900px 500px at 50% 0%,rgba(255,255,255,.06),transparent 70%)}}.world-c6 .btn:not(.ghost){{box-shadow:0 0 0 1px rgba(255,255,255,.12) inset,0 10px 30px -12px rgba(255,255,255,.25)}}
+.world-c7 .lab{{color:var(--accent)}}.world-c7 .nums .num{{font-variant-numeric:tabular-nums}}
+.world-c8 .sec::after{{opacity:.1}}
+.no-motion .world-dark .sec::after{{display:none}}
 .section-extras{{position:relative;z-index:1;margin-top:28px;overflow-wrap:anywhere}}.section-note{{max-width:var(--body-max);line-height:1.5}}.section-actions{{display:flex;flex-wrap:wrap;gap:12px}}.section-note+.section-actions{{margin-top:16px}}.section-actions .btn{{max-width:100%;overflow-wrap:anywhere}}.overlay .section-extras{{color:#fff;padding-bottom:clamp(40px,6vw,80px)}}.overlay .section-actions .btn,.band-accent .section-actions .btn{{background:#fff;color:#111}}
 .source-actions{{position:relative;z-index:1;margin-top:24px;overflow-wrap:anywhere}}.overlay .source-actions{{color:#fff;padding-bottom:clamp(40px,6vw,80px)}}.source-actions>div+div{{margin-top:8px}}.source-actions-label{{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}}.source-actions ul{{list-style:none;display:flex;flex-wrap:wrap;gap:0 24px;margin:0}}.source-actions a{{display:inline-flex;align-items:center;min-height:44px;font-size:clamp(14px,1vw,16px);text-decoration:underline;text-underline-offset:.22em;overflow-wrap:anywhere}}
 .nav{{position:fixed;inset:0 0 auto 0;z-index:50;padding:18px 0;transition:background var(--slow),color var(--slow)}}.nav .wrap{{display:flex;align-items:center;justify-content:space-between;gap:24px}}.nav .wrap>a:first-child{{white-space:nowrap;flex-shrink:0}}.nav .links{{display:flex;gap:28px;font-size:15px}}.nav.solid{{background:color-mix(in srgb,var(--paper) 86%,transparent);color:var(--ink);backdrop-filter:blur(14px)}}.nav.solid .btn{{background:var(--ink);color:var(--paper);border-color:var(--ink)}}.nav.on-photo:not(.solid){{color:var(--on-photo)}}.nav.on-photo:not(.solid) .btn{{background:var(--on-photo);color:#111}}.nav .logo-surface{{display:inline-flex;align-items:center;max-width:100%;box-sizing:border-box}}.nav.logo-plate-solid:not(.on-photo) .logo-surface,.nav.logo-plate-solid.solid .logo-surface,.nav.logo-plate-photo.on-photo:not(.solid) .logo-surface{{background:#fff;padding:4px 8px;border-radius:6px}}.nav .logo{{height:{min(56, max(28, (bp.get('nav') or {}).get('h', 56) - 20))}px;width:auto;max-width:100%}}.nav .wordmark{{font-family:var(--display);font-size:22px}}
@@ -1803,8 +1820,14 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
         seo_head = ''.join(parts)
     language = next((value.strip() for value in (d.get('lang'), inventory.get('lang')) if isinstance(value, str) and re.fullmatch(r'[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*', value.strip())), '')
     lang_attr = f' lang="{e(language)}"' if language else ''
+    # ---- the world layer: the details that separate a studio page from a template, keyed by the concept the director chose
+    # (dna/DNA-REPORT-round2-CONCLUSIONS.md): hairline grids, mono labels with indices, a glow behind the product, grain on dark paper
+    concept_id = str(d.get('concept') or 'C5').upper()
+    if concept_id not in ('C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8'): concept_id = 'C5'
+    dark_world = lum(paper) < .5
+    world_class = f'world-{concept_id.lower()}{" world-dark" if dark_world else ""}'
     html = f'''<!DOCTYPE html><html{lang_attr}><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{e(page_title)}</title>{description_tag}{seo_head}{fonts_link}<style>{css}</style></head>
-<body>
+<body class="{world_class}">
 <nav class="nav{' solid' if 'has-media' not in out[0] else ''}{logo_class}" id="nav" data-nav><div class="wrap"><a href="#top">{mark}</a><div class="links">{nav_links}</div>{cta_html(bool(sec_media(bp['sections'][0])))}</div></nav>
 {chr(10).join(out)}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>{'<script src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js"></script>' if MO.get('smooth') else ''}

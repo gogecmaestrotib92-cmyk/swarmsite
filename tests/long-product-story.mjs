@@ -66,7 +66,7 @@ try {
     ['short-list','wide',d=>{ while(d.beats[0].features.length>2) d.beats[0].features.pop(); }],
     ['individual-image','wide',d=>d.beats[0].features[0].image='photo'],
     ['reserved-for-other-beat','wide',d=>d.beats.unshift({id:'owner',type:'photo',h2:'Image owner',image:'wide'})],
-    ['pinned-intent','wide',d=>d.beats[0].ui.move='pinned-sequence'],
+    // a pinned intent without per-feature pictures is a text ladder: it becomes the product story (heading + screenshot + rows), not a pinned tour
     ['nonsoftware','wide',d=>d.kind='place'],
   ]) {
     const out=build('butter',visual,change);const html=fs.readFileSync(out,'utf8');assert.doesNotMatch(html,/<section class="sec product-story/,label);
