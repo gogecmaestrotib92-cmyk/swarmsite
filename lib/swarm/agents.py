@@ -12,6 +12,7 @@ from visual_quality import empty_visual
 from visual_semantics import ledger_lead_fingerprint
 import budget as B
 import seo as SEO
+import artdir as ART
 MODEL = os.environ.get('DIRECT_MODEL', 'claude-sonnet-5-5')
 _document_lock = RLock()
 
@@ -568,7 +569,10 @@ def visual(slug_dir, notes=''):
             # Preserve the existing fail-open behavior for unsupported formats.
             if _photo(it, known_nonempty=True): distinct += 1
             if it.get('gen'): have_gen += 1
-    gen_rule = 'disabled' if not G.enabled() else (f'enabled — the site has only {distinct} distinct real visual(s) and {have_gen} commissioned so far: you MUST commission {max(0, 3 - have_gen)} originals now, one per section that lacks its own picture (never the hero)' if distinct < 3 and have_gen < 3 else 'enabled (optional, the site has enough visuals)')
+    kind_ = d.get('kind') or 'service'
+    art_ok = G.enabled() and ART.allowed(kind_)
+    gen_rule = ('disabled' if not G.enabled() else 'disabled for places — a restaurant or hotel is shown only in its own photographs' if not ART.allowed(kind_)
+                else f'enabled — the site has {distinct} distinct real visual(s) and {have_gen} commissioned so far. ART DIRECTION: {ART.STYLE[kind_]}. Palette: {ART.colours(d.get("mood")) or "the brand palette"}. Generated imagery is the last resort for a slot with no picture at all (cap {max(0, 3 - have_gen)} now; never the hero, never the proof slot when a real product image exists): photographic material studies only, in that style and palette — never a 3D render or an abstract blob, which reads as AI.')
     content = [{"type": "text", "text": f"GENERATION: {gen_rule}\nBRAND: {json.dumps({k: d.get('brand', {}).get(k) for k in ('name', 'accent', 'paper', 'ink')})} mode={d.get('mode')}\nKIND: {d.get('kind')}\nHERO: {json.dumps({k: d['hero'].get(k) for k in ('h1', 'media')}, ensure_ascii=False)}\nBEATS: {json.dumps([{'id': b['id'], 'type': b['type'], 'h2': b.get('h2'), 'image': b.get('image', ''), 'move': (b.get('ui') or {}).get('move', ''), 'lead': (b.get('ui') or {}).get('lead', '')} for b in d['beats']], ensure_ascii=False)}{business_context(slug_dir)}{creative_context(d)}\nCRITIC NOTES FOR VISUAL: {notes or 'none'}\nIMAGES (thumbnails follow, in this order):"}]
     for it, thumbnail in thumbnails:
         content += [{"type": "text", "text": f"id={it.get('id')} {it.get('w')}×{it.get('h')}{' section-shot' if it.get('shot') else ''}{' hero-grade' if it.get('heroGrade') else ''}"}, {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": thumbnail}}]
@@ -658,6 +662,8 @@ def apply_visual(slug_dir, r):
     # commissioned originals
     import gen as G
     gens = []
+    kind_ = d.get('kind') or 'service'
+    art_ok = G.enabled() and ART.allowed(kind_)  # generated imagery: software/service/product only, material studies, never places
     if G.enabled():
         from concurrent.futures import ThreadPoolExecutor
         valid_imgs = [i for i in imgs if i.get('data') and not is_empty(i)]
@@ -665,14 +671,19 @@ def apply_visual(slug_dir, r):
         have_gen = len([i for i in valid_imgs if i.get('gen')])
         asks = [g for g in (r.get('generate') or []) if g.get('prompt') and g.get('beat') and not text_ticker(ids.get(g['beat']))][:max(0, 3 - have_gen)]
         distinct = len([i for i in valid_imgs if _photo(i, known_nonempty=True)])
-        if distinct < 3 and have_gen < 3 and not asks:  # the rule is mandatory: when the model only lists needs, the needs become the commissions
-            holes = [b for b in d.get('beats', []) if b.get('type') not in ('form', 'faq', 'ledger') and not text_ticker(b)
-                     and (not b.get('image') or b.get('image') in by and id(by[b['image']]) not in valid_objects)][:3 - have_gen]
-            for b, need in zip(holes, (r.get('need') or []) + [f"{d.get('brand', {}).get('name', '')} — {b.get('h2') or b.get('big') or ''}" for b in holes]):
-                asks.append({'beat': b['id'], 'prompt': f"Editorial photograph for a {d.get('kind')} website: {need}. Natural light, real place, restrained palette, no people.", 'ar': '16:9', 'as': f"gen-{b['id']}"})
+        asks = asks if art_ok else []
+        if art_ok and have_gen < 3 and len(asks) < 3 - have_gen:  # the house wants every slot pictured: what the editor did not commission, the art direction commissions
+            asked = {g.get('beat') for g in asks}
+            holes = [b for b in d.get('beats', []) if b.get('type') not in ('form', 'faq', 'ledger', 'testimonials') and not text_ticker(b) and b['id'] not in asked
+                     and (not b.get('image') or b.get('image') in by and id(by[b['image']]) not in valid_objects)][:3 - have_gen - len(asks)]
+            needs = list(r.get('need') or [])
+            for b in holes:
+                idea = needs.pop(0) if needs else (b.get('h2') or b.get('big') or '')
+                asks.append({'beat': b['id'], 'prompt': ART.prompt(kind_, b.get('type'), d.get('mood'), idea, d.get('brand', {}).get('name', '')), 'ar': ART.ratio_for(b.get('type')), 'as': f"gen-{b['id']}"})
+            asks = [g for g in asks if g.get('beat') != 'hero']  # the hero is never generated: it is the product or the type
         def one(g):
             try:
-                pr = g['prompt'] + ' No text, no letters, no logos, no user interface, no watermark, no faces.'
+                pr = g['prompt'] + (' ' + ART.STYLE[kind_] + '. Palette: ' + ART.colours(d.get('mood')) + '.' if ART.colours(d.get('mood')) and ART.STYLE[kind_] not in g['prompt'] else '') + ' ' + ART.NEGATIVE
                 data = G.generate(pr, g.get('ar', '16:9')); im = Image.open(io.BytesIO(data)).convert('RGB'); im.thumbnail((1600, 1600)); buf = io.BytesIO(); im.save(buf, 'JPEG', quality=86)
                 return {'id': re.sub(r'[^\w-]', '', g.get('as') or f"gen-{g['beat']}"), 'src': 'commissioned', 'w': im.size[0], 'h': im.size[1], 'alt': g['prompt'][:80], 'ratio': round(im.size[0] / im.size[1], 2), 'heroGrade': im.size[0] >= 1200, 'gen': True, 'data': 'data:image/jpeg;base64,' + base64.b64encode(buf.getvalue()).decode()}, g['beat']
             except Exception as e: return {'error': str(e)[:120]}, g['beat']

@@ -70,15 +70,17 @@ class AssignedLookalikes(unittest.TestCase):
 
     def test_uncertain_review_keeps_the_directed_hero_and_the_lookalike_story_picture(self):
         secs = sections(self.render('UNCERTAIN'))
-        self.assertEqual(secs['top'][1], 1, 'UNCERTAIN is not NOT_PRODUCT: the hero keeps the picture the director chose')
-        self.assertEqual(secs['result'][1], 2, 'page 2 is assigned to its own slot, and the source\'s own "Before" page stands beside it')
-        self.assertIn('before-after', self.last_html)
+        self.assertGreaterEqual(secs['top'][1], 1, 'UNCERTAIN is not NOT_PRODUCT: the hero keeps the picture the director chose')
+        self.assertEqual(secs['top'][1], 2, 'a document product is a stack of its own pages in the hero: the result on top, the original behind')
+        self.assertIn('doc-stack', self.last_html)
+        self.assertEqual(secs['result'][1], 1, 'page 2 is assigned to its own slot; the hero stack must not use it up')
         self.assertNotIn('pinned', secs['templates'][0], 'five text-only slides are cards, not a pinned ladder')
 
     def test_not_product_still_empties_the_hero(self):
         secs = sections(self.render('NOT_PRODUCT'))
         self.assertEqual(secs['top'][1], 0)
-        self.assertEqual(secs['result'][1], 2)
+        self.assertEqual(secs['result'][1], 2, 'without a hero stack, the source\'s own Before page stands beside the result')
+        self.assertIn('before-after', self.last_html)
 
 
 if __name__ == '__main__':

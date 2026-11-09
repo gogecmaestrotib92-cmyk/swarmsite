@@ -59,13 +59,13 @@ class VisualAssetTest(unittest.TestCase):
         imgs += [{'id': 'blank-gen', 'w': 1200, 'h': 800, 'gen': True, 'data': white},
                  {'id': 'useful', 'w': 1200, 'h': 800, 'data': image_data(useful)}]
         with tempfile.TemporaryDirectory() as directory:
-            agents.W(directory, 'direction.json', {'hero': {}, 'brand': {}, 'beats': [], 'kind': 'place'})
+            agents.W(directory, 'direction.json', {'hero': {}, 'brand': {}, 'beats': [], 'kind': 'service'})
             agents.W(directory, 'images.json', imgs)
             with patch('gen.enabled', return_value=True), patch.object(agents, 'ask', return_value=None) as ask, patch.object(agents, 'empty_visual', wraps=agents.empty_visual) as check_empty, patch('PIL.Image.open', wraps=Image.open) as open_image:
                 agents.visual(directory)
             content = ask.call_args.args[1]
-            self.assertIn('only 1 distinct real visual(s) and 0 commissioned', content[0]['text'])
-            self.assertIn('MUST commission 3 originals', content[0]['text'])
+            self.assertIn('1 distinct real visual(s) and 0 commissioned', content[0]['text'])
+            self.assertIn('material studies only', content[0]['text'])  # commissions are art-directed, never 3D renders, never the hero
             labels = [item['text'] for item in content[1:] if item['type'] == 'text' and item['text'].startswith('id=')]
             self.assertEqual(len(labels), 1)
             self.assertIn('id=useful', labels[0])
@@ -79,7 +79,7 @@ class VisualAssetTest(unittest.TestCase):
         ImageDraw.Draw(useful).rectangle((400, 300, 600, 500), fill='#eeeeee')
         generated = base64.b64decode(image_data(useful).split(',', 1)[1])
         with tempfile.TemporaryDirectory() as directory:
-            direction = {'hero': {}, 'brand': {'name': 'Studio'}, 'kind': 'place', 'beats': [
+            direction = {'hero': {}, 'brand': {'name': 'Studio'}, 'kind': 'service', 'beats': [
                 {'id': 'offer', 'type': 'features', 'h2': 'Offer', 'image': 'blank', 'features': []}]}
             agents.W(directory, 'direction.json', direction)
             agents.W(directory, 'images.json', [{'id': 'blank', 'w': 1200, 'h': 800, 'data': white},
@@ -94,7 +94,7 @@ class VisualAssetTest(unittest.TestCase):
     def test_empty_generated_output_is_not_assigned(self):
         white = base64.b64decode(image_data(Image.new('RGB', (1200, 800), 'white')).split(',', 1)[1])
         with tempfile.TemporaryDirectory() as directory:
-            agents.W(directory, 'direction.json', {'hero': {}, 'brand': {'name': 'Studio'}, 'kind': 'place',
+            agents.W(directory, 'direction.json', {'hero': {}, 'brand': {'name': 'Studio'}, 'kind': 'service',
                                                     'beats': [{'id': 'offer', 'type': 'features'}]})
             agents.W(directory, 'images.json', [])
             with patch('gen.enabled', return_value=True), patch('gen.generate', return_value=white):

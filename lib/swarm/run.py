@@ -12,6 +12,7 @@ import critic as C
 import coverage_report as Coverage
 import pattern_stage as Patterns
 import house as HOUSE
+import moods as MOODS
 
 def relock(slug_dir):
     """The house owns order and moves; agents own copy, pictures and layout details. Re-applied after every agent pass."""
@@ -132,6 +133,14 @@ def _main(snapshot_dir):
     if fs_: ev('Reader', f"{fs_.get('what', '')[:90]}"); ev('Reader', f"{len(fs_.get('facts', []))} facts · {len(fs_.get('offers', []))} offers · {len(fs_.get('quotes', []))} quotes")
     # round 0: the specialists shape the director's document
     safe('Concept', A.concept, slug_dir, '', bp)
+    # the mood (paper, ink, accent) is chosen once, here, so the Visual editor commissions in the same colours the renderer will use
+    try:
+        with A._document_lock:
+            d0 = A.J(slug_dir, 'direction.json'); brief0 = A.J(slug_dir, 'brief.json') or {}; inv0 = A.J(slug_dir, 'inventory.json') or {}
+            if d0 is not None and brief0.get('keepColours', True) is False and not isinstance(d0.get('mood'), dict):
+                d0['mood'] = MOODS.choose(d0.get('kind') or 'service', inv0, d0.get('mode')); A.W(slug_dir, 'direction.json', d0)
+                ev('Concept', f"mood: {d0['mood']['id']} · {d0['mood']['why']}")
+    except Exception as e: ev('Concept', 'mood skipped: ' + str(e)[:80])
     relock(slug_dir)
     d = A.J(slug_dir, 'direction.json'); sw = d.get('swarm') or {}
     if sw.get('idea'): ev('Concept', 'idea: ' + sw['idea'])

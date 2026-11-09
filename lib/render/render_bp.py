@@ -219,7 +219,8 @@ def build(slug_dir, bp_id, out_path=None):
             # hero: real photos first; software bodies: UI section shots first; places: photos first
             pool.sort(key=lambda i: (bool(i.get('shot')) if (prefer_hero or not soft) else not i.get('shot'), not (i.get('heroGrade') if prefer_hero else True), -(i.get('w', 0) * i.get('h', 0)))); it = pool[0] if pool else None
         if not it: return ''
-        used.update(family(it.get('id'))); placed.add(it.get('id')); return it.get('data', '')
+        # look-alikes of a placed picture are used up too — unless the director assigned them to a slot of their own
+        used.update(k for k in family(it.get('id')) if k == it.get('id') or not reserved.get(k)); placed.add(it.get('id')); return it.get('data', '')
 
     def pixel_dimensions(it):
         try:
@@ -275,7 +276,7 @@ def build(slug_dir, bp_id, out_path=None):
     # from an unvalidated seed; invalid foregrounds are repaired for contrast.
     use_blueprint_palette = brief.get('keepColours', True) is False
     # the owner let the swarm pick colours: a curated mood of the blueprint's mode, nearest in hue to the brand's own accent
-    mood = MOODS.choose(d.get('kind') or bp.get('class'), inventory, C.get('mode')) if use_blueprint_palette else None
+    mood = (d.get('mood') if isinstance(d.get('mood'), dict) and d['mood'].get('paper') else MOODS.choose(d.get('kind') or bp.get('class'), inventory, C.get('mode'))) if use_blueprint_palette else None
     policy = resolve_colours({**C, **{k: mood[k] for k in ('paper', 'ink', 'accent', 'alt')}}) if mood else None
     if mood: print(json.dumps({'event': {'role': 'Concept', 'text': f"mood: {mood['id']} · {mood['why']}"}}), file=sys.stderr)
     if policy:
@@ -563,6 +564,17 @@ def build(slug_dir, bp_id, out_path=None):
             left = f'<div class="split-l">{plain_cat}<h1 class="h1" style="{hsty2}">{h1}</h1><p class="lede">{e(h.get("lede"))}</p><div class="ctas">{cta_html()}{secondary_cta()}</div></div>'
             native = f' style="max-width:{verified_dimensions[0]}px;margin-inline:auto"' if verified_dimensions and d.get('kind') == 'software' and h.get('visual_verified') is True else ''
             right = f'<div class="split-r"><div class="shotframe tall{" product-shot" if d.get("kind") == "software" else ""}"{native} data-sig="parallax"><img src="{src}" alt="{source_alt(src)}"></div></div>'
+            # ARTEFACT: a document product (PDF, report, menu) is shown as a stack of its own pages — the result on top,
+            # the original or the next page behind it, lit from above — the way a studio photographs printed work
+            hero_it = images.get(h.get('media')) or {}
+            if hero_it.get('doc'):
+                second = next((it for it in images.values() if it is not hero_it and it.get('doc') and it.get('data') and not it.get('detail')
+                               and it.get('id') not in placed and not (reserved.get(it.get('id')) and reserved.get(it.get('id')) != '__hero__')), None)
+                if second:
+                    s2 = img(second['id'], True)
+                    if s2:
+                        right = (f'<div class="split-r"><div class="doc-stack" data-sig="parallax"><figure class="doc-back"><img src="{s2}" alt="{source_alt(s2)}"></figure>'
+                                 f'<figure class="doc-front"><img src="{src}" alt="{source_alt(src)}"></figure></div></div>')
             return f'<section class="sec hero split" id="top"><div class="wrap split-wrap">{left}{right}</div></section>'
         if shot: body_ += f'<div class="wrap shotwrap"><div class="shotframe"><img src="{src}" alt="{source_alt(src)}"></div></div>'
         return f'<section class="sec hero{" has-media" if media else ""}{" shot" if shot else ""}" id="top" style="min-height:{min(2, bp["sections"][0].get("screens", 1)) * 100}svh">{m}{body_}</section>'
@@ -1594,6 +1606,7 @@ img,video{{display:block;max-width:100%}}a{{color:inherit;text-decoration:none}}
 /* a headline shrinks to fit its longest word before it ever breaks inside one ("Differen/t"); overflow-wrap stays as the last resort for a word longer than the screen */
 .h1[style*="--fs"][style*="--lw"]{{font-size:min(var(--fs),calc((100vw - 2 * min(var(--frame,24px),24px)) / var(--lw,8) * 1.72))!important}}.h2[style*="--fs"][style*="--lw"]{{font-size:min(var(--fs),calc((100vw - 2 * min(var(--frame,24px),24px)) / var(--lw,8) * 1.72))!important}}
 .art-photo-pair .ba-pair{{display:grid;grid-template-columns:1fr 1fr;gap:var(--gutter);margin-top:clamp(28px,4vw,56px);align-items:start}}.art-photo-pair figure{{margin:0;border-radius:var(--radius);overflow:hidden;background:rgba(127,127,127,.08);border:1px solid var(--line)}}.art-photo-pair figure img{{display:block;width:100%;height:auto}}.art-photo-pair figcaption{{font-family:var(--mono,ui-monospace,monospace);font-size:12px;letter-spacing:.08em;text-transform:uppercase;padding:12px 16px;border-top:1px solid var(--line);color:var(--muted)}}.art-photo-pair .ba-before img{{filter:saturate(.85)}}.art-photo-pair .ba-after{{box-shadow:0 30px 80px -30px rgba(0,0,0,.45)}}@media(max-width:700px){{.art-photo-pair .ba-pair{{grid-template-columns:1fr}}}}
+.doc-stack{{position:relative;width:min(100%,560px);margin-inline:auto;aspect-ratio:.78;perspective:1400px}}.doc-stack figure{{position:absolute;margin:0;inset:0;border-radius:6px;overflow:hidden;background:#fff;box-shadow:0 2px 0 rgba(255,255,255,.35) inset,0 30px 60px -20px rgba(0,0,0,.55),0 8px 18px -8px rgba(0,0,0,.35)}}.doc-stack figure img{{display:block;width:100%;height:100%;object-fit:cover;object-position:top}}.doc-stack .doc-back{{transform:translate(9%,-6%) rotate(4deg) scale(.96);filter:brightness(.86) saturate(.9);z-index:0}}.doc-stack .doc-front{{transform:translate(-4%,3%) rotate(-2.5deg);z-index:1}}.doc-stack::after{{content:"";position:absolute;inset:auto 10% -8% 10%;height:18%;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.45),transparent);z-index:-1;filter:blur(10px)}}@media(max-width:900px){{.doc-stack{{width:min(100%,420px);aspect-ratio:.82}}}}
 .section-extras{{position:relative;z-index:1;margin-top:28px;overflow-wrap:anywhere}}.section-note{{max-width:var(--body-max);line-height:1.5}}.section-actions{{display:flex;flex-wrap:wrap;gap:12px}}.section-note+.section-actions{{margin-top:16px}}.section-actions .btn{{max-width:100%;overflow-wrap:anywhere}}.overlay .section-extras{{color:#fff;padding-bottom:clamp(40px,6vw,80px)}}.overlay .section-actions .btn,.band-accent .section-actions .btn{{background:#fff;color:#111}}
 .source-actions{{position:relative;z-index:1;margin-top:24px;overflow-wrap:anywhere}}.overlay .source-actions{{color:#fff;padding-bottom:clamp(40px,6vw,80px)}}.source-actions>div+div{{margin-top:8px}}.source-actions-label{{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}}.source-actions ul{{list-style:none;display:flex;flex-wrap:wrap;gap:0 24px;margin:0}}.source-actions a{{display:inline-flex;align-items:center;min-height:44px;font-size:clamp(14px,1vw,16px);text-decoration:underline;text-underline-offset:.22em;overflow-wrap:anywhere}}
 .nav{{position:fixed;inset:0 0 auto 0;z-index:50;padding:18px 0;transition:background var(--slow),color var(--slow)}}.nav .wrap{{display:flex;align-items:center;justify-content:space-between;gap:24px}}.nav .wrap>a:first-child{{white-space:nowrap;flex-shrink:0}}.nav .links{{display:flex;gap:28px;font-size:15px}}.nav.solid{{background:color-mix(in srgb,var(--paper) 86%,transparent);color:var(--ink);backdrop-filter:blur(14px)}}.nav.solid .btn{{background:var(--ink);color:var(--paper);border-color:var(--ink)}}.nav.on-photo:not(.solid){{color:var(--on-photo)}}.nav.on-photo:not(.solid) .btn{{background:var(--on-photo);color:#111}}.nav .logo-surface{{display:inline-flex;align-items:center;max-width:100%;box-sizing:border-box}}.nav.logo-plate-solid:not(.on-photo) .logo-surface,.nav.logo-plate-solid.solid .logo-surface,.nav.logo-plate-photo.on-photo:not(.solid) .logo-surface{{background:#fff;padding:4px 8px;border-radius:6px}}.nav .logo{{height:{min(56, max(28, (bp.get('nav') or {}).get('h', 56) - 20))}px;width:auto;max-width:100%}}.nav .wordmark{{font-family:var(--display);font-size:22px}}
