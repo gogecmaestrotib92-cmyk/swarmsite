@@ -9,6 +9,7 @@ import { prepareAlternative, publishSelected, verifySelected, verifyAlternative 
 import { saveCrawlCheckpoint, restoreCrawlCheckpoint } from './crawl_checkpoint.mjs';
 import { spawn } from 'node:child_process'; import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
+import { AsyncLocalStorage } from 'node:async_hooks';
 const HERE = path.dirname(fileURLToPath(import.meta.url)); const ROOT = path.resolve(HERE, '..');
 const sb = createClient(process.env.SUPABASE_URL || 'https://placeholder.supabase.co', process.env.SUPABASE_SERVICE_KEY || 'placeholder', { auth: { persistSession: false } });
 const BUCKET = 'previews'; const OUT = path.join(ROOT, 'out');
@@ -25,7 +26,11 @@ const STEPS = [
 const app = express(); app.use(cors({ origin: process.env.PUBLIC_ORIGIN ? process.env.PUBLIC_ORIGIN.split(',') : true })); app.use(express.json({ limit: '1mb' }));
 app.get('/', (_, res) => res.json({ ok: true, service: 'swarmsite', steps: STEPS.map(s => s[0]) }));
 // ---- abuse and cost limits: a public endpoint that spends our model credit needs all three ----
-const RATE = { perIpPerHour: Number(process.env.JOBS_PER_IP_PER_HOUR || 3), perDay: Number(process.env.JOBS_PER_DAY || 150), maxQueue: Number(process.env.JOBS_MAX_QUEUE || 20) };
+// Per-IP guard against one person hammering the queue; the day and queue ceilings are abuse/cost sanity stops,
+// not capacity limits — a burst of real visitors must queue, never be turned away (set them in Railway variables).
+const RATE = { perIpPerHour: Number(process.env.JOBS_PER_IP_PER_HOUR || 3), perDay: Number(process.env.JOBS_PER_DAY || 5000), maxQueue: Number(process.env.JOBS_MAX_QUEUE || 2000) };
+const JOB_MINUTES = Number(process.env.JOB_MINUTES || 4); // typical wall time of one job, for queue estimates
+const NOTIFY = { key: process.env.RESEND_API_KEY || '', from: process.env.NOTIFY_FROM || 'Swarmsite <hello@swarmsite.si>' };
 const ipHits = new Map(); // ip → [timestamps]; one worker process per instance, so in-memory is enough per instance
 const clientIp = req => String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
 function rateLimited(ip) {
@@ -49,17 +54,44 @@ app.post('/jobs', async (req, res) => {
   const since = new Date(Date.now() - 86400e3).toISOString();
   const { count } = await sb.from('jobs').select('id', { count: 'exact', head: true }).gte('created_at', since);
   if ((count || 0) >= RATE.perDay) return res.status(503).json({ error: 'Today\'s preview budget is used up. Please come back tomorrow.' });
-  const { data, error } = await sb.from('jobs').insert({ url, options: req.body?.options || {}, steps: STEPS.map(([id, label]) => ({ id, label, status: 'pending' })) }).select('id').single();
+  const options = { ...(req.body?.options || {}) }; const email = String(options.notify_email || '').trim().toLowerCase(); if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'bad email' }); if (email) options.notify_email = email; else delete options.notify_email;
+  const { data, error } = await sb.from('jobs').insert({ url, options, steps: STEPS.map(([id, label]) => ({ id, label, status: 'pending' })) }).select('id').single();
   if (error) return res.status(500).json({ error: error.message });
   res.json({ id: data.id });
 });
 app.get('/jobs', async (req, res) => { const st = req.query.status || 'running'; const { data } = await sb.from('jobs').select('id,url,status,step,created_at').eq('status', st).order('created_at', { ascending: false }).limit(20); res.json(data || []); });
 app.get('/jobs/:id', async (req, res) => {
-  const { data, error } = await sb.from('jobs').select('id,url,status,step,steps,result,error,created_at').eq('id', req.params.id).single();
+  const { data, error } = await sb.from('jobs').select('id,url,status,step,steps,result,error,created_at,options').eq('id', req.params.id).single();
   if (error) return res.status(404).json({ error: 'not found' });
-  if (data.status === 'queued') { const { count } = await sb.from('jobs').select('id', { count: 'exact', head: true }).eq('status', 'queued').lt('created_at', data.created_at); const { count: running } = await sb.from('jobs').select('id', { count: 'exact', head: true }).eq('status', 'running'); data.queue = { ahead: (count || 0) + (running || 0), eta_min: Math.round(((count || 0) + (running || 0) + 1) * 6) }; }
+  if (data.status === 'queued') {
+    const { count } = await sb.from('jobs').select('id', { count: 'exact', head: true }).eq('status', 'queued').lt('created_at', data.created_at);
+    const { count: running } = await sb.from('jobs').select('id', { count: 'exact', head: true }).eq('status', 'running').gt('lease_until', new Date().toISOString());
+    // capacity = the slots we can see working right now (every replica's live leases), never less than this worker's own slots
+    const capacity = Math.max(running || 0, WORKER_CONCURRENCY), ahead = (count || 0) + (running || 0);
+    data.queue = { ahead, capacity, eta_min: Math.max(1, Math.ceil((ahead + 1) / capacity) * JOB_MINUTES) };
+  }
+  data.notify = { available: !!NOTIFY.key, email: data.options?.notify_email ? true : false }; delete data.options;
   res.json(data);
 });
+// "Email me the link": a person in a long queue should not have to keep the tab open.
+app.post('/jobs/:id/notify', async (req, res) => {
+  if (!/^[0-9a-f-]{36}$/.test(req.params.id)) return res.status(400).end();
+  const email = String(req.body?.email || '').trim().toLowerCase(); if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'bad email' });
+  const { data, error } = await sb.from('jobs').select('id,status,options').eq('id', req.params.id).maybeSingle();
+  if (error || !data) return res.status(404).json({ error: 'not found' });
+  if (!['queued', 'running'].includes(data.status)) return res.status(409).json({ error: 'already finished' });
+  const { error: e2 } = await sb.from('jobs').update({ options: { ...(data.options || {}), notify_email: email } }).eq('id', data.id);
+  if (e2) return res.status(500).json({ error: e2.message });
+  res.json({ ok: true, available: !!NOTIFY.key });
+});
+async function notifyDone(job, previewUrl) {
+  const email = job.options?.notify_email; if (!email || !NOTIFY.key) return;
+  const appUrl = `${process.env.PUBLIC_APP || 'https://swarmsite.si'}/app?url=${encodeURIComponent(String(job.url).replace(/^https?:\/\//, ''))}&job=${job.id}`;
+  const host = (() => { try { return new URL(job.url).hostname.replace(/^www\./, ''); } catch { return job.url; } })();
+  const html = `<p>Your redesigned landing page for <b>${host}</b> is ready.</p><p><a href="${appUrl}">Open your preview</a></p><p style="color:#777;font-size:13px">Your current website stays unchanged. The preview is private to this link.</p>`;
+  const r = await fetch('https://api.resend.com/emails', { method: 'POST', headers: { authorization: 'Bearer ' + NOTIFY.key, 'content-type': 'application/json' }, body: JSON.stringify({ from: NOTIFY.from, to: [email], subject: `Your Swarmsite preview for ${host} is ready`, html }) });
+  if (!r.ok) throw new Error('resend ' + r.status + ' ' + (await r.text()).slice(0, 200));
+}
 // Preview page: Supabase public storage serves HTML as text/plain (XSS guard), so we proxy it with the right type.
 const SELF = process.env.PUBLIC_API || (process.env.RAILWAY_PUBLIC_DOMAIN ? 'https://' + process.env.RAILWAY_PUBLIC_DOMAIN : 'http://localhost:' + (process.env.PORT || 8080));
 async function activePreview(id) {
@@ -79,6 +111,18 @@ app.get('/jobs/:id/art/:name', async (req, res) => {
   const version = active.version; const prefix = version ? `${req.params.id}/v-${version}` : req.params.id;
   const { data, error } = await sb.storage.from(BUCKET).download(`${prefix}/art/${req.params.name}`); if (error || !data) return res.status(404).send('no artefact');
   res.set({ 'content-type': req.params.name.endsWith('.html') ? 'text/plain; charset=utf-8' : 'application/json; charset=utf-8', 'access-control-allow-origin': '*', 'cache-control': 'no-store', 'x-robots-tag': 'noindex' }); res.send(Buffer.from(await data.arrayBuffer()));
+});
+app.get('/p/:id/draft', async (req, res) => {
+  if (!/^[0-9a-f-]{36}$/.test(req.params.id)) return res.status(400).end();
+  const { data: row, error } = await sb.from('jobs').select('status,result').eq('id', req.params.id).maybeSingle();
+  if (error) return res.status(503).send('preview metadata unavailable');
+  if (!row || !row.result?.draft) return res.status(404).send('no draft yet');
+  if (row.status === 'done') return res.redirect(302, `/p/${req.params.id}`);
+  if (row.status !== 'running') return res.status(404).send('no draft');
+  const { data, error: e2 } = await sb.storage.from(BUCKET).download(`${req.params.id}/draft/index.html`);
+  if (e2 || !data) return res.status(404).send('no draft');
+  res.set({ 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-frame-options': 'ALLOWALL', 'x-robots-tag': 'noindex' });
+  res.send(Buffer.from(await data.arrayBuffer()));
 });
 app.get('/p/:id', async (req, res) => {
   if (!/^[0-9a-f-]{36}$/.test(req.params.id)) return res.status(400).end();
@@ -100,9 +144,11 @@ app.get('/p/:id', async (req, res) => {
 app.listen(process.env.PORT || 8080, () => console.log('api on', process.env.PORT || 8080));
 
 // ---------- worker ----------
-let CURRENT_JOB_DIR = ''; // set per job by process_; the worker runs one job at a time, so a module variable is enough (make it per-call before raising concurrency)
+const JOB_CTX = new AsyncLocalStorage(); // the job a child process belongs to, per async chain: several jobs run at once in one worker
+let CURRENT_JOB_DIR = ''; // fallback for code paths outside a job context (tests slice process_ without the loop)
+const WORKER_CONCURRENCY = Math.max(1, Number(process.env.WORKER_CONCURRENCY || 2));
 const run = (cmd, args, opts = {}) => new Promise((resolve, reject) => {
-  const p = spawn(cmd, args, { cwd: ROOT, env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1', ...(CURRENT_JOB_DIR ? { SWARM_JOB_DIR: CURRENT_JOB_DIR } : {}) }, ...opts }); let out = '', err = '';
+  const p = spawn(cmd, args, { cwd: ROOT, env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1', ...((JOB_CTX.getStore()?._dir || CURRENT_JOB_DIR) ? { SWARM_JOB_DIR: JOB_CTX.getStore()?._dir || CURRENT_JOB_DIR } : {}) }, ...opts }); let out = '', err = '';
   let buf = ''; p.stdout.on('data', d => { out += d; if (opts.onLine) { buf += d; const lines = buf.split('\n'); buf = lines.pop(); lines.forEach(l => { try { opts.onLine(l); } catch {} }); } }); p.stderr.on('data', d => err += d);
   const t = setTimeout(() => { p.kill('SIGKILL'); reject(new Error(cmd + ' timeout')); }, opts.timeoutMs || 300000);
   p.on('close', c => { clearTimeout(t); c === 0 ? resolve(out) : reject(new Error(`${cmd} ${args[0]} exit ${c}: ${err.slice(-800)}`)); });
@@ -162,6 +208,19 @@ function emit(job, evs) {
   return next;
 }
 async function drainEvents(job) { if (job._eventChain) await job._eventChain; }
+// Progressive delivery: the best page after each review round goes out as a draft the person can already
+// look at while later rounds refine it. The draft lives outside the versioned preview tree and is only
+// served while the job is still running; the finished, verified page replaces it.
+async function publishDraft(job, draft) {
+  if (!draft || !draft.path || !fs.existsSync(draft.path)) return;
+  const next = (job._eventChain || Promise.resolve()).then(async () => {
+    await upload(draft.path, `${job.id}/draft/index.html`, 'text/html');
+    job._result = job._result || {};
+    job._result.draft = { url: `${SELF}/p/${job.id}/draft?r=${Number(draft.round) || 0}`, round: Number(draft.round) || 0, score: Number(draft.score) || 0, at: Date.now() };
+    await updateWithRetry(job, { result: job._result });
+  });
+  job._eventChain = next; next.catch(e => console.warn('draft', job.id, e.message)); return next;
+}
 function eventsCapture(dir) {
   const g = J(path.join(dir, 'geometry.json')) || {}; const inv = J(path.join(dir, 'inventory.json')) || {}; const as = J(path.join(dir, 'assets.json')) || {}; const ev = [];
   if (g.logo) ev.push({ role: 'Type', text: 'logo found', rect: g.logo });
@@ -335,7 +394,7 @@ async function process_(job) {
     // the swarm: Reader → UX → Copy → UI → Visual shape the document, then Critic ↔ owners loop until the score passes
     if (job._bps[0]) { try {
         const out = path.join(dir, `bp-${job._bps[0]}.html`);
-        const o = await run('python3', ['lib/swarm/run.py', dir, job._bps[0], '--out', out, '--rounds', process.env.SWARM_ROUNDS || '3', '--target', process.env.SWARM_TARGET || '80', '--alt', job._bps[1] || ''], { timeoutMs: 900000, onLine: async l => { try { const j = JSON.parse(l); if (j.event) await emit(job, [j.event]); } catch {} } });
+        const o = await run('python3', ['lib/swarm/run.py', dir, job._bps[0], '--out', out, '--rounds', process.env.SWARM_ROUNDS || '3', '--target', process.env.SWARM_TARGET || '80', '--alt', job._bps[1] || ''], { timeoutMs: 900000, onLine: async l => { try { const j = JSON.parse(l); if (j.event) await emit(job, [j.event]); if (j.draft) await publishDraft(job, j.draft); } catch {} } });
         const last = o.trim().split('\n').map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
         const done = last.find(j => j.done)?.done; const crit = J(path.join(dir, 'critic.json'));
         if (!done?.best_blueprint || !done?.render_manifest || !job._bps.includes(done.best_blueprint)) throw new Error('selected blueprint identity unavailable');
@@ -371,17 +430,21 @@ async function process_(job) {
   delete result.crawlCheckpoint;
   await updateWithRetry(job, { status: 'done', step: 'done', result, slug, lease_owner: null, lease_until: null });
   job._terminalPersisted = true;
+  try { const { data: fresh } = await sb.from('jobs').select('options').eq('id', job.id).maybeSingle(); job.options = fresh?.options || job.options; await notifyDone(job, result.previewUrl); } catch (e) { console.warn('notify', job.id, e.message); }
+  if (job._result?.draft) { const { error } = await sb.storage.from(BUCKET).remove([`${job.id}/draft/index.html`]); if (error) console.warn('draft cleanup', job.id, error.message); }
   if (checkpoint?.key) { const { error } = await sb.storage.from('crawl-checkpoints').remove([checkpoint.key]); if (error) console.warn('checkpoint cleanup', job.id, error.message); }
 }
 async function loop() {
+  const slot = loop.slots = (loop.slots || 0) + 1; // one loop per slot; stagger so they do not hammer the claim RPC together
+  await new Promise(r => setTimeout(r, (slot - 1) * 700));
   while (true) {
     try {
       const { data, error } = await sb.rpc('claim_swarmsite_job', { p_worker_id: WORKER_ID, p_lease_seconds: 120 });
       if (error) throw error;
       const claimed = Array.isArray(data) ? data[0] : data;
-      if (claimed) { console.log('job', claimed.id, claimed.url); await runClaimed(claimed); }
+      if (claimed) { console.log('job', claimed.id, claimed.url, 'slot', slot); await JOB_CTX.run(claimed, () => runClaimed(claimed)); }
       else await new Promise(r => setTimeout(r, 2500));
     } catch (e) { console.error('loop', e.message); await new Promise(r => setTimeout(r, 5000)); }
   }
 }
-if (process.env.SUPABASE_URL) loop(); else console.warn('no SUPABASE_URL: worker idle');
+if (process.env.SUPABASE_URL) { for (let i = 0; i < WORKER_CONCURRENCY; i++) loop(); console.log('worker', WORKER_ID, 'slots', WORKER_CONCURRENCY); } else console.warn('no SUPABASE_URL: worker idle');

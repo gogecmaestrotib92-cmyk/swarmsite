@@ -126,7 +126,10 @@ def _main(snapshot_dir):
     d = A.J(slug_dir, 'direction.json'); sw = d.get('swarm') or {}
     if sw.get('idea'): ev('Concept', 'idea: ' + sw['idea'])
     ev('Concept', 'moves: ' + ', '.join(f"{b['id']}→{(b.get('ui') or {}).get('move', 'auto')}" for b in d['beats']))
-    safe('UX', A.ux, slug_dir); safe('Visual', A.visual, slug_dir); safe('Copy', A.copy, slug_dir); safe('UI', A.ui, slug_dir, '', bp)
+    # the four specialists read Concept's plan and each patch their own fields by beat id under the document lock:
+    # they run at once (one model round-trip instead of four in a row)
+    with ThreadPoolExecutor(max_workers=4) as ex:
+        list(ex.map(lambda j: safe(*j), [('UX', A.ux, slug_dir), ('Visual', A.visual, slug_dir), ('Copy', A.copy, slug_dir), ('UI', A.ui, slug_dir, '', bp)]))
     d = A.J(slug_dir, 'direction.json')
     ev('UX', 'order: ' + ' → '.join(b['type'] for b in d['beats'])); ev('Copy', 'h1: ' + str(d['hero'].get('h1', '')).replace('<em>', '').replace('</em>', ''))
     vis = (d.get('swarm') or {}).get('visual') or {}
@@ -138,7 +141,6 @@ def _main(snapshot_dir):
     for k in range(1, rounds + 1):
         t = time.time()
         # the contract (two viewports) and the critic's look (screenshots + model) are independent: grade both at once
-        from concurrent.futures import ThreadPoolExecutor
         with ThreadPoolExecutor(2) as ex:
             fcon = ex.submit(contract, slug_dir, out); frep = ex.submit(C.critique, slug_dir, out, A.MODEL, (k < rounds))  # desktop-only, short waits until the final look
             con = fcon.result(); cfail = con.get('failed', [])
@@ -168,6 +170,11 @@ def _main(snapshot_dir):
             paths = [out] + [os.path.join(slug_dir, name) for name in ('direction.json', 'images.json', 'contract.json', 'critic.json')]
             best_files = {path: open(path, 'rb').read() for path in paths if os.path.exists(path)}
             snapshot_shots(slug_dir, snapshot_dir)
+            # progressive delivery: the best page so far goes out now; later rounds only replace it if they win
+            try:
+                draft = os.path.join(slug_dir, 'draft.html'); shutil.copyfile(out, draft)
+                print(json.dumps({"draft": {"round": k, "score": score, "path": draft}}), flush=True)
+            except Exception as e: ev('Render', 'draft not published: ' + str(e)[:80])
         if (score >= target and taste >= 70 and not cfail) or k == rounds: break  # good enough, taste not carried by the contract alone, nothing mechanically broken: stop spending
         # RESTART, not patch: a weak first round means the idea or the form is wrong — throw it away, keep the facts, start over once
         if k == 1 and score < 45 and not log.get('restarted'):
@@ -178,7 +185,9 @@ def _main(snapshot_dir):
             else: ev('Concept', 'restart with a new idea')
             for b_ in d0['beats']: (b_.get('ui') or {}).pop('move', None)
             A.W(slug_dir, 'direction.json', d0)
-            safe('Concept', A.concept, slug_dir, why, bp); safe('UX', A.ux, slug_dir, why); safe('Visual', A.visual, slug_dir, why); safe('UI', A.ui, slug_dir, why, bp)
+            safe('Concept', A.concept, slug_dir, why, bp)
+            with ThreadPoolExecutor(max_workers=3) as ex:
+                list(ex.map(lambda j: safe(*j), [('UX', A.ux, slug_dir, why), ('Visual', A.visual, slug_dir, why), ('UI', A.ui, slug_dir, why, bp)]))
             d = A.J(slug_dir, 'direction.json'); sw = d.get('swarm') or {}
             if sw.get('idea'): ev('Concept', 'idea: ' + sw['idea'])
             render_manifest = checked_render(slug_dir, bp, out); ev('Render', f'{bp} · restart'); continue
