@@ -1,0 +1,13 @@
+{
+ "as_of": "2026-11-03",
+ "unit": "USD per million tokens, list price, Anthropic first-party API",
+ "note": "Data, not code: update here when prices change, or override a whole table with the MODEL_PRICES env var (same shape as `models`). A model that is not listed is counted as unpriced, never guessed. cache_read null = not stated in the source table; the ledger then prices cache reads at 10% of input.",
+ "models": {
+  "claude-sonnet-5-5": {"in": 2.0, "out": 10.0, "cache_read": 0.1},
+  "claude-sonnet-5": {"in": 2.0, "out": 10.0, "cache_read": null},
+  "claude-opus-5-5": {"in": 4.0, "out": 20.0, "cache_read": 0.2},
+  "claude-opus-5": {"in": 5.0, "out": 25.0, "cache_read": null},
+  "claude-haiku-5-5": {"in": 0.1, "out": 0.5, "cache_read": null},
+  "claude-fable-5-2": {"in": 8.0, "out": 40.0, "cache_read": 0.2}
+ }
+}

@@ -25,3 +25,47 @@ def test_token_cap(monkeypatch, tmp_path):
     try: B.check('d'); assert False
     except B.BudgetExceeded as e: assert 'tokens' in str(e)
     assert 'calls' in B.summary()
+
+
+def test_cost_in_dollars_by_model(monkeypatch, tmp_path):
+    monkeypatch.setenv('SWARM_JOB_DIR', str(tmp_path)); monkeypatch.delenv('MODEL_PRICES', raising=False)
+    B.charge(U(1_000_000, 100_000), 'direct', 'claude-sonnet-5-5')   # $2 per million in, $10 per million out
+    b = json.load(open(tmp_path / 'budget.json'))
+    assert b['usd'] == 3.0 and 'unpriced_calls' not in b
+    B.charge({'input_tokens': 0, 'output_tokens': 0, 'cache_read_input_tokens': 1_000_000}, 'critic', 'claude-sonnet-5-5')
+    assert json.load(open(tmp_path / 'budget.json'))['usd'] == 3.1    # cache reads at their own price
+    assert '$3.10' in B.summary()
+
+def test_a_model_without_a_price_is_counted_not_guessed(monkeypatch, tmp_path):
+    monkeypatch.setenv('SWARM_JOB_DIR', str(tmp_path)); monkeypatch.delenv('MODEL_PRICES', raising=False)
+    B.charge(U(500_000, 10_000), 'direct', 'some-model-nobody-priced'); B.charge(U(500_000, 10_000), 'direct')  # unknown id, and no id at all
+    b = json.load(open(tmp_path / 'budget.json'))
+    assert b['unpriced_calls'] == 2 and 'usd' not in b and b['calls'] == 2 and b['in'] == 1_000_000
+    B.charge(U(1_000_000, 0), 'direct', 'claude-sonnet-5-5')
+    b = json.load(open(tmp_path / 'budget.json'))
+    assert b['usd'] == 2.0 and b['unpriced_calls'] == 2
+    assert B.summary().endswith('$2.00+')   # the plus says: a floor, something was not priced
+
+def test_price_table_can_be_replaced_from_the_environment(monkeypatch, tmp_path):
+    monkeypatch.setenv('SWARM_JOB_DIR', str(tmp_path)); monkeypatch.setenv('MODEL_PRICES', json.dumps({'house-model': {'in': 1, 'out': 4}}))
+    assert B.cost('house-model', 2_000_000, 500_000) == 4.0
+    assert B.cost('house-model', 0, 0, 1_000_000) == 0.1            # no cache price given: a tenth of input
+    assert B.cost('claude-sonnet-5-5', 1, 1) is None                # the env table replaces the file
+    monkeypatch.setenv('MODEL_PRICES', 'not json'); assert B.cost('claude-sonnet-5-5', 1_000_000, 0) == 2.0
+    monkeypatch.setenv('MODEL_PRICES', json.dumps({'bad': {'in': 'two', 'out': 4}})); assert B.cost('bad', 1, 1) is None
+
+def test_generated_pictures_are_counted_and_priced_only_when_a_price_is_set(monkeypatch, tmp_path):
+    monkeypatch.setenv('SWARM_JOB_DIR', str(tmp_path)); monkeypatch.delenv('IMAGE_USD', raising=False)
+    B.charge_image(1); B.charge_image(0)
+    b = json.load(open(tmp_path / 'budget.json'))
+    assert b['images'] == 1 and b['unpriced_images'] == 1 and b['calls'] == 0 and 'usd' not in b
+    monkeypatch.setenv('IMAGE_USD', '0.05'); B.charge_image(2)
+    b = json.load(open(tmp_path / 'budget.json'))
+    assert b['images'] == 3 and b['usd'] == 0.1 and b['unpriced_images'] == 1
+    B.check('next')   # pictures never trip the model-call cap
+
+def test_shipped_price_table_is_well_formed():
+    import pathlib
+    doc = json.load(open(pathlib.Path(__file__).resolve().parents[1] / 'lib' / 'prices.json'))
+    assert doc['as_of'] and doc['models']['claude-sonnet-5-5'] == {'in': 2.0, 'out': 10.0, 'cache_read': 0.1}
+    for name, p in doc['models'].items(): assert p['in'] > 0 and p['out'] >= p['in'], name
