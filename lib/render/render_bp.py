@@ -16,20 +16,25 @@ e = lambda s: H.escape(str(s if s is not None else ''), quote=True)
 
 # Commercial faces in the winners → Google equivalents with the same stance (weight/width/mood), so the measured sizes still work.
 FONT_MAP = {
-    'diegrotesk': ('Instrument Sans', 'sans'), 'abc favorit': ('Inter Tight', 'sans'), 'suisse intl': ('Inter Tight', 'sans'), 'suisse intl mono': ('JetBrains Mono', 'mono'),
-    'twkeverett': ('Instrument Sans', 'sans'), 'aeonik': ('Instrument Sans', 'sans'), 'abcplus': ('Instrument Sans', 'sans'), 'abcdiatype': ('JetBrains Mono', 'mono'),
+    # the winners' commercial grotesks have character (quirky terminals, tight apertures, light weights); Inter does not.
+    # Each gets the Google face with the same stance, never a generic one.
+    'diegrotesk': ('Schibsted Grotesk', 'sans'), 'abc favorit': ('Bricolage Grotesque', 'sans'), 'suisse intl': ('Geist', 'sans'), 'suisse intl mono': ('Geist Mono', 'mono'),
+    'twkeverett': ('Hanken Grotesk', 'sans'), 'aeonik': ('Manrope', 'sans'), 'abcplus': ('Hanken Grotesk', 'sans'), 'abcdiatype': ('Geist Mono', 'mono'),
     'pp fragment': ('Cormorant Garamond', 'serif'), 'editorialold': ('Instrument Serif', 'serif'), 'cardinal classic long': ('Instrument Serif', 'serif'),
-    'inter': ('Inter Tight', 'sans'), 'inter tight': ('Inter Tight', 'sans'), 'work sans': ('Work Sans', 'sans'), 'oswald': ('Oswald', 'sans'),
-    'mouse memoirs': ('Mouse Memoirs', 'sans'), 'modak': ('Modak', 'sans'), 'geistmono': ('JetBrains Mono', 'mono'), 'bt grotesk': ('Instrument Sans', 'sans'),
-    'helvetica now display': ('Inter Tight', 'sans'), 'garamond narrow': ('Cormorant Garamond', 'serif'),
+    'inter': ('Geist', 'sans'), 'inter tight': ('Geist', 'sans'), 'work sans': ('Work Sans', 'sans'), 'oswald': ('Oswald', 'sans'),
+    'mouse memoirs': ('Mouse Memoirs', 'sans'), 'modak': ('Modak', 'sans'), 'geistmono': ('Geist Mono', 'mono'), 'bt grotesk': ('Schibsted Grotesk', 'sans'),
+    'helvetica now display': ('Hanken Grotesk', 'sans'), 'garamond narrow': ('Cormorant Garamond', 'serif'),
+    'geist': ('Geist', 'sans'), 'manrope': ('Manrope', 'sans'), 'hanken grotesk': ('Hanken Grotesk', 'sans'), 'schibsted grotesk': ('Schibsted Grotesk', 'sans'), 'bricolage grotesque': ('Bricolage Grotesque', 'sans'),
+    'instrument sans': ('Instrument Sans', 'sans'), 'instrument serif': ('Instrument Serif', 'serif'), 'fraunces': ('Fraunces', 'serif'), 'space grotesk': ('Space Grotesk', 'sans'),
 }
 GF = {'Instrument Sans': 'Instrument+Sans:ital,wght@0,400..700;1,400..700', 'Inter Tight': 'Inter+Tight:ital,wght@0,300..700;1,300..700', 'JetBrains Mono': 'JetBrains+Mono:wght@400;500',
       'Cormorant Garamond': 'Cormorant+Garamond:ital,wght@0,300..700;1,300..700', 'Instrument Serif': 'Instrument+Serif:ital@0;1', 'Work Sans': 'Work+Sans:wght@300..600', 'Oswald': 'Oswald:wght@300..600',
       'Mouse Memoirs': 'Mouse+Memoirs', 'Modak': 'Modak', 'Fraunces': 'Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700', 'Bricolage Grotesque': 'Bricolage+Grotesque:opsz,wght@12..96,300..700', 'Space Grotesk': 'Space+Grotesk:wght@300..700',
+      'Geist': 'Geist:wght@300..700', 'Geist Mono': 'Geist+Mono:wght@400;500', 'Manrope': 'Manrope:wght@300..700', 'Hanken Grotesk': 'Hanken+Grotesk:ital,wght@0,300..700;1,300..700', 'Schibsted Grotesk': 'Schibsted+Grotesk:ital,wght@0,400..700;1,400..700',
       # Cal Sans is available from Google Fonts as a regular (400) face.
       'Cal Sans': 'Cal+Sans'}
 
-def font_for(name, fallback=('Instrument Sans', 'sans')):
+def font_for(name, fallback=('Geist', 'sans')):
     if not name: return fallback
     k = str(name).lower().strip()
     for key, v in FONT_MAP.items():
@@ -1834,8 +1839,14 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
 <script>{moves}</script><script>{swarm}</script>
 <script>
 // blueprint motion: reveal on scroll for every section's main pieces, with the winner's own easing/durations
-document.querySelectorAll('.sec .h2, .sec .big-p, .sec .lede, .grid, .rows, .cols, .photo figure, .photos figure').forEach((el, i) => {{ if (!el.closest('.hero')) el.setAttribute('data-move', el.matches('figure') ? 'clip-reveal' : el.matches('.grid, .rows, .cols') ? 'stagger-in' : 'fade-rise'); }});
+// choreography: headings rise line by line out of a mask, lists stagger, photographs clip open, product frames settle, figures count in
+document.querySelectorAll('.sec .h2, .sec .big-p, .sec .lede, .grid, .rows, .cols, .product-story-rows, .ledger-card-list, .photo figure, .photos figure, .art-photo figure, .ba-pair figure, .product-story-visual, figure.lead, .ui-shot, .nums .num, .card .num').forEach((el, i) => {{
+  if (el.closest('.hero') || el.hasAttribute('data-move')) return;
+  const move = el.matches('.num') ? 'number-scramble' : el.matches('.h2') ? 'masked-line-reveal' : el.matches('.product-story-visual, figure.lead, .ui-shot') ? 'scale-settle' : el.matches('figure') ? 'clip-reveal' : el.matches('.grid, .rows, .cols, .product-story-rows, .ledger-card-list') ? 'stagger-in' : 'fade-rise';
+  el.setAttribute('data-move', move); }});
 document.querySelector('.hero')?.setAttribute('data-move', 'hero-intro');
+// the hero artefact (product frame, document stack, poster, photo) is what hero-intro animates in; the stack fans its pages one by one
+document.querySelectorAll('.hero .shotframe, .hero .doc-stack, .hero .poster-visual, .hero .editorial-hero-visual, .hero .inset-v, .hero .billboard-media').forEach(el => el.classList.add('artefact'));
 // signature motion (GSAP ScrollTrigger is on the page)
 function Sig(){{ if(!window.gsap||!window.ScrollTrigger) return; gsap.registerPlugin(ScrollTrigger);
   document.querySelectorAll('[data-sig="sticky"]').forEach(sec=>{{ const rows=[...sec.querySelectorAll('.sp-row')], fr=[...sec.querySelectorAll('.sp-f')]; const set=i=>{{ rows.forEach((r,k)=>r.classList.toggle('on',k===i)); fr.forEach((f,k)=>f.classList.toggle('on',k===i)); }}; set(0);
