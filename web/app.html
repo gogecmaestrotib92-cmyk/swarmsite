@@ -105,7 +105,7 @@ a{color:inherit;text-decoration:none}
   <div class="frame" id="frame"><div class="skel" id="skel"></div><img id="before" alt=""><div class="hud"><span class="lab" id="hudL">agents waking up</span><span class="lab" id="hudR">0 / 6</span></div></div>
   <div class="log" id="log"></div>
   <div class="steps" id="steps"></div>
-  <div class="micro"><span class="lab" id="micro">First version in about 2 minutes · stay or come back, this page remembers the job</span></div>
+  <div class="micro"><span class="lab" id="micro">First version in under a minute · stay or come back, this page remembers the job</span></div>
   <form class="notify" id="notify" hidden onsubmit="return false"><label for="notifyEmail">Email me the link when it’s ready</label><div class="notify-row"><input id="notifyEmail" type="email" placeholder="you@company.com" autocomplete="email"><button class="pill" id="notifyGo">Notify me</button></div><span class="lab" id="notifyNote"></span></form>
   <p class="err" id="err" role="alert"></p>
 </section>
@@ -164,14 +164,14 @@ function showResult(job){ const r=job.result; const pv=new URL(`${window.SWARMSI
   document.querySelectorAll('.seg button[data-v]').forEach(b=>b.onclick=()=>{ document.querySelectorAll('.seg button[data-v]').forEach(x=>x.classList.remove('on')); b.classList.add('on'); const f=$('#preview'); if(b.dataset.v==='mobile'){ f.style.width='390px'; f.style.margin='0 auto'; f.style.borderLeft=f.style.borderRight='1px solid #ddd'; } else { f.style.width='100%'; f.style.border='0'; } });
 }
 
-let draftShown=0, notifyDone=false;
+let draftShown=-1, notifyDone=false;
 $('#notifyGo').onclick=async()=>{ const email=$('#notifyEmail').value.trim(); if(!email) return; const id=new URLSearchParams(location.search).get('job'); if(!id) return; $('#notifyGo').disabled=true;
   try{ const r=await fetch(`${API}/jobs/${id}/notify`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email})}); if(!r.ok) throw new Error('could not save'); $('#notifyNote').textContent='We’ll email you the link. You can close this tab.'; $('#notifyEmail').disabled=true; notifyDone=true; }
   catch(e){ $('#notifyNote').textContent='Could not save that address — try again.'; $('#notifyGo').disabled=false; } };
 function showDraft(job){ const d=job.result.draft; if(!d || d.round===draftShown) return; draftShown=d.round;
   const u=new URL(`${window.SWARMSITE_API}/p/${job.id}/draft`, location.href); u.searchParams.set('r', String(d.round)); u.searchParams.set('t', String(d.at||Date.now()));
   $('#preview').src=u.href; $('#openNew').href=u.href; $('#meta').textContent='draft · still refining'; $('#variants').replaceChildren(); $('#coverage').hidden=true;
-  $('#draftText').textContent=d.round===1?'Your first version is up — the agents are still polishing it':'Updated — a better round just landed'; $('#draftRound').textContent=`round ${d.round}`;
+  $('#draftText').textContent=d.round===0?'Instant first version — your page in our template. The agents are now designing it properly':d.round===1?'The agents’ first design is up — they are still polishing it':'Updated — a better round just landed'; $('#draftRound').textContent=d.round===0?'v0':`round ${d.round}`;
   $('#draftBar').hidden=false; $('#stage').hidden=true; $('#result').classList.add('on'); layoutResult(); }
 async function poll(id){ try{ const r=await fetch(`${API}/jobs/${id}`); if(!r.ok) throw new Error('job not found'); const job=await r.json(); renderSteps(job);
     if(job.status==='done'){ if(sw) sw.stop(); $('#draftBar').hidden=true; showResult(job); return; }

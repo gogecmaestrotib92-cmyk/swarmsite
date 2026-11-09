@@ -370,6 +370,16 @@ async function process_(job) {
   });
   await timed('diagnose', async () => { const out = await run('python3', ['-I', 'lib/audit/diagnose.py', path.join(dir, 'inventory.json')]); fs.writeFileSync(path.join(dir, 'audit.json'), out); }); await emit(job, eventsDiagnose(dir));
   fs.writeFileSync(path.join(dir, 'brief.json'), JSON.stringify(job.options || {}));
+  // Instant first version: their page poured into the house template, no model call. Published as draft round 0 so the
+  // person has something to look at within seconds; the director and the swarm replace it. Never fatal.
+  try {
+    await run('python3', ['lib/direct/quick.py', dir], { timeoutMs: 20000 });
+    const quickDir = J(path.join(dir, 'direction.json')) || {};
+    const draft = path.join(dir, 'draft.html');
+    await run('python3', ['lib/render/render_bp.py', dir, quickDir.blueprint || 'cerebrium', draft], { timeoutMs: 60000 });
+    await publishDraft(job, { round: 0, score: 0, path: draft });
+    await emit(job, [{ role: 'Render', text: `first version up · ${quickDir.blueprint || 'house'} template · ${(quickDir.beats || []).length} sections` }]);
+  } catch (e) { console.warn('quick draft', job.id, e.message); }
   await timed('direct', async () => {
     // batched source analysis is for a multi-page crawl; on the default landing-page scope the Reader already sees every section once
     const invNow = J(path.join(dir, 'inventory.json')) || {}; const multiPage = (invNow.sourcePages || []).length > 0;
