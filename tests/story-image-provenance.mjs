@@ -55,7 +55,7 @@ try {
       assert.equal(await assigned.locator('.st-l li').count(),2,'all assigned-story items retained');
       for(const id of [...(!includePhoto?['unassigned-steps']:[]),...(reserveLogo?['assigned-logo','wide-logo']:[])]) {
         const section=page.locator(`#${id}`);assert.equal(await section.locator('img').count(),0,`${id}: no unrelated logo or substitute image`);
-        assert.equal(await section.locator('.card').count(),id==='wide-logo'?5:2,`${id}: all items retained`);
+        assert.equal(await section.locator(id==='unassigned-steps'?'.ladder-step':'.index-row').count(),id==='wide-logo'?5:2,`${id}: all items retained`); /* a logo is not a picture: steps become the ladder, features the index */
         assert.match(await section.innerText(),id==='unassigned-steps'?/First step/:/A complete description/);
       }
       const fallback=page.locator('#no-assignment');

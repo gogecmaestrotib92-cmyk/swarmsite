@@ -369,7 +369,7 @@ async function process_(job) {
     await emit(job, eventsCapture(dir));
   });
   await timed('diagnose', async () => { const out = await run('python3', ['-I', 'lib/audit/diagnose.py', path.join(dir, 'inventory.json')]); fs.writeFileSync(path.join(dir, 'audit.json'), out); }); await emit(job, eventsDiagnose(dir));
-  fs.writeFileSync(path.join(dir, 'brief.json'), JSON.stringify(job.options || {}));
+  fs.writeFileSync(path.join(dir, 'brief.json'), JSON.stringify({ ...(job.options || {}), url: job.url })); // the url seeds the house's colour pick for unbranded sites
   // Instant first version: their page poured into the house template, no model call. Published as draft round 0 so the
   // person has something to look at within seconds; the director and the swarm replace it. Never fatal.
   try {

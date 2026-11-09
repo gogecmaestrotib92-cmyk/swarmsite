@@ -97,7 +97,7 @@ try {
       const page = await browser.newPage({ viewport: { width, height: 900 }, reducedMotion: 'reduce' });
       await page.goto(pathToFileURL(html).href + '?nomotion=1');
       const section = page.locator('#place-long');
-      assert.ok((await section.getAttribute('class')).split(' ').includes('cards'), `${kind} keeps the existing cards fallback`);
+      assert.ok((await section.getAttribute('class')).split(' ').includes('indexlist'), `${kind}: a story with no picture of its own is set as the index, never padded`);
       assert.equal(await section.locator('.assigned-visual').count(), 0, `${kind} must not use the new product-shot layout`);
       for (const f of other.beats[0].features) {
         assert.equal(await section.getByText(f.title, { exact: true }).count(), 1);

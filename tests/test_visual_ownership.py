@@ -140,14 +140,19 @@ class VisualOwnershipTests(unittest.TestCase):
         self.assertEqual(len(agents.J(self.directory, 'images.json')), len(self.images) + 1)
         self.assertEqual(self.direction()['beats'][1]['image'], 'a-crop-2')
 
-    def test_generated_id_collision_preserves_original_and_reuses_alias(self):
+    def test_generation_is_one_atmosphere_behind_a_statement_never_a_slot_picture(self):
+        direction = self.direction(); direction['beats'].append({'id': 'why', 'type': 'quote', 'big': 'Why we exist'})
+        agents.W(self.directory, 'direction.json', direction)
         reply = {'hero': 'hero', 'generate': [{'beat': 'second', 'prompt': 'A plate', 'ar': '16:9', 'as': 'a'}]}
-        with patch.object(gen, 'enabled', return_value=True), patch.object(gen, 'generate', return_value=self.raw):
+        with patch.object(gen, 'enabled', return_value=True), patch.object(gen, 'generate', return_value=self.raw) as generate:
             agents.apply_visual(self.directory, reply)
             agents.apply_visual(self.directory, reply)
-        images = agents.J(self.directory, 'images.json')
+        images = agents.J(self.directory, 'images.json'); direction = self.direction()
+        self.assertEqual(generate.call_count, 1, 'one backdrop per page; the editor\'s object commission is not honoured')
         self.assertEqual(next(i for i in images if i['id'] == 'a'), self.images[1])
-        self.assertEqual(self.direction()['beats'][1]['image'], 'a-gen-2')
+        self.assertEqual(direction['beats'][1]['image'], 'b')
+        self.assertEqual(direction['beats'][3]['atmos'], 'gen-why')
+        self.assertFalse(direction['beats'][3].get('image'))
         self.assertEqual(len(images), len(self.images) + 1)
 
     def test_visual_update_and_copy_update_both_survive(self):

@@ -22,6 +22,16 @@ class Moods(unittest.TestCase):
         m = moods.choose('service', inv, 'light')
         self.assertIn(m['id'], ('editorial-ivory', 'swiss'))
 
+    def test_unbranded_sites_get_different_worlds_and_keep_them(self):
+        # black-and-white sites (most first versions) are coloured by us: the pick is seeded by the site, so it is stable
+        # for one site and different between sites, in both modes
+        picks = {moods.choose('software', {}, 'dark', seed=f'https://site{i}.com')['id'] for i in range(12)}
+        self.assertGreaterEqual(len(picks), 4)
+        self.assertEqual(moods.choose('software', {}, 'dark', seed='https://www.acme.io/')['id'], moods.choose('software', {}, 'dark', seed='acme.io')['id'])
+        self.assertIn('house pick', moods.choose('service', {}, 'light', seed='x.com')['why'])
+        light = {moods.choose('software', {}, 'light', seed=f'https://site{i}.com')['id'] for i in range(12)}
+        self.assertGreaterEqual(len(light), 4)
+
     def test_every_mood_is_legible_and_has_a_usable_button(self):
         for kind, ms in moods.MOODS.items():
             for m in ms:

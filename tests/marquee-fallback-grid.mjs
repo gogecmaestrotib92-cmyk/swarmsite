@@ -28,10 +28,11 @@ try {
     await page.route(/^https?:\/\//, route => route.abort());
     await page.goto(`${pathToFileURL(html)}?nomotion=1`, { waitUntil: 'domcontentloaded' });
     for (const id of ['features-ticker', 'metrics-ticker', 'intentional-single']) {
-      const section = page.locator(`#${id}`), cards = section.locator('.grid > .card');
+      // a features beat with no picture of its own is set as the index (one hairline row per item); metric cells stay a card grid
+      const section = page.locator(`#${id}`), cards = section.locator(id === 'metrics-ticker' ? '.grid > .card' : '.index-list > .index-row');
       assert.equal(await cards.count(), 6, `${id}: all items survived fallback`);
       const positions = await cards.evaluateAll(nodes => nodes.map(node => Math.round(node.getBoundingClientRect().x)));
-      const expectedColumns = width === 390 || id === 'intentional-single' ? 1 : 3;
+      const expectedColumns = width === 390 || id !== 'metrics-ticker' ? 1 : 3;
       assert.equal(new Set(positions).size, expectedColumns, `${id} at ${width}px: correct grid columns`);
       for (const card of await cards.all()) {
         assert.ok(await card.isVisible());
@@ -47,7 +48,7 @@ try {
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), width);
     await page.close();
   }
-  console.log('Ticker fallbacks retain every item and use responsive card grids');
+  console.log('Ticker fallbacks retain every item: metric cards in a responsive grid, picture-less features as the index');
 } finally {
   if (browser) await browser.close();
   fs.rmSync(dir, { recursive: true, force: true });

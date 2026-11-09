@@ -64,8 +64,7 @@ class VisualAssetTest(unittest.TestCase):
             with patch('gen.enabled', return_value=True), patch.object(agents, 'ask', return_value=None) as ask, patch.object(agents, 'empty_visual', wraps=agents.empty_visual) as check_empty, patch('PIL.Image.open', wraps=Image.open) as open_image:
                 agents.visual(directory)
             content = ask.call_args.args[1]
-            self.assertIn('1 distinct real visual(s) and 0 commissioned', content[0]['text'])
-            self.assertIn('material studies only', content[0]['text'])  # commissions are art-directed, never 3D renders, never the hero
+            self.assertIn('one atmospheric backdrop', content[0]['text'])  # the editor never commissions slot pictures
             labels = [item['text'] for item in content[1:] if item['type'] == 'text' and item['text'].startswith('id=')]
             self.assertEqual(len(labels), 1)
             self.assertIn('id=useful', labels[0])
@@ -80,7 +79,8 @@ class VisualAssetTest(unittest.TestCase):
         generated = base64.b64decode(image_data(useful).split(',', 1)[1])
         with tempfile.TemporaryDirectory() as directory:
             direction = {'hero': {}, 'brand': {'name': 'Studio'}, 'kind': 'service', 'beats': [
-                {'id': 'offer', 'type': 'features', 'h2': 'Offer', 'image': 'blank', 'features': []}]}
+                {'id': 'offer', 'type': 'features', 'h2': 'Offer', 'image': 'blank', 'features': []},
+                {'id': 'why', 'type': 'quote', 'big': 'Why we exist'}]}
             agents.W(directory, 'direction.json', direction)
             agents.W(directory, 'images.json', [{'id': 'blank', 'w': 1200, 'h': 800, 'data': white},
                                                 {'id': 'blank-gen', 'w': 1200, 'h': 800, 'gen': True, 'data': white}])
@@ -88,19 +88,20 @@ class VisualAssetTest(unittest.TestCase):
                 agents.apply_visual(directory, {'need': ['A real visual']})
             self.assertEqual(generate.call_count, 1)
             updated = agents.J(directory, 'direction.json')
-            self.assertNotEqual(updated['beats'][0]['image'], 'blank')
+            self.assertEqual(updated['beats'][1]['atmos'], 'gen-why')  # the backdrop behind the statement
+            self.assertFalse(updated['beats'][0].get('image') and updated['beats'][0]['image'].startswith('gen-'), 'a slot never gets a generated picture')
             self.assertEqual(len(updated['swarm']['visual']['generated']), 1)
 
     def test_empty_generated_output_is_not_assigned(self):
         white = base64.b64decode(image_data(Image.new('RGB', (1200, 800), 'white')).split(',', 1)[1])
         with tempfile.TemporaryDirectory() as directory:
             agents.W(directory, 'direction.json', {'hero': {}, 'brand': {'name': 'Studio'}, 'kind': 'service',
-                                                    'beats': [{'id': 'offer', 'type': 'features'}]})
+                                                    'beats': [{'id': 'offer', 'type': 'features'}, {'id': 'why', 'type': 'quote', 'big': 'Why'}]})
             agents.W(directory, 'images.json', [])
             with patch('gen.enabled', return_value=True), patch('gen.generate', return_value=white):
                 agents.apply_visual(directory, {'generate': [{'beat': 'offer', 'prompt': 'Image'}]})
             d = agents.J(directory, 'direction.json')
-            self.assertFalse(d['beats'][0].get('image'))
+            self.assertFalse(d['beats'][0].get('image')); self.assertFalse(d['beats'][1].get('atmos'))
             self.assertEqual(d['swarm']['visual']['generated'], [])
             self.assertEqual(d['swarm']['visual']['gen_errors'], ['generated image is empty'])
 

@@ -405,10 +405,10 @@ VISUAL_TOOL = {"name": "set_visuals", "description": "Assign images to slots and
     "slots": {"type": "array", "items": {"type": "object", "required": ["beat", "image"], "properties": {"beat": {"type": "string"}, "image": {"type": "string"}}}},
     "crops": {"type": "array", "maxItems": 6, "items": {"type": "object", "required": ["image", "box"], "properties": {"image": {"type": "string"}, "box": {"type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4, "description": "[x,y,w,h] as fractions 0–1 of the source; the subject only, no page chrome, no nav, no text columns"}, "as": {"type": "string", "description": "new id, e.g. shot3-play"}}}},
     "need": {"type": "array", "items": {"type": "string"}, "description": "visuals the page needs but the site does not have (one line each) — e.g. 'founders portrait', 'the play diagram at 1600px'"},
-    "generate": {"type": "array", "maxItems": 3, "items": {"type": "object", "required": ["beat", "prompt", "ar"], "properties": {"beat": {"type": "string", "description": "beat id, or 'hero'"}, "prompt": {"type": "string", "description": "art-director prompt for an ORIGINAL visual: subject (an object, material, scene or abstract form that stands for the section's idea), medium (3D render / illustration / macro photo / paper-cut / ink), light, palette with hex codes, composition, 'no text, no letters, no logos, no user interface, no faces'"}, "ar": {"type": "string", "enum": ["16:9", "4:3", "1:1", "3:4", "3:2"]}, "as": {"type": "string"}}}, "description": "ONLY when GENERATION is enabled and fewer than 3 distinct real visuals exist: commission up to 3 originals"},
+    "generate": {"type": "array", "maxItems": 3, "items": {"type": "object", "required": ["beat", "prompt", "ar"], "properties": {"beat": {"type": "string", "description": "beat id, or 'hero'"}, "prompt": {"type": "string", "description": "art-director prompt for an ORIGINAL visual: subject (an object, material, scene or abstract form that stands for the section's idea), medium (3D render / illustration / macro photo / paper-cut / ink), light, palette with hex codes, composition, 'no text, no letters, no logos, no user interface, no faces'"}, "ar": {"type": "string", "enum": ["16:9", "4:3", "1:1", "3:4", "3:2"]}, "as": {"type": "string"}}}, "description": "Leave empty. Generated pictures are not placed in slots; the art direction alone may add one atmospheric backdrop."},
     "reasons": {"type": "array", "items": {"type": "string"}}}}}
 VISUAL_SYSTEM = """You are the visual editor. When the site has fewer than 3 distinct visuals, do what a studio does with one product screenshot: cut it into DETAIL crops (each ≤ 40% of the source, one feature per crop — the court diagram, the sidebar library, the details panel, a toolbar) and give each features/steps slot its own detail. Details may come from the same screenshot; whole-image repeats may not. You look at every image the site has (thumbnails attached, with ids) and decide what goes where. Facts or cells with a marquee move are text-only tickers: do not assign or commission pictures for them. For other sections, choose images related to the actual subject. Rules: never a logo, icon or text block as a photo; never the same image twice; a UI screenshot is shown FRAMED (hero of a software product, or a lead above a grid) never stretched as a background; crop screenshots to the actual product surface (drop the browser chrome, sidebars, headers, surrounding whitespace). People sections get people. If nothing fits a slot, leave it empty and list it under need.
-When the prompt says GENERATION: enabled, you may also COMMISSION up to 3 original visuals like a studio commissions illustration: a 3D object, a material study, an abstract composition or a macro photo in the brand's palette that stands for a section's idea (a basketball court as clean line-art in brand orange on dark; a stack of printed sheets; a whistle on a bench). Never a fake product interface, never screenshots, never text or logos, never recognisable faces. Give each a beat (or 'hero' only if the site has no product image at all).""" + UNTRUSTED_CREATIVE_RULE
+Do not commission or invent pictures: a generated picture set beside a paragraph is filler. A slot with no real picture stays typographic — list it under need and the renderer sets it in type. The only generated visual a page may carry is chosen by the art direction, not by you.""" + UNTRUSTED_CREATIVE_RULE
 
 def _photo(i, *, known_nonempty=False, decoded=None):  # a real visual is a photograph-like raster: not a page screenshot, not a banner strip or logo, not a crop, not vector art
     if not i.get('data') or i.get('crop_of') or i.get('gen') or i.get('shot') or i.get('w', 0) < 600 or (not known_nonempty and empty_visual(i)): return False
@@ -572,7 +572,7 @@ def visual(slug_dir, notes=''):
     kind_ = d.get('kind') or 'service'
     art_ok = G.enabled() and ART.allowed(kind_)
     gen_rule = ('disabled' if not G.enabled() else 'disabled for places — a restaurant or hotel is shown only in its own photographs' if not ART.allowed(kind_)
-                else f'enabled — the site has {distinct} distinct real visual(s) and {have_gen} commissioned so far. ART DIRECTION: {ART.STYLE[kind_]}. Palette: {ART.colours(d.get("mood")) or "the brand palette"}. Generated imagery is the last resort for a slot with no picture at all (cap {max(0, 3 - have_gen)} now; never the hero, never the proof slot when a real product image exists): photographic material studies only, in that style and palette — never a 3D render or an abstract blob, which reads as AI.')
+                else 'enabled only as one atmospheric backdrop behind a statement, chosen by the art direction — do not commission pictures for slots')
     content = [{"type": "text", "text": f"GENERATION: {gen_rule}\nBRAND: {json.dumps({k: d.get('brand', {}).get(k) for k in ('name', 'accent', 'paper', 'ink')})} mode={d.get('mode')}\nKIND: {d.get('kind')}\nHERO: {json.dumps({k: d['hero'].get(k) for k in ('h1', 'media')}, ensure_ascii=False)}\nBEATS: {json.dumps([{'id': b['id'], 'type': b['type'], 'h2': b.get('h2'), 'image': b.get('image', ''), 'move': (b.get('ui') or {}).get('move', ''), 'lead': (b.get('ui') or {}).get('lead', '')} for b in d['beats']], ensure_ascii=False)}{business_context(slug_dir)}{creative_context(d)}\nCRITIC NOTES FOR VISUAL: {notes or 'none'}\nIMAGES (thumbnails follow, in this order):"}]
     for it, thumbnail in thumbnails:
         content += [{"type": "text", "text": f"id={it.get('id')} {it.get('w')}×{it.get('h')}{' section-shot' if it.get('shot') else ''}{' hero-grade' if it.get('heroGrade') else ''}"}, {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": thumbnail}}]
@@ -669,21 +669,19 @@ def apply_visual(slug_dir, r):
         valid_imgs = [i for i in imgs if i.get('data') and not is_empty(i)]
         valid_objects = {id(i) for i in valid_imgs}
         have_gen = len([i for i in valid_imgs if i.get('gen')])
-        asks = [g for g in (r.get('generate') or []) if g.get('prompt') and g.get('beat') and not text_ticker(ids.get(g['beat']))][:max(0, 3 - have_gen)]
+        # One commission per page, and only as atmosphere: the defocused backdrop behind one statement.
+        # Object commissions (a material study beside a paragraph) are filler, so the editor's asks are not honoured.
+        asks = []
         distinct = len([i for i in valid_imgs if _photo(i, known_nonempty=True)])
-        asks = asks if art_ok else []
-        if art_ok and have_gen < 3 and len(asks) < 3 - have_gen:  # the house wants every slot pictured: what the editor did not commission, the art direction commissions
-            asked = {g.get('beat') for g in asks}
-            holes = [b for b in d.get('beats', []) if b.get('type') not in ('form', 'faq', 'ledger', 'testimonials') and not text_ticker(b) and b['id'] not in asked
-                     and (not b.get('image') or b.get('image') in by and id(by[b['image']]) not in valid_objects)][:3 - have_gen - len(asks)]
-            needs = list(r.get('need') or [])
-            for b in holes:
-                idea = needs.pop(0) if needs else (b.get('h2') or b.get('big') or '')
-                asks.append({'beat': b['id'], 'prompt': ART.prompt(kind_, b.get('type'), d.get('mood'), idea, d.get('brand', {}).get('name', '')), 'ar': ART.ratio_for(b.get('type')), 'as': f"gen-{b['id']}"})
-            asks = [g for g in asks if g.get('beat') != 'hero']  # the hero is never generated: it is the product or the type
+        if art_ok and have_gen < 1:
+            statements = [b for b in d.get('beats', []) if b.get('type') in ('quote', 'statement') and not text_ticker(b) and not (b.get('atmos') and b.get('atmos') in by and id(by[b['atmos']]) in valid_objects)]
+            if statements:
+                b = statements[len(statements) // 2]  # the middle of the page, where a change of light lands best
+                idea = b.get('big') or b.get('body') or b.get('h2') or b.get('lede') or ''
+                asks = [{'beat': b['id'], 'prompt': ART.atmos_prompt(kind_, d.get('mood'), idea, d.get('brand', {}).get('name', '')), 'ar': '16:9', 'as': f"gen-{b['id']}", 'atmos': True}]
         def one(g):
             try:
-                pr = g['prompt'] + (' ' + ART.STYLE[kind_] + '. Palette: ' + ART.colours(d.get('mood')) + '.' if ART.colours(d.get('mood')) and ART.STYLE[kind_] not in g['prompt'] else '') + ' ' + ART.NEGATIVE
+                pr = g['prompt']
                 data = G.generate(pr, g.get('ar', '16:9')); im = Image.open(io.BytesIO(data)).convert('RGB'); im.thumbnail((1600, 1600)); buf = io.BytesIO(); im.save(buf, 'JPEG', quality=86)
                 return {'id': re.sub(r'[^\w-]', '', g.get('as') or f"gen-{g['beat']}"), 'src': 'commissioned', 'w': im.size[0], 'h': im.size[1], 'alt': g['prompt'][:80], 'ratio': round(im.size[0] / im.size[1], 2), 'heroGrade': im.size[0] >= 1200, 'gen': True, 'data': 'data:image/jpeg;base64,' + base64.b64encode(buf.getvalue()).decode()}, g['beat']
             except Exception as e: return {'error': str(e)[:120]}, g['beat']
@@ -694,17 +692,12 @@ def apply_visual(slug_dir, r):
             if is_empty(it):
                 it['error'] = 'generated image is empty'
                 continue
-            owner = ('hero', None) if beat == 'hero' else ('beat', beat)
-            def same_generation(image_id):
-                return by[image_id].get('gen') and (not owners(image_id) or owners(image_id) <= {owner})
-            it['id'] = available_id(it['id'] or f'gen-{beat}', 'gen', same_generation)
+            it['atmos'] = True
+            it['id'] = available_id(it['id'] or f'gen-{beat}', 'gen', lambda image_id: by[image_id].get('gen'))
             if it['id'] in by: imgs[[i.get('id') for i in imgs].index(it['id'])] = it
             else: imgs.append(it)
             by[it['id']] = it
-            if beat == 'hero': apply_visual_assignments(d, by, hero=it['id'])
-            elif beat in ids:
-                apply_visual_assignments(d, by, slots=[{'beat': beat, 'image': it['id']}])
-                if ids[beat].get('image') == it['id']: ids[beat].setdefault('ui', {})['lead'] = it['id']
+            if beat in ids: ids[beat]['atmos'] = it['id']  # a backdrop, never the beat's picture
             n += 1
     d.setdefault('swarm', {})['visual'] = {'need': r.get('need', [])[:4], 'reasons': r.get('reasons', [])[:3], 'generated': [it['id'] for it, _ in gens if not it.get('error')], 'gen_errors': [it['error'] for it, _ in gens if it.get('error')]}
     W(slug_dir, 'images.json', imgs); W(slug_dir, 'direction.json', d); return n

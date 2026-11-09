@@ -138,7 +138,7 @@ def _main(snapshot_dir):
         with A._document_lock:
             d0 = A.J(slug_dir, 'direction.json'); brief0 = A.J(slug_dir, 'brief.json') or {}; inv0 = A.J(slug_dir, 'inventory.json') or {}
             if d0 is not None and brief0.get('keepColours', True) is False and not isinstance(d0.get('mood'), dict):
-                d0['mood'] = MOODS.choose(d0.get('kind') or 'service', inv0, d0.get('mode')); A.W(slug_dir, 'direction.json', d0)
+                d0['mood'] = MOODS.choose(d0.get('kind') or 'service', inv0, d0.get('mode'), seed=brief0.get('url') or (d0.get('brand') or {}).get('name')); A.W(slug_dir, 'direction.json', d0)
                 ev('Concept', f"mood: {d0['mood']['id']} · {d0['mood']['why']}")
     except Exception as e: ev('Concept', 'mood skipped: ' + str(e)[:80])
     relock(slug_dir)

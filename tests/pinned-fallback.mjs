@@ -41,10 +41,11 @@ try {
     await page.route(/^https?:\/\//, route => route.abort());
     await page.goto(`${pathToFileURL(html)}${mode === 'reduce' ? '?nomotion=1' : ''}`, { waitUntil: 'domcontentloaded' });
     for (const id of ['assigned', 'unavailable', 'none']) {
-      const section = page.locator(`#${id}`), cards = section.locator('.grid > .card');
+      // the assigned screenshot keeps the card grid under its lead; steps with no picture of their own are the ladder (one row per step)
+      const section = page.locator(`#${id}`), cards = section.locator(id === 'assigned' ? '.grid > .card' : '.ladder-list > .ladder-step');
       assert.equal(await cards.count(), 3, `${id}: every step survives`);
       const positions = await cards.evaluateAll(nodes => nodes.map(el => Math.round(el.getBoundingClientRect().x)));
-      assert.equal(new Set(positions).size, width === 1440 ? 3 : 1, `${id}: responsive fallback columns`);
+      assert.equal(new Set(positions).size, width === 1440 && id === 'assigned' ? 3 : 1, `${id}: responsive fallback columns`);
       for (const text of steps) assert.ok((await section.innerText()).includes(text));
       assert.ok(await section.locator('.section-note').isVisible());
       assert.equal(await section.locator('figure.lead').count(), id === 'assigned' ? 1 : 0, `${id}: only the assigned and available image is shown`);

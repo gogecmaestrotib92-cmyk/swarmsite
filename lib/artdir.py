@@ -1,8 +1,8 @@
-"""artdir.py — art direction for commissioned visuals, per kind of business, in the page's own mood.
+"""artdir.py — art direction for the one commissioned visual a page may carry: an atmosphere, never an object.
 
-The words on the page stay the site's. What we add is what a studio adds when a client brings a plain site:
-original visuals that stand for each section's idea — a 3D object, a material study, an abstract composition —
-in the palette the page will use. Never a fake product interface, never fake people or places, never text.
+The words on the page stay the site's, and so do its pictures. A generated picture set beside a paragraph is
+filler — the thing awarded pages never do — so a commission is allowed in exactly one place: as the defocused
+backdrop behind one statement, where it reads as light and material, not as an illustration of anything.
 Places (restaurants, hotels) get no generated imagery at all: a photograph of a dining room that does not exist
 is a lie; those pages are built from their own photographs only.
 """
@@ -47,6 +47,20 @@ def prompt(kind, beat_type, mood, idea='', brand=''):
              f'{subj}' + (f', evoking "{idea[:80]}"' if idea else '') + '.',
              STYLE[kind] + '.',
              ('Palette: ' + colours(mood) + ' — the material sits in the backdrop tone; the accent appears only as a light or an edge.') if colours(mood) else 'Restrained palette, one accent.',
+             NEGATIVE]
+    return ' '.join(parts)
+
+
+ATMOS = 'defocused, abstract, the material fills the frame edge to edge with no object or subject in the centre, one soft directional light from one side, low contrast, made to sit behind large text as a wash of the page\'s own colour — light if the backdrop tone is light, dark if it is dark'
+
+
+def atmos_prompt(kind, mood, idea='', brand=''):
+    """The one commission a page may carry: a backdrop behind a statement. `idea` is the statement itself (never pasted as text)."""
+    if not allowed(kind): return ''
+    idea = re.sub(r'<[^>]+>', '', str(idea or '')).strip()
+    parts = [f'Atmospheric backdrop for a {kind} website' + (f' ({brand})' if brand else '') + ':',
+             STYLE[kind] + ', ' + ATMOS + (f', evoking "{idea[:80]}"' if idea else '') + '.',
+             ('Palette: ' + colours(mood) + ' — the picture lives in the backdrop tone and the secondary surface; the accent is a light or an edge, present but not loud.') if colours(mood) else 'The page\'s own palette, one accent as light.',
              NEGATIVE]
     return ' '.join(parts)
 

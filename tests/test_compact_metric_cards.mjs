@@ -36,12 +36,14 @@ try {
     for (const width of [390, 1440]) {
       const page = await browser.newPage({ viewport: { width, height: 900 }, reducedMotion: 'reduce' });
       await page.goto(pathToFileURL(html).href + '?nomotion=1');
-      for (const id of ['metrics', 'long', 'nonnumeric', 'image', 'lead', 'features']) {
+      for (const id of ['metrics', 'long', 'nonnumeric', 'image', 'lead']) {
         const grid = page.locator(`#${id} .grid`);
         assert.equal(await grid.count(), 1, `${bp} ${id} renders cards`);
         const columns = await grid.evaluate(el => getComputedStyle(el).gridTemplateColumns.split(' ').length);
         assert.equal(columns, width > 900 && id === 'metrics' ? 2 : 1, `${bp} ${id} at ${width}`);
       }
+      // a features beat with no picture of its own is set as the index, one row per item, never a one-column card stack
+      assert.equal(await page.locator('#features .index-list > .index-row').count(), metrics.length, `${bp} features set as the index`);
       const cards = await page.locator('#metrics .card').allTextContents();
       assert.equal(await page.locator('#image img').count(), 1, `${bp} image remains visible`);
       assert.equal(await page.locator('#lead img').count(), 1, `${bp} lead remains visible`);

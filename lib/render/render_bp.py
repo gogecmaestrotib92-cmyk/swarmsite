@@ -172,7 +172,7 @@ def build(slug_dir, bp_id, out_path=None):
     def is_used(k): return bool(family(k, twins=not reserved.get(k)) & used)
     reserved = {}  # image id → beat id that owns it
     for bt0 in d.get('beats', []):
-        for k0 in (bt0.get('image'), (bt0.get('ui') or {}).get('lead')):
+        for k0 in (bt0.get('image'), (bt0.get('ui') or {}).get('lead'), bt0.get('atmos')):
             if k0 and images.get(k0): reserved.setdefault(k0, bt0['id'])
         for feature in bt0.get('features') or []:
             image_id = feature.get('image') if isinstance(feature, dict) else None
@@ -181,6 +181,7 @@ def build(slug_dir, bp_id, out_path=None):
     if h.get('media') and images.get(h['media']): reserved.setdefault(h['media'], '__hero__')
     def free_for(it, bt=None):
         if is_empty(it): return False
+        if it.get('gen'): return False  # a generated picture is atmosphere behind a statement, never a picture in a slot
         owners = {reserved[k] for k in family(it.get('id')) if k in reserved}
         owner = bt.get('id') if bt is not None else '__hero__'
         return not owners or owners == {owner}
@@ -208,7 +209,7 @@ def build(slug_dir, bp_id, out_path=None):
         return bool(re.search(r'(?i)(?:^|[/_.\-\s])(logo|icon|favicon|wordmark|brandmark|badge)(?:$|[/_.\-\s])', markers))
     def photo_like(it, minw=500):
         # a picture that can stand in a card or a frame: real pixels, not a page screenshot, not a banner strip or a logo, not vector art
-        if not it.get('data') or is_empty(it) or it.get('shot') or is_used(it.get('id')) or it.get('w', 0) < minw or dark_background_texture(it): return False
+        if not it.get('data') or is_empty(it) or it.get('gen') or it.get('shot') or is_used(it.get('id')) or it.get('w', 0) < minw or dark_background_texture(it): return False
         if symbolic_asset(it): return False
         ar = it.get('w', 1) / max(1, it.get('h', 1)); return .55 <= ar <= 2.0
     placed = set()  # pictures actually put on the page (used also holds their look-alikes)
@@ -217,7 +218,7 @@ def build(slug_dir, bp_id, out_path=None):
         if it and is_empty(it): return ''
         if it and is_used(it.get('id')) and not prefer_hero: it = None
         if not it:
-            available = [i for i in images.values() if i.get('data') and not is_empty(i) and not dark_background_texture(i)]
+            available = [i for i in images.values() if i.get('data') and not is_empty(i) and not i.get('gen') and not dark_background_texture(i)]  # a generated picture is never picked from the pool: it is atmosphere, by id only
             pool = [i for i in available if not is_used(i.get('id')) and reserved.get(i.get('id')) is None] or [i for i in available if not is_used(i.get('id'))] or (available if prefer_hero else [])
             if want_shot is True: pool = [i for i in pool if i.get('shot')] or pool
             if want_shot is False: pool = [i for i in pool if not i.get('shot')] or pool
@@ -281,7 +282,7 @@ def build(slug_dir, bp_id, out_path=None):
     # from an unvalidated seed; invalid foregrounds are repaired for contrast.
     use_blueprint_palette = brief.get('keepColours', True) is False
     # the owner let the swarm pick colours: a curated mood of the blueprint's mode, nearest in hue to the brand's own accent
-    mood = (d.get('mood') if isinstance(d.get('mood'), dict) and d['mood'].get('paper') else MOODS.choose(d.get('kind') or bp.get('class'), inventory, C.get('mode'))) if use_blueprint_palette else None
+    mood = (d.get('mood') if isinstance(d.get('mood'), dict) and d['mood'].get('paper') else MOODS.choose(d.get('kind') or bp.get('class'), inventory, C.get('mode'), seed=brief.get('url') or b.get('name'))) if use_blueprint_palette else None
     policy = resolve_colours({**C, **{k: mood[k] for k in ('paper', 'ink', 'accent', 'alt')}}) if mood else None
     if mood: print(json.dumps({'event': {'role': 'Concept', 'text': f"mood: {mood['id']} · {mood['why']}"}}), file=sys.stderr)
     if policy:
@@ -527,6 +528,14 @@ def build(slug_dir, bp_id, out_path=None):
         if has_video and not src:
             # A failed poster must not discard an independently valid video.
             return f'<section class="sec hero has-media" id="top" style="min-height:100svh">{m}{body_}</section>'
+        if not src and not has_video and not media and mv in (None, '', 'default', 'auto', 'centre', 'split', 'inset', 'photo'):
+            # TYPOGRAPHIC HERO: no picture of their own → the words are the picture. Never a centred block floating in
+            # empty paper: the headline runs the full measure, set as large as its length allows; the lede and the
+            # buttons sit on a ruled bottom row, the way awarded pages open when the type carries the page.
+            tpx = max(64, min(176, int(1150 / ((0.7 if upper else 0.56) * max(10, nch)) * (2.2 if nw <= 4 else 2.6 if nw <= 8 else 3.0))))
+            tsty = re.sub(r'--hero-size:[^;]+', f'--hero-size:{clampf(tpx)}', re.sub(r'max-width:[^;]+', 'max-width:100%', hsty)); tsty = re.sub(r'text-align:(?:left|center)', 'text-align:left', tsty).replace('margin-left:auto;margin-right:auto', '')
+            return (f'<section class="sec hero typo" id="top"><div class="wrap hero-in"><div class="typo-top">{plain_cat}</div><h1 class="h1" style="{tsty}">{h1}</h1>'
+                    f'<div class="typo-row"><p class="lede">{e(h.get("lede"))}</p><div class="ctas">{cta_html()}{secondary_cta()}</div></div></div></section>')
         if mv == 'editorial-type' and not has_video:
             # Text remains one real heading; the image is optional and never
             # replaces it. Keep the full copy and actual CTA destinations.
@@ -736,6 +745,13 @@ def build(slug_dir, bp_id, out_path=None):
             slides += f'<div class="ps-s{" on" if i == 0 else ""}{" no-visual" if not picture else ""}" data-i="{i}"><div class="ps-t">{number_html}<h3 class="h2" style="{heading_style}">{e(heading)}</h3>{description}</div>{picture}</div>'
         return f'<section class="sec pinned band-{band_of(sec, bt)}" id="{e(bt["id"])}" data-sig="pinned" data-n="{len(items)}"><div class="ps-sticky"><div class="wrap">{ghead(sec, bt)}<div class="ps-stage">{slides}</div><div class="ps-dots">{"".join("<i></i>" for _ in items)}</div></div></div></section>'
 
+    def atmos_backdrop(bt):
+        """The one generated picture a page may carry: defocused, behind a statement's words — light and material, never an illustration."""
+        it = images.get(bt.get('atmos')) if bt.get('atmos') else None
+        if not (it and it.get('gen') and it.get('data') and not is_empty(it)): return ''
+        src = img(it['id'])
+        return f'<figure class="atmos-bg" data-move="parallax" data-parallax="6" aria-hidden="true"><img src="{src}" alt=""></figure>' if src else ''
+
     def type_wall(sec, bt):
         """SIGNATURE: one statement in giant type; the words light up one by one as you scroll through it."""
         big = bt.get('big') if bt['type'] == 'quote' else ''
@@ -746,7 +762,8 @@ def build(slug_dir, bp_id, out_path=None):
         caption = f'<p class="tw-caption">{e(body)}</p>' if big and body and big != body else ''
         who = f'<p class="lab who">{e(bt["who"])}</p>' if bt.get('who') else ''
         prominent = bool(big and len(str(big)) <= 30 and len(str(big).split()) <= 6)
-        return f'<section class="sec typewall band-{band_of(sec, bt)}" id="{e(bt["id"])}" data-sig="typewall"><div class="tw-sticky"><div class="wrap{" tw-prominent" if prominent else ""}">{lab(bt.get("label"))}<h2 class="tw{" tw-title" if big else ""}">{ws}</h2>{caption}{who}</div></div></section>'
+        backdrop = atmos_backdrop(bt)
+        return f'<section class="sec typewall{" atmos" if backdrop else ""} band-{band_of(sec, bt)}" id="{e(bt["id"])}" data-sig="typewall">{backdrop}<div class="tw-sticky"><div class="wrap{" tw-prominent" if prominent else ""}">{lab(bt.get("label"))}<h2 class="tw{" tw-title" if big else ""}">{ws}</h2>{caption}{who}</div></div></section>'
 
     def directed_photo(sec, bt):
         """Render only photo treatments this renderer can safely honor."""
@@ -1001,7 +1018,10 @@ def build(slug_dir, bp_id, out_path=None):
         inner = f'{lab(bt.get("label"))}<h2 class="h2" style="{head_style(sec)}">{e(big)}</h2>' if big and px_ >= 40 else lab(bt.get('label'))
         body_px = (sec.get('body') or {}).get('px') or BO['px']
         centered = (hd.get('al') == 'center')
-        return f'<section class="sec statement band-{band_of(sec, bt)}" id="{e(bt["id"])}" style="min-height:{(min(1.0, max(.5, sec.get("screens", .8))) * 100) if len(str(text or "").split()) > 45 else 0}svh"><div class="wrap{" center" if centered else ""}" style="{col_style(sec)}">{inner}<p class="big-p" style="font-size:{clampf(max(body_px, 22), .7)}{";margin-left:auto;margin-right:auto" if centered else ""}">{e(text)}</p>{who}</div></section>'
+        # the one generated picture a page may carry sits here, defocused, behind the words — light and material, not an illustration
+        backdrop = atmos_backdrop(bt)
+        band = band_of(sec, bt)
+        return f'<section class="sec statement{" atmos" if backdrop else ""} band-{band}" id="{e(bt["id"])}" style="min-height:{(min(1.0, max(.5, sec.get("screens", .8))) * 100) if (backdrop or len(str(text or "").split()) > 45) else 0}svh">{backdrop}<div class="wrap{" center" if centered else ""}" style="{col_style(sec)}">{inner}<p class="big-p" style="font-size:{clampf(max(body_px, 22), .7)}{";margin-left:auto;margin-right:auto" if centered else ""}">{e(text)}</p>{who}</div></section>'
 
     def photo_sec(sec, bt=None):
         if bt:
@@ -1083,16 +1103,55 @@ def build(slug_dir, bp_id, out_path=None):
         cap = f'<div class="wrap">{photo_caption(bt, title=not head)}</div>' if bt else ''
         return f'<section class="sec photo{" bleed" if bleed else ""}" id="{e(bt["id"]) if bt else ""}"><figure style="aspect-ratio:{max(1.1, min(2.4, m["ar"]))};{size}"><img src="{src}" alt="{source_alt(src)}">{head}</figure>{cap}</section>'
 
-    def ghead(sec, bt, light=False):
+    # Heading rhythm: awarded pages never set two section heads the same way in a row. When the director has not
+    # asked for a head, the renderer rotates four compositions — split (h2 left, lede right), right (pushed into the
+    # right half), index (the section's ordinal set giant beside the words; no label, the number is the label) and
+    # centre — so the eye never reads a template. The ordinal counts rendered heads, so indexes stay in page order.
+    RHYTHM = ['split', 'index', 'right', 'split', 'centre', 'index']
+    head_count = [0]
+    def ghead(sec, bt, light=False, avoid=()):
         if not bt.get('h2'):
             label = lab(bt.get('label'), light)
             lede = f'<p class="lede">{e(bt.get("lede"))}</p>' if bt.get('lede') else ''
             return f'<div class="gh one">{label}{lede}</div>' if lede else label
         st = re.sub(r'max-width:[^;]+;?', '', head_style(sec, bt=bt)); hm = (bt.get('ui') or {}).get('head')
         lede_html = f'<p class="lede">{e(bt.get("lede"))}</p>' if bt.get('lede') else ''
-        if hm == 'center': return f'<div class="gh one center">{lab(bt.get("label"), light)}<h2 class="h2" style="{st}">{e(bt.get("h2"))}</h2>{lede_html}</div>'
+        head_count[0] += 1; n = head_count[0]
+        if not hm:
+            hm = RHYTHM[(n - 1) % len(RHYTHM)]
+            if hm in avoid or (hm == 'index' and len(str(bt.get('h2'))) > 60): hm = 'split'  # a long heading needs the width; the ladder carries its own ordinals
+        if hm == 'center' or hm == 'centre': return f'<div class="gh one center">{lab(bt.get("label"), light)}<h2 class="h2" style="{st}">{e(bt.get("h2"))}</h2>{lede_html}</div>'
         if hm == 'left': return f'<div class="gh one">{lab(bt.get("label"), light)}<h2 class="h2" style="{st}">{e(bt.get("h2"))}</h2>{lede_html}</div>'
+        if hm == 'right': return f'<div class="gh right"><div></div><div>{lab(bt.get("label"), light)}<h2 class="h2" style="{st}">{e(bt.get("h2"))}</h2>{lede_html}</div></div>'
+        if hm == 'index': return f'<div class="gh index"><span class="gidx" aria-hidden="true">{n:02d}</span><div><h2 class="h2" style="{st}">{e(bt.get("h2"))}</h2>{lede_html}</div></div>'
         return f'<div class="gh"><div>{lab(bt.get("label"), light)}<h2 class="h2" style="{st}">{e(bt.get("h2"))}</h2></div>{lede_html or "<div></div>"}</div>'
+
+    def pictured(bt):
+        """Does this beat bring a real picture of its own (a feature crop, a lead, an assigned photo)? If not, it is set in type."""
+        def ok(k, minw=400):
+            it = images.get(k) if isinstance(k, str) else None
+            if not (it and it.get('data') and not it.get('gen') and not is_empty(it) and not symbolic_asset(it) and free_for(it, bt) and k not in placed): return False  # a logo is not a picture; look-alikes assigned on purpose still count as this beat's picture
+            dims = pixel_dimensions(it) if it.get('w', 0) < minw else None  # inventories can under-report; the pixels decide
+            return (dims[0] if dims else it.get('w', 0)) >= minw
+        if ok(bt.get('image')) or ok((bt.get('ui') or {}).get('lead')): return True
+        return any(isinstance(f, dict) and ok(f.get('image')) for f in bt.get('features') or [])
+
+    def steps_ladder(sec, bt):
+        """Steps as steps: the ordinal set giant, the sentence beside it, a line that fills as you climb. No picture; the type is the visual."""
+        items = beat_items(bt)
+        if not 2 <= len(items) <= 6: return cards(sec, bt, plain=True)
+        rows = ''
+        for i, (_, text) in enumerate(items):
+            title, body = (text.split(' — ', 1) + [''])[:2] if ' — ' in str(text) else (str(text), '')
+            rows += f'<li class="ladder-step"><span class="ladder-n">{i + 1:02d}</span><div class="ladder-t"><h3 class="h3">{e(title)}</h3>{"<p>" + e(body) + "</p>" if body else ""}</div></li>'
+        return f'<section class="sec ladder band-{band_of(sec, bt)}" id="{e(bt["id"])}"><div class="wrap">{ghead(sec, bt, avoid=("index",))}<ol class="ladder-list" data-sig="ladder"><i class="ladder-line"><b></b></i>{rows}</ol></div></section>'
+
+    def index_list(sec, bt):
+        """A list without pictures is set as an index: ordinal, title, body on one hairline row each; the hover moves the row."""
+        items = beat_items(bt)
+        if not 2 <= len(items) <= 8: return cards(sec, bt, plain=True)
+        rows = ''.join(f'<li class="index-row"><span class="idx">{i + 1:02d}</span><h3 class="h3">{e(t)}</h3><p>{e(x or "")}</p></li>' for i, (t, x) in enumerate(items))
+        return f'<section class="sec indexlist band-{band_of(sec, bt)}" id="{e(bt["id"])}"><div class="wrap">{ghead(sec, bt)}<ol class="index-list">{rows}</ol></div></section>'
 
     def lead_fig(ui_, bt):
         src = ''; it = None
@@ -1188,8 +1247,13 @@ def build(slug_dir, bp_id, out_path=None):
         wide = ' product-story-wide' if width / height > 2 else ''
         return f'<section class="sec product-story{wide} band-{band_of(sec, bt)}" id="{e(bt["id"])}"><div class="wrap product-story-layout">{header}{figure}<ol class="product-story-rows">{rows}</ol></div></section>'
 
-    def cards(sec, bt):
+    def cards(sec, bt, plain=False):
         if bt['type'] == 'faq': return faq(sec, bt)
+        # Every road that ends in "a grid of cards" passes here, including the signature moves' fallbacks. A beat with
+        # no picture of its own is not padded with one: steps become the ladder, features the index — type as the visual.
+        if not plain and not pictured(bt):
+            if bt['type'] == 'steps' and 2 <= len(bt.get('steps') or []) <= 6: return steps_ladder(sec, bt)
+            if bt['type'] == 'features' and 2 <= len(bt.get('features') or []) <= 8: return index_list(sec, bt)
         ms = sec_media(sec); n = max(2, min(4, len(ms) or 3)); ar = (ms[0]['ar'] if ms else 0.82)
         lead = ''; ui_ = bt.get('ui') or {}
         own_feature_images = (bt['type'] == 'features' and owned_story_shot(bt)
@@ -1545,7 +1609,7 @@ def build(slug_dir, bp_id, out_path=None):
         elif t in ('features', 'cells', 'steps', 'facts', 'faq'):
             sec = take('list'); r = sec['role']
             if (r.startswith(('two-audiences', 'double')) and t in ('steps', 'features', 'cells')) or (t == 'steps' and r.startswith('feature')): out.append(two_col(sec, bt))
-            else: out.append(cards(sec, bt))
+            else: out.append(cards(sec, bt))  # cards() routes picture-less steps to the ladder and picture-less features to the index
         elif t == 'form': sec = take('cta'); out.append(cta(sec, bt)); cta_done = True
         else: continue
         out[-1] = section_extras(out[-1], bt)
@@ -1642,7 +1706,7 @@ img,video{{display:block;max-width:100%}}a{{color:inherit;text-decoration:none}}
 .hero.shot{{align-content:start;padding-top:104px;min-height:auto!important}}.hero.shot .hero-in{{padding-bottom:0}}.hero.shot .cat{{margin-bottom:14px}}.hero.shot .lede{{margin-top:14px}}.hero.shot .ctas{{margin-top:20px}}.hero .shotwrap{{padding-top:clamp(22px,3vw,36px);padding-bottom:0}}.shotframe{{border-radius:max(12px,var(--radius)) max(12px,var(--radius)) 0 0;overflow:hidden;border:1px solid var(--line);border-bottom:0;box-shadow:0 30px 80px color-mix(in srgb,var(--ink) 14%,transparent)}}.shotframe img{{width:100%;max-height:72vh;object-fit:cover;object-position:top center}}
 .sec{{padding:clamp(64px,9vw,140px) 0;display:grid;grid-template-columns:minmax(0,1fr);align-content:center}}.band-dark{{background:var(--band-paper);color:var(--band-ink);--muted:{policy['dark_muted'] if policy else 'color-mix(in srgb,var(--band-ink) 68%,transparent)'};--line:color-mix(in srgb,var(--band-ink) 22%,transparent)}}.band-dark .lab{{color:{'var(--muted)' if policy else 'color-mix(in srgb,var(--band-ink) 62%,transparent)'}}}.band-dark .btn{{background:var(--band-ink);color:var(--band-paper)}}.band-alt{{background:{'var(--alt)' if policy else 'color-mix(in srgb,var(--ink) 6%,var(--paper))'}{';color:var(--alt-ink);--muted:'+policy['alt_muted'] if policy else ''}}}
 .statement .who{{margin-top:22px}}.statement .wrap{{padding-left:max(var(--frame),var(--statement-offset,0px))}}.statement .wrap.center{{text-align:center;display:grid;justify-items:center}}
-.photos .pair{{display:flex;gap:var(--gutter);align-items:flex-start}}.photos figure{{overflow:hidden;border-radius:var(--radius)}}.photos figure img,.photo figure img{{width:100%;height:100%;object-fit:cover}}.photo figure{{position:relative;margin:0;max-height:92svh}}.inset-wrap{{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--gutter);align-items:end}}.inset-wrap figure{{overflow:hidden;border-radius:var(--radius)}}.inset-wrap .cap{{font-size:clamp(20px,1.6vw,26px);color:inherit}}@media(max-width:820px){{.inset-wrap{{grid-template-columns:1fr}}}}.photo.bleed{{padding:0}}.photo.bleed figure{{overflow:hidden}}.photo.bleed figure img{{height:124%;margin-top:-12%}}.no-motion .photo.bleed figure img{{height:100%;margin-top:0}}.photo .over{{position:absolute;inset:auto 0 0 0;padding-bottom:clamp(28px,4vw,56px);color:var(--on-photo)}}.h2.light{{color:var(--on-photo)}}.cap{{margin-top:14px;max-width:var(--body-max);color:var(--muted)}}.caps{{display:flex;gap:24px;align-items:baseline;flex-wrap:wrap;padding-top:14px}}.photo-caption{{padding:clamp(24px,3vw,40px) 0}}.photo-caption .h2{{margin-top:14px;overflow-wrap:anywhere}}.photo-details{{display:flex;flex-wrap:wrap;gap:12px 24px;list-style:none;margin-top:18px}}
+.photos .pair{{display:flex;gap:var(--gutter);align-items:flex-start}}.photos figure{{overflow:hidden;border-radius:var(--radius)}}.photos figure img,.photo figure img{{width:100%;height:100%;object-fit:cover}}.photo figure{{position:relative;margin:0;max-height:92svh}}.inset-wrap{{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--gutter);align-items:end}}.inset-wrap figure{{overflow:hidden;border-radius:var(--radius)}}.inset-wrap .cap{{font-size:clamp(20px,1.6vw,26px);color:inherit}}@media(max-width:820px){{.inset-wrap{{grid-template-columns:1fr}}}}.sec.atmos{{position:relative;overflow:hidden;--atmos:var(--paper)}}.sec.atmos.band-dark{{--atmos:var(--band-paper)}}.sec.atmos.band-alt{{--atmos:color-mix(in srgb,var(--ink) 6%,var(--paper))}}.statement.atmos{{display:grid;align-content:center}}.sec.atmos .atmos-bg{{position:absolute;inset:0;margin:0;z-index:0}}.sec.atmos .atmos-bg img{{width:100%;height:124%;margin-top:-12%;object-fit:cover;filter:blur(3px) saturate(.9)}}.sec.atmos .atmos-bg::after{{content:"";position:absolute;inset:0;background:linear-gradient(180deg,color-mix(in srgb,var(--atmos) 40%,transparent),color-mix(in srgb,var(--atmos) 66%,transparent))}}.sec.atmos .wrap,.sec.atmos .tw-sticky{{position:relative;z-index:1}}.no-motion .sec.atmos .atmos-bg img{{height:100%;margin-top:0}}.photo.bleed{{padding:0}}.photo.bleed figure{{overflow:hidden}}.photo.bleed figure img{{height:124%;margin-top:-12%}}.no-motion .photo.bleed figure img{{height:100%;margin-top:0}}.photo .over{{position:absolute;inset:auto 0 0 0;padding-bottom:clamp(28px,4vw,56px);color:var(--on-photo)}}.h2.light{{color:var(--on-photo)}}.cap{{margin-top:14px;max-width:var(--body-max);color:var(--muted)}}.caps{{display:flex;gap:24px;align-items:baseline;flex-wrap:wrap;padding-top:14px}}.photo-caption{{padding:clamp(24px,3vw,40px) 0}}.photo-caption .h2{{margin-top:14px;overflow-wrap:anywhere}}.photo-details{{display:flex;flex-wrap:wrap;gap:12px 24px;list-style:none;margin-top:18px}}
 .photo.ui-photo .ui-shot{{width:100%;overflow:hidden;border-radius:var(--radius)}}.photo.ui-photo .ui-shot img{{display:block;width:auto;max-width:100%;height:auto;max-height:92svh;object-fit:contain;margin:0 auto}}
 .art-photo .art-photo-inner{{display:grid;gap:clamp(28px,4vw,64px);align-items:center}}
 .art-photo figure{{margin:0;width:100%;max-width:var(--photo-native);overflow:hidden;border-radius:var(--radius)}}
@@ -1664,7 +1728,7 @@ img,video{{display:block;max-width:100%}}a{{color:inherit;text-decoration:none}}
 .photo-gallery .photo-caption .h2{{font-size:clamp(26px,3vw,44px);line-height:1.05}}
 @media(max-width:820px){{.art-photo-split .art-photo-inner{{grid-template-columns:minmax(0,1fr)}}.art-photo-stacked figure{{justify-self:start}}}}
 @media(max-width:820px){{.photo-gallery.gallery-2,.photo-gallery.gallery-3{{grid-template-columns:minmax(0,1fr);gap:48px}}}}
-.gh{{display:grid;grid-template-columns:1.1fr .9fr;gap:var(--gutter);align-items:end;margin-bottom:clamp(28px,4vw,48px)}}.gh .h2{{text-align:left!important;margin-left:0!important;margin-top:14px;max-width:18ch;text-wrap:balance}}.gh .lede{{margin-top:0}}
+.gh.right{{grid-template-columns:.8fr 1.2fr;align-items:start}}.gh.right .h2{{max-width:22ch}}.gh.right .lede{{margin-top:18px}}.gh.index{{grid-template-columns:auto minmax(0,1fr);align-items:start;gap:clamp(20px,3vw,48px)}}.gh.index .gidx{{font-family:var(--display);font-weight:var(--h1-w);font-size:clamp(64px,9vw,150px);line-height:.8;letter-spacing:-.04em;color:var(--accent);opacity:.9;font-variant-numeric:tabular-nums}}.gh.index .h2{{max-width:22ch}}.gh.index .lede{{margin-top:18px}}.ladder-list{{list-style:none;position:relative;margin-top:clamp(24px,3vw,40px);padding-left:0}}.ladder-step{{display:grid;grid-template-columns:minmax(120px,.28fr) minmax(0,1fr);gap:var(--gutter);align-items:start;padding:clamp(28px,4vw,56px) 0;border-top:1px solid var(--line)}}.ladder-step:last-child{{border-bottom:1px solid var(--line)}}.ladder-n{{font-family:var(--display);font-weight:var(--h1-w);font-size:clamp(56px,8vw,128px);line-height:.85;letter-spacing:-.04em;color:var(--muted);transition:color .5s var(--ease)}}.ladder-step.on .ladder-n{{color:var(--accent)}}.ladder-t .h3{{font-size:clamp(24px,2.4vw,40px);max-width:24ch;text-wrap:balance}}.ladder-t p{{margin-top:12px;color:var(--muted);max-width:52ch;font-size:calc(var(--body-px) + 1px)}}.ladder-line{{position:absolute;left:0;top:0;bottom:0;width:1px;background:var(--line)}}.ladder-line b{{position:absolute;left:0;top:0;width:1px;height:100%;background:var(--accent);transform-origin:top;transform:scaleY(var(--p,0))}}.no-motion .ladder-line b{{transform:none}}.index-list{{list-style:none;margin-top:clamp(24px,3vw,40px)}}.index-row{{display:grid;grid-template-columns:64px minmax(0,1fr) minmax(0,1fr);gap:var(--gutter);align-items:baseline;padding:clamp(20px,2.4vw,32px) 0;border-top:1px solid var(--line);transition:transform .5s var(--ease)}}.index-row:last-child{{border-bottom:1px solid var(--line)}}.index-row .idx{{font-family:var(--label);font-size:var(--lab-px);letter-spacing:var(--lab-ls);color:var(--muted);transition:color .4s}}.index-row .h3{{font-size:clamp(24px,2.4vw,38px);text-wrap:balance}}.index-row p{{color:var(--muted);max-width:48ch}}@media(hover:hover){{.index-row:hover{{transform:translateX(10px)}}.index-row:hover .idx{{color:var(--accent)}}}}@media(max-width:900px){{.gh.right,.gh.index{{grid-template-columns:1fr}}.gh.right>div:first-child{{display:none}}.gh.index .gidx{{font-size:clamp(48px,14vw,80px)}}.ladder-step{{grid-template-columns:1fr;gap:12px}}.ladder-n{{font-size:clamp(40px,12vw,64px)}}.index-row{{grid-template-columns:40px minmax(0,1fr)}}.index-row p{{grid-column:2}}}}.gh{{display:grid;grid-template-columns:1.1fr .9fr;gap:var(--gutter);align-items:end;margin-bottom:clamp(28px,4vw,48px)}}.gh .h2{{text-align:left!important;margin-left:0!important;margin-top:14px;max-width:18ch;text-wrap:balance}}.gh .lede{{margin-top:0}}
 .sec.compact{{padding:clamp(40px,5vw,72px) 0;min-height:auto!important}}.gh.one{{display:block;max-width:var(--body-max)}}.gh.one .h2{{max-width:none}}.gh.one.center{{text-align:center;margin-left:auto;margin-right:auto}}.gh.one.center .h2{{text-align:center!important;margin-left:auto!important;margin-right:auto}}.gh.one .lede{{margin-top:16px}}.gh.one.center .lede{{margin-left:auto;margin-right:auto}}
 figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4vw,48px);border:1px solid var(--line);max-height:78vh}}figure.lead.narrow{{width:min(100%,640px);margin-left:auto;margin-right:auto}}figure.lead.ledger-visual{{margin-top:28px}}figure.lead img{{width:100%;height:100%;object-fit:cover;object-position:top}}figure.lead.lead-shot{{width:fit-content;max-width:100%;margin-left:auto;margin-right:auto;border-radius:0}}figure.lead.lead-shot img{{width:auto;height:auto;max-width:100%;max-height:calc(78vh - 2px);object-fit:contain}}
 .faq .two{{display:grid;grid-template-columns:.8fr 1.2fr;gap:var(--gutter)}}.qa details{{border-top:1px solid var(--line);padding:16px 0}}.qa details:last-child{{border-bottom:1px solid var(--line)}}.qa summary{{cursor:pointer;list-style:none;font-family:var(--display);font-weight:var(--h3-w);font-size:min(var(--h3),24px);display:flex;justify-content:space-between;gap:16px}}.qa summary::after{{content:"+";font-weight:300}}.qa details[open] summary::after{{content:"–"}}.qa details p{{margin-top:10px;color:var(--muted);max-width:60ch}}
@@ -1722,7 +1786,7 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
 .giant{{padding:40px 0 0;overflow:hidden}}.gw{{font-family:var(--display);font-weight:var(--h1-w);font-size:min(22vw,{round(165 / max(4, len(b['name'])), 1)}vw);line-height:.85;letter-spacing:-.03em;white-space:nowrap;text-transform:var(--h1-tt)}}
 .end{{padding-top:clamp(48px,6vw,80px);padding-bottom:28px}}.end:has(.end-mark){{padding-bottom:0;overflow:hidden}}.end .end-mark{{padding:clamp(40px,6vw,96px) 0 0;text-align:center}}.end .end-mark .gw{{margin-bottom:-.14em;opacity:.94;will-change:transform}}.end .fcols{{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--gutter);margin-top:48px;padding-top:40px;border-top:1px solid var(--line)}}.end .fcols>*{{min-width:0}}.end li{{overflow-wrap:anywhere}}.end ul{{list-style:none;margin-top:10px;display:grid;gap:6px}}.end ul.footer-nav{{display:flex;flex-wrap:wrap;gap:12px 24px;margin-top:24px}}.end .legal{{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:40px;font-family:var(--label);font-size:var(--lab-px);color:var(--muted)}}
 /* template components */
-.hero.centre{{min-height:auto;padding-top:120px}}.hero.centre .hero-in{{text-align:center;display:grid;justify-items:center}}
+.hero.typo{{min-height:92svh;align-content:end;padding-top:120px}}.hero.typo .hero-in{{display:grid;gap:clamp(28px,4vw,56px);padding-bottom:clamp(28px,4vw,48px)}}.hero.typo .typo-top .cat{{margin-bottom:0}}.hero.typo .h1{{max-width:100%!important;text-wrap:balance;letter-spacing:-.035em;line-height:.92}}.hero.typo .typo-row{{display:grid;grid-template-columns:minmax(0,1.1fr) auto;gap:var(--gutter);align-items:end;padding-top:clamp(20px,2.5vw,32px);border-top:1px solid var(--line)}}.hero.typo .typo-row .lede{{margin-top:0;max-width:40ch}}.hero.typo .typo-row .ctas{{margin-top:0;justify-content:end}}@media(max-width:900px){{.hero.typo{{min-height:auto}}.hero.typo .typo-row{{grid-template-columns:1fr}}.hero.typo .typo-row .ctas{{justify-content:start}}}}.hero.centre{{min-height:auto;padding-top:120px}}.hero.centre .hero-in{{text-align:center;display:grid;justify-items:center}}
 .hero.editorial-type{{background:var(--editorial-bg);color:var(--editorial-ink);min-height:100svh;padding:clamp(120px,12vw,180px) 0 clamp(64px,8vw,120px);overflow:visible}}.editorial-hero-layout{{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:clamp(30px,5vw,80px);align-items:end}}.editorial-type.no-visual .editorial-hero-layout{{grid-template-columns:minmax(0,1fr)}}.editorial-hero-copy{{min-width:0}}.editorial-hero-copy .lab{{color:var(--editorial-ink)}}.editorial-hero-copy .h1{{font-family:var(--display);font-size:min(var(--hero-size),clamp(56px,8.5vw,140px));line-height:1;letter-spacing:-.04em;overflow-wrap:anywhere}}.editorial-hero-copy .lede{{font-size:clamp(16px,1.6vw,21px);line-height:1.45;max-width:48ch}}.editorial-hero-copy .btn:not(.ghost){{background:var(--editorial-ink);color:var(--editorial-bg)}}.editorial-hero-copy .btn.ghost{{color:var(--editorial-ink);border-color:var(--editorial-ink)}}.editorial-hero-visual{{margin:0;width:100%;max-width:580px;justify-self:end}}.editorial-hero-visual img{{width:100%;max-height:65svh;object-fit:contain}}@media(max-width:800px){{.hero.editorial-type{{min-height:auto;padding-top:120px}}.editorial-hero-layout{{grid-template-columns:minmax(0,1fr)}}.editorial-hero-copy .h1{{font-size:min(var(--hero-size),13vw)}}.editorial-hero-visual{{justify-self:start}}}}
 .hero.billboard{{padding:clamp(100px,10vw,140px) 0 clamp(32px,4vw,64px);min-height:auto;overflow:visible}}.wrap.billboard-frame{{width:calc(100% - 2 * var(--frame));max-width:calc(var(--container) - 2 * var(--frame));padding:0;position:relative;isolation:isolate;overflow:hidden;border-radius:clamp(16px,2vw,28px);min-height:min(70svh,720px);display:grid;align-items:center}}.billboard-media{{position:absolute;inset:0;z-index:-1;background:#111}}.billboard-media img{{width:100%;height:100%;object-fit:cover}}.billboard-content{{display:grid;align-self:stretch;align-content:center;justify-items:center;text-align:center;background:rgba(0,0,0,.58);color:#fff;padding:clamp(48px,8vw,96px) clamp(20px,5vw,64px);overflow-wrap:anywhere}}.billboard-content .cat{{justify-content:center;margin-bottom:20px}}.billboard-content .lab{{color:#fff}}.billboard-content .h1{{color:#fff;margin:0 auto;text-shadow:none;line-height:1.05}}.billboard-content .lede{{color:#fff;max-width:55ch;font-size:clamp(16px,1.5vw,20px);line-height:1.45;margin:20px auto 0}}.billboard-content .ctas{{justify-content:center}}.billboard-content .btn.ghost{{color:#fff;border-color:#fff}}@media(max-height:950px) and (min-width:601px){{.hero.billboard{{padding-top:96px}}.billboard-content{{padding-top:clamp(26px,5vh,44px);padding-bottom:clamp(26px,5vh,44px)}}.billboard-content .h1{{font-size:min(var(--hero-size),clamp(48px,11vh,115px))}}.billboard-content .ctas{{margin-top:18px}}}}@media(max-width:900px){{.wrap.billboard-frame{{width:calc(100% - 2 * clamp(16px,5vw,32px))}}}}@media(max-width:600px){{.hero.billboard{{padding-top:100px}}.billboard-frame{{min-height:0}}.billboard-content .h1{{font-size:min(var(--hero-size),12vw)}}}}
 .hero.poster-composition{{min-height:100svh;padding:clamp(110px,12vw,160px) 0 clamp(48px,6vw,88px);align-content:center;overflow:visible}}.poster-layout{{display:flex;flex-direction:column;align-items:center;text-align:center;gap:clamp(18px,2.5vw,36px)}}.poster-layout .h1{{max-width:100%;font-size:min(var(--hero-size),clamp(56px,12vw,190px));line-height:.95;overflow-wrap:anywhere}}.poster-visual{{width:min(100%,620px);margin:0}}.poster-visual img{{width:100%;max-height:55svh;object-fit:contain}}.poster-layout .lede{{margin:0;max-width:52ch;font-size:clamp(16px,1.5vw,20px);line-height:1.45}}.poster-layout .ctas{{justify-content:center;margin:0}}@media(max-width:600px){{.hero.poster-composition{{min-height:auto;padding-top:116px}}.poster-layout .h1{{font-size:min(var(--hero-size),clamp(46px,13vw,76px))}}}}
@@ -1861,6 +1925,7 @@ function Sig(){{ if(!window.gsap||!window.ScrollTrigger) return; gsap.registerPl
     ScrollTrigger.create({{trigger:sec,start:'top top',end:'bottom bottom',onUpdate:st=>set(Math.min(n-1,Math.floor(st.progress*n)))}}); }});
   document.querySelectorAll('[data-sig="typewall"]').forEach(sec=>{{ const ws=[...sec.querySelectorAll('.tw-w')]; sec.classList.add('tw-animated'); sec.style.height='150vh'; ScrollTrigger.create({{trigger:sec,start:'top top',end:'bottom bottom',onUpdate:st=>{{ const k=Math.round(st.progress*ws.length); ws.forEach((w,i)=>w.classList.toggle('on',i<k)); }}}}); }});
   document.querySelectorAll('[data-sig="parallax"]').forEach(el=>gsap.fromTo(el,{{y:40}},{{y:-40,ease:'none',scrollTrigger:{{trigger:el,start:'top bottom',end:'bottom top',scrub:true}}}}));
+  document.querySelectorAll('[data-sig="ladder"]').forEach(list=>{{ const steps=[...list.querySelectorAll('.ladder-step')]; ScrollTrigger.create({{trigger:list,start:'top 60%',end:'bottom 60%',scrub:.3,onUpdate:st=>list.style.setProperty('--p',st.progress.toFixed(3))}}); steps.forEach(s=>ScrollTrigger.create({{trigger:s,start:'top 60%',end:'bottom 60%',onToggle:t=>s.classList.toggle('on',t.isActive)}})); }});
   ScrollTrigger.refresh(); }}
 const REDUCED=matchMedia('(prefers-reduced-motion:reduce)').matches; const NOMOTION=/[?&]nomotion/.test(location.search)||REDUCED; const PREVIEW=!NOMOTION&&/[?&]swarm=1/.test(location.search); // the finished page is the finished page: agents replay only when asked for explicitly, never because it sits in a frame
 // ?nomotion=1 freezes the page for screenshots and the contract: the real layout, animation off. prefers-reduced-motion is the user's choice: static fallbacks for pinned, rail and marquee.
