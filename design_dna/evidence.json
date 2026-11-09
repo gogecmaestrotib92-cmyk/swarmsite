@@ -1,0 +1,34 @@
+{
+ "schema_version": 1,
+ "about": "Hand-written input to design_dna/build.py: what the build cannot discover from the blueprint and raw files. Per reference: the folder that holds screenshots of the original (or null), the blueprint it mirrors (authored references only), and known caveats. A caveat names the files that show it; 'expect' makes the build confirm it: 'differ' = the two pointers hold different values, 'number-not-in-text' = the number at the second pointer, followed by px, does not occur in the text at the first.",
+ "references": {
+  "aino": {"screenshots": null, "caveats": []},
+  "atelier": {"screenshots": null, "mirrors": "lpas", "caveats": []},
+  "belgrade-arbor": {"screenshots": null, "caveats": []},
+  "butter": {
+   "screenshots": {"dir": "dna/butter", "profile": "dna/butter/data.json"},
+   "caveats": [
+    {"code": "profile-display-size-differs", "shown_by": ["dna/butter/data.json#/fonts/display", "lib/blueprints/raw/butter.json#/sections/0/heads/0/px"], "expect": "number-not-in-text"}
+   ]
+  },
+  "cerebrium": {
+   "screenshots": {"dir": "dna/cerebrium", "profile": "dna/cerebrium/data.json"},
+   "caveats": [
+    {"code": "profile-page-height-differs", "shown_by": ["dna/cerebrium/data.json#/pageHeight", "lib/blueprints/raw/cerebrium.json#/pageH"], "expect": "differ"},
+    {"code": "profile-display-size-differs", "shown_by": ["dna/cerebrium/data.json#/fonts/display", "lib/blueprints/raw/cerebrium.json#/sections/0/heads/0/px"], "expect": "number-not-in-text"}
+   ]
+  },
+  "crav": {"screenshots": null, "caveats": []},
+  "deepbook": {
+   "screenshots": {"dir": "dna/deepbook", "profile": "dna/deepbook/data.json"},
+   "caveats": [
+    {"code": "profile-url-differs", "shown_by": ["dna/deepbook/data.json#/url", "lib/blueprints/deepbook.bp.json#/source"], "expect": "differ"}
+   ]
+  },
+  "halfdays": {"screenshots": null, "caveats": []},
+  "lpas": {"screenshots": null, "caveats": []},
+  "tengile": {"screenshots": null, "caveats": []},
+  "units": {"screenshots": null, "caveats": []},
+  "white-desert": {"screenshots": null, "caveats": []}
+ }
+}

@@ -1,0 +1,964 @@
+{
+ "built_from": {
+  "design_dna/evidence.json#/references/cerebrium": "sha256:f2ff00fba26fa6e13a5cf0e5b7bb8b97dc9fbf917cfad5c27fa119edb26da148",
+  "lib/blueprints/cerebrium.bp.json": "sha256:29b7589fdaabc9638cd118d8bd3698c49034c29530a6db757d9ca7370f856deb",
+  "lib/blueprints/raw/cerebrium.json": "sha256:cd7177a15ebf92121707416f0bdf4f367a8b58d85dc65e9adeee3e31bce153e4"
+ },
+ "completeness": {
+  "composition": "measured-desktop",
+  "experience": "prose-only",
+  "imagery": "measured-desktop",
+  "mobile": "missing",
+  "motion": "partial",
+  "screenshots": "unverified",
+  "typography": "measured"
+ },
+ "composition": {
+  "basis": "measured",
+  "fraction_base": {
+   "basis": "recorded",
+   "source": "lib/blueprints/raw/cerebrium.json#/vw",
+   "w": 1440
+  },
+  "grid": {
+   "col": null,
+   "container": 1345,
+   "frame": null,
+   "gutter": 40,
+   "not_recorded": [
+    "col",
+    "frame"
+   ],
+   "raw_fields": {
+    "container": "lib/blueprints/raw/cerebrium.json#/container",
+    "gutter": "lib/blueprints/raw/cerebrium.json#/gutter"
+   },
+   "source": {
+    "blueprint": "lib/blueprints/cerebrium.bp.json#/grid",
+    "raw": "lib/blueprints/raw/cerebrium.json"
+   }
+  },
+  "sections": [
+   {
+    "bg": null,
+    "head": {
+     "align": "start",
+     "case": null,
+     "leading": 1.0,
+     "not_recorded": [
+      "case"
+     ],
+     "px": 86,
+     "source": "lib/blueprints/raw/cerebrium.json#/sections/0/heads/0",
+     "tracking": -0.025,
+     "weight": 300,
+     "wf": 0.46,
+     "x": 0.028,
+     "y": 0.297
+    },
+    "media": [
+     {
+      "ar": 2.62,
+      "bleed": false,
+      "kind": "image",
+      "source": "lib/blueprints/raw/cerebrium.json#/sections/0/imgs/0",
+      "wf": 0.094,
+      "xf": null
+     }
+    ],
+    "role": "hero",
+    "screens": 1.85,
+    "source": {
+     "blueprint": "lib/blueprints/cerebrium.bp.json#/sections/0",
+     "raw": "lib/blueprints/raw/cerebrium.json#/sections/0"
+    },
+    "sticky": true
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": null,
+     "leading": 1.5,
+     "not_recorded": [
+      "align",
+      "case",
+      "tracking"
+     ],
+     "px": 16,
+     "source": "lib/blueprints/raw/cerebrium.json#/sections/1/heads/0",
+     "tracking": null,
+     "weight": 500,
+     "wf": 0.46,
+     "x": 0.028,
+     "y": 0.0
+    },
+    "media": [
+     {
+      "ar": 0.86,
+      "bleed": false,
+      "kind": "image",
+      "source": "lib/blueprints/raw/cerebrium.json#/sections/1/imgs/0",
+      "wf": 0.46,
+      "xf": 0.502
+     }
+    ],
+    "role": "feature-cards-sticky",
+    "screens": 4.18,
+    "source": {
+     "blueprint": "lib/blueprints/cerebrium.bp.json#/sections/1",
+     "raw": "lib/blueprints/raw/cerebrium.json#/sections/1"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": null,
+     "leading": null,
+     "not_recorded": [
+      "align",
+      "case",
+      "leading",
+      "tracking"
+     ],
+     "px": 16,
+     "source": "lib/blueprints/raw/cerebrium.json#/sections/2/heads/0",
+     "tracking": null,
+     "weight": 500,
+     "wf": 0.417,
+     "x": 0.028,
+     "y": 0.0
+    },
+    "media": [],
+    "role": "statement",
+    "screens": 0.79,
+    "source": {
+     "blueprint": "lib/blueprints/cerebrium.bp.json#/sections/2",
+     "raw": "lib/blueprints/raw/cerebrium.json#/sections/2"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": null,
+    "media": [],
+    "role": "logo-grid",
+    "screens": 0.47,
+    "source": {
+     "blueprint": "lib/blueprints/cerebrium.bp.json#/sections/3",
+     "raw": "lib/blueprints/raw/cerebrium.json#/sections/3"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": null,
+     "leading": 1.15,
+     "not_recorded": [
+      "align",
+      "case"
+     ],
+     "px": 44,
+     "source": "lib/blueprints/raw/cerebrium.json#/sections/4/heads/0",
+     "tracking": -0.05,
+     "weight": 300,
+     "wf": 0.248,
+     "x": 0.371,
+     "y": 0.0
+    },
+    "media": [],
+    "role": "cases-grid",
+    "screens": 0.76,
+    "source": {
+     "blueprint": "lib/blueprints/cerebrium.bp.json#/sections/4",
+     "raw": "lib/blueprints/raw/cerebrium.json#/sections/4"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": null,
+     "leading": 1.35,
+     "not_recorded": [
+      "align",
+      "case"
+     ],
+     "px": 27,
+     "source": "lib/blueprints/raw/cerebrium.json#/sections/5/heads/0",
+     "tracking": -0.0244,
+     "weight": 400,
+     "wf": 0.276,
+     "x": 0.042,
+     "y": 0.692
+    },
+    "media": [
+     {
+      "ar": 1.21,
+      "bleed": false,
+      "kind": "image",
+      "source": "lib/blueprints/raw/cerebrium.json#/sections/5/imgs/0",
+      "wf": 0.138,
+      "xf": 0.111
+     }
+    ],
+    "role": "cards-row",
+    "screens": 0.93,
+    "source": {
+     "blueprint": "lib/blueprints/cerebrium.bp.json#/sections/5",
+     "raw": "lib/blueprints/raw/cerebrium.json#/sections/5"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": null,
+     "leading": null,
+     "not_recorded": [
+      "align",
+      "case",
+      "leading",
+      "tracking"
+     ],
+     "px": 16,
+     "source": "lib/blueprints/raw/cerebrium.json#/sections/6/heads/0",
+     "tracking": null,
+     "weight": 500,
+     "wf": 0.302,
+     "x": 0.028,
+     "y": 0.0
+    },
+    "media": [],
+    "role": "features-list",
+    "screens": 0.7,
+    "source": {
+     "blueprint": "lib/blueprints/cerebrium.bp.json#/sections/6",
+     "raw": "lib/blueprints/raw/cerebrium.json#/sections/6"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": null,
+     "leading": 1.15,
+     "not_recorded": [
+      "align",
+      "case"
+     ],
+     "px": 36,
+     "source": "lib/blueprints/raw/cerebrium.json#/sections/7/heads/0",
+     "tracking": -0.025,
+     "weight": 300,
+     "wf": 0.224,
+     "x": 0.028,
+     "y": 0.009
+    },
+    "media": [
+     {
+      "ar": 0.78,
+      "bleed": false,
+      "kind": "image",
+      "source": "lib/blueprints/raw/cerebrium.json#/sections/7/imgs/0",
+      "wf": 0.302,
+      "xf": 0.028
+     }
+    ],
+    "role": "blog-cards",
+    "screens": 0.87,
+    "source": {
+     "blueprint": "lib/blueprints/cerebrium.bp.json#/sections/7",
+     "raw": "lib/blueprints/raw/cerebrium.json#/sections/7"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": null,
+     "leading": 1.3,
+     "not_recorded": [
+      "align",
+      "case"
+     ],
+     "px": 15,
+     "source": "lib/blueprints/raw/cerebrium.json#/sections/8/heads/0",
+     "tracking": 0.01,
+     "weight": 400,
+     "wf": 0.223,
+     "x": 0.502,
+     "y": 0.079
+    },
+    "media": [],
+    "role": "footer",
+    "screens": 1.18,
+    "source": {
+     "blueprint": "lib/blueprints/cerebrium.bp.json#/sections/8",
+     "raw": "lib/blueprints/raw/cerebrium.json#/sections/8"
+    },
+    "sticky": null
+   }
+  ],
+  "summary": {
+   "bleed_section_share": {
+    "count": 0,
+    "evidence": [
+     "composition.sections"
+    ],
+    "how": "sections holding a medium flagged bleed in the capture or at least 98% of the viewport wide ÷ all sections",
+    "matched": [],
+    "of": 9,
+    "value": 0.0
+   },
+   "offset_heading_share": {
+    "count": 2,
+    "evidence": [
+     "composition.sections[0].head.x",
+     "composition.sections[1].head.x",
+     "composition.sections[2].head.x",
+     "composition.sections[4].head.x",
+     "composition.sections[5].head.x",
+     "composition.sections[6].head.x",
+     "composition.sections[7].head.x",
+     "composition.sections[8].head.x"
+    ],
+    "how": "headings whose left edge is at or right of 30% of the viewport width ÷ headings with a recorded position",
+    "matched": [
+     "composition.sections[4].head.x",
+     "composition.sections[8].head.x"
+    ],
+    "of": 8,
+    "value": 0.25
+   },
+   "pacing": {
+    "evidence": [
+     "composition.sections[0].screens",
+     "composition.sections[1].screens",
+     "composition.sections[2].screens",
+     "composition.sections[3].screens",
+     "composition.sections[4].screens",
+     "composition.sections[5].screens",
+     "composition.sections[6].screens",
+     "composition.sections[7].screens",
+     "composition.sections[8].screens"
+    ],
+    "how": "section heights in screens, in page order",
+    "value": [
+     1.85,
+     4.18,
+     0.79,
+     0.47,
+     0.76,
+     0.93,
+     0.7,
+     0.87,
+     1.18
+    ]
+   },
+   "page_screens": {
+    "source": {
+     "blueprint": "lib/blueprints/cerebrium.bp.json#/screens",
+     "raw": "lib/blueprints/raw/cerebrium.json#/screens"
+    },
+    "value": 14.2
+   },
+   "sections": {
+    "evidence": [
+     "composition.sections"
+    ],
+    "how": "number of sections in the record",
+    "value": 9
+   },
+   "sections_screens_total": {
+    "evidence": [
+     "composition.sections[0].screens",
+     "composition.sections[1].screens",
+     "composition.sections[2].screens",
+     "composition.sections[3].screens",
+     "composition.sections[4].screens",
+     "composition.sections[5].screens",
+     "composition.sections[6].screens",
+     "composition.sections[7].screens",
+     "composition.sections[8].screens"
+    ],
+    "how": "sum of section heights in screens; sections can overlap or leave gaps, so this is not the page length",
+    "value": 11.73
+   }
+  },
+  "surface": {
+   "mode": "dark",
+   "paper": "#101421",
+   "paper_luminance": 0.079,
+   "source": {
+    "blueprint": "lib/blueprints/cerebrium.bp.json#/colour/paper",
+    "raw": "lib/blueprints/raw/cerebrium.json#/palette/0"
+   }
+  }
+ },
+ "evidence": {
+  "blueprint": "lib/blueprints/cerebrium.bp.json",
+  "caveats": [
+   {
+    "code": "profile-page-height-differs",
+    "shown_by": [
+     "dna/cerebrium/data.json#/pageHeight",
+     "lib/blueprints/raw/cerebrium.json#/pageH"
+    ],
+    "values": [
+     10958,
+     10698
+    ]
+   },
+   {
+    "code": "profile-display-size-differs",
+    "shown_by": [
+     "dna/cerebrium/data.json#/fonts/display",
+     "lib/blueprints/raw/cerebrium.json#/sections/0/heads/0/px"
+    ],
+    "values": [
+     null,
+     86
+    ]
+   }
+  ],
+  "mirrors": null,
+  "raw": "lib/blueprints/raw/cerebrium.json",
+  "screenshots": {
+   "desktop": [],
+   "dir": "dna/cerebrium",
+   "mobile": [],
+   "profile": "dna/cerebrium/data.json",
+   "unclassified": [
+    "dna/cerebrium/mcp-claude-in-chrome-blob-1793980902274-aonlt4-c34dc3ac.jpg",
+    "dna/cerebrium/mcp-claude-in-chrome-blob-1793980902274-y112nw-40f79fda.jpg",
+    "dna/cerebrium/mcp-claude-in-chrome-blob-1793980902275-167ptn-ec8a854e.jpg",
+    "dna/cerebrium/mcp-claude-in-chrome-blob-1793980902275-2q0o9j-3ce651f3.jpg",
+    "dna/cerebrium/mcp-claude-in-chrome-blob-1793980902275-6a2h3e-124d71ac.jpg",
+    "dna/cerebrium/mcp-claude-in-chrome-blob-1793980902275-f3er3a-a9490869.jpg",
+    "dna/cerebrium/mcp-claude-in-chrome-blob-1793980902275-gl5q3g-f1878a63.jpg",
+    "dna/cerebrium/mcp-claude-in-chrome-blob-1793980902275-kr54v3-17c957c0.jpg",
+    "dna/cerebrium/mcp-claude-in-chrome-blob-1793980902276-03obfv-c64799fb.jpg",
+    "dna/cerebrium/mcp-claude-in-chrome-blob-1793980902276-inc23c-15e595f6.jpg",
+    "dna/cerebrium/mcp-claude-in-chrome-blob-1793980902276-keby3z-dcbef68d.jpg",
+    "dna/cerebrium/mcp-claude-in-chrome-blob-1793980902276-nrad85-84871c34.jpg",
+    "dna/cerebrium/mcp-claude-in-chrome-blob-1793980948742-vmvka4-a6c20788.jpg",
+    "dna/cerebrium/mcp-claude-in-chrome-blob-1793980948743-3g5yis-64cf8ddb.jpg",
+    "dna/cerebrium/mcp-claude-in-chrome-blob-1793980948743-e8btme-adb8eb08.jpg",
+    "dna/cerebrium/mcp-claude-in-chrome-blob-1793980948743-mqyk9s-46de9e55.jpg",
+    "dna/cerebrium/mcp-claude-in-chrome-blob-1793980948743-t6r5zm-b72e6b6b.jpg",
+    "dna/cerebrium/mcp-claude-in-chrome-blob-1793980948743-yncw68-c283a675.jpg",
+    "dna/cerebrium/mcp-claude-in-chrome-blob-1793980948744-f8emao-fa11a959.jpg",
+    "dna/cerebrium/mcp-claude-in-chrome-blob-1793980956740-rkoa4c-1c0afb48.jpg",
+    "dna/cerebrium/mcp-claude-in-chrome-blob-1793980980327-9eru7v-81177523.jpg",
+    "dna/cerebrium/mcp-claude-in-chrome-blob-1793980980327-kok2me-e39d69e3.jpg",
+    "dna/cerebrium/mcp-claude-in-chrome-blob-1793980980327-mptmcs-d79f931b.jpg",
+    "dna/cerebrium/mcp-claude-in-chrome-blob-1793980980327-n0yvua-c2191f70.jpg",
+    "dna/cerebrium/mcp-claude-in-chrome-blob-1793980980327-qihvh4-f86a89e5.jpg",
+    "dna/cerebrium/mcp-claude-in-chrome-blob-1793980980327-v2191s-c91045ea.jpg",
+    "dna/cerebrium/mcp-claude-in-chrome-blob-1793980980327-vmdz1b-8f09ea56.jpg"
+   ]
+  },
+  "scroll_capture": null
+ },
+ "experience": {
+  "not_measured": [
+   "narrative",
+   "interaction",
+   "mobile"
+  ],
+  "pacing_screens": {
+   "evidence": [
+    "composition.summary.pacing"
+   ],
+   "value": [
+    1.85,
+    4.18,
+    0.79,
+    0.47,
+    0.76,
+    0.93,
+    0.7,
+    0.87,
+    1.18
+   ]
+  },
+  "section_notes": [
+   {
+    "kind": "prose",
+    "section": 0,
+    "source": "lib/blueprints/cerebrium.bp.json#/sections/0/note",
+    "text": null,
+    "withheld": "quotes-source-text"
+   },
+   {
+    "kind": "prose",
+    "section": 1,
+    "source": "lib/blueprints/cerebrium.bp.json#/sections/1/note",
+    "text": null,
+    "withheld": "quotes-source-text"
+   },
+   {
+    "kind": "prose",
+    "section": 2,
+    "source": "lib/blueprints/cerebrium.bp.json#/sections/2/note",
+    "text": "dark band: mono label, 57px light display line, 27px body, pink button",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 3,
+    "source": "lib/blueprints/cerebrium.bp.json#/sections/3/note",
+    "text": "20-col strip of partner marks",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 4,
+    "source": "lib/blueprints/cerebrium.bp.json#/sections/4/note",
+    "text": "container-sm 1240; centered h2; 2x2 list rows with 47px icon + h3 21px + 17px body",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 5,
+    "source": "lib/blueprints/cerebrium.bp.json#/sections/5/note",
+    "text": "3 cards 453px wide, image 199x165 contained, h3 27px; horizontal carousel with arrows",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 6,
+    "source": "lib/blueprints/cerebrium.bp.json#/sections/6/note",
+    "text": "label left (435px col), content right from x=500",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 7,
+    "source": "lib/blueprints/cerebrium.bp.json#/sections/7/note",
+    "text": "3 portrait cards 435x560, title inside card bottom",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 8,
+    "source": "lib/blueprints/cerebrium.bp.json#/sections/8/note",
+    "text": "dark footer: 36px statement left 663px + CTA, link columns right at 723/1064",
+    "withheld": null
+   }
+  ]
+ },
+ "fits": {
+  "also": [],
+  "archetype": "dark-light-bands",
+  "archetype_source": "lib/blueprints/cerebrium.bp.json#/archetype",
+  "kinds": [
+   "software"
+  ],
+  "kinds_source": "lib/blueprints/cerebrium.bp.json#/class",
+  "needs": {
+   "derived_by": "rule",
+   "evidence": [
+    "imagery.image_sections",
+    "imagery.video_first_section"
+   ],
+   "images_min": 2,
+   "rule": "derive_needs",
+   "video": false
+  },
+  "temper": [
+   {
+    "derived_by": "rule",
+    "principle": "display-light-weight",
+    "rule": "rule_display_light_weight",
+    "tag": "light-weight"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "tight-tracking",
+    "rule": "rule_tight_tracking",
+    "tag": "tight-tracking"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "offset-headings",
+    "rule": "rule_offset_headings",
+    "tag": "asymmetric"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "type-led",
+    "rule": "rule_type_led",
+    "tag": "type-led"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "pinned-sections",
+    "rule": "rule_pinned_sections",
+    "tag": "pinned"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "dark-page",
+    "rule": "rule_dark_page",
+    "tag": "dark"
+   }
+  ]
+ },
+ "id": "cerebrium",
+ "imagery": {
+  "aspects": {
+   "evidence": [
+    "composition.sections[1].media[0].ar",
+    "composition.sections[7].media[0].ar"
+   ],
+   "how": "distinct aspect ratios (width ÷ height) of large media; large = at least 20% of the viewport width",
+   "value": [
+    0.78,
+    0.86
+   ]
+  },
+  "basis": "measured",
+  "image_sections": {
+   "evidence": [
+    "composition.sections"
+   ],
+   "how": "sections holding at least one large still: not tagged video or canvas, aspect between 0.4 and 2.5",
+   "matched": [
+    "composition.sections[1].media[0]",
+    "composition.sections[7].media[0]"
+   ],
+   "of": 9,
+   "share": 0.22,
+   "value": 2
+  },
+  "landscape_share": {
+   "count": 0,
+   "evidence": [
+    "composition.sections[1].media[0].ar",
+    "composition.sections[7].media[0].ar"
+   ],
+   "how": "large media with aspect ≥ 1.2 ÷ large media",
+   "matched": [],
+   "of": 2,
+   "value": 0.0
+  },
+  "media_recorded": {
+   "evidence": [
+    "composition.sections"
+   ],
+   "how": "media elements kept in the record: wider than 100px, at most 4 per section",
+   "value": 4
+  },
+  "portrait_share": {
+   "count": 2,
+   "evidence": [
+    "composition.sections[1].media[0].ar",
+    "composition.sections[7].media[0].ar"
+   ],
+   "how": "large media with aspect ≤ 0.9 ÷ large media",
+   "matched": [
+    "composition.sections[1].media[0].ar",
+    "composition.sections[7].media[0].ar"
+   ],
+   "of": 2,
+   "value": 1.0
+  },
+  "video_first_section": {
+   "evidence": [
+    "composition.sections[0].media"
+   ],
+   "how": "the first section holds a medium the capture tagged VIDEO",
+   "matched": [],
+   "value": false
+  }
+ },
+ "implementation": {
+  "ir_seeds": [],
+  "recipe": "lib/templates/recipes.py#cerebrium"
+ },
+ "motion": {
+  "animated": 14,
+  "custom_cursor": null,
+  "keyframes": [
+   "fade-slide-in",
+   "initial-loader-logo-bar",
+   "overlay-anim-in",
+   "slideFromBottom",
+   "slideFromLeft"
+  ],
+  "libs": {
+   "lenis": true,
+   "webgl": true
+  },
+  "not_measured": [
+   "scroll",
+   "pinning",
+   "sequence",
+   "interaction",
+   "reduced-motion"
+  ],
+  "note": null,
+  "source": "lib/blueprints/raw/cerebrium.json#/motion",
+  "tracked": 297,
+  "transitions": [
+   "opacity|0.3s|cubic-bezier(0.4, 0, 0.2, 1)",
+   "transform|0.3s|cubic-bezier(0.645, 0.045, 0.355, 1)",
+   "filter|0.6s|cubic-bezier(0.645, 0.045, 0.355, 1)",
+   "transform, opacity|0.8s|cubic-bezier(0.645, 0.045, 0.355, 1)",
+   "clip-path|0.2s|cubic-bezier(0.645, 0.045, 0.355, 1)"
+  ]
+ },
+ "principles": [
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "typography.display.weight"
+   ],
+   "id": "display-light-weight",
+   "rule": "rule_display_light_weight",
+   "statement": "The largest measured heading is set light, weight 300. Threshold: weight ≤ 300."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "typography.display.tracking",
+    "typography.display.px"
+   ],
+   "id": "tight-tracking",
+   "rule": "rule_tight_tracking",
+   "statement": "The largest measured heading is tracked tight, -0.025em at 86px. Threshold: ≤ -0.02em."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "composition.summary.offset_heading_share",
+    "composition.sections[4].head.x",
+    "composition.sections[8].head.x"
+   ],
+   "id": "offset-headings",
+   "rule": "rule_offset_headings",
+   "statement": "2 of 8 headings with a recorded position start at or right of 30% of the viewport width. Threshold: share ≥ 25% and at least 2 headings."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "imagery.image_sections",
+    "composition.sections"
+   ],
+   "id": "type-led",
+   "rule": "rule_type_led",
+   "statement": "2 of 9 sections hold a large still image. Threshold: share ≤ 25%."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "composition.sections[1].role",
+    "composition.sections[0].sticky",
+    "composition.sections[1].screens"
+   ],
+   "id": "pinned-sections",
+   "rule": "rule_pinned_sections",
+   "statement": "2 of 9 sections are marked pinned or sticky: 1 by a role name written into the capture by hand, 1 by the capture's sticky flag; the tallest of them runs 4.18 screens. Threshold: at least one such section. The scroll behaviour itself was not measured."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "composition.surface.paper",
+    "composition.surface.paper_luminance"
+   ],
+   "id": "dark-page",
+   "rule": "rule_dark_page",
+   "statement": "The page surface is dark: the background colour with the largest share, #101421, has relative luminance 0.08. Threshold: luminance < 0.3."
+  }
+ ],
+ "rights": {
+  "fonts": [
+   {
+    "face": "Bricolage Grotesque",
+    "licence": "OFL",
+    "role": "delivery",
+    "source": "lib/typography/fonts.json#/fonts/3/license"
+   },
+   {
+    "face": "Geist",
+    "licence": "unknown",
+    "role": "delivery",
+    "source": null
+   },
+   {
+    "face": "ABC Favorit",
+    "licence": "Dinamo — paid",
+    "role": "source",
+    "source": "lib/typography/fonts.json#/_meta/seen_on_winners_licensed/ABC Favorit (Cerebrium)"
+   },
+   {
+    "face": "Suisse Intl",
+    "licence": "Swiss Typefaces — paid",
+    "role": "source",
+    "source": "lib/typography/fonts.json#/_meta/seen_on_winners_licensed/Suisse Intl ~1 Suisse Intl Mono (Cerebrium)"
+   },
+   {
+    "face": "Suisse Intl Mono",
+    "licence": "Swiss Typefaces — paid",
+    "role": "source",
+    "source": "lib/typography/fonts.json#/_meta/seen_on_winners_licensed/Suisse Intl ~1 Suisse Intl Mono (Cerebrium)"
+   }
+  ],
+  "screenshots": "research-only",
+  "source_text": "excluded"
+ },
+ "schema_version": 1,
+ "source": {
+  "captured_at": null,
+  "description": null,
+  "dpr": null,
+  "url": "https://cerebrium.ai/",
+  "url_source": "lib/blueprints/cerebrium.bp.json#/source",
+  "viewport": {
+   "h": 756,
+   "h_source": "lib/blueprints/raw/cerebrium.json#/vh",
+   "w": 1440,
+   "w_source": "lib/blueprints/raw/cerebrium.json#/vw"
+  }
+ },
+ "status": "measured-desktop",
+ "typography": {
+  "basis": "measured",
+  "body": {
+   "case": null,
+   "delivery_class": "sans",
+   "delivery_face": "Geist",
+   "delivery_fallback": false,
+   "leading": 1.35,
+   "not_recorded": [
+    "case",
+    "tracking",
+    "weight"
+   ],
+   "px": 17,
+   "source": {
+    "blueprint": "lib/blueprints/cerebrium.bp.json#/type/body",
+    "raw": "lib/blueprints/raw/cerebrium.json#/sections/0/paras/0"
+   },
+   "source_face": "Suisse Intl",
+   "tracking": null,
+   "weight": null
+  },
+  "display": {
+   "case": null,
+   "delivery_class": "sans",
+   "delivery_face": "Bricolage Grotesque",
+   "delivery_fallback": false,
+   "leading": 1.0,
+   "not_recorded": [
+    "case"
+   ],
+   "px": 86,
+   "source": {
+    "blueprint": "lib/blueprints/cerebrium.bp.json#/type/display",
+    "raw": "lib/blueprints/raw/cerebrium.json#/sections/0/heads/0"
+   },
+   "source_face": "ABC Favorit",
+   "tracking": -0.025,
+   "weight": 300
+  },
+  "families": {
+   "source": "lib/blueprints/raw/cerebrium.json#/fonts",
+   "value": [
+    "Suisse Intl",
+    "Suisse Intl Mono",
+    "ABC Favorit"
+   ]
+  },
+  "h2": {
+   "case": null,
+   "delivery_class": "sans",
+   "delivery_face": "Bricolage Grotesque",
+   "delivery_fallback": false,
+   "leading": 1.15,
+   "not_recorded": [
+    "case"
+   ],
+   "px": 44,
+   "source": {
+    "blueprint": "lib/blueprints/cerebrium.bp.json#/type/h2",
+    "raw": "lib/blueprints/raw/cerebrium.json#/sections/4/heads/0"
+   },
+   "source_face": "ABC Favorit",
+   "tracking": -0.05,
+   "weight": 300
+  },
+  "h3": {
+   "case": null,
+   "delivery_class": "sans",
+   "delivery_face": "Geist",
+   "delivery_fallback": false,
+   "leading": 1.15,
+   "not_recorded": [
+    "case"
+   ],
+   "px": 36,
+   "source": {
+    "blueprint": "lib/blueprints/cerebrium.bp.json#/type/h3",
+    "raw": "lib/blueprints/raw/cerebrium.json#/sections/7/heads/0"
+   },
+   "source_face": "Suisse Intl",
+   "tracking": -0.025,
+   "weight": 300
+  },
+  "label": {
+   "case": "uppercase",
+   "delivery_class": "sans",
+   "delivery_face": "Geist",
+   "delivery_fallback": false,
+   "leading": null,
+   "not_recorded": [
+    "leading",
+    "weight"
+   ],
+   "px": 13,
+   "source": {
+    "blueprint": "lib/blueprints/cerebrium.bp.json#/type/label",
+    "raw": "lib/blueprints/raw/cerebrium.json#/sections/0/labels/0"
+   },
+   "source_face": "Suisse Intl Mono",
+   "tracking": -0.025,
+   "weight": null
+  },
+  "levels_missing": {},
+  "ratios": {
+   "display_to_body": {
+    "evidence": [
+     "typography.display.px",
+     "typography.body.px"
+    ],
+    "how": "display px ÷ body px",
+    "value": 5.06
+   },
+   "display_to_h2": {
+    "evidence": [
+     "typography.display.px",
+     "typography.h2.px"
+    ],
+    "how": "display px ÷ h2 px",
+    "value": 1.95
+   }
+  }
+ }
+}

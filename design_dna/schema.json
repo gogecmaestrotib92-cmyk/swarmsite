@@ -1,0 +1,304 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "design_dna/schema.json",
+ "title": "Design DNA reference record",
+ "description": "One measured (or authored) design reference: design_dna/references/<id>.json, written by design_dna/build.py. Every value is copied or computed from a named field of lib/blueprints/<id>.bp.json or lib/blueprints/raw/<id>.json and says where from, or it is null. design_dna/validate.py reads this file and checks records against it with its own small interpreter; it rejects any keyword it does not implement, so the schema cannot promise more than is checked. Two pointer forms are used: a file pointer 'path#/json/pointer' (repo-relative path, RFC 6901 pointer) and an internal pointer 'composition.sections[2].media[0].ar' into the record itself.",
+ "type": "object",
+ "additionalProperties": false,
+ "required": ["schema_version", "id", "status", "source", "evidence", "built_from", "completeness", "typography", "composition", "imagery", "motion", "experience", "principles", "fits", "rights", "implementation"],
+ "properties": {
+  "schema_version": {"const": 1},
+  "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$", "description": "The blueprint id: lib/blueprints/<id>.bp.json."},
+  "status": {"enum": ["measured-desktop", "authored", "incomplete"], "description": "measured-desktop: a raw capture exists and the largest heading and the sections are bound to it; one viewport only. authored: no raw capture; usable as a recipe, never as evidence. incomplete: a raw capture exists but the core is not bound."},
+  "source": {
+   "type": "object", "additionalProperties": false,
+   "required": ["url", "url_source", "description", "captured_at", "viewport", "dpr"],
+   "properties": {
+    "url": {"type": ["string", "null"], "pattern": "^https?://"},
+    "url_source": {"$ref": "#/$defs/fileRefOrNull"},
+    "description": {"$ref": "#/$defs/proseOrNull", "description": "What the blueprint says its source is when that is not a URL."},
+    "captured_at": {"type": ["string", "null"], "pattern": "^\\d{4}-\\d{2}-\\d{2}", "description": "No raw file records a capture date. A value needs captured_at_source."},
+    "captured_at_source": {"$ref": "#/$defs/fileRef"},
+    "dpr": {"type": ["number", "null"], "description": "No raw file records a device pixel ratio. A value needs dpr_source."},
+    "dpr_source": {"$ref": "#/$defs/fileRef"},
+    "viewport": {
+     "type": "object", "additionalProperties": false, "required": ["w", "h", "w_source", "h_source"],
+     "properties": {
+      "w": {"type": ["integer", "null"], "description": "Recorded viewport width in px. Null when the raw file has no vw; composition.fraction_base then says which width the fractions assume."},
+      "h": {"type": ["integer", "null"]},
+      "w_source": {"$ref": "#/$defs/fileRefOrNull"},
+      "h_source": {"$ref": "#/$defs/fileRefOrNull"}
+     }
+    }
+   }
+  },
+  "evidence": {
+   "type": "object", "additionalProperties": false,
+   "required": ["blueprint", "raw", "screenshots", "scroll_capture", "mirrors", "caveats"],
+   "properties": {
+    "blueprint": {"$ref": "#/$defs/fileRef"},
+    "raw": {"$ref": "#/$defs/fileRefOrNull"},
+    "screenshots": {
+     "type": "object", "additionalProperties": false, "required": ["dir", "profile", "desktop", "mobile", "unclassified"],
+     "description": "Screenshots of the original, by path only: third-party material, research-only, never copied. No file records which viewport a screenshot was taken at, so today every file is unclassified.",
+     "properties": {
+      "dir": {"$ref": "#/$defs/fileRefOrNull"},
+      "profile": {"$ref": "#/$defs/fileRefOrNull", "description": "The research profile kept next to the screenshots."},
+      "desktop": {"type": "array", "items": {"$ref": "#/$defs/fileRef"}},
+      "mobile": {"type": "array", "items": {"$ref": "#/$defs/fileRef"}},
+      "unclassified": {"type": "array", "items": {"$ref": "#/$defs/fileRef"}}
+     }
+    },
+    "scroll_capture": {"$ref": "#/$defs/fileRefOrNull"},
+    "mirrors": {
+     "type": ["object", "null"], "additionalProperties": false, "required": ["id", "blueprint", "differs_at"],
+     "description": "An authored blueprint that repeats another one: the JSON pointers at which the two blueprint files differ, computed by the build.",
+     "properties": {"id": {"type": "string"}, "blueprint": {"$ref": "#/$defs/fileRef"}, "differs_at": {"type": "array", "items": {"type": "string"}}}
+    },
+    "caveats": {
+     "type": "array",
+     "items": {
+      "type": "object", "additionalProperties": false, "required": ["code", "shown_by", "values"],
+      "description": "A known disagreement in the evidence. shown_by are the file pointers that show it; values are what they hold when that is a number or a URL (other text is not copied).",
+      "properties": {
+       "code": {"enum": ["profile-url-differs", "profile-page-height-differs", "profile-display-size-differs"]},
+       "shown_by": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/fileRef"}},
+       "values": {"type": "array", "items": {"type": ["number", "string", "null"]}}
+      }
+     }
+    }
+   }
+  },
+  "built_from": {"type": "object", "additionalProperties": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}, "description": "sha256 of each input the record was built from. A record whose inputs have changed is stale."},
+  "completeness": {
+   "type": "object", "additionalProperties": false,
+   "required": ["typography", "composition", "imagery", "motion", "experience", "mobile", "screenshots"],
+   "properties": {
+    "typography": {"enum": ["measured", "partial", "authored", "missing"], "description": "measured: the largest heading and the body are both bound to the capture. partial: some level is."},
+    "composition": {"enum": ["measured-desktop", "authored", "missing"]},
+    "imagery": {"enum": ["measured-desktop", "authored", "missing"]},
+    "motion": {"enum": ["partial", "prose-only", "authored", "missing"], "description": "partial: CSS transition strings, keyframe names or library flags were captured. Scroll, pinning and interaction are never measured."},
+    "experience": {"enum": ["prose-only", "authored", "missing"], "description": "Narrative exists only as hand-written notes. Pacing is measured and lives under composition."},
+    "mobile": {"enum": ["measured", "missing"]},
+    "screenshots": {"enum": ["present", "unverified", "missing"], "description": "unverified: files exist, their viewport and date are not recorded. present needs desktop and mobile files, a capture date and a viewport."}
+   }
+  },
+  "typography": {
+   "type": "object", "additionalProperties": false,
+   "required": ["basis", "display", "h2", "h3", "body", "label", "levels_missing", "families", "ratios"],
+   "description": "Levels as lib/blueprint/normalize.py picks them: display is the largest heading anywhere on the page (not necessarily the hero headline), h2 the largest between 28px and display, h3 the largest between 16px and h2, body the paragraph with the most recorded words, label the first small uppercase or mono label.",
+   "properties": {
+    "basis": {"enum": ["measured", "authored"]},
+    "display": {"$ref": "#/$defs/typeLevel"}, "h2": {"$ref": "#/$defs/typeLevel"}, "h3": {"$ref": "#/$defs/typeLevel"}, "body": {"$ref": "#/$defs/typeLevel"}, "label": {"$ref": "#/$defs/typeLevel"},
+    "levels_missing": {"type": "object", "additionalProperties": {"enum": ["not-in-capture", "blueprint-copies-display", "not-in-blueprint"]}, "description": "Why a level is null. blueprint-copies-display: the blueprint repeats display as h2 because the capture has no heading in between."},
+    "families": {"type": ["object", "null"], "additionalProperties": false, "required": ["value", "source"], "properties": {"value": {"type": "array", "items": {"type": "string"}}, "source": {"$ref": "#/$defs/fileRef"}}},
+    "ratios": {"type": "object", "additionalProperties": false, "required": ["display_to_body", "display_to_h2"], "properties": {"display_to_body": {"$ref": "#/$defs/computedOrNull"}, "display_to_h2": {"$ref": "#/$defs/computedOrNull"}}}
+   }
+  },
+  "composition": {
+   "type": "object", "additionalProperties": false,
+   "required": ["basis", "grid", "fraction_base", "surface", "sections", "summary"],
+   "properties": {
+    "basis": {"enum": ["measured", "authored"]},
+    "grid": {
+     "type": "object", "additionalProperties": false, "required": ["frame", "gutter", "container", "col", "not_recorded", "source", "raw_fields"],
+     "description": "px. A value the normaliser would have invented (frame = gutter, gutter = 40) is null.",
+     "properties": {
+      "frame": {"type": ["number", "null"]}, "gutter": {"type": ["number", "null"]}, "container": {"type": ["number", "null"]}, "col": {"type": ["number", "null"]},
+      "not_recorded": {"type": "array", "items": {"type": "string"}},
+      "source": {"$ref": "#/$defs/sourcePair"},
+      "raw_fields": {"type": "object", "additionalProperties": {"$ref": "#/$defs/fileRef"}}
+     }
+    },
+    "fraction_base": {
+     "type": ["object", "null"], "additionalProperties": false, "required": ["w", "basis", "source"],
+     "description": "The viewport width that head.x, head.wf, media.wf and media.xf are fractions of. assumed: the raw file has no vw and the normaliser used 1440.",
+     "properties": {"w": {"type": "integer"}, "basis": {"enum": ["recorded", "assumed"]}, "source": {"$ref": "#/$defs/fileRef"}}
+    },
+    "surface": {
+     "type": ["object", "null"], "additionalProperties": false, "required": ["paper", "paper_luminance", "mode", "source"],
+     "description": "paper is the background colour with the largest share in the capture; mode is dark when its relative luminance is below 0.3.",
+     "properties": {"paper": {"type": "string", "pattern": "^#[0-9a-fA-F]{6}$"}, "paper_luminance": {"type": "number", "minimum": 0, "maximum": 1}, "mode": {"enum": ["light", "dark"]}, "source": {"$ref": "#/$defs/sourcePair"}}
+    },
+    "sections": {"type": "array", "items": {"$ref": "#/$defs/section"}},
+    "summary": {
+     "type": "object", "additionalProperties": false,
+     "required": ["sections", "page_screens", "sections_screens_total", "pacing", "offset_heading_share", "bleed_section_share"],
+     "properties": {
+      "sections": {"$ref": "#/$defs/computed"},
+      "page_screens": {"type": ["object", "null"], "additionalProperties": false, "required": ["value", "source"], "description": "Page height ÷ viewport height, as the capture recorded it.", "properties": {"value": {"type": "number"}, "source": {"$ref": "#/$defs/sourcePair"}}},
+      "sections_screens_total": {"$ref": "#/$defs/computed"},
+      "pacing": {"$ref": "#/$defs/computed"},
+      "offset_heading_share": {"$ref": "#/$defs/computed"},
+      "bleed_section_share": {"$ref": "#/$defs/computed"}
+     }
+    }
+   }
+  },
+  "imagery": {
+   "type": "object", "additionalProperties": false,
+   "required": ["basis", "media_recorded", "aspects", "portrait_share", "landscape_share", "image_sections", "video_first_section"],
+   "description": "Computed from composition.sections[].media. The capture keeps only a few media per section (three in today's extract.js; the normaliser keeps at most four) and does not say whether a still is a photograph, a screenshot or an illustration.",
+   "properties": {
+    "basis": {"enum": ["measured", "authored"]},
+    "media_recorded": {"$ref": "#/$defs/computed"}, "aspects": {"$ref": "#/$defs/computed"}, "portrait_share": {"$ref": "#/$defs/computed"}, "landscape_share": {"$ref": "#/$defs/computed"},
+    "image_sections": {"$ref": "#/$defs/computed"}, "video_first_section": {"$ref": "#/$defs/computed"}
+   }
+  },
+  "motion": {
+   "type": "object", "additionalProperties": false,
+   "required": ["libs", "transitions", "keyframes", "animated", "tracked", "custom_cursor", "source", "note", "not_measured"],
+   "description": "What the capture holds about motion: library flags, CSS transition strings, keyframe names, how many of the tracked elements changed transform or opacity across scroll. Nothing here describes how the page moves; that exists only as the prose note.",
+   "properties": {
+    "libs": {"type": ["object", "null"], "additionalProperties": {"type": "boolean"}},
+    "transitions": {"type": ["array", "null"], "items": {"type": "string"}},
+    "keyframes": {"type": ["array", "null"], "items": {"type": "string"}},
+    "animated": {"type": ["integer", "null"]}, "tracked": {"type": ["integer", "null"]}, "custom_cursor": {"type": ["boolean", "null"]},
+    "source": {"$ref": "#/$defs/fileRefOrNull"},
+    "note": {"$ref": "#/$defs/proseOrNull"},
+    "not_measured": {"type": "array", "items": {"type": "string"}}
+   }
+  },
+  "experience": {
+   "type": "object", "additionalProperties": false, "required": ["pacing_screens", "section_notes", "not_measured"],
+   "properties": {
+    "pacing_screens": {"type": "object", "additionalProperties": false, "required": ["value", "evidence"], "properties": {"value": {"type": "array", "items": {"type": "number"}}, "evidence": {"type": "array", "items": {"$ref": "#/$defs/internalPointer"}}}},
+    "section_notes": {"type": "array", "items": {"$ref": "#/$defs/prose"}},
+    "not_measured": {"type": "array", "items": {"type": "string"}}
+   }
+  },
+  "principles": {
+   "type": "array",
+   "items": {
+    "type": "object", "additionalProperties": false, "required": ["id", "statement", "evidence", "derived_by", "confidence", "rule"],
+    "description": "A statement a rule in build.py made from values in this record. evidence points at those values; none may be null.",
+    "properties": {
+     "id": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+     "statement": {"type": "string"},
+     "evidence": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/internalPointer"}},
+     "derived_by": {"enum": ["rule"]},
+     "confidence": {"enum": ["measured", "observed"], "description": "observed: the rule rests on a hand annotation in the capture (a role name), not on a measured field."},
+     "rule": {"type": "string", "pattern": "^rule_[a-z0-9_]+$"}
+    }
+   }
+  },
+  "fits": {
+   "type": "object", "additionalProperties": false, "required": ["kinds", "kinds_source", "archetype", "archetype_source", "also", "needs", "temper"],
+   "properties": {
+    "kinds": {"type": "array", "items": {"enum": ["place", "service", "software", "product"]}},
+    "kinds_source": {"$ref": "#/$defs/fileRef"},
+    "archetype": {"type": ["string", "null"], "description": "The blueprint's own label, a hand annotation."},
+    "archetype_source": {"$ref": "#/$defs/fileRefOrNull"},
+    "also": {"type": "array", "items": {"enum": ["place", "service", "software", "product"]}, "description": "Empty: no rule derives a second kind. Retrieval scores other kinds by needs and temper instead."},
+    "needs": {
+     "type": ["object", "null"], "additionalProperties": false, "required": ["images_min", "video", "derived_by", "rule", "evidence"],
+     "description": "images_min: sections of the reference that hold a large still, so a brand needs at least that many stills of some kind. video: the first section holds a video.",
+     "properties": {"images_min": {"type": "integer", "minimum": 0}, "video": {"type": "boolean"}, "derived_by": {"enum": ["rule"]}, "rule": {"const": "derive_needs"}, "evidence": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/internalPointer"}}}
+    },
+    "temper": {
+     "type": "array",
+     "items": {"type": "object", "additionalProperties": false, "required": ["tag", "derived_by", "rule", "principle"], "properties": {"tag": {"type": "string"}, "derived_by": {"enum": ["rule"]}, "rule": {"type": "string"}, "principle": {"type": "string"}}}
+    }
+   }
+  },
+  "rights": {
+   "type": "object", "additionalProperties": false, "required": ["screenshots", "source_text", "fonts"],
+   "properties": {
+    "screenshots": {"const": "research-only"},
+    "source_text": {"const": "excluded"},
+    "fonts": {
+     "type": "array",
+     "items": {"type": "object", "additionalProperties": false, "required": ["face", "role", "licence", "source"],
+               "description": "licence is the note lib/typography/fonts.json holds for the face, or 'unknown' when the face is not listed there.",
+               "properties": {"face": {"type": "string"}, "role": {"enum": ["source", "delivery"]}, "licence": {"type": "string"}, "source": {"$ref": "#/$defs/fileRefOrNull"}}}
+    }
+   }
+  },
+  "implementation": {
+   "type": "object", "additionalProperties": false, "required": ["recipe", "ir_seeds"],
+   "description": "What the engine can do with this reference today. Kept apart from the evidence above.",
+   "properties": {"recipe": {"$ref": "#/$defs/fileRefOrNull"}, "ir_seeds": {"type": "array", "items": {"$ref": "#/$defs/fileRef"}}}
+  }
+ },
+ "$defs": {
+  "fileRef": {"type": "string", "pattern": "^(lib|dna|design_dna|docs)/[^#\\s]+(#.*)?$"},
+  "fileRefOrNull": {"type": ["string", "null"], "pattern": "^(lib|dna|design_dna|docs)/[^#\\s]+(#.*)?$"},
+  "internalPointer": {"type": "string", "pattern": "^[a-z_][a-z0-9_]*(\\.[a-z_][a-z0-9_]*|\\[\\d+\\])*$"},
+  "sourcePair": {"type": "object", "additionalProperties": false, "required": ["blueprint", "raw"], "properties": {"blueprint": {"$ref": "#/$defs/fileRef"}, "raw": {"$ref": "#/$defs/fileRefOrNull"}}},
+  "prose": {
+   "type": "object", "additionalProperties": false, "required": ["kind", "source", "text", "withheld"],
+   "description": "Hand-written prose that already exists in a blueprint file, carried with its pointer. text must equal what the pointer holds. Withheld (text null) when the note quotes a source heading, button or label.",
+   "properties": {"kind": {"const": "prose"}, "source": {"$ref": "#/$defs/fileRef"}, "text": {"type": ["string", "null"]}, "withheld": {"enum": [null, "quotes-source-text"]}, "section": {"type": "integer", "minimum": 0}}
+  },
+  "proseOrNull": {
+   "type": ["object", "null"], "additionalProperties": false, "required": ["kind", "source", "text", "withheld"],
+   "properties": {"kind": {"const": "prose"}, "source": {"$ref": "#/$defs/fileRef"}, "text": {"type": ["string", "null"]}, "withheld": {"enum": [null, "quotes-source-text"]}}
+  },
+  "computed": {
+   "type": "object", "additionalProperties": false, "required": ["value", "how", "evidence"],
+   "description": "A value the build computed from other values in the record. evidence: the values it ranged over. matched: the ones that counted.",
+   "properties": {
+    "value": {}, "how": {"type": "string"},
+    "evidence": {"type": "array", "items": {"$ref": "#/$defs/internalPointer"}},
+    "matched": {"type": "array", "items": {"$ref": "#/$defs/internalPointer"}},
+    "count": {"type": "integer", "minimum": 0}, "of": {"type": "integer", "minimum": 0}, "share": {"type": ["number", "null"]}
+   }
+  },
+  "computedOrNull": {
+   "type": ["object", "null"], "additionalProperties": false, "required": ["value", "how", "evidence"],
+   "properties": {"value": {}, "how": {"type": "string"}, "evidence": {"type": "array", "items": {"$ref": "#/$defs/internalPointer"}}}
+  },
+  "typeLevel": {
+   "type": ["object", "null"], "additionalProperties": false,
+   "required": ["source_face", "delivery_face", "delivery_class", "delivery_fallback", "px", "weight", "tracking", "leading", "case", "not_recorded", "source"],
+   "properties": {
+    "source_face": {"type": ["string", "null"], "description": "The font family the capture recorded on the original. Often a commercial face."},
+    "delivery_face": {"type": "string", "description": "Exactly what font_for in lib/render/render_bp.py returns for source_face: the face that ships."},
+    "delivery_class": {"enum": ["sans", "serif", "mono"]},
+    "delivery_fallback": {"type": "boolean", "description": "true when font_for has no mapping for the source face and returned its generic fallback."},
+    "px": {"type": ["number", "null"]},
+    "weight": {"type": ["integer", "null"]},
+    "tracking": {"type": ["number", "null"], "description": "em. Computed from the raw letter-spacing and px; the blueprint's own value is rounded to whole pixels first."},
+    "leading": {"type": ["number", "null"], "description": "line-height ÷ font-size."},
+    "case": {"type": ["string", "null"], "description": "text-transform as recorded. Null when the capture has none: extract.js drops 'none', so null is not proof of mixed case."},
+    "not_recorded": {"type": "array", "items": {"type": "string"}, "description": "Attributes the capture does not hold for this element. The blueprint carries a default for them; the record does not."},
+    "source": {"$ref": "#/$defs/sourcePair"}
+   }
+  },
+  "head": {
+   "type": ["object", "null"], "additionalProperties": false,
+   "required": ["px", "weight", "tracking", "leading", "case", "align", "x", "y", "wf", "not_recorded", "source"],
+   "description": "The first heading of the section. x: left edge ÷ viewport width. y: top edge inside the section ÷ section height. wf: width ÷ viewport width.",
+   "properties": {
+    "px": {"type": ["number", "null"]}, "weight": {"type": ["integer", "null"]}, "tracking": {"type": ["number", "null"]}, "leading": {"type": ["number", "null"]},
+    "case": {"type": ["string", "null"]}, "align": {"type": ["string", "null"]},
+    "x": {"type": ["number", "null"]}, "y": {"type": ["number", "null"]}, "wf": {"type": ["number", "null"]},
+    "not_recorded": {"type": "array", "items": {"type": "string"}},
+    "source": {"$ref": "#/$defs/fileRef"}
+   }
+  },
+  "media": {
+   "type": "object", "additionalProperties": false, "required": ["ar", "wf", "xf", "bleed", "kind", "source"],
+   "properties": {
+    "ar": {"type": ["number", "null"], "description": "width ÷ height."},
+    "wf": {"type": ["number", "null"], "description": "width ÷ viewport width; above 1 when the element overscans."},
+    "xf": {"type": ["number", "null"], "description": "left edge ÷ viewport width; null when the capture has no x."},
+    "bleed": {"type": "boolean", "description": "The capture's flag (element at least viewport − 8px wide). An absent flag reads as false."},
+    "kind": {"enum": ["image", "video", "canvas", null], "description": "From the element tag; null when the capture did not record it."},
+    "source": {"$ref": "#/$defs/fileRef"}
+   }
+  },
+  "section": {
+   "type": "object", "additionalProperties": false, "required": ["role", "screens", "bg", "sticky", "head", "media", "source"],
+   "properties": {
+    "role": {"type": ["string", "null"], "description": "A label written into the capture by hand. Not a measurement."},
+    "screens": {"type": ["number", "null"], "description": "Section height ÷ viewport height."},
+    "bg": {"type": ["string", "null"]},
+    "sticky": {"enum": [true, null], "description": "The capture's sticky flag; null when not flagged."},
+    "head": {"$ref": "#/$defs/head"},
+    "media": {"type": "array", "items": {"$ref": "#/$defs/media"}},
+    "source": {"$ref": "#/$defs/sourcePair"}
+   }
+  }
+ }
+}

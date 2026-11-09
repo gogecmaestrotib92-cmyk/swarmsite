@@ -1,0 +1,1132 @@
+{
+ "built_from": {
+  "design_dna/evidence.json#/references/butter": "sha256:ddbfbbd1e67ae5216640a7d1471babd67dfb81270dbae2de5d787b32fc6bd0a1",
+  "lib/blueprints/butter.bp.json": "sha256:12bea8e04d56f0a4c40e1592ae5a483353e8851245044557ca2ef8cfb0f322af",
+  "lib/blueprints/raw/butter.json": "sha256:0406ad0ec86b4a77220141945b50228efddf2f9ff241a963ff72aa8046565632"
+ },
+ "completeness": {
+  "composition": "measured-desktop",
+  "experience": "missing",
+  "imagery": "measured-desktop",
+  "mobile": "missing",
+  "motion": "partial",
+  "screenshots": "unverified",
+  "typography": "measured"
+ },
+ "composition": {
+  "basis": "measured",
+  "fraction_base": {
+   "basis": "recorded",
+   "source": "lib/blueprints/raw/butter.json#/vw",
+   "w": 1440
+  },
+  "grid": {
+   "col": null,
+   "container": 1300,
+   "frame": null,
+   "gutter": 60,
+   "not_recorded": [
+    "col",
+    "frame"
+   ],
+   "raw_fields": {
+    "container": "lib/blueprints/raw/butter.json#/maxw/0",
+    "gutter": "lib/blueprints/raw/butter.json#/gutter"
+   },
+   "source": {
+    "blueprint": "lib/blueprints/butter.bp.json#/grid",
+    "raw": "lib/blueprints/raw/butter.json"
+   }
+  },
+  "sections": [
+   {
+    "bg": null,
+    "head": {
+     "align": "center",
+     "case": null,
+     "leading": 0.99,
+     "not_recorded": [
+      "case"
+     ],
+     "px": 103,
+     "source": "lib/blueprints/raw/butter.json#/sections/0/heads/0",
+     "tracking": 0.0032,
+     "weight": 400,
+     "wf": 0.719,
+     "x": 0.135,
+     "y": 0.381
+    },
+    "media": [
+     {
+      "ar": 6.14,
+      "bleed": true,
+      "kind": "image",
+      "source": "lib/blueprints/raw/butter.json#/sections/0/imgs/0",
+      "wf": 1.287,
+      "xf": null
+     }
+    ],
+    "role": "hero",
+    "screens": 1.0,
+    "source": {
+     "blueprint": "lib/blueprints/butter.bp.json#/sections/0",
+     "raw": "lib/blueprints/raw/butter.json#/sections/0"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": null,
+    "media": [
+     {
+      "ar": 3.19,
+      "bleed": false,
+      "kind": "image",
+      "source": "lib/blueprints/raw/butter.json#/sections/1/imgs/0",
+      "wf": 0.08,
+      "xf": null
+     },
+     {
+      "ar": 3.69,
+      "bleed": false,
+      "kind": "image",
+      "source": "lib/blueprints/raw/butter.json#/sections/1/imgs/1",
+      "wf": 0.092,
+      "xf": null
+     },
+     {
+      "ar": 3.14,
+      "bleed": false,
+      "kind": "image",
+      "source": "lib/blueprints/raw/butter.json#/sections/1/imgs/2",
+      "wf": 0.078,
+      "xf": null
+     },
+     {
+      "ar": 4.72,
+      "bleed": false,
+      "kind": "image",
+      "source": "lib/blueprints/raw/butter.json#/sections/1/imgs/3",
+      "wf": 0.118,
+      "xf": null
+     }
+    ],
+    "role": "ticker",
+    "screens": 0.29,
+    "source": {
+     "blueprint": "lib/blueprints/butter.bp.json#/sections/1",
+     "raw": "lib/blueprints/raw/butter.json#/sections/1"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": "center",
+     "case": null,
+     "leading": 0.97,
+     "not_recorded": [
+      "case"
+     ],
+     "px": 58,
+     "source": "lib/blueprints/raw/butter.json#/sections/2/heads/0",
+     "tracking": 0.006,
+     "weight": 400,
+     "wf": 0.717,
+     "x": 0.137,
+     "y": 0.191
+    },
+    "media": [
+     {
+      "ar": 2.01,
+      "bleed": true,
+      "kind": "image",
+      "source": "lib/blueprints/raw/butter.json#/sections/2/imgs/0",
+      "wf": 1.038,
+      "xf": null
+     },
+     {
+      "ar": 1.0,
+      "bleed": false,
+      "kind": "image",
+      "source": "lib/blueprints/raw/butter.json#/sections/2/imgs/1",
+      "wf": 0.166,
+      "xf": null
+     },
+     {
+      "ar": 1.0,
+      "bleed": false,
+      "kind": "video",
+      "source": "lib/blueprints/raw/butter.json#/sections/2/imgs/2",
+      "wf": 0.166,
+      "xf": null
+     },
+     {
+      "ar": 1.0,
+      "bleed": false,
+      "kind": "video",
+      "source": "lib/blueprints/raw/butter.json#/sections/2/imgs/3",
+      "wf": 0.166,
+      "xf": null
+     }
+    ],
+    "role": "statement",
+    "screens": 2.0,
+    "source": {
+     "blueprint": "lib/blueprints/butter.bp.json#/sections/2",
+     "raw": "lib/blueprints/raw/butter.json#/sections/2"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": "start",
+     "case": null,
+     "leading": 0.97,
+     "not_recorded": [
+      "case"
+     ],
+     "px": 58,
+     "source": "lib/blueprints/raw/butter.json#/sections/3/heads/0",
+     "tracking": 0.006,
+     "weight": 400,
+     "wf": 0.443,
+     "x": 0.043,
+     "y": 0.435
+    },
+    "media": [
+     {
+      "ar": 2.77,
+      "bleed": false,
+      "kind": "video",
+      "source": "lib/blueprints/raw/butter.json#/sections/3/imgs/0",
+      "wf": 0.443,
+      "xf": 0.043
+     },
+     {
+      "ar": 1.0,
+      "bleed": false,
+      "kind": "image",
+      "source": "lib/blueprints/raw/butter.json#/sections/3/imgs/1",
+      "wf": 0.133,
+      "xf": 0.61
+     },
+     {
+      "ar": 1.0,
+      "bleed": false,
+      "kind": "image",
+      "source": "lib/blueprints/raw/butter.json#/sections/3/imgs/2",
+      "wf": 0.133,
+      "xf": 0.782
+     }
+    ],
+    "role": "story",
+    "screens": 1.78,
+    "source": {
+     "blueprint": "lib/blueprints/butter.bp.json#/sections/3",
+     "raw": "lib/blueprints/raw/butter.json#/sections/3"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": "start",
+     "case": null,
+     "leading": 0.97,
+     "not_recorded": [
+      "case"
+     ],
+     "px": 58,
+     "source": "lib/blueprints/raw/butter.json#/sections/4/heads/0",
+     "tracking": 0.006,
+     "weight": 400,
+     "wf": 0.366,
+     "x": 0.58,
+     "y": 0.424
+    },
+    "media": [
+     {
+      "ar": 0.93,
+      "bleed": false,
+      "kind": "video",
+      "source": "lib/blueprints/raw/butter.json#/sections/4/imgs/0",
+      "wf": 0.443,
+      "xf": 0.043
+     }
+    ],
+    "role": "story-flip",
+    "screens": 1.53,
+    "source": {
+     "blueprint": "lib/blueprints/butter.bp.json#/sections/4",
+     "raw": "lib/blueprints/raw/butter.json#/sections/4"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": "start",
+     "case": null,
+     "leading": 0.97,
+     "not_recorded": [
+      "case"
+     ],
+     "px": 58,
+     "source": "lib/blueprints/raw/butter.json#/sections/5/heads/0",
+     "tracking": 0.006,
+     "weight": 400,
+     "wf": 0.423,
+     "x": 0.043,
+     "y": 0.032
+    },
+    "media": [
+     {
+      "ar": 2.0,
+      "bleed": false,
+      "kind": "video",
+      "source": "lib/blueprints/raw/butter.json#/sections/5/imgs/0",
+      "wf": 0.208,
+      "xf": 0.543
+     }
+    ],
+    "role": "story-wide",
+    "screens": 2.0,
+    "source": {
+     "blueprint": "lib/blueprints/butter.bp.json#/sections/5",
+     "raw": "lib/blueprints/raw/butter.json#/sections/5"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": "left",
+     "case": null,
+     "leading": 0.96,
+     "not_recorded": [
+      "case"
+     ],
+     "px": 44,
+     "source": "lib/blueprints/raw/butter.json#/sections/6/heads/0",
+     "tracking": 0.008,
+     "weight": 400,
+     "wf": 0.397,
+     "x": 0.043,
+     "y": 0.191
+    },
+    "media": [
+     {
+      "ar": 0.77,
+      "bleed": false,
+      "kind": "video",
+      "source": "lib/blueprints/raw/butter.json#/sections/6/imgs/0",
+      "wf": 0.212,
+      "xf": 0.043
+     },
+     {
+      "ar": 0.77,
+      "bleed": false,
+      "kind": "image",
+      "source": "lib/blueprints/raw/butter.json#/sections/6/imgs/1",
+      "wf": 0.212,
+      "xf": 0.274
+     },
+     {
+      "ar": 0.77,
+      "bleed": false,
+      "kind": "image",
+      "source": "lib/blueprints/raw/butter.json#/sections/6/imgs/2",
+      "wf": 0.212,
+      "xf": 0.503
+     },
+     {
+      "ar": 0.77,
+      "bleed": false,
+      "kind": "video",
+      "source": "lib/blueprints/raw/butter.json#/sections/6/imgs/3",
+      "wf": 0.212,
+      "xf": 0.733
+     }
+    ],
+    "role": "feature-cards",
+    "screens": 1.31,
+    "source": {
+     "blueprint": "lib/blueprints/butter.bp.json#/sections/6",
+     "raw": "lib/blueprints/raw/butter.json#/sections/6"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": "left",
+     "case": null,
+     "leading": 0.97,
+     "not_recorded": [
+      "case"
+     ],
+     "px": 58,
+     "source": "lib/blueprints/raw/butter.json#/sections/7/heads/0",
+     "tracking": 0.006,
+     "weight": 400,
+     "wf": 0.212,
+     "x": 0.58,
+     "y": 0.352
+    },
+    "media": [
+     {
+      "ar": 0.91,
+      "bleed": false,
+      "kind": "image",
+      "source": "lib/blueprints/raw/butter.json#/sections/7/imgs/0",
+      "wf": 0.443,
+      "xf": 0.043
+     }
+    ],
+    "role": "tabs-media",
+    "screens": 1.3,
+    "source": {
+     "blueprint": "lib/blueprints/butter.bp.json#/sections/7",
+     "raw": "lib/blueprints/raw/butter.json#/sections/7"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": "center",
+     "case": null,
+     "leading": 0.96,
+     "not_recorded": [
+      "case"
+     ],
+     "px": 44,
+     "source": "lib/blueprints/raw/butter.json#/sections/8/heads/0",
+     "tracking": 0.008,
+     "weight": 400,
+     "wf": 0.596,
+     "x": 0.197,
+     "y": 0.198
+    },
+    "media": [
+     {
+      "ar": 1.43,
+      "bleed": false,
+      "kind": "video",
+      "source": "lib/blueprints/raw/butter.json#/sections/8/imgs/0",
+      "wf": 0.149,
+      "xf": null
+     }
+    ],
+    "role": "gallery-marquee",
+    "screens": 1.26,
+    "source": {
+     "blueprint": "lib/blueprints/butter.bp.json#/sections/8",
+     "raw": "lib/blueprints/raw/butter.json#/sections/8"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": "start",
+     "case": null,
+     "leading": 0.96,
+     "not_recorded": [
+      "case"
+     ],
+     "px": 44,
+     "source": "lib/blueprints/raw/butter.json#/sections/9/heads/0",
+     "tracking": 0.008,
+     "weight": 400,
+     "wf": 0.366,
+     "x": 0.043,
+     "y": 0.427
+    },
+    "media": [
+     {
+      "ar": 1.0,
+      "bleed": false,
+      "kind": "video",
+      "source": "lib/blueprints/raw/butter.json#/sections/9/imgs/0",
+      "wf": 0.443,
+      "xf": 0.503
+     }
+    ],
+    "role": "story-sticky",
+    "screens": 1.21,
+    "source": {
+     "blueprint": "lib/blueprints/butter.bp.json#/sections/9",
+     "raw": "lib/blueprints/raw/butter.json#/sections/9"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": "start",
+     "case": null,
+     "leading": 0.96,
+     "not_recorded": [
+      "case"
+     ],
+     "px": 44,
+     "source": "lib/blueprints/raw/butter.json#/sections/10/heads/0",
+     "tracking": 0.008,
+     "weight": 400,
+     "wf": 0.226,
+     "x": 0.078,
+     "y": 0.221
+    },
+    "media": [
+     {
+      "ar": 1.46,
+      "bleed": false,
+      "kind": "video",
+      "source": "lib/blueprints/raw/butter.json#/sections/10/imgs/0",
+      "wf": 0.443,
+      "xf": 0.043
+     },
+     {
+      "ar": 1.46,
+      "bleed": false,
+      "kind": "image",
+      "source": "lib/blueprints/raw/butter.json#/sections/10/imgs/1",
+      "wf": 0.443,
+      "xf": 0.503
+     }
+    ],
+    "role": "double",
+    "screens": 1.31,
+    "source": {
+     "blueprint": "lib/blueprints/butter.bp.json#/sections/10",
+     "raw": "lib/blueprints/raw/butter.json#/sections/10"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": null,
+     "leading": 1.5,
+     "not_recorded": [
+      "align",
+      "case",
+      "tracking"
+     ],
+     "px": 21,
+     "source": "lib/blueprints/raw/butter.json#/sections/11/heads/0",
+     "tracking": null,
+     "weight": 400,
+     "wf": 0.366,
+     "x": 0.58,
+     "y": 0.315
+    },
+    "media": [
+     {
+      "ar": 0.91,
+      "bleed": false,
+      "kind": "video",
+      "source": "lib/blueprints/raw/butter.json#/sections/11/imgs/0",
+      "wf": 0.443,
+      "xf": 0.043
+     }
+    ],
+    "role": "showcase-list",
+    "screens": 1.3,
+    "source": {
+     "blueprint": "lib/blueprints/butter.bp.json#/sections/11",
+     "raw": "lib/blueprints/raw/butter.json#/sections/11"
+    },
+    "sticky": null
+   },
+   {
+    "bg": "#ededed",
+    "head": null,
+    "media": [
+     {
+      "ar": 2.33,
+      "bleed": false,
+      "kind": "image",
+      "source": "lib/blueprints/raw/butter.json#/sections/12/imgs/0",
+      "wf": 0.937,
+      "xf": null
+     }
+    ],
+    "role": "footer",
+    "screens": 1.48,
+    "source": {
+     "blueprint": "lib/blueprints/butter.bp.json#/sections/12",
+     "raw": "lib/blueprints/raw/butter.json#/sections/12"
+    },
+    "sticky": null
+   }
+  ],
+  "summary": {
+   "bleed_section_share": {
+    "count": 2,
+    "evidence": [
+     "composition.sections"
+    ],
+    "how": "sections holding a medium flagged bleed in the capture or at least 98% of the viewport wide ÷ all sections",
+    "matched": [
+     "composition.sections[0].media[0].bleed",
+     "composition.sections[2].media[0].bleed"
+    ],
+    "of": 13,
+    "value": 0.15
+   },
+   "offset_heading_share": {
+    "count": 3,
+    "evidence": [
+     "composition.sections[0].head.x",
+     "composition.sections[2].head.x",
+     "composition.sections[3].head.x",
+     "composition.sections[4].head.x",
+     "composition.sections[5].head.x",
+     "composition.sections[6].head.x",
+     "composition.sections[7].head.x",
+     "composition.sections[8].head.x",
+     "composition.sections[9].head.x",
+     "composition.sections[10].head.x",
+     "composition.sections[11].head.x"
+    ],
+    "how": "headings whose left edge is at or right of 30% of the viewport width ÷ headings with a recorded position",
+    "matched": [
+     "composition.sections[4].head.x",
+     "composition.sections[7].head.x",
+     "composition.sections[11].head.x"
+    ],
+    "of": 11,
+    "value": 0.27
+   },
+   "pacing": {
+    "evidence": [
+     "composition.sections[0].screens",
+     "composition.sections[1].screens",
+     "composition.sections[2].screens",
+     "composition.sections[3].screens",
+     "composition.sections[4].screens",
+     "composition.sections[5].screens",
+     "composition.sections[6].screens",
+     "composition.sections[7].screens",
+     "composition.sections[8].screens",
+     "composition.sections[9].screens",
+     "composition.sections[10].screens",
+     "composition.sections[11].screens",
+     "composition.sections[12].screens"
+    ],
+    "how": "section heights in screens, in page order",
+    "value": [
+     1.0,
+     0.29,
+     2.0,
+     1.78,
+     1.53,
+     2.0,
+     1.31,
+     1.3,
+     1.26,
+     1.21,
+     1.31,
+     1.3,
+     1.48
+    ]
+   },
+   "page_screens": {
+    "source": {
+     "blueprint": "lib/blueprints/butter.bp.json#/screens",
+     "raw": "lib/blueprints/raw/butter.json#/screens"
+    },
+    "value": 17.8
+   },
+   "sections": {
+    "evidence": [
+     "composition.sections"
+    ],
+    "how": "number of sections in the record",
+    "value": 13
+   },
+   "sections_screens_total": {
+    "evidence": [
+     "composition.sections[0].screens",
+     "composition.sections[1].screens",
+     "composition.sections[2].screens",
+     "composition.sections[3].screens",
+     "composition.sections[4].screens",
+     "composition.sections[5].screens",
+     "composition.sections[6].screens",
+     "composition.sections[7].screens",
+     "composition.sections[8].screens",
+     "composition.sections[9].screens",
+     "composition.sections[10].screens",
+     "composition.sections[11].screens",
+     "composition.sections[12].screens"
+    ],
+    "how": "sum of section heights in screens; sections can overlap or leave gaps, so this is not the page length",
+    "value": 17.77
+   }
+  },
+  "surface": {
+   "mode": "light",
+   "paper": "#fafafa",
+   "paper_luminance": 0.98,
+   "source": {
+    "blueprint": "lib/blueprints/butter.bp.json#/colour/paper",
+    "raw": "lib/blueprints/raw/butter.json#/palette/0"
+   }
+  }
+ },
+ "evidence": {
+  "blueprint": "lib/blueprints/butter.bp.json",
+  "caveats": [
+   {
+    "code": "profile-display-size-differs",
+    "shown_by": [
+     "dna/butter/data.json#/fonts/display",
+     "lib/blueprints/raw/butter.json#/sections/0/heads/0/px"
+    ],
+    "values": [
+     null,
+     103
+    ]
+   }
+  ],
+  "mirrors": null,
+  "raw": "lib/blueprints/raw/butter.json",
+  "screenshots": {
+   "desktop": [],
+   "dir": "dna/butter",
+   "mobile": [],
+   "profile": "dna/butter/data.json",
+   "unclassified": [
+    "dna/butter/mcp-claude-in-chrome-blob-1793981182135-y8qazg-926a39d9.jpg",
+    "dna/butter/mcp-claude-in-chrome-blob-1793981206673-840btn-4a8af78d.jpg",
+    "dna/butter/mcp-claude-in-chrome-blob-1793981206673-d4xr8k-3029a068.jpg",
+    "dna/butter/mcp-claude-in-chrome-blob-1793981206673-eth7j9-675d0be1.jpg",
+    "dna/butter/mcp-claude-in-chrome-blob-1793981206673-phw73f-a94f2d76.jpg",
+    "dna/butter/mcp-claude-in-chrome-blob-1793981206674-6c8hc5-c43f5a2d.jpg",
+    "dna/butter/mcp-claude-in-chrome-blob-1793981206674-91bzqb-4780301a.jpg",
+    "dna/butter/mcp-claude-in-chrome-blob-1793981206674-an0vqw-fba51454.jpg",
+    "dna/butter/mcp-claude-in-chrome-blob-1793981206674-cs5996-8e38f13d.jpg",
+    "dna/butter/mcp-claude-in-chrome-blob-1793981206674-hvz47a-46fa5235.jpg",
+    "dna/butter/mcp-claude-in-chrome-blob-1793981206674-nzkomn-41d2ddad.jpg",
+    "dna/butter/mcp-claude-in-chrome-blob-1793981221239-frkrum-72aa9ede.jpg",
+    "dna/butter/mcp-claude-in-chrome-blob-1793981231104-arfrs6-0f82ff62.jpg",
+    "dna/butter/mcp-claude-in-chrome-blob-1793981231104-jc126h-416bded8.jpg",
+    "dna/butter/mcp-claude-in-chrome-blob-1793981231104-n6bkqu-9a20794d.jpg",
+    "dna/butter/mcp-claude-in-chrome-blob-1793981231105-hj6qyy-ec40b2e2.jpg"
+   ]
+  },
+  "scroll_capture": null
+ },
+ "experience": {
+  "not_measured": [
+   "narrative",
+   "interaction",
+   "mobile"
+  ],
+  "pacing_screens": {
+   "evidence": [
+    "composition.summary.pacing"
+   ],
+   "value": [
+    1.0,
+    0.29,
+    2.0,
+    1.78,
+    1.53,
+    2.0,
+    1.31,
+    1.3,
+    1.26,
+    1.21,
+    1.31,
+    1.3,
+    1.48
+   ]
+  },
+  "section_notes": []
+ },
+ "fits": {
+  "also": [],
+  "archetype": "editorial-product-story",
+  "archetype_source": "lib/blueprints/butter.bp.json#/archetype",
+  "kinds": [
+   "software"
+  ],
+  "kinds_source": "lib/blueprints/butter.bp.json#/class",
+  "needs": {
+   "derived_by": "rule",
+   "evidence": [
+    "imagery.image_sections",
+    "imagery.video_first_section"
+   ],
+   "images_min": 5,
+   "rule": "derive_needs",
+   "video": false
+  },
+  "temper": [
+   {
+    "derived_by": "rule",
+    "principle": "offset-headings",
+    "rule": "rule_offset_headings",
+    "tag": "asymmetric"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "pinned-sections",
+    "rule": "rule_pinned_sections",
+    "tag": "pinned"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "long-page",
+    "rule": "rule_long_page",
+    "tag": "long"
+   }
+  ]
+ },
+ "id": "butter",
+ "imagery": {
+  "aspects": {
+   "evidence": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[3].media[0].ar",
+    "composition.sections[4].media[0].ar",
+    "composition.sections[5].media[0].ar",
+    "composition.sections[6].media[0].ar",
+    "composition.sections[6].media[1].ar",
+    "composition.sections[6].media[2].ar",
+    "composition.sections[6].media[3].ar",
+    "composition.sections[7].media[0].ar",
+    "composition.sections[9].media[0].ar",
+    "composition.sections[10].media[0].ar",
+    "composition.sections[10].media[1].ar",
+    "composition.sections[11].media[0].ar",
+    "composition.sections[12].media[0].ar"
+   ],
+   "how": "distinct aspect ratios (width ÷ height) of large media; large = at least 20% of the viewport width",
+   "value": [
+    0.77,
+    0.91,
+    0.93,
+    1.0,
+    1.46,
+    2.0,
+    2.01,
+    2.33,
+    2.77,
+    6.14
+   ]
+  },
+  "basis": "measured",
+  "image_sections": {
+   "evidence": [
+    "composition.sections"
+   ],
+   "how": "sections holding at least one large still: not tagged video or canvas, aspect between 0.4 and 2.5",
+   "matched": [
+    "composition.sections[2].media[0]",
+    "composition.sections[6].media[1]",
+    "composition.sections[7].media[0]",
+    "composition.sections[10].media[1]",
+    "composition.sections[12].media[0]"
+   ],
+   "of": 13,
+   "share": 0.38,
+   "value": 5
+  },
+  "landscape_share": {
+   "count": 7,
+   "evidence": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[3].media[0].ar",
+    "composition.sections[4].media[0].ar",
+    "composition.sections[5].media[0].ar",
+    "composition.sections[6].media[0].ar",
+    "composition.sections[6].media[1].ar",
+    "composition.sections[6].media[2].ar",
+    "composition.sections[6].media[3].ar",
+    "composition.sections[7].media[0].ar",
+    "composition.sections[9].media[0].ar",
+    "composition.sections[10].media[0].ar",
+    "composition.sections[10].media[1].ar",
+    "composition.sections[11].media[0].ar",
+    "composition.sections[12].media[0].ar"
+   ],
+   "how": "large media with aspect ≥ 1.2 ÷ large media",
+   "matched": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[3].media[0].ar",
+    "composition.sections[5].media[0].ar",
+    "composition.sections[10].media[0].ar",
+    "composition.sections[10].media[1].ar",
+    "composition.sections[12].media[0].ar"
+   ],
+   "of": 15,
+   "value": 0.47
+  },
+  "media_recorded": {
+   "evidence": [
+    "composition.sections"
+   ],
+   "how": "media elements kept in the record: wider than 100px, at most 4 per section",
+   "value": 25
+  },
+  "portrait_share": {
+   "count": 4,
+   "evidence": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[3].media[0].ar",
+    "composition.sections[4].media[0].ar",
+    "composition.sections[5].media[0].ar",
+    "composition.sections[6].media[0].ar",
+    "composition.sections[6].media[1].ar",
+    "composition.sections[6].media[2].ar",
+    "composition.sections[6].media[3].ar",
+    "composition.sections[7].media[0].ar",
+    "composition.sections[9].media[0].ar",
+    "composition.sections[10].media[0].ar",
+    "composition.sections[10].media[1].ar",
+    "composition.sections[11].media[0].ar",
+    "composition.sections[12].media[0].ar"
+   ],
+   "how": "large media with aspect ≤ 0.9 ÷ large media",
+   "matched": [
+    "composition.sections[6].media[0].ar",
+    "composition.sections[6].media[1].ar",
+    "composition.sections[6].media[2].ar",
+    "composition.sections[6].media[3].ar"
+   ],
+   "of": 15,
+   "value": 0.27
+  },
+  "video_first_section": {
+   "evidence": [
+    "composition.sections[0].media"
+   ],
+   "how": "the first section holds a medium the capture tagged VIDEO",
+   "matched": [],
+   "value": false
+  }
+ },
+ "implementation": {
+  "ir_seeds": [],
+  "recipe": "lib/templates/recipes.py#butter"
+ },
+ "motion": {
+  "animated": null,
+  "custom_cursor": true,
+  "keyframes": null,
+  "libs": {
+   "gsap": false,
+   "lenis": true,
+   "scrollTrigger": false,
+   "three": false,
+   "webgl": false
+  },
+  "not_measured": [
+   "scroll",
+   "pinning",
+   "sequence",
+   "interaction",
+   "reduced-motion"
+  ],
+  "note": null,
+  "source": "lib/blueprints/raw/butter.json#/motion",
+  "tracked": null,
+  "transitions": [
+   "opacity, transform|0.2s, 0.2s|ease, ease",
+   "opacity|0.5s|cubic-bezier(0.2, 0.715, 0.205, 0.99)",
+   "transform|0.2s|cubic-bezier(0.2, 0.715, 0.205, 0.99)",
+   "opacity|0.8s|cubic-bezier(0.2, 0.715, 0.205, 0.99)",
+   "opacity, transform, clip-path|0.8s, 0.5s, 0.5s|cubic-bezier(0.2, 0.715, 0.205, 0.99)",
+   "transform, opacity|0.8s, 0.528s|cubic-bezier(0, 0, 0, 1), linear",
+   "background|0.5s|cubic-bezier(0.2, 0.715, 0.205, 0.99)"
+  ]
+ },
+ "principles": [
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "composition.summary.offset_heading_share",
+    "composition.sections[4].head.x",
+    "composition.sections[7].head.x",
+    "composition.sections[11].head.x"
+   ],
+   "id": "offset-headings",
+   "rule": "rule_offset_headings",
+   "statement": "3 of 11 headings with a recorded position start at or right of 30% of the viewport width. Threshold: share ≥ 25% and at least 2 headings."
+  },
+  {
+   "confidence": "observed",
+   "derived_by": "rule",
+   "evidence": [
+    "composition.sections[9].role",
+    "composition.sections[9].screens"
+   ],
+   "id": "pinned-sections",
+   "rule": "rule_pinned_sections",
+   "statement": "1 of 13 sections are marked pinned or sticky: 1 by a role name written into the capture by hand, 0 by the capture's sticky flag; the tallest of them runs 1.21 screens. Threshold: at least one such section. The scroll behaviour itself was not measured."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "composition.summary.page_screens.value"
+   ],
+   "id": "long-page",
+   "rule": "rule_long_page",
+   "statement": "The page runs 17.8 screens at the capture height. Threshold: ≥ 15 screens."
+  }
+ ],
+ "rights": {
+  "fonts": [
+   {
+    "face": "Schibsted Grotesk",
+    "licence": "OFL",
+    "role": "delivery",
+    "source": "lib/typography/fonts.json#/fonts/10/license"
+   },
+   {
+    "face": "DieGrotesk",
+    "licence": "unknown",
+    "role": "source",
+    "source": null
+   }
+  ],
+  "screenshots": "research-only",
+  "source_text": "excluded"
+ },
+ "schema_version": 1,
+ "source": {
+  "captured_at": null,
+  "description": null,
+  "dpr": null,
+  "url": "https://www.butter.video/",
+  "url_source": "lib/blueprints/butter.bp.json#/source",
+  "viewport": {
+   "h": 756,
+   "h_source": "lib/blueprints/raw/butter.json#/vh",
+   "w": 1440,
+   "w_source": "lib/blueprints/raw/butter.json#/vw"
+  }
+ },
+ "status": "measured-desktop",
+ "typography": {
+  "basis": "measured",
+  "body": {
+   "case": null,
+   "delivery_class": "sans",
+   "delivery_face": "Schibsted Grotesk",
+   "delivery_fallback": false,
+   "leading": 1.16,
+   "not_recorded": [
+    "case",
+    "tracking",
+    "weight"
+   ],
+   "px": 21,
+   "source": {
+    "blueprint": "lib/blueprints/butter.bp.json#/type/body",
+    "raw": "lib/blueprints/raw/butter.json#/sections/9/paras/1"
+   },
+   "source_face": "DieGrotesk",
+   "tracking": null,
+   "weight": null
+  },
+  "display": {
+   "case": null,
+   "delivery_class": "sans",
+   "delivery_face": "Schibsted Grotesk",
+   "delivery_fallback": false,
+   "leading": 0.99,
+   "not_recorded": [
+    "case"
+   ],
+   "px": 103,
+   "source": {
+    "blueprint": "lib/blueprints/butter.bp.json#/type/display",
+    "raw": "lib/blueprints/raw/butter.json#/sections/0/heads/0"
+   },
+   "source_face": "DieGrotesk",
+   "tracking": 0.0032,
+   "weight": 400
+  },
+  "families": {
+   "source": "lib/blueprints/raw/butter.json#/fonts",
+   "value": [
+    "Times",
+    "DieGrotesk",
+    "ABCDiatype"
+   ]
+  },
+  "h2": {
+   "case": null,
+   "delivery_class": "sans",
+   "delivery_face": "Schibsted Grotesk",
+   "delivery_fallback": false,
+   "leading": 0.97,
+   "not_recorded": [
+    "case"
+   ],
+   "px": 58,
+   "source": {
+    "blueprint": "lib/blueprints/butter.bp.json#/type/h2",
+    "raw": "lib/blueprints/raw/butter.json#/sections/2/heads/0"
+   },
+   "source_face": "DieGrotesk",
+   "tracking": 0.006,
+   "weight": 400
+  },
+  "h3": {
+   "case": null,
+   "delivery_class": "sans",
+   "delivery_face": "Schibsted Grotesk",
+   "delivery_fallback": false,
+   "leading": 0.96,
+   "not_recorded": [
+    "case"
+   ],
+   "px": 44,
+   "source": {
+    "blueprint": "lib/blueprints/butter.bp.json#/type/h3",
+    "raw": "lib/blueprints/raw/butter.json#/sections/6/heads/0"
+   },
+   "source_face": "DieGrotesk",
+   "tracking": 0.008,
+   "weight": 400
+  },
+  "label": null,
+  "levels_missing": {
+   "label": "not-in-capture"
+  },
+  "ratios": {
+   "display_to_body": {
+    "evidence": [
+     "typography.display.px",
+     "typography.body.px"
+    ],
+    "how": "display px ÷ body px",
+    "value": 4.9
+   },
+   "display_to_h2": {
+    "evidence": [
+     "typography.display.px",
+     "typography.h2.px"
+    ],
+    "how": "display px ÷ h2 px",
+    "value": 1.78
+   }
+  }
+ }
+}

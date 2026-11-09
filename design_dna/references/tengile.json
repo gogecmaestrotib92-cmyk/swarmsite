@@ -1,0 +1,1247 @@
+{
+ "built_from": {
+  "design_dna/evidence.json#/references/tengile": "sha256:4952dd4d48d421cea32c38304b27ca1c20c3ad671e90a627433238d62111e569",
+  "lib/blueprints/raw/tengile.json": "sha256:3af8c184eea56ef9bda47b5a4fecbec55174df51c30812b7ecd8675acf850cc1",
+  "lib/blueprints/tengile.bp.json": "sha256:8518ba3d3a7bfedb18c8e7da01b042f6798b118b828d8ead99973f41f699651a"
+ },
+ "completeness": {
+  "composition": "measured-desktop",
+  "experience": "prose-only",
+  "imagery": "measured-desktop",
+  "mobile": "missing",
+  "motion": "partial",
+  "screenshots": "missing",
+  "typography": "measured"
+ },
+ "composition": {
+  "basis": "measured",
+  "fraction_base": {
+   "basis": "assumed",
+   "source": "lib/blueprint/normalize.py",
+   "w": 1440
+  },
+  "grid": {
+   "col": null,
+   "container": 1393,
+   "frame": 16,
+   "gutter": null,
+   "not_recorded": [
+    "col",
+    "gutter"
+   ],
+   "raw_fields": {
+    "container": "lib/blueprints/raw/tengile.json#/container",
+    "frame": "lib/blueprints/raw/tengile.json#/frame"
+   },
+   "source": {
+    "blueprint": "lib/blueprints/tengile.bp.json#/grid",
+    "raw": "lib/blueprints/raw/tengile.json"
+   }
+  },
+  "sections": [
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": "uppercase",
+     "leading": 0.9,
+     "not_recorded": [
+      "align",
+      "y"
+     ],
+     "px": 120,
+     "source": "lib/blueprints/raw/tengile.json#/sections/0/heads/0",
+     "tracking": -0.02,
+     "weight": 220,
+     "wf": 0.967,
+     "x": 0.011,
+     "y": null
+    },
+    "media": [
+     {
+      "ar": 1.88,
+      "bleed": false,
+      "kind": "video",
+      "source": "lib/blueprints/raw/tengile.json#/sections/0/imgs/0",
+      "wf": 0.99,
+      "xf": null
+     }
+    ],
+    "role": "hero-video",
+    "screens": 1.0,
+    "source": {
+     "blueprint": "lib/blueprints/tengile.bp.json#/sections/0",
+     "raw": "lib/blueprints/raw/tengile.json#/sections/0"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": null,
+     "leading": 1.15,
+     "not_recorded": [
+      "align",
+      "case",
+      "tracking"
+     ],
+     "px": 32,
+     "source": "lib/blueprints/raw/tengile.json#/sections/1/heads/0",
+     "tracking": null,
+     "weight": 310,
+     "wf": 0.478,
+     "x": 0.501,
+     "y": 0.0
+    },
+    "media": [],
+    "role": "statement-right",
+    "screens": 0.39,
+    "source": {
+     "blueprint": "lib/blueprints/tengile.bp.json#/sections/1",
+     "raw": "lib/blueprints/raw/tengile.json#/sections/1"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": null,
+    "media": [
+     {
+      "ar": 0.79,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/tengile.json#/sections/2/imgs/0",
+      "wf": 0.444,
+      "xf": -0.013
+     },
+     {
+      "ar": 0.83,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/tengile.json#/sections/2/imgs/1",
+      "wf": 0.535,
+      "xf": 0.472
+     }
+    ],
+    "role": "photo-pair",
+    "screens": 1.52,
+    "source": {
+     "blueprint": "lib/blueprints/tengile.bp.json#/sections/2",
+     "raw": "lib/blueprints/raw/tengile.json#/sections/2"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": null,
+     "leading": 1.1,
+     "not_recorded": [
+      "align",
+      "case",
+      "tracking"
+     ],
+     "px": 48,
+     "source": "lib/blueprints/raw/tengile.json#/sections/3/heads/0",
+     "tracking": null,
+     "weight": 220,
+     "wf": 0.967,
+     "x": 0.011,
+     "y": 0.111
+    },
+    "media": [],
+    "role": "statement-full",
+    "screens": 0.55,
+    "source": {
+     "blueprint": "lib/blueprints/tengile.bp.json#/sections/3",
+     "raw": "lib/blueprints/raw/tengile.json#/sections/3"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": "uppercase",
+     "leading": null,
+     "not_recorded": [
+      "align",
+      "leading",
+      "tracking",
+      "wf",
+      "x",
+      "y"
+     ],
+     "px": 14,
+     "source": "lib/blueprints/raw/tengile.json#/sections/4/heads/0",
+     "tracking": null,
+     "weight": 500,
+     "wf": null,
+     "x": null,
+     "y": null
+    },
+    "media": [
+     {
+      "ar": 0.82,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/tengile.json#/sections/4/imgs/0",
+      "wf": 0.353,
+      "xf": -0.008
+     },
+     {
+      "ar": 0.82,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/tengile.json#/sections/4/imgs/1",
+      "wf": 0.353,
+      "xf": 0.318
+     },
+     {
+      "ar": 0.82,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/tengile.json#/sections/4/imgs/2",
+      "wf": 0.353,
+      "xf": 0.644
+     }
+    ],
+    "role": "cards-3up",
+    "screens": 1.11,
+    "source": {
+     "blueprint": "lib/blueprints/tengile.bp.json#/sections/4",
+     "raw": "lib/blueprints/raw/tengile.json#/sections/4"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": null,
+    "media": [],
+    "role": "cards-3up",
+    "screens": 1.11,
+    "source": {
+     "blueprint": "lib/blueprints/tengile.bp.json#/sections/5",
+     "raw": "lib/blueprints/raw/tengile.json#/sections/5"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": null,
+    "media": [],
+    "role": "quote-band",
+    "screens": 0.68,
+    "source": {
+     "blueprint": "lib/blueprints/tengile.bp.json#/sections/6",
+     "raw": "lib/blueprints/raw/tengile.json#/sections/6"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": null,
+    "media": [
+     {
+      "ar": 1.78,
+      "bleed": true,
+      "kind": null,
+      "source": "lib/blueprints/raw/tengile.json#/sections/7/imgs/0",
+      "wf": 1.083,
+      "xf": null
+     }
+    ],
+    "role": "photo-bleed",
+    "screens": 1.08,
+    "source": {
+     "blueprint": "lib/blueprints/tengile.bp.json#/sections/7",
+     "raw": "lib/blueprints/raw/tengile.json#/sections/7"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": null,
+     "leading": 1.15,
+     "not_recorded": [
+      "align",
+      "case",
+      "tracking"
+     ],
+     "px": 32,
+     "source": "lib/blueprints/raw/tengile.json#/sections/8/heads/0",
+     "tracking": null,
+     "weight": 310,
+     "wf": 0.478,
+     "x": 0.501,
+     "y": 0.106
+    },
+    "media": [
+     {
+      "ar": 0.68,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/tengile.json#/sections/8/imgs/0",
+      "wf": 0.262,
+      "xf": 0.486
+     },
+     {
+      "ar": 1.0,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/tengile.json#/sections/8/imgs/1",
+      "wf": 0.262,
+      "xf": 0.731
+     }
+    ],
+    "role": "story-right",
+    "screens": 1.19,
+    "source": {
+     "blueprint": "lib/blueprints/tengile.bp.json#/sections/8",
+     "raw": "lib/blueprints/raw/tengile.json#/sections/8"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": null,
+     "leading": null,
+     "not_recorded": [
+      "align",
+      "case",
+      "leading",
+      "tracking",
+      "wf",
+      "x",
+      "y"
+     ],
+     "px": 32,
+     "source": "lib/blueprints/raw/tengile.json#/sections/9/heads/0",
+     "tracking": null,
+     "weight": 310,
+     "wf": null,
+     "x": null,
+     "y": null
+    },
+    "media": [
+     {
+      "ar": 0.9,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/tengile.json#/sections/9/imgs/0",
+      "wf": 0.14,
+      "xf": 0.662
+     },
+     {
+      "ar": 0.88,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/tengile.json#/sections/9/imgs/1",
+      "wf": 0.109,
+      "xf": 0.406
+     },
+     {
+      "ar": 0.9,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/tengile.json#/sections/9/imgs/2",
+      "wf": 0.14,
+      "xf": 0.256
+     }
+    ],
+    "role": "collage",
+    "screens": 1.17,
+    "source": {
+     "blueprint": "lib/blueprints/tengile.bp.json#/sections/9",
+     "raw": "lib/blueprints/raw/tengile.json#/sections/9"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": null,
+     "leading": null,
+     "not_recorded": [
+      "align",
+      "case",
+      "leading",
+      "tracking"
+     ],
+     "px": 32,
+     "source": "lib/blueprints/raw/tengile.json#/sections/10/heads/0",
+     "tracking": null,
+     "weight": 310,
+     "wf": 0.478,
+     "x": 0.011,
+     "y": 0.077
+    },
+    "media": [
+     {
+      "ar": 1.21,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/tengile.json#/sections/10/imgs/0",
+      "wf": 0.361,
+      "xf": null
+     },
+     {
+      "ar": 0.85,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/tengile.json#/sections/10/imgs/1",
+      "wf": 0.361,
+      "xf": null
+     },
+     {
+      "ar": 0.82,
+      "bleed": false,
+      "kind": null,
+      "source": "lib/blueprints/raw/tengile.json#/sections/10/imgs/2",
+      "wf": 0.361,
+      "xf": null
+     }
+    ],
+    "role": "marquee-photos",
+    "screens": 1.47,
+    "source": {
+     "blueprint": "lib/blueprints/tengile.bp.json#/sections/10",
+     "raw": "lib/blueprints/raw/tengile.json#/sections/10"
+    },
+    "sticky": null
+   },
+   {
+    "bg": null,
+    "head": {
+     "align": null,
+     "case": null,
+     "leading": null,
+     "not_recorded": [
+      "align",
+      "case",
+      "leading",
+      "tracking"
+     ],
+     "px": 32,
+     "source": "lib/blueprints/raw/tengile.json#/sections/11/heads/0",
+     "tracking": null,
+     "weight": 310,
+     "wf": 0.319,
+     "x": 0.506,
+     "y": 0.588
+    },
+    "media": [
+     {
+      "ar": 1.13,
+      "bleed": true,
+      "kind": null,
+      "source": "lib/blueprints/raw/tengile.json#/sections/11/imgs/0",
+      "wf": 1.12,
+      "xf": null
+     }
+    ],
+    "role": "photo-text-overlay",
+    "screens": 1.68,
+    "source": {
+     "blueprint": "lib/blueprints/tengile.bp.json#/sections/11",
+     "raw": "lib/blueprints/raw/tengile.json#/sections/11"
+    },
+    "sticky": null
+   },
+   {
+    "bg": "#5c6e21",
+    "head": {
+     "align": null,
+     "case": null,
+     "leading": null,
+     "not_recorded": [
+      "align",
+      "case",
+      "leading",
+      "tracking",
+      "weight",
+      "wf",
+      "x",
+      "y"
+     ],
+     "px": 16,
+     "source": "lib/blueprints/raw/tengile.json#/sections/12/heads/0",
+     "tracking": null,
+     "weight": null,
+     "wf": null,
+     "x": null,
+     "y": null
+    },
+    "media": [],
+    "role": "footer",
+    "screens": 0.66,
+    "source": {
+     "blueprint": "lib/blueprints/tengile.bp.json#/sections/12",
+     "raw": "lib/blueprints/raw/tengile.json#/sections/12"
+    },
+    "sticky": null
+   }
+  ],
+  "summary": {
+   "bleed_section_share": {
+    "count": 3,
+    "evidence": [
+     "composition.sections"
+    ],
+    "how": "sections holding a medium flagged bleed in the capture or at least 98% of the viewport wide ÷ all sections",
+    "matched": [
+     "composition.sections[0].media[0].wf",
+     "composition.sections[7].media[0].bleed",
+     "composition.sections[11].media[0].bleed"
+    ],
+    "of": 13,
+    "value": 0.23
+   },
+   "offset_heading_share": {
+    "count": 3,
+    "evidence": [
+     "composition.sections[0].head.x",
+     "composition.sections[1].head.x",
+     "composition.sections[3].head.x",
+     "composition.sections[8].head.x",
+     "composition.sections[10].head.x",
+     "composition.sections[11].head.x"
+    ],
+    "how": "headings whose left edge is at or right of 30% of the viewport width ÷ headings with a recorded position",
+    "matched": [
+     "composition.sections[1].head.x",
+     "composition.sections[8].head.x",
+     "composition.sections[11].head.x"
+    ],
+    "of": 6,
+    "value": 0.5
+   },
+   "pacing": {
+    "evidence": [
+     "composition.sections[0].screens",
+     "composition.sections[1].screens",
+     "composition.sections[2].screens",
+     "composition.sections[3].screens",
+     "composition.sections[4].screens",
+     "composition.sections[5].screens",
+     "composition.sections[6].screens",
+     "composition.sections[7].screens",
+     "composition.sections[8].screens",
+     "composition.sections[9].screens",
+     "composition.sections[10].screens",
+     "composition.sections[11].screens",
+     "composition.sections[12].screens"
+    ],
+    "how": "section heights in screens, in page order",
+    "value": [
+     1.0,
+     0.39,
+     1.52,
+     0.55,
+     1.11,
+     1.11,
+     0.68,
+     1.08,
+     1.19,
+     1.17,
+     1.47,
+     1.68,
+     0.66
+    ]
+   },
+   "page_screens": {
+    "source": {
+     "blueprint": "lib/blueprints/tengile.bp.json#/screens",
+     "raw": "lib/blueprints/raw/tengile.json#/screens"
+    },
+    "value": 15.1
+   },
+   "sections": {
+    "evidence": [
+     "composition.sections"
+    ],
+    "how": "number of sections in the record",
+    "value": 13
+   },
+   "sections_screens_total": {
+    "evidence": [
+     "composition.sections[0].screens",
+     "composition.sections[1].screens",
+     "composition.sections[2].screens",
+     "composition.sections[3].screens",
+     "composition.sections[4].screens",
+     "composition.sections[5].screens",
+     "composition.sections[6].screens",
+     "composition.sections[7].screens",
+     "composition.sections[8].screens",
+     "composition.sections[9].screens",
+     "composition.sections[10].screens",
+     "composition.sections[11].screens",
+     "composition.sections[12].screens"
+    ],
+    "how": "sum of section heights in screens; sections can overlap or leave gaps, so this is not the page length",
+    "value": 13.61
+   }
+  },
+  "surface": {
+   "mode": "light",
+   "paper": "#f5eee9",
+   "paper_luminance": 0.938,
+   "source": {
+    "blueprint": "lib/blueprints/tengile.bp.json#/colour/paper",
+    "raw": "lib/blueprints/raw/tengile.json#/palette/0"
+   }
+  }
+ },
+ "evidence": {
+  "blueprint": "lib/blueprints/tengile.bp.json",
+  "caveats": [],
+  "mirrors": null,
+  "raw": "lib/blueprints/raw/tengile.json",
+  "screenshots": {
+   "desktop": [],
+   "dir": null,
+   "mobile": [],
+   "profile": null,
+   "unclassified": []
+  },
+  "scroll_capture": null
+ },
+ "experience": {
+  "not_measured": [
+   "narrative",
+   "interaction",
+   "mobile"
+  ],
+  "pacing_screens": {
+   "evidence": [
+    "composition.summary.pacing"
+   ],
+   "value": [
+    1.0,
+    0.39,
+    1.52,
+    0.55,
+    1.11,
+    1.11,
+    0.68,
+    1.08,
+    1.19,
+    1.17,
+    1.47,
+    1.68,
+    0.66
+   ]
+  },
+  "section_notes": [
+   {
+    "kind": "prose",
+    "section": 0,
+    "source": "lib/blueprints/tengile.bp.json#/sections/0/note",
+    "text": "full-bleed video, giant uppercase light serif h1 top-left at y=166, 18px serif lede 336px wide",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 1,
+    "source": "lib/blueprints/tengile.bp.json#/sections/1/note",
+    "text": "32px serif paragraph in right half (x=721, 689 wide); small Inter 14 label left",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 2,
+    "source": "lib/blueprints/tengile.bp.json#/sections/2/note",
+    "text": "two portrait photos offset (left bleeds edge, right larger), 16px Inter caption 343px",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 3,
+    "source": "lib/blueprints/tengile.bp.json#/sections/3/note",
+    "text": "48px light serif across full container",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 4,
+    "source": "lib/blueprints/tengile.bp.json#/sections/4/note",
+    "text": "uppercase 14 label, 3 portrait cards 508x619 with 20px serif title + 16px text under",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 5,
+    "source": "lib/blueprints/tengile.bp.json#/sections/5/note",
+    "text": "same as 5 (CAMPS)",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 6,
+    "source": "lib/blueprints/tengile.bp.json#/sections/6/note",
+    "text": "48px serif quote indented to x=140, 1158 wide, 80px pads",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 7,
+    "source": "lib/blueprints/tengile.bp.json#/sections/7/note",
+    "text": "full-bleed 16:9 photo, slight overscan (parallax)",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 8,
+    "source": "lib/blueprints/tengile.bp.json#/sections/8/note",
+    "text": "32px serif in right half + two small photos (portrait + square) under it",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 9,
+    "source": "lib/blueprints/tengile.bp.json#/sections/9/note",
+    "text": "small scattered photos around a centered 32px heading",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 10,
+    "source": "lib/blueprints/tengile.bp.json#/sections/10/note",
+    "text": "32px serif left half, then horizontal photo marquee of 520px-wide mixed-aspect images",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 11,
+    "source": "lib/blueprints/tengile.bp.json#/sections/11/note",
+    "text": "tall bleed photo with 32px serif paragraph bottom-right (x=728, 459 wide)",
+    "withheld": null
+   },
+   {
+    "kind": "prose",
+    "section": 12,
+    "source": "lib/blueprints/tengile.bp.json#/sections/12/note",
+    "text": "olive footer, 219px link columns from x=16",
+    "withheld": null
+   }
+  ]
+ },
+ "fits": {
+  "also": [],
+  "archetype": "editorial-lodge",
+  "archetype_source": "lib/blueprints/tengile.bp.json#/archetype",
+  "kinds": [
+   "place"
+  ],
+  "kinds_source": "lib/blueprints/tengile.bp.json#/class",
+  "needs": {
+   "derived_by": "rule",
+   "evidence": [
+    "imagery.image_sections",
+    "imagery.video_first_section"
+   ],
+   "images_min": 6,
+   "rule": "derive_needs",
+   "video": true
+  },
+  "temper": [
+   {
+    "derived_by": "rule",
+    "principle": "scale-contrast-high",
+    "rule": "rule_scale_contrast_high",
+    "tag": "high-contrast-type"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "display-light-weight",
+    "rule": "rule_display_light_weight",
+    "tag": "light-weight"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "display-uppercase",
+    "rule": "rule_display_uppercase",
+    "tag": "uppercase"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "tight-tracking",
+    "rule": "rule_tight_tracking",
+    "tag": "tight-tracking"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "tight-leading",
+    "rule": "rule_tight_leading",
+    "tag": "tight-leading"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "offset-headings",
+    "rule": "rule_offset_headings",
+    "tag": "asymmetric"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "portrait-media",
+    "rule": "rule_portrait_media",
+    "tag": "portrait-imagery"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "video-first-section",
+    "rule": "rule_video_first_section",
+    "tag": "video-led"
+   },
+   {
+    "derived_by": "rule",
+    "principle": "long-page",
+    "rule": "rule_long_page",
+    "tag": "long"
+   }
+  ]
+ },
+ "id": "tengile",
+ "imagery": {
+  "aspects": {
+   "evidence": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[4].media[0].ar",
+    "composition.sections[4].media[1].ar",
+    "composition.sections[4].media[2].ar",
+    "composition.sections[7].media[0].ar",
+    "composition.sections[8].media[0].ar",
+    "composition.sections[8].media[1].ar",
+    "composition.sections[10].media[0].ar",
+    "composition.sections[10].media[1].ar",
+    "composition.sections[10].media[2].ar",
+    "composition.sections[11].media[0].ar"
+   ],
+   "how": "distinct aspect ratios (width ÷ height) of large media; large = at least 20% of the viewport width",
+   "value": [
+    0.68,
+    0.79,
+    0.82,
+    0.83,
+    0.85,
+    1.0,
+    1.13,
+    1.21,
+    1.78,
+    1.88
+   ]
+  },
+  "basis": "measured",
+  "image_sections": {
+   "evidence": [
+    "composition.sections"
+   ],
+   "how": "sections holding at least one large still: not tagged video or canvas, aspect between 0.4 and 2.5",
+   "matched": [
+    "composition.sections[2].media[0]",
+    "composition.sections[4].media[0]",
+    "composition.sections[7].media[0]",
+    "composition.sections[8].media[0]",
+    "composition.sections[10].media[0]",
+    "composition.sections[11].media[0]"
+   ],
+   "of": 13,
+   "share": 0.46,
+   "value": 6
+  },
+  "landscape_share": {
+   "count": 3,
+   "evidence": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[4].media[0].ar",
+    "composition.sections[4].media[1].ar",
+    "composition.sections[4].media[2].ar",
+    "composition.sections[7].media[0].ar",
+    "composition.sections[8].media[0].ar",
+    "composition.sections[8].media[1].ar",
+    "composition.sections[10].media[0].ar",
+    "composition.sections[10].media[1].ar",
+    "composition.sections[10].media[2].ar",
+    "composition.sections[11].media[0].ar"
+   ],
+   "how": "large media with aspect ≥ 1.2 ÷ large media",
+   "matched": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[7].media[0].ar",
+    "composition.sections[10].media[0].ar"
+   ],
+   "of": 13,
+   "value": 0.23
+  },
+  "media_recorded": {
+   "evidence": [
+    "composition.sections"
+   ],
+   "how": "media elements kept in the record: wider than 100px, at most 4 per section",
+   "value": 16
+  },
+  "portrait_share": {
+   "count": 8,
+   "evidence": [
+    "composition.sections[0].media[0].ar",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[4].media[0].ar",
+    "composition.sections[4].media[1].ar",
+    "composition.sections[4].media[2].ar",
+    "composition.sections[7].media[0].ar",
+    "composition.sections[8].media[0].ar",
+    "composition.sections[8].media[1].ar",
+    "composition.sections[10].media[0].ar",
+    "composition.sections[10].media[1].ar",
+    "composition.sections[10].media[2].ar",
+    "composition.sections[11].media[0].ar"
+   ],
+   "how": "large media with aspect ≤ 0.9 ÷ large media",
+   "matched": [
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[4].media[0].ar",
+    "composition.sections[4].media[1].ar",
+    "composition.sections[4].media[2].ar",
+    "composition.sections[8].media[0].ar",
+    "composition.sections[10].media[1].ar",
+    "composition.sections[10].media[2].ar"
+   ],
+   "of": 13,
+   "value": 0.62
+  },
+  "video_first_section": {
+   "evidence": [
+    "composition.sections[0].media"
+   ],
+   "how": "the first section holds a medium the capture tagged VIDEO",
+   "matched": [
+    "composition.sections[0].media[0].kind"
+   ],
+   "value": true
+  }
+ },
+ "implementation": {
+  "ir_seeds": [],
+  "recipe": "lib/templates/recipes.py#tengile"
+ },
+ "motion": {
+  "animated": null,
+  "custom_cursor": null,
+  "keyframes": [
+   "SectionImagesMarquee marquee",
+   "SectionMap pinPointIddler"
+  ],
+  "libs": {
+   "lenis": true
+  },
+  "not_measured": [
+   "scroll",
+   "pinning",
+   "sequence",
+   "interaction",
+   "reduced-motion"
+  ],
+  "note": {
+   "kind": "prose",
+   "source": "lib/blueprints/tengile.bp.json#/motion/idea",
+   "text": "slow expo easings 1.6–2s on image reveal (blur+scale), image marquee band, map with idle pins",
+   "withheld": null
+  },
+  "source": "lib/blueprints/raw/tengile.json#/motion",
+  "tracked": null,
+  "transitions": [
+   "filter, transform|1.6s|cubic-bezier(0.19, 1, 0.22, 1)",
+   "opacity, filter|1s|cubic-bezier(0.165, 0.84, 0.44, 1)",
+   "transform|2s|cubic-bezier(0.19, 1, 0.22, 1)",
+   "transform|0.8s|cubic-bezier(0.77, 0, 0.175, 1)"
+  ]
+ },
+ "principles": [
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "typography.ratios.display_to_body",
+    "typography.display.px",
+    "typography.body.px"
+   ],
+   "id": "scale-contrast-high",
+   "rule": "rule_scale_contrast_high",
+   "statement": "The largest measured heading is 7.5× the body size (120px over 16px). Threshold: ratio ≥ 7."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "typography.display.weight"
+   ],
+   "id": "display-light-weight",
+   "rule": "rule_display_light_weight",
+   "statement": "The largest measured heading is set light, weight 220. Threshold: weight ≤ 300."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "typography.display.case"
+   ],
+   "id": "display-uppercase",
+   "rule": "rule_display_uppercase",
+   "statement": "The largest measured heading is set in uppercase. Threshold: text-transform uppercase recorded in the capture."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "typography.display.tracking",
+    "typography.display.px"
+   ],
+   "id": "tight-tracking",
+   "rule": "rule_tight_tracking",
+   "statement": "The largest measured heading is tracked tight, -0.02em at 120px. Threshold: ≤ -0.02em."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "typography.display.leading"
+   ],
+   "id": "tight-leading",
+   "rule": "rule_tight_leading",
+   "statement": "The largest measured heading has a line height of 0.9. Threshold: ≤ 0.95."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "composition.summary.offset_heading_share",
+    "composition.sections[1].head.x",
+    "composition.sections[8].head.x",
+    "composition.sections[11].head.x"
+   ],
+   "id": "offset-headings",
+   "rule": "rule_offset_headings",
+   "statement": "3 of 6 headings with a recorded position start at or right of 30% of the viewport width. Threshold: share ≥ 25% and at least 2 headings."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "imagery.portrait_share",
+    "composition.sections[2].media[0].ar",
+    "composition.sections[2].media[1].ar",
+    "composition.sections[4].media[0].ar",
+    "composition.sections[4].media[1].ar",
+    "composition.sections[4].media[2].ar",
+    "composition.sections[8].media[0].ar",
+    "composition.sections[10].media[1].ar",
+    "composition.sections[10].media[2].ar"
+   ],
+   "id": "portrait-media",
+   "rule": "rule_portrait_media",
+   "statement": "8 of 13 large media are portrait (aspect ≤ 0.9; large = at least 20% of the viewport width). Threshold: share ≥ 60% and at least 3 large media."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "imagery.video_first_section",
+    "composition.sections[0].media[0].kind"
+   ],
+   "id": "video-first-section",
+   "rule": "rule_video_first_section",
+   "statement": "The first measured section holds a video element. Threshold: a medium tagged VIDEO in the first section of the capture."
+  },
+  {
+   "confidence": "measured",
+   "derived_by": "rule",
+   "evidence": [
+    "composition.summary.page_screens.value"
+   ],
+   "id": "long-page",
+   "rule": "rule_long_page",
+   "statement": "The page runs 15.1 screens at the capture height. Threshold: ≥ 15 screens."
+  }
+ ],
+ "rights": {
+  "fonts": [
+   {
+    "face": "Cormorant Garamond",
+    "licence": "unknown",
+    "role": "delivery",
+    "source": null
+   },
+   {
+    "face": "Geist",
+    "licence": "unknown",
+    "role": "delivery",
+    "source": null
+   },
+   {
+    "face": "Inter",
+    "licence": "unknown",
+    "role": "source",
+    "source": null
+   },
+   {
+    "face": "PP Fragment",
+    "licence": "unknown",
+    "role": "source",
+    "source": null
+   }
+  ],
+  "screenshots": "research-only",
+  "source_text": "excluded"
+ },
+ "schema_version": 1,
+ "source": {
+  "captured_at": null,
+  "description": null,
+  "dpr": null,
+  "url": "https://tengilemalamala.com/",
+  "url_source": "lib/blueprints/tengile.bp.json#/source",
+  "viewport": {
+   "h": 756,
+   "h_source": "lib/blueprints/raw/tengile.json#/vh",
+   "w": null,
+   "w_source": null
+  }
+ },
+ "status": "measured-desktop",
+ "typography": {
+  "basis": "measured",
+  "body": {
+   "case": null,
+   "delivery_class": "sans",
+   "delivery_face": "Geist",
+   "delivery_fallback": false,
+   "leading": 1.25,
+   "not_recorded": [
+    "case",
+    "tracking",
+    "weight"
+   ],
+   "px": 16,
+   "source": {
+    "blueprint": "lib/blueprints/tengile.bp.json#/type/body",
+    "raw": "lib/blueprints/raw/tengile.json#/sections/4/paras/0"
+   },
+   "source_face": "Inter",
+   "tracking": null,
+   "weight": null
+  },
+  "display": {
+   "case": "uppercase",
+   "delivery_class": "serif",
+   "delivery_face": "Cormorant Garamond",
+   "delivery_fallback": false,
+   "leading": 0.9,
+   "not_recorded": [],
+   "px": 120,
+   "source": {
+    "blueprint": "lib/blueprints/tengile.bp.json#/type/display",
+    "raw": "lib/blueprints/raw/tengile.json#/sections/0/heads/0"
+   },
+   "source_face": "PP Fragment",
+   "tracking": -0.02,
+   "weight": 220
+  },
+  "families": {
+   "source": "lib/blueprints/raw/tengile.json#/fonts",
+   "value": [
+    "Inter",
+    "PP Fragment"
+   ]
+  },
+  "h2": {
+   "case": null,
+   "delivery_class": "serif",
+   "delivery_face": "Cormorant Garamond",
+   "delivery_fallback": false,
+   "leading": 1.1,
+   "not_recorded": [
+    "case",
+    "tracking"
+   ],
+   "px": 48,
+   "source": {
+    "blueprint": "lib/blueprints/tengile.bp.json#/type/h2",
+    "raw": "lib/blueprints/raw/tengile.json#/sections/3/heads/0"
+   },
+   "source_face": "PP Fragment",
+   "tracking": null,
+   "weight": 220
+  },
+  "h3": {
+   "case": null,
+   "delivery_class": "serif",
+   "delivery_face": "Cormorant Garamond",
+   "delivery_fallback": false,
+   "leading": 1.15,
+   "not_recorded": [
+    "case",
+    "tracking"
+   ],
+   "px": 32,
+   "source": {
+    "blueprint": "lib/blueprints/tengile.bp.json#/type/h3",
+    "raw": "lib/blueprints/raw/tengile.json#/sections/1/heads/0"
+   },
+   "source_face": "PP Fragment",
+   "tracking": null,
+   "weight": 310
+  },
+  "label": {
+   "case": "uppercase",
+   "delivery_class": "sans",
+   "delivery_face": "Geist",
+   "delivery_fallback": false,
+   "leading": null,
+   "not_recorded": [
+    "leading",
+    "tracking"
+   ],
+   "px": 14,
+   "source": {
+    "blueprint": "lib/blueprints/tengile.bp.json#/type/label",
+    "raw": "lib/blueprints/raw/tengile.json#/sections/4/heads/0"
+   },
+   "source_face": "Inter",
+   "tracking": null,
+   "weight": 500
+  },
+  "levels_missing": {},
+  "ratios": {
+   "display_to_body": {
+    "evidence": [
+     "typography.display.px",
+     "typography.body.px"
+    ],
+    "how": "display px ÷ body px",
+    "value": 7.5
+   },
+   "display_to_h2": {
+    "evidence": [
+     "typography.display.px",
+     "typography.h2.px"
+    ],
+    "how": "display px ÷ h2 px",
+    "value": 2.5
+   }
+  }
+ }
+}
