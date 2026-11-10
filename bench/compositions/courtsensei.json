@@ -1,0 +1,121 @@
+{
+ "ir": "0.1",
+ "note": "The product in its frame, wide and low on the right; the headline runs past its edge on a plate, so the words and the tool read as one object.",
+ "hero": {
+  "surface": "paper",
+  "height": "auto",
+  "rows": [
+   "auto",
+   "auto",
+   "auto",
+   "auto"
+  ],
+  "gap": "md",
+  "nodes": [
+   {
+    "id": "cat",
+    "t": "text",
+    "src": "hero.category",
+    "as": "label",
+    "at": {
+     "col": [
+      1,
+      6
+     ],
+     "row": 1
+    }
+   },
+   {
+    "id": "fact",
+    "t": "text",
+    "src": "hero.fact",
+    "as": "label",
+    "align": "end",
+    "at": {
+     "col": [
+      8,
+      13
+     ],
+     "row": 1
+    }
+   },
+   {
+    "id": "h1",
+    "t": "text",
+    "src": "hero.h1",
+    "as": "h1",
+    "size": "xxl",
+    "measure": 11,
+    "plate": "paper",
+    "at": {
+     "col": [
+      1,
+      9
+     ],
+     "row": 2,
+     "z": 2
+    }
+   },
+   {
+    "id": "tool",
+    "t": "media",
+    "src": "hero.picture",
+    "fit": "contain",
+    "ratio": "3/2",
+    "frame": "browser",
+    "at": {
+     "col": [
+      6,
+      13
+     ],
+     "row": [
+      2,
+      5
+     ],
+     "z": 1,
+     "self": "end"
+    }
+   },
+   {
+    "id": "lede",
+    "t": "text",
+    "src": "hero.lede",
+    "as": "lede",
+    "measure": 40,
+    "at": {
+     "col": [
+      1,
+      6
+     ],
+     "row": 3
+    }
+   },
+   {
+    "id": "go",
+    "t": "actions",
+    "src": [
+     "hero.cta",
+     "hero.cta2"
+    ],
+    "at": {
+     "col": [
+      1,
+      6
+     ],
+     "row": 4
+    }
+   }
+  ],
+  "sm": {
+   "order": [
+    "cat",
+    "h1",
+    "lede",
+    "go",
+    "tool",
+    "fact"
+   ]
+  },
+  "enter": "none"
+ }
+}

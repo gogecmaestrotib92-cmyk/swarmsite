@@ -6,6 +6,11 @@ how the page is composed, never from a different capture or different words.
   shipped   the direction exactly as the job left it, through today's renderer
   house     the house lock applied: order and move of every section fixed per kind of business
   recipe    no house, per-section moves cleared: the chosen recipe's own slots decide the forms
+  composed  shipped, with the hero replaced by the hand- or model-written composition in bench/compositions/<site>.json
+            (sites without a composition are skipped; a composition the validator refuses is an error, never a fallback)
+  modelled  the same, with the composition a model wrote (bench/compose.py → bench/runs/_compositions/<site>.json)
+  page      modelled, and the lists below the first screen drawn as the model composed them
+            (bench/compose.py --lists → bench/runs/_compositions/<site>.lists.json)
 
 Usage: python3 bench/run.py <variant> [site-id ...] [--no-shots]
 Writes bench/runs/<variant>/<site>/{page.html, contract.json, fingerprint.json, result.json, desktop.jpg, mobile.jpg}
@@ -13,9 +18,11 @@ and bench/runs/<variant>/summary.json. Needs Python 3.12+, node and a Chrome (CH
 import copy, json, os, shutil, subprocess, sys, time
 
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(HERE)
-sys.path.insert(0, os.path.join(ROOT, 'lib')); sys.path.insert(0, os.path.join(ROOT, 'lib', 'qa'))
+sys.path.insert(0, os.path.join(ROOT, 'lib')); sys.path.insert(0, os.path.join(ROOT, 'lib', 'qa')); sys.path.insert(0, os.path.join(ROOT, 'lib', 'compose'))
 import house as HOUSE
 import fingerprint as FP
+import render_ir as IR
+import lists as LISTS
 
 INPUTS = ('direction.json', 'images.json', 'assets.json', 'inventory.json', 'brief.json', 'hero.mp4')
 # Promises whose failure means the page is broken for a visitor, not merely off-style.
@@ -34,7 +41,8 @@ def recipe(d):
         if isinstance(beat.get('ui'), dict): beat['ui'].pop('move', None)
     return d
 
-VARIANTS = {'shipped': shipped, 'house': house, 'recipe': recipe}
+VARIANTS = {'shipped': shipped, 'house': house, 'recipe': recipe, 'composed': shipped, 'modelled': shipped, 'page': shipped}
+COMPOSITIONS = {'composed': os.path.join(HERE, 'compositions'), 'modelled': os.path.join(HERE, 'runs', '_compositions'), 'page': os.path.join(HERE, 'runs', '_compositions')}
 
 
 def environment():
@@ -61,6 +69,22 @@ def run_site(site, variant, shots=True):
     result['seconds']['render'] = round(time.time() - t, 1)
     if r.returncode: result['error'] = 'render: ' + r.stderr[-300:]; return result
     with open(page, encoding='utf-8') as f: html = f.read()
+    if variant in COMPOSITIONS:
+        composition = os.path.join(COMPOSITIONS[variant], site['id'] + '.json')
+        with open(composition) as f: ir = json.load(f)
+        with open(os.path.join(work, 'images.json')) as f: images = json.load(f)
+        html, report = IR.transplant(html, ir, images)
+        result['composition'] = {'drawn': report['drawn'], 'errors': report['errors'], 'note': ir.get('note')}
+        if not report['drawn']:
+            result['error'] = 'composition refused: ' + '; '.join(f"{e['code']} {e['at']}" for e in report['errors'][:4]); return result
+        lists_doc = os.path.join(COMPOSITIONS[variant], site['id'] + '.lists.json')
+        if variant == 'page' and os.path.exists(lists_doc):
+            with open(lists_doc) as f: doc = json.load(f)
+            html, drawn = LISTS.transplant(html, doc)
+            result['lists'] = {'drawn': drawn['drawn'], 'sections': drawn['sections'], 'errors': drawn['errors'], 'note': doc.get('note'), 'forms': {l['section']: l['form'] for l in doc.get('lists', []) if isinstance(l, dict) and 'section' in l}}
+            if not drawn['drawn']:
+                result['error'] = 'lists refused: ' + '; '.join(f"{e['code']} {e['at']}" for e in drawn['errors'][:4]); return result
+        with open(page, 'w', encoding='utf-8') as f: f.write(html)
     result['bytes'] = len(html.encode('utf-8'))
     fp = FP.fingerprint(html); result['fingerprint'] = fp
     with open(os.path.join(work, 'fingerprint.json'), 'w') as f: json.dump(fp, f, indent=1)
@@ -109,6 +133,7 @@ def main():
     results = []
     for site in sites:
         if wanted and site['id'] not in wanted: continue
+        if variant in COMPOSITIONS and not os.path.exists(os.path.join(COMPOSITIONS[variant], site['id'] + '.json')): continue
         r = run_site(site, variant, shots); results.append(r)
         mark = '✗' if r.get('error') else '✓'
         print(f"{mark} {site['id']:22s} {site['blueprint']:14s} contract {r.get('contract')}  hard {r.get('hard_failures')}  " + (r.get('error') or ' | '.join((r.get('fingerprint') or {}).get('body', []))), flush=True)

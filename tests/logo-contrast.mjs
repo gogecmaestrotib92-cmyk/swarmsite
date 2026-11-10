@@ -61,7 +61,7 @@ try{
     const btn=page.locator('.hero .btn:not(.ghost)').first();assert.equal(await btn.count(),1);
     const styles=await btn.evaluate(e=>({bg:getComputedStyle(e).backgroundColor,fg:getComputedStyle(e).color}));
     const luminance=c=>{const a=c.match(/\d+/g).slice(0,3).map(x=>{x=+x/255;return x<=.04045?x/12.92:((x+.055)/1.055)**2.4});return .2126*a[0]+.7152*a[1]+.0722*a[2]};const x=luminance(styles.bg),y=luminance(styles.fg);assert.ok((Math.max(x,y)+.05)/(Math.min(x,y)+.05)>=4.5,`${width}: CTA text contrast`);
-    await page.evaluate(()=>scrollTo(0,500));await page.waitForTimeout(100);assert.match(await page.locator('nav').getAttribute('class'),/\bsolid\b/);assert.equal(await page.locator('nav .logo-surface').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(255, 255, 255)',`${width}: dark solid nav after scroll`);
+    await page.evaluate(()=>scrollTo(0,500));await page.waitForFunction(()=>document.querySelector('nav').classList.contains('solid'),null,{timeout:3000});/* the nav turns solid on the scroll event: wait for the state, not for 100 ms — under a full test run the handler can take longer and the fixed wait went red although the page was right */assert.equal(await page.locator('nav .logo-surface').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(255, 255, 255)',`${width}: dark solid nav after scroll`);
    }
    if(c.mediumPaper){
     await page.evaluate(()=>{const e=document.createElement('div');e.style.cssText='position:fixed;inset:0 0 auto;height:120px;background:#000;z-index:49';document.body.append(e);scrollTo(0,500)});await page.waitForTimeout(100);
@@ -86,7 +86,7 @@ try{
    const page=await browser.newPage({viewport:{width,height:900},reducedMotion:'reduce'});await page.route(/^https?:/,route=>route.abort());await page.goto(pathToFileURL(out).href+'?nomotion=1',{waitUntil:'load'});
    assert.equal(await page.locator('.hero.has-media').count(),1);assert.match(await page.locator('nav').getAttribute('class'),/\bon-photo\b/);
    assert.equal(await page.locator('nav .logo-surface').evaluate(e=>getComputedStyle(e).backgroundColor),needsPlate?'rgb(255, 255, 255)':'rgba(0, 0, 0, 0)');
-   await page.evaluate(()=>scrollTo(0,900));await page.waitForTimeout(100);assert.match(await page.locator('nav').getAttribute('class'),/\bsolid\b/);
+   await page.evaluate(()=>scrollTo(0,900));await page.waitForFunction(()=>document.querySelector('nav').classList.contains('solid'),null,{timeout:3000});/* the nav turns solid on the scroll event: wait for the state, not for 100 ms — under a full test run the handler can take longer and the fixed wait went red although the page was right */
    assert.equal(await page.locator('nav .logo-surface').evaluate(e=>getComputedStyle(e).backgroundColor),'rgba(0, 0, 0, 0)');await page.close();
   }
  }
@@ -114,7 +114,7 @@ try{
    assert.ok(await page.locator('.hero .btn').count(),`${bp}/${keepColours}/${width}: hero CTA exists`);
    if(captured)assert.ok(await page.locator('#pricing .btn').count(),`${bp}/${keepColours}/${width}: captured pricing CTA exists`);
    for(const selector of ['nav .btn','.hero .btn','#pricing .btn'])for(const el of await page.locator(selector).all())assert.ok(await ratio(el)>=4.5,`${bp}/${keepColours}/${width} ${selector}: actual text contrast`);
-   await page.evaluate(()=>scrollTo(0,500));await page.waitForTimeout(100);assert.match(await page.locator('nav').getAttribute('class'),/\bsolid\b/);
+   await page.evaluate(()=>scrollTo(0,500));await page.waitForFunction(()=>document.querySelector('nav').classList.contains('solid'),null,{timeout:3000});/* the nav turns solid on the scroll event: wait for the state, not for 100 ms — under a full test run the handler can take longer and the fixed wait went red although the page was right */
    for(const el of await page.locator('nav .btn').all())assert.ok(await ratio(el)>=4.5,`${bp}/${keepColours}/${width}: nav CTA after scroll`);
    await page.close();
   }
