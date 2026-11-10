@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # livetest.sh — the step before you land code. Renders the sample direction through every blueprint,
-# grades each render against the contract at 1440 and 390, and fails loudly. Usage: scripts/livetest.sh [min-score]
+# grades each render against the contract at 1440 and 390, measures its typesetting at five widths (lib/qa/layout.mjs:
+# no heading stacked a word to a line, no split word, no sliver of a column, nothing clipped or overlapping), and fails loudly. Usage: scripts/livetest.sh [min-score]
 set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"; cd "$ROOT"
 MIN="${1:-75}"; TMP="$(mktemp -d)"; FAIL=0; export LIVETEST=1
@@ -12,6 +13,8 @@ one() { bp="$1"; mkdir -p "$TMP/$bp"
   if ! python3 lib/render/render_bp.py "$TMP/site" "$bp" "$TMP/$bp/page.html" >/dev/null 2>"$TMP/$bp/err"; then echo "✗ $bp: render failed — $(tail -c 300 "$TMP/$bp/err")" > "$TMP/$bp/result"; return; fi
   out="$(node lib/qa/contract.mjs "$TMP/$bp/page.html" --dir "$TMP/$bp" 2>"$TMP/$bp/cerr" | tail -1)"
   score="$(echo "$out" | python3 -c 'import sys,json; print(json.load(sys.stdin)["score"])' 2>/dev/null || echo -1)"
+  broken="$(node lib/qa/layout.mjs "$TMP/$bp/page.html" 2>/dev/null | tail -1 | python3 -c 'import sys,json; b=json.load(sys.stdin)["breaks"]; print("; ".join("%s in %s at %s (%s)" % (x["kind"], x["section"], x["widths"], x["detail"]) for x in b[:3]))' 2>/dev/null || echo "layout could not be measured")"
+  if [ -n "$broken" ]; then echo "✗ $bp: layout broken — $broken" > "$TMP/$bp/result"; return; fi
   if [ "$score" -lt "$MIN" ]; then echo "✗ $bp: contract $score < $MIN — $(echo "$out" | python3 -c 'import sys,json; print("; ".join(json.load(sys.stdin)["failed"][:4]))' 2>/dev/null)" > "$TMP/$bp/result"; else echo "✓ $bp: contract $score" > "$TMP/$bp/result"; fi; }
 for bp in $BPS; do one "$bp" & done; wait
 for bp in $BPS; do r="$(cat "$TMP/$bp/result" 2>/dev/null || echo "✗ $bp: no result")"; echo "$r"; case "$r" in ✗*) FAIL=1;; esac; done

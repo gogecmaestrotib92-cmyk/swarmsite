@@ -36,7 +36,8 @@ try {
       const page = await browser.newPage({ viewport: { width, height: 900 }, reducedMotion: 'reduce' });
       await page.goto(pathToFileURL(output).href + '?nomotion=1');
       const sizes = await page.locator('#first h2, #second h2').evaluateAll(els => els.map(el => parseFloat(getComputedStyle(el).fontSize)));
-      const sizeAt = px => Math.max(Math.max(28, Math.floor(px * .45)), Math.min(px, Math.round(px / 14.4 * 100) / 100 * width / 100));
+      const floor = width <= 600 ? 32 : 28;   // on a phone a section heading does not fall under 32 px (it outranks 18 px running text)
+      const sizeAt = px => Math.max(floor, Math.max(Math.max(28, Math.floor(px * .45)), Math.min(px, Math.round(px / 14.4 * 100) / 100 * width / 100)));
       assert.equal(sizes.length, 2, `${name} headings`);
       assert.ok(Math.abs(sizes[0] - sizeAt(Math.min(h2, 96))) < .2, `${name} body-scale heading at ${width}: ${sizes[0]}`);
       assert.ok(Math.abs(sizes[1] - sizeAt(smaller)) < .2, `${name} intentional heading at ${width}: ${sizes[1]}`);

@@ -8,6 +8,9 @@ Every significant change goes through, in this order, before `git commit`:
 3. **Commit** — one change per commit, message says what the page does differently, not what the code does.
 4. **Track** — append one line to `REFACTOR.md` under today's date: what changed, the live-test result, the next bottleneck.
 
+## Broken layout never ships (added 2026-11-10)
+`lib/qa/layout.mjs <page.html>` measures every heading and paragraph at 390, 768, 1100, 1440 and 1920 and names what is broken as typesetting: a heading stacked a word to a line, a split word, a line of punctuation alone, a paragraph in a sliver of a column, text clipped or lying over other text. It is not a matter of taste and it is not weighed against the critic. `scripts/livetest.sh` fails on any break in any blueprint. In the loop (`lib/swarm/run.py mend_layout`) a composed section with a break goes back to what it was before composition, and a composed page whose first screen is broken is refused. A new kind of breakage seen on a real page becomes a check in `layout.mjs` with a fixture in `tests/layout-breaks.mjs` — never a patch for that one page. Check widths between and beyond the two the contract uses: the column that started this was fine at 1440 and 186 px wide at 1800.
+
 ## Effort
 Use high effort for anything in `lib/render`, `lib/swarm`, `lib/qa`, `server/`. A cheap pass that "looks fine" has cost us a day more than once (sticky that never stuck, text invisible on dark bands, the same picture four times).
 

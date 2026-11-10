@@ -37,9 +37,9 @@ CSS = """
 .sec.wc .wc-head,.sec.wc .wc-body{grid-column:1/-1;min-width:0;padding:0;margin:0;overflow-wrap:break-word}
 .sec.wc .wc-body .rows li b{flex-shrink:0;max-width:100%;overflow-wrap:break-word}
 .sec.wc .wc-head .h2{text-wrap:balance;overflow-wrap:normal;margin-top:14px}.sec.wc .wc-head .lede,.sec.wc .wc-head .cap{margin-top:clamp(14px,1.6vw,24px);max-width:48ch}
-.sec.wc.wc-t-md .wc-head .h2{font-size:min(clamp(28px,3.2vw,46px),calc((100vw - 48px) / var(--lw,8) * 1.72))!important;line-height:1.06}
-.sec.wc.wc-t-lg .wc-head .h2{font-size:min(clamp(34px,4.4vw,64px),calc((100vw - 48px) / var(--lw,8) * 1.72))!important;line-height:1.02}
-.sec.wc.wc-t-xl .wc-head .h2{font-size:min(clamp(40px,6.2vw,96px),calc((100vw - 48px) / var(--lw,8) * 1.72))!important;line-height:.98;letter-spacing:var(--h1-ls,-.03em)}
+.sec.wc.wc-t-md .wc-head .h2{font-size:min(calc(clamp(28px,3.2vw,46px) * var(--face-grow,1)),calc((100vw - 48px) / var(--lw,8) * 1.72))!important;line-height:1.06}
+.sec.wc.wc-t-lg .wc-head .h2{font-size:min(calc(clamp(34px,4.4vw,64px) * var(--face-grow,1)),calc((100vw - 48px) / var(--lw,8) * 1.72))!important;line-height:1.02}
+.sec.wc.wc-t-xl .wc-head .h2{font-size:min(calc(clamp(40px,6.2vw,96px) * var(--face-grow,1)),calc((100vw - 48px) / var(--lw,8) * 1.72))!important;line-height:.98;letter-spacing:var(--h1-ls,-.03em)}
 .sec.wc .wc-body>:first-child{margin-top:0}
 .sec.wc.wc-f-poster .wc-body{grid-column:6/-1;border-top:1px solid var(--line);padding-top:clamp(18px,2vw,28px)}.sec.wc.wc-f-poster.wc-side-left .wc-body{grid-column:1/8}
 .sec.wc.wc-f-columns .wc-body ul,.sec.wc.wc-f-columns .wc-body ol{display:block;column-count:2;column-gap:clamp(32px,6vw,96px)}.sec.wc.wc-f-columns .wc-body li{break-inside:avoid}

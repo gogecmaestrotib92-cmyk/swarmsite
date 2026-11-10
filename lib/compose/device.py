@@ -23,18 +23,21 @@ STEP_WORDS = (3, 9)      # a heading of fewer words has nothing to step; a longe
 CSS = """
 .sec .h2 .dv-l{display:block}.sec .h2 .dv-l+.dv-l{padding-left:calc(var(--dv-step,0) * .5em)}
 .sec .h2.dv-stepped{text-wrap:wrap;max-width:none}
+.sec .pc-col .h2 .dv-l,.sec .lc-head-left .h2 .dv-l,.sec .lc-head-sticky .h2 .dv-l{display:inline;padding-left:0}
 .sec .h2 em.dv-mk{font-style:normal;color:inherit}
 .sec .h2 em.dv-mk-accent{color:var(--accent-word,var(--accent))}.sec.band-accent .h2 em.dv-mk-accent,.sec.wc-g-accent .h2 em.dv-mk-accent,.sec.dv-event .h2 em.dv-mk-accent{color:inherit;font-style:italic}
+.sec.band-accent .h2 em.dv-mk-underline,.sec.wc-g-accent .h2 em.dv-mk-underline,.sec.dv-event .h2 em.dv-mk-underline{text-decoration-color:currentColor}
+.sec.band-accent .h2 em.dv-mk-box,.sec.wc-g-accent .h2 em.dv-mk-box,.sec.dv-event .h2 em.dv-mk-box{background:var(--on-accent,var(--paper));color:var(--accent)}
 .sec .h2 em.dv-mk-italic{font-style:italic}
 .sec .h2 em.dv-mk-outline{color:transparent;-webkit-text-stroke:max(1.2px,.018em) currentColor}
 .sec .h2 em.dv-mk-underline{text-decoration:underline;text-decoration-color:var(--accent);text-decoration-thickness:.07em;text-underline-offset:.12em;text-decoration-skip-ink:none}
 .sec .h2 em.dv-mk-box{background:var(--accent);color:var(--on-accent,var(--paper));padding:0 .14em;margin:0 -.04em;box-decoration-break:clone;-webkit-box-decoration-break:clone}
 .sec.cta.dv-event{--band-paper:var(--accent);--band-ink:var(--on-accent,var(--paper));background:var(--accent);color:var(--on-accent,var(--paper));min-height:min(88svh,900px)!important}
 .sec.cta.dv-event.cta-inset{background:var(--paper)}.sec.cta.dv-event.cta-inset>.wrap{background:var(--accent);color:var(--on-accent,var(--paper));min-height:min(80svh,820px);align-content:center}
-.sec.cta.dv-event .h2{font-size:min(clamp(48px,8.4vw,136px),calc((100vw - 48px) / var(--lw,8) * 1.72))!important;line-height:.96;max-width:none}
+.sec.cta.dv-event:not(.hero) .h2.h2[style]{font-size:min(clamp(44px,8.4vw,136px),calc((100vw - 48px) / var(--lw,8) * 1.72))!important;line-height:.96;max-width:min(100%,18ch)!important;text-wrap:balance}
 .sec.cta.dv-event .btn{background:var(--on-accent,var(--paper));color:var(--accent);border-color:var(--on-accent,var(--paper))}
 .sec.cta.dv-event .lab,.sec.cta.dv-event .alts .lab{color:inherit;opacity:.8}
-@media(max-width:600px){.sec .h2 .dv-l+.dv-l{padding-left:calc(var(--dv-step,0) * .25em)}}
+@media(max-width:600px){.sec .h2 .dv-l+.dv-l{padding-left:calc(var(--dv-step,0) * .25em)}.sec.cta.dv-event{min-height:0!important;padding-top:clamp(72px,18vw,120px);padding-bottom:clamp(72px,18vw,120px)}.sec.cta.dv-event.cta-inset>.wrap{min-height:0}}
 """
 _word = lambda w: re.sub(r'^\W+|\W+$', '', w, flags=re.U)
 
@@ -78,7 +81,7 @@ def _draw(attrs, inner, treat, word, centred):
     marked = None
     if treat.get('mark'):
         bare = [_word(H.unescape(w)) for w in words]
-        marked = next((i for i, b in enumerate(bare) if word and b.casefold() == str(word).casefold()), None)
+        marked = next((i for i, b in enumerate(bare) if word and _word(str(word)) and b.casefold() == _word(str(word)).casefold()), None)
         if marked is None: marked = max(range(len(words)), key=lambda i: (len(bare[i]) >= 4, i))   # no word named: the last word of some length
         w = words[marked]; core = re.match(r'^(\W*)(.*?)(\W*)$', w, re.S | re.U)
         words[marked] = f'{core.group(1)}<em class="dv-mk dv-mk-{treat["mark"]}">{core.group(2)}</em>{core.group(3)}' if core and core.group(2) and '&' not in w else f'<em class="dv-mk dv-mk-{treat["mark"]}">{w}</em>'
@@ -109,10 +112,12 @@ def carry(page_html, plan, ir):
         head = _heading(body)
         if head:
             a, b, attrs, inner = head
-            centred = (bool(re.search(r'text-align:\s*center', attrs)) or 'wc-f-statement' in classes or ('cta' in classes and 'cta-line' not in classes))
+            centred = (bool(re.search(r'text-align:\s*center', attrs)) or 'wc-f-statement' in classes or ('cta' in classes and 'cta-line' not in classes)
+                       or bool(re.search(r'class="[^"]*\bcenter\b[^"]*"[^<]*(?:<span\b[^>]*>[^<]*</span>\s*)*$', body[:a])))   # centred by the block that holds it
             drawn, done = _draw(attrs, inner, treat, wanted[sec['id']], centred)
             if drawn: body = body[:a] + drawn + body[b:]; report['sections'][sec['id']] = done
         if closing:
+            body = re.sub(r'(<h2\b[^>]*\bstyle=")([^"]*)"', lambda m: m.group(1) + re.sub(r'max-width:[^;"]+;?', '', m.group(2)) + '"', body, count=1)
             body = re.sub(r'(<section\b[^>]*\bclass=")([^"]*)"', lambda m: f'{m.group(1)}{m.group(2)} dv-event"', body, count=1)
             report['event'] = sec['id']; report['sections'].setdefault(sec['id'], {})['event'] = 'closing plate'
         out = out[:start] + body + out[end:]

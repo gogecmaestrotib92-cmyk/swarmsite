@@ -27,4 +27,4 @@ def test_a_size_that_already_fits_is_left_alone():
 
 
 def test_a_section_heading_has_a_floor_on_a_phone():
-    assert 'font-size:min(max(var(--fs),32px)' in css_of('atelier')
+    assert 'font-size:min(max(calc(var(--fs) * var(--face-grow,1)),32px)' in css_of('atelier')

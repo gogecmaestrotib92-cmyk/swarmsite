@@ -47,3 +47,19 @@ def test_a_closing_with_a_form_is_left_as_it_is():
 
 def test_nothing_to_carry_changes_nothing():
     assert DEVICE.carry(PAGE, PLAN, {'hero': {'nodes': [{'as': 'h1'}]}})[0] == PAGE and DEVICE.carry(PAGE, None, IR)[0] == PAGE
+
+
+def test_a_named_word_is_found_with_its_full_stop():
+    plan = {**PLAN, 'carriers': [{'section': 'tour', 'how': 'x', 'word': 'Draw.'}]}
+    assert DEVICE.carry(PAGE, plan, IR)[1]['sections']['tour']['word'] == 'Draw'
+
+
+def test_a_heading_centred_by_its_block_is_not_stepped():
+    page = PAGE.replace('<section class="sec photo band-paper" id="tour"><div class="wrap">', '<section class="sec photo band-paper" id="tour"><div class="wrap"><div class="gh one center"><span class="lab">Tour</span>')
+    assert 'step' not in DEVICE.carry(page, PLAN, IR)[1]['sections']['tour']
+
+
+def test_the_event_line_is_not_held_narrow():
+    page = PAGE.replace('style="--lw:10">A tool', 'style="--fs:40px;max-width:46%;--lw:10">A tool')
+    out, _ = DEVICE.carry(page, PLAN, IR)
+    assert 'max-width:46%' not in out and '--lw:10' in out

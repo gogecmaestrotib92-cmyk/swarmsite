@@ -231,6 +231,7 @@ def face_head(hero, content):
         tokens.append(f"--display:{FACES.stack(face)};--h1-w:{weight};--h2-w:{weight};--h3-w:{h3};--h1-ls:{face['ls']};--h2-ls:{face['ls']};"
                       f"--h1-lh:{face['lh']};--h2-lh:{max(face['lh'], 1.0)};--h1-tt:{'uppercase' if case == 'upper' else 'none'}")
         width = face.get('avg_upper' if case == 'upper' else 'avg') or 0.46; grow = min(1.3, 0.46 / width)
+        if width < 0.42: tokens.append(f'--face-grow:{grow:.2f}')   # and so do the section headings: 32 px of a condensed face reads as 24
         if width <= 0.37: extra = f'.h3{{font-size:calc(var(--h3) * {grow:.2f})}}.qa summary{{font-size:min(calc(var(--h3) * {grow:.2f}),{round(24 * grow)}px)}}'   # a narrow face sets small at a size meant for a wide one: the small headings grow with it
     for role in ('body', 'label'):   # the page's running text and its small print follow the system the composition chose
         if system.get(role): face = FACES.get(system[role]); loaded.append(face); tokens.append(f'--{role}:{FACES.stack(face)}')

@@ -45,6 +45,8 @@ EDGES = ('fade', 'hard')
 CROPS = ('whole', 'fade')
 GALLERY_KEYS = {'sections', 'ratio', 'title', 'tone', 'enter'}
 GALLERY_RATIOS = ('1/1', '4/5', '3/4', '4/3', '3/2')
+WORDS_MIN = 360         # CSS px: the narrowest column a heading and a paragraph are set in beside a picture (22.5rem)
+HEADING_LINES = {'md': 4, 'lg': 3, 'xl': 3}   # a heading that runs longer than this in its column is a list of words, not a line
 GALLERY_WORDS = 320    # characters each section of a gallery may say: more makes columns of ragged length
 DISSOLVE = 0.45        # how far apart in lightness (0–1) a picture's inner edge and its section's ground may be for the edge to dissolve
 INLINE_WORDS = 140     # a picture set into the heading needs at least this many characters in its section
@@ -90,9 +92,9 @@ CSS = """
 .sec.pc .pc-words .rows li b{flex-shrink:0;max-width:100%;overflow-wrap:break-word}
 .sec.pc .pc-words .h2{text-wrap:balance;overflow-wrap:normal}.sec.pc .pc-words .h2.light{color:inherit}
 .sec.pc .pc-words .cap,.sec.pc .pc-words .lede{font-size:clamp(17px,1.35vw,21px);line-height:1.5;max-width:44ch;margin-top:clamp(14px,1.6vw,24px)}
-.sec.pc.pc-t-md .pc-words .h2{font-size:min(clamp(28px,3.2vw,46px),calc((100vw - 48px) / var(--lw,8) * 1.72))!important;line-height:1.06}
-.sec.pc.pc-t-lg .pc-words .h2{font-size:min(clamp(34px,4.4vw,64px),calc((100vw - 48px) / var(--lw,8) * 1.72))!important;line-height:1.02}
-.sec.pc.pc-t-xl .pc-words .h2{font-size:min(clamp(40px,6.2vw,96px),calc((100vw - 48px) / var(--lw,8) * 1.72))!important;line-height:.98;letter-spacing:var(--h1-ls,-.03em)}
+.sec.pc.pc-t-md .pc-words .h2{font-size:min(calc(clamp(28px,3.2vw,46px) * var(--face-grow,1)),calc((100vw - 48px) / var(--lw,8) * 1.72))!important;line-height:1.06}
+.sec.pc.pc-t-lg .pc-words .h2{font-size:min(calc(clamp(34px,4.4vw,64px) * var(--face-grow,1)),calc((100vw - 48px) / var(--lw,8) * 1.72))!important;line-height:1.02}
+.sec.pc.pc-t-xl .pc-words .h2{font-size:min(calc(clamp(40px,6.2vw,96px) * var(--face-grow,1)),calc((100vw - 48px) / var(--lw,8) * 1.72))!important;line-height:.98;letter-spacing:var(--h1-ls,-.03em)}
 .sec.pc .pc-al-start{align-content:start;align-self:start}.sec.pc .pc-al-center{align-content:center;align-self:center}.sec.pc .pc-al-end{align-content:end;align-self:end}
 .sec.pc.pc-flush{padding:0;display:block}
 .sec.pc.pc-flush .pc-tail{padding:clamp(20px,3vw,40px) 0 clamp(40px,6vw,80px)}.sec.pc.pc-flush .pc-tail>:first-child{margin-top:0}
@@ -114,8 +116,8 @@ CSS = """
 .sec.pc.pc-f-backdrop .pc-words .cap,.sec.pc.pc-f-backdrop .pc-words .lede{max-width:34ch}
 .sec.pc.pc-f-backdrop .pc-at-center .pc-words>*{margin-left:auto;margin-right:auto}.sec.pc.pc-f-backdrop .pc-at-center .pc-words ul{justify-content:center}
 
-.sec.pc.pc-f-bleed .pc-field,.sec.pc.pc-f-stage .pc-field{grid-template-columns:minmax(0,var(--pc-pic)) minmax(0,1fr)}
-.sec.pc.pc-f-bleed.pc-side-right .pc-field,.sec.pc.pc-f-stage.pc-side-right .pc-field{grid-template-columns:minmax(0,1fr) minmax(0,var(--pc-pic))}
+.sec.pc.pc-f-bleed .pc-field,.sec.pc.pc-f-stage .pc-field{--pc-words-min:calc(var(--pc-edge) + clamp(32px,6vw,104px) + 22.5rem);grid-template-columns:minmax(0,var(--pc-pic)) minmax(min(100%,var(--pc-words-min)),1fr)}
+.sec.pc.pc-f-bleed.pc-side-right .pc-field,.sec.pc.pc-f-stage.pc-side-right .pc-field{grid-template-columns:minmax(min(100%,var(--pc-words-min)),1fr) minmax(0,var(--pc-pic))}
 .sec.pc.pc-f-bleed .pc-fig,.sec.pc.pc-f-stage .pc-panel{grid-row:1;grid-column:1}.sec.pc.pc-f-bleed .pc-col,.sec.pc.pc-f-stage .pc-col{grid-row:1;grid-column:2}
 .sec.pc.pc-f-bleed.pc-side-right .pc-fig,.sec.pc.pc-f-stage.pc-side-right .pc-panel{grid-column:2}.sec.pc.pc-f-bleed.pc-side-right .pc-col,.sec.pc.pc-f-stage.pc-side-right .pc-col{grid-column:1}
 .sec.pc.pc-f-bleed .pc-fig{height:100%}.sec.pc.pc-f-bleed .pc-fig img{position:absolute;inset:0}
@@ -277,7 +279,7 @@ def geometry(entry, content, page):
     span = lambda n, bleed='none': V.span_px((1, n + 1, 1, 2), page, bleed, GUTTER)
     if form == 'backdrop': box, fit, words = (W, HEIGHTS[entry.get('height', 'lg')] / 100 * Hh), 'cover', min(576, inner)
     elif form == 'bleed':
-        width = W * cols / 12; box, fit = (width, HEIGHTS[entry.get('height', 'lg')] / 100 * Hh), 'cover'; words = min(544, W - width - edge - 86 + entry.get('overlap', 0) * W / 12)
+        width = min(W * cols / 12, W - edge - 86 - WORDS_MIN); box, fit = (width, HEIGHTS[entry.get('height', 'lg')] / 100 * Hh), 'cover'; words = min(544, W - width - edge - 86 + entry.get('overlap', 0) * W / 12)
     elif form == 'panorama': box, fit, words = (W, W / _ratio(entry.get('ratio', '21/9'))), 'cover', (inner - 115) * 5 / 11
     elif form == 'card':
         width = span(cols, side if entry.get('bleed') else 'none'); box, fit = (width, width / _ratio(entry.get('ratio', '3/2'))), 'cover'; words = span(_card_cols(cols)) - 86
@@ -288,10 +290,10 @@ def geometry(entry, content, page):
     elif form == 'inline':   # set into the heading like a word: as tall as the heading's capitals
         size = TITLE_PX[entry.get('title', 'xl')]; box, fit, words = (size * PILLS[entry.get('shape', 'pill')], size * PILL_EM), 'cover', inner
     else:   # stage: the panel takes cols/12 of the screen; the picture sits inside it at no more than its pixels allow
-        top = side == 'top'; panel = (W - 2 * edge) if top else W * cols / 12 - 2 * 72
+        top = side == 'top'; panel = (W - 2 * edge) if top else min(W * cols / 12, W - edge - 86 - WORDS_MIN) - 2 * 72
         if entry.get('crop') == 'fade': width = min(panel, limit * w); box, fit = (width, width / CROP_RATIO), 'cover'
         else: width = min(panel, limit * w, 0.72 * Hh * w / h); box, fit = (width, width * h / w), 'contain'
-        words = (inner - 115) * 5 / 11 if top else min(544, W - W * cols / 12 - edge - 86)
+        words = (inner - 115) * 5 / 11 if top else min(544, max(WORDS_MIN, W - W * cols / 12 - edge - 86))
     scale = (min if fit == 'contain' else max)(box[0] / w, box[1] / h)
     return {'box': (round(box[0]), round(box[1])), 'fit': fit, 'scale': scale, 'limit': limit, 'words': words}
 
@@ -306,6 +308,9 @@ def _heading_fits(entry, content, page, room):
     if not content['words']['heading']: return None
     face = FACES.known(page.get('display')); advance = FACES.advance(face, bool(page.get('upper')))
     longest = max(content['words']['heading'].split(), key=len); need = len(longest) * advance * TITLE_PX[title] * 1.08
+    heading = ' '.join(content['words']['heading'].split()); lines = -(-(len(heading) * advance * TITLE_PX[title] * 1.08) // room) if room > 0 else 99
+    if need <= room and lines > HEADING_LINES.get(title, 4) and entry['form'] != 'inline':
+        return f'its heading ({len(heading)} characters) would run about {int(lines)} lines at title "{title}" in the {round(room)} px its words have — a column of single words. Use a smaller title, give the picture fewer columns, or put the words above it ("side": "top")'
     if need <= room: return None
     return f'its heading\'s longest word ("{longest}") is about {round(need)} px wide at title "{title}" and the words have {round(room)} px: use a smaller title or give the words more room'
 
