@@ -58,7 +58,9 @@ class Content(unittest.TestCase):
             self.assertIn(f'href="{IR.e(action["href"])}"', hero); self.assertNotIn('→', action['label'])
         picture = BASE['media']['hero.picture']
         self.assertEqual((picture['w'], picture['h']), (1344, 896)); self.assertIn(picture['src'], hero)
-        self.assertEqual(BASE['page'], {'container': BASE['page']['container'], 'frame': BASE['page']['frame']})
+        self.assertEqual(set(BASE['page']), {'container', 'frame', 'dark', 'display', 'h3_weight', 'upper'})
+        self.assertIsInstance(BASE['page']['container'], int); self.assertIsInstance(BASE['page']['frame'], int)
+        self.assertIn(f"--display:'{BASE['page']['display']}'", PAGE, 'the display face is read off the page\'s own tokens'); self.assertIs(BASE['page']['dark'], False)
 
     def test_emphasis_in_the_headline_survives_as_structure_not_markup(self):
         page, images = production_page(lambda d: d['hero'].update(h1='Stari grad, <em>nova</em> kuhinja'))
@@ -75,6 +77,8 @@ class Validator(unittest.TestCase):
 
     def test_structure(self):
         self.assertEqual(codes({'ir': '9.9', 'hero': {}}), ['IR001'])
+        for version in V.ACCEPTED:   # 0.2 only adds fields: a 0.1 composition still means what it meant
+            ir = composition(); ir['ir'] = version; self.assertEqual(codes(ir), [], version)
         ir = composition(); ir['hero']['surface'] = 'neon'; self.assertEqual(codes(ir), ['IR001'])
         for surface in ('dark', 'alt', 'accent'):   # the nav above cannot follow another surface yet
             ir = composition(); ir['hero']['surface'] = surface; self.assertEqual(codes(ir), ['IR001'], surface)
@@ -177,7 +181,7 @@ class Renderer(unittest.TestCase):
         first, report = IR.transplant(PAGE, ir, IMAGES); second, _ = IR.transplant(PAGE, ir, IMAGES)
         self.assertTrue(report['drawn']); self.assertEqual(first, second)
         start, end = CONTENT.hero_span(first); hero = first[start:end]
-        self.assertIn('class="sec hero ir"', hero); self.assertIn('data-ir="0.1"', hero)
+        self.assertIn('class="sec hero ir"', hero); self.assertIn(f'data-ir="{V.VERSION}"', hero)
         self.assertEqual(hero.count('<h1'), 1)
         self.assertIn(IR.e(BASE['text']['hero.lede']), hero)
         for action in BASE['actions'].values(): self.assertIn(f'href="{IR.e(action["href"])}"', hero)
@@ -215,7 +219,8 @@ class Renderer(unittest.TestCase):
         html = IR.render_hero(ir, BASE)
         self.assertIn(f'data-node="{ids[0]}"', html); self.assertRegex(html, rf'data-node="{ids[0]}" style="[^"]*--sm:{len(ids) - 1}"')
         longest = max(len(w) for w in ''.join(t for t, _ in BASE['text']['hero.h1']).split())
-        self.assertIn(f'--lw:{longest}', html)
+        face, upper = V.face_of(ir['hero'], BASE)   # the headline is sized so that its longest word fits its columns, from the face's measured advance
+        self.assertIn(f'--fit:{longest * V.FACES.advance(face, upper) * IR.ESTIMATE_SLACK:.3f}', html, 'an estimate is an average: it is given a tenth of room')
 
     def test_shipped_compositions_are_well_formed(self):
         """The hand-written compositions in bench/ against stand-in content that has every address they name."""
@@ -227,7 +232,7 @@ class Renderer(unittest.TestCase):
                     for s in n['src']: stand_in['actions'][s] = {'label': 'Go', 'href': 'https://example.test/', 'ghost': False}
                 if n['t'] == 'media': stand_in['media'][n['src']] = {'src': 'data:image/png;base64,AAAA', 'alt': '', 'w': 2400, 'h': 2400, 'shot': n.get('fit') == 'contain', 'gen': False}
             self.assertEqual(V.validate(ir, stand_in), [], path.name)
-            self.assertIn('data-ir="0.1"', IR.render_hero(ir, stand_in))
+            self.assertIn(f'data-ir="{V.VERSION}"', IR.render_hero(ir, stand_in))
 
 
 if __name__ == '__main__':

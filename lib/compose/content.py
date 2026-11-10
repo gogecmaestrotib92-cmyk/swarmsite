@@ -7,6 +7,7 @@ buttons going to the same captured destinations. A composition can place them di
 add to them, or leave them out (lib/compose/validate.py checks that).
 
   from_page(page_html, images)  → {'text', 'actions', 'media', 'page', 'span'}
+  words(headline segments)      → the headline word by word, for line breaks and marked words
 Deterministic, no network, no model."""
 import base64, io, re
 from html.parser import HTMLParser
@@ -98,6 +99,33 @@ def from_page(page_html, images=None):
         media['hero.picture'] = {'src': parser.picture['src'], 'alt': parser.picture['alt'], 'w': w, 'h': h, 'shot': bool(known and known.get('shot')), 'gen': bool(known and known.get('gen')), 'id': str(known['id']) if known and known.get('id') else None}
     root = re.search(r':root\{([^}]*)\}', page_html); tokens = root.group(1) if root else ''
     px = lambda name, default: int(float((re.search(r'--' + name + r':\s*([\d.]+)px', tokens) or [None, default])[1]))
+    token = lambda name: (re.search(r'--' + name + r':\s*([^;}]+)', tokens) or [None, ''])[1].strip()
+    family = re.match(r"\s*'([^']+)'", token('display'))
     used_elsewhere = {key for key, m in media.items() if m['src'] in page_html[:start] + page_html[end:]}
     return {'text': text, 'actions': actions, 'media': media, 'span': (start, end),
-            'page': {'container': px('container', 1300), 'frame': px('frame', 40)}, 'used_elsewhere': sorted(used_elsewhere)}
+            'page': {'container': px('container', 1300), 'frame': px('frame', 40), 'dark': _dark(token('paper')), 'display': family.group(1) if family else None,
+                     'h3_weight': int(token('h3-w')) if token('h3-w').isdigit() else None, 'upper': token('h1-tt') == 'uppercase'},
+            'used_elsewhere': sorted(used_elsewhere)}
+
+
+def _dark(colour):
+    """Is this #RRGGBB page background a dark one? Unknown reads as light."""
+    m = re.fullmatch(r'#([0-9a-fA-F]{6})', colour or '')
+    if not m: return False
+    r, g, b = (int(m.group(1)[i:i + 2], 16) / 255 for i in (0, 2, 4))
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b < 0.4
+
+
+def words(segments):
+    """The headline as words, each a list of (text, emphasised) runs: 'Your PDF, <em>redesigned</em>.' is three words and
+    the last one is [('redesigned', True), ('.', False)]. A composition refers to words by their index in this list."""
+    out, current = [], []
+    for text, em in segments:
+        for part in re.split(r'(\s+)', text):
+            if not part: continue
+            if part.isspace():
+                if current: out.append(current); current = []
+            elif current and current[-1][1] == em: current[-1] = (current[-1][0] + part, em)
+            else: current.append((part, em))
+    if current: out.append(current)
+    return out

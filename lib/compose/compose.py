@@ -6,8 +6,16 @@ sees the pictures, the hero the template made, and the measured principles of th
 
   1. compose        — one call; the answer is validated (validate.py)
   2. correct        — a refused composition goes back once with the validator's reasons
-  3. look and revise — the valid composition is rendered and screenshotted at 1440 and 390; the model sees its own
-                       page and may revise once. A revision that does not validate is dropped; the valid one stands.
+  3. look and revise — the valid composition is rendered and screenshotted at 1440 and 390 and graded by the page
+                       contract; the model sees its own page and what it newly breaks, and may revise once. A revision
+                       that does not validate, or measures worse, is dropped; the valid one stands.
+  4. refuse         — a composition that still breaks the page on the render is not shipped at all.
+Before it is looked at, the composition's headline is measured in a browser (measure.mjs) and sized from that
+measurement (`fit` on the headline node): how wide words set in a face is measured, never estimated.
+
+Besides placement the model may choose the page's typeface from the registry of free faces (lib/type), break and mark
+the headline, tone, shape, tilt and layer pictures, and name how a picture arrives — all fields of the composition,
+all checked by the validator. A page set in the brand's own typeface keeps it.
 
 The model never writes text, links or markup: the format has no field for them. What it wishes the format could do is
 collected in `wishes` — the backlog for new primitives — and never drawn.
@@ -33,22 +41,36 @@ How a first screen reads as designed rather than assembled:
 - Scale contrast. Labels small and quiet, the headline loud, the lede narrow (36–48 characters) and close to the headline's edge.
 - A picture is chosen for its subject and given the ratio that suits the subject: a tall room gets a tall ratio, a wide terrace a wide one. Put the focal point on the subject. A weak or irrelevant picture is left out — type alone can carry a first screen.
 - Crossing. A headline that runs onto the picture ties the two into one object; it then needs a plate (a block of the page's own colour under the words). At most once, and only when it earns it.
-- A screenshot of a product is shown whole, in a frame. It is never cropped, bled or written over.
+- A screenshot of a product is shown whole, in a frame, in its own colours. It is never cropped, bled, toned or written over.
 - The actions sit where the eye lands after the headline and the lede.
 - Leave real empty space. A first screen that fills every cell is a template.
 - On a phone the pieces stack. Order them so the headline is first or second and the first action comes before a long scroll.
+- Type is most of it. The typeface carries the voice of the business before a word is read; where a headline breaks, which word is marked and how, decide whether it reads as written by someone. Break by sense and by shape: a short line against a long one, the stressed word alone on its line.
+- Treatments are seasoning. One typographic move and one picture move per screen, each because of what this business is. If everything is treated, nothing is.
 
 REFERENCE PRINCIPLES, when given, are measurements from reference sites that fit this business. Use them as principles — how large, how far off-centre, how much of the screen a picture takes — never as a layout to reproduce.
 
 THE FORMAT
 The hero is a grid of 12 columns and the rows you declare. A node sits at "at": {"col": [start, end], "row": n or [start, end]} using grid lines: columns 1..13, rows 1..(number of rows + 1); the end line is not included, so "col": [1, 7] is the left half.
-- the hero: "height": auto|screen|tall, "rows": 1–6 of auto|1fr|2fr|min, "gap": sm|md|lg, "nodes": [...], "phone_order": [every node id, in the order they stack on a phone]. It sits on the page's own background and uses the page's own typeface and colours (you see them in the template's first screen).
+- the hero: "height": auto|screen|tall, "rows": 1–6 of auto|1fr|2fr|min, "gap": sm|md|lg, "nodes": [...], "phone_order": [every node id, in the order they stack on a phone]. It sits on the page's own background and uses the page's own colours (you see them in the template's first screen).
+- the typeface: the page is set in one display face and every heading of the page follows it. Keep the page's own ("typeface": "page") or set the page in one from TYPEFACES, chosen by its voice — what this business sounds like, never what is fashionable. Optional "weight" inside the face's range (light for a large quiet serif, heavy for a condensed or grotesque face) and "case": none|upper. When the brief says the face is the brand's own, it stays.
 - text node: {"id", "t": "text", "src": a text address, "as": label|h1|lede, "at"}. hero.h1 is always "as": "h1"; hero.lede is "lede"; hero.category and hero.fact are "label".
-  h1 takes "size": xl|xxl|mega (mega is about 12% of the viewport width: for short headlines) and "measure" 6–40 (characters per line). lede takes "size": md|lg and "measure" 20–70. A label takes neither.
+  h1 takes "size": xl|xxl|mega (mega is about 12% of the viewport width: for short headlines). lede takes "size": md|lg and "measure" 20–70. A label takes neither.
   Optional "align": start|center|end, and "plate": paper|ink when the text crosses a picture.
+  The headline, and only it, can be set by hand:
+  · "lines": word counts per line, e.g. [2, 3] for a five-word headline; one to three lines. A line never wraps and the headline is sized so that its longest line fits its columns: short lines get large type, a long line makes all of it small. Without "lines" the headline wraps by itself inside "measure" (6–40 characters); with "lines" there is no measure.
+  · "indent": one value per line, steps of half an em, 0–6: [0, 2, 4] is a stepped headline. Needs "lines".
+  · "scale": one value per line from 0.6 0.8 1 1.3 1.6: one line larger or smaller than the rest. Needs "lines"; the values may add up to 3.4 at most.
+  · "mark": accent|italic|outline|underline|box — how the emphasised words are drawn (outline: hollow letters; box: on a block of the accent colour). It applies to the words the headline already emphasises (shown between * in the brief) unless "mark_words" names others by position, 0 being the first word. At most half the words.
 - actions node: {"id", "t": "actions", "src": [one or two action addresses], "at", optional "align"}.
 - media node: {"id", "t": "media", "src": a picture address, "fit": cover|contain, "ratio": one of 1/1 4/5 3/4 2/3 4/3 3/2 16/9 16/10 21/9, "focal": [x, y] each 0–1, "bleed": none|left|right, "frame": none|browser|paper, "scrim": true|false, "at"}.
   "bleed" runs the picture to the screen edge and is allowed only from column 1 (left) or to column line 13 (right). A screenshot must be "fit": "contain" with a "frame" and no bleed or scrim.
+  A photograph can be treated:
+  · "tone": none|mono|duotone|tint — mono is black and white; duotone prints the photograph in the page's own two colours, so it belongs to the page; tint prints it in the accent colour. A snapshot that looks out of place in full colour often holds in one tone.
+  · "shape": rect|soft|arch|circle|pill (a circle needs ratio 1/1). "tilt": whole degrees −4 to 4. "shadow": none|soft|hard (hard is an offset block of the accent colour). "grain": true|false.
+  · a stack: "src": [the picture in front, the one behind, optionally a third] with "stack": offset|fan — two or three pictures laid on each other inside the node's own box: pages of a document, covers, two views of one thing. "ratio" is each picture's ratio; each is about two thirds of the node's width, so a stack needs six columns or more.
+  · "enter": none|rise|clip|settle — how the picture arrives when the page loads (clip: it opens from the bottom; settle: it eases in from slightly large). "scroll": none|parallax — a photograph drifts inside its frame as the page scrolls. Only media nodes take "enter" and "scroll": the words arrive by themselves, the headline line by line.
+  None of the treatments applies to a screenshot except "tilt", "shadow", "enter" and a stack; a picture that bleeds takes none but "tone", "grain", "enter" and "scroll".
 - shape node: {"id", "t": "shape", "kind": "rule", "at"} — a hairline.
 - "at" may add "z": 0–4 (higher is in front) and "self": start|center|end|stretch (where the node sits inside its rows).
 Rules the renderer enforces — a composition that breaks one is refused whole:
@@ -58,7 +80,8 @@ Rules the renderer enforces — a composition that breaks one is refused whole:
 - A photograph is never shown wider or taller than 1.35 times its pixels; a screenshot never larger than its pixels. Column widths are given below.
 - In the list of nodes the h1 comes before the lede and the actions.
 - A picture you place should register: at least one spans five columns or more (the page is graded on showing a picture or the product at 30% of the screen width in the first screen when it has one).
-- The headline takes at most three lines at 1440 px. You cannot see line breaks in advance: choose size and measure for the words you have, and you will be told what was measured on the render.
+- A picture stands no taller than about 720 px at 1440 (its width divided by its ratio; 900 px with "height": "tall"): taller, and the buttons fall under the fold.
+- The headline takes at most three lines at 1440 px and is never set under 48 px. Break it yourself with "lines" when the break matters; otherwise choose size and measure for the words you have. You will be told what was measured on the render.
 Answer by calling write_composition. In "concept", say in one sentence what the first screen does and why it suits this business. In "wishes", list anything you wanted that the format cannot do — it is not drawn, it is how the format grows."""
 
 AT = {"type": "object", "required": ["col", "row"], "properties": {
@@ -67,15 +90,21 @@ AT = {"type": "object", "required": ["col", "row"], "properties": {
     "z": {"type": "integer"}, "self": {"type": "string", "enum": list(V.SELF)}}}
 NODE = {"type": "object", "required": ["id", "t", "at"], "properties": {
     "id": {"type": "string"}, "t": {"type": "string", "enum": ["text", "actions", "media", "shape"]},
-    "src": {"anyOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}, "minItems": 1, "maxItems": 2}]},
+    "src": {"anyOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}, "minItems": 1, "maxItems": 3}]},
     "as": {"type": "string", "enum": list(V.ROLES)}, "size": {"type": "string", "enum": ["md", "lg", "xl", "xxl", "mega"]}, "measure": {"type": "integer"},
+    "lines": {"type": "array", "items": {"type": "integer"}, "minItems": 1, "maxItems": 3}, "indent": {"type": "array", "items": {"type": "integer"}, "maxItems": 3},
+    "scale": {"type": "array", "items": {"type": "number", "enum": list(V.SCALES)}, "maxItems": 3}, "mark": {"type": "string", "enum": list(V.MARKS)}, "mark_words": {"type": "array", "items": {"type": "integer"}, "maxItems": 4},
+    "stack": {"type": "string", "enum": list(V.STACKS)}, "tone": {"type": "string", "enum": list(V.TONES)}, "shape": {"type": "string", "enum": list(V.SHAPES)}, "tilt": {"type": "integer"},
+    "shadow": {"type": "string", "enum": list(V.SHADOWS)}, "grain": {"type": "boolean"}, "enter": {"type": "string", "enum": list(V.MEDIA_ENTER)}, "scroll": {"type": "string", "enum": list(V.MEDIA_SCROLL)},
     "align": {"type": "string", "enum": list(V.ALIGN)}, "plate": {"type": "string", "enum": list(V.PLATES)},
     "fit": {"type": "string", "enum": list(V.FITS)}, "ratio": {"type": "string", "enum": list(V.RATIOS)},
     "focal": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2}, "bleed": {"type": "string", "enum": list(V.BLEEDS)},
     "frame": {"type": "string", "enum": list(V.FRAMES)}, "scrim": {"type": "boolean"}, "kind": {"type": "string", "enum": ["rule"]}, "at": AT}}
 # Flat on purpose: with the hero as one nested object the first answer came back as broken text; its fields are top-level here.
-TOOL = {"name": "write_composition", "description": "The composition of the first screen. The hero's fields are given directly: height, rows, gap, nodes, phone_order.", "input_schema": {"type": "object", "required": ["concept", "rows", "nodes", "phone_order"], "properties": {
+TOOL = {"name": "write_composition", "description": "The composition of the first screen. The hero's fields are given directly: typeface, height, rows, gap, nodes, phone_order.", "input_schema": {"type": "object", "required": ["concept", "rows", "nodes", "phone_order"], "properties": {
     "concept": {"type": "string", "description": "one sentence: what this first screen does and why it suits this business"},
+    "typeface": {"type": "string", "enum": ["page"] + [f["id"] for f in V.FACES.all()], "description": "the display face the whole page is set in; \"page\" keeps the page's own"},
+    "weight": {"type": "integer", "description": "the display weight, inside the chosen face's range"}, "case": {"type": "string", "enum": list(V.CASES)},
     "height": {"type": "string", "enum": list(V.HEIGHTS)},
     "rows": {"type": "array", "items": {"type": "string", "enum": list(V.ROW_SIZES)}, "minItems": 1, "maxItems": 6},
     "gap": {"type": "string", "enum": list(V.GAPS)},
@@ -104,6 +133,16 @@ def offered_pictures(content, limit=7):
     return out[:limit]
 
 
+def face_locked(job_dir, content):
+    """Is the page set in the brand's own typeface? Then it is part of the brand and a composition keeps it. The
+    direction says so: the owner kept the font and the page's display face is the one the brand's site named."""
+    try:
+        with open(os.path.join(job_dir, 'direction.json'), encoding='utf-8') as f: brand = json.load(f).get('brand') or {}
+    except (OSError, ValueError, TypeError): return False
+    named = str(brand.get('font_hint') or '').strip().casefold()
+    return bool(brand.get('keep_font') and named and named == str(content['page'].get('display') or '').casefold())
+
+
 def brief(content, job_dir=None):
     """The material, as text: what may be placed, how wide a column is, and the reference principles that fit."""
     page = content['page']; inner = min(1440, page['container']) - 2 * page['frame']; col = (inner - 11 * 24) / 12
@@ -122,6 +161,14 @@ def brief(content, job_dir=None):
         lines.append(f'- {address}: {int(m["w"])}×{int(m["h"])} px {kind}' + (' — the picture the template used in its hero' if address == 'hero.picture' else ''))
     lines.append(f'WIDTHS at a 1440 px viewport: one column is about {round(col)} px and gaps are 24 px, so n columns span n×{round(col)} + (n−1)×24 px; '
                  f'a bleed adds about {round(page["frame"] + max(0, (1440 - page["container"]) / 2))} px.')
+    own = page.get('display') or 'unknown'
+    if page.get('face_locked'): lines.append(f'TYPEFACE — the page is set in {own}, the brand\'s own face: it stays ("typeface": "page").')
+    else:
+        lines.append(f'TYPEFACES — the page is set in {own} now' + (' (headlines in capitals)' if page.get('upper') else '') + '. Keep it ("page") or set the page in one of these; an average character is about `width` em wide, so a line of n characters at s px runs about n × width × s px:')
+        for f in V.FACES.all():
+            lo, hi = f['weights']
+            lines.append(f'- {f["id"]}: {f["family"]}, {f["kind"]}, ' + (f'weights {lo}–{hi}' if lo != hi else f'one weight ({lo})') + (', has an italic' if f.get('italic') else ', no italic')
+                         + (', set in capitals' if f.get('upper') else '') + f', width {f["avg_upper" if f.get("upper") else "avg"]} — {f["voice"]}. Suits: {", ".join(f["suits"])}.')
     if job_dir:
         try:
             import retrieve as DNA
@@ -145,18 +192,56 @@ def hero_shots(page_path):
 
 
 # Promises of the page contract that a first screen can break. Measured on the render, never estimated.
-HERO_PROMISES = ('h1-', 'first-screen-visual', 'no-overflow', 'contrast', 'no-upscaled-images', 'no-empty-screens', 'no-duplicate-images')
-BREAKING = ('h1-lines', 'no-overflow', 'contrast', 'no-empty-screens')   # a composition that newly breaks one of these is not shipped
+BREAKING = ('h1-lines', 'h1-size', 'no-overflow', 'contrast', 'no-empty-screens', 'hero-line-wrap')   # a composition that newly breaks one of these is not shipped
 
 
 def measured(page_path):
-    """What the page contract finds on this page at 1440 and 390, limited to what a first screen can break: {id: detail}."""
+    """What the page contract finds failing on this page at 1440 and 390: {id: detail}. The whole page, not the first
+    screen alone: a composition may set the page in another typeface, and every heading below follows it."""
     out = tempfile.mkdtemp(prefix='compose-contract-')
     r = subprocess.run(['node', os.path.join(ROOT, 'lib/qa/contract.mjs'), page_path, '--dir', out], cwd=ROOT, capture_output=True, text=True, timeout=300)
     try:
         with open(os.path.join(out, 'contract.json')) as f: report = json.load(f)
     except (OSError, ValueError): raise RuntimeError('the contract could not grade the page: ' + (r.stderr or r.stdout)[-200:])
-    return {f['id']: f['detail'] for f in report.get('failed', []) if any(k in f['id'] for k in HERO_PROMISES)}
+    return {f['id']: f['detail'] for f in report.get('failed', [])}
+
+
+def measure_hero(page_path):
+    """What only a browser knows about this page's first screen (lib/compose/measure.mjs): the real width of the headline's
+    lines and words in the face the page loads, hand-broken lines that did not stay on one line, where the first button ends."""
+    r = subprocess.run(['node', os.path.join(HERE, 'measure.mjs'), page_path], cwd=ROOT, capture_output=True, text=True, timeout=180)
+    try: return json.loads(r.stdout.strip().splitlines()[-1])
+    except (ValueError, IndexError): raise RuntimeError('the first screen could not be measured: ' + (r.stderr or r.stdout)[-200:])
+
+
+def hero_findings(seen):
+    """Promises of a first screen that the page contract does not grade, from measure_hero()."""
+    found = {}
+    for view in ('desktop', 'mobile'):
+        v = (seen or {}).get(view) or {}
+        for w in v.get('wrapped') or []:
+            found[f'{view}-hero-line-wrap'] = f'line {w.get("line")} of the headline ("{str(w.get("text"))[:40]}") does not stay on one line in its columns' + (f' ({w["over"]} px too wide)' if w.get('over') else '')
+    d = (seen or {}).get('desktop') or {}
+    if isinstance(d.get('actions_bottom'), (int, float)) and isinstance(d.get('fold'), (int, float)) and d['actions_bottom'] > d['fold']:
+        found['hero-actions-under-fold'] = f'at 1440×900 the first button ends at {round(d["actions_bottom"])} px: under the fold'
+    return found
+
+
+def fit(page_html, ir, images, folder):
+    """The composition with its headline measured: drawn into the page, measured in a browser, the widths written on the
+    headline node as `fit`. The renderer then sizes the headline from the measurement instead of an estimate. Returns the
+    composition unchanged when there is nothing to measure or the measurement does not validate."""
+    content = CONTENT.from_page(page_html, images or []); page, report = IR.transplant(page_html, ir, images)
+    if not report['drawn']: return ir
+    with tempfile.NamedTemporaryFile('w', suffix='.html', delete=False, encoding='utf-8', dir=folder) as f: f.write(page); drawn = f.name
+    try: seen = measure_hero(drawn)
+    finally: os.unlink(drawn)
+    measured_fit = (seen or {}).get('fit')
+    if not isinstance(measured_fit, dict): return ir
+    fitted = json.loads(json.dumps(ir))
+    for node in fitted['hero']['nodes']:
+        if node.get('t') == 'text' and node.get('as') == 'h1': node['fit'] = {'line': measured_fit.get('line'), 'word': measured_fit.get('word')}
+    return fitted if not V.validate(fitted, content) else ir
 
 
 def _image_block(path, size=1100):
@@ -176,8 +261,12 @@ def _to_ir(answer):
     hero = {}
     for key in ('height', 'rows', 'gap', 'nodes'):
         if answer.get(key) is not None: hero[key] = read(answer[key])
+    if isinstance(hero.get('nodes'), list):   # `fit` is a measurement the loop takes, never something a model states
+        hero['nodes'] = [{k: v for k, v in n.items() if k != 'fit'} if isinstance(n, dict) else n for n in hero['nodes']]
     order = read(answer.get('phone_order'))
     if order is not None: hero['sm'] = {'order': order}
+    if answer.get('typeface') not in (None, '', 'page'):   # "page" is the page's own face: nothing to set
+        hero['face'] = {'id': answer['typeface'], **({'weight': answer['weight']} if answer.get('weight') is not None else {}), **({'case': answer['case']} if answer.get('case') else {})}
     return {'ir': V.VERSION, 'note': str(answer.get('concept') or '')[:300], 'hero': hero}
 
 def compose(page_html, images, job_dir=None, page_path=None, model=None, review=True, ask=None):
@@ -185,7 +274,9 @@ def compose(page_html, images, job_dir=None, page_path=None, model=None, review=
     `ask(system, content, tool, model=..., max_tokens=...)` is the model call; it defaults to the swarm's and is injectable for tests."""
     if ask is None:
         import agents; ask = agents.ask
-    content = CONTENT.from_page(page_html, images or []); text, pictures = brief(content, job_dir)
+    content = CONTENT.from_page(page_html, images or [])
+    if face_locked(job_dir, content): content['page']['face_locked'] = True
+    text, pictures = brief(content, job_dir)
     material = [{"type": "text", "text": text}]
     for address, m in pictures:
         data = _thumb(m['src'])
@@ -221,25 +312,32 @@ def compose(page_html, images, job_dir=None, page_path=None, model=None, review=
             with tempfile.NamedTemporaryFile('w', suffix='.html', delete=False, encoding='utf-8', dir=folder) as f: f.write(page); drawn = f.name
             try:
                 shots_ = hero_shots(drawn) if review else (None, None)
-                found = measured(drawn)
+                found = {**measured(drawn), **hero_findings(measure_hero(drawn))}
             finally: os.unlink(drawn)
             return shots_, {k: v for k, v in found.items() if k not in baseline}
         try:
-            baseline = measured(page_path)
+            baseline = {**measured(page_path), **hero_findings(measure_hero(page_path))}
+            best = fit(page_html, best, images, folder)
             (desktop, mobile), findings = look_at(best)
             log[-1]['measured'] = findings
             if review:
                 look = [{"type": "text", "text": "YOUR COMPOSITION, AS DRAWN. First at 1440 px, then on a phone:\n" + json.dumps(best['hero'], ensure_ascii=False)}]
                 if desktop: look.append(_image_block(desktop))
                 if mobile: look += [{"type": "text", "text": "On a phone:"}, _image_block(mobile, 700)]
-                if findings: look.append({"type": "text", "text": "MEASURED ON THIS RENDER — your composition newly breaks these promises of the page; fix them:\n" + '\n'.join(f'- {k}: {v}' for k, v in findings.items())})
+                must = {k: v for k, v in findings.items() if any(b in k for b in BREAKING)}; other = {k: v for k, v in findings.items() if k not in must}
+                if must: look.append({"type": "text", "text": "MEASURED ON THIS RENDER — your composition breaks these; fix them, or it is not shipped:\n" + '\n'.join(f'- {k}: {v}' for k, v in must.items())})
+                if other: look.append({"type": "text", "text": "ALSO MEASURED — the page is graded on these too. They are yours to weigh: change the composition only where it gets better for it. "
+                                                                 "A first screen without a picture is right when no picture offered is good enough; never place a document, a notice or a logo sheet to have one.\n" + '\n'.join(f'- {k}: {v}' for k, v in other.items())})
                 look.append({"type": "text", "text": "Look at it as the art director. Does one thing dominate? Is anything cramped, drifting, awkwardly empty, clipped, or is the picture cropped off its subject? Is the headline the right size for its words? "
                                                         "Return the composition you would ship: revised where the picture or the measurements show a problem, unchanged if you would ship this."})
                 revised, revised_errors = attempt('revise', look)
                 if revised is not None and not revised_errors:
+                    revised = fit(page_html, revised, images, folder)
                     _, revised_findings = look_at(revised)
                     log[-1]['measured'] = revised_findings
-                    worse = len([k for k in revised_findings if any(b in k for b in BREAKING)]) > len([k for k in findings if any(b in k for b in BREAKING)]) or (len(revised_findings) > len(findings))
+                    # worse is: more broken, or as broken and more of the rest — except that leaving a picture out is a choice, not a defect
+                    count = lambda found: (len([k for k in found if any(b in k for b in BREAKING)]), len([k for k in found if not any(b in k for b in BREAKING) and 'first-screen-visual' not in k]))
+                    worse = count(revised_findings) > count(findings)
                     if worse: log[-1]['errors'] = ['revision measured worse than the first composition: kept the first']
                     else: best, findings = revised, revised_findings
         except Exception as e: log.append({'stage': 'look', 'errors': ['review skipped: ' + str(e)[:160]]})

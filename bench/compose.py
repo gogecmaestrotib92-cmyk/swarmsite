@@ -1,6 +1,8 @@
 """compose.py — have the model compose the hero of every benchmark site (or the ones named), from the `shipped` render.
 
   python3 bench/compose.py [site-id ...] [--no-review]
+  python3 bench/compose.py --fit [site-id ...]     measure the headlines of the compositions already written, in a browser, and
+                                                   write the measurement into them — no model call
 Writes bench/runs/_compositions/<site>.json (+ .log.json with every attempt, the validator's reasons and the model's
 wishes) and a budget per site. Then `python3 bench/run.py modelled` renders and measures them.
 Needs ANTHROPIC_API_KEY and bench/runs/shipped/ (run `bench/run.py shipped` first). Spends model calls: about three per site."""
@@ -12,10 +14,24 @@ import compose as COMPOSE
 import budget as B
 
 
+def refit(sites, wanted, out):
+    for site in sites:
+        path = os.path.join(out, site['id'] + '.json'); page = os.path.join(HERE, 'runs', 'shipped', site['id'], 'page.html')
+        if (wanted and site['id'] not in wanted) or not os.path.exists(path) or not os.path.exists(page): continue
+        with open(path, encoding='utf-8') as f: ir = json.load(f)
+        with open(page, encoding='utf-8') as f: html = f.read()
+        with open(os.path.join(HERE, 'seed', site['id'], 'images.json')) as f: images = json.load(f)
+        fitted = COMPOSE.fit(html, ir, images, os.path.dirname(page))
+        with open(path, 'w', encoding='utf-8') as f: json.dump(fitted, f, indent=1, ensure_ascii=False)
+        h1 = next((n for n in fitted['hero']['nodes'] if n.get('as') == 'h1'), {})
+        print(f"{'✓' if h1.get('fit') else '–'} {site['id']:22s} fit {h1.get('fit')}", flush=True)
+
+
 def main():
     args = sys.argv[1:]; review = '--no-review' not in args; wanted = [a for a in args if not a.startswith('--')]
     with open(os.path.join(HERE, 'sites.json')) as f: sites = json.load(f)['sites']
     out = os.path.join(HERE, 'runs', '_compositions'); os.makedirs(out, exist_ok=True); total = 0.0; wishes = []
+    if '--fit' in args: return refit(sites, wanted, out)
     for site in sites:
         if wanted and site['id'] not in wanted: continue
         page = os.path.join(HERE, 'runs', 'shipped', site['id'], 'page.html'); seed = os.path.join(HERE, 'seed', site['id'])

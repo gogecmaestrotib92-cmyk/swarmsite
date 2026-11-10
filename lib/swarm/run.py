@@ -2,6 +2,8 @@
   round 0: Reader (if not yet) → UX → Copy → UI → Visual → render
   round k: Critic looks at the render → routes each defect to its owner (copy / ui / visual / ux) → owners fix in parallel → bounded critic ops → render
 Stops at --target score or --rounds. Prints one JSON line per event (the server turns them into swarm events) and a final {"done":…} line.
+Opt-in, after the rounds (brief.json "compose": true, or SWARM_COMPOSE=1): the first screen of the winning page is recomposed
+(lib/compose) and the composed page is kept only if it scores at least as high as the page it would replace.
 Usage: python3 lib/swarm/run.py out/<slug> <blueprint-id> --out bp-<id>.html [--rounds 3] [--target 80]"""
 import json, os, sys, time, subprocess, traceback, shutil, tempfile, hashlib
 from concurrent.futures import ThreadPoolExecutor
@@ -114,6 +116,95 @@ def checked_render(slug_dir, bp, out):
         ev('Patterns', f"{len(selection['choices'])} verified section move(s) · {selection['reason']}")
     return render(slug_dir, bp, out)
 
+def compose_wanted(slug_dir):
+    """An art director recomposes the first screen only when the job asks for it (brief.json: "compose": true) or the
+    deployment does (SWARM_COMPOSE=1). Without either, nothing in lib/compose runs."""
+    brief = A.J(slug_dir, 'brief.json') or {}
+    return os.environ.get('SWARM_COMPOSE') == '1' or brief.get('compose') is True
+
+
+def compose_first_screen(slug_dir, out):
+    """Recompose the first screen of the page at `out` (lib/compose) and write composition.json. The page file is replaced
+    only by a composition that validated, was measured on its own render and broke nothing; anything else leaves it as it was.
+    Returns the record: {'drawn', 'attempts', 'concept', 'face', 'measured', 'wishes', 'log', 'ir'}."""
+    if os.path.join(ROOT, 'lib', 'compose') not in sys.path: sys.path.insert(0, os.path.join(ROOT, 'lib', 'compose'))
+    import compose as COMPOSE, render_ir as IR
+    with open(out, encoding='utf-8') as f: page = f.read()
+    images = A.J(slug_dir, 'images.json') or []
+    result = COMPOSE.compose(page, images, job_dir=slug_dir, page_path=out)
+    ir = result.get('ir')
+    record = {'drawn': False, 'attempts': result.get('attempts'), 'concept': (ir or {}).get('note'), 'face': ((ir or {}).get('hero') or {}).get('face'),
+              'measured': result.get('measured'), 'wishes': result.get('wishes'), 'log': result.get('log'), 'ir': ir}
+    if ir:
+        composed, report = IR.transplant(page, ir, images)
+        if report['drawn']:
+            with open(out + '.composed', 'w', encoding='utf-8') as f: f.write(composed)
+            os.replace(out + '.composed', out); record['drawn'] = True
+    with open(os.path.join(slug_dir, 'composition.json'), 'w', encoding='utf-8') as f: json.dump(record, f, indent=1, ensure_ascii=False)
+    return record
+
+
+def composed_candidate(slug_dir, out, best_score, best_broken, grade):
+    """The composed page is one more candidate, held to the loop's own rule: it replaces the winner only if the contract
+    and the critic, looking at its own render, score it at least as high and it breaks no hard promise the winner kept.
+    `grade()` → (contract report, critic report) for the page at `out`. Returns the decision; when 'kept' is false the
+    caller puts the winner's files back."""
+    record = compose_first_screen(slug_dir, out)
+    decision = {'kept': False, 'drawn': record['drawn'], 'attempts': record.get('attempts'), 'concept': record.get('concept'), 'face': record.get('face'), 'before': best_score}
+    if not record['drawn']:
+        decision['why'] = 'no composition passed validation and measurement'; return decision
+    con, rep = grade()
+    taste = rep.get('score') if isinstance(rep, dict) and isinstance(rep.get('score'), (int, float)) else None
+    if taste is None or not isinstance(con.get('score'), (int, float)):
+        decision['why'] = 'the composed page could not be graded'; return decision
+    score = round(0.55 * taste + 0.45 * con['score']); failed = con.get('failed', [])
+    hard = lambda ids: {i for i in ids if any(i.endswith(h) or i == h for h in HARD)}
+    newly = sorted(hard(f['id'] for f in failed) - hard(f['id'] for f in (best_broken or [])))
+    decision.update(score=score, taste=taste, contract=con['score'], broken=failed, critic=rep)
+    if newly: decision['why'] = 'it breaks ' + ', '.join(newly)
+    elif score < best_score: decision['why'] = f'it scores {score}, the page it would replace {best_score}'
+    else: decision['kept'] = True
+    return decision
+
+
+def recompose(slug_dir, out, log, best_score, best_round, best_manifest, best_files, snapshot_dir):
+    """Offer the winning page a composed first screen and keep whichever page scores higher. Returns the (score, round,
+    manifest) of the page that stands. A composed page that is kept becomes one more round in the log, with the critic's
+    and the contract's reports of that page; a refused one leaves every file of the winner exactly as it was."""
+    winner = next((r for r in log['rounds'] if r.get('k') == best_round), {})
+    try:
+        def grade():
+            with ThreadPoolExecutor(2) as ex:
+                fcon = ex.submit(contract, slug_dir, out); frep = ex.submit(C.critique, slug_dir, out, A.MODEL, False)
+                return fcon.result(), frep.result()
+        decision = composed_candidate(slug_dir, out, best_score, winner.get('broken'), grade)
+    except Exception as e:
+        decision = {'kept': False, 'drawn': False, 'before': best_score, 'why': 'failed: ' + str(e)[:120]}
+    rep = decision.pop('critic', None); cfail = decision.pop('broken', None)
+    if decision['kept']:
+        k = max(r['k'] for r in log['rounds']) + 1
+        fixes = [f for f in (rep.get('fixes') if isinstance(rep.get('fixes'), list) else []) if isinstance(f, dict)]
+        log['rounds'].append({'k': k, 'composed': True, 'score': decision['score'], 'taste': decision['taste'], 'contract': decision['contract'], 'axes': rep.get('axes') if isinstance(rep.get('axes'), dict) else None, 'broken': cfail, 'fixes': fixes, 'verdict': rep.get('verdict')})
+        with open(os.path.join(slug_dir, 'critic.json'), 'w') as f:
+            json.dump({**rep, 'score': decision['score'], 'taste': decision['taste'], 'contract': decision['contract'], 'broken': cfail, 'round': k, 'best': decision['score'], 'composed': True}, f, indent=1, ensure_ascii=False)
+        best_score, best_round = decision['score'], k; best_manifest = dict(best_manifest, html=digest(out))
+        ev('Concept', 'first screen recomposed: ' + str(decision.get('concept') or '')[:110])
+        ev('Critic', f"composed first screen kept: {decision['score']}/100 (was {decision['before']}) · taste {decision['taste']} · contract {decision['contract']}")
+    else:   # the winner's page, documents, contract, critic and screenshots go back exactly as they were
+        for path, data in best_files.items():
+            with open(path, 'wb') as f: f.write(data)
+        restore_shots(slug_dir, snapshot_dir)
+        if best_manifest['html'] != digest(out): raise RuntimeError('the winning page could not be restored after a refused composition')
+        ev('Concept', 'first screen left as it was: ' + str(decision.get('why') or '')[:100])
+    log['composition'] = decision
+    try:
+        record = A.J(slug_dir, 'composition.json') or {}
+        record.update({key: decision.get(key) for key in ('kept', 'why', 'before', 'score', 'taste', 'contract')})
+        with open(os.path.join(slug_dir, 'composition.json'), 'w', encoding='utf-8') as f: json.dump(record, f, indent=1, ensure_ascii=False)
+    except Exception: pass
+    return best_score, best_round, best_manifest
+
+
 def snapshot_shots(slug_dir, snapshot_dir):
     """Keep only the current best's screenshots on disk, never in memory."""
     saved = os.path.join(snapshot_dir, 'critic-shots')
@@ -142,7 +233,10 @@ def main():
     with tempfile.TemporaryDirectory(prefix='swarm-best-') as snapshot_dir:
         return _main(snapshot_dir)
 
+COMPOSE_BY = 600   # seconds into the loop after which a first screen is no longer recomposed: the server stops the loop at 900
+
 def _main(snapshot_dir):
+    started = time.time()
     slug_dir, bp = sys.argv[1], sys.argv[2]; args = sys.argv[3:]
     out = args[args.index('--out') + 1] if '--out' in args else os.path.join(slug_dir, f'bp-{bp}.html')
     rounds = int(args[args.index('--rounds') + 1]) if '--rounds' in args else 3
@@ -258,6 +352,9 @@ def _main(snapshot_dir):
         if best_round != log['rounds'][-1]['k']: ev('Critic', f'kept round {best_round} with {best_score}/100')
     if isinstance(best_manifest, dict) and (best_manifest['fingerprints'] != fingerprints(slug_dir, best_bp) or best_manifest['html'] != digest(out)):
         raise RuntimeError('best snapshot changed after render')
+    # Opt-in: an art director recomposes the first screen of the page that won. The composed page is one more candidate.
+    if compose_wanted(slug_dir) and isinstance(best_manifest, dict) and best_files and time.time() - started < COMPOSE_BY:
+        best_score, best_round, best_manifest = recompose(slug_dir, out, log, best_score, best_round, best_manifest, best_files, snapshot_dir)
     # Audit the selected render, after rolling back any weaker candidate.
     # A text match is not a semantic guarantee; unmatched sections require review.
     try:
