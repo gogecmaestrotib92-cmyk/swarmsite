@@ -207,6 +207,7 @@ def compose_first_screen(slug_dir, out, deadline=None):
         composed, report = IR.transplant(page, ir, images)
         if report['drawn']: replace(composed); page = composed; record['drawn'] = True
     record['direction'] = result.get('direction') if record['drawn'] else None
+    record['plan'] = result.get('plan') if record['drawn'] else None
     def directed():
         """One page, one direction: what the first screen's composer asked of the rest of the page, its typeface, and what
         the composers before this one already chose — so that each continues the page instead of starting again."""

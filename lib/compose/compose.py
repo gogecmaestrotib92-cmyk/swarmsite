@@ -89,6 +89,8 @@ Rules the renderer enforces — a composition that breaks one is refused whole:
 - A picture you place should register: at least one spans five columns or more (the page is graded on showing a picture or the product at 30% of the screen width in the first screen when it has one).
 - A picture stands no taller than about 720 px at 1440 (its width divided by its ratio; 900 px with "height": "tall"): taller, and the buttons fall under the fold.
 - The headline takes at most three lines at 1440 px and is never set under 48 px. Break it yourself with "lines" when the break matters; otherwise choose size and measure for the words you have. You will be told what was measured on the render.
+THE PAGE PLAN. A first screen with an idea over a page of stock sections is the commonest failure of a page like this: the idea stops at the fold. So before the sections below are composed, you plan the page ("page_plan"): name the ONE device of your first screen that returns (something drawable), at least two sections from THE PAGE BELOW that carry it and how each does, at most one event — the page's single loud moment below the first screen — and the sections that stay plain. Most of a page is plain; that is what lets the carriers and the event be seen. Use only section ids you are given.
+
 Answer by calling write_composition. In "concept", say in one sentence what the first screen does and why it suits this business. In "wishes", list anything you wanted that the format cannot do — it is not drawn, it is how the format grows."""
 
 AT = {"type": "object", "required": ["col", "row"], "properties": {
@@ -111,6 +113,11 @@ NODE = {"type": "object", "required": ["id", "t", "at"], "properties": {
 TOOL = {"name": "write_composition", "description": "The composition of the first screen. The hero's fields are given directly: typeface, height, rows, gap, nodes, phone_order.", "input_schema": {"type": "object", "required": ["concept", "rows", "nodes", "phone_order"], "properties": {
     "concept": {"type": "string", "description": "one sentence: what this first screen does and why it suits this business"},
     "page_direction": {"type": "string", "description": "two or three sentences for the art directors who compose the rest of this page after you: the attitude of the type (quiet/loud, large/small, numerals hollow or solid), where colour and dark grounds belong, what pictures should do, and the one motif that should return down the page. Instructions for colleagues, never shown to a visitor."},
+    "page_plan": {"type": "object", "description": "the plan of the whole page, written before any section below is composed: the one device of your first screen that returns, and where", "properties": {
+        "device": {"type": "string", "description": "one sentence: the device of the first screen that returns down the page — a way of cutting pictures, a ground, a gesture of the type, a system of labels. Something a colleague can draw, not a mood."},
+        "carriers": {"type": "array", "maxItems": 4, "items": {"type": "object", "required": ["section", "how"], "properties": {"section": {"type": "string", "description": "a section id from THE PAGE BELOW"}, "how": {"type": "string", "description": "what the device looks like in this section"}}}},
+        "event": {"type": "object", "properties": {"section": {"type": "string"}, "what": {"type": "string", "description": "the page's one loud moment below the first screen: the only change of ground, the one full-bleed picture, the largest type"}}},
+        "plain": {"type": "array", "items": {"type": "string"}, "description": "section ids that stay quiet so the others can be seen"}}},
     "typeface": {"type": "string", "enum": ["page"] + [f["id"] for f in V.FACES.of_role('display')], "description": "the display face the whole page is set in; \"page\" keeps the page's own"},
     "body_face": {"type": "string", "enum": ["page"] + [f["id"] for f in V.FACES.of_role('body')], "description": "the face of the page's running text; \"page\" keeps the page's own"},
     "label_face": {"type": "string", "enum": ["page"] + [f["id"] for f in V.FACES.of_role('label')], "description": "the face of the small print: labels, numerals, captions; \"page\" keeps the page's own"},
@@ -251,7 +258,7 @@ def backdrop_findings(page_path):
     return found
 
 
-LEADS = {'picture': 0.4, 'headline': 0.6}   # under both, neither picture nor type leads the first screen (the references: a picture over 82% or more on 9 of 11; headline width median 81%)
+LED_BY = {'picture': 0.4, 'headline': 0.6}   # under both, neither picture nor type leads the first screen (the references: a picture over 82% or more on 9 of 11; headline width median 81%)
 CUT_BY_FOLD = 0.2   # the share of a first-screen picture that may hang under the fold before it reads as cut off
 
 
@@ -259,7 +266,7 @@ def hero_findings(seen):
     """Promises of a first screen that the page contract does not grade, from measure_hero()."""
     found = {}
     lead = ((seen or {}).get('desktop') or {}).get('lead')
-    if isinstance(lead, dict) and lead.get('picture', 1) < LEADS['picture'] and lead.get('headline', 1) < LEADS['headline']:
+    if isinstance(lead, dict) and lead.get('picture', 1) < LED_BY['picture'] and lead.get('headline', 1) < LED_BY['headline']:
         found['desktop-hero-nothing-leads'] = (f"the largest picture covers {round(lead['picture'] * 100)}% of the first screen and the headline spans {round(lead['headline'] * 100)}% of its width: neither leads. "
                                               f"A first screen is led by its picture or by its type — let the picture fill the screen (\"bleed\": \"full\", or many more columns and rows) or set the headline across the width (more columns, a larger \"size\")")
     for view in ('desktop', 'mobile'):
@@ -313,10 +320,46 @@ def veil(page_html, ir, images, folder):
     return deeper
 
 
+KINDS = ('indexlist', 'ladder', 'ledger', 'faq', 'cards', 'numbers', 'photo', 'photos', 'story', 'statement', 'qband', 'sticky', 'pinned', 'typewall', 'marquee', 'railsec', 'products', 'cta', 'archive')
+
+
+def outline(page_html):
+    """The sections under the first screen, as a planner needs them: id, what kind of section, how much text."""
+    import re, sections as SECTIONS
+    out = []
+    for s in SECTIONS.sections(page_html):
+        if not s.get('id') or s['id'] in ('top', 'more', 'end') or 'hero' in (s.get('classes') or []): continue
+        body = page_html[s['span'][0]:s['span'][1]]; words = re.sub(r'<[^>]+>', ' ', re.sub(r'<(script|style)\b.*?</\1>', ' ', body, flags=re.S))
+        kind = next((c for c in s.get('classes') or [] if c in KINDS), 'section') + (' with a picture' if '<img' in body else '')
+        out.append({'id': s['id'], 'kind': kind, 'chars': len(' '.join(words.split()))})
+    return out
+
+
+def page_plan(answer, below):
+    """A plan as the page can hold it: a device in words, carriers and an event that name sections which exist, the plain
+    ones. Anything else the model wrote is dropped; a plan without a device or without a carrier is no plan."""
+    if not isinstance(answer, dict) or not isinstance(answer.get('device'), str) or not answer['device'].strip(): return None
+    known = {s['id'] for s in below or []}; line = lambda t, n: ' '.join(str(t or '').split())[:n]
+    carriers = [{'section': c['section'], 'how': line(c.get('how'), 200)} for c in answer.get('carriers') or [] if isinstance(c, dict) and c.get('section') in known and line(c.get('how'), 200)][:4]
+    if not carriers: return None
+    event = answer.get('event') if isinstance(answer.get('event'), dict) and answer['event'].get('section') in known and line(answer['event'].get('what'), 200) else None
+    taken = {c['section'] for c in carriers} | ({event['section']} if event else set())
+    return {'device': line(answer['device'], 300), 'carriers': carriers, 'event': {'section': event['section'], 'what': line(event['what'], 200)} if event else None,
+            'plain': [sid for sid in answer.get('plain') or [] if sid in known and sid not in taken]}
+
+
+def plan_words(plan):
+    """The plan as the sentence the composers after the first screen read."""
+    said = f"PAGE PLAN — the device that returns down the page: {plan['device']} Carried by: " + '; '.join(f'"{c["section"]}" — {c["how"]}' for c in plan['carriers']) + '.'
+    if plan.get('event'): said += f' The page\'s one event: "{plan["event"]["section"]}" — {plan["event"]["what"]}.'
+    if plan.get('plain'): said += ' Kept plain, so the others can be seen: ' + ', '.join(f'"{s}"' for s in plan['plain']) + '.'
+    return said + ' A section the plan names is composed as the plan says; a section it does not name stays quiet.'
+
+
 def _directed(direction):
     """What the page has already decided, as the first thing a composer reads: the direction set with the first screen and
     what the composers before this one chose. Words for a model only — nothing of it reaches the page."""
-    return [{"type": "text", "text": "THE PAGE'S DIRECTION — decided with its first screen; what you compose continues it, it does not start again:\n" + str(direction)[:1400]}] if direction else []
+    return [{"type": "text", "text": "THE PAGE'S DIRECTION — decided with its first screen; what you compose continues it, it does not start again:\n" + str(direction)[:2600]}] if direction else []
 
 
 def _pruned(doc, key, errors, check):
@@ -393,6 +436,8 @@ def compose(page_html, images, job_dir=None, page_path=None, model=None, review=
     content = CONTENT.from_page(page_html, images or [])
     if face_locked(job_dir, content): content['page']['face_locked'] = True
     text, pictures = brief(content, job_dir)
+    below = outline(page_html)
+    if below: text += '\n\nTHE PAGE BELOW the first screen — its sections in order (id: what it is, how many characters), for "page_plan":\n' + '\n'.join(f'- {s["id"]}: {s["kind"]}, {s["chars"]} characters' for s in below)
     material = [{"type": "text", "text": text}]
     for address, m in pictures:
         data = _thumb(m['src'])
@@ -416,6 +461,8 @@ def compose(page_html, images, job_dir=None, page_path=None, model=None, review=
             if isinstance(w, dict) and (w.get('missing') or w.get('intent')): wishes.append({'intent': str(w.get('intent') or '')[:200], 'missing': str(w.get('missing') or '')[:120]})
         entry = {'stage': stage, 'concept': ir['note'], 'errors': [f"{e['code']} {e['at']}: {e['message']}" for e in errors], **({'refused': ir['hero']} if errors else {})}; log.append(entry)
         if isinstance(answer.get('page_direction'), str) and answer['page_direction'].strip(): entry['direction'] = ' '.join(answer['page_direction'].split())[:900]
+        plan = page_plan(answer.get('page_plan'), below)
+        if plan: entry['plan'] = plan
         return ir, errors, entry
 
     def draft(label='', lead=None):
@@ -504,7 +551,10 @@ def compose(page_html, images, job_dir=None, page_path=None, model=None, review=
             log.append({'stage': 'refuse', 'errors': [f'the composition breaks the page on the render ({", ".join(_broken(findings))}): not shipped']}); best = None
     said = [step for step in log if step.get('direction') and step.get('concept') == (best or {}).get('note')] or [step for step in log if step.get('direction')]
     direction = said[-1]['direction'] if best and said else None   # what the composer of the chosen first screen asked of the rest of the page
-    result = {'ir': best, 'direction': direction, 'drawn': best is not None, 'attempts': sum(1 for step in log if step['stage'].split(':')[0] in ('compose', 'correct', 'revise', 'jury')), 'log': log, 'wishes': wishes, 'measured': findings}
+    planned = [step for step in log if step.get('plan') and step.get('concept') == (best or {}).get('note')] or [step for step in log if step.get('plan')]
+    plan = planned[-1]['plan'] if best and planned else None
+    if plan: direction = ((direction + ' ') if direction else '') + plan_words(plan)   # the plan travels with the direction: every composer after this one, and the critic, reads it
+    result = {'ir': best, 'direction': direction, 'plan': plan, 'drawn': best is not None, 'attempts': sum(1 for step in log if step['stage'].split(':')[0] in ('compose', 'correct', 'revise', 'jury')), 'log': log, 'wishes': wishes, 'measured': findings}
     if several: result.update(concepts=[{'label': c['label'], 'concept': c['ir']['note'], 'measured': c.get('findings'), **({'failed': c['failed']} if 'failed' in c else {})} for c in candidates], chosen=chosen['label'] if chosen else None, verdict=verdict)
     return result
 
