@@ -289,7 +289,8 @@ class ContractTests(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeError, 'invalid report'):
                     run.contract(directory, 'page.html')
 
-    def test_best_taste_round_wins_and_restores_matching_artifacts(self):
+    def rounds_of_which_only_the_second_is_sound(self, decide, check):
+        """Three rounds: the first and third look better (taste 90, 100) and overflow on a phone; the second is clean (taste 25)."""
         with tempfile.TemporaryDirectory() as directory:
             agents.W(directory, 'direction.json', {'hero': {'h1': 'Headline'}, 'beats': []})
             agents.W(directory, 'factsheet.json', {})
@@ -327,27 +328,54 @@ class ContractTests(unittest.TestCase):
             def ui(folder, notes='', blueprint_id=None):
                 return int(bool(notes))
 
-            with patch.object(run.sys, 'argv', ['run.py', directory, 'butter', '--out', str(output), '--rounds', '3']), \
+            with patch.object(run.sys, 'argv', ['run.py', directory, 'butter', '--out', str(output), '--rounds', '3']), patch.object(run, 'DECIDE', decide), \
                     patch.object(run, 'render', render), patch.object(run, 'contract', contract), \
                     patch.object(run.C, 'critique', critique), patch.object(agents, 'ui', ui), \
                     patch.object(agents, 'concept', return_value=0), patch.object(agents, 'ux', return_value=0), \
                     patch.object(agents, 'visual', return_value=0), patch.object(agents, 'copy', return_value=0):
                 run.main()
 
-            # taste leads: round 1 (taste 90, one broken promise) beats round 2 (clean, taste 25); round 2 bought nothing, so the loop stops there
-            self.assertEqual(round_number, 2)
+            check(directory, output, round_number)
+
+    def test_a_page_that_breaks_no_hard_promise_stands_before_a_better_looking_one_that_does(self):
+        def check(directory, output, rounds_run):
+            # two tracks, never added up: round 2 (clean, taste 25) stands before round 1 (taste 90, overflow on a phone); round 3
+            # (taste 100, overflow again) does not displace it, and the clean round's own files are what is left
+            self.assertEqual(rounds_run, 3)
+            self.assertEqual(output.read_text(), 'page 2')
+            self.assertEqual(agents.J(directory, 'direction.json')['hero']['h1'], 'Headline 2')
+            self.assertEqual(agents.J(directory, 'images.json')[0]['id'], 'image-2')
+            self.assertEqual(agents.J(directory, 'contract.json')['failed'], [])
+            self.assertEqual(agents.J(directory, 'critic.json')['round'], 2)
+            trace = agents.J(directory, 'swarm.json'); self.assertEqual(trace['best_round'], 2)
+            self.assertEqual((trace['scores']['decided_by'], trace['scores']['enforced'], trace['scores']['technical']['pass']), ('gates', True, True))
+            shots = Path(directory) / 'critic-shots'
+            self.assertEqual((shots / 'desktop-2.png').read_bytes(), b'screenshot 2')
+            self.assertFalse((shots / 'desktop-3.png').exists())
+            self.assertEqual((shots / 'notes.txt').read_text(), 'keep this unrelated file')
+            # Coverage refers to the page that ships ("page 2"), which does not hold the source's words "page 1"
+            self.assertEqual(agents.J(directory, 'coverage.json')['sections'][0]['status'], 'needs_review')
+        self.rounds_of_which_only_the_second_is_sound('gates', check)
+
+    def test_the_blended_number_can_still_decide_and_restores_matching_artifacts(self):
+        def check(directory, output, rounds_run):
+            # SWARM_DECIDE=blend: taste carries the sum, so round 1 (taste 90, one broken promise) beats round 2 (clean, taste 25);
+            # round 2 bought nothing, so the loop stops there
+            self.assertEqual(rounds_run, 2)
             self.assertEqual(output.read_text(), 'page 1')
             self.assertEqual(agents.J(directory, 'direction.json')['hero']['h1'], 'Headline 1')
             self.assertEqual(agents.J(directory, 'images.json')[0]['id'], 'image-1')
             self.assertEqual(len(agents.J(directory, 'contract.json')['failed']), 1)
             self.assertEqual(agents.J(directory, 'critic.json')['round'], 1)
-            self.assertEqual(agents.J(directory, 'swarm.json')['best_round'], 1)
+            trace = agents.J(directory, 'swarm.json'); self.assertEqual(trace['best_round'], 1)
+            self.assertEqual((trace['scores']['decided_by'], trace['scores']['enforced']), ('blend', False))
             shots = Path(directory) / 'critic-shots'
             self.assertEqual((shots / 'desktop-1.png').read_bytes(), b'screenshot 1')
             self.assertFalse((shots / 'desktop-2.png').exists())
             self.assertEqual((shots / 'notes.txt').read_text(), 'keep this unrelated file')
             # Coverage must refer to the selected, restored HTML, not the last attempted round.
             self.assertEqual(agents.J(directory, 'coverage.json')['sections'][0]['status'], 'text_detected')
+        self.rounds_of_which_only_the_second_is_sound('blend', check)
 
     def test_missing_best_shots_remove_later_shots_without_touching_other_files(self):
         with tempfile.TemporaryDirectory() as directory, tempfile.TemporaryDirectory() as snapshot:

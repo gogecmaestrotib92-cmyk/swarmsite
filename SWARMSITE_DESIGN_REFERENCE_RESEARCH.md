@@ -1443,7 +1443,7 @@ One line each; every line is **[I]**, condensed from the analysis that follows, 
 - [M] Section headings (h2, 28 px) are smaller than what they head: h3 at 44 px and 34.6 px.
 - [M] Paragraph: 64 characters per line, 29.6 em (562 px), 2 lines at 1440; 32 characters, 17.9 em at 390 (paragraphs).
 - [M] Headings wrap `balance`; display text is split into spans (`h1 › span`, `h2 › span` in the reveal readings); the 56 px marquee row is `nowrap`, −0.02 em.
-- [M-seen] The caron of "š" is drawn detached and oversized above the letter in the serif at every display size — h1, form heading, footer wordmark — and correctly in the sans and the mono (`desktop-scroll-0.jpg`, crops of `desktop-full.jpg`). [I] The display face as loaded lacks that glyph and the accent comes from a fallback.
+- [M-seen] The caron of "š" is drawn detached and oversized above the letter in the serif at every display size — h1, form heading, footer wordmark — and correctly in the sans and the mono (`desktop-scroll-0.jpg`, crops of `desktop-full.jpg`). [I] The display face as loaded lacks that glyph and the accent comes from a fallback. (Checked afterwards and wrong: the face draws the letter itself, with its accent set apart — see E.1, G11.)
 
 **Layout geometry**
 - [M] Left edge 0.07 (27 blocks). Second-column starts scatter: 0.48 (8 blocks), 0.49 (4), 0.5 (3), 0.52 (3), 0.53 (3); also 0.29 (3), 0.3 (4), 0.74 (3). Declared grids: 2 columns ×14, 4 ×1 (desktop, alignment).
@@ -1909,9 +1909,12 @@ Four more findings come from the analysis of our own recipe as rendered (C.12), 
 
 - **G10 · Size does not follow rank.** In that render the section headings are 28 px above items at 44 and 34.6 px,
   and the headline is the fifth-largest type on the page.
-- **G11 · A display face is used for letters it does not draw.** The caron of "š" stands detached and oversized over
-  the letter in the serif at every display size, and correctly in the other two faces [M-seen:
-  `references/atelier/desktop-scroll-0.jpg`]. The cause was not examined.
+- **G11 · A display face whose accents come apart.** The caron of "š" stands high and detached over the letter in the
+  serif at every display size, and sits correctly in the other two faces [M-seen:
+  `references/atelier/desktop-scroll-0.jpg`]. Examined afterwards on a clean test page, same day: the letter is drawn
+  by the face itself, not by a fallback — the instrument's letter reading confirms it — and the face as served draws
+  its lowercase caron and acute that way, while its capitals hold together. So the defect is the choice of face for
+  this alphabet, not its loading.
 - **G12 · The second column has no single edge**: blocks start at 48, 49, 50, 52 and 53% of the width, where the
   reference it mirrors has two edges on the whole page.
 - **G13 · A recipe is not what gets drawn.** The recipe says a held first screen with a rail over video, one family,
@@ -1946,7 +1949,7 @@ Rules, parameters and briefs. No new form, no new document.
 | 10 | Smoothed scrolling as a decision by kind of page, off for a shop or a form page | G8; D.4-1; [S 7] | the renderer's scroll set-up |
 | 11 | The closing wordmark as one ending among several | G7 | the renderer's footer |
 | 12 | Size follows rank: no heading smaller than what it heads; the headline the largest type on its screen | G10 | the renderer's type-scale tokens per beat |
-| 13 | Every letter drawn by the face it is set in | G11 | the type registry (`lib/type/faces.json`) and the faces' loaded subsets; a Track T check (T-19) |
+| 13 | A face is set only in an alphabet it draws well | G11 | the type registry (`lib/type/faces.json`): record for each face whether its accented letters hold together in the languages we serve; the instrument reports letters a face does not draw itself (T-19) |
 | 14 | One edge per column | G12 | the renderer's column starts |
 
 ### E.3 What needs a new composition capability

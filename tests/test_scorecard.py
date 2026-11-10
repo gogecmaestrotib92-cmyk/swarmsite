@@ -1,5 +1,6 @@
 """Taste and contract are reported side by side, each against its own bar. A high contract never stands in for taste,
-and a page with a broken screen is not technically sound however it is scored. Reported, not enforced."""
+and a page with a broken screen is not technically sound however it is scored. The loop decides on the same two tracks,
+so what the card reports is what was enforced."""
 import io, json, os, sys, tempfile, unittest
 from contextlib import redirect_stdout
 from pathlib import Path
@@ -19,7 +20,8 @@ class Scorecard(unittest.TestCase):
         card = run.scorecard(log({'k': 1, 'taste': 52, 'contract': 97, 'score': 72, 'broken': [], 'axes': {'design': 55, 'originality': 42, 'craft': 50, 'function': 62}}), 1)
         self.assertTrue(card['technical']['pass']); self.assertFalse(card['creative']['pass'])
         self.assertEqual((card['taste'], card['contract'], card['blended']), (52, 97, 72))
-        self.assertEqual(card['axes']['originality'], 42); self.assertFalse(card['enforced'])
+        self.assertEqual(card['axes']['originality'], 42); self.assertTrue(card['enforced']); self.assertEqual(card['decided_by'], 'gates')
+        self.assertEqual(card['creative']['level'], 1, 'taste 52 is under the 55 where competent begins')
 
     def test_a_broken_screen_fails_the_technical_gate_whatever_the_score(self):
         card = run.scorecard(log({'k': 1, 'taste': 90, 'contract': 96, 'score': 93, 'broken': [{'id': 'mobile-no-overflow', 'detail': 'x', 'weight': 2}, {'id': 'h2-short', 'detail': 'y', 'weight': 1}]}), 1)
@@ -77,10 +79,11 @@ class LoopWritesTheCard(unittest.TestCase):
                 run.main()
 
             card = agents.J(directory, 'scores.json')
-            self.assertEqual((card['round'], card['taste'], card['contract']), (1, 58, 97))
+            # round 1 looks better (58) and has an empty screen; round 2 (40) is sound: the sound one ships, and the card says so
+            self.assertEqual((card['round'], card['taste'], card['contract']), (2, 40, 97))
             self.assertFalse(card['creative']['pass'])
-            self.assertFalse(card['technical']['pass'], 'contract 97 with an empty screen is not technically sound')
-            self.assertEqual(card['technical']['hard_failures'], ['desktop-no-empty-screens'])
+            self.assertTrue(card['technical']['pass'], 'the page that ships has no empty screen')
+            self.assertEqual(card['technical']['hard_failures'], [])
             self.assertEqual(card['axes']['originality'], 44)
             fp = agents.J(directory, 'fingerprint.json')
             self.assertEqual(fp['signature'], ['hero.split', 'cards', 'cta']); self.assertEqual(fp['body'], ['cards'])
@@ -89,9 +92,9 @@ class LoopWritesTheCard(unittest.TestCase):
             self.assertEqual(trace['rounds'][0]['axes']['design'], 60)
             lines = [json.loads(l) for l in printed.getvalue().splitlines() if l.startswith('{')]
             done = next(l['done'] for l in lines if 'done' in l)
-            self.assertEqual(done['scores']['taste'], 58); self.assertEqual(done['score'], trace['best'])
+            self.assertEqual(done['scores']['taste'], 40); self.assertEqual(done['score'], trace['best'])
             said = [l['event']['text'] for l in lines if 'event' in l and l['event']['role'] == 'Critic']
-            self.assertTrue(any('design 58/100 (below 70)' in t and 'technical 97/100 (broken: desktop-no-empty-screens)' in t for t in said), said)
+            self.assertTrue(any('design 40/100 (below 70)' in t and 'technical 97/100 (clears 90)' in t for t in said), said)
 
 
 if __name__ == '__main__':

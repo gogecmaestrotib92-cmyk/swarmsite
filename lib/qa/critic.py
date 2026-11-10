@@ -7,6 +7,7 @@ import json, os, sys, subprocess, base64, re
 from html.parser import HTMLParser
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 import budget as B
+import standard as STANDARD
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 
 TOOL = {"name": "report_fixes", "description": "Report concrete visual defects and the bounded fixes for them.",
@@ -28,6 +29,44 @@ TOOL = {"name": "report_fixes", "description": "Report concrete visual defects a
                 "op": {"type": "string", "enum": ["drop_beat", "shorten", "swap_image", "hero_image", "hero_h1", "band", "layout", "reorder", "note"]},
                 "agent": {"type": "string", "enum": ["copy", "ui", "visual", "ux", "concept"], "description": "who owns the fix: copy = words; ui = columns/bands/sizes/spacing/empty screens; visual = which image, crops, missing visuals; ux = order of sections, CTAs, nav; concept = the section's MOVE is wrong (sticky/pinned/type-wall/marquee/story/cards) or the page lacks one idea"},
                 "beat": {"type": "string"}, "field": {"type": "string"}, "max_words": {"type": "integer"}, "image": {"type": "string"}, "value": {"type": "string"}, "reason": {"type": "string"}}}}}}}
+
+AREAS = {'art_direction': 'one idea, specific to this subject, visible on the first screen and still there on the last',
+         'typography': 'a system of faces and sizes with one scale regime; headings broken by sense',
+         'composition': 'each screen arranged on purpose: few shared edges, room given, something crossing its column',
+         'hierarchy': 'one thing seen first on each screen, and it is the right thing',
+         'imagery': 'pictures given a job and room, never a box beside text',
+         'originality': 'a device of its own that follows from the subject',
+         'motion': 'what the direction says moves, as one system — judged from the frozen frames and from what the browser measured',
+         'content': 'an argument: what it is, for whom, proof beside the claim, the next step always visible',
+         'responsive': 'the 390 screens recomposed, not stacked'}
+OPS = ["drop_beat", "shorten", "swap_image", "hero_image", "hero_h1", "band", "layout", "reorder", "note"]
+
+
+def final_tool():
+    """The tool of the final look: the same report, plus a level for each area of the Standard and findings with all their
+    parts. Intermediate rounds keep the short tool: they steer the agents and do not decide what ships."""
+    tool = json.loads(json.dumps(TOOL)); props = tool['input_schema']['properties']
+    props['levels'] = {"type": "object", "description": "the level of each area: 1 machine-made, 2 competent, 3 distinctive studio quality, 4 experimental; halves allowed",
+                       "properties": {a: {"type": "number", "minimum": 1, "maximum": 4, "description": d} for a, d in AREAS.items()}}
+    props['findings'] = {"type": "array", "maxItems": 8, "description": "for the areas below level 3: what is wrong, where, why, and the one correction", "items": {
+        "type": "object", "required": ["defect", "area", "evidence", "reason", "correction"], "properties": {
+            "defect": {"type": "string", "description": "an id from DEFECTS, or NEW"}, "area": {"type": "string", "enum": list(AREAS)}, "beat": {"type": "string", "description": "the section id"},
+            "viewport": {"type": "string", "enum": ["1440", "390", "both"]}, "evidence": {"type": "string", "description": "what is seen, on which screen, where on it"},
+            "reason": {"type": "string", "description": "why a designer reads it as a defect"},
+            "correction": {"type": "object", "required": ["op"], "properties": {"op": {"type": "string", "enum": OPS + ["gap"], "description": "an operation that exists, or gap when nothing the engine can do today would fix it"},
+                                                                                   "detail": {"type": "string", "description": "the parameters, or for a gap what would have to exist"}}},
+            "expectation": {"type": "string", "description": "what will be different, visibly or measurably, if the correction worked"}, "confidence": {"type": "string", "enum": ["seen", "inferred"]}}}}
+    return tool
+
+
+STANDARD_BRIEF = """
+THE FINAL LOOK — besides the report above, give a level to each area and findings for the areas below level 3.
+LEVELS: 1 = machine-made, a known template with another logo; 2 = competent: clear and tidy, nothing wrong and nothing remembered; 3 = distinctive studio quality: this could only be this company's page and every screen was decided; 4 = experimental: a form not met before that serves the subject. Level 3 needs an idea and a type system; a tidy page without them is level 2 whatever else it does.
+A FINDING has every part or is not reported: the defect (an id from DEFECTS, or NEW), the area, the section and viewport, the evidence (what is seen, on which screen, where), the reason, ONE correction, and what will change if it worked. The correction is an operation that exists (the ops of report_fixes). When nothing the engine can do today would fix it, the op is "gap" and the detail says what would have to exist: gaps are counted and become the engine's backlog, so name them precisely.
+MEASURED BY A BROWSER, when listed below, is fact: the page was measured while it loaded, scrolled and moved. Do not re-estimate what is measured. Weigh those findings in your levels, refer to them by id, and spend your own findings on what a browser cannot measure.
+DEFECTS a reviewer judges:
+""" + '\n'.join(f'- {fid} ({area}): {what}' for fid, (area, what) in STANDARD.REVIEWED.items()) + """
+DEFECTS a browser measures (listed for you when present): """ + ', '.join(sorted(STANDARD.CATALOGUE))
 
 SYSTEM = """You are the creative director reviewing screenshots of a page your studio just built. Be hard but concrete.
 CALIBRATION — score each axis against these measured references; the numbers are an internal comparison scale:
@@ -126,8 +165,9 @@ def rendered_actions(html):
     with open(html, encoding='utf-8') as f: parser.feed(f.read())
     return parser.actions, parser.forms
 
-def critique(slug_dir, html, model='claude-sonnet-5-5', fast=False, files=None):
-    """One reading of the page. `files`: screenshots already taken (critique_twice takes them once for both readings)."""
+def critique(slug_dir, html, model='claude-sonnet-5-5', fast=False, files=None, measured=None):
+    """One reading of the page. `files`: screenshots already taken (critique_twice takes them once for both readings).
+    `measured`: the findings a browser measured on this page (lib/qa/standard.py), handed to the final look as fact."""
     import anthropic
     d = json.load(open(os.path.join(slug_dir, 'direction.json')))
     imgs_meta = [{k: v for k, v in i.items() if k != 'data'} for i in (json.load(open(os.path.join(slug_dir, 'images.json'))) if os.path.exists(os.path.join(slug_dir, 'images.json')) else [])]
@@ -168,9 +208,13 @@ def critique(slug_dir, html, model='claude-sonnet-5-5', fast=False, files=None):
         except Exception: continue
         content.append({"type": "text", "text": "SCREEN: " + os.path.basename(f)})
         content.append({"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": base64.b64encode(buf.getvalue()).decode()}})
-    content.append({"type": "text", "text": "Score the four axes against the calibration, compute the weighted score, then call report_fixes."})
+    if not fast and measured:
+        content.append({"type": "text", "text": "MEASURED BY A BROWSER on this page (fact, not opinion):\n" + '\n'.join(
+            f"- {m.get('id')} at {m.get('view')}: {(m.get('evidence') or {}).get('reading')} = {json.dumps((m.get('evidence') or {}).get('value'), ensure_ascii=False)}; expected {(m.get('evidence') or {}).get('expected')}; {(m.get('evidence') or {}).get('references')}"
+            for m in measured[:16] if isinstance(m, dict))})
+    content.append({"type": "text", "text": "Score the four axes against the calibration, compute the weighted score, then call report_fixes." + ('' if fast else " Give the level of each area and the findings.")})
     client = anthropic.Anthropic()
-    B.check('critic'); msg = client.messages.create(model=model, max_tokens=3000, system=SYSTEM, messages=[{"role": "user", "content": content}], tools=[TOOL], tool_choice={"type": "auto"})
+    B.check('critic'); msg = client.messages.create(model=model, max_tokens=3000 if fast else 4500, system=SYSTEM if fast else SYSTEM + STANDARD_BRIEF, messages=[{"role": "user", "content": content}], tools=[TOOL if fast else final_tool()], tool_choice={"type": "auto"})
     B.charge(getattr(msg, 'usage', None), 'critic', model)
     call = next((b for b in msg.content if getattr(b, 'type', '') == 'tool_use'), None)
     r = dict(call.input) if call else {'score': -1, 'fixes': [], 'verdict': 'no report'}
@@ -178,16 +222,35 @@ def critique(slug_dir, html, model='claude-sonnet-5-5', fast=False, files=None):
     r['fixes'] = [f for f in r['fixes'] if isinstance(f, dict)]
     if isinstance(r.get('axes'), dict) and not isinstance(r.get('score'), (int, float)):
         ax = r['axes']; r['score'] = round(.35 * ax.get('design', 0) + .2 * ax.get('originality', 0) + .25 * ax.get('craft', 0) + .2 * ax.get('function', 0))
+    return reviewed(r)
+
+
+def reviewed(r):
+    """The Standard's part of a report, made safe: levels as numbers 1–4 for known areas, findings that have their parts,
+    the page level by the Standard's rule. A report without them (an intermediate round) is returned as it is."""
+    if isinstance(r.get('levels'), dict):
+        r['levels'] = {a: float(v) for a, v in r['levels'].items() if a in AREAS and isinstance(v, (int, float)) and not isinstance(v, bool) and 1 <= v <= 4}
+        r['page_level'] = STANDARD.page_level(r['levels'])
+    elif 'levels' in r: del r['levels']
+    if 'findings' in r:
+        kept = []
+        for f in r['findings'] if isinstance(r['findings'], list) else []:
+            if not isinstance(f, dict) or not all(isinstance(f.get(k), str) and f[k].strip() for k in ('defect', 'area', 'evidence', 'reason')): continue
+            fix = f.get('correction') if isinstance(f.get('correction'), dict) else {}
+            if fix.get('op') not in OPS + ['gap'] or f['area'] not in AREAS: continue
+            kept.append({'id': f['defect'].strip()[:12], 'area': f['area'], 'track': 'C', 'beat': str(f.get('beat') or '')[:60], 'view': str(f.get('viewport') or 'both'), 'evidence': f['evidence'].strip()[:400], 'reason': f['reason'].strip()[:300],
+                         'correction': {'op': fix['op'], 'detail': str(fix.get('detail') or '')[:300]}, 'expectation': str(f.get('expectation') or '')[:300], 'confidence': f.get('confidence') if f.get('confidence') in ('seen', 'inferred') else 'seen'})
+        r['findings'] = kept
     return r
 
-def critique_twice(slug_dir, html, model='claude-sonnet-5-5', shots_dir='critic-shots'):
+def critique_twice(slug_dir, html, model='claude-sonnet-5-5', shots_dir='critic-shots', measured=None):
     """Two readings of the same screenshots, averaged. One reading of a page moves about four points either way; where a
     decision hangs on the score — is the composed page at least as good as the one it would replace — two are taken.
     The verdict and the fixes are the harder reading's; `readings` keeps both scores."""
     from concurrent.futures import ThreadPoolExecutor
     files = shots(html, os.path.join(slug_dir, shots_dir), False)
     if not files: return {'score': -1, 'fixes': [], 'verdict': 'no screenshots'}
-    with ThreadPoolExecutor(2) as pool: both = list(pool.map(lambda _: critique(slug_dir, html, model, False, files), range(2)))
+    with ThreadPoolExecutor(2) as pool: both = list(pool.map(lambda _: critique(slug_dir, html, model, False, files, **({'measured': measured} if measured else {})), range(2)))
     read = [r for r in both if isinstance(r, dict) and isinstance(r.get('score'), (int, float)) and r['score'] >= 0]
     if not read: return both[0]
     hard = min(read, key=lambda r: r['score']); mean = lambda values: round(sum(values) / len(values))
@@ -195,6 +258,16 @@ def critique_twice(slug_dir, html, model='claude-sonnet-5-5', shots_dir='critic-
     for group in ('axes', 'studio'):
         parts = [r[group] for r in read if isinstance(r.get(group), dict)]
         if parts: merged[group] = {k: mean([p[k] for p in parts if isinstance(p.get(k), (int, float))]) for k in parts[0] if any(isinstance(p.get(k), (int, float)) for p in parts)}
+    levels = [r['levels'] for r in read if isinstance(r.get('levels'), dict) and r['levels']]
+    if levels:   # the level of an area is the mean of the readings that gave one, to the half
+        merged['levels'] = {a: round(sum(l[a] for l in levels if a in l) / sum(1 for l in levels if a in l) * 2) / 2 for a in AREAS if any(a in l for l in levels)}
+        merged['page_level'] = STANDARD.page_level(merged['levels'])
+    seen, findings = set(), []
+    for r in [hard] + [x for x in read if x is not hard]:   # the harder reading's findings first; the other's where they name something else
+        for f in r.get('findings') or []:
+            key = (f.get('id'), f.get('beat'))
+            if key not in seen: seen.add(key); findings.append(f)
+    if findings or any('findings' in r for r in read): merged['findings'] = findings[:10]
     return merged
 
 

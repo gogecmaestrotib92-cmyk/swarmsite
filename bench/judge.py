@@ -28,14 +28,19 @@ def judge(site):
         if os.path.exists(os.path.join(job, stale)): os.remove(os.path.join(job, stale))
     out = os.path.join(job, 'bp-judge.html'); shutil.copyfile(shipped, out); os.environ['SWARM_JOB_DIR'] = job
     kept = out + '.ref.html'; shutil.copyfile(shipped, kept)   # the shipped page, read by the critic as it is now, twice — as a production job reads its winner
+    os.environ['SWARM_MEASURE'] = '1'   # both pages are measured in a browser before they are read, as a production job does
+    def read_again():
+        found = run.measured(job, kept, os.path.join(job, 'measure-ref'))
+        return run.C.critique_twice(job, kept, run.A.MODEL, 'critic-shots-ref', **({'measured': found['findings']} if found else {})), found
     with ThreadPoolExecutor(1) as side:
-        again = side.submit(run.C.critique_twice, job, kept, run.A.MODEL, 'critic-shots-ref')
+        again = side.submit(read_again)
         started = time.time(); record = run.compose_first_screen(job, out)
         with ThreadPoolExecutor(2) as pool:
-            graded = pool.submit(run.contract, job, out); seen = pool.submit(run.C.critique_twice, job, out, run.A.MODEL)
-            con, rep = graded.result(), seen.result()
-        try: now = again.result(timeout=300)
-        except Exception: now = {}
+            graded = pool.submit(run.contract, job, out); counted = pool.submit(run.measured, job, out)
+            con, found = graded.result(), counted.result()
+        rep = run.C.critique_twice(job, out, run.A.MODEL, **({'measured': found['findings']} if found else {}))
+        try: now, found_before = again.result(timeout=300)
+        except Exception: now, found_before = {}, None
     rep = rep if isinstance(rep, dict) else {}; con = con if isinstance(con, dict) else {}
     try:
         with open(os.path.join(seed, 'critic.json')) as f: before = json.load(f)
@@ -48,9 +53,11 @@ def judge(site):
                            'refused': {part: [step for step in ((record.get(part) or {}).get('log') or []) if step.get('errors') or step.get('changes')] for part in ('lists', 'pictures', 'words')}},
               'taste': taste, 'contract': contract, 'blended': round(0.55 * taste + 0.45 * contract) if isinstance(taste, (int, float)) and isinstance(contract, (int, float)) else None,
               'failed': [f.get('id') for f in con.get('failed', [])], 'axes': rep.get('axes'), 'verdict': rep.get('verdict'), 'fixes': rep.get('fixes'),
-              'readings': rep.get('readings'), 'studio': rep.get('studio'),
+              'readings': rep.get('readings'), 'studio': rep.get('studio'), 'levels': rep.get('levels'), 'page_level': rep.get('page_level'), 'findings': rep.get('findings'),
+              'measured': {'findings': [f"{f['id']}@{f['view']}" for f in found['findings']], 'checks_failed': [c['id'] for c in found['technical'] if not c['pass']], 'readings': found['readings']['desktop']} if found else None,
               'shipped': {'taste': before.get('taste'), 'contract': before.get('contract'), 'score': before.get('score'), 'taste_now': now.get('score') if isinstance(now, dict) else None, 'readings_now': now.get('readings') if isinstance(now, dict) else None,
-                          'verdict_now': now.get('verdict') if isinstance(now, dict) else None}}
+                          'verdict_now': now.get('verdict') if isinstance(now, dict) else None, 'page_level_now': now.get('page_level') if isinstance(now, dict) else None,
+                          'measured': [f"{f['id']}@{f['view']}" for f in found_before['findings']] if found_before else None}}
     dest = os.path.join(HERE, 'runs', 'judged', site); os.makedirs(dest, exist_ok=True)
     shutil.copyfile(out, os.path.join(dest, 'page.html'))
     with open(os.path.join(dest, 'judge.json'), 'w', encoding='utf-8') as f: json.dump(result, f, indent=1, ensure_ascii=False)
@@ -65,4 +72,6 @@ if __name__ == '__main__':
         r = judge(site); c = r['composed']
         print(f"{site:22s} composed taste {r['taste']} {r['readings'] or ''} contract {r['contract']} → {r['blended']}   shipped, read now: taste {r['shipped']['taste_now']} {r['shipped']['readings_now'] or ''} (on production: {r['shipped']['taste']})   {r['seconds']}s ${r['usd'] or 0:.2f}", flush=True)
         print(f"   parts: first screen {'yes' if c['first_screen'] else 'no'} · lists {c['lists']} · pictures {c['pictures']} · words {c['words']}", flush=True)
+        print(f"   level {r['page_level']} (shipped {r['shipped']['page_level_now']}) · measured, composed: {(r['measured'] or {}).get('findings')} · shipped: {r['shipped']['measured']}", flush=True)
+        print('   findings: ' + ' | '.join(f"{f['id']} {f['beat']} → {f['correction']['op']}" for f in (r['findings'] or [])), flush=True)
         print('   ' + str(r['verdict'])[:900], flush=True)
