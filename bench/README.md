@@ -46,6 +46,9 @@ grades them (`composed` does the same for the hand-written ones in `bench/compos
 about $0.04 a site), `python3 bench/compose.py --pictures` has it decide what each picture below the first screen does —
 backdrop, bleed, panorama, card, offset or stage, settled against a measured render (about $0.03 a site) — and
 `python3 bench/run.py page` renders and grades the whole composed page.
+`python3 bench/judge.py <site>` runs the whole production composition path on a frozen site with the real model and the real critic
+(about $0.4 and five minutes a site) and writes the composed page and the critic's verdict to `bench/runs/judged/<site>/`: it is how to
+read why a composed page scores as it does.
 
 Variants that need the model (three concepts, composed heroes) are added as they are built; they must start from the
 same `seed/` files.
