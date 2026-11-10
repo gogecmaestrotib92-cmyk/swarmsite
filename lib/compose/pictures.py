@@ -17,7 +17,9 @@ written over). The validator knows the size each form would draw it at a 1440×9
   readable(page_html, images=None)      → {section id: content | reason} for the picture sections of the page, and for the
                                           sections of words that one of the job's unused pictures is offered to (`offers`)
   open_forms(content, page)             → the forms this section's picture may take, with what each would draw
-  a document: {"ir": "0.2", "pictures": [{"section": id, "form": backdrop|bleed|panorama|card|offset|stage, …}]}
+  a document: {"ir": "0.2", "pictures": [{"section": id, "form": backdrop|bleed|panorama|card|offset|stage|inline, …}],
+               "galleries": [{"sections": [ids of two to four neighbouring picture sections], "ratio", "title", "tone", "enter"}]}
+               a gallery runs neighbouring photographs side by side in one row, each over its own heading and words
 Deterministic, no network, no model. A document that fails is refused whole and the page comes back untouched."""
 import base64, html as H, io, json, os, re, sys
 
@@ -41,6 +43,9 @@ FRAMES = ('none', 'paper', 'browser')
 GROUNDS = ('accent', 'ink', 'alt', 'own')   # own: the colour the picture's own edges share — the section takes it and the picture has no box
 EDGES = ('fade', 'hard')
 CROPS = ('whole', 'fade')
+GALLERY_KEYS = {'sections', 'ratio', 'title', 'tone', 'enter'}
+GALLERY_RATIOS = ('1/1', '4/5', '3/4', '4/3', '3/2')
+GALLERY_WORDS = 320    # characters each section of a gallery may say: more makes columns of ragged length
 DISSOLVE = 0.45        # how far apart in lightness (0–1) a picture's inner edge and its section's ground may be for the edge to dissolve
 INLINE_WORDS = 140     # a picture set into the heading needs at least this many characters in its section
 CROP_RATIO = 1.5   # the proportion a fading crop shows of a screen: wider than this and it is shown whole
@@ -124,6 +129,9 @@ CSS = """
 .sec.pc .pc-dk,.sec.pc .pc-dk .h2,.sec.pc .pc-dk .lab,.sec.pc .pc-dk .cap,.sec.pc .pc-dk .lede,.sec.pc .pc-dk p,.sec.pc .pc-dk li,.sec.pc .pc-dk li *{color:#15130f}
 .sec.pc .pc-dk li{border-color:rgba(21,19,15,.3)}.sec.pc .pc-dk .btn{background:#15130f;color:#F4EFE3;border-color:#15130f}.sec.pc .pc-dk .btn.ghost{background:transparent;color:#15130f}
 .sec.pc .pc-inv a:not(.btn),.sec.pc .pc-dk a:not(.btn){color:inherit}
+.sec.pc.pc-f-gallery .pc-gal{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));column-gap:var(--gutter,32px);row-gap:clamp(32px,4vw,56px);align-items:start}
+.sec.pc.pc-f-gallery .pc-gi{min-width:0;margin:0}.sec.pc.pc-f-gallery .pc-gi .pc-fig{aspect-ratio:var(--ratio);margin-bottom:clamp(16px,1.8vw,26px)}
+.sec.pc.pc-f-gallery .pc-gi:nth-child(even){margin-top:clamp(28px,4.5vw,72px)}
 .sec.pc.pc-f-inline .pc-words .h2{max-width:15em;line-height:1.16!important}
 .sec.pc .pc-pill{display:inline-block;vertical-align:-.24em;height:1.1em;width:2.6em;border-radius:999px;margin:0 .08em}.sec.pc .pc-pill-soft{width:1.7em;border-radius:.16em}.sec.pc .pc-pill-circle{width:1.1em;border-radius:50%}
 .sec.pc.pc-f-stage.pc-side-top .pc-field{display:block;min-height:0}.sec.pc.pc-f-stage.pc-side-top .pc-panel{padding:clamp(40px,6vw,96px) var(--pc-edge)}
@@ -172,6 +180,7 @@ CSS = """
 .sec.pc.pc-f-bleed .pc-fig{height:auto;aspect-ratio:4/3}.sec.pc.pc-f-bleed .pc-fade{background:linear-gradient(180deg,transparent 55%,var(--pc-bg) 100%)!important}.sec.pc.pc-f-bleed .pc-col{margin:0!important}
 .sec.pc.pc-f-panorama .pc-fig{aspect-ratio:3/2}.sec.pc .pc-split{grid-template-columns:minmax(0,1fr);row-gap:18px}
 .sec.pc.pc-f-card .pc-wrap,.sec.pc.pc-f-offset .pc-wrap{display:flex;flex-direction:column;align-items:stretch;gap:28px}
+.sec.pc.pc-f-gallery .pc-gal{grid-template-columns:minmax(0,1fr)}.sec.pc.pc-f-gallery .pc-gi:nth-child(even){margin-top:0}
 .sec.pc.pc-f-card .pc-fig{margin-left:0!important;margin-right:0!important}
 .sec.pc.pc-f-card .pc-words{margin:0!important;padding:0!important;background:none}
 .sec.pc.pc-f-offset .pc-fig{rotate:none!important;margin-top:0;margin-bottom:0;align-self:flex-start}
@@ -350,11 +359,36 @@ def _refusals(entry, content, page):
 def validate(doc, page_html, images=None):
     errors = []
     def err(code, at, message): errors.append({'code': code, 'at': at, 'message': message})
-    if not isinstance(doc, dict) or doc.get('ir') not in V.ACCEPTED or not isinstance(doc.get('pictures'), list) or not doc['pictures'] or len(doc['pictures']) > 12 or set(doc) - {'ir', 'pictures', 'note'}:
-        err('IP001', 'ir', f'a picture composition is {{"ir": "{V.VERSION}", "pictures": [1–12 objects]}}'); return errors
+    shaped = isinstance(doc, dict) and doc.get('ir') in V.ACCEPTED and isinstance(doc.get('pictures', []), list) and isinstance(doc.get('galleries', []), list) and not set(doc) - {'ir', 'pictures', 'galleries', 'note'}
+    if not shaped or not (doc.get('pictures') or doc.get('galleries')) or len(doc.get('pictures', [])) > 12 or len(doc.get('galleries', [])) > 4:
+        err('IP001', 'ir', f'a picture composition is {{"ir": "{V.VERSION}", "pictures": [up to 12 objects], "galleries": [up to 4 objects]}} with at least one entry'); return errors
     page = readable(page_html, images); tokens = CONTENT.page_of(page_html); named = []; given = []
     whole = lambda v, lo, hi: isinstance(v, int) and not isinstance(v, bool) and lo <= v <= hi
-    for i, entry in enumerate(doc['pictures']):
+    order = [s['id'] for s in SECTIONS.sections(page_html)]
+    for i, run in enumerate(doc.get('galleries', [])):   # neighbouring photographs side by side in one row, each over its own heading and words
+        where = f'galleries[{i}]'
+        if not isinstance(run, dict) or set(run) - GALLERY_KEYS: err('IP001', where, f'a gallery is {{"sections": [ids], optional {sorted(GALLERY_KEYS - {"sections"})}}}'); continue
+        ids = run.get('sections')
+        if not (isinstance(ids, list) and 2 <= len(ids) <= 4 and all(isinstance(x, str) for x in ids) and len(set(ids)) == len(ids)): err('IP010', where, 'a gallery names two to four different sections, in the order of the page'); continue
+        if run.get('ratio', '4/3') not in GALLERY_RATIOS: err('IP020', where, f'the ratio of a gallery\'s pictures is one of {GALLERY_RATIOS}')
+        if run.get('title', 'md') not in TITLES[:2]: err('IP020', where, f'title in a gallery is one of {TITLES[:2]}')
+        if run.get('tone', 'none') not in V.TONES: err('IP020', where, f'tone is one of {V.TONES}')
+        if run.get('enter', 'none') not in V.MEDIA_ENTER: err('IP020', where, f'enter is one of {V.MEDIA_ENTER}')
+        unknown = [x for x in ids if x not in page or isinstance(page[x][1], str) or not page[x][1].get('picture')]
+        if unknown: err('IP010', where, f'{unknown} cannot be in a gallery: each of its sections is a picture section with its own picture; they are {sorted(k for k, v in page.items() if not isinstance(v[1], str) and v[1].get("picture"))}'); continue
+        if any(x in named for x in ids): err('IP010', where, 'a section is in one gallery, once')
+        named += ids
+        if [order.index(x) for x in ids] != list(range(order.index(ids[0]), order.index(ids[0]) + len(ids))): err('IP010', where, f'the sections of a gallery follow each other on the page, in its order; the page runs {[x for x in order if x in page]}'); continue
+        ratio = _ratio(run.get('ratio', '4/3')) if run.get('ratio', '4/3') in GALLERY_RATIOS else 4 / 3
+        inner = min(VIEW[0], tokens.get('container', 1300)) - 2 * tokens.get('frame', 40); width = (inner - (len(ids) - 1) * GUTTER) / len(ids)
+        for x in ids:
+            c = page[x][1]; pic = c['picture']
+            if pic['shot']: err('IP062', where, f'"{x}" shows a screenshot: a gallery crops its pictures to one proportion, and a screenshot is never cropped')
+            elif not (isinstance(pic.get('w'), (int, float)) and isinstance(pic.get('h'), (int, float)) and pic['w'] > 0 and pic['h'] > 0): err('IP063', where, f'the pixel size of the picture of "{x}" is unknown')
+            elif max(width / pic['w'], width / ratio / pic['h']) > V.UPSCALE + 1e-6:
+                err('IP060', where, f'the picture of "{x}" is {int(pic["w"])}×{int(pic["h"])} px and a gallery of {len(ids)} would fill {round(width)}×{round(width / ratio)} px with it ({max(width / pic["w"], width / ratio / pic["h"]):.2f}× its pixels, limit {V.UPSCALE}×): another ratio, or more sections in the row')
+            if c['words']['chars'] > GALLERY_WORDS or c['words']['rows'] > 3: err('IP021', where, f'"{x}" says {c["words"]["chars"]} characters in {c["words"]["rows"]} rows: a gallery column holds a heading and a few lines (up to {GALLERY_WORDS} characters, 3 rows)')
+    for i, entry in enumerate(doc.get('pictures', [])):
         where = f'pictures[{i}]'
         if not isinstance(entry, dict): err('IP001', where, 'each picture is an object'); continue
         sid = entry.get('section'); where = f'pictures[{sid}]' if isinstance(sid, str) else where
@@ -535,15 +569,39 @@ def render_section(sec, content, entry, page):
     return f'<section class="{e(" ".join(classes))}" id="{e(sec["id"])}" data-pc="{V.VERSION}" data-form="{form}"{attrs} style="--pc-dark:{dark};--pc-light:{light}">{body}</section>'
 
 
+def render_gallery(members, run, page):
+    """One <section> for a run of neighbouring picture sections: their pictures side by side in one row, each over its own
+    words block, verbatim. The row keeps the first section's id, band and classes; every other member keeps its id on its
+    own column, so a link to it still lands on it; what each section held after its words follows the row."""
+    first = members[0][1]; ratio = run.get('ratio', '4/3'); tone = run.get('tone', 'none')
+    toned = (['pc-tone'] + (['pc-tone-tint'] if tone == 'tint' else [])) if tone != 'none' else []
+    layers = '<i class="pc-t-light"></i><i class="pc-t-dark"></i>' if tone == 'duotone' else ''
+    move = f' data-move="{MOVES[run["enter"]]}"' if run.get('enter', 'none') != 'none' else ''
+    columns = []
+    for n, (sec, content) in enumerate(members):
+        pic = content['picture']; words = content['words']; names = ' '.join(['pc-fig'] + toned)
+        wclass = ' '.join(['pc-words'] + [c for c in words['classes'] if not c.startswith('pc-')])
+        anchor = f' id="{e(sec["id"])}"' if n else ''
+        columns.append(f'<article class="pc-gi"{anchor}><figure class="{names}" data-limit="{V.UPSCALE:g}"{move}><img src="{e(pic["src"])}" alt="{e(pic["alt"])}">{layers}</figure><div class="{wclass}">{words["html"]}</div></article>')
+    kept = [c for c in first['classes'] if c != 'pc' and not c.startswith('pc-')]; classes = kept + ['pc', 'pc-f-gallery', 'pc-t-' + run.get('title', 'md')]
+    dark, light = ('var(--paper)', 'var(--ink)') if page.get('dark') else ('var(--ink)', 'var(--paper)')
+    tails = ''.join(content['tail'] for _, content in members)
+    return (f'<section class="{e(" ".join(classes))}" id="{e(members[0][0]["id"])}" data-pc="{V.VERSION}" data-form="gallery" style="--pc-dark:{dark};--pc-light:{light}">'
+            f'<div class="wrap pc-gal" style="--n:{len(members)};--ratio:{ratio}">{"".join(columns)}</div>{tails}</section>')
+
+
 def transplant(page_html, doc, images=None):
     """Draw every picture section of the document in place of the template's. Validated first against the page itself;
     a document that fails leaves the page untouched and says why."""
     errors = validate(doc, page_html, images)
     if errors: return page_html, {'drawn': False, 'errors': errors, 'sections': []}
-    page = readable(page_html, images); tokens = CONTENT.page_of(page_html); out = page_html; done = []
-    for entry in sorted(doc['pictures'], key=lambda x: -page[x['section']][0]['span'][0]):   # from the bottom up: earlier spans stay true
-        sec, content = page[entry['section']]; start, end = sec['span']
-        out = out[:start] + render_section(sec, _with_picture(content, entry), entry, tokens) + out[end:]; done.append(entry['section'])
+    page = readable(page_html, images); tokens = CONTENT.page_of(page_html); out = page_html; done = []; redrawn = []
+    for entry in doc.get('pictures', []):
+        sec, content = page[entry['section']]; redrawn.append((sec['span'][0], sec['span'][1], render_section(sec, _with_picture(content, entry), entry, tokens), [entry['section']]))
+    for run in doc.get('galleries', []):
+        members = [page[x] for x in run['sections']]; redrawn.append((members[0][0]['span'][0], members[-1][0]['span'][1], render_gallery(members, run, tokens), run['sections']))
+    for start, end, html, ids in sorted(redrawn, key=lambda x: -x[0]):   # from the bottom up: earlier spans stay true
+        out = out[:start] + html + out[end:]; done += ids
     if 'id="pc-css"' not in out:
         head = out.find('</head>')
         if head < 0: return page_html, {'drawn': False, 'errors': [{'code': 'IP000', 'at': 'page', 'message': 'the page has no </head> to carry the picture stylesheet'}], 'sections': []}

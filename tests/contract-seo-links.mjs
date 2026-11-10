@@ -24,6 +24,8 @@ const inventory = {
     { text: 'Comments', href: 'https://example.test/blog/first-post#comments', region: 'main' },  // another page, with a fragment: a real link
     { text: 'About', href: 'https://example.test/about/', region: 'footer' },
     { text: 'Elsewhere', href: 'https://other.test/partner', region: 'footer' },              // another site: not ours to keep
+    { text: '0', href: 'https://example.test/cesta/', region: 'nav' },                         // the shop's cart: a control, not a page
+    { text: 'CREATE AN ACCOUNT', href: 'https://example.test/mi-cuenta/?action=register', region: 'main' },  // the customer's account: the same
   ],
 };
 const page = about => `<!doctype html><html lang="en"><head><title>Example</title><style>section{padding:40px}a.btn{display:inline-block;padding:10px}</style></head><body>

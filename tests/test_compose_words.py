@@ -91,7 +91,7 @@ class Loop(unittest.TestCase):
     said = lambda self, n: '\n'.join(b.get('text', '') for b in self.asked[n] if b.get('type') == 'text')
 
     def test_the_model_is_told_what_each_section_holds(self):
-        text, ids = COMPOSE.brief(PAGE); self.assertEqual(ids, ['menu', 'note']); self.assertIn('▸ "menu" — ledger, on the paper band. Heading: "From the sea". ', text); self.assertIn('5 rows, 1 button(s)', text); self.assertIn('"go" — cta', text)
+        text, ids = COMPOSE.brief(PAGE); self.assertEqual(ids, ['menu', 'note']); self.assertIn('▸ "menu" — ledger, on the paper band. Heading: "From the sea". ', text); self.assertIn('5 rows, 1 button(s)', text); self.assertIn('"go" — cta, on the dark ground', text); self.assertIn('Three or more neighbours on one ground', COMPOSE.SYSTEM)
 
     def test_a_valid_answer_is_the_document_and_a_side_on_another_form_is_not_part_of_it(self):
         result = self.run_(answer(COLUMNS, {**STATEMENT, 'side': 'left'})); self.assertTrue(result['drawn']); self.assertEqual(result['doc']['words'], [COLUMNS, STATEMENT]); self.assertEqual(result['attempts'], 1)

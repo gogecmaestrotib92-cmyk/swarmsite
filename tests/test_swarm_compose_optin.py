@@ -207,11 +207,28 @@ class Recompose(Job):
         self.log = {'rounds': [{'k': 1, 'score': 70, 'taste': 52, 'contract': 92, 'broken': []}]}
         self.manifest = {'fingerprints': {'inputs': {}, 'engine': {}}, 'html': run.digest(self.out)}
         quiet = patch.object(run, 'ev', lambda *a: None); quiet.start(); self.addCleanup(quiet.stop)
+        self.reread = 52   # the taste the winner gets when it is read again: by default what its round recorded
     def go(self, taste, contract, failed=()):
         report = {'score': contract, 'failed': [{'id': i, 'detail': '', 'weight': 1} for i in failed]}
         def graded(slug_dir, html): Path(slug_dir, 'contract.json').write_text(json.dumps(report)); return report
-        with patch.object(run, 'contract', graded), patch.object(run.C, 'critique', lambda *a: {'score': taste, 'verdict': 'composed page', 'axes': {'design': taste}, 'fixes': [{'op': 'note'}]}):
+        def read(slug_dir, page, *a, **k):   # the winner read again scores as its round did unless the test says otherwise; the composed page scores `taste`
+            if str(page).endswith('.ref.html'):
+                if self.reread is None: raise RuntimeError('no critic')
+                return {'score': self.reread, 'verdict': 'the page as it stood', 'axes': {'design': self.reread}, 'fixes': []}
+            return {'score': taste, 'verdict': 'composed page', 'axes': {'design': taste}, 'fixes': [{'op': 'note'}]}
+        with patch.object(run, 'contract', graded), patch.object(run.C, 'critique', read), patch.object(run.C, 'critique_twice', read):
             return run.recompose(self.dir, self.out, self.log, 70, 1, self.manifest, self.files, self.snapshot)
+
+    def test_the_composed_page_is_compared_with_the_winner_as_the_critic_reads_it_now(self):
+        self.reread = 44   # read again, the winner is .55×44 + .45×92 = 65.6 → 66, not the 70 its round recorded
+        score, best_round, _ = self.go(taste=50, contract=92)   # composed: .55×50 + .45×92 = 68.9 → 69
+        self.assertEqual((score, best_round), (69, 2), 'under the recorded 70, over the 66 the same critic gives the winner now: kept')
+        self.assertEqual(self.log['composition']['before'], 70); self.assertEqual(self.log['composition']['reference'], 66); self.assertEqual(self.record()['reference'], 66)
+        self.assertFalse(os.path.exists(self.out + '.ref.html')); self.assertFalse(os.path.exists(os.path.join(self.dir, 'critic-shots-ref')))
+
+    def test_without_a_second_reading_of_the_winner_its_recorded_score_stands(self):
+        self.reread = None; score, best_round, _ = self.go(taste=50, contract=92)   # 69 against the recorded 70
+        self.assertEqual((score, best_round), (70, 1)); self.assertFalse(self.log['composition']['kept']); self.assertNotIn('reference', self.log['composition'])
 
     def test_a_better_composed_page_becomes_the_page_with_its_own_reports(self):
         score, best_round, manifest = self.go(taste=66, contract=96)   # .55×66 + .45×96 = 79.5 → 80

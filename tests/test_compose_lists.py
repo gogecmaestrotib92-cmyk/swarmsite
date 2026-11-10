@@ -34,6 +34,8 @@ BY_ID = {s['id']: s for s in SECTIONS.sections(PAGE)}
 read = lambda sid, page=PAGE: SECTIONS.from_section(page[{s['id']: s for s in SECTIONS.sections(page)}[sid]['span'][0]:{s['id']: s for s in SECTIONS.sections(page)}[sid]['span'][1]])
 FEAT, NUMS = read('feat'), read('nums')
 def doc(*lists): return {'ir': '0.2', 'lists': [dict(l) for l in lists]}
+ROW = re.search(r'<li class="index-row">.*?</li>', PAGE, re.S).group(0)
+FOUR = PAGE.replace(ROW, ROW + ROW.replace('<h3', '<h3 data-again="1"', 1), 1)   # the same page with a fourth row in the index: stepped columns need four items
 def codes(document, page=PAGE): return sorted({e['code'] for e in LISTS.validate(document, page)})
 LEDGER = {'section': 'feat', 'form': 'ledger', 'numerals': 'outline', 'head': 'left', 'title': 'lg'}
 BENTO = {'section': 'nums', 'form': 'bento', 'feature': 1}
@@ -92,7 +94,8 @@ class OtherKinds(unittest.TestCase):
 
 class Validator(unittest.TestCase):
     def test_a_good_document_may_be_drawn(self):
-        self.assertEqual(codes(doc(LEDGER, BENTO)), []); self.assertEqual(codes(doc({'section': 'feat', 'form': 'stagger', 'cols': 3})), [])
+        self.assertEqual(codes(doc(LEDGER, BENTO)), []); self.assertEqual(codes(doc({'section': 'feat', 'form': 'stagger', 'cols': 3}), FOUR), [])
+        self.assertEqual(codes(doc({'section': 'feat', 'form': 'stagger'})), ['IL021'], 'with three items the one out of line reads as a mistake'); self.assertEqual(codes(doc({'section': 'nums', 'form': 'stagger'})), ['IL021'])
 
     def test_structure_and_no_field_for_words(self):
         for bad in ({}, {'ir': '0.2'}, {'ir': '0.2', 'lists': []}, {'ir': '9', 'lists': [LEDGER]}, {'ir': '0.2', 'lists': [LEDGER], 'extra': 1}): self.assertEqual(codes(bad), ['IL001'], bad)
@@ -101,16 +104,16 @@ class Validator(unittest.TestCase):
 
     def test_only_lists_of_this_page_once_each(self):
         self.assertEqual(codes(doc(dict(LEDGER, section='nowhere'))), ['IL010']); self.assertEqual(codes(doc(dict(LEDGER, section='jelovnik'))), ['IL010'], 'a price ledger is not a list')
-        self.assertEqual(codes(doc(LEDGER, dict(LEDGER, form='stagger'))), ['IL010'])
+        self.assertEqual(codes(doc(LEDGER, dict(LEDGER, form='bento', head='top'))), ['IL010'])
 
     def test_forms_and_their_parameters_come_from_the_vocabulary(self):
         for field, value in (('form', 'carousel'), ('head', 'right'), ('numerals', 'roman'), ('title', 'xl')): self.assertEqual(codes(doc(dict(LEDGER, **{field: value}))), ['IL020'], field)
-        self.assertEqual(codes(doc(dict(LEDGER, cols=3))), ['IL020'], 'cols belongs to the staggered form'); self.assertEqual(codes(doc({'section': 'feat', 'form': 'stagger', 'cols': 5})), ['IL020'])
+        self.assertEqual(codes(doc(dict(LEDGER, cols=3))), ['IL020'], 'cols belongs to the staggered form'); self.assertEqual(codes(doc({'section': 'feat', 'form': 'stagger', 'cols': 5}), FOUR), ['IL020'])
         self.assertEqual(codes(doc(dict(BENTO, feature=len(NUMS['items'])))), ['IL020']); self.assertEqual(codes(doc(dict(LEDGER, feature=0))), ['IL020'])
 
     def test_forms_that_a_list_cannot_carry(self):
         self.assertEqual(codes(doc(dict(BENTO, head='left'))), ['IL021'])
-        self.assertEqual(codes(doc({'section': 'feat', 'form': 'stagger', 'cols': 3, 'head': 'left'})), ['IL021'])
+        self.assertEqual(codes(doc({'section': 'feat', 'form': 'stagger', 'cols': 3, 'head': 'left'}), FOUR), ['IL021'])
         short = re.sub(r'((?:<li class="index-row">.*?</li>){2})(?:<li class="index-row">.*?</li>)*(</ol>)', r'\1\2', PAGE, count=1, flags=re.S)
         self.assertEqual(len(read('feat', short)['items']), 2)
         self.assertEqual(codes(doc({'section': 'feat', 'form': 'bento'}), short), ['IL021']); self.assertEqual(codes(doc(dict(LEDGER, head='sticky')), short), ['IL021'])
@@ -167,8 +170,9 @@ class Renderer(unittest.TestCase):
     def test_numerals_and_heads_are_drawn_as_asked(self):
         page, report = LISTS.transplant(PAGE, doc(dict(LEDGER, numerals='none', head='left')))
         self.assertTrue(report['drawn'], report['errors']); self.assertIn('lc-head-left', page); self.assertNotIn('class="lc-tag"', page)
-        page, _ = LISTS.transplant(PAGE, doc({'section': 'nums', 'form': 'stagger', 'cols': 3, 'numerals': 'outline'}))
-        self.assertIn('lc-n-outline', page); self.assertIn('style="--n:3"', page)
+        page, report = LISTS.transplant(FOUR, doc({'section': 'feat', 'form': 'stagger', 'cols': 3, 'numerals': 'outline'})); self.assertTrue(report['drawn'], report['errors'])
+        self.assertIn('lc-n-outline', page); self.assertIn('style="--n:3"', page); self.assertEqual(page.count('<li class="lc-item"'), 4)
+        page, _ = LISTS.transplant(PAGE, doc({'section': 'nums', 'form': 'ledger', 'numerals': 'outline'}))
         for item in NUMS['items']: self.assertIn(f'<span class="lc-tag">{LISTS.e(item["tag"])}</span>', page)
 
     def test_everything_drawn_is_escaped(self):

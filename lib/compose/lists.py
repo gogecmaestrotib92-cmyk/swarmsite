@@ -127,6 +127,7 @@ def validate(doc, page_html):
         feature = entry.get('feature')
         if feature is not None and (form != 'bento' or not (isinstance(feature, int) and not isinstance(feature, bool) and 0 <= feature < len(items))): err('IL020', where, f'feature belongs to the bento and is the position of one of its {len(items)} items, 0 first')
         if form == 'bento' and len(items) < 3: err('IL021', where, f'a bento needs three items or more; this list has {len(items)}')
+        if form == 'stagger' and len(items) < 4: err('IL021', where, f'stepped columns read as a pattern from four items on; with {len(items)} the one item out of line reads as a mistake: a ledger')
         if form == 'stagger' and content['kind'] == 'numbers': err('IL021', where, 'figures stepped against each other read as unfinished: a ledger, or tiles with the figure that matters most large')
         if form == 'bento' and head != 'top': err('IL021', where, 'a bento takes the whole width: its heading sits on top')
         if head == 'sticky' and len(items) < 4: err('IL021', where, f'a heading that stays while the list scrolls needs a list long enough to scroll past: four items or more, this one has {len(items)}')
