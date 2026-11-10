@@ -12,6 +12,9 @@ like a hero composition it places what is there and cannot change it. This file 
                                     'picture': {'src', 'alt'}, 'first': 'words'|'picture', 'tail'}
                                    a section that is its words and one picture side by side: the words block verbatim, the
                                    picture, and everything the section holds after them (lib/compose/pictures.py draws it)
+  from_words(section_html)       → {'kind': 'words', 'band', 'classes', 'head', 'body', 'holder', 'heading', 'chars', 'rows', 'tail'}
+                                   a section that is words only — a price ledger, a menu, a paragraph with its heading:
+                                   its heading block and what the heading introduces, each verbatim (lib/compose/words.py draws it)
 A section this file cannot read whole (an item with markup it does not know) is refused with ValueError: a composition
 never draws a list it could not read completely. Deterministic, no network, no model."""
 import html as H, re
@@ -209,3 +212,33 @@ def _heading_over_photo(section_html, start):
     heading = section_html[inner[1][2]:inner[1][3]]; caption = section_html[held[0][2]:held[0][3]]
     label = re.match(r'\s*<span class="lab">.*?</span>', caption, re.S); at = label.end() if label else 0
     return {'words': caption[:at] + heading + caption[at:], 'picture': picture, 'tail': section_html[top[1][4]:close]}
+
+
+def from_words(section_html):
+    """The content of a section that is words only: its heading block and what the heading introduces. Raises ValueError
+    when it is anything else — a list, a picture, a signature section, the hero, the closing call — or cannot be read whole."""
+    head = re.match(r'<section class="([^"]*)"([^>]*)>', section_html)
+    if not head or not section_html.endswith('</section>'): raise ValueError('not a section')
+    classes = head.group(1).split()
+    if 'hero' in classes or 'archive' in classes or 'cta' in classes or any(c.startswith('cta-') for c in classes) or any(k in classes for k in LIST_KINDS): raise ValueError('not a section of words')
+    if 'data-pc' in head.group(2) or 'data-wc' in head.group(2) or 'data-lc' in head.group(2): raise ValueError('this section is already composed')
+    if '<img' in section_html or '<figure' in section_html or '<video' in section_html or 'data-sig' in section_html: raise ValueError('not a section of words')
+    wrap = re.match(r'\s*<div class="wrap[^"]*"[^>]*>', section_html[head.end():])
+    if not wrap: raise ValueError('the section does not open the way this reader knows')
+    blocks, close = _blocks(section_html, head.end() + wrap.end())
+    if not section_html.startswith('</div>', close): raise ValueError('the section is not closed the way this reader knows')
+    tail = section_html[close + len('</div>'):-len('</section>')]
+    if len(re.findall(r'<div\b', tail)) != tail.count('</div>'): raise ValueError('what follows the words in their section is not balanced the way this reader knows')
+    if not 1 <= len(blocks) <= 3: raise ValueError(f'the section holds {len(blocks)} blocks: a section of words is its heading block and what it introduces')
+    outer = [section_html[a - len(opening):end] for _, opening, a, _, end in blocks]; holder = []
+    if len(blocks) == 1:   # one block: the heading and what follows it are its own children
+        name, opening, a, b, _ = blocks[0]; inner = section_html[a:b]; cut = inner.find('</h2>') + 5
+        if name != 'div' or cut < 5 or len(re.findall(r'<div\b', inner[:cut])) != inner[:cut].count('</div>'): raise ValueError('the block has no heading of its own to stand apart from what it introduces')
+        top, rest = inner[:cut], inner[cut:]; holder = (re.search(r'class="([^"]*)"', opening) or [None, ''])[1].split()
+    else:
+        if '</h2>' not in outer[0]: raise ValueError('the first block of the section is not its heading block')
+        top, rest = outer[0], ''.join(outer[1:])
+    text = lambda html: ' '.join(H.unescape(re.sub(r'<[^>]+>', ' ', html)).split())
+    if not text(rest): raise ValueError('the heading introduces nothing: there is nothing to compose')
+    return {'kind': 'words', 'band': next((c[5:] for c in classes if c.startswith('band-')), 'paper'), 'classes': classes, 'head': top, 'body': rest, 'holder': holder,
+            'heading': text((re.search(r'<h2\b[^>]*>(.*?)</h2>', top, re.S) or [None, ''])[1]), 'chars': len(text(top + rest)), 'rows': len(re.findall(r'<li\b', rest)), 'buttons': len(re.findall(r'class="btn\b', rest)), 'tail': tail}

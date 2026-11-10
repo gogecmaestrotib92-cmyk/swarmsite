@@ -11,6 +11,7 @@ import run
 import compose as COMPOSE
 import compose_lists as COMPOSE_LISTS
 import compose_pictures as COMPOSE_PICTURES
+import compose_words as COMPOSE_WORDS
 import render_ir as IR
 
 PAGE = ('<html><head><style>:root{--paper:#ffffff;--display:\'Geist\',sans-serif;--container:1300px;--frame:40px}</style></head><body>'
@@ -21,7 +22,10 @@ PAGE = ('<html><head><style>:root{--paper:#ffffff;--display:\'Geist\',sans-serif
         + ''.join(f'<li class="index-row"><span class="idx">0{n}</span><h3 class="h3">Thing {n}</h3><p>Body of thing {n}.</p></li>' for n in range(1, 5))
         + '</ol></div></section>'
         '<section class="sec story band-paper" id="room"><div class="wrap st"><div class="photo-caption"><span class="lab">The room</span><h2 class="h2">Where it happens</h2><p class="cap">One line about the room.</p></div>'
-        '<figure class="st-v"><img src="data:image/png;base64,AAAA" alt="The room"></figure></div></section></body></html>')
+        '<figure class="st-v"><img src="data:image/png;base64,AAAA" alt="The room"></figure></div></section>'
+        '<section class="sec ledger band-paper" id="prices"><div class="wrap two"><div class="ledger-intro"><span class="lab">Prices</span><h2 class="h2">What it costs</h2></div><div><ul class="rows">'
+        + ''.join(f'<li><span class="ledger-item">Plan {n}</span><i></i><b>{n}0 €</b></li>' for n in range(1, 5)) + '</ul></div></div></section></body></html>')
+WORDS_OK = {'ir': '0.2', 'note': 'A printed price list.', 'words': [{'section': 'prices', 'form': 'columns', 'title': 'xl'}]}
 ROOM = [{'id': 'room', 'data': 'data:image/png;base64,AAAA', 'w': 1600, 'h': 1067}]   # images.json describes the picture of the "room" section
 PICTURES_OK = {'ir': '0.2', 'note': 'The room runs off the edge.', 'pictures': [{'section': 'room', 'form': 'bleed', 'side': 'right', 'cols': 6}]}
 LISTS_OK = {'ir': '0.2', 'note': 'Hollow numerals.', 'lists': [{'section': 'what', 'form': 'ledger', 'numerals': 'outline', 'head': 'sticky'}]}
@@ -45,6 +49,8 @@ class Job(unittest.TestCase):
         patcher = patch.object(COMPOSE_LISTS, 'compose', lambda *a, **k: self.lists); patcher.start(); self.addCleanup(patcher.stop)
         self.pictures = {'doc': None, 'drawn': False, 'attempts': 0, 'log': [], 'measured': None}   # and so does the pictures composer
         patcher = patch.object(COMPOSE_PICTURES, 'compose', lambda *a, **k: self.pictures); patcher.start(); self.addCleanup(patcher.stop)
+        self.words = {'doc': None, 'drawn': False, 'attempts': 0, 'log': [], 'measured': None}   # and the composer of the sections that are words only
+        patcher = patch.object(COMPOSE_WORDS, 'compose', lambda *a, **k: self.words); patcher.start(); self.addCleanup(patcher.stop)
     def brief(self, **fields): Path(self.dir, 'brief.json').write_text(json.dumps(fields))
     def record(self): return json.loads(Path(self.dir, 'composition.json').read_text())
 
@@ -112,6 +118,17 @@ class FirstScreen(Job):
         self.pictures = {'doc': {'ir': '0.2', 'pictures': [{'section': 'room', 'form': 'bleed', 'cols': 11}]}, 'drawn': True, 'attempts': 1, 'log': [], 'measured': {}}
         record = run.compose_first_screen(self.dir, self.out)
         self.assertFalse(record['pictures']['drawn'], 'a document the validator refuses is never drawn, whoever returned it'); self.assertEqual(Path(self.out).read_text(encoding='utf-8'), PAGE)
+
+    def test_the_sections_of_words_are_composed_too_and_alone_are_a_candidate(self):
+        self.result = {'ir': None, 'drawn': False, 'attempts': 2, 'log': [], 'wishes': [], 'measured': None}; seen = []
+        def words(page, path, **kw): seen.append(page); return {'doc': json.loads(json.dumps(WORDS_OK)), 'drawn': True, 'attempts': 1, 'log': [], 'measured': {}}
+        with patch.object(COMPOSE_WORDS, 'compose', words): record = run.compose_first_screen(self.dir, self.out)
+        page = Path(self.out).read_text(encoding='utf-8'); self.assertTrue(record['drawn']); self.assertEqual(record['words']['forms'], {'prices': 'columns'}); self.assertIn('wc wc-f-columns wc-t-xl', page)
+        self.assertEqual(page.count('<span class="ledger-item">Plan '), 4); self.assertEqual(self.record()['words']['concept'], 'A printed price list.')
+        Path(self.out).write_text(PAGE, encoding='utf-8')
+        with patch.object(COMPOSE_WORDS, 'compose', side_effect=RuntimeError('no browser')): record = run.compose_first_screen(self.dir, self.out)
+        self.assertIn('no browser', record['words']['error']); self.assertEqual(Path(self.out).read_text(encoding='utf-8'), PAGE)
+        with patch.object(COMPOSE_WORDS, 'compose', side_effect=AssertionError('not asked')): self.assertIn('no time left', run.compose_first_screen(self.dir, self.out, deadline=time.time() - 1)['words']['error'])
 
     def test_the_pictures_are_left_alone_when_the_job_has_no_time_left(self):
         with patch.object(COMPOSE_PICTURES, 'compose', side_effect=AssertionError('not asked')): record = run.compose_first_screen(self.dir, self.out, deadline=time.time() - 1)

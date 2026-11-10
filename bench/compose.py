@@ -7,6 +7,8 @@
                                                    `modelled` render → bench/runs/_compositions/<site>.lists.json (+ .lists.log.json)
   python3 bench/compose.py --pictures [site-id ...]  have the model decide what each picture below the first screen does, on the
                                                    `modelled` render with its composed lists → <site>.pictures.json (+ .pictures.log.json)
+  python3 bench/compose.py --words [site-id ...]   have the model give the sections that are words only (price lists, menus) a form
+                                                   of their own, on the `modelled` render → <site>.words.json (+ .words.log.json)
 Writes bench/runs/_compositions/<site>.json (+ .log.json with every attempt, the validator's reasons and the model's
 wishes) and a budget per site. Then `python3 bench/run.py modelled` renders and measures them.
 Needs ANTHROPIC_API_KEY and bench/runs/shipped/ (run `bench/run.py shipped` first). Spends model calls: about three per site."""
@@ -17,6 +19,7 @@ sys.path.insert(0, os.path.join(ROOT, 'lib', 'compose')); sys.path.insert(0, os.
 import compose as COMPOSE
 import compose_lists as COMPOSE_LISTS
 import compose_pictures as COMPOSE_PICTURES
+import compose_words as COMPOSE_WORDS
 import lists as LISTS
 import budget as B
 
@@ -85,6 +88,32 @@ def pictures(sites, wanted, out, review):
     print(f'total ${total:.2f}')
 
 
+def words(sites, wanted, out, review):
+    """Compose the sections that are words only, on each site's `modelled` render (its composed first screen)."""
+    total = 0.0
+    for site in sites:
+        modelled = os.path.join(HERE, 'runs', 'modelled', site['id'], 'page.html'); seed = os.path.join(HERE, 'seed', site['id'])
+        if (wanted and site['id'] not in wanted) or not os.path.exists(modelled): continue
+        with open(modelled, encoding='utf-8') as f: html = f.read()
+        base = os.path.join(out, '_base-words', site['id']); os.makedirs(base, exist_ok=True); page = os.path.join(base, 'page.html')
+        with open(page, 'w', encoding='utf-8') as f: f.write(html)
+        for name in ('brief.json', 'inventory.json'):
+            if os.path.exists(os.path.join(seed, name)):
+                with open(os.path.join(seed, name), 'rb') as a, open(os.path.join(base, name), 'wb') as b: b.write(a.read())
+        ledger = os.path.join(out, 'budget', site['id'] + '-words-' + time.strftime('%H%M%S')); os.makedirs(ledger, exist_ok=True); os.environ['SWARM_JOB_DIR'] = ledger
+        t = time.time(); result = COMPOSE_WORDS.compose(html, page, model=os.environ.get('COMPOSE_MODEL') or None, review=review)
+        spent = B.read(os.path.join(ledger, 'budget.json')); total += spent.get('usd', 0); written = os.path.join(out, site['id'] + '.words.json')
+        if result['doc']:
+            with open(written, 'w', encoding='utf-8') as f: json.dump(result['doc'], f, indent=1, ensure_ascii=False)
+        elif os.path.exists(written): os.remove(written)
+        with open(os.path.join(out, site['id'] + '.words.log.json'), 'w', encoding='utf-8') as f:
+            json.dump({'drawn': result['drawn'], 'attempts': result['attempts'], 'seconds': round(time.time() - t), 'usd': spent.get('usd'), 'log': result['log']}, f, indent=1, ensure_ascii=False)
+        stages = ' → '.join(f"{s['stage']}{'✗' if s['errors'] else '✓'}" for s in result['log'])
+        forms = ', '.join(f"{w['section']}:{w['form']}{'/' + w['ground'] if w.get('ground', 'band') != 'band' else ''}" for w in (result['doc'] or {}).get('words', []))
+        print(f"{'✓' if result['drawn'] else '✗'} {site['id']:22s} {stages:30s} {round(time.time() - t):>3}s ${spent.get('usd', 0):.3f}  {forms}  — {(result['doc'] or {}).get('note', '')[:80]}", flush=True)
+    print(f'total ${total:.2f}')
+
+
 def main():
     args = sys.argv[1:]; review = '--no-review' not in args; wanted = [a for a in args if not a.startswith('--')]
     with open(os.path.join(HERE, 'sites.json')) as f: sites = json.load(f)['sites']
@@ -92,6 +121,7 @@ def main():
     if '--fit' in args: return refit(sites, wanted, out)
     if '--lists' in args: return lists(sites, wanted, out, review)
     if '--pictures' in args: return pictures(sites, wanted, out, review)
+    if '--words' in args: return words(sites, wanted, out, review)
     concepts = int(args[args.index('--concepts') + 1]) if '--concepts' in args else 1
     if '--concepts' in args: wanted = [w for w in wanted if not w.isdigit()]
     for site in sites:
