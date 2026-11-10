@@ -345,7 +345,8 @@ class Screens(unittest.TestCase):
     def test_no_heavy_shadow_is_left(self):
         import render_ir as IR
         for css in (PICTURES.CSS, IR.CSS): self.assertNotIn('rgba(0,0,0,.6)', css); self.assertNotIn('rgba(0,0,0,.55)', css)
-        self.assertIn('.pc-fig.pc-screen{border-radius:8px;box-shadow:0 0 0 1px color-mix(in srgb,currentColor 14%,transparent),0 24px 60px -24px rgba(0,0,0,.22)}', PICTURES.CSS)
+        for css in (PICTURES.CSS, IR.CSS): self.assertNotIn('0 24px 60px', css, 'no soft shadow either: none of 248 reference pictures carries one')
+        self.assertIn('.pc-fig.pc-screen{border-radius:8px;box-shadow:0 0 0 1px color-mix(in srgb,currentColor 14%,transparent)}', PICTURES.CSS)
         whole = section('mk', PICTURES.transplant(PAGE, doc(FORMS['stage']), SHOT)[0]); self.assertIn('pc-contain pc-screen', whole); self.assertNotIn('pc-screen', section('mk', PICTURES.transplant(PAGE, doc(FORMS['stage']), IMAGES)[0]))
 
 

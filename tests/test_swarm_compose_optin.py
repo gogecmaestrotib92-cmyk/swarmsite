@@ -56,14 +56,21 @@ class Job(unittest.TestCase):
 
 
 class OptIn(Job):
-    def test_nothing_is_recomposed_unless_asked(self):
-        self.assertFalse(run.compose_wanted(self.dir), 'no brief at all')
-        for value in (False, None, 'true', 1, 'yes'):
-            self.brief(compose=value, url='https://example.test/'); self.assertFalse(run.compose_wanted(self.dir), repr(value))
-        self.brief(compose=True); self.assertTrue(run.compose_wanted(self.dir))
-        self.brief()
-        with patch.dict(os.environ, {'SWARM_COMPOSE': '1'}): self.assertTrue(run.compose_wanted(self.dir))
-        with patch.dict(os.environ, {'SWARM_COMPOSE': '0'}): self.assertFalse(run.compose_wanted(self.dir))
+    def test_a_page_is_recomposed_unless_the_job_or_the_deployment_says_no(self):
+        with patch.dict(os.environ, {}, clear=False):
+            os.environ.pop('SWARM_COMPOSE', None); os.environ.pop('LIVETEST', None)
+            self.assertTrue(run.compose_wanted(self.dir), 'no brief at all: the ordinary path')
+            for value in (None, 'true', 1, 'yes', 'false', 0):
+                self.brief(compose=value, url='https://example.test/'); self.assertTrue(run.compose_wanted(self.dir), f'{value!r} is not a no')
+            self.brief(compose=False); self.assertFalse(run.compose_wanted(self.dir), 'the job says no')
+            with patch.dict(os.environ, {'SWARM_COMPOSE': '1'}): self.assertFalse(run.compose_wanted(self.dir), 'the job comes before the deployment')
+            self.brief()
+            with patch.dict(os.environ, {'SWARM_COMPOSE': '0'}):
+                self.assertFalse(run.compose_wanted(self.dir), 'the deployment says no'); self.brief(compose=True); self.assertTrue(run.compose_wanted(self.dir), 'and a job can still ask')
+            self.brief()
+            with patch.dict(os.environ, {'LIVETEST': '1'}):
+                self.assertFalse(run.compose_wanted(self.dir), 'under tests nothing calls a model unasked')
+                with patch.dict(os.environ, {'SWARM_COMPOSE': '1'}): self.assertTrue(run.compose_wanted(self.dir))
 
     def test_the_loop_does_not_reach_the_composer_by_default(self):
         source = (ROOT / 'lib' / 'swarm' / 'run.py').read_text()
