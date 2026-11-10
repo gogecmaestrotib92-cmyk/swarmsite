@@ -53,8 +53,8 @@ MAX_LINES = 3    # and its ceiling on lines
 UPSCALE = 1.35   # a photograph may be shown up to this much past its pixels (the renderer's own limit); a screenshot not at all
 
 KEYS = {
-    'text': {'id', 't', 'src', 'as', 'size', 'measure', 'align', 'plate', 'at', 'lines', 'indent', 'scale', 'mark', 'mark_words', 'fit'},
-    'actions': {'id', 't', 'src', 'align', 'at'},
+    'text': {'id', 't', 'src', 'as', 'size', 'measure', 'align', 'plate', 'at', 'lines', 'indent', 'scale', 'mark', 'mark_words', 'fit', 'enter'},
+    'actions': {'id', 't', 'src', 'align', 'at', 'enter'},
     'media': {'id', 't', 'src', 'fit', 'ratio', 'focal', 'bleed', 'frame', 'scrim', 'at', 'stack', 'tone', 'shape', 'tilt', 'shadow', 'grain', 'enter', 'scroll'},
     'shape': {'id', 't', 'kind', 'at'},
 }
@@ -108,6 +108,14 @@ def stack_layout(kind, n, ratio):
         layer_h = f / r; step_x = (1 - f) / (n - 1); step_y = 0.14 * layer_h; box_h = layer_h + (n - 1) * step_y
         layers = [{'left': (n - 1 - k) * step_x, 'top': (n - 1 - k) * step_y / box_h, 'width': f, 'height': layer_h / box_h, 'rotate': 0, 'z': n - k} for k in range(n)]
     return 1 / box_h, layers, f
+
+
+def fit_of(node, content):
+    """How a media node's picture fills its box. A screenshot is always shown whole, so that is what it means when the
+    node does not say; a photograph fills its box."""
+    sources = node.get('src') if isinstance(node.get('src'), list) else [node.get('src')]
+    shot = any(isinstance(x, str) and (content['media'].get(x) or {}).get('shot') for x in sources)
+    return node.get('fit', 'contain' if shot else 'cover')
 
 
 def face_of(hero, content):
@@ -199,6 +207,8 @@ def validate(ir, content):
         if not (isinstance(z, int) and not isinstance(z, bool) and 0 <= z <= 4): err('IR030', where, 'z is 0..4')
         if node['at'].get('self', 'start') not in SELF: err('IR030', where, f'self is one of {SELF}')
         if set(node['at']) - {'col', 'row', 'z', 'self'}: err('IR001', where, 'unknown placement fields')
+        if kind in ('text', 'actions') and node.get('enter', 'rise') != 'rise':   # the page's own entrance brings the words in: saying so is allowed, asking for another is not
+            err('IR070', where, 'words and buttons arrive rising, the headline line by line: the only value here is "rise"')
 
         if kind == 'text':
             src, role = node.get('src'), node.get('as')
@@ -265,7 +275,7 @@ def validate(ir, content):
             if stacked and not (2 <= len(src) <= 3 and all(isinstance(x, str) for x in src) and len(set(src)) == len(src)): err('IR001', where, 'a stack names two or three different pictures, the front one first'); continue
             missing = [x for x in sources if not isinstance(x, str) or x not in content['media']]
             if missing: err('IR010', where, f'no picture at address {missing}; available: {sorted(content["media"])}'); continue
-            fit, ratio, bleed, frame = node.get('fit', 'cover'), node.get('ratio'), node.get('bleed', 'none'), node.get('frame', 'none')
+            fit, ratio, bleed, frame = fit_of(node, content), node.get('ratio'), node.get('bleed', 'none'), node.get('frame', 'none')
             tone, shape, tilt, shadow = node.get('tone', 'none'), node.get('shape', 'rect'), node.get('tilt', 0), node.get('shadow', 'none')
             enter, scroll, stack = node.get('enter', 'none'), node.get('scroll', 'none'), node.get('stack')
             if fit not in FITS: err('IR001', where, f'fit is one of {FITS}')
@@ -294,7 +304,8 @@ def validate(ir, content):
             if scroll == 'parallax' and (fit != 'cover' or tilt or shape not in ('rect', 'soft') or frame != 'none'): err('IR067', where, 'parallax moves a photograph inside its own frame: fit "cover", no tilt, no frame, a rectangular shape')
             shots = [x for x in sources if content['media'][x].get('shot')]
             if shots:   # a screenshot is evidence of the product: shown whole, in its own colours
-                if fit != 'contain' or frame == 'none' or bleed != 'none' or node.get('scrim'): err('IR062', where, 'a screenshot is shown whole in a frame: fit "contain", a frame, no bleed, no scrim')
+                wrong = ([f'fit is "{fit}"'] if fit != 'contain' else []) + (['it has no frame ("frame": browser or paper)'] if frame == 'none' else []) + ([f'bleed is "{bleed}"'] if bleed != 'none' else []) + (['it has a scrim'] if node.get('scrim') else [])
+                if wrong: err('IR062', where, 'a screenshot is shown whole in a frame — fit "contain", a frame, no bleed, no scrim — and here ' + ', '.join(wrong))
                 if tone != 'none' or shape not in ('rect', 'soft') or scroll != 'none': err('IR062', where, 'a screenshot keeps its own colours and its rectangle: no tone, no shape, no parallax')
             gap = {'sm': 16, 'md': 24, 'lg': 40}.get(hero.get('gap', 'md'), 24)
             share = stack_layout(stack, len(sources), ratio)[2] if stacked and stack in STACKS and ratio in RATIOS else 1

@@ -130,6 +130,21 @@ class Review(unittest.TestCase):
         self.assertIn('desktop-hero-line-wrap', model.text(1)); self.assertIn('Beograd slavi', model.text(1))
         self.assertFalse(result['drawn']); self.assertIn('desktop-hero-line-wrap', result['log'][-1]['errors'][0])
 
+    def test_a_picture_the_fold_cuts_through_is_reported_with_its_numbers(self):
+        found = COMPOSE.hero_findings({'desktop': {'wrapped': [], 'fold': 900, 'actions_bottom': 700, 'pictures': [{'id': 'report', 'top': 760, 'bottom': 1100}, {'id': 'whole', 'top': 200, 'bottom': 880}]}})
+        self.assertEqual(list(found), ['hero-picture-cut-by-fold']); self.assertIn('"report" runs from 760 to 1100 px', found['hero-picture-cut-by-fold']); self.assertIn('59%', found['hero-picture-cut-by-fold'])
+        self.assertEqual(COMPOSE.hero_findings({'desktop': {'fold': 900, 'pictures': [{'id': 'a', 'top': 300, 'bottom': 960}]}}), {}, 'a tenth under the fold is a picture that invites the scroll')
+        self.assertEqual(COMPOSE.hero_findings({'desktop': {'fold': 900, 'pictures': [{'id': 'a', 'top': 980, 'bottom': 1500}]}}), {}, 'a picture that starts under the fold is simply the next thing down the page')
+        self.assertEqual(COMPOSE.hero_findings({'desktop': {'fold': 900, 'pictures': [{'id': 'a'}, 'junk']}}), {})
+        cut = {'desktop': {'wrapped': [], 'fold': 900, 'actions_bottom': 700, 'pictures': [{'id': 'pic', 'top': 700, 'bottom': 1200}]}}
+        self.seen = [{}, {}, dict(cut), {}, {}]   # template · fit · look (cut) · fit of the revision · look (clean)
+        model = Model(answer(concept='Picture under the words.'), answer(concept='Picture beside the words.'))
+        result = COMPOSE.compose(PAGE, IMAGES, page_path=self.page, ask=model)
+        self.assertIn('hero-picture-cut-by-fold', model.text(1)); self.assertIn('ALSO MEASURED', model.text(1)); self.assertEqual(result['ir']['note'], 'Picture beside the words.')
+        self.seen = [{}, {}, {}, {}, dict(cut)]   # a revision that pushes the picture through the fold is worse than the one it would replace
+        result = COMPOSE.compose(PAGE, IMAGES, page_path=self.page, ask=Model(answer(concept='Clean.'), answer(concept='Now cut.')))
+        self.assertEqual(result['ir']['note'], 'Clean.'); self.assertTrue(result['drawn'])
+
     def test_buttons_under_the_fold_are_reported_but_do_not_refuse_the_composition(self):
         low = {'desktop': {'wrapped': [], 'actions_bottom': 960, 'fold': 900}}
         self.seen = [{}, {}, dict(low), {}, {}]
@@ -251,6 +266,106 @@ class Typeface(unittest.TestCase):
             model = Model(answer(typeface='unbounded', concept='Wide and loud.'), answer(typeface='fraunces', concept='Quieter.'))
             result = COMPOSE.compose(PAGE, IMAGES, page_path=page, ask=model)
         self.assertIn('mobile-no-overflow: a card heading runs past the screen', model.text(1)); self.assertEqual(result['ir']['note'], 'Quieter.')
+
+
+class Studio:
+    """A stand-in for the model when three concepts are asked for at once: it answers by the lead it was given (the three
+    calls run side by side, in no fixed order), chooses as the creative director, and revises."""
+    LEADS = {'A': 'CONCEPT — type leads. The headline', 'B': ('CONCEPT — the picture leads', 'CONCEPT — type leads again'), 'C': 'CONCEPT — the one neither'}
+    def __init__(self, drafts, verdict=None, revision=None, corrections=None):
+        self.drafts, self.verdict, self.revision, self.corrections = drafts, verdict, revision, corrections or {}; self.calls = []
+    def __call__(self, system, content, tool, model=None, max_tokens=None):
+        text = '\n'.join(block['text'] for block in content if block.get('type') == 'text')
+        label = next((l for l, marks in self.LEADS.items() if any(m in text for m in ([marks] if isinstance(marks, str) else marks))), None)
+        kind = 'jury' if tool['name'] == 'choose_concept' else 'revise' if 'YOUR COMPOSITION, AS DRAWN' in text else 'correct' if 'WAS REFUSED' in text else 'compose'
+        self.calls.append({'kind': kind, 'label': label, 'text': text, 'tool': tool, 'images': sum(1 for b in content if b.get('type') == 'image')})
+        if kind == 'jury': return self.verdict
+        if kind == 'revise': return self.revision
+        return (self.corrections if kind == 'correct' else self.drafts).get(label)
+    def of(self, kind): return [c for c in self.calls if c['kind'] == kind]
+
+
+def concept(label, **changes):
+    """A valid answer that can be told apart on the drawn page: A is set mega, B xxl, C xl."""
+    doc = answer(**{'concept': f'Concept {label}.', **changes}); next(n for n in doc['nodes'] if n['id'] == 'h1')['size'] = {'A': 'mega', 'B': 'xxl', 'C': 'xl'}[label]
+    return doc
+MARK = {'A': IR.SIZE['mega'], 'B': IR.SIZE['xxl'], 'C': IR.SIZE['xl']}   # what each concept leaves in the page it is drawn into
+
+
+class ThreeConcepts(unittest.TestCase):
+    def setUp(self):
+        from PIL import Image
+        self.temp = tempfile.mkdtemp(); self.addCleanup(shutil.rmtree, self.temp, True); self.page = os.path.join(self.temp, 'page.html'); Path(self.page).write_text(PAGE)
+        shot = os.path.join(self.temp, 'shot.png'); Image.new('RGB', (64, 40), '#ccc').save(shot)
+        self.breaks = {}   # label → what the contract finds on the page that concept is drawn into
+        def graded(path):
+            html = Path(path).read_text()
+            return dict(next((found for label, found in self.breaks.items() if f'--ir-size:{MARK[label]}' in html), {}))
+        for target, stand_in in (('hero_shots', lambda path: (shot, shot)), ('measured', graded), ('measure_hero', lambda path: {})):
+            patcher = patch.object(COMPOSE, target, stand_in); patcher.start(); self.addCleanup(patcher.stop)
+        self.drafts = {label: concept(label) for label in 'ABC'}
+    def run_studio(self, studio, **kw): return COMPOSE.compose(PAGE, IMAGES, page_path=self.page, ask=studio, concepts=3, **kw)
+
+    def test_three_leads_are_drawn_and_the_creative_director_chooses_among_the_renders(self):
+        studio = Studio(self.drafts, verdict={'choice': 'B', 'reason': 'The room is what people come for.', 'improve': 'Give the headline one more column.'}, revision=concept('B', concept='Concept B, wider headline.'))
+        result = self.run_studio(studio)
+        self.assertEqual(sorted(c['label'] for c in studio.of('compose')), ['A', 'B', 'C'], 'each concept is asked for with its own lead')
+        jury = studio.of('jury'); self.assertEqual(len(jury), 1)
+        for label in 'ABC': self.assertIn(f'CONCEPT {label} — Concept {label}.', jury[0]['text'])
+        self.assertEqual(jury[0]['tool']['input_schema']['properties']['choice']['enum'], ['A', 'B', 'C']); self.assertEqual(jury[0]['images'], 6, 'every concept is shown as drawn, at 1440 and on a phone')
+        self.assertEqual(result['chosen'], 'B'); self.assertEqual(result['verdict']['reason'], 'The room is what people come for.')
+        revise = studio.of('revise'); self.assertEqual(len(revise), 1)
+        self.assertIn('The studio chose this one of its concepts: The room is what people come for. Before it ships: Give the headline one more column.', revise[0]['text'])
+        self.assertTrue(result['drawn']); self.assertEqual(result['ir']['note'], 'Concept B, wider headline.')
+        self.assertEqual([c['label'] for c in result['concepts']], ['A', 'B', 'C']); self.assertEqual(result['attempts'], 5)
+        self.assertEqual(sorted(os.listdir(self.temp)), ['page.html', 'shot.png'], 'every page drawn for the look is removed again')
+
+    def test_a_concept_that_breaks_the_page_is_not_put_before_the_creative_director(self):
+        self.breaks = {'A': {'desktop-no-overflow': 'the headline runs past the screen'}}
+        studio = Studio(self.drafts, verdict={'choice': 'C', 'reason': 'Unexpected and clean.'}, revision=concept('C'))
+        result = self.run_studio(studio)
+        jury = studio.of('jury')[0]
+        self.assertEqual(jury['tool']['input_schema']['properties']['choice']['enum'], ['B', 'C']); self.assertNotIn('CONCEPT A', jury['text'])
+        self.assertEqual(result['chosen'], 'C'); self.assertEqual(next(c for c in result['concepts'] if c['label'] == 'A')['measured'], {'desktop-no-overflow': 'the headline runs past the screen'})
+
+    def test_when_nobody_chooses_the_least_broken_stands_and_a_is_before_b(self):
+        self.breaks = {'A': {'h2-short': 'a long heading further down'}}
+        for verdict in (None, {'choice': 'D', 'reason': 'x'}, {'reason': 'no choice'}):
+            studio = Studio(self.drafts, verdict=verdict, revision=None)
+            result = self.run_studio(studio)
+            self.assertEqual(result['chosen'], 'B', 'B and C are clean, A has a finding: B is first of the clean ones'); self.assertTrue(result['drawn'])
+            self.assertIn('no valid choice', next(s for s in result['log'] if s['stage'] == 'jury')['errors'][0])
+
+    def test_when_every_concept_breaks_the_page_the_least_broken_gets_one_revision_or_nothing_ships(self):
+        self.breaks = {label: {'desktop-no-overflow': 'too wide'} for label in 'ABC'}; self.breaks['C']['h1-lines'] = '4 lines'
+        studio = Studio(self.drafts, verdict={'choice': 'A', 'reason': 'Fixable.'}, revision=concept('A'))
+        result = self.run_studio(studio)
+        self.assertEqual(studio.of('jury')[0]['tool']['input_schema']['properties']['choice']['enum'], ['A', 'B', 'C'], 'with nothing sound, all are shown and the break is named')
+        self.assertIn('fix them, or it is not shipped', studio.of('jury')[0]['text'])
+        self.assertFalse(result['drawn']); self.assertEqual(result['log'][-1]['stage'], 'refuse')
+
+    def test_one_valid_draft_needs_no_choice(self):
+        broken = concept('A'); broken['nodes'] = [n for n in broken['nodes'] if n['id'] != 'go']
+        studio = Studio({'A': broken, 'B': concept('B'), 'C': None}, corrections={'A': json.loads(json.dumps(broken))}, revision=concept('B'))
+        result = self.run_studio(studio)
+        self.assertEqual(studio.of('jury'), []); self.assertEqual(result['chosen'], 'B'); self.assertTrue(result['drawn'])
+        self.assertEqual(sorted(c['label'] for c in studio.of('correct')), ['A'], 'a refused draft is corrected once, under its own lead')
+        self.assertIn(Studio.LEADS['A'], studio.of('correct')[0]['text'])
+
+    def test_without_a_picture_worth_placing_the_second_concept_is_a_second_voice(self):
+        with patch.object(COMPOSE, 'offered_pictures', lambda content, limit=7: []):
+            typed = {}
+            for label in 'ABC':
+                doc = concept(label); doc['nodes'] = [n for n in doc['nodes'] if n['id'] != 'pic']; doc['phone_order'] = [n['id'] for n in doc['nodes']]; typed[label] = doc
+            studio = Studio(typed, verdict={'choice': 'A', 'reason': 'Quiet and sure.'}, revision=None)
+            self.run_studio(studio)
+        texts = ' '.join(c['text'] for c in studio.of('compose'))
+        self.assertIn('type leads again, in another voice', texts); self.assertNotIn('the picture leads', texts)
+
+    def test_without_a_page_to_draw_on_there_is_one_concept(self):
+        model = Model(answer())
+        result = COMPOSE.compose(PAGE, IMAGES, review=False, ask=model, concepts=3)
+        self.assertEqual(len(model.seen), 1); self.assertTrue(result['drawn']); self.assertNotIn('concepts', result)
 
 
 class Brief(unittest.TestCase):

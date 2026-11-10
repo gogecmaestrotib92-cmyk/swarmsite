@@ -54,6 +54,7 @@ open(sys.argv[3], 'w', encoding='utf-8').write(out)
   assert.deepEqual(clean.desktop.wrapped, [], JSON.stringify(clean.desktop));
   assert.ok(Math.abs(clean.fit.line - first.fit.line) / first.fit.line < 0.02);
   assert.ok(clean.desktop.actions_bottom > 0 && clean.desktop.fold === 900);
+  assert.deepEqual(clean.desktop.pictures, [], 'this composition places no picture');
 
   // a page the production renderer built, with no composition, can still be asked where its first button ends
   const template = measure(page);

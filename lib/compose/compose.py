@@ -20,10 +20,15 @@ all checked by the validator. A page set in the brand's own typeface keeps it.
 The model never writes text, links or markup: the format has no field for them. What it wishes the format could do is
 collected in `wishes` — the backlog for new primitives — and never drawn.
 
-  compose(page_html, images, job_dir=None, page_path=None, model=None) → {'ir', 'drawn', 'attempts', 'log', 'wishes'}
-  python3 lib/compose/compose.py <page.html> <images.json> --out composition.json [--job <job dir>] [--no-review]
+With concepts=3 the studio works the way a studio does: three compositions from three different leads (type leads, the
+picture leads, the unexpected one), each drawn and measured, and a creative director chooses among the renders — never
+among descriptions. A concept that breaks the page is not put before the director while a sound one exists.
+
+  compose(page_html, images, job_dir=None, page_path=None, model=None, concepts=1) → {'ir', 'drawn', 'attempts', 'log', 'wishes'[, 'concepts', 'chosen', 'verdict']}
+  python3 lib/compose/compose.py <page.html> <images.json> --out composition.json [--job <job dir>] [--no-review] [--concepts 3]
 Needs ANTHROPIC_API_KEY. Every call is charged to the job budget when SWARM_JOB_DIR is set."""
-import base64, io, json, os, subprocess, sys, tempfile
+import base64, io, json, os, shutil, subprocess, sys, tempfile
+from concurrent.futures import ThreadPoolExecutor
 
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.abspath(os.path.join(HERE, '..', '..'))
 sys.path.insert(0, HERE); sys.path.insert(0, os.path.join(ROOT, 'lib', 'swarm')); sys.path.insert(0, os.path.join(ROOT, 'lib')); sys.path.insert(0, os.path.join(ROOT, 'design_dna'))
@@ -64,12 +69,12 @@ The hero is a grid of 12 columns and the rows you declare. A node sits at "at": 
   · "mark": accent|italic|outline|underline|box — how the emphasised words are drawn (outline: hollow letters; box: on a block of the accent colour). It applies to the words the headline already emphasises (shown between * in the brief) unless "mark_words" names others by position, 0 being the first word. At most half the words.
 - actions node: {"id", "t": "actions", "src": [one or two action addresses], "at", optional "align"}.
 - media node: {"id", "t": "media", "src": a picture address, "fit": cover|contain, "ratio": one of 1/1 4/5 3/4 2/3 4/3 3/2 16/9 16/10 21/9, "focal": [x, y] each 0–1, "bleed": none|left|right, "frame": none|browser|paper, "scrim": true|false, "at"}.
-  "bleed" runs the picture to the screen edge and is allowed only from column 1 (left) or to column line 13 (right). A screenshot must be "fit": "contain" with a "frame" and no bleed or scrim.
+  "bleed" runs the picture to the screen edge and is allowed only from column 1 (left) or to column line 13 (right). A screenshot is always "fit": "contain" (that is its default) and needs a "frame": browser or paper; no bleed, no scrim.
   A photograph can be treated:
   · "tone": none|mono|duotone|tint — mono is black and white; duotone prints the photograph in the page's own two colours, so it belongs to the page; tint prints it in the accent colour. A snapshot that looks out of place in full colour often holds in one tone.
   · "shape": rect|soft|arch|circle|pill (a circle needs ratio 1/1). "tilt": whole degrees −4 to 4. "shadow": none|soft|hard (hard is an offset block of the accent colour). "grain": true|false.
   · a stack: "src": [the picture in front, the one behind, optionally a third] with "stack": offset|fan — two or three pictures laid on each other inside the node's own box: pages of a document, covers, two views of one thing. "ratio" is each picture's ratio; each is about two thirds of the node's width, so a stack needs six columns or more.
-  · "enter": none|rise|clip|settle — how the picture arrives when the page loads (clip: it opens from the bottom; settle: it eases in from slightly large). "scroll": none|parallax — a photograph drifts inside its frame as the page scrolls. Only media nodes take "enter" and "scroll": the words arrive by themselves, the headline line by line.
+  · "enter": none|rise|clip|settle — how the picture arrives when the page loads (clip: it opens from the bottom; settle: it eases in from slightly large). "scroll": none|parallax — a photograph drifts inside its frame as the page scrolls. Only media nodes choose "enter" and "scroll": the words and buttons always arrive rising, the headline line by line.
   None of the treatments applies to a screenshot except "tilt", "shadow", "enter" and a stack; a picture that bleeds takes none but "tone", "grain", "enter" and "scroll".
 - shape node: {"id", "t": "shape", "kind": "rule", "at"} — a hairline.
 - "at" may add "z": 0–4 (higher is in front) and "self": start|center|end|stretch (where the node sits inside its rows).
@@ -192,13 +197,17 @@ def hero_shots(page_path):
 
 
 # Promises of the page contract that a first screen can break. Measured on the render, never estimated.
-BREAKING = ('h1-lines', 'h1-size', 'no-overflow', 'contrast', 'no-empty-screens', 'hero-line-wrap')   # a composition that newly breaks one of these is not shipped
+# A composition that newly breaks one of these is not shipped: the page is broken for a visitor, or it lost words or links the source had.
+BREAKING = ('h1-lines', 'h1-size', 'no-overflow', 'contrast', 'no-empty-screens', 'hero-line-wrap', 'seo-text-kept', 'seo-links-kept')
 
 
 def measured(page_path):
     """What the page contract finds failing on this page at 1440 and 390: {id: detail}. The whole page, not the first
     screen alone: a composition may set the page in another typeface, and every heading below follows it."""
     out = tempfile.mkdtemp(prefix='compose-contract-')
+    for name in ('brief.json', 'inventory.json'):   # what the contract needs to grade the kept-words and kept-links promises, when the page sits in its job's folder
+        source = os.path.join(os.path.dirname(os.path.abspath(page_path)), name)
+        if os.path.isfile(source): shutil.copyfile(source, os.path.join(out, name))
     r = subprocess.run(['node', os.path.join(ROOT, 'lib/qa/contract.mjs'), page_path, '--dir', out], cwd=ROOT, capture_output=True, text=True, timeout=300)
     try:
         with open(os.path.join(out, 'contract.json')) as f: report = json.load(f)
@@ -214,6 +223,9 @@ def measure_hero(page_path):
     except (ValueError, IndexError): raise RuntimeError('the first screen could not be measured: ' + (r.stderr or r.stdout)[-200:])
 
 
+CUT_BY_FOLD = 0.2   # the share of a first-screen picture that may hang under the fold before it reads as cut off
+
+
 def hero_findings(seen):
     """Promises of a first screen that the page contract does not grade, from measure_hero()."""
     found = {}
@@ -224,6 +236,13 @@ def hero_findings(seen):
     d = (seen or {}).get('desktop') or {}
     if isinstance(d.get('actions_bottom'), (int, float)) and isinstance(d.get('fold'), (int, float)) and d['actions_bottom'] > d['fold']:
         found['hero-actions-under-fold'] = f'at 1440×900 the first button ends at {round(d["actions_bottom"])} px: under the fold'
+    for p in d.get('pictures') or []:   # a picture the fold cuts through reads as an accident: either it is in the first screen or it is plainly below it
+        try: top, bottom, fold = float(p['top']), float(p['bottom']), float(d['fold'])
+        except (KeyError, TypeError, ValueError): continue
+        under = (bottom - fold) / (bottom - top) if bottom > top else 0
+        if top < fold - 40 and under > CUT_BY_FOLD:
+            found['hero-picture-cut-by-fold'] = (f'at 1440×900 the picture "{p.get("id")}" runs from {round(top)} to {round(bottom)} px down the page: {round(under * 100)}% of it is under the fold. '
+                                                 'Put it beside the headline instead of under it, give it fewer rows or a wider ratio, or shorten what stands above it')
     return found
 
 
@@ -269,8 +288,34 @@ def _to_ir(answer):
         hero['face'] = {'id': answer['typeface'], **({'weight': answer['weight']} if answer.get('weight') is not None else {}), **({'case': answer['case']} if answer.get('case') else {})}
     return {'ir': V.VERSION, 'note': str(answer.get('concept') or '')[:300], 'hero': hero}
 
-def compose(page_html, images, job_dir=None, page_path=None, model=None, review=True, ask=None):
+LEADS = (
+    ('A', "THIS CONCEPT — type leads. The headline is the picture: its face, its breaks, its size. A picture is in support — smaller, lower, held to one side. When the product's own screen or a photograph worth showing is on offer it stays on the screen in that supporting role; only when nothing offered deserves the place is there none."),
+    ('B', "THIS CONCEPT — the picture leads. One photograph, a stack, or the product's own screen is given real room, and the headline answers it rather than competing with it."),
+    ('C', "THIS CONCEPT — the one neither obvious arrangement would reach: an unusual split of the screen, a crossing, a jump in scale, the pieces hung from one unexpected edge. It still has to be true to this business."),
+)
+# With no picture worth placing, the second concept is a second voice rather than a second arrangement of nothing.
+LEAD_WITHOUT_PICTURES = "THIS CONCEPT — type leads again, in another voice: a different face and a different structure from the one you would reach for first. If that was a serif set quietly, this is a grotesque set loud, or the reverse."
+
+JURY = """You are the creative director of a small studio. Up to three first screens were composed for the same business from the same words, buttons and pictures. You see each as it renders, at 1440 px and on a phone, with what was measured on it. One ships.
+Choose the one a visitor would remember and that is true to this business — not the safest. A screen that only rearranges a template is the wrong choice even when nothing is wrong with it. A screen that breaks something measured can still be chosen when the break is small and can be fixed: say what to fix.
+The page is graded on showing a picture or the product in its first screen. A screen that shows none is the right choice only when nothing on offer is worth showing; if you choose one, say why nothing was.
+Answer by calling choose_concept."""
+JURY_TOOL = {"name": "choose_concept", "description": "Which first screen ships.", "input_schema": {"type": "object", "required": ["choice", "reason"], "properties": {
+    "choice": {"type": "string", "enum": ["A", "B", "C"]},
+    "reason": {"type": "string", "description": "one sentence: why this one, for this business"},
+    "improve": {"type": "string", "description": "the one thing the chosen screen should change before it ships; empty when nothing"}}}}
+
+
+def _broken(found): return [k for k in (found or {}) if any(b in k for b in BREAKING)]
+def _standing(found):
+    """How a measured composition stands, for comparison: (broken promises, other findings) — leaving a picture out is a choice, not a finding."""
+    return (len(_broken(found)), len([k for k in (found or {}) if not any(b in k for b in BREAKING) and 'first-screen-visual' not in k]))
+
+
+def compose(page_html, images, job_dir=None, page_path=None, model=None, review=True, ask=None, concepts=1):
     """Compose, correct once, look and revise once. Returns the last composition that validates, or none.
+    With concepts=3 (and a page to draw on) three compositions are written from three different leads, each drawn and
+    measured, and a creative director chooses among the renders; the chosen one is then revised once like any other.
     `ask(system, content, tool, model=..., max_tokens=...)` is the model call; it defaults to the swarm's and is injectable for tests."""
     if ask is None:
         import agents; ask = agents.ask
@@ -281,29 +326,44 @@ def compose(page_html, images, job_dir=None, page_path=None, model=None, review=
     for address, m in pictures:
         data = _thumb(m['src'])
         if data: material += [{"type": "text", "text": f'PICTURE {address}'}, {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": data}}]
-    shots = None
     if page_path:
         try:
             shots = hero_shots(page_path)
             if shots[0]: material += [{"type": "text", "text": "THE TEMPLATE'S FIRST SCREEN (same material; this is the page's typeface and colours — yours will use them too):"}, _image_block(shots[0])]
         except Exception as e: material.append({"type": "text", "text": f'(the template\'s first screen could not be pictured: {str(e)[:80]})'})
-    log, wishes, best = [], [], None
+    log, wishes, findings, best = [], [], None, None
+    several = concepts >= 3 and bool(page_path)
 
     def attempt(stage, extra):
+        """One model call → (composition or None, the validator's errors, this call's entry in the log)."""
         answer = ask(SYSTEM, material + extra + [{"type": "text", "text": "Call write_composition."}], TOOL, model=model, max_tokens=6000)
-        if not isinstance(answer, dict): log.append({'stage': stage, 'errors': ['no composition returned']}); return None, [{'code': 'IR000', 'at': 'answer', 'message': 'no composition returned'}]
+        if not isinstance(answer, dict):
+            entry = {'stage': stage, 'errors': ['no composition returned']}; log.append(entry)
+            return None, [{'code': 'IR000', 'at': 'answer', 'message': 'no composition returned'}], entry
         ir = _to_ir(answer); errors = V.validate(ir, content)
         for w in answer.get('wishes') or []:
             if isinstance(w, dict) and (w.get('missing') or w.get('intent')): wishes.append({'intent': str(w.get('intent') or '')[:200], 'missing': str(w.get('missing') or '')[:120]})
-        log.append({'stage': stage, 'concept': ir['note'], 'errors': [f"{e['code']} {e['at']}: {e['message']}" for e in errors], **({'refused': ir['hero']} if errors else {})})
-        return ir, errors
+        entry = {'stage': stage, 'concept': ir['note'], 'errors': [f"{e['code']} {e['at']}: {e['message']}" for e in errors], **({'refused': ir['hero']} if errors else {})}; log.append(entry)
+        return ir, errors, entry
 
-    ir, errors = attempt('compose', [])
-    if errors and ir is not None:
-        problems = '\n'.join(f"- {e['code']} at {e['at']}: {e['message']}" for e in errors[:12])
-        ir, errors = attempt('correct', [{"type": "text", "text": "YOUR PREVIOUS COMPOSITION WAS REFUSED:\n" + json.dumps(ir['hero'], ensure_ascii=False) + "\nReasons:\n" + problems + "\nKeep the idea; fix exactly these."}])
-    if ir is not None and not errors: best = ir
-    findings = None
+    def draft(label='', lead=None):
+        """Compose and, when the validator refuses it, correct once. → (composition or None, its log entry)."""
+        tag = f':{label}' if label else ''; extra = [{"type": "text", "text": lead}] if lead else []
+        ir, errors, entry = attempt('compose' + tag, extra)
+        if errors and ir is not None:
+            problems = '\n'.join(f"- {e['code']} at {e['at']}: {e['message']}" for e in errors[:12])
+            ir, errors, entry = attempt('correct' + tag, extra + [{"type": "text", "text": "YOUR PREVIOUS COMPOSITION WAS REFUSED:\n" + json.dumps(ir['hero'], ensure_ascii=False) + "\nReasons:\n" + problems + "\nKeep the idea; fix exactly these."}])
+        return (ir if ir is not None and not errors else None), entry
+
+    if several:
+        leads = [(label, LEAD_WITHOUT_PICTURES if label == 'B' and not pictures else lead) for label, lead in LEADS]
+        with ThreadPoolExecutor(len(leads)) as pool: drafts = list(pool.map(lambda l: (l[0],) + draft(l[0], l[1]), leads))
+        candidates = [{'label': label, 'ir': ir, 'entry': entry} for label, ir, entry in drafts if ir is not None]
+    else:
+        ir, entry = draft()
+        candidates = [{'label': '', 'ir': ir, 'entry': entry}] if ir is not None else []
+    chosen = candidates[0] if candidates else None; best = chosen['ir'] if chosen else None; verdict = None
+
     if best and page_path:
         folder = os.path.dirname(os.path.abspath(page_path))
         def look_at(candidate):
@@ -315,36 +375,63 @@ def compose(page_html, images, job_dir=None, page_path=None, model=None, review=
                 found = {**measured(drawn), **hero_findings(measure_hero(drawn))}
             finally: os.unlink(drawn)
             return shots_, {k: v for k, v in found.items() if k not in baseline}
+        def seen(candidate):
+            """Measure the candidate's headline, draw it, picture it, grade it — in place, on the candidate's own record."""
+            try:
+                candidate['ir'] = fit(page_html, candidate['ir'], images, folder)
+                candidate['shots'], candidate['findings'] = look_at(candidate['ir']); candidate['entry']['measured'] = candidate['findings']
+            except Exception as e: candidate['failed'] = str(e)[:160]
+            return candidate
+        def shown(candidate, title):
+            """What the model is shown of a drawn composition: the document, the two pictures, what was measured."""
+            blocks = [{"type": "text", "text": title + "\n" + json.dumps(candidate['ir']['hero'], ensure_ascii=False)}]
+            desktop, mobile = candidate.get('shots') or (None, None)
+            if desktop: blocks.append(_image_block(desktop))
+            if mobile: blocks += [{"type": "text", "text": "On a phone:"}, _image_block(mobile, 700)]
+            found = candidate.get('findings') or {}
+            must = {k: v for k, v in found.items() if any(b in k for b in BREAKING)}; other = {k: v for k, v in found.items() if k not in must}
+            if must: blocks.append({"type": "text", "text": "MEASURED ON THIS RENDER — your composition breaks these; fix them, or it is not shipped:\n" + '\n'.join(f'- {k}: {v}' for k, v in must.items())})
+            if other: blocks.append({"type": "text", "text": "ALSO MEASURED — the page is graded on these too. They are yours to weigh: change the composition only where it gets better for it. "
+                                                              "A first screen without a picture is right when no picture offered is good enough; never place a document, a notice or a logo sheet to have one.\n" + '\n'.join(f'- {k}: {v}' for k, v in other.items())})
+            return blocks
         try:
             baseline = {**measured(page_path), **hero_findings(measure_hero(page_path))}
-            best = fit(page_html, best, images, folder)
-            (desktop, mobile), findings = look_at(best)
-            log[-1]['measured'] = findings
+            if several and len(candidates) > 1:
+                with ThreadPoolExecutor(len(candidates)) as pool: list(pool.map(seen, candidates))
+                drawn = [c for c in candidates if 'failed' not in c]
+                if not drawn: raise RuntimeError(candidates[0]['failed'])
+                sound = [c for c in drawn if not _broken(c['findings'])] or drawn
+                chosen = min(sound, key=lambda c: (_standing(c['findings']), c['label']))   # the fallback when nobody chooses: the least broken, then A before B before C
+                if review and len(sound) > 1:
+                    table = [{"type": "text", "text": text}]
+                    for c in sound: table += shown(c, f"CONCEPT {c['label']} — {c['ir']['note']}\nAS DRAWN, at 1440 px:")
+                    tool = json.loads(json.dumps(JURY_TOOL)); tool['input_schema']['properties']['choice']['enum'] = [c['label'] for c in sound]
+                    answer = ask(JURY, table + [{"type": "text", "text": "Call choose_concept."}], tool, model=model, max_tokens=800)
+                    picked = next((c for c in sound if isinstance(answer, dict) and c['label'] == answer.get('choice')), None)
+                    verdict = {'choice': (picked or chosen)['label'], 'reason': str((answer or {}).get('reason') or '')[:300] if picked else 'no valid choice was returned: the least broken stands', 'improve': str((answer or {}).get('improve') or '')[:300] if picked else ''}
+                    if picked: chosen = picked
+                    log.append({'stage': 'jury', 'errors': [] if picked else ['no valid choice returned'], **verdict})
+            else:
+                seen(chosen)
+                if 'failed' in chosen: raise RuntimeError(chosen['failed'])
+            best, findings = chosen['ir'], chosen['findings']
             if review:
-                look = [{"type": "text", "text": "YOUR COMPOSITION, AS DRAWN. First at 1440 px, then on a phone:\n" + json.dumps(best['hero'], ensure_ascii=False)}]
-                if desktop: look.append(_image_block(desktop))
-                if mobile: look += [{"type": "text", "text": "On a phone:"}, _image_block(mobile, 700)]
-                must = {k: v for k, v in findings.items() if any(b in k for b in BREAKING)}; other = {k: v for k, v in findings.items() if k not in must}
-                if must: look.append({"type": "text", "text": "MEASURED ON THIS RENDER — your composition breaks these; fix them, or it is not shipped:\n" + '\n'.join(f'- {k}: {v}' for k, v in must.items())})
-                if other: look.append({"type": "text", "text": "ALSO MEASURED — the page is graded on these too. They are yours to weigh: change the composition only where it gets better for it. "
-                                                                 "A first screen without a picture is right when no picture offered is good enough; never place a document, a notice or a logo sheet to have one.\n" + '\n'.join(f'- {k}: {v}' for k, v in other.items())})
+                look = shown(chosen, "YOUR COMPOSITION, AS DRAWN. First at 1440 px, then on a phone:")
+                if verdict and verdict.get('reason'): look.append({"type": "text", "text": "The studio chose this one of its concepts: " + verdict['reason'] + (" Before it ships: " + verdict['improve'] if verdict.get('improve') else '')})
                 look.append({"type": "text", "text": "Look at it as the art director. Does one thing dominate? Is anything cramped, drifting, awkwardly empty, clipped, or is the picture cropped off its subject? Is the headline the right size for its words? "
                                                         "Return the composition you would ship: revised where the picture or the measurements show a problem, unchanged if you would ship this."})
-                revised, revised_errors = attempt('revise', look)
+                revised, revised_errors, entry = attempt('revise', look)
                 if revised is not None and not revised_errors:
-                    revised = fit(page_html, revised, images, folder)
-                    _, revised_findings = look_at(revised)
-                    log[-1]['measured'] = revised_findings
-                    # worse is: more broken, or as broken and more of the rest — except that leaving a picture out is a choice, not a defect
-                    count = lambda found: (len([k for k in found if any(b in k for b in BREAKING)]), len([k for k in found if not any(b in k for b in BREAKING) and 'first-screen-visual' not in k]))
-                    worse = count(revised_findings) > count(findings)
-                    if worse: log[-1]['errors'] = ['revision measured worse than the first composition: kept the first']
-                    else: best, findings = revised, revised_findings
+                    second = seen({'label': chosen['label'], 'ir': revised, 'entry': entry})
+                    if 'failed' in second: entry['errors'] = ['the revision could not be drawn and measured: kept the first']
+                    elif _standing(second['findings']) > _standing(findings): entry['errors'] = ['revision measured worse than the first composition: kept the first']   # worse is: more broken, or as broken and more of the rest
+                    else: best, findings = second['ir'], second['findings']
         except Exception as e: log.append({'stage': 'look', 'errors': ['review skipped: ' + str(e)[:160]]})
-        broken = [k for k in (findings or {}) if any(b in k for b in BREAKING)]
-        if broken:  # correct and generic beats striking and broken: the page keeps the template's hero
-            log.append({'stage': 'refuse', 'errors': [f'the composition breaks the page on the render ({", ".join(broken)}): not shipped']}); best = None
-    return {'ir': best, 'drawn': best is not None, 'attempts': sum(1 for step in log if step['stage'] in ('compose', 'correct', 'revise')), 'log': log, 'wishes': wishes, 'measured': findings}
+        if _broken(findings):  # correct and generic beats striking and broken: the page keeps the template's hero
+            log.append({'stage': 'refuse', 'errors': [f'the composition breaks the page on the render ({", ".join(_broken(findings))}): not shipped']}); best = None
+    result = {'ir': best, 'drawn': best is not None, 'attempts': sum(1 for step in log if step['stage'].split(':')[0] in ('compose', 'correct', 'revise', 'jury')), 'log': log, 'wishes': wishes, 'measured': findings}
+    if several: result.update(concepts=[{'label': c['label'], 'concept': c['ir']['note'], 'measured': c.get('findings'), **({'failed': c['failed']} if 'failed' in c else {})} for c in candidates], chosen=chosen['label'] if chosen else None, verdict=verdict)
+    return result
 
 
 if __name__ == '__main__':
@@ -354,7 +441,8 @@ if __name__ == '__main__':
     job = args[args.index('--job') + 1] if '--job' in args else None
     with open(page_path, encoding='utf-8') as f: html = f.read()
     with open(images_path) as f: pictures_json = json.load(f)
-    result = compose(html, pictures_json, job_dir=job, page_path=page_path, model=os.environ.get('COMPOSE_MODEL') or None, review='--no-review' not in args)
+    result = compose(html, pictures_json, job_dir=job, page_path=page_path, model=os.environ.get('COMPOSE_MODEL') or None, review='--no-review' not in args,
+                     concepts=int(args[args.index('--concepts') + 1]) if '--concepts' in args else 1)
     if result['ir']:
         with open(out, 'w', encoding='utf-8') as f: json.dump(result['ir'], f, indent=1, ensure_ascii=False)
     with open(os.path.splitext(out)[0] + '.log.json', 'w', encoding='utf-8') as f: json.dump({k: result[k] for k in ('drawn', 'attempts', 'log', 'wishes')}, f, indent=1, ensure_ascii=False)

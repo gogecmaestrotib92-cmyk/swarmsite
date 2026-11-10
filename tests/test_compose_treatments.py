@@ -191,6 +191,20 @@ class Pictures(unittest.TestCase):
         self.assertEqual(codes(with_node('pic', frame='paper', shape='arch')), ['IR067'])
         self.assertEqual(codes(with_node('pic', scroll='parallax', tilt=2)), ['IR067']); self.assertEqual(codes(with_node('pic', scroll='parallax', fit='contain')), ['IR067'])
 
+    def test_a_screenshot_is_whole_without_having_to_say_so(self):
+        shot = copy.deepcopy(BASE); shot['media']['hero.picture']['shot'] = True
+        ir = with_node('pic', shot, frame='browser', ratio='3/2'); node(ir, 'pic').pop('fit')
+        self.assertEqual(codes(ir, shot), [], 'a screenshot that does not state its fit is contained: there is no other way to show one')
+        self.assertIn('ir-contain', draw(ir, shot))
+        photo = with_node('pic'); node(photo, 'pic').pop('fit'); self.assertNotIn('ir-contain', draw(photo), 'a photograph that does not say fills its box')
+        said = [e['message'] for e in V.validate(with_node('pic', shot, fit='cover', ratio='3/2', bleed='right'), shot) if e['code'] == 'IR062'][0]
+        for part in ('fit is "cover"', 'it has no frame', 'bleed is "right"'): self.assertIn(part, said, 'the refusal says which of the conditions is not met')
+
+    def test_words_arrive_rising_and_may_say_so(self):
+        self.assertEqual(codes(with_node('h1', enter='rise')), []); self.assertEqual(codes(with_node('go', enter='rise')), [])
+        self.assertEqual(codes(with_node('h1', enter='clip')), ['IR070']); self.assertEqual(codes(with_node('lede', enter='none')), ['IR070'])
+        self.assertEqual(draw(with_node('h1', enter='rise')), draw(composition()), 'saying what already happens draws nothing different')
+
     def test_a_screenshot_keeps_its_colours_and_its_rectangle(self):
         shot = copy.deepcopy(BASE); shot['media']['hero.picture']['shot'] = True
         framed = dict(fit='contain', frame='browser', ratio='3/2')

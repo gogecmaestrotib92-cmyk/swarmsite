@@ -41,6 +41,9 @@ Composed heroes: `python3 bench/compose.py [site …]` has a model write a first
 `shipped` render (about three calls and $0.10 a site; needs `ANTHROPIC_API_KEY`), `python3 bench/compose.py --fit` re-measures
 the headlines of the compositions already written without a model call, and `python3 bench/run.py modelled` renders and
 grades them (`composed` does the same for the hand-written ones in `bench/compositions/`).
+`--concepts 3` draws three first screens per site from three leads and has a creative director choose among the renders.
+`python3 bench/compose.py --lists` has the model recompose the lists below each site's composed first screen (two calls and
+about $0.04 a site) and `python3 bench/run.py page` renders and grades the whole composed page.
 
 Variants that need the model (three concepts, composed heroes) are added as they are built; they must start from the
 same `seed/` files.

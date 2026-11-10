@@ -9,12 +9,17 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'lib' / 'swarm')); sys.path.insert(0, str(ROOT / 'lib' / 'compose'))
 import run
 import compose as COMPOSE
+import compose_lists as COMPOSE_LISTS
 import render_ir as IR
 
 PAGE = ('<html><head><style>:root{--paper:#ffffff;--display:\'Geist\',sans-serif;--container:1300px;--frame:40px}</style></head><body>'
         '<section class="sec hero" id="top"><div class="cat"><span class="lab">A label</span></div><h1 class="h1">Four words <em>right</em> here</h1>'
         '<p class="lede">One sentence of lede.</p><div class="ctas"><a class="btn" href="https://example.test/go">Go <span class="ar">→</span></a></div></section>'
-        '<section class="sec cards"><h2 class="h2">Below</h2></section></body></html>')
+        '<section class="sec cards"><h2 class="h2">Below</h2></section>'
+        '<section class="sec indexlist band-alt" id="what"><div class="wrap"><div class="gh"><span class="lab">What</span><h2 class="h2">Four things</h2></div><ol class="index-list">'
+        + ''.join(f'<li class="index-row"><span class="idx">0{n}</span><h3 class="h3">Thing {n}</h3><p>Body of thing {n}.</p></li>' for n in range(1, 5))
+        + '</ol></div></section></body></html>')
+LISTS_OK = {'ir': '0.2', 'note': 'Hollow numerals.', 'lists': [{'section': 'what', 'form': 'ledger', 'numerals': 'outline', 'head': 'sticky'}]}
 IR_OK = {'ir': '0.2', 'note': 'Type alone, stepped.', 'hero': {'rows': ['auto', 'auto', 'auto', 'auto'], 'face': {'id': 'fraunces'}, 'nodes': [
     {'id': 'cat', 't': 'text', 'src': 'hero.category', 'as': 'label', 'at': {'col': [1, 7], 'row': 1}},
     {'id': 'h1', 't': 'text', 'src': 'hero.h1', 'as': 'h1', 'lines': [2, 2], 'indent': [0, 2], 'at': {'col': [1, 10], 'row': 2}},
@@ -28,7 +33,11 @@ class Job(unittest.TestCase):
         self.out = os.path.join(self.dir, 'bp-x.html'); Path(self.out).write_text(PAGE, encoding='utf-8')
         Path(self.dir, 'images.json').write_text('[]'); Path(self.dir, 'direction.json').write_text(json.dumps({'kind': 'software'}))
         self.result = {'ir': json.loads(json.dumps(IR_OK)), 'drawn': True, 'attempts': 2, 'log': [{'stage': 'compose', 'errors': []}], 'wishes': [], 'measured': {}}
-        patcher = patch.object(COMPOSE, 'compose', lambda *a, **k: self.result); patcher.start(); self.addCleanup(patcher.stop)
+        self.asked = []
+        def composed(*a, **k): self.asked.append(k); return self.result
+        patcher = patch.object(COMPOSE, 'compose', composed); patcher.start(); self.addCleanup(patcher.stop)
+        self.lists = {'doc': None, 'drawn': False, 'attempts': 0, 'log': [], 'measured': None}   # by default the lists composer returns nothing
+        patcher = patch.object(COMPOSE_LISTS, 'compose', lambda *a, **k: self.lists); patcher.start(); self.addCleanup(patcher.stop)
     def brief(self, **fields): Path(self.dir, 'brief.json').write_text(json.dumps(fields))
     def record(self): return json.loads(Path(self.dir, 'composition.json').read_text())
 
@@ -56,13 +65,39 @@ class FirstScreen(Job):
         page = Path(self.out).read_text(encoding='utf-8')
         self.assertTrue(record['drawn']); self.assertIn('class="sec hero ir"', page); self.assertIn("--display:'Fraunces'", page)
         self.assertIn('<section class="sec cards"><h2 class="h2">Below</h2></section>', page, 'the rest of the page is untouched')
+        self.assertIn('<ol class="index-list">', page, 'a list nobody recomposed stays as the template drew it'); self.assertEqual(record['lists']['drawn'], False)
         self.assertEqual(self.record()['concept'], 'Type alone, stepped.'); self.assertEqual(self.record()['face'], {'id': 'fraunces'})
+        self.assertEqual(self.asked[0]['concepts'], 3, 'in the loop three first screens are drawn and one is chosen'); self.assertEqual(self.asked[0]['page_path'], self.out)
         self.assertFalse(os.path.exists(self.out + '.composed'))
 
     def test_no_composition_leaves_the_page_byte_for_byte(self):
         self.result = {'ir': None, 'drawn': False, 'attempts': 2, 'log': [{'stage': 'refuse', 'errors': ['breaks the page']}], 'wishes': [], 'measured': None}
         record = run.compose_first_screen(self.dir, self.out)
         self.assertFalse(record['drawn']); self.assertEqual(Path(self.out).read_text(encoding='utf-8'), PAGE); self.assertFalse(self.record()['drawn'])
+
+    def test_the_lists_are_composed_on_the_page_as_it_stands_after_the_first_screen(self):
+        seen = []
+        def lists(page, path, **kw): seen.append(page); return {'doc': json.loads(json.dumps(LISTS_OK)), 'drawn': True, 'attempts': 1, 'log': [], 'measured': {}}
+        with patch.object(COMPOSE_LISTS, 'compose', lists): record = run.compose_first_screen(self.dir, self.out)
+        page = Path(self.out).read_text(encoding='utf-8')
+        self.assertIn('class="sec hero ir"', seen[0], 'the lists composer is shown the page with its composed first screen')
+        self.assertTrue(record['drawn']); self.assertTrue(record['lists']['drawn']); self.assertEqual(record['lists']['forms'], {'what': 'ledger'})
+        self.assertIn('lc lc-ledger', page); self.assertIn('class="sec hero ir"', page); self.assertEqual(page.count('<h3 class="h3 lc-title">Thing '), 4)
+        self.assertEqual(self.record()['lists']['concept'], 'Hollow numerals.')
+
+    def test_lists_alone_are_a_candidate_when_the_first_screen_is_refused(self):
+        self.result = {'ir': None, 'drawn': False, 'attempts': 2, 'log': [], 'wishes': [], 'measured': None}
+        self.lists = {'doc': json.loads(json.dumps(LISTS_OK)), 'drawn': True, 'attempts': 1, 'log': [], 'measured': {}}
+        record = run.compose_first_screen(self.dir, self.out); page = Path(self.out).read_text(encoding='utf-8')
+        self.assertTrue(record['drawn']); self.assertIn('lc lc-ledger', page); self.assertIn('<section class="sec hero" id="top">', page, 'the template\'s first screen stays')
+
+    def test_a_lists_composer_that_fails_or_is_refused_leaves_the_first_screen_standing(self):
+        with patch.object(COMPOSE_LISTS, 'compose', side_effect=RuntimeError('no browser')): record = run.compose_first_screen(self.dir, self.out)
+        self.assertTrue(record['drawn']); self.assertIn('no browser', record['lists']['error']); self.assertNotIn(' lc ', Path(self.out).read_text(encoding='utf-8'))
+        Path(self.out).write_text(PAGE, encoding='utf-8')
+        self.lists = {'doc': {'ir': '0.2', 'lists': [{'section': 'what', 'form': 'bento', 'head': 'left'}]}, 'drawn': True, 'attempts': 1, 'log': [], 'measured': {}}
+        record = run.compose_first_screen(self.dir, self.out)
+        self.assertFalse(record['lists']['drawn'], 'a document the validator refuses is never drawn, whoever returned it'); self.assertNotIn('lc-bento', Path(self.out).read_text(encoding='utf-8'))
 
     def test_a_composition_the_validator_refuses_is_never_written(self):
         self.result['ir']['hero']['nodes'][2]['text'] = 'We are the best'

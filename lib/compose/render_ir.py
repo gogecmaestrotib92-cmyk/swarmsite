@@ -175,7 +175,7 @@ def render_hero(ir, content):
             classes = ['ir-n', 'ir-actions', f'ir-al-{node.get("align", "start")}'] + (['ir-on-scrim'] if on_scrim(node) else [])
             out.append(f'<div class="{" ".join(classes)}" data-node="{nid}" style="{style}"><div class="ctas">{buttons}</div></div>')
         elif kind == 'media':
-            fit = node.get('fit', 'cover'); focal = node.get('focal', [0.5, 0.5]); tone = node.get('tone', 'none'); shape = node.get('shape', 'rect')
+            fit = V.fit_of(node, content); focal = node.get('focal', [0.5, 0.5]); tone = node.get('tone', 'none'); shape = node.get('shape', 'rect')
             look = (['ir-contain'] if fit == 'contain' else []) + ([f'ir-frame-{node["frame"]}'] if node.get('frame', 'none') != 'none' else []) + ([f'ir-shape-{shape}'] if shape != 'rect' else [])
             toned = (['ir-tone'] + (['ir-tone-tint'] if tone == 'tint' else [])) if tone != 'none' else []
             style += f';--ratio:{node["ratio"]};--focal:{round(focal[0] * 100)}% {round(focal[1] * 100)}%'

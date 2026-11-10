@@ -2,8 +2,8 @@
   round 0: Reader (if not yet) → UX → Copy → UI → Visual → render
   round k: Critic looks at the render → routes each defect to its owner (copy / ui / visual / ux) → owners fix in parallel → bounded critic ops → render
 Stops at --target score or --rounds. Prints one JSON line per event (the server turns them into swarm events) and a final {"done":…} line.
-Opt-in, after the rounds (brief.json "compose": true, or SWARM_COMPOSE=1): the first screen of the winning page is recomposed
-(lib/compose) and the composed page is kept only if it scores at least as high as the page it would replace.
+Opt-in, after the rounds (brief.json "compose": true, or SWARM_COMPOSE=1): the first screen of the winning page and the lists
+below it are recomposed (lib/compose) and the composed page is kept only if it scores at least as high as the page it would replace.
 Usage: python3 lib/swarm/run.py out/<slug> <blueprint-id> --out bp-<id>.html [--rounds 3] [--target 80]"""
 import json, os, sys, time, subprocess, traceback, shutil, tempfile, hashlib
 from concurrent.futures import ThreadPoolExecutor
@@ -124,22 +124,35 @@ def compose_wanted(slug_dir):
 
 
 def compose_first_screen(slug_dir, out):
-    """Recompose the first screen of the page at `out` (lib/compose) and write composition.json. The page file is replaced
-    only by a composition that validated, was measured on its own render and broke nothing; anything else leaves it as it was.
-    Returns the record: {'drawn', 'attempts', 'concept', 'face', 'measured', 'wishes', 'log', 'ir'}."""
+    """Recompose the page at `out` (lib/compose) — its first screen, then the lists below it, each a document that is
+    validated, measured on its own render and refused whole if it breaks anything — and write composition.json. The page
+    file is replaced only by what passed; a part that did not pass leaves that part of the page as it was.
+    Returns the record: {'drawn', 'attempts', 'concept', 'face', 'measured', 'wishes', 'log', 'ir', 'lists'}; 'drawn' is
+    true when either part was drawn."""
     if os.path.join(ROOT, 'lib', 'compose') not in sys.path: sys.path.insert(0, os.path.join(ROOT, 'lib', 'compose'))
     import compose as COMPOSE, render_ir as IR
+    def replace(page):
+        with open(out + '.composed', 'w', encoding='utf-8') as f: f.write(page)
+        os.replace(out + '.composed', out)
     with open(out, encoding='utf-8') as f: page = f.read()
     images = A.J(slug_dir, 'images.json') or []
-    result = COMPOSE.compose(page, images, job_dir=slug_dir, page_path=out)
+    result = COMPOSE.compose(page, images, job_dir=slug_dir, page_path=out, concepts=COMPOSE_CONCEPTS)
     ir = result.get('ir')
     record = {'drawn': False, 'attempts': result.get('attempts'), 'concept': (ir or {}).get('note'), 'face': ((ir or {}).get('hero') or {}).get('face'),
-              'measured': result.get('measured'), 'wishes': result.get('wishes'), 'log': result.get('log'), 'ir': ir}
+              'measured': result.get('measured'), 'wishes': result.get('wishes'), 'log': result.get('log'), 'ir': ir, 'lists': None,
+              **{k: result[k] for k in ('concepts', 'chosen', 'verdict') if k in result}}
     if ir:
         composed, report = IR.transplant(page, ir, images)
-        if report['drawn']:
-            with open(out + '.composed', 'w', encoding='utf-8') as f: f.write(composed)
-            os.replace(out + '.composed', out); record['drawn'] = True
+        if report['drawn']: replace(composed); page = composed; record['drawn'] = True
+    try:   # the lists are composed on the page as it now stands, so that they are seen under the first screen they follow
+        import compose_lists as COMPOSE_LISTS, lists as LISTS
+        chosen = COMPOSE_LISTS.compose(page, out); doc = chosen.get('doc')
+        record['lists'] = {'drawn': False, 'attempts': chosen.get('attempts'), 'concept': (doc or {}).get('note'), 'forms': {l['section']: l['form'] for l in (doc or {}).get('lists', [])},
+                           'measured': chosen.get('measured'), 'log': chosen.get('log'), 'doc': doc}
+        if doc:
+            composed, report = LISTS.transplant(page, doc)
+            if report['drawn']: replace(composed); record['lists']['drawn'] = True; record['drawn'] = True
+    except Exception as e: record['lists'] = {'drawn': False, 'error': str(e)[:160]}
     with open(os.path.join(slug_dir, 'composition.json'), 'w', encoding='utf-8') as f: json.dump(record, f, indent=1, ensure_ascii=False)
     return record
 
@@ -150,7 +163,8 @@ def composed_candidate(slug_dir, out, best_score, best_broken, grade):
     `grade()` → (contract report, critic report) for the page at `out`. Returns the decision; when 'kept' is false the
     caller puts the winner's files back."""
     record = compose_first_screen(slug_dir, out)
-    decision = {'kept': False, 'drawn': record['drawn'], 'attempts': record.get('attempts'), 'concept': record.get('concept'), 'face': record.get('face'), 'before': best_score}
+    decision = {'kept': False, 'drawn': record['drawn'], 'attempts': record.get('attempts'), 'concept': record.get('concept'), 'face': record.get('face'), 'before': best_score,
+                'first_screen': bool(record.get('ir')), 'lists': (record.get('lists') or {}).get('forms') if (record.get('lists') or {}).get('drawn') else None}
     if not record['drawn']:
         decision['why'] = 'no composition passed validation and measurement'; return decision
     con, rep = grade()
@@ -188,18 +202,19 @@ def recompose(slug_dir, out, log, best_score, best_round, best_manifest, best_fi
         with open(os.path.join(slug_dir, 'critic.json'), 'w') as f:
             json.dump({**rep, 'score': decision['score'], 'taste': decision['taste'], 'contract': decision['contract'], 'broken': cfail, 'round': k, 'best': decision['score'], 'composed': True}, f, indent=1, ensure_ascii=False)
         best_score, best_round = decision['score'], k; best_manifest = dict(best_manifest, html=digest(out))
-        ev('Concept', 'first screen recomposed: ' + str(decision.get('concept') or '')[:110])
-        ev('Critic', f"composed first screen kept: {decision['score']}/100 (was {decision['before']}) · taste {decision['taste']} · contract {decision['contract']}")
+        if decision.get('first_screen'): ev('Concept', 'first screen recomposed: ' + str(decision.get('concept') or '')[:110])
+        if decision.get('lists'): ev('Concept', 'lists recomposed: ' + ', '.join(f'{k} as {v}' for k, v in decision['lists'].items())[:110])
+        ev('Critic', f"composed page kept: {decision['score']}/100 (was {decision['before']}) · taste {decision['taste']} · contract {decision['contract']}")
     else:   # the winner's page, documents, contract, critic and screenshots go back exactly as they were
         for path, data in best_files.items():
             with open(path, 'wb') as f: f.write(data)
         restore_shots(slug_dir, snapshot_dir)
         if best_manifest['html'] != digest(out): raise RuntimeError('the winning page could not be restored after a refused composition')
-        ev('Concept', 'first screen left as it was: ' + str(decision.get('why') or '')[:100])
+        ev('Concept', 'page left as the rounds made it: ' + str(decision.get('why') or '')[:100])
     log['composition'] = decision
     try:
         record = A.J(slug_dir, 'composition.json') or {}
-        record.update({key: decision.get(key) for key in ('kept', 'why', 'before', 'score', 'taste', 'contract')})
+        record.update({key: decision.get(key) for key in ('kept', 'why', 'before', 'score', 'taste', 'contract', 'first_screen')})
         with open(os.path.join(slug_dir, 'composition.json'), 'w', encoding='utf-8') as f: json.dump(record, f, indent=1, ensure_ascii=False)
     except Exception: pass
     return best_score, best_round, best_manifest
@@ -233,7 +248,8 @@ def main():
     with tempfile.TemporaryDirectory(prefix='swarm-best-') as snapshot_dir:
         return _main(snapshot_dir)
 
-COMPOSE_BY = 600   # seconds into the loop after which a first screen is no longer recomposed: the server stops the loop at 900
+COMPOSE_BY = 540   # seconds into the loop after which the page is no longer recomposed: the server stops the loop at 900
+COMPOSE_CONCEPTS = 1 if os.environ.get('SWARM_COMPOSE_CONCEPTS') == '1' else 3   # first screens drawn before one is chosen
 
 def _main(snapshot_dir):
     started = time.time()
