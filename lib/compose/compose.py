@@ -89,7 +89,7 @@ Rules the renderer enforces — a composition that breaks one is refused whole:
 - A picture you place should register: at least one spans five columns or more (the page is graded on showing a picture or the product at 30% of the screen width in the first screen when it has one).
 - A picture stands no taller than about 720 px at 1440 (its width divided by its ratio; 900 px with "height": "tall"): taller, and the buttons fall under the fold.
 - The headline takes at most three lines at 1440 px and is never set under 48 px. Break it yourself with "lines" when the break matters; otherwise choose size and measure for the words you have. You will be told what was measured on the render.
-THE PAGE PLAN. A first screen with an idea over a page of stock sections is the commonest failure of a page like this: the idea stops at the fold. So before the sections below are composed, you plan the page ("page_plan"): name the ONE device of your first screen that returns (something drawable), at least two sections from THE PAGE BELOW that carry it and how each does, at most one event — the page's single loud moment below the first screen — and the sections that stay plain. Most of a page is plain; that is what lets the carriers and the event be seen. Use only section ids you are given.
+THE PAGE PLAN. A first screen with an idea over a page of stock sections is the commonest failure of a page like this: the idea stops at the fold. So before the sections below are composed, you plan the page ("page_plan"): name the ONE device of your first screen that returns (something drawable), at least two sections from THE PAGE BELOW that carry it and how each does, at most one event — the page's single loud moment below the first screen — and the sections that stay plain. Most of a page is plain; that is what lets the carriers and the event be seen. Use only section ids you are given. What you do to your headline — a stepped line, a marked word — is repeated for you on the heading of every carrier and of the event, exactly as you drew it on the first screen; for each carrier you may name the one word of its heading that takes the mark. When the event is the closing call to action it becomes the page's one plate of accent with its line set large.
 
 Answer by calling write_composition. In "concept", say in one sentence what the first screen does and why it suits this business. In "wishes", list anything you wanted that the format cannot do — it is not drawn, it is how the format grows."""
 
@@ -115,7 +115,7 @@ TOOL = {"name": "write_composition", "description": "The composition of the firs
     "page_direction": {"type": "string", "description": "two or three sentences for the art directors who compose the rest of this page after you: the attitude of the type (quiet/loud, large/small, numerals hollow or solid), where colour and dark grounds belong, what pictures should do, and the one motif that should return down the page. Instructions for colleagues, never shown to a visitor."},
     "page_plan": {"type": "object", "description": "the plan of the whole page, written before any section below is composed: the one device of your first screen that returns, and where", "properties": {
         "device": {"type": "string", "description": "one sentence: the device of the first screen that returns down the page — a way of cutting pictures, a ground, a gesture of the type, a system of labels. Something a colleague can draw, not a mood."},
-        "carriers": {"type": "array", "maxItems": 4, "items": {"type": "object", "required": ["section", "how"], "properties": {"section": {"type": "string", "description": "a section id from THE PAGE BELOW"}, "how": {"type": "string", "description": "what the device looks like in this section"}}}},
+        "carriers": {"type": "array", "maxItems": 4, "items": {"type": "object", "required": ["section", "how"], "properties": {"section": {"type": "string", "description": "a section id from THE PAGE BELOW"}, "how": {"type": "string", "description": "what the device looks like in this section"}, "word": {"type": "string", "description": "when your headline marks a word: the ONE word of this section's heading (as given in THE PAGE BELOW) that takes the same mark"}}}},
         "event": {"type": "object", "properties": {"section": {"type": "string"}, "what": {"type": "string", "description": "the page's one loud moment below the first screen: the only change of ground, the one full-bleed picture, the largest type"}}},
         "plain": {"type": "array", "items": {"type": "string"}, "description": "section ids that stay quiet so the others can be seen"}}},
     "typeface": {"type": "string", "enum": ["page"] + [f["id"] for f in V.FACES.of_role('display')], "description": "the display face the whole page is set in; \"page\" keeps the page's own"},
@@ -331,7 +331,8 @@ def outline(page_html):
         if not s.get('id') or s['id'] in ('top', 'more', 'end') or 'hero' in (s.get('classes') or []): continue
         body = page_html[s['span'][0]:s['span'][1]]; words = re.sub(r'<[^>]+>', ' ', re.sub(r'<(script|style)\b.*?</\1>', ' ', body, flags=re.S))
         kind = next((c for c in s.get('classes') or [] if c in KINDS), 'section') + (' with a picture' if '<img' in body else '')
-        out.append({'id': s['id'], 'kind': kind, 'chars': len(' '.join(words.split()))})
+        h2 = re.search(r'<h2\b[^>]*>(.*?)</h2>', body, re.S); heading = ' '.join(re.sub(r'<[^>]+>', ' ', h2.group(1)).split())[:90] if h2 else ''
+        out.append({'id': s['id'], 'kind': kind, 'chars': len(' '.join(words.split())), 'heading': heading})
     return out
 
 
@@ -340,7 +341,7 @@ def page_plan(answer, below):
     ones. Anything else the model wrote is dropped; a plan without a device or without a carrier is no plan."""
     if not isinstance(answer, dict) or not isinstance(answer.get('device'), str) or not answer['device'].strip(): return None
     known = {s['id'] for s in below or []}; line = lambda t, n: ' '.join(str(t or '').split())[:n]
-    carriers = [{'section': c['section'], 'how': line(c.get('how'), 200)} for c in answer.get('carriers') or [] if isinstance(c, dict) and c.get('section') in known and line(c.get('how'), 200)][:4]
+    carriers = [{'section': c['section'], 'how': line(c.get('how'), 200), **({'word': line(c.get('word'), 40)} if line(c.get('word'), 40) else {})} for c in answer.get('carriers') or [] if isinstance(c, dict) and c.get('section') in known and line(c.get('how'), 200)][:4]
     if not carriers: return None
     event = answer.get('event') if isinstance(answer.get('event'), dict) and answer['event'].get('section') in known and line(answer['event'].get('what'), 200) else None
     taken = {c['section'] for c in carriers} | ({event['section']} if event else set())
@@ -437,7 +438,7 @@ def compose(page_html, images, job_dir=None, page_path=None, model=None, review=
     if face_locked(job_dir, content): content['page']['face_locked'] = True
     text, pictures = brief(content, job_dir)
     below = outline(page_html)
-    if below: text += '\n\nTHE PAGE BELOW the first screen — its sections in order (id: what it is, how many characters), for "page_plan":\n' + '\n'.join(f'- {s["id"]}: {s["kind"]}, {s["chars"]} characters' for s in below)
+    if below: text += '\n\nTHE PAGE BELOW the first screen — its sections in order (id: what it is, how many characters), for "page_plan":\n' + '\n'.join(f'- {s["id"]}: {s["kind"]}, {s["chars"]} characters' + (f', headed "{s["heading"]}"' if s.get('heading') else '') for s in below)
     material = [{"type": "text", "text": text}]
     for address, m in pictures:
         data = _thumb(m['src'])

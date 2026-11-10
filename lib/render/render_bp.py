@@ -264,6 +264,9 @@ def build(slug_dir, bp_id, out_path=None):
     disp_name, disp_kind = blueprint_disp_name, blueprint_disp_kind
     body_name, body_kind = font_for((T.get('body') or {}).get('fam'), ('Inter Tight', 'sans'))
     label_name, _ = font_for((T.get('label') or {}).get('fam'), ('JetBrains Mono', 'mono'))
+    # running text on a phone: a desk size of 19–24 px steps down (a serif, drawn narrower, keeps 20; the rest 18); a recipe that sets its text as display is left alone
+    _bpx = (T.get('body') or {}).get('px', 17); _bpx = _bpx if isinstance(_bpx, (int, float)) and not isinstance(_bpx, bool) else 17
+    phone_body = min(_bpx, 20 if body_kind == 'serif' else 18) if _bpx <= 24 else _bpx
     hint = b.get('font_hint'); extra_gf = {}
     if brief.get('keepFont', True) and b.get('keep_font') and isinstance(hint, str):
         # Never interpolate an arbitrary site-provided family into CSS or a URL.
@@ -423,7 +426,9 @@ def build(slug_dir, bp_id, out_path=None):
                     host = host.rstrip('.')
                     if u.scheme not in ('http', 'https') or not host or u.username or u.password or host == 'localhost' or host.endswith(('.local','.internal','.localhost')) or ':' in host or re.fullmatch(r'\d+\.\d+\.\d+\.\d+', host): continue
                 except ValueError: continue
-                pair = (url, ' '.join(label.split()).casefold())
+                label = unarrowed(' '.join(label.split()))   # the client's own arrow is not part of the name: the same link is not drawn twice, nor with two arrows
+                if not re.search(r'\w', re.sub(r'[→➝➔⟶›»↗]|->', '', label)): continue   # a link whose whole name is an arrow names nothing
+                pair = (url, label.casefold())
                 if pair in anchors.pairs: continue
                 anchors.pairs.add(pair)
                 links.append(f'<li><a href="{e(url)}" target="_blank" rel="noopener noreferrer">{e(label)} ↗</a></li>')
@@ -1729,6 +1734,10 @@ img,video{{display:block;max-width:100%}}a{{color:inherit;text-decoration:none}}
 .h1,.h2{{hyphens:manual}}.h1[style*="--fs"],.h2[style*="--fs"]{{font-size:var(--fs)}}
 /* a headline shrinks to fit its longest word before it ever breaks inside one ("Differen/t"); overflow-wrap stays as the last resort for a word longer than the screen */
 .h1[style*="--fs"][style*="--lw"]{{font-size:min(var(--fs),calc((100vw - 2 * min(var(--frame,24px),24px)) / var(--lw,8) * 1.72))!important}}.h2[style*="--fs"][style*="--lw"]{{font-size:min(var(--fs),calc((100vw - 2 * min(var(--frame,24px),24px)) / var(--lw,8) * 1.72))!important}}
+/* a row of a ledger on a phone: name left and value right, no leader; a value too long for that stands under its name — never some rows one way and some the other by accident */
+@media(max-width:600px){{.sec .rows li{{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:16px;row-gap:4px;align-items:baseline}}.sec .rows li i{{display:none}}.sec .rows li b{{text-align:right;max-width:44vw;margin-left:0}}.sec .rows li.price-long{{grid-template-columns:minmax(0,1fr)}}.sec .rows li.price-long span{{font-size:.86em;opacity:.72}}.sec .rows li.price-long b{{text-align:left;max-width:100%;margin-left:0}}}}
+/* on a phone running text steps down from a desk size (phone_body), a section's heading does not fall under 32 px (still fitting its longest word), and the lede steps down to the running size */
+@media(max-width:600px){{:root{{--body-px:{phone_body}px}}.sec:not(.hero) .h2[style*="--fs"][style*="--lw"]{{font-size:min(max(var(--fs),32px),calc((100vw - 2 * min(var(--frame,24px),24px)) / var(--lw,8) * 1.72))!important}}.sec:not(.hero) .lede{{font-size:max(17px,var(--body-px))}}}}
 .art-photo-pair .ba-pair{{display:grid;grid-template-columns:1fr 1fr;gap:var(--gutter);margin-top:clamp(28px,4vw,56px);align-items:start}}.art-photo-pair figure{{margin:0;border-radius:var(--radius);overflow:hidden;background:rgba(127,127,127,.08);border:1px solid var(--line)}}.art-photo-pair figure img{{display:block;width:100%;height:auto}}.art-photo-pair figcaption{{font-family:var(--mono,ui-monospace,monospace);font-size:12px;letter-spacing:.08em;text-transform:uppercase;padding:12px 16px;border-top:1px solid var(--line);color:var(--muted)}}.art-photo-pair .ba-before img{{filter:saturate(.85)}}.art-photo-pair .ba-after{{box-shadow:none}}@media(max-width:700px){{.art-photo-pair .ba-pair{{grid-template-columns:1fr}}}}
 .doc-stack{{position:relative;width:min(100%,560px);margin-inline:auto;aspect-ratio:.78;perspective:1400px}}.doc-stack figure{{position:absolute;margin:0;inset:0;border-radius:6px;overflow:hidden;background:#fff;box-shadow:0 2px 0 rgba(255,255,255,.35) inset,0 30px 60px -20px rgba(0,0,0,.55),0 8px 18px -8px rgba(0,0,0,.35)}}.doc-stack figure img{{display:block;width:100%;height:100%;object-fit:cover;object-position:top}}.doc-stack .doc-back{{transform:translate(9%,-6%) rotate(4deg) scale(.96);filter:brightness(.86) saturate(.9);z-index:0}}.doc-stack .doc-front{{transform:translate(-4%,3%) rotate(-2.5deg);z-index:1}}.doc-stack::after{{content:"";position:absolute;inset:auto 10% -8% 10%;height:18%;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.45),transparent);z-index:-1;filter:blur(10px)}}@media(max-width:900px){{.doc-stack{{width:min(100%,420px);aspect-ratio:.82}}}}
 /* world layer */

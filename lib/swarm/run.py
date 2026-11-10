@@ -269,6 +269,14 @@ def compose_first_screen(slug_dir, out, deadline=None):
                 composed, report = WORDS.transplant(page, doc)
                 if report['drawn']: replace(composed); record['words']['drawn'] = True; record['drawn'] = True
         except Exception as e: record['words'] = {'drawn': False, 'error': str(e)[:160]}
+    if record.get('drawn') and record.get('plan') and os.environ.get('SWARM_DEVICE', '1') != '0':
+        try:   # what the first screen did to its headline, repeated on the sections the plan names — by rule, since no form can say it
+            import device as DEVICE
+            with open(out, encoding='utf-8') as f: page = f.read()
+            carried, report = DEVICE.carry(page, record['plan'], record.get('ir'))
+            record['device'] = report
+            if report['drawn']: replace(carried)
+        except Exception as e: record['device'] = {'drawn': False, 'error': str(e)[:160]}
     with open(os.path.join(slug_dir, 'composition.json'), 'w', encoding='utf-8') as f: json.dump(record, f, indent=1, ensure_ascii=False)
     return record
 
