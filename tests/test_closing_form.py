@@ -44,14 +44,12 @@ def test_a_form_keeps_its_own_closing():
 
 
 def test_an_action_carries_one_arrow():
-    def change(beat): beat.pop('fields', None); beat['cta'] = 'Book a table →'
+    """A label that brings its own arrow from the client's page (here in the direction and in the inventory alike) is drawn with one."""
     tmp = tempfile.mkdtemp()
     for name in ('direction', 'images', 'assets', 'inventory'):
-        shutil.copy(os.path.join(ROOT, 'tests', f'{name}.sample.json'), os.path.join(tmp, f'{name}.json'))
-    path = os.path.join(tmp, 'direction.json'); d = json.load(open(path, encoding='utf-8'))
-    for sec in d.get('beats') or d.get('sections') or []:
-        if isinstance(sec, dict) and sec.get('type') == 'form': change(sec)
-    json.dump(d, open(path, 'w', encoding='utf-8')); out = os.path.join(tmp, 'page.html')
+        text = open(os.path.join(ROOT, 'tests', f'{name}.sample.json'), encoding='utf-8').read()
+        open(os.path.join(tmp, f'{name}.json'), 'w', encoding='utf-8').write(text.replace('Rezerviši sto', 'Rezerviši sto →'))
+    out = os.path.join(tmp, 'page.html')
     subprocess.run([sys.executable, os.path.join(ROOT, 'lib', 'render', 'render_bp.py'), tmp, 'atelier', out], check=True, capture_output=True)
     page = open(out, encoding='utf-8').read(); shutil.rmtree(tmp)
-    assert 'Book a table <span class="ar">' in page and 'Book a table →' not in page and '→ <span class="ar">' not in page
+    assert 'Rezerviši sto <span class="ar">' in page and '→ <span class="ar">' not in page
