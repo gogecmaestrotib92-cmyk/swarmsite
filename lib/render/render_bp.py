@@ -347,6 +347,7 @@ def build(slug_dir, bp_id, out_path=None):
         return next((safe_url(f.get('source_url')) for f in source_forms if str(f.get('text') or '').strip().casefold() == label and safe_url(f.get('source_url'))), '')
     contact = forms[0] if forms else {}
     contact_target = action_url(contact.get('cta') or h.get('cta'), contact.get('cta_href') or h.get('cta_href'), include_forms=True)
+    unarrowed = lambda label: re.sub(r'[\s\u00a0]*(?:→|➝|➔|⟶|›|»|->|&rarr;)+[\s\u00a0]*$', '', str(label)) or str(label)   # one arrow per action: a label that brings its own loses it
     def cta_html(light=False, label=None, href=None):
         label = label or h.get('cta') or d.get('nav', {}).get('cta') or 'Contact'
         if href is not None:
@@ -357,7 +358,7 @@ def build(slug_dir, bp_id, out_path=None):
             target = action_url(label, h.get('cta_href'), include_forms=True)
             if not target and forms and contact_target and str(label).strip().casefold() == str(contact.get('cta') or '').strip().casefold():
                 target = '#' + form_id
-        return f'<a class="btn{" light" if light else ""}" href="{e(target)}">{e(label)} <span class="ar">→</span></a>' if target else ''
+        return f'<a class="btn{" light" if light else ""}" href="{e(target)}">{e(unarrowed(label))} <span class="ar">→</span></a>' if target else ''
     def secondary_cta(light=False):
         label = h.get('cta2')
         target = action_url(label, h.get('cta2_href')) if label else ''
@@ -443,7 +444,7 @@ def build(slug_dir, bp_id, out_path=None):
             label = bt.get(key)
             target = action_url(label, bt.get(key + '_href'), include_forms=True) if label else ''
             if target:
-                links.append(f'<a class="btn" href="{e(target)}">{e(label)} <span class="ar">→</span></a>')
+                links.append(f'<a class="btn" href="{e(target)}">{e(unarrowed(label))} <span class="ar">→</span></a>')
         actions_html = f'<div class="section-actions">{"".join(links)}</div>' if links else ''
         if not note_html and not actions_html and not source_actions_html: return rendered
         extra = (f'<div class="wrap section-extras">{note_html}{actions_html}</div>' if note_html or actions_html else '') + source_actions_html
@@ -1352,7 +1353,7 @@ def build(slug_dir, bp_id, out_path=None):
         second_label = bt.get('cta2')
         second_target = action_url(second_label, bt.get('cta2_href'), include_forms=True) if second_label else ''
         if second_target:
-            link += f'<a class="btn ghost" href="{e(second_target)}">{e(second_label)} <span class="ar">→</span></a>'
+            link += f'<a class="btn ghost" href="{e(second_target)}">{e(unarrowed(second_label))} <span class="ar">→</span></a>'
         own = images.get(bt.get('image'))
         if not own or not photo_like(own, 600) or not free_for(own, bt):
             lead = images.get((bt.get('ui') or {}).get('lead'))
@@ -1423,7 +1424,7 @@ def build(slug_dir, bp_id, out_path=None):
         attrs = f' action="{e(live)}" method="get" target="_blank" rel="noopener"'
         inputs = ''.join(f'<label><span>{e(f)}</span><input name="{e(re.sub(r"[^a-z0-9]+", "_", f.lower()).strip("_") or "field")}" placeholder="{e(f)}"{" type=\"email\"" if re.search(r"e-?mail", f, re.I) else " type=\"tel\"" if re.search(r"tel|phone|mobil", f, re.I) else ""}></label>' for f in fields)
         note = ''
-        return f'<form class="form"{attrs}>{inputs}<button class="btn" type="submit">{e(label or h.get("cta") or "Send")} <span class="ar">→</span></button>{note}</form>'
+        return f'<form class="form"{attrs}>{inputs}<button class="btn" type="submit">{e(unarrowed(label or h.get("cta") or "Send"))} <span class="ar">→</span></button>{note}</form>'
     def cta(sec, bt=None):
         title = (bt or {}).get('h2') or en.get('tag') or h.get('cta') or b['name']
         cta_title_used.append(title)
