@@ -27,4 +27,8 @@ assert.ok(kinds(b).includes('overlap@o'), 'a heading lying over text is named');
 
 b = run('width', '<section id="w"><div style="width:min(100%,22vw)"><h2 style="font-size:40px">What could your book earn now?</h2></div></section>', '390,1440');
 assert.deepEqual(b.find(x => x.kind === 'stacked-words')?.widths, [390], 'a break is reported with the widths it shows at');
+b = run('dump', '<section id="d"><h2>Toolkit</h2><ul>' + Array.from({ length: 9 }, (_, i) => `<li><a href="https://x.test/${i}" style="text-decoration:underline">Explore page ${i}</a></li>`).join('') + '</ul></section>', '1440');
+assert.ok(kinds(b).includes('link-dump@d'), 'a run of bare links standing in a section is named');
+b = run('kept', '<section id="k"><h2>Toolkit</h2><details><summary>More in this section</summary><ul>' + Array.from({ length: 9 }, (_, i) => `<li><a href="https://x.test/${i}" style="text-decoration:underline">Explore page ${i}</a></li>`).join('') + '</ul></details></section>', '1440');
+assert.deepEqual(b, [], 'the same links kept behind one row a reader opens are not a dump');
 console.log('The layout detector names stacked, split, thin, clipped and overlapping text and passes a sound page');
