@@ -23,6 +23,7 @@ STEP_WORDS = (3, 9)      # a heading of fewer words has nothing to step; a longe
 CSS = """
 .sec .h2 .dv-l{display:block}.sec .h2 .dv-l+.dv-l{padding-left:calc(var(--dv-step,0) * .5em)}
 .sec .h2.dv-stepped{text-wrap:wrap;max-width:none}
+.sec .pc-col .h2 .dv-l,.sec .lc-head-left .h2 .dv-l,.sec .lc-head-sticky .h2 .dv-l{display:inline;padding-left:0}
 .sec .h2 em.dv-mk{font-style:normal;color:inherit}
 .sec .h2 em.dv-mk-accent{color:var(--accent-word,var(--accent))}.sec.band-accent .h2 em.dv-mk-accent,.sec.wc-g-accent .h2 em.dv-mk-accent,.sec.dv-event .h2 em.dv-mk-accent{color:inherit;font-style:italic}
 .sec.band-accent .h2 em.dv-mk-underline,.sec.wc-g-accent .h2 em.dv-mk-underline,.sec.dv-event .h2 em.dv-mk-underline{text-decoration-color:currentColor}
