@@ -27,6 +27,7 @@ The files are `lib/blueprints/<id>.bp.json` (the normalised blueprint) and `lib/
 | `schema.json` | JSON Schema of a record, with the meaning of each field. The validator reads it. |
 | `validate.py` | Checks every record against the schema and against the files it cites. Standard library only. |
 | `retrieve.py` | `retrieve(brand, k)`: the references that fit a brand, with scores, reasons and a compact card. Standard library only. |
+| `inspect.mjs` | A measuring instrument, separate from the records: `node design_dna/inspect.mjs <id> <url>` reads a live page in a browser at 1440 and 390 — type, geometry, sections, pictures, surfaces, what moves on load and on scroll, pointer, reduced motion, one lab run — and writes `evidence.json` and screenshots to `bench/runs/_research/` (untracked, research only). The records below are not built from it; `SWARMSITE_DESIGN_REFERENCE_RESEARCH.md` is. |
 
 ```bash
 python3 design_dna/build.py            # rebuild the records and the tables in this file
