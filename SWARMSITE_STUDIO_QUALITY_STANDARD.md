@@ -185,7 +185,7 @@ of the eleven references set their largest type at 4.5 times the text size or mo
 | TYP-07 | No label system: small text in several sizes and cases | measured: distinct styles under 15 px | hero `type.label`; one label style |
 | TYP-08 | Emphasis by weight, colour and italic at once | critic | one means of emphasis per page |
 | TYP-09 | Size does not follow rank: a heading smaller than the items under it, or a headline that is not the largest type on its screen | measured; found on our own render [M: Research C.12] | the renderer's scale per beat |
-| TYP-10 | A letter drawn by a fallback face, or an accent detached from its letter | seen on our own render [M: Research C.12]; Track T-19 | a face that draws the content's alphabet; the registry records which alphabets each face covers |
+| TYP-10 | A letter drawn by a fallback face, or a face whose accents stand apart from their letters | measured (letters a face does not draw itself); seen on our own render, where the face draws "š" itself with its caron detached [M: Research E.1, G11] | a face that draws the content's alphabet well; the registry records, per face, whether its accented letters hold together |
 
 ### 4.3 Composition
 
@@ -202,7 +202,7 @@ proportioned, not equal all round; fewer formats give order [S 34].
 | Text set centred | none (≤ 2%) in 6 of 11; ≤ 20% in 9; 29% and 44% on two poster pages | ≤ 20% of text blocks, more only in the poster regime [I]; flush left is the default [S 37] |
 | Largest picture on the first screen | ≥ 82% of the screen in 9 of 11; the two others are a two-picture index and a type poster | reviewed, not gated: a first screen that is neither picture-led nor type-led is a finding [I] |
 | The same form on consecutive sections | not measured on the references | no form three times running [I] |
-| Changes of ground down the page | 0–5, median 1; three pages never change | ≤ 3, more only when the direction says the page is striped [I]. Our pages: 5–14, median 10 [M: Research E.1] |
+| Changes of ground down the page | 0–5, median 1; three pages never change | ≤ 5 [I]; three or fewer is where eight of the eleven references sit. Our pages: 5–14, median 10 [M: Research E.1] |
 | Rules on the page (on elements, by pseudo-elements, `hr`) | 0–16, median 1; ten or more on 4 of 11 | above 16 is a finding [I]. Our pages: 17–50, median 33 [M: Research E.1] |
 | Characters per screen of a section (page median) | 30–400, median 230 | reviewed: a page keeps to one end of the range; above 400 is a finding [I]. Our pages: median 382 |
 | A picture as a rectangle beside a column of text | — | never [M: the owner's standard, 2026-11-10] |
@@ -241,7 +241,7 @@ before the visuals [S 2][S 26]; one distinct element directs attention and the f
 
 | Reading | References | Threshold |
 |---|---|---|
-| Filled buttons on the first screen (navigation included) | 0 in 5, 1 in 3, 4–5 in 3 (lower bounds: the reading can miss a button) | one primary action style on the page; ≤ 2 filled buttons on the first screen [I]. Our pages: 2 on 8 of 8 |
+| Filled buttons on the first screen (navigation included) | 0 in 5, 1 in 3, 4–5 in 3 (lower bounds: the reading can miss a button) | one primary action style on the page (reviewed); more than 5 filled buttons on the first screen is a measured finding [I]. Our pages: 2 on 8 of 8 |
 | Words in the headline | 1–9 in 7 of the 8 that have an h1 | ≤ 12 [I]; the contract already grades `h1-words` |
 | Sizes of text inside one section | not measured | ≤ 3 [I] |
 | A heading is larger than the items it heads | not measured on the references; broken on our own render [M: Research C.12] | required [I] |
@@ -277,7 +277,7 @@ beside text, it belongs to the look of its section [M: owner, 2026-11-10].
 | Reading | References | Threshold |
 |---|---|---|
 | Pictures with a CSS shadow | 0 of 248 pictures on 11 pages | 0 on photographs [I]; on product screens the question is open (Research F.3) |
-| Rounded pictures | none on 6 of 11 pages; 31 of 248 in all | one decision per page: all pictures square, or all at one radius [I] |
+| Rounded pictures | none on 6 of 11 pages; 31 of 248 in all; on the five pages that round some, square and rounded pictures stand together | one radius value per page [I] |
 | Pictures with words standing on them | on 11 of 11 pages (45 pictures) | allowed; the words must measure 4.5:1 against what is really behind them [S 54, 1.4.3] |
 | Pictures that run edge to edge | at least one on 8 of 11 pages | on a page with three or more photographs, at least one leaves its column [I] |
 | Pictures drawn at a ratio other than their own | 85 of 248 | allowed for photographs; never for a screenshot [M: engine rule] |
@@ -300,7 +300,7 @@ beside text, it belongs to the look of its section [M: owner, 2026-11-10].
 |---|---|---|---|
 | IMG-01 | A picture boxed beside text | section reader | a picture form (CMP-04) |
 | IMG-02 | A shadow, a frame or a card around a photograph | measured | none; a product screen keeps one hairline ring |
-| IMG-03 | Mixed corner radii | measured | one radius for the page |
+| IMG-03 | Several corner radii on one page | measured | one radius for the page |
 | IMG-04 | Every picture the same size and ratio | measured | `panorama` or `bleed` for one, `offset` small for another; `gallery` for neighbours |
 | IMG-05 | A picture stretched beyond its pixels | measured (`picmeasure.mjs`) | a smaller form, or `stage` |
 | IMG-06 | A picture that does not belong to its section | critic | `swap_image`; or a section of words |
@@ -487,7 +487,7 @@ Pass or fail. "Exists" means a check of ours measures it today.
 | T-16 | CLS ≤ 0.1; reveals animate `transform` and `opacity` only | [S 56][S 59] | `inspect.mjs` measures CLS | no |
 | T-17 | Pictures carry their dimensions; fonts have a metric-compatible fallback | [S 60] | — | no |
 | T-18 | Responsiveness to input (INP ≤ 200 ms) | [S 56][S 58] | cannot be measured without visitors; reported as not measured | — |
-| T-19 | Every character on the page is drawn by the face it is set in, with its accents attached | ours [I]; found on our own render [M: Research C.12] | — | no |
+| T-19 | Every character on the page is drawn by the face it is set in, and no accent arrives as a separate mark | ours [I] | `lib/qa/inspect.mjs` (`letters`) | measured, not yet a gate |
 
 The references are no model for this track [M: Research D.7]: in one lab run four of eleven exceeded 2.5 s LCP, one
 exceeded 0.1 CLS, six of the seven with load reveals kept them under "reduce motion", three have no h1, and they

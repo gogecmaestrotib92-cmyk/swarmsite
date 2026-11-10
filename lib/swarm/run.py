@@ -3,7 +3,11 @@
   round k: Critic looks at the render → routes each defect to its owner (copy / ui / visual / ux) → owners fix in parallel → bounded critic ops → render
 Stops at --target score or --rounds. Prints one JSON line per event (the server turns them into swarm events) and a final {"done":…} line.
 Opt-in, after the rounds (brief.json "compose": true, or SWARM_COMPOSE=1): the first screen of the winning page and the lists
-below it are recomposed (lib/compose) and the composed page is kept only if it scores at least as high as the page it would replace.
+below it are recomposed (lib/compose) and the composed page is kept only if it stands at least as high as the page it would replace.
+Which page stands is decided on two tracks that are never added up (SWARMSITE_STUDIO_QUALITY_STANDARD.md §2): a page that
+breaks no hard promise, then one that clears the technical bar, then the one the critic reads higher. SWARM_DECIDE=blend
+brings back the one blended number. The page that ships is measured in a browser (lib/qa/measure.py) and what the
+Standard says of the readings is written beside it (findings.json); in the composed path the critic's final look is given them.
 Usage: python3 lib/swarm/run.py out/<slug> <blueprint-id> --out bp-<id>.html [--rounds 3] [--target 80]"""
 import json, os, sys, time, subprocess, traceback, shutil, tempfile, hashlib
 from concurrent.futures import ThreadPoolExecutor
@@ -11,6 +15,8 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.insert(0, os.path.join(ROOT, 'lib/swarm')); sys.path.insert(0, os.path.join(ROOT, 'lib/qa')); sys.path.insert(0, os.path.join(ROOT, 'lib'))
 import agents as A
 import critic as C
+import measure as MEASURE
+import standard as STANDARD
 import coverage_report as Coverage
 import pattern_stage as Patterns
 import house as HOUSE
@@ -83,23 +89,71 @@ def route_fixes(fixes, direction):
 # Promises whose failure means the page is broken for a visitor, not merely off-style.
 HARD = ('no-overflow', 'no-empty-screens', 'contrast', 'actionable-cta', 'seo-text-kept', 'seo-links-kept')
 
-def scorecard(log, best_round):
-    """Taste and contract of the round that ships, side by side, and whether each clears its own bar.
-    Reported, not enforced: what ships is decided by the loop above. Here a high contract never stands in for taste —
-    the two are never added up. Bars: GATE_TECHNICAL (default 90, and no hard failure) and GATE_CREATIVE (default 70)."""
+TASTE_NOISE = 3    # one reading of the critic moves about four points either way: a smaller difference between two rounds is not one
+MEASURE_BY = 730   # seconds into the loop after which the page is no longer measured: the server stops the loop at 900
+DECIDE = 'blend' if os.environ.get('SWARM_DECIDE') == 'blend' else 'gates'
+
+
+def bar(name, default):
+    try: return int(os.environ.get(name) or default)
+    except ValueError: return default
+
+
+def standing(taste, contract_score, broken):
+    """Where a page stands on each track: its taste, its contract score, the hard promises it breaks, and whether it
+    clears the technical bar (GATE_TECHNICAL, default 90, and no hard failure)."""
+    hard = sorted({str(f.get('id')) for f in broken or [] if isinstance(f, dict) and any(h in str(f.get('id')) for h in HARD)})
+    number = lambda v: isinstance(v, (int, float)) and not isinstance(v, bool)
+    return {'taste': taste if number(taste) else -1, 'contract': contract_score if number(contract_score) else -1, 'hard': hard,
+            'technical': bool(number(contract_score) and contract_score >= bar('GATE_TECHNICAL', 90) and not hard)}
+
+
+def beats(new, old):
+    """Does the page standing at `new` come before the one at `old`? The two tracks are never added up: fewer broken hard
+    promises first; then clearing the technical bar; then the higher taste, when the difference is more than one reading's
+    noise; within that noise the higher contract; then taste again."""
+    if len(new['hard']) != len(old['hard']): return len(new['hard']) < len(old['hard'])
+    if new['technical'] != old['technical']: return new['technical']
+    if abs(new['taste'] - old['taste']) > TASTE_NOISE: return new['taste'] > old['taste']
+    if new['contract'] != old['contract']: return new['contract'] > old['contract']
+    return new['taste'] > old['taste']
+
+
+_MEASURED = {}   # page digest → what a browser measured on it, so the page that ships is not measured twice
+
+
+def measured(slug_dir, page, folder=None):
+    """What a browser measures on `page` and what the Standard says of it (lib/qa/measure.py), or None. Best effort: a
+    page that cannot be measured does not stop a job. Off under tests (LIVETEST) unless SWARM_MEASURE=1; SWARM_MEASURE=0
+    switches it off everywhere."""
+    wanted = os.environ.get('SWARM_MEASURE', '' if os.environ.get('LIVETEST') else '1')
+    if wanted != '1': return None
+    try:
+        key = digest(page)
+        if key not in _MEASURED:
+            where = folder or slug_dir; os.makedirs(where, exist_ok=True); _MEASURED[key] = MEASURE.measure(page, where)
+        return _MEASURED[key]
+    except Exception: return None
+
+
+def scorecard(log, best_round, report=None):
+    """Taste and contract of the round that ships, side by side, and whether each clears its own bar: GATE_TECHNICAL
+    (default 90, and no hard failure) and GATE_CREATIVE (default 70). The two are never added up, and since the loop
+    decides on the same two tracks (`decided_by`), what is reported here is what was enforced. With `report` — what a
+    browser measured on the page — the card also says how many findings the Standard has and which measured checks fail."""
     rec = next((r for r in log.get('rounds', []) if r.get('k') == best_round), None)
     if not rec: return None
-    def bar(name, default):
-        try: return int(os.environ.get(name) or default)
-        except ValueError: return default
     technical_min, creative_min = bar('GATE_TECHNICAL', 90), bar('GATE_CREATIVE', 70)
     contract, taste = rec.get('contract'), rec.get('taste')
     hard = [str(f.get('id')) for f in rec.get('broken') or [] if isinstance(f, dict) and any(h in str(f.get('id')) for h in HARD)]
     number = lambda v: isinstance(v, (int, float)) and not isinstance(v, bool)
     return {'round': best_round, 'taste': taste, 'contract': contract, 'blended': rec.get('score'), 'axes': rec.get('axes'),
             'technical': {'pass': bool(number(contract) and contract >= technical_min and not hard), 'min': technical_min, 'hard_failures': hard},
-            'creative': {'pass': bool(number(taste) and taste >= creative_min), 'min': creative_min},
-            'enforced': False}
+            'creative': {'pass': bool(number(taste) and taste >= creative_min), 'min': creative_min, 'level': STANDARD.level_of(taste),
+                         **({'levels': rec['levels'], 'page_level': rec.get('page_level')} if isinstance(rec.get('levels'), dict) and rec['levels'] else {})},
+            'decided_by': DECIDE, 'enforced': DECIDE == 'gates',
+            **({'measured': {'findings': len(report['findings']), 'by_area': {a: sum(1 for f in report['findings'] if f['area'] == a) for a in sorted({f['area'] for f in report['findings']})},
+                             'ids': [f"{f['id']}@{f['view']}" for f in report['findings']], 'checks_failed': [c['id'] for c in report['technical'] if not c['pass']]}} if isinstance(report, dict) and isinstance(report.get('findings'), list) else {})}
 
 def safe(name, fn, *a):
     t = time.time()
@@ -192,11 +246,13 @@ def compose_first_screen(slug_dir, out, deadline=None):
     return record
 
 
-def composed_candidate(slug_dir, out, best_score, best_broken, grade, deadline=None, reference=None):
-    """The composed page is one more candidate, held to the loop's own rule: it replaces the winner only if the contract
-    and the critic, looking at its own render, score it at least as high and it breaks no hard promise the winner kept.
-    `grade()` → (contract report, critic report) for the page at `out`. Returns the decision; when 'kept' is false the
-    caller puts the winner's files back."""
+def composed_candidate(slug_dir, out, best_score, best_broken, grade, deadline=None, reference=None, winner=None):
+    """The composed page is one more candidate, held to the loop's own rule. `grade()` → (contract report, critic report)
+    for the page at `out`. `reference()` → the page it would replace as the critic reads it now: {'taste', 'score'} (or
+    the blended number alone). With `winner` — the round it would replace: taste, contract, broken — the decision is made
+    on two tracks: the composed page stands when it breaks no hard promise the winner kept, does not lose the technical
+    bar the winner cleared, and the critic reads it at least as high. Without it, or under SWARM_DECIDE=blend, the one
+    blended number decides as before. Returns the decision; when 'kept' is false the caller puts the winner's files back."""
     record = compose_first_screen(slug_dir, out, deadline)
     decision = {'kept': False, 'drawn': record['drawn'], 'attempts': record.get('attempts'), 'concept': record.get('concept'), 'face': record.get('face'), 'before': best_score,
                 'first_screen': bool(record.get('ir')), 'lists': (record.get('lists') or {}).get('forms') if (record.get('lists') or {}).get('drawn') else None,
@@ -210,12 +266,21 @@ def composed_candidate(slug_dir, out, best_score, best_broken, grade, deadline=N
         decision['why'] = 'the composed page could not be graded'; return decision
     score = round(0.55 * taste + 0.45 * con['score']); failed = con.get('failed', [])
     against = reference() if reference else None   # the page it would replace, read again now by the same critic: like against like
+    rival_taste = against.get('taste') if isinstance(against, dict) else None
+    if isinstance(against, dict): against = against.get('score')
     if isinstance(against, (int, float)): decision['reference'] = against; best_score = against
     hard = lambda ids: {i for i in ids if any(i.endswith(h) or i == h for h in HARD)}
     newly = sorted(hard(f['id'] for f in failed) - hard(f['id'] for f in (best_broken or [])))
     decision.update(score=score, taste=taste, contract=con['score'], broken=failed, critic=rep)
+    two_tracks = DECIDE == 'gates' and isinstance(winner, dict) and isinstance(winner.get('taste'), (int, float))
+    if two_tracks:
+        if not isinstance(rival_taste, (int, float)): rival_taste = winner['taste']   # the winner could not be read again: what its round recorded
+        mine, rival = standing(taste, con['score'], failed), standing(rival_taste, winner.get('contract'), winner.get('broken'))
+        decision.update(decided_by='gates', reference_taste=rival_taste)
     if newly: decision['why'] = 'it breaks ' + ', '.join(newly)
-    elif score < best_score: decision['why'] = f'it scores {score}, the page it would replace {best_score}'
+    elif two_tracks and rival['technical'] and not mine['technical']: decision['why'] = f"its contract is {con['score']}, under the technical bar the page it would replace clears"
+    elif two_tracks and taste < rival_taste: decision['why'] = f'the critic reads it at {taste}, the page it would replace at {rival_taste}'
+    elif not two_tracks and score < best_score: decision['why'] = f'it scores {score}, the page it would replace {best_score}'
     else: decision['kept'] = True
     return decision
 
@@ -230,18 +295,26 @@ def recompose(slug_dir, out, log, best_score, best_round, best_manifest, best_fi
         # One reading of a page moves about four points either way, and the winner's score is one reading from its round.
         # So the winner is read again — twice, by the critic as it is now — while the page is composed, and the composed
         # page is read twice too: the decision compares two averages of the same kind.
-        shutil.copyfile(out, kept_page); again = reread.submit(C.critique_twice, slug_dir, kept_page, A.MODEL, 'critic-shots-ref')
+        # Both pages are measured in a browser before they are read, and the critic is handed what was measured: it does
+        # not estimate what a browser has counted (the Standard, §5.3).
+        shutil.copyfile(out, kept_page)
+        def read_again():
+            found = measured(slug_dir, kept_page, os.path.join(slug_dir, 'measure-ref'))
+            return C.critique_twice(slug_dir, kept_page, A.MODEL, 'critic-shots-ref', **({'measured': found['findings']} if found else {}))
+        again = reread.submit(read_again)
         def reference():
             try: rep = again.result(timeout=240)
             except Exception: return None
             taste = rep.get('score') if isinstance(rep, dict) else None
             if not isinstance(taste, (int, float)) or taste < 0 or not isinstance(winner.get('contract'), (int, float)): return None
-            return round(0.55 * taste + 0.45 * winner['contract'])
+            return {'taste': taste, 'score': round(0.55 * taste + 0.45 * winner['contract'])}
         def grade():
+            in_time = deadline is None or time.time() < deadline + 30
             with ThreadPoolExecutor(2) as ex:
-                fcon = ex.submit(contract, slug_dir, out); frep = ex.submit(C.critique_twice, slug_dir, out, A.MODEL)
-                return fcon.result(), frep.result()
-        decision = composed_candidate(slug_dir, out, best_score, winner.get('broken'), grade, deadline, reference)
+                fcon = ex.submit(contract, slug_dir, out); fmeasured = ex.submit(measured, slug_dir, out) if in_time else None
+                con = fcon.result(); found = fmeasured.result() if fmeasured else None
+            return con, C.critique_twice(slug_dir, out, A.MODEL, **({'measured': found['findings']} if found else {}))
+        decision = composed_candidate(slug_dir, out, best_score, winner.get('broken'), grade, deadline, reference, winner)
         decision['before'] = best_score   # what the round recorded; `reference` is the same page as the critic reads it now
     except Exception as e:
         decision = {'kept': False, 'drawn': False, 'before': best_score, 'why': 'failed: ' + str(e)[:120]}
@@ -249,14 +322,17 @@ def recompose(slug_dir, out, log, best_score, best_round, best_manifest, best_fi
         reread.shutdown(wait=False)
         for leftover in (kept_page,):
             if os.path.exists(leftover): os.remove(leftover)
-        shutil.rmtree(os.path.join(slug_dir, 'critic-shots-ref'), ignore_errors=True)
+        for folder in ('critic-shots-ref', 'measure-ref'): shutil.rmtree(os.path.join(slug_dir, folder), ignore_errors=True)
     rep = decision.pop('critic', None); cfail = decision.pop('broken', None)
     if isinstance(rep, dict):   # what the critic said of the composed page is kept whether or not the page is: a refusal is where there is most to learn
         decision['verdict'] = str(rep.get('verdict') or '')[:1500]; decision['axes'] = rep.get('axes') if isinstance(rep.get('axes'), dict) else None
+        if isinstance(rep.get('levels'), dict): decision['levels'] = rep['levels']; decision['page_level'] = rep.get('page_level')
+        if isinstance(rep.get('findings'), list): decision['findings'] = rep['findings']
     if decision['kept']:
         k = max(r['k'] for r in log['rounds']) + 1
         fixes = [f for f in (rep.get('fixes') if isinstance(rep.get('fixes'), list) else []) if isinstance(f, dict)]
-        log['rounds'].append({'k': k, 'composed': True, 'score': decision['score'], 'taste': decision['taste'], 'contract': decision['contract'], 'axes': rep.get('axes') if isinstance(rep.get('axes'), dict) else None, 'broken': cfail, 'fixes': fixes, 'verdict': rep.get('verdict')})
+        log['rounds'].append({'k': k, 'composed': True, 'score': decision['score'], 'taste': decision['taste'], 'contract': decision['contract'], 'axes': rep.get('axes') if isinstance(rep.get('axes'), dict) else None, 'broken': cfail, 'fixes': fixes, 'verdict': rep.get('verdict'),
+                              **{key: rep[key] for key in ('levels', 'page_level', 'findings') if rep.get(key) is not None}})
         with open(os.path.join(slug_dir, 'critic.json'), 'w') as f:
             json.dump({**rep, 'score': decision['score'], 'taste': decision['taste'], 'contract': decision['contract'], 'broken': cfail, 'round': k, 'best': decision['score'], 'composed': True}, f, indent=1, ensure_ascii=False)
         best_score, best_round = decision['score'], k; best_manifest = dict(best_manifest, html=digest(out))
@@ -274,7 +350,7 @@ def recompose(slug_dir, out, log, best_score, best_round, best_manifest, best_fi
     log['composition'] = decision
     try:
         record = A.J(slug_dir, 'composition.json') or {}
-        record.update({key: decision.get(key) for key in ('kept', 'why', 'before', 'reference', 'score', 'taste', 'contract', 'first_screen', 'verdict', 'axes')})
+        record.update({key: decision.get(key) for key in ('kept', 'why', 'before', 'reference', 'reference_taste', 'decided_by', 'score', 'taste', 'contract', 'first_screen', 'verdict', 'axes', 'levels', 'page_level', 'findings')})
         with open(os.path.join(slug_dir, 'composition.json'), 'w', encoding='utf-8') as f: json.dump(record, f, indent=1, ensure_ascii=False)
     except Exception: pass
     return best_score, best_round, best_manifest
@@ -348,7 +424,7 @@ def _main(snapshot_dir):
     for x in (vis.get('gen_errors') or [])[:1]: ev('Visual', 'generation failed: ' + x)
     for x in (vis.get('need') or [])[:2]: ev('Visual', 'missing visual: ' + x)
     render_manifest = checked_render(slug_dir, bp, out); ev('Render', f'{bp} · round 0')
-    best_score, best_key, best_round, best_files, best_bp, best_manifest = -1, None, None, None, None, None
+    best_score, best_key, best_round, best_files, best_bp, best_manifest = -1, None, None, None, None, None; best_stand = None
     for k in range(1, rounds + 1):
         t = time.time()
         # the contract (two viewports) and the critic's look (screenshots + model) are independent: grade both at once
@@ -371,11 +447,12 @@ def _main(snapshot_dir):
         score = round(0.55 * taste + 0.45 * con['score']) if con.get('score', -1) >= 0 and taste >= 0 else taste
         ev('Critic', f'round {k}: taste {taste} · contract {con.get("score")} → {score}/100 · {len(fixes)} defects · {round(time.time() - t)}s'); ev('Critic', str(rep.get('verdict', ''))[:140])
         for f in cfail: fixes.append({'op': 'note', 'agent': owner_of(f['id']), 'beat': '', 'reason': f"CONTRACT BROKEN — {f['id']}: {f['detail']}"})
-        log['rounds'].append({'k': k, 'score': score, 'taste': taste, 'contract': con.get('score'), 'axes': rep.get('axes') if isinstance(rep.get('axes'), dict) else None, 'broken': cfail, 'fixes': fixes, 'verdict': rep.get('verdict')})
-        # taste leads: the combined score already carries the contract at 45%; a broken promise only breaks a tie
-        rank = (score, not cfail, -len(fixes))
-        if best_key is None or rank > best_key:
-            best_score, best_key, best_round, best_bp, best_manifest = score, rank, k, bp, render_manifest
+        log['rounds'].append({'k': k, 'score': score, 'taste': taste, 'contract': con.get('score'), 'axes': rep.get('axes') if isinstance(rep.get('axes'), dict) else None, 'broken': cfail, 'fixes': fixes, 'verdict': rep.get('verdict'),
+                              **{key: rep[key] for key in ('levels', 'page_level', 'findings') if rep.get(key) is not None}})
+        # Which round stands is decided on two tracks, never on their sum (`beats`); `score` stays the number a visitor is shown.
+        rank = (score, not cfail, -len(fixes)); stand = standing(taste, con.get('score'), cfail)
+        if best_key is None or (rank > best_key if DECIDE == 'blend' else beats(stand, best_stand)):
+            best_score, best_key, best_round, best_bp, best_manifest = score, rank, k, bp, render_manifest; best_stand = stand
         json.dump({**rep, 'score': score, 'taste': taste, 'contract': con.get('score'), 'broken': cfail, 'round': k, 'best': best_score}, open(os.path.join(slug_dir, 'critic.json'), 'w'), indent=1, ensure_ascii=False)
         if best_round == k:
             paths = [out] + [os.path.join(slug_dir, name) for name in ('direction.json', 'images.json', 'contract.json', 'critic.json')]
@@ -405,7 +482,8 @@ def _main(snapshot_dir):
             render_manifest = checked_render(slug_dir, bp, out); ev('Render', f'{bp} · restart'); continue
         if len(log['rounds']) >= 2:
             previous = log['rounds'][-2]
-            if rank <= (previous['score'], not previous['broken'], -len(previous['fixes'])):
+            before = standing(previous.get('taste'), previous.get('contract'), previous.get('broken'))
+            if (rank <= (previous['score'], not previous['broken'], -len(previous['fixes']))) if DECIDE == 'blend' else not beats(stand, before):
                 ev('Critic', 'no gain this round — stopping'); break  # another round costs the same and the last one bought nothing
         # route: every defect goes to its owner with the critic's reason
         notes = route_fixes(fixes, A.J(slug_dir, 'direction.json') or {})
@@ -451,7 +529,23 @@ def _main(snapshot_dir):
         with open(os.path.join(slug_dir, 'fingerprint.json'), 'w', encoding='utf-8') as f: json.dump(fp, f, indent=1)
         log['fingerprint'] = {k: fp[k] for k in ('hero', 'body', 'digest', 'body_digest')}
     except Exception as e: ev('Render', 'fingerprint unavailable: ' + str(e)[:80])
-    card = scorecard(log, best_round)
+    # What a browser measures on the page that ships — while it loads, scrolls and moves — and what the Standard says of
+    # it. Reported beside the page; the critic's own findings for the round that ships stand next to the measured ones.
+    report = measured(slug_dir, out) if time.time() - started < MEASURE_BY else None
+    if report:
+        shipped = next((r for r in log['rounds'] if r.get('k') == best_round), {})
+        reviewed = shipped.get('findings') if isinstance(shipped.get('findings'), list) else []
+        try:
+            with open(os.path.join(slug_dir, 'findings.json'), 'w', encoding='utf-8') as f:
+                json.dump({'round': best_round, 'measured': report['findings'], 'reviewed': reviewed, 'gaps': [x for x in reviewed if (x.get('correction') or {}).get('op') == 'gap'],
+                           'technical': report['technical'], 'readings': report['readings']}, f, indent=1, ensure_ascii=False)
+        except OSError: pass
+        log['measure'] = {'findings': [f"{x['id']}@{x['view']}" for x in report['findings']], 'technical': report['technical']}
+        failed_checks = [c['id'] for c in report['technical'] if not c['pass']]
+        ev('Measure', f"{len(report['findings'])} findings against the Standard · " + (('measured checks failed: ' + ', '.join(failed_checks)) if failed_checks else 'measured checks pass'))
+        for x in report['findings'][:4]: ev('Measure', f"{x['id']} {x['evidence']['reading']}: {json.dumps(x['evidence']['value'], ensure_ascii=False)[:40]} (expected {x['evidence']['expected']})")
+    else: ev('Measure', 'the page was not measured')
+    card = scorecard(log, best_round, report)
     if card:
         log['scores'] = card
         with open(os.path.join(slug_dir, 'scores.json'), 'w', encoding='utf-8') as f: json.dump(card, f, indent=1)
