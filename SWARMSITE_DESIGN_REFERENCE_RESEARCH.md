@@ -1913,8 +1913,11 @@ Four more findings come from the analysis of our own recipe as rendered (C.12), 
   serif at every display size, and sits correctly in the other two faces [M-seen:
   `references/atelier/desktop-scroll-0.jpg`]. Examined afterwards on a clean test page, same day: the letter is drawn
   by the face itself, not by a fallback — the instrument's letter reading confirms it — and the face as served draws
-  its lowercase caron and acute that way, while its capitals hold together. So the defect is the choice of face for
-  this alphabet, not its loading.
+  its lowercase caron and acute that way, while its capitals hold together. Measured after that across the 63 faces of
+  the registry (`lib/type/measure.mjs`, the gap between the caron and its letter, its sideways shift and its width):
+  this face is inside the range on all three (gap 0.07 em; range 0.013–0.09). So it is not a defect of the face and no
+  rule follows from it; what was seen is how a light serif with a small x-height draws an accent at display size. The
+  earlier sentence here, that the face was the wrong choice for this alphabet, claimed more than the evidence holds.
 - **G12 · The second column has no single edge**: blocks start at 48, 49, 50, 52 and 53% of the width, where the
   reference it mirrors has two edges on the whole page.
 - **G13 · A recipe is not what gets drawn.** The recipe says a held first screen with a rail over video, one family,
@@ -1949,7 +1952,7 @@ Rules, parameters and briefs. No new form, no new document.
 | 10 | Smoothed scrolling as a decision by kind of page, off for a shop or a form page | G8; D.4-1; [S 7] | the renderer's scroll set-up |
 | 11 | The closing wordmark as one ending among several | G7 | the renderer's footer |
 | 12 | Size follows rank: no heading smaller than what it heads; the headline the largest type on its screen | G10 | the renderer's type-scale tokens per beat |
-| 13 | A face is set only in an alphabet it draws well | G11 | the type registry (`lib/type/faces.json`): record for each face whether its accented letters hold together in the languages we serve; the instrument reports letters a face does not draw itself (T-19) |
+| 13 | A letter is drawn by the face it is set in | G11 | the instrument reports letters a face does not draw itself (T-19); the registry now records how each face holds a caron (`accent_gap`), measured, with no rule attached |
 | 14 | One edge per column | G12 | the renderer's column starts |
 
 ### E.3 What needs a new composition capability
