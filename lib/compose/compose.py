@@ -59,6 +59,7 @@ THE FORMAT
 The hero is a grid of 12 columns and the rows you declare. A node sits at "at": {"col": [start, end], "row": n or [start, end]} using grid lines: columns 1..13, rows 1..(number of rows + 1); the end line is not included, so "col": [1, 7] is the left half.
 - the hero: "height": auto|screen|tall, "rows": 1–6 of auto|1fr|2fr|min, "gap": sm|md|lg, "nodes": [...], "phone_order": [every node id, in the order they stack on a phone]. It sits on the page's own background and uses the page's own colours (you see them in the template's first screen).
 - the typeface: the page is set in one display face and every heading of the page follows it. Keep the page's own ("typeface": "page") or set the page in one from TYPEFACES, chosen by its voice — what this business sounds like, never what is fashionable. Optional "weight" inside the face's range (light for a large quiet serif, heavy for a condensed or grotesque face) and "case": none|upper. When the brief says the face is the brand's own, it stays.
+- the type system: a studio sets a page in a system, not a font — a display face with character, a quiet face for running text, and a third for the small print (labels, numerals, captions), very often a monospace. "body_face" and "label_face" choose the other two from TEXT FACES and LABEL FACES ("page" keeps the page's own). PAIRINGS lists systems that are known to sit well together: start from the one whose voice is this business, and change a member only for a reason. Contrast is the point: a serif display over a plain grotesk text, a grotesk display over the same grotesk for text, never two display faces. Faces marked "seen everywhere" are on most machine-made pages this year: take one only when nothing else has the voice.
 - text node: {"id", "t": "text", "src": a text address, "as": label|h1|lede, "at"}. hero.h1 is always "as": "h1"; hero.lede is "lede"; hero.category and hero.fact are "label".
   h1 takes "size": xl|xxl|mega (mega is about 12% of the viewport width: for short headlines). lede takes "size": md|lg and "measure" 20–70. A label takes neither.
   Optional "align": start|center|end, and "plate": paper|ink when the text crosses a picture.
@@ -109,7 +110,10 @@ NODE = {"type": "object", "required": ["id", "t", "at"], "properties": {
 # Flat on purpose: with the hero as one nested object the first answer came back as broken text; its fields are top-level here.
 TOOL = {"name": "write_composition", "description": "The composition of the first screen. The hero's fields are given directly: typeface, height, rows, gap, nodes, phone_order.", "input_schema": {"type": "object", "required": ["concept", "rows", "nodes", "phone_order"], "properties": {
     "concept": {"type": "string", "description": "one sentence: what this first screen does and why it suits this business"},
-    "typeface": {"type": "string", "enum": ["page"] + [f["id"] for f in V.FACES.all()], "description": "the display face the whole page is set in; \"page\" keeps the page's own"},
+    "page_direction": {"type": "string", "description": "two or three sentences for the art directors who compose the rest of this page after you: the attitude of the type (quiet/loud, large/small, numerals hollow or solid), where colour and dark grounds belong, what pictures should do, and the one motif that should return down the page. Instructions for colleagues, never shown to a visitor."},
+    "typeface": {"type": "string", "enum": ["page"] + [f["id"] for f in V.FACES.of_role('display')], "description": "the display face the whole page is set in; \"page\" keeps the page's own"},
+    "body_face": {"type": "string", "enum": ["page"] + [f["id"] for f in V.FACES.of_role('body')], "description": "the face of the page's running text; \"page\" keeps the page's own"},
+    "label_face": {"type": "string", "enum": ["page"] + [f["id"] for f in V.FACES.of_role('label')], "description": "the face of the small print: labels, numerals, captions; \"page\" keeps the page's own"},
     "weight": {"type": "integer", "description": "the display weight, inside the chosen face's range"}, "case": {"type": "string", "enum": list(V.CASES)},
     "height": {"type": "string", "enum": list(V.HEIGHTS)},
     "rows": {"type": "array", "items": {"type": "string", "enum": list(V.ROW_SIZES)}, "minItems": 1, "maxItems": 6},
@@ -131,7 +135,7 @@ def offered_pictures(content, limit=7):
     """Pictures a composition may reasonably use: real, not already on the page, wide enough to matter; the hero's own first."""
     out = []
     for address, m in content['media'].items():
-        if m.get('gen') or address in content.get('used_elsewhere', []): continue
+        if address in content.get('used_elsewhere', []) or (m.get('gen') and address != 'hero.picture'): continue   # a generated picture is offered only where the template itself put it: the first screen
         if not isinstance(m.get('w'), (int, float)) or m['w'] < 480: continue
         if address != 'hero.picture' and any(m['src'] == content['media'][o]['src'] for o in ('hero.picture',) if o in content['media']): continue
         out.append((address, m))
@@ -165,6 +169,9 @@ def brief(content, job_dir=None):
     for address, m in pictures:
         kind = 'screenshot' if m.get('shot') else 'photograph'
         carries = not m.get('shot') and max(1440 / m['w'], V.BACKDROP_PX['auto'] / m['h']) <= V.UPSCALE
+        if m.get('gen'):
+            lines.append(f'- {address}: {int(m["w"])}×{int(m["h"])} px — an atmosphere picture commissioned for this page, not a photograph of the business. It may ONLY be the BACKDROP of the first screen ("bleed": "full"), which is how the template uses it; '
+                         + ('it is large enough for that.' if carries else 'it is too small for that, so it is not placed.')); continue
         lines.append(f'- {address}: {int(m["w"])}×{int(m["h"])} px {kind}' + (' — the picture the template used in its hero' if address == 'hero.picture' else '') + (' — large enough to be the BACKDROP of the first screen ("bleed": "full")' if carries else ''))
     lines.append(f'WIDTHS at a 1440 px viewport: one column is about {round(col)} px and gaps are 24 px, so n columns span n×{round(col)} + (n−1)×24 px; '
                  f'a bleed adds about {round(page["frame"] + max(0, (1440 - page["container"]) / 2))} px.')
@@ -172,10 +179,13 @@ def brief(content, job_dir=None):
     if page.get('face_locked'): lines.append(f'TYPEFACE — the page is set in {own}, the brand\'s own face: it stays ("typeface": "page").')
     else:
         lines.append(f'TYPEFACES — the page is set in {own} now' + (' (headlines in capitals)' if page.get('upper') else '') + '. Keep it ("page") or set the page in one of these; an average character is about `width` em wide, so a line of n characters at s px runs about n × width × s px:')
-        for f in V.FACES.all():
+        for f in V.FACES.of_role('display'):
             lo, hi = f['weights']
             lines.append(f'- {f["id"]}: {f["family"]}, {f["kind"]}, ' + (f'weights {lo}–{hi}' if lo != hi else f'one weight ({lo})') + (', has an italic' if f.get('italic') else ', no italic')
-                         + (', set in capitals' if f.get('upper') else '') + f', width {f["avg_upper" if f.get("upper") else "avg"]} — {f["voice"]}. Suits: {", ".join(f["suits"])}.')
+                         + (', set in capitals' if f.get('upper') else '') + f', width {f["avg_upper" if f.get("upper") else "avg"]} — {f["voice"]}. Suits: {", ".join(f["suits"])}.' + (' SEEN EVERYWHERE this year.' if f.get('common') else ''))
+        lines.append('TEXT FACES ("body_face") — the page\'s running text: ' + '; '.join(f'{f["id"]} ({f["family"]}, {f["kind"]}: {f["voice"]})' for f in V.FACES.of_role('body')) + '.')
+        lines.append('LABEL FACES ("label_face") — the small print: ' + '; '.join(f'{f["id"]} ({f["family"]}: {f["voice"]})' for f in V.FACES.of_role('label')) + '.')
+        lines.append('PAIRINGS — systems that sit well together (display / text / label): ' + '; '.join(f'{p["voice"]}: {p["display"]} / {p["body"]} / {p["label"]}' for p in V.FACES.pairings()) + '.')
     if job_dir:
         try:
             import retrieve as DNA
@@ -298,6 +308,25 @@ def veil(page_html, ir, images, folder):
     return deeper
 
 
+def _directed(direction):
+    """What the page has already decided, as the first thing a composer reads: the direction set with the first screen and
+    what the composers before this one chose. Words for a model only — nothing of it reaches the page."""
+    return [{"type": "text", "text": "THE PAGE'S DIRECTION — decided with its first screen; what you compose continues it, it does not start again:\n" + str(direction)[:1400]}] if direction else []
+
+
+def _pruned(doc, key, errors, check):
+    """A document for the sections below the first screen, without the entries the validator still refuses after its
+    reasons went back once: (document or None, [section ids left as the template drew them]). One wrong entry costs its
+    own section, not the others — but what is left is validated whole again, and a fault of the document itself costs all."""
+    named = {e['at'][len(key) + 1:-1] for e in errors if e['at'].startswith(key + '[') and e['at'].endswith(']')}
+    entries = doc.get(key) if isinstance(doc, dict) else None
+    if not named or len(named) != len({e['at'] for e in errors}) or not isinstance(entries, list): return None, []
+    kept = [x for x in entries if isinstance(x, dict) and x.get('section') not in named]
+    if not kept or len(kept) == len(entries): return None, []
+    smaller = dict(doc, **{key: kept})
+    return (smaller, sorted(named)) if not check(smaller) else (None, [])
+
+
 def _image_block(path, size=1100):
     from PIL import Image
     im = Image.open(path).convert('RGB'); im.thumbnail((size, size)); buf = io.BytesIO(); im.save(buf, 'JPEG', quality=74)
@@ -321,6 +350,8 @@ def _to_ir(answer):
     if order is not None: hero['sm'] = {'order': order}
     if answer.get('typeface') not in (None, '', 'page'):   # "page" is the page's own face: nothing to set
         hero['face'] = {'id': answer['typeface'], **({'weight': answer['weight']} if answer.get('weight') is not None else {}), **({'case': answer['case']} if answer.get('case') else {})}
+    system = {role: answer[field] for role, field in (('body', 'body_face'), ('label', 'label_face')) if answer.get(field) not in (None, '', 'page')}
+    if system: hero['type'] = system   # the faces of the running text and the small print: with the display face, the page's type system
     return {'ir': V.VERSION, 'note': str(answer.get('concept') or '')[:300], 'hero': hero}
 
 LEADS = (
@@ -379,6 +410,7 @@ def compose(page_html, images, job_dir=None, page_path=None, model=None, review=
         for w in answer.get('wishes') or []:
             if isinstance(w, dict) and (w.get('missing') or w.get('intent')): wishes.append({'intent': str(w.get('intent') or '')[:200], 'missing': str(w.get('missing') or '')[:120]})
         entry = {'stage': stage, 'concept': ir['note'], 'errors': [f"{e['code']} {e['at']}: {e['message']}" for e in errors], **({'refused': ir['hero']} if errors else {})}; log.append(entry)
+        if isinstance(answer.get('page_direction'), str) and answer['page_direction'].strip(): entry['direction'] = ' '.join(answer['page_direction'].split())[:900]
         return ir, errors, entry
 
     def draft(label='', lead=None):
@@ -465,7 +497,9 @@ def compose(page_html, images, job_dir=None, page_path=None, model=None, review=
         except Exception as e: log.append({'stage': 'look', 'errors': ['review skipped: ' + str(e)[:160]]})
         if _broken(findings):  # correct and generic beats striking and broken: the page keeps the template's hero
             log.append({'stage': 'refuse', 'errors': [f'the composition breaks the page on the render ({", ".join(_broken(findings))}): not shipped']}); best = None
-    result = {'ir': best, 'drawn': best is not None, 'attempts': sum(1 for step in log if step['stage'].split(':')[0] in ('compose', 'correct', 'revise', 'jury')), 'log': log, 'wishes': wishes, 'measured': findings}
+    said = [step for step in log if step.get('direction') and step.get('concept') == (best or {}).get('note')] or [step for step in log if step.get('direction')]
+    direction = said[-1]['direction'] if best and said else None   # what the composer of the chosen first screen asked of the rest of the page
+    result = {'ir': best, 'direction': direction, 'drawn': best is not None, 'attempts': sum(1 for step in log if step['stage'].split(':')[0] in ('compose', 'correct', 'revise', 'jury')), 'log': log, 'wishes': wishes, 'measured': findings}
     if several: result.update(concepts=[{'label': c['label'], 'concept': c['ir']['note'], 'measured': c.get('findings'), **({'failed': c['failed']} if 'failed' in c else {})} for c in candidates], chosen=chosen['label'] if chosen else None, verdict=verdict)
     return result
 

@@ -18,6 +18,7 @@ import validate as V
 SYSTEM = """You are the art director of a small studio. The first screen of this page is composed. Below it the page is mostly lists — an index of features, a row of cards, the steps of a process, a set of figures, questions and their answers — and a page-building template drew each of them in the one form it has. You decide how the lists that would gain from it are drawn instead. The words are fixed: you choose a form, you do not write.
 
 How lists read as designed rather than assembled:
+- Rows before boxes. The best studio pages hold a list as ruled rows — a name, what it is, a figure — with nothing but space and a hairline between them; a grid of boxes is what a template does. Reach for the ledger first, stepped columns second, and tiles (bento) for one list a page at most, when the items truly are a set of facts with one that matters most.
 - The form says what kind of list it is. A sequence or an index reads as a ledger. A handful of parallel things read as columns. A set of facts where one matters most reads as tiles with that one large.
 - Two lists that follow each other never take the same form, and a page does not need every list changed: a list you leave out stays as the template drew it.
 - One idea runs down the page. If the numerals are large and hollow in one list, they are not small and grey in the next; if one heading stands to the left of its list, think about whether the next one should too.
@@ -82,13 +83,13 @@ def _to_doc(answer):
     return {'ir': V.VERSION, 'note': str(answer.get('concept') or '')[:300], 'lists': lists}
 
 
-def compose(page_html, page_path, model=None, review=True, ask=None):
+def compose(page_html, page_path, model=None, review=True, ask=None, direction=None):
     """Compose the lists, correct once, look and revise once. Returns the last document that validates and breaks nothing, or none."""
     if ask is None:
         import agents; ask = agents.ask
     text, ids = brief(page_html); log, findings, best = [], None, None
     if not ids: return {'doc': None, 'drawn': False, 'attempts': 0, 'log': [{'stage': 'skip', 'errors': ['the page has no list that can be recomposed']}], 'measured': None}
-    material = [{"type": "text", "text": text}]
+    material = HERO._directed(direction) + [{"type": "text", "text": text}]
     try:
         shots = section_shots(page_path, ids[:MAX_PICTURED]) if review else {}
         for sid in ids[:MAX_PICTURED]:
@@ -106,6 +107,9 @@ def compose(page_html, page_path, model=None, review=True, ask=None):
     doc, errors, entry = attempt('compose', [])
     if errors and doc is not None:
         doc, errors, entry = attempt('correct', [{"type": "text", "text": "YOUR PREVIOUS COMPOSITION WAS REFUSED:\n" + json.dumps(doc['lists'], ensure_ascii=False) + "\nReasons:\n" + '\n'.join('- ' + e for e in entry['errors'][:12]) + "\nKeep the idea; fix exactly these."}])
+    if errors and doc is not None:   # still refused: the entries at fault go back to the template's form, the rest stand if they validate whole
+        raw = LISTS.validate(doc, page_html); smaller, dropped = HERO._pruned(doc, 'lists', raw, lambda d: LISTS.validate(d, page_html))
+        if smaller: doc, errors = smaller, []; log.append({'stage': 'prune', 'errors': [], 'dropped': dropped})
     if doc is not None and not errors: best = doc
     if best:
         folder = os.path.dirname(os.path.abspath(page_path))

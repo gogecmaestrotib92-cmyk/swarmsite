@@ -35,7 +35,7 @@ CSS = """
 .sec.lc .lc-wrap{display:grid;gap:clamp(28px,4vw,64px);grid-template-columns:minmax(0,1fr)}
 .sec.lc .lc-head .gh{margin-bottom:0}
 .sec.lc .lc-list{list-style:none;margin:0;padding:0;display:grid;gap:var(--gutter,32px);min-width:0}
-.sec.lc .lc-item{min-width:0;overflow-wrap:anywhere;margin:0}
+.sec.lc .lc-item{min-width:0;overflow-wrap:break-word;margin:0}
 .sec.lc .lc-item p{margin:0;max-width:52ch}
 .sec.lc .lc-title{margin:0;text-wrap:balance}.sec.lc .lc-t-lg .lc-title{font-size:clamp(24px,2.6vw,40px);line-height:1.04}
 .sec.lc .lc-tag{display:block;font-family:var(--display);font-weight:var(--h1-w,500);line-height:.9;letter-spacing:var(--h1-ls,-.02em);font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -127,6 +127,7 @@ def validate(doc, page_html):
         feature = entry.get('feature')
         if feature is not None and (form != 'bento' or not (isinstance(feature, int) and not isinstance(feature, bool) and 0 <= feature < len(items))): err('IL020', where, f'feature belongs to the bento and is the position of one of its {len(items)} items, 0 first')
         if form == 'bento' and len(items) < 3: err('IL021', where, f'a bento needs three items or more; this list has {len(items)}')
+        if form == 'stagger' and content['kind'] == 'numbers': err('IL021', where, 'figures stepped against each other read as unfinished: a ledger, or tiles with the figure that matters most large')
         if form == 'bento' and head != 'top': err('IL021', where, 'a bento takes the whole width: its heading sits on top')
         if head == 'sticky' and len(items) < 4: err('IL021', where, f'a heading that stays while the list scrolls needs a list long enough to scroll past: four items or more, this one has {len(items)}')
         if form == 'stagger' and head != 'top' and entry.get('cols', 2) == 3: err('IL021', where, 'three staggered columns need the whole width: put the heading on top or use two columns')

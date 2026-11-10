@@ -14,7 +14,8 @@ written over). The validator knows the size each form would draw it at a 1440×9
 
   validate(doc, page_html, images=None) → [{'code', 'at', 'message'}]        ([] = may be drawn)
   transplant(page_html, doc, images=None) → (page_html, {'drawn', 'errors', 'sections'})
-  readable(page_html, images=None)      → {section id: content | reason} for the picture sections of the page
+  readable(page_html, images=None)      → {section id: content | reason} for the picture sections of the page, and for the
+                                          sections of words that one of the job's unused pictures is offered to (`offers`)
   open_forms(content, page)             → the forms this section's picture may take, with what each would draw
   a document: {"ir": "0.2", "pictures": [{"section": id, "form": backdrop|bleed|panorama|card|offset|stage, …}]}
 Deterministic, no network, no model. A document that fails is refused whole and the page comes back untouched."""
@@ -39,6 +40,10 @@ OFFSET_RATIOS = ('own',) + V.RATIOS
 FRAMES = ('none', 'paper', 'browser')
 GROUNDS = ('accent', 'ink', 'alt', 'own')   # own: the colour the picture's own edges share — the section takes it and the picture has no box
 EDGES = ('fade', 'hard')
+CROPS = ('whole', 'fade')
+DISSOLVE = 0.45        # how far apart in lightness (0–1) a picture's inner edge and its section's ground may be for the edge to dissolve
+INLINE_WORDS = 140     # a picture set into the heading needs at least this many characters in its section
+CROP_RATIO = 1.5   # the proportion a fading crop shows of a screen: wider than this and it is shown whole
 PILLS = {'pill': 2.6, 'soft': 1.7, 'circle': 1.1}   # the width of a picture set into the heading, in em of the heading; it stands 1.1 em tall
 PILL_EM = 1.1
 TITLES = ('md', 'lg', 'xl')
@@ -53,7 +58,7 @@ WORDS_ON_PICTURE = 420   # characters a reader takes in over a photograph; more 
 ROWS_ON_PICTURE = 4
 MIN_PICTURE_PX = 240     # under this a picture is an icon, not a picture
 
-COMMON = {'section', 'form', 'title', 'enter'}
+COMMON = {'section', 'form', 'title', 'enter', 'picture'}   # picture: for a section of words, the address of the offered picture it takes
 TREATED = {'tone', 'grain', 'focal', 'scroll'}
 KEYS = {
     'backdrop': COMMON | TREATED | {'place', 'height', 'scrim'},
@@ -61,7 +66,7 @@ KEYS = {
     'panorama': COMMON | TREATED | {'ratio', 'words'},
     'card': COMMON | TREATED | {'side', 'cols', 'ratio', 'anchor', 'bleed'},
     'offset': COMMON | (TREATED - {'scroll'}) | {'side', 'cols', 'ratio', 'shape', 'tilt', 'shadow', 'frame', 'drop', 'align'},
-    'stage': COMMON | {'side', 'cols', 'ground', 'tilt', 'align', 'height'},
+    'stage': COMMON | {'side', 'cols', 'ground', 'tilt', 'align', 'height', 'crop'},
     'inline': COMMON | {'tone', 'focal', 'at', 'shape'},
 }
 COLS = {'bleed': (5, 7), 'card': (7, 9), 'offset': (3, 7), 'stage': (5, 8)}
@@ -76,7 +81,8 @@ CSS = """
 .sec.pc .pc-tone{isolation:isolate;background:#808080}.sec.pc .pc-tone img{mix-blend-mode:luminosity}.sec.pc .pc-tone-tint{background:var(--accent)}
 .sec.pc .pc-t-light{z-index:1;background:var(--pc-light);mix-blend-mode:multiply}.sec.pc .pc-t-dark{z-index:2;background:var(--pc-dark);mix-blend-mode:lighten}
 .sec.pc .pc-grain{z-index:2;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
-.sec.pc .pc-words{min-width:0;padding:0;margin:0;overflow-wrap:anywhere;order:0}
+.sec.pc .pc-words{min-width:0;padding:0;margin:0;overflow-wrap:break-word;order:0}
+.sec.pc .pc-words .rows li b{flex-shrink:0;max-width:100%;overflow-wrap:break-word}
 .sec.pc .pc-words .h2{text-wrap:balance;overflow-wrap:normal}.sec.pc .pc-words .h2.light{color:inherit}
 .sec.pc .pc-words .cap,.sec.pc .pc-words .lede{font-size:clamp(17px,1.35vw,21px);line-height:1.5;max-width:44ch;margin-top:clamp(14px,1.6vw,24px)}
 .sec.pc.pc-t-md .pc-words .h2{font-size:min(clamp(28px,3.2vw,46px),calc((100vw - 48px) / var(--lw,8) * 1.72))!important;line-height:1.06}
@@ -145,14 +151,19 @@ CSS = """
 .sec.pc.pc-f-offset .pc-drop-up{align-self:start;margin-top:calc(-1 * clamp(20px,4vw,64px))}.sec.pc.pc-f-offset .pc-drop-down{align-self:end;margin-bottom:calc(-1 * clamp(20px,4vw,64px))}
 .sec.pc .pc-fig.pc-contain img{object-fit:contain}
 .sec.pc .pc-shape-soft{border-radius:clamp(18px,2.4vw,36px)}.sec.pc .pc-shape-arch{border-radius:999px 999px 0 0}.sec.pc .pc-shape-circle{border-radius:50%}.sec.pc .pc-shape-pill{border-radius:999px}
-.sec.pc .pc-shadow-soft{box-shadow:0 44px 90px -44px rgba(0,0,0,.6)}.sec.pc .pc-shadow-hard{box-shadow:clamp(8px,1vw,16px) clamp(8px,1vw,16px) 0 var(--accent)}
-.sec.pc .pc-frame-paper{background:#fff;padding:clamp(8px,1vw,16px);box-shadow:0 30px 70px -36px rgba(0,0,0,.55)}
-.sec.pc .pc-frame-browser{border:1px solid var(--line);border-radius:max(10px,var(--radius,0px));box-shadow:0 30px 80px -40px rgba(0,0,0,.5)}
+.sec.pc .pc-shadow-soft{box-shadow:0 24px 60px -24px rgba(0,0,0,.22)}.sec.pc .pc-shadow-hard{box-shadow:clamp(8px,1vw,16px) clamp(8px,1vw,16px) 0 var(--accent)}
+.sec.pc .pc-frame-paper{background:#fff;padding:clamp(8px,1vw,16px);box-shadow:0 0 0 1px color-mix(in srgb,currentColor 14%,transparent),0 24px 60px -24px rgba(0,0,0,.22)}
+.sec.pc .pc-frame-browser{border-radius:8px;box-shadow:0 0 0 1px color-mix(in srgb,currentColor 14%,transparent),0 24px 60px -24px rgba(0,0,0,.22)}
 
 .sec.pc.pc-f-stage .pc-panel{display:grid;place-items:center;min-width:0;padding:clamp(32px,5vw,88px);background:var(--pc-ground)}
 .sec.pc.pc-ground-accent{--pc-ground:var(--accent)}.sec.pc.pc-ground-ink{--pc-ground:var(--ink)}.sec.pc.pc-ground-ink.band-dark{--pc-ground:var(--band-ink)}
 .sec.pc.pc-ground-alt{--pc-ground:color-mix(in srgb,var(--ink) 9%,var(--paper))}.sec.pc.pc-ground-alt.band-dark{--pc-ground:color-mix(in srgb,var(--band-ink) 12%,var(--band-paper))}
-.sec.pc.pc-f-stage .pc-fig{justify-self:center;width:min(100%,var(--pc-max),calc(72svh * var(--pc-ar)));aspect-ratio:var(--ratio);border-radius:max(8px,var(--radius,0px));box-shadow:0 44px 90px -40px rgba(0,0,0,.6)}
+.sec.pc.pc-f-stage .pc-fig{justify-self:center;width:min(100%,var(--pc-max),calc(72svh * var(--pc-ar)));aspect-ratio:var(--ratio);border-radius:min(8px,max(4px,var(--radius,0px)))}
+.sec.pc.pc-f-stage .pc-fig.pc-screen{border-radius:8px;box-shadow:0 0 0 1px color-mix(in srgb,currentColor 14%,transparent),0 24px 60px -24px rgba(0,0,0,.22)}
+.sec.pc.pc-f-stage .pc-fig.pc-crop{width:min(100%,var(--pc-max));aspect-ratio:var(--crop);border-radius:8px 8px 0 0;box-shadow:0 0 0 1px color-mix(in srgb,currentColor 14%,transparent)}
+.sec.pc.pc-f-stage .pc-fig.pc-crop img{object-fit:cover;object-position:top}
+.sec.pc.pc-f-stage .pc-cropfade{z-index:3;background:linear-gradient(180deg,transparent 58%,var(--pc-ground) 100%)}
+.sec.pc.pc-f-stage.pc-cropped .pc-panel{padding-bottom:0;align-items:end}
 @media(max-width:900px){
 .sec.pc .pc-field{display:block;min-height:0}
 .sec.pc .pc-col,.sec.pc.pc-side-right .pc-col{padding:32px min(var(--frame,24px),24px) 56px}.sec.pc .pc-col .pc-words{max-width:none}
@@ -187,6 +198,37 @@ def _ground(src):
     return {'rgb': [round(v) for v in mean], 'dark': (0.2126 * mean[0] + 0.7152 * mean[1] + 0.0722 * mean[2]) / 255 < 0.45}
 
 
+def _sides(src):
+    """How light a picture is along its left and its right edge, 0–1: {'left', 'right'} — what a dissolving edge has to
+    meet. None when the file cannot be opened here."""
+    try:
+        from PIL import Image, ImageStat
+        with Image.open(io.BytesIO(base64.b64decode(src.split(',', 1)[1]))) as im:
+            im = im.convert('L'); im.thumbnail((200, 200)); w, h = im.size; b = max(4, round(w * 0.12))
+            return {'left': round(ImageStat.Stat(im.crop((0, 0, b, h))).mean[0] / 255, 3), 'right': round(ImageStat.Stat(im.crop((w - b, 0, w, h))).mean[0] / 255, 3)}
+    except Exception: return None
+
+
+def offered(page_html, images, sid):
+    """The job's pictures that this page does not show yet and that a section of words may take: {address: picture}.
+    A picture commissioned or captured for this very section (its id says so) is marked `meant`. A commissioned picture
+    is offered only to the section it was made for; a detail cut from another picture is never offered beside it."""
+    out = {}; token = lambda name: re.split(r'[^a-z0-9]+', str(name).lower())
+    for i in images or []:
+        if not isinstance(i, dict) or not i.get('data') or not i.get('id') or i['data'] in page_html or i.get('crop_of'): continue
+        w, h = i.get('w'), i.get('h')
+        if not (isinstance(w, (int, float)) and isinstance(h, (int, float)) and w >= 600 and h >= 300): continue
+        name, sec = token(i['id']), token(sid); meant = any(name[k:k + len(sec)] == sec for k in range(len(name) - len(sec) + 1))
+        if (i.get('gen') or i.get('shot')) and not meant: continue   # atmosphere made for another section, or a screen of something else: not this section's
+        out['img:' + str(i['id'])] = {'src': i['data'], 'alt': ' '.join(str(i.get('alt') or '').split())[:200], 'w': w, 'h': h, 'shot': bool(i.get('shot')), 'gen': bool(i.get('gen')), 'meant': meant, 'ground': _ground(i['data']), 'sides': _sides(i['data'])}
+    return out
+
+
+def _with_picture(content, entry):
+    """The section's content with the picture this entry gives it, when it has none of its own."""
+    return content if content.get('picture') else dict(content, picture=content['offers'][entry['picture']])
+
+
 def readable(page_html, images=None):
     """{section id: (section record, content or the reason it cannot be read)} for the sections of the page that hold a
     picture and are not lists. The picture's pixel size is read off the picture itself; whether it is a screenshot or a
@@ -196,14 +238,22 @@ def readable(page_html, images=None):
     for sec in SECTIONS.sections(page_html)[1:]:
         if sec['kind'] or not sec['id']: continue
         html = page_html[sec['span'][0]:sec['span'][1]]
-        if '<img' not in html: continue
+        if '<img' not in html:   # a section of words: it may take one of the job's pictures that the page does not show yet
+            given = offered(page_html, images, sec['id']) if images else {}
+            if not given: continue
+            try: said = SECTIONS.from_words(html)
+            except ValueError: continue
+            found[sec['id']] = (sec, {'kind': 'picture', 'band': said['band'], 'classes': said['classes'], 'picture': None, 'offers': given, 'first': 'words', 'tail': said['tail'],
+                                      'words': {'html': said['head'] + said['body'], 'classes': said['holder'], 'chars': said['chars'], 'rows': said['rows'], 'heading': said['heading'],
+                                                'parts': None if said['holder'] else [said['head'], said['body']]}})
+            continue
         try: content = SECTIONS.from_picture(html)
         except ValueError as err: found[sec['id']] = (sec, str(err)); continue
         pic = content['picture']; known = by_data.get(pic['src'])
         sized = known and all(isinstance(known.get(k), (int, float)) and not isinstance(known.get(k), bool) and known[k] > 0 for k in ('w', 'h'))
         w, h = (known['w'], known['h']) if sized else CONTENT._size(pic['src'])   # images.json describes this very file; without it the file is opened
         marked = bool({'ui-photo', 'ui-photo-story'} & set(sec['classes'])) or bool(re.search(r'<figure class="[^"]*\b(ui-shot|assigned-visual|lead-shot)\b', html))
-        pic.update(w=w, h=h, shot=bool(known.get('shot')) if known else marked, gen=bool(known and known.get('gen')), ground=_ground(pic['src']))
+        pic.update(w=w, h=h, shot=bool(known.get('shot')) if known else marked, gen=bool(known and known.get('gen')), ground=_ground(pic['src']), sides=_sides(pic['src']))
         found[sec['id']] = (sec, content)
     return found
 
@@ -229,7 +279,9 @@ def geometry(entry, content, page):
     elif form == 'inline':   # set into the heading like a word: as tall as the heading's capitals
         size = TITLE_PX[entry.get('title', 'xl')]; box, fit, words = (size * PILLS[entry.get('shape', 'pill')], size * PILL_EM), 'cover', inner
     else:   # stage: the panel takes cols/12 of the screen; the picture sits inside it at no more than its pixels allow
-        top = side == 'top'; panel = (W - 2 * edge) if top else W * cols / 12 - 2 * 72; width = min(panel, limit * w, 0.72 * Hh * w / h); box, fit = (width, width * h / w), 'contain'
+        top = side == 'top'; panel = (W - 2 * edge) if top else W * cols / 12 - 2 * 72
+        if entry.get('crop') == 'fade': width = min(panel, limit * w); box, fit = (width, width / CROP_RATIO), 'cover'
+        else: width = min(panel, limit * w, 0.72 * Hh * w / h); box, fit = (width, width * h / w), 'contain'
         words = (inner - 115) * 5 / 11 if top else min(544, W - W * cols / 12 - edge - 86)
     scale = (min if fit == 'contain' else max)(box[0] / w, box[1] / h)
     return {'box': (round(box[0]), round(box[1])), 'fit': fit, 'scale': scale, 'limit': limit, 'words': words}
@@ -254,9 +306,13 @@ def open_forms(content, page):
     [{'form', 'box', 'scale'} …]. What the composer is shown, so that it chooses among what is possible."""
     out = []
     for form in FORMS:
-        entry = {'section': 'x', 'form': form}
-        if _refusals(entry, content, page): continue
-        g = geometry(entry, content, page); out.append({'form': form, 'box': g['box'], 'scale': round(g['scale'], 2)})
+        if content['picture'].get('gen') and form not in COVERING: continue
+        # a bleed dissolves into its section when the picture's inner edge is as light as the ground: on one side, the other, or not at all
+        variants = [({}, ''), ({'side': 'left'}, 'dissolves only with the picture on the left'), ({'edge': 'hard'}, 'hard edge only')] if form == 'bleed' else [({}, '')]
+        for change, note in variants:
+            entry = {'section': 'x', 'form': form, **change}
+            if _refusals(entry, content, page): continue
+            g = geometry(entry, content, page); out.append({'form': form, 'box': g['box'], 'scale': round(g['scale'], 2), **({'note': note} if note else {})}); break
     return out
 
 
@@ -272,6 +328,11 @@ def _refusals(entry, content, page):
     if form == 'backdrop' and (words['chars'] > WORDS_ON_PICTURE or words['rows'] > ROWS_ON_PICTURE):
         out.append(('IP021', f'this section says {words["chars"]} characters in {words["rows"]} list rows: more than a reader takes in over a photograph ({WORDS_ON_PICTURE} characters, {ROWS_ON_PICTURE} rows). Give the words a ground of their own: "card", "bleed" or "panorama"'))
     if form == 'inline' and not words['heading']: out.append(('IP021', 'a picture set into the heading needs a heading: this section has none'))
+    if form == 'inline' and words['chars'] < INLINE_WORDS: out.append(('IP021', f'this section says {words["chars"]} characters: with its picture set into the heading it would be a thin band with a thumbnail in it. A picture in the heading is for a section with words to carry it ({INLINE_WORDS} characters or more); here show the picture as large as it can be — stage or offset'))
+    if form == 'bleed' and entry.get('edge', 'fade') == 'fade':   # a dissolve needs the picture and the ground to be of one lightness where they meet
+        ground = (page.get('grounds') or {}).get(content.get('band')); inner = (pic.get('sides') or {}).get('left' if entry.get('side', 'right') == 'right' else 'right')
+        if ground is not None and inner is not None and abs(ground - inner) > DISSOLVE:
+            out.append(('IP067', f'the picture is {"light" if inner > ground else "dark"} where it would dissolve into a {"dark" if inner > ground else "light"} section: the dissolve would turn to mud. Cut it clean ("edge": "hard"), put it on the other side, or choose another form'))
     if form == 'stage' and entry.get('ground') == 'own' and not pic.get('ground'):
         out.append(('IP067', 'the edges of this picture are a scene, not one colour: it has no ground of its own to give the section — "ground" accent, ink or alt, or a form that crops it'))
     if out: return out
@@ -291,7 +352,7 @@ def validate(doc, page_html, images=None):
     def err(code, at, message): errors.append({'code': code, 'at': at, 'message': message})
     if not isinstance(doc, dict) or doc.get('ir') not in V.ACCEPTED or not isinstance(doc.get('pictures'), list) or not doc['pictures'] or len(doc['pictures']) > 12 or set(doc) - {'ir', 'pictures', 'note'}:
         err('IP001', 'ir', f'a picture composition is {{"ir": "{V.VERSION}", "pictures": [1–12 objects]}}'); return errors
-    page = readable(page_html, images); tokens = CONTENT.page_of(page_html); named = []
+    page = readable(page_html, images); tokens = CONTENT.page_of(page_html); named = []; given = []
     whole = lambda v, lo, hi: isinstance(v, int) and not isinstance(v, bool) and lo <= v <= hi
     for i, entry in enumerate(doc['pictures']):
         where = f'pictures[{i}]'
@@ -308,6 +369,15 @@ def validate(doc, page_html, images=None):
         named.append(sid)
         _, content = page[sid]
         if isinstance(content, str): err('IP010', where, f'section "{sid}" cannot be recomposed: {content}'); continue
+        if content.get('picture'):
+            if 'picture' in entry: err('IP001', where, 'this section shows its own picture: "picture" is for a section of words that takes one'); continue
+        else:   # a section of words: it takes one of the pictures offered to it, and a picture is shown once
+            address = entry.get('picture')
+            if address not in content['offers']: err('IP010', where, f'section "{sid}" is words only: it needs "picture", one of {sorted(content["offers"])}'); continue
+            if address in given: err('IP061', where, f'"{address}" is given to two sections; a picture appears once')
+            given.append(address)
+            if content['offers'][address]['gen'] and form not in COVERING: err('IP065', where, 'a picture commissioned for atmosphere is a ground, an edge or a strip — backdrop, bleed, panorama, card — never set down as an object or a print'); continue
+            content = _with_picture(content, entry)
         before = len(errors)
         if entry.get('title', 'xl' if form == 'inline' else 'md') not in (TITLES[1:] if form == 'inline' else TITLES): err('IP020', where, f'title is one of {TITLES[1:] if form == "inline" else TITLES}')
         if entry.get('enter', 'none') not in V.MEDIA_ENTER: err('IP020', where, f'enter is one of {V.MEDIA_ENTER}')
@@ -357,6 +427,12 @@ def validate(doc, page_html, images=None):
         elif form == 'stage':
             if entry.get('ground', 'accent') not in GROUNDS: err('IP020', where, f'ground is one of {GROUNDS}: the colour of the stage')
             if not whole(entry.get('tilt', 0), -3, 3): err('IP020', where, 'tilt on a stage is a whole number of degrees, -3 to 3')
+            if entry.get('crop', 'whole') not in CROPS: err('IP020', where, f'crop is one of {CROPS}: a screen shown whole, or its top at full size with the rest fading into the stage')
+            elif entry.get('crop') == 'fade' and len(errors) == before:
+                shown = content['picture']
+                if not shown['shot']: err('IP067', where, 'a fading crop is how a product screen is shown — its top at full size, the rest running on; a photograph takes a form that crops it to its subject')
+                elif entry.get('tilt'): err('IP067', where, 'a screen that fades into the stage stands straight: no tilt')
+                elif shown.get('w') and shown.get('h') and shown['w'] / shown['h'] >= CROP_RATIO: err('IP067', where, f'this screen is already wider than the crop ({shown["w"]}×{shown["h"]}): show it whole')
         if len(errors) > before: continue
         for code, message in _refusals(entry, content, tokens): err(code, where, message)
     return errors
@@ -423,7 +499,9 @@ def render_section(sec, content, entry, page):
             if entry.get('ground') == 'own':   # the section takes the picture's own ground: no panel, no edge, the words in the colour that reads on it
                 classes.append('pc-own'); own = ';--pc-ground:rgb(%d,%d,%d)' % tuple(pic['ground']['rgb']); said = block(' pc-inv' if pic['ground']['dark'] else ' pc-dk')
             style = f'--pc-max:{int(pic["w"] * limit)}px;--pc-ar:{pic["w"] / pic["h"]:.4f};--ratio:{int(pic["w"])}/{int(pic["h"])}' + (f';rotate:{entry["tilt"]}deg' if entry.get('tilt') else '')
-            shown = f'<div class="pc-panel">{figure(["pc-contain"], style)}</div>'
+            if entry.get('crop') == 'fade':   # a product screen at full size: its top, the rest fading into the ground it stands on
+                classes.append('pc-cropped'); shown = '<div class="pc-panel">' + figure(['pc-screen', 'pc-crop'], style + f';--crop:{CROP_RATIO:g}').replace('</figure>', '<i class="pc-cropfade"></i></figure>') + '</div>'
+            else: shown = f'<div class="pc-panel">{figure(["pc-contain"] + (["pc-screen"] if pic["shot"] else []), style)}</div>'
         height = entry.get('height', 'lg' if form == 'bleed' else 'auto'); tall = 'auto' if height == 'auto' else '%dsvh' % HEIGHTS[height]
         if form == 'stage' and side == 'top':   # the picture across the top on its ground, the words under it in two columns
             classes += ['pc-tailed'] * has_tail; body = f'<div class="pc-field" style="--pc-h:auto{own}">{shown}</div><div class="wrap pc-wrap">{split()}</div>'
@@ -465,7 +543,7 @@ def transplant(page_html, doc, images=None):
     page = readable(page_html, images); tokens = CONTENT.page_of(page_html); out = page_html; done = []
     for entry in sorted(doc['pictures'], key=lambda x: -page[x['section']][0]['span'][0]):   # from the bottom up: earlier spans stay true
         sec, content = page[entry['section']]; start, end = sec['span']
-        out = out[:start] + render_section(sec, content, entry, tokens) + out[end:]; done.append(entry['section'])
+        out = out[:start] + render_section(sec, _with_picture(content, entry), entry, tokens) + out[end:]; done.append(entry['section'])
     if 'id="pc-css"' not in out:
         head = out.find('</head>')
         if head < 0: return page_html, {'drawn': False, 'errors': [{'code': 'IP000', 'at': 'page', 'message': 'the page has no </head> to carry the picture stylesheet'}], 'sections': []}

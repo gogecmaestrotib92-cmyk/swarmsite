@@ -58,7 +58,7 @@ class Content(unittest.TestCase):
             self.assertIn(f'href="{IR.e(action["href"])}"', hero); self.assertNotIn('→', action['label'])
         picture = BASE['media']['hero.picture']
         self.assertEqual((picture['w'], picture['h']), (1344, 896)); self.assertIn(picture['src'], hero)
-        self.assertEqual(set(BASE['page']), {'container', 'frame', 'dark', 'display', 'h3_weight', 'upper'})
+        self.assertEqual(set(BASE['page']), {'container', 'frame', 'dark', 'display', 'h3_weight', 'upper', 'grounds'})
         self.assertIsInstance(BASE['page']['container'], int); self.assertIsInstance(BASE['page']['frame'], int)
         self.assertIn(f"--display:'{BASE['page']['display']}'", PAGE, 'the display face is read off the page\'s own tokens'); self.assertIs(BASE['page']['dark'], False)
 

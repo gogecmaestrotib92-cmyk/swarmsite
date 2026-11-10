@@ -130,6 +130,19 @@ class FirstScreen(Job):
         self.assertIn('no browser', record['words']['error']); self.assertEqual(Path(self.out).read_text(encoding='utf-8'), PAGE)
         with patch.object(COMPOSE_WORDS, 'compose', side_effect=AssertionError('not asked')): self.assertIn('no time left', run.compose_first_screen(self.dir, self.out, deadline=time.time() - 1)['words']['error'])
 
+    def test_one_direction_runs_down_the_page(self):
+        self.result = dict(self.result, direction='Hollow numerals; one dark pause.'); got = {}
+        def lists(page, path, direction=None, **kw): got['lists'] = direction; return {'doc': json.loads(json.dumps(LISTS_OK)), 'drawn': True, 'attempts': 1, 'log': [], 'measured': {}}
+        def pictures(page, path, images=None, direction=None, **kw): got['pictures'] = direction; return {'doc': json.loads(json.dumps(PICTURES_OK)), 'drawn': True, 'attempts': 1, 'log': [], 'measured': {}}
+        def words(page, path, direction=None, **kw): got['words'] = direction; return self.words
+        with patch.object(COMPOSE_LISTS, 'compose', lists), patch.object(COMPOSE_PICTURES, 'compose', pictures), patch.object(COMPOSE_WORDS, 'compose', words): record = run.compose_first_screen(self.dir, self.out)
+        self.assertEqual(record['direction'], 'Hollow numerals; one dark pause.'); self.assertIn('Hollow numerals; one dark pause.', got['lists']); self.assertIn('typeface "fraunces"', got['lists'])
+        self.assertIn('Already composed — lists: "what" as ledger', got['pictures'], 'each composer is told what the ones before it chose'); self.assertIn('Their idea: Hollow numerals.', got['pictures'])
+        self.assertIn('Already composed — pictures: "room" as bleed', got['words']); self.assertNotIn('pictures:', got['lists'])
+        Path(self.out).write_text(PAGE, encoding='utf-8'); self.result = {'ir': None, 'drawn': False, 'attempts': 2, 'log': [], 'wishes': [], 'measured': None, 'direction': 'never used'}
+        with patch.object(COMPOSE_LISTS, 'compose', lists): record = run.compose_first_screen(self.dir, self.out)
+        self.assertIsNone(got['lists'], 'a first screen that was not drawn directs nothing'); self.assertIsNone(record['direction'])
+
     def test_the_pictures_are_left_alone_when_the_job_has_no_time_left(self):
         with patch.object(COMPOSE_PICTURES, 'compose', side_effect=AssertionError('not asked')): record = run.compose_first_screen(self.dir, self.out, deadline=time.time() - 1)
         self.assertTrue(record['drawn'], 'the first screen is still composed'); self.assertIn('no time left', record['pictures']['error'])
@@ -215,6 +228,7 @@ class Recompose(Job):
         self.assertEqual((score, best_round, manifest), (70, 1, self.manifest))
         for path, data in self.files.items(): self.assertEqual(open(path, 'rb').read(), data, os.path.basename(path))
         self.assertEqual(len(self.log['rounds']), 1); self.assertFalse(self.log['composition']['kept']); self.assertFalse(self.record()['kept'])
+        self.assertEqual(self.record()['verdict'], 'composed page', 'what the critic said of the page that was refused is kept: that is where there is most to learn'); self.assertEqual(self.record()['axes'], {'design': 40})
 
     def test_a_composer_that_fails_changes_nothing(self):
         with patch.object(COMPOSE, 'compose', side_effect=RuntimeError('credit exhausted')):

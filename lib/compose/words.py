@@ -34,7 +34,8 @@ STATEMENT_ROWS = 2
 
 CSS = """
 .sec.wc .wc-wrap{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gutter,32px);row-gap:clamp(24px,3.5vw,56px);align-items:start}
-.sec.wc .wc-head,.sec.wc .wc-body{grid-column:1/-1;min-width:0;padding:0;margin:0;overflow-wrap:anywhere}
+.sec.wc .wc-head,.sec.wc .wc-body{grid-column:1/-1;min-width:0;padding:0;margin:0;overflow-wrap:break-word}
+.sec.wc .wc-body .rows li b{flex-shrink:0;max-width:100%;overflow-wrap:break-word}
 .sec.wc .wc-head .h2{text-wrap:balance;overflow-wrap:normal;margin-top:14px}.sec.wc .wc-head .lede,.sec.wc .wc-head .cap{margin-top:clamp(14px,1.6vw,24px);max-width:48ch}
 .sec.wc.wc-t-md .wc-head .h2{font-size:min(clamp(28px,3.2vw,46px),calc((100vw - 48px) / var(--lw,8) * 1.72))!important;line-height:1.06}
 .sec.wc.wc-t-lg .wc-head .h2{font-size:min(clamp(34px,4.4vw,64px),calc((100vw - 48px) / var(--lw,8) * 1.72))!important;line-height:1.02}

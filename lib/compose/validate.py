@@ -60,7 +60,7 @@ KEYS = {
     'media': {'id', 't', 'src', 'fit', 'ratio', 'focal', 'bleed', 'frame', 'scrim', 'at', 'stack', 'tone', 'shape', 'tilt', 'shadow', 'grain', 'enter', 'scroll'},
     'shape': {'id', 't', 'kind', 'at'},
 }
-HERO_KEYS = {'surface', 'height', 'rows', 'gap', 'nodes', 'sm', 'enter', 'face'}
+HERO_KEYS = {'surface', 'height', 'rows', 'gap', 'nodes', 'sm', 'enter', 'face', 'type'}
 
 
 def area(node, rows):
@@ -176,14 +176,23 @@ def validate(ir, content):
     chosen = hero.get('face'); known = None
     if chosen is not None:   # the typeface is a decision for the whole page: it comes from the registry of faces that are free to ship, or it stays the page's own
         known = FACES.get(chosen.get('id')) if isinstance(chosen, dict) else None
+        if known and 'display' not in known.get('roles', ['display']): known = None   # a text or label face is not a face for headings
         if not isinstance(chosen, dict) or set(chosen) - {'id', 'weight', 'case'}: err('IR050', 'hero.face', 'face is {"id", optional "weight", optional "case"}')
-        elif not known: err('IR050', 'hero.face', f'no typeface "{chosen.get("id")}" in the registry; available: {[f["id"] for f in FACES.all()]}')
+        elif not known: err('IR050', 'hero.face', f'no display typeface "{chosen.get("id")}" in the registry; available: {[f["id"] for f in FACES.of_role("display")]}')
         else:
             weight = chosen.get('weight')
             if weight is not None and not (isinstance(weight, int) and not isinstance(weight, bool) and known['weights'][0] <= weight <= known['weights'][1]):
                 err('IR050', 'hero.face', f'{known["family"]} has weights {known["weights"][0]}–{known["weights"][1]}')
             if chosen.get('case') is not None and chosen['case'] not in CASES: err('IR050', 'hero.face', f'case is one of {CASES}')
             if content.get('page', {}).get('face_locked'): err('IR051', 'hero.face', f'this page is set in the brand\'s own typeface ({content["page"].get("display")}): it is kept')
+    system = hero.get('type')
+    if system is not None:   # the faces the page's running text and its small print are set in: with the display face, the page's type system
+        if not isinstance(system, dict) or not system or set(system) - {'body', 'label'}: err('IR050', 'hero.type', 'type is {"body": a text face, "label": a label face}, either or both')
+        else:
+            for role, fid in system.items():
+                listed = [f['id'] for f in FACES.of_role(role)]
+                if fid not in listed: err('IR050', 'hero.type', f'no {role} face "{fid}" in the registry; available: {listed}')
+            if content.get('page', {}).get('face_locked'): err('IR051', 'hero.type', 'this page is set in the brand\'s own typefaces: they are kept')
     face, upper = face_of(hero, content)
     rows = hero.get('rows')
     if not (isinstance(rows, list) and 1 <= len(rows) <= 6 and all(r in ROW_SIZES for r in rows)):
@@ -318,7 +327,8 @@ def validate(ir, content):
             share = stack_layout(stack, len(sources), ratio)[2] if stacked and stack in STACKS and ratio in RATIOS else 1
             for x in sources:
                 m = content['media'][x]
-                if m.get('gen'): err('IR065', where, f'"{x}" is a generated picture: it is never the picture of a real place or product')
+                if m.get('gen') and not backdrop:   # as atmosphere under the words it is what the template itself does with it; framed, it would pass for the place
+                    err('IR065', where, f'"{x}" is a generated picture: it is never shown as the picture of a real place or product — it may only be the backdrop of the first screen ("bleed": "full")')
                 if x in content.get('used_elsewhere', []): err('IR061', where, f'"{x}" is already shown in another section of this page; a picture appears once')
                 if x in placed_media: err('IR061', where, f'"{x}" is placed twice in this first screen; a picture appears once')
                 placed_media.append(x)

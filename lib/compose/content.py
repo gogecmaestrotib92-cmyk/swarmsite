@@ -105,12 +105,21 @@ def from_page(page_html, images=None):
 def page_of(page_html):
     """What a composition needs to know about the page it sits in, read off the page's own tokens: the width of its
     container and frame, whether it is a dark page, the family and weights its headings are set in."""
-    root = re.search(r':root\{([^}]*)\}', page_html); tokens = root.group(1) if root else ''
-    px = lambda name, default: int(float((re.search(r'--' + name + r':\s*([\d.]+)px', tokens) or [None, default])[1]))
-    token = lambda name: (re.search(r'--' + name + r':\s*([^;}]+)', tokens) or [None, ''])[1].strip()
+    tokens = ';'.join(re.findall(r':root\{([^}]*)\}', page_html))   # every :root block of the page: a composition that set the page's faces added one, and the last word counts
+    px = lambda name, default: int(float(([default] + re.findall(r'--' + name + r':\s*([\d.]+)px', tokens))[-1]))
+    token = lambda name: ([''] + re.findall(r'--' + name + r':\s*([^;}]+)', tokens))[-1].strip()
     family = re.match(r"\s*'([^']+)'", token('display'))
     return {'container': px('container', 1300), 'frame': px('frame', 40), 'dark': _dark(token('paper')), 'display': family.group(1) if family else None,
-            'h3_weight': int(token('h3-w')) if token('h3-w').isdigit() else None, 'upper': token('h1-tt') == 'uppercase'}
+            'h3_weight': int(token('h3-w')) if token('h3-w').isdigit() else None, 'upper': token('h1-tt') == 'uppercase',
+            'grounds': {band: _luminance(token(name)) for band, name in (('paper', 'paper'), ('dark', 'band-paper'), ('alt', 'alt'), ('accent', 'accent'))}}   # how light each band's ground is, 0–1; None when the page does not say
+
+
+def _luminance(colour):
+    """How light a #RRGGBB colour is, 0 (black) to 1 (white); None for anything else."""
+    m = re.fullmatch(r'#([0-9a-fA-F]{6})', colour or '')
+    if not m: return None
+    r, g, b = (int(m.group(1)[i:i + 2], 16) / 255 for i in (0, 2, 4))
+    return round(0.2126 * r + 0.7152 * g + 0.0722 * b, 3)
 
 
 def _dark(colour):

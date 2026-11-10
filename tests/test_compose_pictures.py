@@ -45,7 +45,7 @@ def doc(*entries): return {'ir': '0.2', 'pictures': [dict(e) for e in entries]}
 def codes(document, page=PAGE, images=IMAGES): return sorted({e['code'] for e in PICTURES.validate(document, page, images)})
 FORMS = {
     'backdrop': {'section': 'mk', 'form': 'backdrop', 'place': 'bottom-left', 'height': 'lg', 'scrim': 'mid', 'title': 'xl'},
-    'bleed': {'section': 'mk', 'form': 'bleed', 'side': 'right', 'cols': 6, 'align': 'center'},
+    'bleed': {'section': 'mk', 'form': 'bleed', 'side': 'right', 'cols': 6, 'align': 'center', 'edge': 'hard'},   # the sample photograph is dark at its edges and the section light: it is cut clean
     'panorama': {'section': 'mk', 'form': 'panorama', 'ratio': '21/9', 'words': 'above'},
     'card': {'section': 'mk', 'form': 'card', 'side': 'right', 'cols': 8, 'ratio': '3/2', 'anchor': 'bottom', 'bleed': True},
     'offset': {'section': 'mk', 'form': 'offset', 'side': 'left', 'cols': 5, 'ratio': '3/4', 'shape': 'arch', 'tone': 'duotone'},
@@ -96,8 +96,9 @@ class Reading(unittest.TestCase):
 class OpenForms(unittest.TestCase):
     def forms(self, page, images): return [f['form'] for f in PICTURES.open_forms(PICTURES.readable(page, images)['mk'][1], CONTENT.page_of(page))]
     def test_the_picture_decides_which_forms_are_open(self):
-        self.assertEqual(self.forms(PAGE, IMAGES), list(PICTURES.FORMS), 'a large photograph can do anything')
-        self.assertEqual(self.forms(SMALL, []), ['offset', 'stage', 'inline'], 'a small photograph cannot be made large: a print, an object, or a word of the heading')
+        self.assertEqual(self.forms(PAGE, IMAGES), [f for f in PICTURES.FORMS if f != 'inline'], 'a large photograph can do anything but hide in a heading over so few words')
+        self.assertEqual(self.forms(SMALL, []), ['offset', 'stage'], 'a small photograph cannot be made large: a print or an object')
+        self.assertEqual(self.forms(WORDIER, []), ['offset', 'stage', 'inline'], '… or, where the section has words to carry it, a word of the heading')
         self.assertEqual(self.forms(PAGE, SHOT), ['offset', 'stage'], 'a screenshot is shown whole')
 
     def test_each_open_form_says_what_it_would_draw(self):
@@ -220,6 +221,7 @@ class Drawing(unittest.TestCase):
 
 DARK = PAGE.replace(SRC, picture(1200, 900, (12, 14, 18)))     # the same page with a picture whose edges are one dark colour (a render on black)
 LIGHT = PAGE.replace(SRC, picture(1200, 900, (244, 240, 232)))   # … and one light colour (a product on white)
+WORDIER = SMALL.replace(MK['words']['html'], MK['words']['html'] + '<p class="cap">' + 'There is more to say about this room. ' * 4 + '</p>', 1)   # the small photograph in a section with words to carry it
 def scene(width, height):
     """A picture whose edges are a scene, not a colour."""
     from PIL import Image
@@ -246,21 +248,25 @@ class NoBox(unittest.TestCase):
         self.assertIn('.sec.pc.pc-own .pc-fig{box-shadow:none;border-radius:0}', PICTURES.CSS, 'on its own ground the picture has no edge and no shadow')
 
     def test_a_picture_that_runs_off_the_screen_dissolves_into_its_section_and_the_words_may_reach_into_it(self):
-        self.assertIn('<i class="pc-fade"></i></figure>', self.draw(FORMS['bleed'])); self.assertIn('pc-edge-fade', self.draw(FORMS['bleed']))
-        hard = self.draw({**FORMS['bleed'], 'edge': 'hard'}); self.assertNotIn('pc-fade', hard); self.assertNotIn('data-over', hard)
-        reach = self.draw({**FORMS['bleed'], 'overlap': 2}); self.assertIn('pc-over-2', reach); self.assertIn('data-over="2"', reach)
+        fade = {k: v for k, v in FORMS['bleed'].items() if k != 'edge'}   # on the light page the picture and the ground are of one lightness: it dissolves, and that is the default
+        self.assertIn('<i class="pc-fade"></i></figure>', self.draw(fade, LIGHT, [])); self.assertIn('pc-edge-fade', self.draw(fade, LIGHT, []))
+        hard = self.draw(FORMS['bleed']); self.assertNotIn('pc-fade', hard); self.assertNotIn('data-over', hard)
+        reach = self.draw({**fade, 'overlap': 2}, LIGHT, []); self.assertIn('pc-over-2', reach); self.assertIn('data-over="2"', reach)
+        mud = PICTURES.validate(doc(fade), PAGE, IMAGES); self.assertEqual([e['code'] for e in mud], ['IP067']); self.assertIn('turn to mud', mud[0]['message'])
+        self.assertEqual(codes(doc(fade), DARK, []), ['IP067'], 'a dark picture does not dissolve into a light section'); self.assertEqual(codes(doc({**fade, 'side': 'left'}), LIGHT, []), [])
         self.assertEqual(codes(doc({**FORMS['bleed'], 'edge': 'hard', 'overlap': 1})), ['IP067']); self.assertEqual(codes(doc({**FORMS['bleed'], 'overlap': 3})), ['IP020']); self.assertEqual(codes(doc({**FORMS['bleed'], 'edge': 'soft'})), ['IP020'])
         self.assertEqual(codes(doc({**FORMS['card'], 'edge': 'fade'})), ['IP001'])
 
     def test_a_picture_is_set_into_the_heading_like_a_word(self):
         heading = MK['words']['heading']; inline = {'section': 'mk', 'form': 'inline'}
-        end = self.draw(inline, SMALL, []); self.assertRegex(end, r' <span class="pc-fig pc-pill pc-pill-pill" data-limit="1.35" style="--focal:50% 50%"><img [^>]*></span></h2>'); self.assertIn('pc-t-xl', end)
-        start = self.draw({**inline, 'at': 'start', 'shape': 'circle', 'title': 'lg', 'tone': 'mono'}, SMALL, []); self.assertRegex(start, r'<h2\b[^>]*><span class="pc-fig pc-pill pc-pill-circle pc-tone"'); self.assertIn('pc-t-lg', start)
+        end = self.draw(inline, WORDIER, []); self.assertRegex(end, r' <span class="pc-fig pc-pill pc-pill-pill" data-limit="1.35" style="--focal:50% 50%"><img [^>]*></span></h2>'); self.assertIn('pc-t-xl', end)
+        start = self.draw({**inline, 'at': 'start', 'shape': 'circle', 'title': 'lg', 'tone': 'mono'}, WORDIER, []); self.assertRegex(start, r'<h2\b[^>]*><span class="pc-fig pc-pill pc-pill-circle pc-tone"'); self.assertIn('pc-t-lg', start)
         for drawn in (end, start): self.assertEqual(drawn.count('<img '), 1); self.assertNotIn('<figure', drawn); self.assertIn(heading.split()[0], drawn)
-        out, _ = PICTURES.transplant(SMALL, doc(inline), []); text = lambda html: ' '.join(re.sub(r'<[^>]+>', ' ', re.sub(r'<style.*?</style>', '', html, flags=re.S)).split())
-        self.assertEqual(text(out), text(SMALL), 'the heading says what it said')
-        self.assertEqual(codes(doc(inline), PAGE, SHOT), ['IP062']); self.assertEqual(codes(doc({**inline, 'title': 'md'}), SMALL, []), ['IP020']); self.assertEqual(codes(doc({**inline, 'shape': 'arch'}), SMALL, []), ['IP020'])
-        bare = SMALL.replace(re.search(r'<h2\b[^>]*>.*?</h2>', MK['words']['html'], re.S).group(0), '', 1); self.assertEqual(codes(doc(inline), bare, []), ['IP021'])
+        out, _ = PICTURES.transplant(WORDIER, doc(inline), []); text = lambda html: ' '.join(re.sub(r'<[^>]+>', ' ', re.sub(r'<style.*?</style>', '', html, flags=re.S)).split())
+        self.assertEqual(text(out), text(WORDIER), 'the heading says what it said')
+        self.assertEqual(codes(doc(inline), WORDIER, [{'id': 'x', 'data': picture(418, 315), 'w': 418, 'h': 315, 'shot': True}]), ['IP062']); self.assertEqual(codes(doc({**inline, 'title': 'md'}), WORDIER, []), ['IP020']); self.assertEqual(codes(doc({**inline, 'shape': 'arch'}), WORDIER, []), ['IP020'])
+        found = PICTURES.validate(doc(inline), SMALL, []); self.assertEqual([e['code'] for e in found], ['IP021']); self.assertIn('a thin band with a thumbnail', found[0]['message'])
+        bare = WORDIER.replace(re.search(r'<h2\b[^>]*>.*?</h2>', MK['words']['html'], re.S).group(0), '', 1); self.assertEqual(codes(doc(inline), bare, []), ['IP021'])
 
     def test_a_stage_may_stand_across_the_top_with_the_words_under_it(self):
         top = self.draw({'section': 'mk', 'form': 'stage', 'side': 'top', 'ground': 'ink'}); self.assertIn('pc-side-top', top)
@@ -279,6 +285,68 @@ class NoBox(unittest.TestCase):
         self.assertIsNone(COMPOSE._eased({**FORMS['bleed'], 'overlap': 0}, 'words-on-picture'))
         text, _ = COMPOSE.brief(PAGE, IMAGES); self.assertIn('its edges are a scene', text); text, _ = COMPOSE.brief(DARK, []); self.assertIn('its edges are one even dark colour', text)
         self.assertIn('a rectangle on one side and the words on the other', COMPOSE.SYSTEM)
+
+
+LEDGER = ('<section class="sec ledger band-paper" id="menu"><div class="wrap two"><div class="ledger-intro"><span class="lab">The menu</span><h2 class="h2">From the sea</h2></div>'
+          '<div><ul class="rows"><li><span class="ledger-item">Sole</span><i></i><b>24 €</b></li><li><span class="ledger-item">Prawns</span><i></i><b>18 €</b></li></ul></div></div></section>')
+HOURS = '<section class="sec ledger band-alt" id="hours"><div class="wrap two"><div class="ledger-intro"><h2 class="h2">Opening hours</h2></div><div><p>Every day from noon.</p></div></div></section>'
+USED = picture(900, 700, (90, 80, 70))
+WORDY = ('<html><head><style>:root{--paper:#ffffff;--container:1300px;--frame:40px}</style></head><body><section class="sec hero" id="top"><h1>Hello</h1><img src="%s" alt=""></section>' % USED) + LEDGER + HOURS + '</body></html>'
+JOB = [{'id': 'menu-fish', 'data': picture(1600, 1067, (40, 60, 80)), 'w': 1600, 'h': 1067, 'gen': True, 'alt': 'Fish on ice'},       # commissioned for the "menu" section
+       {'id': 'menu-fish-detail', 'data': picture(800, 500, (41, 61, 81)), 'w': 800, 'h': 500, 'gen': True, 'crop_of': 'menu-fish'},  # a detail cut from it
+       {'id': 'gen-terrace', 'data': picture(1500, 1000, (10, 90, 30)), 'w': 1500, 'h': 1000, 'gen': True},                           # commissioned for another section
+       {'id': 'room', 'data': picture(1400, 900, (120, 100, 90)), 'w': 1400, 'h': 900, 'alt': 'The dining room'},                      # a photograph the page does not show
+       {'id': 'shot1', 'data': picture(1440, 900, (20, 20, 20)), 'w': 1440, 'h': 900, 'shot': True},                                   # a screen of something else
+       {'id': 'thumb', 'data': picture(400, 300, (1, 2, 3)), 'w': 400, 'h': 300},                                                      # too small to matter
+       {'id': 'hero', 'data': USED, 'w': 900, 'h': 700}]                                                                               # already on the page
+
+
+class Offers(unittest.TestCase):
+    """A section of words may take one of the job's pictures that the page does not show yet."""
+    def test_what_is_offered_to_a_section(self):
+        menu = PICTURES.offered(WORDY, JOB, 'menu'); self.assertEqual(sorted(menu), ['img:menu-fish', 'img:room']); self.assertTrue(menu['img:menu-fish']['meant']); self.assertFalse(menu['img:room']['meant'])
+        self.assertEqual(sorted(PICTURES.offered(WORDY, JOB, 'hours')), ['img:room'], 'atmosphere made for another section, a screen of something else, a detail, a thumbnail and a picture already shown are not offered')
+        self.assertEqual(sorted(PICTURES.offered(WORDY, JOB, 'terrace')), ['img:gen-terrace', 'img:room'])
+        read = PICTURES.readable(WORDY, JOB); self.assertIsNone(read['menu'][1]['picture']); self.assertEqual(sorted(read['menu'][1]['offers']), ['img:menu-fish', 'img:room']); self.assertEqual(len(read['menu'][1]['words']['parts']), 2)
+        self.assertEqual(PICTURES.readable(WORDY, None), {}, 'without the job\'s pictures nothing is on offer')
+
+    def test_a_section_of_words_takes_one_offered_picture_and_says_what_it_said(self):
+        entry = {'section': 'menu', 'picture': 'img:menu-fish', 'form': 'bleed', 'side': 'right', 'cols': 6, 'edge': 'hard'}
+        out, report = PICTURES.transplant(WORDY, doc(entry), JOB); self.assertTrue(report['drawn'], report['errors'])
+        drawn = section('menu', out); self.assertEqual(out.count(JOB[0]['data']), 1); self.assertIn('alt="Fish on ice"', drawn); self.assertIn('class="sec ledger band-paper pc pc-f-bleed', drawn)
+        self.assertIn('<span class="ledger-item">Sole</span><i></i><b>24 €</b>', drawn); text = lambda html: ' '.join(re.sub(r'<[^>]+>', ' ', re.sub(r'<style.*?</style>', '', html, flags=re.S)).split())
+        self.assertEqual(text(out), text(WORDY)); self.assertNotIn('img:menu-fish', PICTURES.readable(out, JOB).get('hours', (None, {'offers': {}}))[1].get('offers', {}), 'a picture that is now on the page is no longer on offer')
+        strip, report = PICTURES.transplant(WORDY, doc({'section': 'menu', 'picture': 'img:menu-fish', 'form': 'panorama'}), JOB); self.assertTrue(report['drawn'], report['errors']); self.assertIn('<div class="pc-wh"><div class="ledger-intro">', strip)
+
+    def test_one_defect_per_rule(self):
+        base = {'section': 'menu', 'picture': 'img:menu-fish', 'form': 'bleed', 'edge': 'hard'}
+        self.assertEqual(codes(doc({'section': 'menu', 'form': 'bleed'}), WORDY, JOB), ['IP010'], 'a section of words needs a picture'); self.assertEqual(codes(doc({**base, 'picture': 'img:gen-terrace'}), WORDY, JOB), ['IP010'], 'only what is offered to it')
+        self.assertEqual(codes(doc({**base, 'picture': 'img:room'}, {'section': 'hours', 'picture': 'img:room', 'form': 'bleed', 'edge': 'hard'}), WORDY, JOB), ['IP061'], 'a picture is shown once')
+        for form in ('offset', 'stage', 'inline'): self.assertEqual(codes(doc({'section': 'menu', 'picture': 'img:menu-fish', 'form': form}), WORDY, JOB), ['IP065'], f'atmosphere is never an object: {form}')
+        self.assertEqual(codes(doc({'section': 'menu', 'picture': 'img:room', 'form': 'stage', 'ground': 'ink'}), WORDY, JOB), [], 'a photograph may stand on a stage')
+        self.assertEqual(codes(doc({**FORMS['bleed'], 'picture': 'img:room'})), ['IP001'], 'a section with its own picture takes no other')
+
+    def test_the_composer_is_shown_what_is_on_offer(self):
+        text, ids = COMPOSE.brief(WORDY, JOB); self.assertEqual(ids, ['menu', 'hours']); self.assertIn('▸ "menu" — ledger, WORDS ONLY', text); self.assertIn('img:menu-fish ★ made for this section — 1600×1067 px, a commissioned atmosphere picture, "Fish on ice"', text)
+        self.assertIn('(forms: backdrop, bleed, panorama, card)', text, 'atmosphere is offered only the forms that crop it'); self.assertEqual([a for a, _ in COMPOSE.brief.offered], ['img:menu-fish', 'img:room', 'img:room'])
+        self.assertIn('"picture": {"type": "string"', json.dumps(COMPOSE.ENTRY)); self.assertIn('a document, a notice', COMPOSE.SYSTEM)
+
+
+class Screens(unittest.TestCase):
+    """A product screen is set down with a hairline ring and one soft shadow; a tall one may show its top and fade."""
+    TALL = [dict(i, shot=True, w=1200, h=1600) if i.get('data') == SRC else i for i in IMAGES]
+    def test_a_tall_screen_shows_its_top_and_fades_into_the_stage(self):
+        entry = {'section': 'mk', 'form': 'stage', 'side': 'right', 'cols': 7, 'ground': 'ink', 'crop': 'fade'}
+        out, report = PICTURES.transplant(PAGE, doc(entry), self.TALL); self.assertTrue(report['drawn'], report['errors']); drawn = section('mk', out)
+        self.assertIn('pc-screen pc-crop', drawn); self.assertIn('--crop:1.5', drawn); self.assertIn('<i class="pc-cropfade"></i></figure>', drawn); self.assertIn('pc-cropped', drawn); self.assertIn('data-limit="1"', drawn)
+        self.assertEqual(codes(doc({**entry, 'tilt': 2}), PAGE, self.TALL), ['IP067']); self.assertEqual(codes(doc({**entry, 'crop': 'top'}), PAGE, self.TALL), ['IP020'])
+        self.assertEqual(codes(doc(entry), PAGE, IMAGES), ['IP067'], 'a photograph is not shown this way'); self.assertEqual(codes(doc(entry), PAGE, SHOT), ['IP067'], 'a screen already wider than the crop is shown whole')
+
+    def test_no_heavy_shadow_is_left(self):
+        import render_ir as IR
+        for css in (PICTURES.CSS, IR.CSS): self.assertNotIn('rgba(0,0,0,.6)', css); self.assertNotIn('rgba(0,0,0,.55)', css)
+        self.assertIn('.pc-fig.pc-screen{border-radius:8px;box-shadow:0 0 0 1px color-mix(in srgb,currentColor 14%,transparent),0 24px 60px -24px rgba(0,0,0,.22)}', PICTURES.CSS)
+        whole = section('mk', PICTURES.transplant(PAGE, doc(FORMS['stage']), SHOT)[0]); self.assertIn('pc-contain pc-screen', whole); self.assertNotIn('pc-screen', section('mk', PICTURES.transplant(PAGE, doc(FORMS['stage']), IMAGES)[0]))
 
 
 def answer(*entries, concept='Each picture gets a job.'): return {'concept': concept, 'pictures': [dict(e) for e in entries]}
@@ -317,6 +385,15 @@ class Loop(unittest.TestCase):
         result = self.run_(answer({**FORMS['bleed'], 'cols': 11}), answer(FORMS['bleed'])); self.assertTrue(result['drawn']); self.assertEqual([s['stage'] for s in result['log']], ['compose', 'correct'])
         self.assertIn('IP020', self.said(1)); self.assertIn('WAS REFUSED', self.said(1))
         self.asked.clear(); twice = self.run_(answer({**FORMS['bleed'], 'cols': 11}), answer({**FORMS['bleed'], 'cols': 12})); self.assertFalse(twice['drawn']); self.assertEqual(len(self.asked), 2)
+
+    def test_an_entry_still_refused_costs_its_own_section_not_the_others(self):
+        path = os.path.join(self.dir, 'wordy.html'); Path(path).write_text(WORDY, encoding='utf-8')
+        good = {'section': 'menu', 'picture': 'img:menu-fish', 'form': 'panorama'}; bad = {'section': 'hours', 'form': 'bleed', 'edge': 'hard'}   # a section of words without its picture
+        result = COMPOSE.compose(WORDY, path, images=JOB, ask=self.ask(answer(good, bad), answer(good, bad)), review=False)
+        self.assertTrue(result['drawn']); self.assertEqual(result['doc']['pictures'], [good]); self.assertEqual([s['stage'] for s in result['log']], ['compose', 'correct', 'prune']); self.assertEqual(result['log'][-1]['dropped'], ['hours'])
+        self.assertEqual(PICTURES.validate(result['doc'], WORDY, JOB), [], 'what is left is a document that validates whole')
+        alone = COMPOSE.compose(WORDY, path, images=JOB, ask=self.ask(answer(bad), answer(bad)), review=False); self.assertFalse(alone['drawn'], 'nothing is left to draw')
+        prune = COMPOSE.HERO._pruned; self.assertEqual(prune({'ir': '9', 'pictures': [good, bad]}, 'pictures', [{'at': 'ir', 'code': 'IP001', 'message': ''}], lambda d: []), (None, []), 'a fault of the document itself costs all of it')
 
     def test_a_veil_that_leaves_the_words_unreadable_is_thickened_by_rule(self):
         def measured(path):

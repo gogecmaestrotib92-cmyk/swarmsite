@@ -145,9 +145,19 @@ def compose_first_screen(slug_dir, out, deadline=None):
     if ir:
         composed, report = IR.transplant(page, ir, images)
         if report['drawn']: replace(composed); page = composed; record['drawn'] = True
+    record['direction'] = result.get('direction') if record['drawn'] else None
+    def directed():
+        """One page, one direction: what the first screen's composer asked of the rest of the page, its typeface, and what
+        the composers before this one already chose — so that each continues the page instead of starting again."""
+        said = [record['direction']] if record.get('direction') else ([f'The first screen: {record["concept"]}'] if record['drawn'] and record.get('concept') else [])
+        if record.get('face'): said.append(f'The page is set in the typeface "{record["face"].get("id")}".')
+        for part in ('lists', 'pictures', 'words'):
+            done = record.get(part) or {}
+            if done.get('drawn') and done.get('forms'): said.append(f'Already composed — {part}: ' + ', '.join(f'"{k}" as {v}' for k, v in done['forms'].items()) + (f'. Their idea: {done["concept"]}' if done.get('concept') else ''))
+        return ' '.join(said) or None
     try:   # the lists are composed on the page as it now stands, so that they are seen under the first screen they follow
         import compose_lists as COMPOSE_LISTS, lists as LISTS
-        chosen = COMPOSE_LISTS.compose(page, out); doc = chosen.get('doc')
+        chosen = COMPOSE_LISTS.compose(page, out, direction=directed()); doc = chosen.get('doc')
         record['lists'] = {'drawn': False, 'attempts': chosen.get('attempts'), 'concept': (doc or {}).get('note'), 'forms': {l['section']: l['form'] for l in (doc or {}).get('lists', [])},
                            'measured': chosen.get('measured'), 'log': chosen.get('log'), 'doc': doc}
         if doc:
@@ -159,7 +169,7 @@ def compose_first_screen(slug_dir, out, deadline=None):
         try:   # what each picture below the first screen does, on the page as it now stands
             import compose_pictures as COMPOSE_PICTURES, pictures as PICTURES
             with open(out, encoding='utf-8') as f: page = f.read()
-            chosen = COMPOSE_PICTURES.compose(page, out, images=images); doc = chosen.get('doc')
+            chosen = COMPOSE_PICTURES.compose(page, out, images=images, direction=directed()); doc = chosen.get('doc')
             record['pictures'] = {'drawn': False, 'attempts': chosen.get('attempts'), 'concept': (doc or {}).get('note'), 'forms': {p['section']: p['form'] for p in (doc or {}).get('pictures', [])},
                                   'measured': chosen.get('measured'), 'log': chosen.get('log'), 'doc': doc}
             if doc:
@@ -171,7 +181,7 @@ def compose_first_screen(slug_dir, out, deadline=None):
         try:   # the sections that are words only — price lists, menus, a paragraph under its heading — on the page as it now stands
             import compose_words as COMPOSE_WORDS, words as WORDS
             with open(out, encoding='utf-8') as f: page = f.read()
-            chosen = COMPOSE_WORDS.compose(page, out); doc = chosen.get('doc')
+            chosen = COMPOSE_WORDS.compose(page, out, direction=directed()); doc = chosen.get('doc')
             record['words'] = {'drawn': False, 'attempts': chosen.get('attempts'), 'concept': (doc or {}).get('note'), 'forms': {w['section']: w['form'] for w in (doc or {}).get('words', [])},
                                'measured': chosen.get('measured'), 'log': chosen.get('log'), 'doc': doc}
             if doc:
@@ -222,6 +232,8 @@ def recompose(slug_dir, out, log, best_score, best_round, best_manifest, best_fi
     except Exception as e:
         decision = {'kept': False, 'drawn': False, 'before': best_score, 'why': 'failed: ' + str(e)[:120]}
     rep = decision.pop('critic', None); cfail = decision.pop('broken', None)
+    if isinstance(rep, dict):   # what the critic said of the composed page is kept whether or not the page is: a refusal is where there is most to learn
+        decision['verdict'] = str(rep.get('verdict') or '')[:1500]; decision['axes'] = rep.get('axes') if isinstance(rep.get('axes'), dict) else None
     if decision['kept']:
         k = max(r['k'] for r in log['rounds']) + 1
         fixes = [f for f in (rep.get('fixes') if isinstance(rep.get('fixes'), list) else []) if isinstance(f, dict)]
@@ -243,7 +255,7 @@ def recompose(slug_dir, out, log, best_score, best_round, best_manifest, best_fi
     log['composition'] = decision
     try:
         record = A.J(slug_dir, 'composition.json') or {}
-        record.update({key: decision.get(key) for key in ('kept', 'why', 'before', 'score', 'taste', 'contract', 'first_screen')})
+        record.update({key: decision.get(key) for key in ('kept', 'why', 'before', 'score', 'taste', 'contract', 'first_screen', 'verdict', 'axes')})
         with open(os.path.join(slug_dir, 'composition.json'), 'w', encoding='utf-8') as f: json.dump(record, f, indent=1, ensure_ascii=False)
     except Exception: pass
     return best_score, best_round, best_manifest

@@ -32,8 +32,11 @@ SIZE = {'xl': 'clamp(36px,4.6vw,68px)', 'xxl': 'clamp(46px,7.4vw,112px)', 'mega'
 BAND = {'paper': '', 'dark': ' band-dark', 'alt': ' band-alt', 'accent': ' band-accent'}
 SURFACE = {'paper': ('var(--paper)', 'var(--ink)'), 'dark': ('var(--band-paper)', 'var(--band-ink)'), 'alt': ('var(--alt,var(--paper))', 'var(--alt-ink,var(--ink))'), 'accent': ('var(--accent)', 'var(--on-accent,var(--paper))')}
 
-# The grid and nothing else: type, colour and buttons are the page's own.
+# The grid and nothing else: type, colour and buttons are the page's own. The first lines are the manners of set type, for
+# the whole page: headings balanced, paragraphs without orphans, figures that line up, the optical size following the size.
 CSS = """
+h1,h2,h3{text-wrap:balance}p,li{text-wrap:pretty}body{font-optical-sizing:auto;font-kerning:normal}
+.rows b,.num,.lc-tag,.idx,.ladder-n,time{font-variant-numeric:tabular-nums}
 .hero.ir{display:flex;min-height:var(--ir-minh,auto);padding-top:calc(var(--nav-h,64px) + clamp(20px,3vw,44px));padding-bottom:clamp(28px,5vw,80px)}
 .hero.ir .ir-grid{flex:1;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-template-rows:var(--ir-rows);column-gap:var(--ir-gap);row-gap:var(--ir-gap)}
 .hero.ir .ir-n{grid-column:var(--c0)/var(--c1);grid-row:var(--r0)/var(--r1);z-index:var(--z,1);align-self:var(--self,start);min-width:0;container-type:inline-size;margin:0}
@@ -55,21 +58,21 @@ CSS = """
 .hero.ir .ir-media{position:relative;overflow:hidden;border-radius:var(--radius,0);aspect-ratio:var(--ratio);align-self:var(--self,start)}
 .hero.ir .ir-media img{display:block;width:100%;height:100%;object-fit:cover;object-position:var(--focal,50% 50%)}
 .hero.ir .ir-media.ir-contain{overflow:visible;aspect-ratio:auto}.hero.ir .ir-media.ir-contain img{height:auto;object-fit:contain}
-.hero.ir .ir-frame-browser{border:1px solid var(--line);border-radius:max(10px,var(--radius,0));box-shadow:0 30px 80px -40px color-mix(in srgb,var(--ink) 55%,transparent);overflow:hidden}
-.hero.ir .ir-frame-paper{background:#fff;padding:clamp(10px,1.4vw,22px);box-shadow:0 30px 80px -40px color-mix(in srgb,var(--ink) 55%,transparent)}
+.hero.ir .ir-frame-browser{border-radius:8px;box-shadow:0 0 0 1px color-mix(in srgb,currentColor 14%,transparent),0 24px 60px -24px rgba(0,0,0,.22);overflow:hidden}
+.hero.ir .ir-frame-paper{background:#fff;padding:clamp(10px,1.4vw,22px);box-shadow:0 0 0 1px color-mix(in srgb,currentColor 14%,transparent),0 24px 60px -24px rgba(0,0,0,.22)}
 .hero.ir .ir-scrim::after{content:"";position:absolute;inset:0;z-index:3;background:linear-gradient(180deg,rgba(0,0,0,.34),rgba(0,0,0,.16) 45%,rgba(0,0,0,.52))}
 .hero.ir .ir-tone{isolation:isolate;background:#808080}.hero.ir .ir-tone img{mix-blend-mode:luminosity}.hero.ir .ir-tone-tint{background:var(--accent)}
 .hero.ir .ir-media>i,.hero.ir .ir-layer>i{position:absolute;inset:0;pointer-events:none}
 .hero.ir .ir-t-light{z-index:1;background:var(--ir-light);mix-blend-mode:multiply}.hero.ir .ir-t-dark{z-index:2;background:var(--ir-dark);mix-blend-mode:lighten}
 .hero.ir .ir-grain{z-index:2;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 .hero.ir .ir-shape-soft{border-radius:clamp(18px,2.4vw,36px)}.hero.ir .ir-shape-arch{border-radius:999px 999px 0 0}.hero.ir .ir-shape-circle{border-radius:50%}.hero.ir .ir-shape-pill{border-radius:999px}
-.hero.ir .ir-shadow-soft{box-shadow:0 44px 90px -44px rgba(0,0,0,.6)}.hero.ir .ir-shadow-hard{box-shadow:clamp(8px,1vw,16px) clamp(8px,1vw,16px) 0 var(--accent)}
+.hero.ir .ir-shadow-soft{box-shadow:0 24px 60px -24px rgba(0,0,0,.22)}.hero.ir .ir-shadow-hard{box-shadow:clamp(8px,1vw,16px) clamp(8px,1vw,16px) 0 var(--accent)}
 .hero.ir .ir-stack{position:relative;overflow:visible;aspect-ratio:var(--box);align-self:var(--self,start)}
-.hero.ir .ir-layer{position:absolute;display:block;overflow:hidden;border-radius:var(--radius,0);background:var(--ir-bg);box-shadow:0 30px 70px -34px rgba(0,0,0,.6)}
+.hero.ir .ir-layer{position:absolute;display:block;overflow:hidden;border-radius:var(--radius,0);background:var(--ir-bg);box-shadow:0 0 0 1px color-mix(in srgb,currentColor 12%,transparent),0 20px 50px -24px rgba(0,0,0,.24)}
 .hero.ir .ir-layer img{display:block;width:100%;height:100%;object-fit:cover;object-position:var(--focal,50% 50%)}
 .hero.ir .ir-stack.ir-contain .ir-layer{background:#fff}.hero.ir .ir-stack.ir-contain .ir-layer img{object-fit:contain}
 .hero.ir .ir-stack.ir-frame-browser,.hero.ir .ir-stack.ir-frame-paper{border:0;box-shadow:none;background:none;padding:0;overflow:visible}
-.hero.ir .ir-stack.ir-frame-browser .ir-layer{border:1px solid var(--line);border-radius:max(10px,var(--radius,0))}.hero.ir .ir-stack.ir-frame-paper .ir-layer{border:clamp(6px,.8vw,12px) solid #fff}
+.hero.ir .ir-stack.ir-frame-browser .ir-layer{border-radius:8px}.hero.ir .ir-stack.ir-frame-paper .ir-layer{border:clamp(6px,.8vw,12px) solid #fff}
 .hero.ir .ir-stack.ir-shape-soft{border-radius:0}.hero.ir .ir-stack.ir-shape-soft .ir-layer{border-radius:clamp(14px,1.8vw,28px)}
 .hero.ir .ir-on-scrim,.hero.ir .ir-on-scrim .lab,.hero.ir .ir-on-scrim .lede{color:var(--on-photo,#F4EFE3)}.hero.ir .ir-on-scrim .btn.ghost{color:var(--on-photo,#F4EFE3);border-color:var(--on-photo,#F4EFE3)}
 .hero.ir .ir-bleed-right{margin-right:calc(-1 * (var(--frame,24px) + max(0px,(100vw - var(--container,1300px)) / 2)))}
@@ -218,14 +221,21 @@ def render_hero(ir, content):
 def face_head(hero, content):
     """What the page's <head> gains when the composition sets the page in a registry face: its stylesheet and the page's
     display tokens — family, weights, tracking, leading, case. Every heading of the page follows; nothing else changes."""
-    chosen = hero.get('face')
-    if not chosen: return ''
-    face = FACES.get(chosen['id']); weight = chosen.get('weight', face['display']); lo, hi = face['weights']
-    h3 = min(hi, max(lo, content.get('page', {}).get('h3_weight') or weight))
-    case = chosen.get('case') or ('upper' if face.get('upper') else 'none')
-    tokens = (f"--display:{FACES.stack(face)};--h1-w:{weight};--h2-w:{weight};--h3-w:{h3};--h1-ls:{face['ls']};--h2-ls:{face['ls']};"
-              f"--h1-lh:{face['lh']};--h2-lh:{max(face['lh'], 1.0)};--h1-tt:{'uppercase' if case == 'upper' else 'none'}")
-    return f'<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link id="ir-face" href="{e(FACES.link(face))}" rel="stylesheet"><style id="ir-face-css">:root{{{tokens}}}</style>'
+    chosen = hero.get('face'); system = hero.get('type') or {}
+    if not chosen and not system: return ''
+    loaded, tokens, extra = [], [], ''
+    if chosen:
+        face = FACES.get(chosen['id']); weight = chosen.get('weight', face['display']); lo, hi = face['weights']; loaded.append(face)
+        h3 = min(hi, max(lo, content.get('page', {}).get('h3_weight') or weight))
+        case = chosen.get('case') or ('upper' if face.get('upper') else 'none')
+        tokens.append(f"--display:{FACES.stack(face)};--h1-w:{weight};--h2-w:{weight};--h3-w:{h3};--h1-ls:{face['ls']};--h2-ls:{face['ls']};"
+                      f"--h1-lh:{face['lh']};--h2-lh:{max(face['lh'], 1.0)};--h1-tt:{'uppercase' if case == 'upper' else 'none'}")
+        width = face.get('avg_upper' if case == 'upper' else 'avg') or 0.46; grow = min(1.3, 0.46 / width)
+        if width <= 0.37: extra = f'.h3{{font-size:calc(var(--h3) * {grow:.2f})}}.qa summary{{font-size:min(calc(var(--h3) * {grow:.2f}),{round(24 * grow)}px)}}'   # a narrow face sets small at a size meant for a wide one: the small headings grow with it
+    for role in ('body', 'label'):   # the page's running text and its small print follow the system the composition chose
+        if system.get(role): face = FACES.get(system[role]); loaded.append(face); tokens.append(f'--{role}:{FACES.stack(face)}')
+    sheets = ''.join(f'<link id="ir-face{n or ""}" href="{e(url)}" rel="stylesheet">' for n, url in enumerate(FACES.links(loaded)))
+    return f'<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>{sheets}<style id="ir-face-css">:root{{{";".join(tokens)}}}{extra}</style>'
 
 
 def transplant(page_html, ir, images=None):

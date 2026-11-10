@@ -7,7 +7,8 @@ are checked and measured by lib/type/measure.mjs, never guessed. A face that is 
   get(face_id)     → one face or None
   known(family)    → the measured widths of a family, whether it can be chosen or is only one pages are already set in
   stack(face)      → the CSS font-family value
-  link(face)       → the stylesheet URL
+  link(face)       → the stylesheet URL; links(faces) → the stylesheets for several faces, one request per source
+  of_role(role)    → the faces that may be chosen as 'display', 'body' or 'label'; pairings() → systems known to sit well together
   advance(face, upper=False) → mean advance of one headline character in em (a wide default for an unknown face)
 The advance is an average: a real line can be a tenth wider or narrower. What sizes a headline in the end is the
 measurement of its own words in a browser (lib/compose/measure.mjs); this number is the estimate before that.
@@ -41,12 +42,32 @@ def get(face_id):
     return next((f for f in all() if f['id'] == face_id), None)
 
 
+def of_role(role):
+    """The faces that may be chosen for a role: 'display' (headings), 'body' (running text), 'label' (the small print:
+    labels, numerals, captions). A face without `roles` is a display face."""
+    return [f for f in all() if role in f.get('roles', ['display'])]
+
+
+def pairings():
+    """Systems of faces that are known to sit well together: [{'id', 'display', 'body', 'label', 'voice'}]."""
+    return _registry().get('pairings', [])
+
+
 def stack(face):
     return f"'{face['family']}',{face['fallback']}"
 
 
 def link(face):
-    return f"https://fonts.googleapis.com/css2?family={face['gf']}&display=swap"
+    return face.get('css') or f"https://fonts.googleapis.com/css2?family={face['gf']}&display=swap"
+
+
+def links(faces):
+    """The stylesheets that load these faces: every Google family in one request, a face from another source by its own."""
+    seen, google, other = set(), [], []
+    for f in faces:
+        if not f or f['family'] in seen: continue
+        seen.add(f['family']); (other if f.get('css') else google).append(f)
+    return ([f"https://fonts.googleapis.com/css2?family={'&family='.join(f['gf'] for f in google)}&display=swap"] if google else []) + [f['css'] for f in other]
 
 
 def advance(face, upper=False):
