@@ -65,6 +65,28 @@ class Findings(unittest.TestCase):
         self.assertEqual(ST.findings({'views': {'desktop': {'status': 200}, 'mobile': None}}), []); self.assertEqual(ST.technical({}), []); self.assertIsNone(ST.readings(None)['desktop'])
 
 
+class FeelAndLead(unittest.TestCase):
+    def test_small_targets_on_a_phone_fail_the_measured_check(self):
+        check = lambda targets: next(c for c in ST.technical(page(mobile=view(paragraphs=[{'per_line': 40}], targets=targets))) if c['id'] == 'T-10')
+        self.assertTrue(check({'counted': 12, 'under_24_px': 0, 'under_44_px': 5})['pass'], '24 px is the floor; 44 is reported, not required')
+        self.assertFalse(check({'counted': 12, 'under_24_px': 2, 'under_44_px': 7})['pass'])
+        self.assertNotIn('T-10', {c['id'] for c in ST.technical(page())}, 'not read, not guessed')
+
+    def test_a_composed_first_screen_that_nothing_leads_is_sent_back(self):
+        sys.path.insert(0, str(ROOT / 'lib' / 'compose')); import compose as COMPOSE
+        seen = lambda picture, headline: {'desktop': {'lead': {'picture': picture, 'headline': headline}, 'wrapped': [], 'pictures': []}, 'mobile': {'lead': {'picture': 0.1, 'headline': 0.3}, 'wrapped': [], 'pictures': []}}
+        found = COMPOSE.hero_findings(seen(0.2, 0.42)); self.assertIn('desktop-hero-nothing-leads', found); self.assertIn('20%', found['desktop-hero-nothing-leads']); self.assertIn('42%', found['desktop-hero-nothing-leads'])
+        for picture, headline in ((0.9, 0.3), (0.1, 0.8), (0.4, 0.6)):
+            with self.subTest(picture=picture, headline=headline): self.assertNotIn('desktop-hero-nothing-leads', COMPOSE.hero_findings(seen(picture, headline)))
+        self.assertNotIn('desktop-hero-nothing-leads', COMPOSE.hero_findings({'desktop': {'lead': None, 'wrapped': [], 'pictures': []}}), 'a first screen that is not composed is not judged by this')
+        self.assertNotIn('nothing-leads', ' '.join(COMPOSE.BREAKING), 'it is asked to be corrected, not a reason to throw the page away')
+
+    def test_the_page_answers_a_press_and_respects_three_preferences(self):
+        css = (ROOT / 'lib' / 'render' / 'render_bp.py').read_text()
+        for rule in (':active', 'transform:scale(.97)', ':focus-visible', 'min-height:44px', 'prefers-reduced-transparency:reduce', 'prefers-contrast:more', 'prefers-reduced-motion'):
+            with self.subTest(rule): self.assertIn(rule, css)
+
+
 class Levels(unittest.TestCase):
     def test_bands_and_the_page_rule(self):
         self.assertEqual([ST.level_of(s) for s in (40, 55, 69, 70, 89, 90, -1, None)], [1, 2, 2, 3, 3, 4, None, None])

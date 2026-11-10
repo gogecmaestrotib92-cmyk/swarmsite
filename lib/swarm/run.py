@@ -183,6 +183,25 @@ def compose_wanted(slug_dir):
     return not os.environ.get('LIVETEST')
 
 
+def keep_plain(doc, record):
+    """A page plan names the sections that stay quiet so the others can be seen. A composer after the first screen may
+    still propose one of them; it is taken out of the composition before anything is drawn, and the record says which."""
+    plain = set(((record.get('plan') or {}).get('plain')) or [])
+    if not plain or not isinstance(doc, dict): return doc, []
+    dropped = []
+    for key in ('lists', 'pictures', 'words'):
+        if isinstance(doc.get(key), list):
+            kept = [e for e in doc[key] if not (isinstance(e, dict) and e.get('section') in plain)]
+            dropped += [e.get('section') for e in doc[key] if isinstance(e, dict) and e.get('section') in plain]; doc[key] = kept
+    if isinstance(doc.get('galleries'), list):
+        kept = [g for g in doc['galleries'] if not (isinstance(g, dict) and plain & set(g.get('sections') or []))]
+        dropped += [g['sections'][0] for g in doc['galleries'] if isinstance(g, dict) and plain & set(g.get('sections') or [])]; doc['galleries'] = kept
+    if dropped: record.setdefault('kept_plain', []).extend(d for d in dropped if d not in record.get('kept_plain', []))
+    left = any(doc.get(k) for k in ('lists', 'pictures', 'words', 'galleries'))
+    if 'galleries' in doc and not doc['galleries']: doc.pop('galleries')
+    return (doc if left else None), dropped
+
+
 def compose_first_screen(slug_dir, out, deadline=None):
     """Recompose the page at `out` (lib/compose) — its first screen, then the lists below it, then the sections that show a
     picture, then the sections that are words only, each a document that is validated, measured on its own render and refused whole if it breaks anything — and
@@ -207,6 +226,7 @@ def compose_first_screen(slug_dir, out, deadline=None):
         composed, report = IR.transplant(page, ir, images)
         if report['drawn']: replace(composed); page = composed; record['drawn'] = True
     record['direction'] = result.get('direction') if record['drawn'] else None
+    record['plan'] = result.get('plan') if record['drawn'] else None
     def directed():
         """One page, one direction: what the first screen's composer asked of the rest of the page, its typeface, and what
         the composers before this one already chose — so that each continues the page instead of starting again."""
@@ -218,7 +238,7 @@ def compose_first_screen(slug_dir, out, deadline=None):
         return ' '.join(said) or None
     try:   # the lists are composed on the page as it now stands, so that they are seen under the first screen they follow
         import compose_lists as COMPOSE_LISTS, lists as LISTS
-        chosen = COMPOSE_LISTS.compose(page, out, direction=directed()); doc = chosen.get('doc')
+        chosen = COMPOSE_LISTS.compose(page, out, direction=directed()); doc = chosen.get('doc'); doc, quiet = keep_plain(doc, record)
         record['lists'] = {'drawn': False, 'attempts': chosen.get('attempts'), 'concept': (doc or {}).get('note'), 'forms': {l['section']: l['form'] for l in (doc or {}).get('lists', [])},
                            'measured': chosen.get('measured'), 'log': chosen.get('log'), 'doc': doc}
         if doc:
@@ -230,7 +250,7 @@ def compose_first_screen(slug_dir, out, deadline=None):
         try:   # what each picture below the first screen does, on the page as it now stands
             import compose_pictures as COMPOSE_PICTURES, pictures as PICTURES
             with open(out, encoding='utf-8') as f: page = f.read()
-            chosen = COMPOSE_PICTURES.compose(page, out, images=images, direction=directed()); doc = chosen.get('doc')
+            chosen = COMPOSE_PICTURES.compose(page, out, images=images, direction=directed()); doc = chosen.get('doc'); doc, quiet = keep_plain(doc, record)
             record['pictures'] = {'drawn': False, 'attempts': chosen.get('attempts'), 'concept': (doc or {}).get('note'), 'forms': {**{p['section']: p['form'] for p in (doc or {}).get('pictures', [])}, **{g['sections'][0]: 'gallery' for g in (doc or {}).get('galleries', [])}},
                                   'measured': chosen.get('measured'), 'log': chosen.get('log'), 'doc': doc}
             if doc:
@@ -242,7 +262,7 @@ def compose_first_screen(slug_dir, out, deadline=None):
         try:   # the sections that are words only — price lists, menus, a paragraph under its heading — on the page as it now stands
             import compose_words as COMPOSE_WORDS, words as WORDS
             with open(out, encoding='utf-8') as f: page = f.read()
-            chosen = COMPOSE_WORDS.compose(page, out, direction=directed()); doc = chosen.get('doc')
+            chosen = COMPOSE_WORDS.compose(page, out, direction=directed()); doc = chosen.get('doc'); doc, quiet = keep_plain(doc, record)
             record['words'] = {'drawn': False, 'attempts': chosen.get('attempts'), 'concept': (doc or {}).get('note'), 'forms': {w['section']: w['form'] for w in (doc or {}).get('words', [])},
                                'measured': chosen.get('measured'), 'log': chosen.get('log'), 'doc': doc}
             if doc:

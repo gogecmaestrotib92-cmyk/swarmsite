@@ -185,7 +185,7 @@ of the eleven references set their largest type at 4.5 times the text size or mo
 | TYP-07 | No label system: small text in several sizes and cases | measured: distinct styles under 15 px | hero `type.label`; one label style |
 | TYP-08 | Emphasis by weight, colour and italic at once | critic | one means of emphasis per page |
 | TYP-09 | Size does not follow rank: a heading smaller than the items under it, or a headline that is not the largest type on its screen | measured; found on our own render [M: Research C.12] | the renderer's scale per beat |
-| TYP-10 | A letter drawn by a fallback face, or a face whose accents stand apart from their letters | measured (letters a face does not draw itself); seen on our own render, where the face draws "š" itself with its caron detached [M: Research E.1, G11] | a face that draws the content's alphabet well; the registry records, per face, whether its accented letters hold together |
+| TYP-10 | A letter drawn by a fallback face, or an accent that arrives as a separate mark | measured (`letters` in the instrument). A caron that looked detached on our own render was measured against the 63 faces of the registry and is within their range: not a defect [M: Research E.1, G11] | a face that draws the content's alphabet; text in composed form |
 
 ### 4.3 Composition
 

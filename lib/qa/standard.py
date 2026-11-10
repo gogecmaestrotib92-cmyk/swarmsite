@@ -99,6 +99,7 @@ def _view(view):
         'held_screens': max(held) if held else 0, 'lag_ms': _mid(scroll.get('lag_ms') or []),
         'headline_ms': (settled + (load.get('session') or {}).get('began_ms', 0)) if isinstance(settled, (int, float)) else None,
         'cls': (view.get('lab') or {}).get('cls_on_load'), 'lcp_ms': ((view.get('lab') or {}).get('lcp') or {}).get('ms'),
+        'targets': view.get('targets'),
         'letters_not_drawn': sorted({ch for f in letters.get('by_family') or [] for ch in f.get('not_drawn_by_it') or []}), 'accents_apart': letters.get('accents_as_separate_marks') or [],
     }
 
@@ -168,6 +169,8 @@ def technical(evidence):
     if d:
         if d['headline_ms'] is not None: out.append({'id': 'T-15', 'check': 'headline visible in time', 'pass': d['headline_ms'] <= T['headline_ms'], 'value': d['headline_ms'], 'need': f"≤ {T['headline_ms']} ms"})
         out.append({'id': 'T-19', 'check': 'every letter drawn by its own face', 'pass': not (d['letters_not_drawn'] or d['accents_apart']), 'value': {'not_drawn': d['letters_not_drawn'], 'apart': d['accents_apart']}, 'need': 'none'})
+    if m and isinstance(m.get('targets'), dict) and m['targets'].get('counted'):
+        out.append({'id': 'T-10', 'check': 'targets at least 24 px on a phone', 'pass': m['targets']['under_24_px'] == 0, 'value': m['targets'], 'need': 'none under 24 px (WCAG 2.5.8); 44 px is the comfortable size'})
     for name, v in (('1440', d), ('390', m)):
         if v and v['cls'] is not None: out.append({'id': 'T-16', 'check': f'layout shift on load at {name}', 'pass': v['cls'] <= T['cls'], 'value': v['cls'], 'need': f"≤ {T['cls']}"})
     return out
