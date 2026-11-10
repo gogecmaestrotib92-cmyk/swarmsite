@@ -17,6 +17,8 @@ import agents as A
 import critic as C
 import measure as MEASURE
 import standard as STANDARD
+sys.path.insert(0, os.path.join(ROOT, 'lib/render'))
+import rules as RULES
 import coverage_report as Coverage
 import pattern_stage as Patterns
 import house as HOUSE
@@ -171,10 +173,14 @@ def checked_render(slug_dir, bp, out):
     return render(slug_dir, bp, out)
 
 def compose_wanted(slug_dir):
-    """An art director recomposes the first screen only when the job asks for it (brief.json: "compose": true) or the
-    deployment does (SWARM_COMPOSE=1). Without either, nothing in lib/compose runs."""
-    brief = A.J(slug_dir, 'brief.json') or {}
-    return os.environ.get('SWARM_COMPOSE') == '1' or brief.get('compose') is True
+    """The page that won the rounds is recomposed (lib/compose) unless the job or the deployment says no: brief.json
+    "compose": false, or SWARM_COMPOSE=0. Since 2026-11-10 this is the ordinary path — the form a visitor fills in has no
+    such switch, so an opt-in was a path nobody reached. A job's own word comes first, then the deployment's. Under tests
+    (LIVETEST) nothing is recomposed unless asked, so no test calls a model by default."""
+    brief = A.J(slug_dir, 'brief.json') or {}; asked = brief.get('compose'); env = os.environ.get('SWARM_COMPOSE')
+    if asked is True or asked is False: return asked
+    if env in ('0', '1'): return env == '1'
+    return not os.environ.get('LIVETEST')
 
 
 def compose_first_screen(slug_dir, out, deadline=None):
@@ -187,6 +193,7 @@ def compose_first_screen(slug_dir, out, deadline=None):
     if os.path.join(ROOT, 'lib', 'compose') not in sys.path: sys.path.insert(0, os.path.join(ROOT, 'lib', 'compose'))
     import compose as COMPOSE, render_ir as IR
     def replace(page):
+        page = RULES.budget(page)   # the page's budget of rules, counted again with the recomposed sections in it
         with open(out + '.composed', 'w', encoding='utf-8') as f: f.write(page)
         os.replace(out + '.composed', out)
     with open(out, encoding='utf-8') as f: page = f.read()

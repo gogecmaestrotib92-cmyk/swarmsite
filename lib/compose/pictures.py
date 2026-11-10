@@ -159,15 +159,15 @@ CSS = """
 .sec.pc.pc-f-offset .pc-drop-up{align-self:start;margin-top:calc(-1 * clamp(20px,4vw,64px))}.sec.pc.pc-f-offset .pc-drop-down{align-self:end;margin-bottom:calc(-1 * clamp(20px,4vw,64px))}
 .sec.pc .pc-fig.pc-contain img{object-fit:contain}
 .sec.pc .pc-shape-soft{border-radius:clamp(18px,2.4vw,36px)}.sec.pc .pc-shape-arch{border-radius:999px 999px 0 0}.sec.pc .pc-shape-circle{border-radius:50%}.sec.pc .pc-shape-pill{border-radius:999px}
-.sec.pc .pc-shadow-soft{box-shadow:0 24px 60px -24px rgba(0,0,0,.22)}.sec.pc .pc-shadow-hard{box-shadow:clamp(8px,1vw,16px) clamp(8px,1vw,16px) 0 var(--accent)}
-.sec.pc .pc-frame-paper{background:#fff;padding:clamp(8px,1vw,16px);box-shadow:0 0 0 1px color-mix(in srgb,currentColor 14%,transparent),0 24px 60px -24px rgba(0,0,0,.22)}
-.sec.pc .pc-frame-browser{border-radius:8px;box-shadow:0 0 0 1px color-mix(in srgb,currentColor 14%,transparent),0 24px 60px -24px rgba(0,0,0,.22)}
+.sec.pc .pc-shadow-soft{box-shadow:0 0 0 1px color-mix(in srgb,currentColor 14%,transparent)}.sec.pc .pc-shadow-hard{box-shadow:clamp(8px,1vw,16px) clamp(8px,1vw,16px) 0 var(--accent)}
+.sec.pc .pc-frame-paper{background:#fff;padding:clamp(8px,1vw,16px);box-shadow:0 0 0 1px color-mix(in srgb,currentColor 14%,transparent)}
+.sec.pc .pc-frame-browser{border-radius:8px;box-shadow:0 0 0 1px color-mix(in srgb,currentColor 14%,transparent)}
 
 .sec.pc.pc-f-stage .pc-panel{display:grid;place-items:center;min-width:0;padding:clamp(32px,5vw,88px);background:var(--pc-ground)}
 .sec.pc.pc-ground-accent{--pc-ground:var(--accent)}.sec.pc.pc-ground-ink{--pc-ground:var(--ink)}.sec.pc.pc-ground-ink.band-dark{--pc-ground:var(--band-ink)}
 .sec.pc.pc-ground-alt{--pc-ground:color-mix(in srgb,var(--ink) 9%,var(--paper))}.sec.pc.pc-ground-alt.band-dark{--pc-ground:color-mix(in srgb,var(--band-ink) 12%,var(--band-paper))}
 .sec.pc.pc-f-stage .pc-fig{justify-self:center;width:min(100%,var(--pc-max),calc(72svh * var(--pc-ar)));aspect-ratio:var(--ratio);border-radius:min(8px,max(4px,var(--radius,0px)))}
-.sec.pc.pc-f-stage .pc-fig.pc-screen{border-radius:8px;box-shadow:0 0 0 1px color-mix(in srgb,currentColor 14%,transparent),0 24px 60px -24px rgba(0,0,0,.22)}
+.sec.pc.pc-f-stage .pc-fig.pc-screen{border-radius:8px;box-shadow:0 0 0 1px color-mix(in srgb,currentColor 14%,transparent)}
 .sec.pc.pc-f-stage .pc-fig.pc-crop{width:min(100%,var(--pc-max));aspect-ratio:var(--crop);border-radius:8px 8px 0 0;box-shadow:0 0 0 1px color-mix(in srgb,currentColor 14%,transparent)}
 .sec.pc.pc-f-stage .pc-fig.pc-crop img{object-fit:cover;object-position:top}
 .sec.pc.pc-f-stage .pc-cropfade{z-index:3;background:linear-gradient(180deg,transparent 58%,var(--pc-ground) 100%)}

@@ -11,6 +11,8 @@ from visual_quality import empty_visual
 from visual_semantics import ledger_lead_fingerprint
 from colour_policy import resolve as resolve_colours, norm as normalise_colour, contrast as colour_contrast
 import moods as MOODS
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import rules as RULES
 
 e = lambda s: H.escape(str(s if s is not None else ''), quote=True)
 
@@ -453,11 +455,23 @@ def build(slug_dir, bp_id, out_path=None):
             core = re.sub(r'^\s*0?\d{1,2}\s*[/.·—–-]?\s*', '', str(bt['label'])).strip()
             bt['label'] = f"{pos[bt['id']]:02d} — {core}" if core and re.match(r'^\s*0?\d{1,2}\b', str(bt['label'])) else (core or bt['label'])
 
+    # One ground carries the page. The references change ground a median of once a page (0–5); ours changed it ten times,
+    # a band per section (research E.1-G2). So the tinted band is the paper again, and of the inverse and accent bands only
+    # the first run down the page keeps its ground: a change of ground is an event, not a rhythm. SWARM_GROUNDS=bands keeps
+    # every band as it was asked for.
+    GROUND = {}; ground_run = {'kept': False, 'open': False}
+    def settle_ground(bt, asked):
+        if os.environ.get('SWARM_GROUNDS') == 'bands' or not isinstance(bt, dict) or not bt.get('id'): return asked
+        key = bt['id']
+        if key not in GROUND:
+            stays = asked in ('dark', 'accent') and (not ground_run['kept'] or ground_run['open'])
+            GROUND[key] = asked if stays else 'paper'; ground_run['open'] = stays; ground_run['kept'] = ground_run['kept'] or stays
+        return GROUND[key]
     def band_of(sec, bt=None):
         # the band becomes a class name: only the bands the stylesheet knows, never a string a model wrote freely
         for value in ((bt or {}).get('band'), sec.get('band')):
-            if value in ('paper', 'dark', 'alt', 'accent'): return value
-        return 'paper'
+            if value in ('paper', 'dark', 'alt', 'accent'): return settle_ground(bt, value)
+        return settle_ground(bt, 'paper')
     def head_style(sec, key='head', bt=None):
         hd = sec.get(key) or {}; override = ((bt or {}).get('ui') or {}).get('h2_px')
         if isinstance(override, bool) or not isinstance(override, (int, float)) or not 12 <= override <= 400: override = None  # a size is a number; anything else is no choice
@@ -978,7 +992,7 @@ def build(slug_dir, bp_id, out_path=None):
         return f'<section class="sec overlay{" chapter" if variant == "chapter" else ""}" id="{e(bt.get("id", ""))}" data-sig="parallax"><figure class="ov-bg"><img src="{ps[0]}" alt=""></figure><div class="wrap ov-in light">{lab(bt.get("label"), True)}<h2 class="h2 light" style="{re.sub(r"max-width:[^;]+;?", "", head_style(sec))}">{e(title)}</h2>{lede_html}{rows_html}</div></section>'
     def quote_band(sec, bt, variant=''):
         text = bt.get('body') or bt.get('lede') or ''; who = f'<p class="lab who">{e(bt["who"])}</p>' if bt.get('who') else ''
-        band = 'accent' if variant == 'accent' else 'dark'
+        band = settle_ground(bt, 'accent' if variant == 'accent' else 'dark')
         return f'<section class="sec qband band-{band}{" center" if variant == "centre" else ""}" id="{e(bt["id"])}"><div class="wrap"><p class="qb">{e(text)}</p>{who}</div></section>'
     def rail(sec, bt):
         items = beat_items(bt); cands = [i for i in images.values() if photo_like(i) and free_for(i, bt)]
@@ -1445,7 +1459,7 @@ def build(slug_dir, bp_id, out_path=None):
         lang = str(inventory.get('lang') or '').lower().split('-')[0]
         heading = {'sr': 'Više o nama', 'hr': 'Više o nama', 'es': 'Más información', 'fr': 'En savoir plus', 'de': 'Mehr erfahren', 'it': 'Maggiori informazioni', 'pt': 'Mais informações'}.get(lang, 'More about us')
         links_h = {'sr': 'Ostale stranice', 'hr': 'Ostale stranice', 'es': 'Otras páginas', 'fr': 'Autres pages', 'de': 'Weitere Seiten', 'it': 'Altre pagine', 'pt': 'Outras páginas'}.get(lang, 'More pages')
-        return (f'<section class="sec archive band-alt" id="more"><div class="wrap"><span class="lab">{e(heading)}</span><div class="arch">{"".join(items)}</div>'
+        return (f'<section class="sec archive band-{"alt" if os.environ.get("SWARM_GROUNDS") == "bands" else ("dark" if C.get("bands") and C["bands"][-1] == "dark" else "paper")}" id="more"><div class="wrap"><span class="lab">{e(heading)}</span><div class="arch">{"".join(items)}</div>'
                 + (f'<nav class="arch-links" aria-label="{e(links_h)}"><span class="lab">{e(links_h)}</span><ul>{links}</ul></nav>' if links else '') + '</div></section>')
     def footer(sec):
         def text(value): return value.strip() if isinstance(value, str) else ''
@@ -1965,6 +1979,7 @@ addEventListener('load',()=>{{ const nav=document.getElementById('nav'); const s
   try{{ if(PREVIEW) new Swarm({{agents:innerWidth<900?8:18,speed:1,hud:true,sectionSelector:'section,footer',boxSel:'.btn,.card,figure,.rows li,.form input',onDone:()=>{{ try{{ scrollTo(0,0); Moves.init(); Sig(); }}catch(e){{}} }}}}).run(); else {{ Moves.init(); Sig(); }} }}catch(e){{ try{{Moves.init(); Sig();}}catch(_){{}} }} }});
 </script></body></html>'''
     html = fit_headings(html)
+    html = RULES.budget(html)
     out_path = out_path or os.path.join(slug_dir, f'index.{bp_id}.html'); open(out_path, 'w').write(html); return out_path
 
 if __name__ == '__main__':

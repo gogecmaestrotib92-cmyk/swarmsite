@@ -58,15 +58,15 @@ h1,h2,h3{text-wrap:balance}p,li{text-wrap:pretty}body{font-optical-sizing:auto;f
 .hero.ir .ir-media{position:relative;overflow:hidden;border-radius:var(--radius,0);aspect-ratio:var(--ratio);align-self:var(--self,start)}
 .hero.ir .ir-media img{display:block;width:100%;height:100%;object-fit:cover;object-position:var(--focal,50% 50%)}
 .hero.ir .ir-media.ir-contain{overflow:visible;aspect-ratio:auto}.hero.ir .ir-media.ir-contain img{height:auto;object-fit:contain}
-.hero.ir .ir-frame-browser{border-radius:8px;box-shadow:0 0 0 1px color-mix(in srgb,currentColor 14%,transparent),0 24px 60px -24px rgba(0,0,0,.22);overflow:hidden}
-.hero.ir .ir-frame-paper{background:#fff;padding:clamp(10px,1.4vw,22px);box-shadow:0 0 0 1px color-mix(in srgb,currentColor 14%,transparent),0 24px 60px -24px rgba(0,0,0,.22)}
+.hero.ir .ir-frame-browser{border-radius:8px;box-shadow:0 0 0 1px color-mix(in srgb,currentColor 14%,transparent);overflow:hidden}
+.hero.ir .ir-frame-paper{background:#fff;padding:clamp(10px,1.4vw,22px);box-shadow:0 0 0 1px color-mix(in srgb,currentColor 14%,transparent)}
 .hero.ir .ir-scrim::after{content:"";position:absolute;inset:0;z-index:3;background:linear-gradient(180deg,rgba(0,0,0,.34),rgba(0,0,0,.16) 45%,rgba(0,0,0,.52))}
 .hero.ir .ir-tone{isolation:isolate;background:#808080}.hero.ir .ir-tone img{mix-blend-mode:luminosity}.hero.ir .ir-tone-tint{background:var(--accent)}
 .hero.ir .ir-media>i,.hero.ir .ir-layer>i{position:absolute;inset:0;pointer-events:none}
 .hero.ir .ir-t-light{z-index:1;background:var(--ir-light);mix-blend-mode:multiply}.hero.ir .ir-t-dark{z-index:2;background:var(--ir-dark);mix-blend-mode:lighten}
 .hero.ir .ir-grain{z-index:2;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 .hero.ir .ir-shape-soft{border-radius:clamp(18px,2.4vw,36px)}.hero.ir .ir-shape-arch{border-radius:999px 999px 0 0}.hero.ir .ir-shape-circle{border-radius:50%}.hero.ir .ir-shape-pill{border-radius:999px}
-.hero.ir .ir-shadow-soft{box-shadow:0 24px 60px -24px rgba(0,0,0,.22)}.hero.ir .ir-shadow-hard{box-shadow:clamp(8px,1vw,16px) clamp(8px,1vw,16px) 0 var(--accent)}
+.hero.ir .ir-shadow-soft{box-shadow:0 0 0 1px color-mix(in srgb,currentColor 14%,transparent)}.hero.ir .ir-shadow-hard{box-shadow:clamp(8px,1vw,16px) clamp(8px,1vw,16px) 0 var(--accent)}
 .hero.ir .ir-stack{position:relative;overflow:visible;aspect-ratio:var(--box);align-self:var(--self,start)}
 .hero.ir .ir-layer{position:absolute;display:block;overflow:hidden;border-radius:var(--radius,0);background:var(--ir-bg);box-shadow:0 0 0 1px color-mix(in srgb,currentColor 12%,transparent),0 20px 50px -24px rgba(0,0,0,.24)}
 .hero.ir .ir-layer img{display:block;width:100%;height:100%;object-fit:cover;object-position:var(--focal,50% 50%)}
