@@ -37,7 +37,7 @@ CSS = """
 .sec.cta.dv-event:not(.hero) .h2.h2[style]{font-size:min(clamp(44px,8.4vw,136px),calc((100vw - 48px) / var(--lw,8) * 1.72))!important;line-height:.96;max-width:min(100%,18ch)!important;text-wrap:balance}
 .sec.cta.dv-event .btn{background:var(--on-accent,var(--paper));color:var(--accent);border-color:var(--on-accent,var(--paper))}
 .sec.cta.dv-event .lab,.sec.cta.dv-event .alts .lab{color:inherit;opacity:.8}
-@media(max-width:600px){.sec .h2 .dv-l+.dv-l{padding-left:calc(var(--dv-step,0) * .25em)}}
+@media(max-width:600px){.sec .h2 .dv-l+.dv-l{padding-left:calc(var(--dv-step,0) * .25em)}.sec.cta.dv-event{min-height:0!important;padding-top:clamp(72px,18vw,120px);padding-bottom:clamp(72px,18vw,120px)}.sec.cta.dv-event.cta-inset>.wrap{min-height:0}}
 """
 _word = lambda w: re.sub(r'^\W+|\W+$', '', w, flags=re.U)
 

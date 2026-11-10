@@ -358,7 +358,14 @@ def compose_first_screen(slug_dir, out, deadline=None):
         except Exception as e: record['device'] = {'drawn': False, 'error': str(e)[:160]}
     wanted = os.environ.get('SWARM_LAYOUT', '0' if os.environ.get('LIVETEST') else '1') != '0'
     if record.get('drawn') and wanted:
-        try: record['layout'] = mend_layout(out, after_first_screen, replace)
+        try:
+            record['layout'] = mend_layout(out, after_first_screen, replace)
+            for sid in (record['layout'] or {}).get('reverted') or []:   # the record says what the page is: a section put back carries no device
+                if isinstance(record.get('device'), dict):
+                    record['device'].get('sections', {}).pop(sid, None)
+                    if record['device'].get('event') == sid: record['device']['event'] = None
+                for part in ('lists', 'pictures', 'words'):
+                    if isinstance(record.get(part), dict) and isinstance(record[part].get('forms'), dict): record[part]['forms'].pop(sid, None)
         except Exception as e: record['layout'] = {'error': str(e)[:160]}
     with open(os.path.join(slug_dir, 'composition.json'), 'w', encoding='utf-8') as f: json.dump(record, f, indent=1, ensure_ascii=False)
     return record
