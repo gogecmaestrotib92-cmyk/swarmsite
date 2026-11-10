@@ -68,8 +68,9 @@ The hero is a grid of 12 columns and the rows you declare. A node sits at "at": 
   · "scale": one value per line from 0.6 0.8 1 1.3 1.6: one line larger or smaller than the rest. Needs "lines"; the values may add up to 3.4 at most.
   · "mark": accent|italic|outline|underline|box — how the emphasised words are drawn (outline: hollow letters; box: on a block of the accent colour). It applies to the words the headline already emphasises (shown between * in the brief) unless "mark_words" names others by position, 0 being the first word. At most half the words.
 - actions node: {"id", "t": "actions", "src": [one or two action addresses], "at", optional "align"}.
-- media node: {"id", "t": "media", "src": a picture address, "fit": cover|contain, "ratio": one of 1/1 4/5 3/4 2/3 4/3 3/2 16/9 16/10 21/9, "focal": [x, y] each 0–1, "bleed": none|left|right, "frame": none|browser|paper, "scrim": true|false, "at"}.
-  "bleed" runs the picture to the screen edge and is allowed only from column 1 (left) or to column line 13 (right). A screenshot is always "fit": "contain" (that is its default) and needs a "frame": browser or paper; no bleed, no scrim.
+- media node: {"id", "t": "media", "src": a picture address, "fit": cover|contain, "ratio": one of 1/1 4/5 3/4 2/3 4/3 3/2 16/9 16/10 21/9, "focal": [x, y] each 0–1, "bleed": none|left|right|full, "frame": none|browser|paper, "scrim": true|false, "at"}.
+  "bleed" runs the picture to the screen edge and is allowed only from column 1 (left) or to column line 13 (right).
+  "bleed": "full" makes a photograph the BACKDROP of the whole first screen — edge to edge, under the navigation, the words standing on it in the on-photo colour. It covers "col": [1, 13] and every row, has "scrim": true and no "ratio", and takes only "tone", "grain", "focal", "enter" and "scroll". It needs a large photograph (the brief says which can carry it). Then the layout of the words answers the picture: put them where the picture is quiet, set "focal" on its subject so the crop keeps it, and keep the headline off the subject. A studio does this when the photograph is the strongest thing the business has; a picture boxed beside the text is the weaker choice whenever a photograph can carry the screen. A screenshot is always "fit": "contain" (that is its default) and needs a "frame": browser or paper; no bleed, no scrim.
   A photograph can be treated:
   · "tone": none|mono|duotone|tint — mono is black and white; duotone prints the photograph in the page's own two colours, so it belongs to the page; tint prints it in the accent colour. A snapshot that looks out of place in full colour often holds in one tone.
   · "shape": rect|soft|arch|circle|pill (a circle needs ratio 1/1). "tilt": whole degrees −4 to 4. "shadow": none|soft|hard (hard is an offset block of the accent colour). "grain": true|false.
@@ -163,7 +164,8 @@ def brief(content, job_dir=None):
     lines.append('PICTURES — optional (thumbnails follow in this order):' if pictures else 'PICTURES — none that can carry a first screen: compose with type.')
     for address, m in pictures:
         kind = 'screenshot' if m.get('shot') else 'photograph'
-        lines.append(f'- {address}: {int(m["w"])}×{int(m["h"])} px {kind}' + (' — the picture the template used in its hero' if address == 'hero.picture' else ''))
+        carries = not m.get('shot') and max(1440 / m['w'], V.BACKDROP_PX['auto'] / m['h']) <= V.UPSCALE
+        lines.append(f'- {address}: {int(m["w"])}×{int(m["h"])} px {kind}' + (' — the picture the template used in its hero' if address == 'hero.picture' else '') + (' — large enough to be the BACKDROP of the first screen ("bleed": "full")' if carries else ''))
     lines.append(f'WIDTHS at a 1440 px viewport: one column is about {round(col)} px and gaps are 24 px, so n columns span n×{round(col)} + (n−1)×24 px; '
                  f'a bleed adds about {round(page["frame"] + max(0, (1440 - page["container"]) / 2))} px.')
     own = page.get('display') or 'unknown'
@@ -198,7 +200,7 @@ def hero_shots(page_path):
 
 # Promises of the page contract that a first screen can break. Measured on the render, never estimated.
 # A composition that newly breaks one of these is not shipped: the page is broken for a visitor, or it lost words or links the source had.
-BREAKING = ('h1-lines', 'h1-size', 'no-overflow', 'contrast', 'no-empty-screens', 'hero-line-wrap', 'seo-text-kept', 'seo-links-kept')
+BREAKING = ('h1-lines', 'h1-size', 'no-overflow', 'contrast', 'no-empty-screens', 'hero-line-wrap', 'seo-text-kept', 'seo-links-kept', 'picture-over-pixels')
 
 
 def measured(page_path):
@@ -221,6 +223,22 @@ def measure_hero(page_path):
     r = subprocess.run(['node', os.path.join(HERE, 'measure.mjs'), page_path], cwd=ROOT, capture_output=True, text=True, timeout=180)
     try: return json.loads(r.stdout.strip().splitlines()[-1])
     except (ValueError, IndexError): raise RuntimeError('the first screen could not be measured: ' + (r.stderr or r.stdout)[-200:])
+
+
+def backdrop_findings(page_path):
+    """Promises of a first screen whose picture is its ground, measured on the render (lib/compose/picmeasure.mjs): the
+    picture is within its pixels, and the words read against what is really behind them."""
+    r = subprocess.run(['node', os.path.join(HERE, 'picmeasure.mjs'), page_path], cwd=ROOT, capture_output=True, text=True, timeout=240)
+    try: seen = json.loads(r.stdout.strip().splitlines()[-1])
+    except (ValueError, IndexError): raise RuntimeError('the backdrop could not be measured: ' + (r.stderr or r.stdout)[-200:])
+    found = {}
+    for view in ('desktop', 'mobile'):
+        for s in seen.get(view) or []:
+            if s.get('form') != 'hero-backdrop': continue
+            if isinstance(s.get('scale'), (int, float)) and s['scale'] > s.get('limit', 1.35) + 0.02: found[f'{view}-hero-picture-over-pixels'] = f'the backdrop is drawn at {s["scale"]:.2f}× its pixels (limit {s.get("limit", 1.35):g}×): this photograph cannot carry the whole screen'
+            c = s.get('contrast')
+            if c and c['ratio'] < c['need']: found[f'{view}-hero-words-on-picture-contrast'] = f'"{c["text"]}" reads at {c["ratio"]:.1f}:1 against the picture behind it and needs {c["need"]:g}:1: move the words to a quieter part of the picture, change "focal", tone the picture ("mono"), or give the text a "plate"'
+    return found
 
 
 CUT_BY_FOLD = 0.2   # the share of a first-screen picture that may hang under the fold before it reads as cut off
@@ -261,6 +279,23 @@ def fit(page_html, ir, images, folder):
     for node in fitted['hero']['nodes']:
         if node.get('t') == 'text' and node.get('as') == 'h1': node['fit'] = {'line': measured_fit.get('line'), 'word': measured_fit.get('word')}
     return fitted if not V.validate(fitted, content) else ir
+
+
+def veil(page_html, ir, images, folder):
+    """A composition whose first screen stands on a backdrop, with the veil the render asks for: drawn, measured, and when
+    the words do not read against what is really behind them the scrim is made deep — by rule, without asking again."""
+    ground = [n for n in ir['hero']['nodes'] if isinstance(n, dict) and n.get('bleed') == 'full' and n.get('scrim') is True]
+    if not ground: return ir
+    page, report = IR.transplant(page_html, ir, images)
+    if not report['drawn']: return ir
+    with tempfile.NamedTemporaryFile('w', suffix='.html', delete=False, encoding='utf-8', dir=folder) as f: f.write(page); drawn = f.name
+    try: found = backdrop_findings(drawn)
+    finally: os.unlink(drawn)
+    if not any('words-on-picture' in k for k in found): return ir
+    deeper = json.loads(json.dumps(ir))
+    for node in deeper['hero']['nodes']:
+        if node.get('bleed') == 'full': node['scrim'] = 'deep'
+    return deeper
 
 
 def _image_block(path, size=1100):
@@ -373,12 +408,13 @@ def compose(page_html, images, job_dir=None, page_path=None, model=None, review=
             try:
                 shots_ = hero_shots(drawn) if review else (None, None)
                 found = {**measured(drawn), **hero_findings(measure_hero(drawn))}
+                if any(isinstance(n, dict) and n.get('bleed') == 'full' for n in candidate['hero']['nodes']): found.update(backdrop_findings(drawn))
             finally: os.unlink(drawn)
             return shots_, {k: v for k, v in found.items() if k not in baseline}
         def seen(candidate):
             """Measure the candidate's headline, draw it, picture it, grade it — in place, on the candidate's own record."""
             try:
-                candidate['ir'] = fit(page_html, candidate['ir'], images, folder)
+                candidate['ir'] = veil(page_html, fit(page_html, candidate['ir'], images, folder), images, folder)
                 candidate['shots'], candidate['findings'] = look_at(candidate['ir']); candidate['entry']['measured'] = candidate['findings']
             except Exception as e: candidate['failed'] = str(e)[:160]
             return candidate

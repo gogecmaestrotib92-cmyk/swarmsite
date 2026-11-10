@@ -7,6 +7,7 @@ buttons going to the same captured destinations. A composition can place them di
 add to them, or leave them out (lib/compose/validate.py checks that).
 
   from_page(page_html, images)  → {'text', 'actions', 'media', 'page', 'span'}
+  page_of(page_html)            → the page's own measures and type, from its tokens
   words(headline segments)      → the headline word by word, for line breaks and marked words
 Deterministic, no network, no model."""
 import base64, io, re
@@ -97,15 +98,19 @@ def from_page(page_html, images=None):
         known = by_data.get(parser.picture['src'])
         w, h = (known.get('w'), known.get('h')) if known else _size(parser.picture['src'])
         media['hero.picture'] = {'src': parser.picture['src'], 'alt': parser.picture['alt'], 'w': w, 'h': h, 'shot': bool(known and known.get('shot')), 'gen': bool(known and known.get('gen')), 'id': str(known['id']) if known and known.get('id') else None}
+    used_elsewhere = {key for key, m in media.items() if m['src'] in page_html[:start] + page_html[end:]}
+    return {'text': text, 'actions': actions, 'media': media, 'span': (start, end), 'page': page_of(page_html), 'used_elsewhere': sorted(used_elsewhere)}
+
+
+def page_of(page_html):
+    """What a composition needs to know about the page it sits in, read off the page's own tokens: the width of its
+    container and frame, whether it is a dark page, the family and weights its headings are set in."""
     root = re.search(r':root\{([^}]*)\}', page_html); tokens = root.group(1) if root else ''
     px = lambda name, default: int(float((re.search(r'--' + name + r':\s*([\d.]+)px', tokens) or [None, default])[1]))
     token = lambda name: (re.search(r'--' + name + r':\s*([^;}]+)', tokens) or [None, ''])[1].strip()
     family = re.match(r"\s*'([^']+)'", token('display'))
-    used_elsewhere = {key for key, m in media.items() if m['src'] in page_html[:start] + page_html[end:]}
-    return {'text': text, 'actions': actions, 'media': media, 'span': (start, end),
-            'page': {'container': px('container', 1300), 'frame': px('frame', 40), 'dark': _dark(token('paper')), 'display': family.group(1) if family else None,
-                     'h3_weight': int(token('h3-w')) if token('h3-w').isdigit() else None, 'upper': token('h1-tt') == 'uppercase'},
-            'used_elsewhere': sorted(used_elsewhere)}
+    return {'container': px('container', 1300), 'frame': px('frame', 40), 'dark': _dark(token('paper')), 'display': family.group(1) if family else None,
+            'h3_weight': int(token('h3-w')) if token('h3-w').isdigit() else None, 'upper': token('h1-tt') == 'uppercase'}
 
 
 def _dark(colour):

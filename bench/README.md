@@ -43,7 +43,9 @@ the headlines of the compositions already written without a model call, and `pyt
 grades them (`composed` does the same for the hand-written ones in `bench/compositions/`).
 `--concepts 3` draws three first screens per site from three leads and has a creative director choose among the renders.
 `python3 bench/compose.py --lists` has the model recompose the lists below each site's composed first screen (two calls and
-about $0.04 a site) and `python3 bench/run.py page` renders and grades the whole composed page.
+about $0.04 a site), `python3 bench/compose.py --pictures` has it decide what each picture below the first screen does —
+backdrop, bleed, panorama, card, offset or stage, settled against a measured render (about $0.03 a site) — and
+`python3 bench/run.py page` renders and grades the whole composed page.
 
 Variants that need the model (three concepts, composed heroes) are added as they are built; they must start from the
 same `seed/` files.

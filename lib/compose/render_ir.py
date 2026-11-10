@@ -75,6 +75,11 @@ CSS = """
 .hero.ir .ir-bleed-right{margin-right:calc(-1 * (var(--frame,24px) + max(0px,(100vw - var(--container,1300px)) / 2)))}
 .hero.ir .ir-bleed-left{margin-left:calc(-1 * (var(--frame,24px) + max(0px,(100vw - var(--container,1300px)) / 2)))}
 .hero.ir .ir-rule{height:1px;background:var(--line);align-self:var(--self,start)}
+.hero.ir.ir-has-backdrop{position:relative;isolation:isolate;overflow:hidden;background:#15130f}
+.hero.ir .ir-backdrop{position:absolute;inset:0;width:100%;height:100%;align-self:stretch;z-index:0;margin:0;aspect-ratio:auto;border-radius:0}
+.hero.ir .ir-backdrop.ir-scrim::after{background:linear-gradient(180deg,rgba(12,10,8,.52),rgba(12,10,8,.3) 42%,rgba(12,10,8,.68))}
+.hero.ir .ir-backdrop.ir-scrim-deep::after{background:linear-gradient(180deg,rgba(12,10,8,.76),rgba(12,10,8,.62) 42%,rgba(12,10,8,.86))}
+.hero.ir.ir-has-backdrop .ir-grid{position:relative;z-index:1}
 @media(max-width:900px){
 .hero.ir{min-height:auto}
 .hero.ir .ir-grid{display:flex;flex-direction:column;gap:22px}
@@ -86,6 +91,8 @@ CSS = """
 .hero.ir .ir-h:not(.ir-keep-sm) .ir-l{display:inline;font-size:inherit;padding-left:0}.hero.ir .ir-h:not(.ir-keep-sm) .mv-line-in{display:inline}
 .hero.ir .ir-media{rotate:none!important}
 .hero.ir .ir-on-scrim,.hero.ir .ir-on-scrim .lab,.hero.ir .ir-on-scrim .lede{color:inherit}.hero.ir .ir-on-scrim .btn.ghost{color:inherit;border-color:currentColor}
+.hero.ir.ir-has-backdrop{min-height:min(100svh,720px)}.hero.ir .ir-backdrop{aspect-ratio:auto}
+.hero.ir.ir-has-backdrop .ir-on-scrim,.hero.ir.ir-has-backdrop .ir-on-scrim .lab,.hero.ir.ir-has-backdrop .ir-on-scrim .lede{color:var(--on-photo,#F4EFE3)}.hero.ir.ir-has-backdrop .ir-on-scrim .btn.ghost{color:var(--on-photo,#F4EFE3);border-color:var(--on-photo,#F4EFE3)}
 }
 """
 
@@ -143,7 +150,7 @@ def render_hero(ir, content):
     # text that sits on a scrimmed picture reads in the on-photo colour
     def on_scrim(node):
         return not node.get('plate') and any(m.get('t') == 'media' and m.get('scrim') and V.overlap(areas[node['id']], areas[m['id']]) for m in nodes)
-    out = []
+    out, under = [], []
     for node in nodes:
         style = _place(node, len(rows), phone.index(node['id'])); kind = node['t']; nid = e(node['id'])
         if kind == 'text':
@@ -178,6 +185,11 @@ def render_hero(ir, content):
             fit = V.fit_of(node, content); focal = node.get('focal', [0.5, 0.5]); tone = node.get('tone', 'none'); shape = node.get('shape', 'rect')
             look = (['ir-contain'] if fit == 'contain' else []) + ([f'ir-frame-{node["frame"]}'] if node.get('frame', 'none') != 'none' else []) + ([f'ir-shape-{shape}'] if shape != 'rect' else [])
             toned = (['ir-tone'] + (['ir-tone-tint'] if tone == 'tint' else [])) if tone != 'none' else []
+            if node.get('bleed') == 'full':   # the ground of the whole first screen: under the grid, edge to edge, the navigation on it
+                named = ([MOVES[node['enter']]] if node.get('enter', 'none') != 'none' else []) + (['parallax'] if node.get('scroll') == 'parallax' else [])
+                move = (f' data-move="{" ".join(named)}"' + (' data-parallax="6"' if 'parallax' in named else '')) if named else ''
+                under.append(f'<figure class="{" ".join(["ir-media", "ir-backdrop", "ir-scrim"] + (["ir-scrim-deep"] if node.get("scrim") == "deep" else []) + toned)}" data-node="{nid}"{move} style="--focal:{round(focal[0] * 100)}% {round(focal[1] * 100)}%">{_picture(content["media"][node["src"]])}{_toning(node)}</figure>')
+                continue
             style += f';--ratio:{node["ratio"]};--focal:{round(focal[0] * 100)}% {round(focal[1] * 100)}%'
             if isinstance(node['src'], list):   # a stack: every layer inside the node's own box, the first picture named in front
                 box, layers, _ = V.stack_layout(node['stack'], len(node['src']), node['ratio']); inner = ''
@@ -198,8 +210,9 @@ def render_hero(ir, content):
     bg, fg = SURFACE[hero.get('surface', 'paper')]
     dark, light = ('var(--paper)', 'var(--ink)') if content.get('page', {}).get('dark') else ('var(--ink)', 'var(--paper)')
     grid_style = f'--ir-rows:{" ".join(ROWS[r] for r in rows)};--ir-gap:{GAP[hero.get("gap", "md")]};--ir-minh:{HEIGHT[hero.get("height", "auto")]};--ir-bg:{bg};--ir-fg:{fg};--ir-dark:{dark};--ir-light:{light}'
-    return (f'<section class="sec hero ir{BAND[hero.get("surface", "paper")]}" id="top" data-ir="{V.VERSION}" data-enter="{e(hero.get("enter", "none"))}" style="{grid_style}">'
-            f'<div class="wrap ir-grid">{"".join(out)}</div></section>')
+    ground = ' has-media ir-has-backdrop' if under else ''   # has-media: the page's own script then sets the navigation in the on-photo colour over it
+    return (f'<section class="sec hero ir{BAND[hero.get("surface", "paper")]}{ground}" id="top" data-ir="{V.VERSION}" data-enter="{e(hero.get("enter", "none"))}" style="{grid_style}">'
+            f'{"".join(under)}<div class="wrap ir-grid">{"".join(out)}</div></section>')
 
 
 def face_head(hero, content):

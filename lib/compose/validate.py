@@ -5,7 +5,8 @@ person or a model and it is not trusted: everything is checked here before a pix
 fails is refused whole — the page keeps its production hero. Nothing is repaired silently.
 
 What a composition can do: place each piece of content on the grid, size the headline, set a measure, let a picture
-bleed or sit under the headline, choose the height, order the pieces for a phone. Since 0.2 also: set the page in a
+bleed, sit under the headline or be the ground of the whole screen (a backdrop: bleed "full", the words on it under its
+scrim), choose the height, order the pieces for a phone. Since 0.2 also: set the page in a
 typeface from the registry (lib/type), break the headline into lines by word count, indent or scale a line, mark a
 word (accent, italic, outline, underline, box), tone and shape a photograph, tilt it, layer two or three pictures, and
 say how a picture arrives and moves.
@@ -32,7 +33,7 @@ LEDE_SIZES = ('md', 'lg')
 ROLES = ('label', 'h1', 'lede')
 FITS = ('cover', 'contain')
 RATIOS = ('1/1', '4/5', '3/4', '2/3', '4/3', '3/2', '16/9', '16/10', '21/9')
-BLEEDS = ('none', 'left', 'right')
+BLEEDS = ('none', 'left', 'right', 'full')   # full: the picture is the ground of the whole first screen, the words stand on it
 FRAMES = ('none', 'browser', 'paper')
 PLATES = ('paper', 'ink')
 SELF = ('start', 'center', 'end', 'stretch')
@@ -48,6 +49,7 @@ SHADOWS = ('none', 'soft', 'hard')
 MEDIA_ENTER = ('none', 'rise', 'clip', 'settle')
 MEDIA_SCROLL = ('none', 'parallax')
 MIN_H1_PX = 48   # the page contract's floor for a headline at 1440
+BACKDROP_PX = {'auto': 760, 'screen': 900, 'tall': 1080}     # how tall a backdrop is drawn at 1440×900, navigation included
 FIRST_SCREEN_PX = {'auto': 720, 'screen': 720, 'tall': 900}   # the room a 1440×900 first screen has under the navigation: a picture taller than this pushes the rest under the fold
 MAX_LINES = 3    # and its ceiling on lines
 UPSCALE = 1.35   # a photograph may be shown up to this much past its pixels (the renderer's own limit); a screenshot not at all
@@ -279,14 +281,19 @@ def validate(ir, content):
             tone, shape, tilt, shadow = node.get('tone', 'none'), node.get('shape', 'rect'), node.get('tilt', 0), node.get('shadow', 'none')
             enter, scroll, stack = node.get('enter', 'none'), node.get('scroll', 'none'), node.get('stack')
             if fit not in FITS: err('IR001', where, f'fit is one of {FITS}')
-            if ratio not in RATIOS: err('IR064', where, f'a picture states its ratio, one of {RATIOS}: the height it takes is then known before it is drawn')
+            backdrop = bleed == 'full'
+            if backdrop:   # the ground of the first screen: it has the screen's proportion, not one of its own
+                if a != (1, COLS + 1, 1, len(rows) + 1): err('IR030', where, f'a backdrop (bleed "full") covers the whole first screen: col [1, {COLS + 1}] and row [1, {len(rows) + 1}]')
+                if node.get('scrim') not in (True, 'deep'): err('IR032', where, 'a backdrop carries the words of the first screen: it needs its scrim ("scrim": true)')
+                if ratio is not None: err('IR064', where, 'a backdrop takes the proportion of the screen: it has no ratio')
+            elif ratio not in RATIOS: err('IR064', where, f'a picture states its ratio, one of {RATIOS}: the height it takes is then known before it is drawn')
             if bleed not in BLEEDS: err('IR001', where, f'bleed is one of {BLEEDS}')
             if frame not in FRAMES: err('IR001', where, f'frame is one of {FRAMES}')
             if tone not in TONES: err('IR001', where, f'tone is one of {TONES}')
             if shape not in SHAPES: err('IR001', where, f'shape is one of {SHAPES}')
             if shadow not in SHADOWS: err('IR001', where, f'shadow is one of {SHADOWS}')
             if not (isinstance(tilt, int) and not isinstance(tilt, bool) and -4 <= tilt <= 4): err('IR001', where, 'tilt is a whole number of degrees, -4 to 4: more than that leaves the cells the picture was given'); tilt = 0
-            if not isinstance(node.get('scrim', False), bool): err('IR001', where, 'scrim is true or false')
+            if not (isinstance(node.get('scrim', False), bool) or (node.get('scrim') == 'deep' and bleed == 'full')): err('IR001', where, 'scrim is true or false (a backdrop\'s may also be "deep")')
             if not isinstance(node.get('grain', False), bool): err('IR001', where, 'grain is true or false')
             if enter not in MEDIA_ENTER: err('IR070', where, f'a picture arrives as one of {MEDIA_ENTER}')
             if scroll not in MEDIA_SCROLL: err('IR070', where, f'a picture moves with the scroll as one of {MEDIA_SCROLL}')
@@ -298,7 +305,7 @@ def validate(ir, content):
             if bleed == 'right' and a[1] != COLS + 1: err('IR030', where, 'a picture bleeds right only from the last column')
             # treatments that do not go together
             if shape == 'circle' and ratio != '1/1': err('IR067', where, 'a circle is a picture at ratio 1/1')
-            if bleed in ('left', 'right') and (tilt or shape not in ('rect',) or shadow != 'none' or stacked): err('IR067', where, 'a picture that bleeds to the screen edge is a plain rectangle: no tilt, shape, shadow or stack')
+            if bleed in ('left', 'right', 'full') and (tilt or shape not in ('rect',) or shadow != 'none' or stacked or (bleed == 'full' and frame != 'none')): err('IR067', where, 'a picture that bleeds to the screen edge is a plain rectangle: no tilt, shape, shadow, stack' + (' or frame' if bleed == 'full' else ''))
             if frame != 'none' and shape not in ('rect', 'soft'): err('IR067', where, 'a framed picture keeps a rectangular shape')
             if stacked and (node.get('scrim') or shape not in ('rect', 'soft') or tilt or scroll != 'none'): err('IR067', where, 'a stack is rectangles laid on each other: no scrim, shape, tilt of its own or parallax')
             if scroll == 'parallax' and (fit != 'cover' or tilt or shape not in ('rect', 'soft') or frame != 'none'): err('IR067', where, 'parallax moves a photograph inside its own frame: fit "cover", no tilt, no frame, a rectangular shape')
@@ -317,6 +324,13 @@ def validate(ir, content):
                 placed_media.append(x)
                 w, h = m.get('w'), m.get('h')
                 if not (isinstance(w, (int, float)) and isinstance(h, (int, float)) and w > 0 and h > 0): err('IR063', where, f'the pixel size of "{x}" is unknown, so it cannot be checked against the space it would fill'); continue
+                if backdrop:
+                    tall = BACKDROP_PX.get(hero.get('height', 'auto'), 760); needed = max(1440 / w, tall / h)
+                    if needed > UPSCALE + 1e-6:
+                        lower = hero.get('height', 'auto') != 'auto' and max(1440 / w, BACKDROP_PX['auto'] / h) <= UPSCALE
+                        err('IR060', where, f'"{x}" is {int(w)}×{int(h)} px and as a backdrop would fill 1440×{tall} px at a 1440 viewport ({needed:.2f}× its pixels, limit {UPSCALE}×): '
+                            + ('with the first screen at "height": "auto" it can carry it' if lower else 'it cannot be the ground of the first screen — place it in columns instead'))
+                    continue
                 if ratio not in RATIOS or bleed not in BLEEDS: continue
                 width = span_px(a, content.get('page', {}), bleed, gap) * share; num, den = (int(v) for v in ratio.split('/')); height = width * den / num
                 limit = 1.0 if m.get('shot') else UPSCALE
@@ -327,9 +341,9 @@ def validate(ir, content):
                     err('IR068', where, f'"{x}" is a {int(w)}×{int(h)} screenshot and the stack\'s ratio {ratio} would letterbox it: the nearest ratio to its own is {nearest}')
             # what registers as the first screen's picture: one picture by its own width, a stack by the room its pictures take together
             # (the page contract counts a figure of several pictures as one visual) as long as each is a picture and not an icon
-            layer = span_px(a, content.get('page', {}), bleed if bleed in BLEEDS else 'none', gap) * share
-            widths[nid] = (layer / share if layer >= 0.15 * 1440 else 0) if stacked else layer
-            if ratio in RATIOS and bleed in BLEEDS:   # the first screen is 900 px tall: a picture that stands taller pushes what is under it out of it
+            layer = span_px(a, content.get('page', {}), bleed if bleed in ('left', 'right') else 'none', gap) * share
+            widths[nid] = 1440 if backdrop else (layer / share if layer >= 0.15 * 1440 else 0) if stacked else layer
+            if ratio in RATIOS and bleed in BLEEDS and not backdrop:   # the first screen is 900 px tall: a picture that stands taller pushes what is under it out of it
                 num, den = (int(v) for v in ratio.split('/')); full = span_px(a, content.get('page', {}), bleed, gap)
                 first = content['media'][sources[0]]
                 if stacked and stack in STACKS: tall = full / stack_layout(stack, len(sources), ratio)[0]

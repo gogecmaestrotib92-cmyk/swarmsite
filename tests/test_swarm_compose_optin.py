@@ -1,7 +1,7 @@
 """The composed first screen in the production loop: off unless a job or the deployment asks, one more candidate when on.
 It replaces the winning page only if it scores at least as high and breaks nothing the winner kept; otherwise every
 file of the winner is put back exactly. No model, no browser: the composer, the contract and the critic are stand-ins."""
-import json, os, shutil, sys, tempfile, unittest
+import json, os, shutil, sys, tempfile, time, unittest
 from pathlib import Path
 from unittest.mock import patch
 
@@ -10,6 +10,7 @@ sys.path.insert(0, str(ROOT / 'lib' / 'swarm')); sys.path.insert(0, str(ROOT / '
 import run
 import compose as COMPOSE
 import compose_lists as COMPOSE_LISTS
+import compose_pictures as COMPOSE_PICTURES
 import render_ir as IR
 
 PAGE = ('<html><head><style>:root{--paper:#ffffff;--display:\'Geist\',sans-serif;--container:1300px;--frame:40px}</style></head><body>'
@@ -18,7 +19,11 @@ PAGE = ('<html><head><style>:root{--paper:#ffffff;--display:\'Geist\',sans-serif
         '<section class="sec cards"><h2 class="h2">Below</h2></section>'
         '<section class="sec indexlist band-alt" id="what"><div class="wrap"><div class="gh"><span class="lab">What</span><h2 class="h2">Four things</h2></div><ol class="index-list">'
         + ''.join(f'<li class="index-row"><span class="idx">0{n}</span><h3 class="h3">Thing {n}</h3><p>Body of thing {n}.</p></li>' for n in range(1, 5))
-        + '</ol></div></section></body></html>')
+        + '</ol></div></section>'
+        '<section class="sec story band-paper" id="room"><div class="wrap st"><div class="photo-caption"><span class="lab">The room</span><h2 class="h2">Where it happens</h2><p class="cap">One line about the room.</p></div>'
+        '<figure class="st-v"><img src="data:image/png;base64,AAAA" alt="The room"></figure></div></section></body></html>')
+ROOM = [{'id': 'room', 'data': 'data:image/png;base64,AAAA', 'w': 1600, 'h': 1067}]   # images.json describes the picture of the "room" section
+PICTURES_OK = {'ir': '0.2', 'note': 'The room runs off the edge.', 'pictures': [{'section': 'room', 'form': 'bleed', 'side': 'right', 'cols': 6}]}
 LISTS_OK = {'ir': '0.2', 'note': 'Hollow numerals.', 'lists': [{'section': 'what', 'form': 'ledger', 'numerals': 'outline', 'head': 'sticky'}]}
 IR_OK = {'ir': '0.2', 'note': 'Type alone, stepped.', 'hero': {'rows': ['auto', 'auto', 'auto', 'auto'], 'face': {'id': 'fraunces'}, 'nodes': [
     {'id': 'cat', 't': 'text', 'src': 'hero.category', 'as': 'label', 'at': {'col': [1, 7], 'row': 1}},
@@ -31,13 +36,15 @@ class Job(unittest.TestCase):
     def setUp(self):
         self.dir = tempfile.mkdtemp(); self.addCleanup(shutil.rmtree, self.dir, True)
         self.out = os.path.join(self.dir, 'bp-x.html'); Path(self.out).write_text(PAGE, encoding='utf-8')
-        Path(self.dir, 'images.json').write_text('[]'); Path(self.dir, 'direction.json').write_text(json.dumps({'kind': 'software'}))
+        Path(self.dir, 'images.json').write_text(json.dumps(ROOM)); Path(self.dir, 'direction.json').write_text(json.dumps({'kind': 'software'}))
         self.result = {'ir': json.loads(json.dumps(IR_OK)), 'drawn': True, 'attempts': 2, 'log': [{'stage': 'compose', 'errors': []}], 'wishes': [], 'measured': {}}
         self.asked = []
         def composed(*a, **k): self.asked.append(k); return self.result
         patcher = patch.object(COMPOSE, 'compose', composed); patcher.start(); self.addCleanup(patcher.stop)
         self.lists = {'doc': None, 'drawn': False, 'attempts': 0, 'log': [], 'measured': None}   # by default the lists composer returns nothing
         patcher = patch.object(COMPOSE_LISTS, 'compose', lambda *a, **k: self.lists); patcher.start(); self.addCleanup(patcher.stop)
+        self.pictures = {'doc': None, 'drawn': False, 'attempts': 0, 'log': [], 'measured': None}   # and so does the pictures composer
+        patcher = patch.object(COMPOSE_PICTURES, 'compose', lambda *a, **k: self.pictures); patcher.start(); self.addCleanup(patcher.stop)
     def brief(self, **fields): Path(self.dir, 'brief.json').write_text(json.dumps(fields))
     def record(self): return json.loads(Path(self.dir, 'composition.json').read_text())
 
@@ -84,6 +91,33 @@ class FirstScreen(Job):
         self.assertTrue(record['drawn']); self.assertTrue(record['lists']['drawn']); self.assertEqual(record['lists']['forms'], {'what': 'ledger'})
         self.assertIn('lc lc-ledger', page); self.assertIn('class="sec hero ir"', page); self.assertEqual(page.count('<h3 class="h3 lc-title">Thing '), 4)
         self.assertEqual(self.record()['lists']['concept'], 'Hollow numerals.')
+
+    def test_the_pictures_are_composed_last_on_the_page_as_it_then_stands(self):
+        seen = []; self.lists = {'doc': json.loads(json.dumps(LISTS_OK)), 'drawn': True, 'attempts': 1, 'log': [], 'measured': {}}
+        def pictures(page, path, images=None, **kw): seen.append((page, images)); return {'doc': json.loads(json.dumps(PICTURES_OK)), 'drawn': True, 'attempts': 2, 'log': [], 'measured': {}}
+        with patch.object(COMPOSE_PICTURES, 'compose', pictures): record = run.compose_first_screen(self.dir, self.out)
+        page = Path(self.out).read_text(encoding='utf-8')
+        self.assertIn('class="sec hero ir"', seen[0][0]); self.assertIn('lc lc-ledger', seen[0][0], 'the pictures composer is shown the page with its first screen and lists composed')
+        self.assertEqual(seen[0][1], ROOM, 'and the job\'s images, which say what each picture is')
+        self.assertTrue(record['pictures']['drawn']); self.assertEqual(record['pictures']['forms'], {'room': 'bleed'}); self.assertEqual(self.record()['pictures']['concept'], 'The room runs off the edge.')
+        self.assertIn('pc pc-f-bleed', page); self.assertIn('lc lc-ledger', page); self.assertIn('class="sec hero ir"', page); self.assertEqual(page.count('data:image/png;base64,AAAA'), 1)
+
+    def test_pictures_alone_are_a_candidate_and_a_failing_or_refused_composer_leaves_the_rest(self):
+        self.result = {'ir': None, 'drawn': False, 'attempts': 2, 'log': [], 'wishes': [], 'measured': None}
+        self.pictures = {'doc': json.loads(json.dumps(PICTURES_OK)), 'drawn': True, 'attempts': 1, 'log': [], 'measured': {}}
+        record = run.compose_first_screen(self.dir, self.out); self.assertTrue(record['drawn']); self.assertIn('pc pc-f-bleed', Path(self.out).read_text(encoding='utf-8'))
+        Path(self.out).write_text(PAGE, encoding='utf-8')
+        with patch.object(COMPOSE_PICTURES, 'compose', side_effect=RuntimeError('no browser')): record = run.compose_first_screen(self.dir, self.out)
+        self.assertFalse(record['drawn']); self.assertIn('no browser', record['pictures']['error']); self.assertEqual(Path(self.out).read_text(encoding='utf-8'), PAGE)
+        self.pictures = {'doc': {'ir': '0.2', 'pictures': [{'section': 'room', 'form': 'bleed', 'cols': 11}]}, 'drawn': True, 'attempts': 1, 'log': [], 'measured': {}}
+        record = run.compose_first_screen(self.dir, self.out)
+        self.assertFalse(record['pictures']['drawn'], 'a document the validator refuses is never drawn, whoever returned it'); self.assertEqual(Path(self.out).read_text(encoding='utf-8'), PAGE)
+
+    def test_the_pictures_are_left_alone_when_the_job_has_no_time_left(self):
+        with patch.object(COMPOSE_PICTURES, 'compose', side_effect=AssertionError('not asked')): record = run.compose_first_screen(self.dir, self.out, deadline=time.time() - 1)
+        self.assertTrue(record['drawn'], 'the first screen is still composed'); self.assertIn('no time left', record['pictures']['error'])
+        self.pictures = {'doc': json.loads(json.dumps(PICTURES_OK)), 'drawn': True, 'attempts': 1, 'log': [], 'measured': {}}
+        self.assertTrue(run.compose_first_screen(self.dir, self.out, deadline=time.time() + 60)['pictures']['drawn'])
 
     def test_lists_alone_are_a_candidate_when_the_first_screen_is_refused(self):
         self.result = {'ir': None, 'drawn': False, 'attempts': 2, 'log': [], 'wishes': [], 'measured': None}

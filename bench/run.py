@@ -10,7 +10,8 @@ how the page is composed, never from a different capture or different words.
             (sites without a composition are skipped; a composition the validator refuses is an error, never a fallback)
   modelled  the same, with the composition a model wrote (bench/compose.py → bench/runs/_compositions/<site>.json)
   page      modelled, and the lists below the first screen drawn as the model composed them
-            (bench/compose.py --lists → bench/runs/_compositions/<site>.lists.json)
+            (bench/compose.py --lists → bench/runs/_compositions/<site>.lists.json) and its picture sections
+            (bench/compose.py --pictures → bench/runs/_compositions/<site>.pictures.json)
 
 Usage: python3 bench/run.py <variant> [site-id ...] [--no-shots]
 Writes bench/runs/<variant>/<site>/{page.html, contract.json, fingerprint.json, result.json, desktop.jpg, mobile.jpg}
@@ -23,6 +24,7 @@ import house as HOUSE
 import fingerprint as FP
 import render_ir as IR
 import lists as LISTS
+import pictures as PICTURES
 
 INPUTS = ('direction.json', 'images.json', 'assets.json', 'inventory.json', 'brief.json', 'hero.mp4')
 # Promises whose failure means the page is broken for a visitor, not merely off-style.
@@ -84,6 +86,13 @@ def run_site(site, variant, shots=True):
             result['lists'] = {'drawn': drawn['drawn'], 'sections': drawn['sections'], 'errors': drawn['errors'], 'note': doc.get('note'), 'forms': {l['section']: l['form'] for l in doc.get('lists', []) if isinstance(l, dict) and 'section' in l}}
             if not drawn['drawn']:
                 result['error'] = 'lists refused: ' + '; '.join(f"{e['code']} {e['at']}" for e in drawn['errors'][:4]); return result
+        pictures_doc = os.path.join(COMPOSITIONS[variant], site['id'] + '.pictures.json')
+        if variant == 'page' and os.path.exists(pictures_doc):
+            with open(pictures_doc) as f: doc = json.load(f)
+            html, drawn = PICTURES.transplant(html, doc, images)
+            result['pictures'] = {'drawn': drawn['drawn'], 'sections': drawn['sections'], 'errors': drawn['errors'], 'note': doc.get('note'), 'forms': {p['section']: p['form'] for p in doc.get('pictures', []) if isinstance(p, dict) and 'section' in p}}
+            if not drawn['drawn']:
+                result['error'] = 'pictures refused: ' + '; '.join(f"{e['code']} {e['at']}" for e in drawn['errors'][:4]); return result
         with open(page, 'w', encoding='utf-8') as f: f.write(html)
     result['bytes'] = len(html.encode('utf-8'))
     fp = FP.fingerprint(html); result['fingerprint'] = fp
