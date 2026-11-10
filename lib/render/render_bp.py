@@ -321,6 +321,7 @@ def build(slug_dir, bp_id, out_path=None):
     BO = dict(T.get('body') or {'px': 17, 'lh': 1.4, 'maxw': 480})
     # running text is running text whatever a recipe measured under that name: 15–24 px, a leading it can be read at, and a
     # measure of thirty characters or more (a recipe once filed a 40 px display line in a 189 px box as its body)
+    BODY_AS_FILED = BO.get('px')   # what the recipe measured under "body": a section head at this size was mis-filed with it
     if isinstance(BO.get('px'), (int, float)) and not isinstance(BO.get('px'), bool):
         if BO['px'] > 24: BO['px'] = 20; BO['lh'] = max(BO.get('lh') or 1.4, 1.35) if isinstance(BO.get('lh'), (int, float)) else 1.4
         BO['px'] = max(15, BO['px'])
@@ -493,7 +494,7 @@ def build(slug_dir, bp_id, out_path=None):
         # Those measurements do not describe the H2 we add to a content beat.
         # Preserve genuinely smaller blueprint headings and explicit direction
         # choices; replace only measurements at body/label scale.
-        body_scale = max(BO.get('px') or 0, LB.get('px') or 0)
+        body_scale = max(BODY_AS_FILED if isinstance(BODY_AS_FILED, (int, float)) else (BO.get('px') or 0), LB.get('px') or 0)
         if not override and px_ and H2.get('px') and px_ <= body_scale and px_ < H2['px'] * .75:
             px_ = H2['px']
             hd = {**hd, **{key: H2.get(key) for key in ('lh', 'ls', 'tt', 'it')}}

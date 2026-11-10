@@ -210,6 +210,49 @@ def layout_breaks(page_path):
     except Exception: return None
 
 
+RANGES = {390: '(max-width:600px)', 768: '(min-width:601px) and (max-width:900px)', 1100: '(min-width:901px) and (max-width:1279px)',
+          1440: '(min-width:1280px) and (max-width:1679px)', 1920: '(min-width:1680px)'}
+FITTABLE = ('stacked-words', 'split-word', 'lone-mark', 'clipped')   # what a smaller size can cure
+FIT_FLOOR = {'h1': 30, 'h2': 24, 'h3': 18}
+
+
+def fit_headings(out, breaks, replace, rounds=3):
+    """A heading that does not fit the room it was given is set smaller until it does — in that section, at the widths
+    where it broke, never under a floor. The cure of last resort for any page, composed or not: the form that left the
+    heading too little room is still wrong, but what leaves is whole. Returns (the rules written, what is still broken)."""
+    import re
+    sizes = {}   # (section, tag, width) → px now
+    left = breaks
+    for _ in range(rounds):
+        todo = [b for b in left or [] if b.get('kind') in FITTABLE and b.get('section') and b.get('tag') in FIT_FLOOR]
+        moved = False
+        for b in todo:
+            for width in b.get('widths') or []:
+                key = (b['section'], b['tag'], width); now = sizes.get(key) or (b.get('sizes') or {}).get(str(width)) or (b.get('sizes') or {}).get(width)
+                if not isinstance(now, (int, float)) or width not in RANGES: continue
+                smaller = max(FIT_FLOOR[b['tag']], round(now * 0.82, 1))
+                if smaller < now: sizes[key] = smaller; moved = True
+        if not moved: break
+        css = ''.join(f'@media{RANGES[w]}{{#{sid} {tag},#{sid} {tag}.{tag}{{font-size:{px}px!important}}}}' for (sid, tag, w), px in sorted(sizes.items()) if re.fullmatch(r'[A-Za-z][\w-]*', sid))
+        with open(out, encoding='utf-8') as f: page = f.read()
+        page = re.sub(r'<style id="fit-css">.*?</style>', '', page, flags=re.S)
+        head = page.find('</head>')
+        if head < 0: break
+        replace(page[:head] + f'<style id="fit-css">{css}</style>' + page[head:])
+        left = layout_breaks(out)
+        if left is None: break
+    return [{'section': sid, 'tag': tag, 'width': w, 'px': px} for (sid, tag, w), px in sorted(sizes.items())], left
+
+
+def guard_layout(out, replace):
+    """The last thing done to any page that ships: measured at five widths, headings that do not fit set smaller, and
+    what is still broken written down. {'breaks': found, 'fitted': rules, 'left': still broken} — None when unmeasured."""
+    found = layout_breaks(out)
+    if found is None: return None
+    fitted, left = fit_headings(out, found, replace) if found else ([], found)
+    return {'breaks': found, 'fitted': fitted, 'left': left}
+
+
 def mend_layout(out, before, replace):
     """No broken typesetting leaves the loop. The composed page is measured at five widths; a section below the first
     screen in which something is broken — a heading stacked a word to a line, a word split, a paragraph in a sliver of a
@@ -228,6 +271,9 @@ def mend_layout(out, before, replace):
         page = page[:sec['span'][0]] + was[sec['id']] + page[sec['span'][1]:]; record['reverted'].append(sec['id'])
     if record['reverted']:
         replace(page); record['left'] = layout_breaks(out)
+    if record['left']:   # what putting sections back did not cure: a heading that does not fit is set smaller
+        record['fitted'], record['left'] = fit_headings(out, record['left'], replace)
+        with open(out, encoding='utf-8') as f: page = f.read()
     now = {s['id']: page[s['span'][0]:s['span'][1]] for s in SECTIONS.sections(page) if s.get('id')}
     # what is still broken and is the composition's doing: the first screen it drew, or a section it changed that could not be put back
     record['own'] = [b for b in record['left'] or [] if b.get('section') == 'top' or (b.get('section') in now and b['section'] in was and now[b['section']] != was[b['section']])]
@@ -587,6 +633,20 @@ def _main(snapshot_dir):
     # Opt-in: an art director recomposes the first screen of the page that won. The composed page is one more candidate.
     if compose_wanted(slug_dir) and isinstance(best_manifest, dict) and best_files and time.time() - started < COMPOSE_BY:
         best_score, best_round, best_manifest = recompose(slug_dir, out, log, best_score, best_round, best_manifest, best_files, snapshot_dir, deadline=started + COMPOSE_PICTURES_BY)
+    # Whatever page won — a template round or the composed one — is measured as typesetting before anything else reads it.
+    if os.environ.get('SWARM_LAYOUT', '0' if os.environ.get('LIVETEST') else '1') != '0':
+        def _put(page):
+            with open(out + '.fit', 'w', encoding='utf-8') as f: f.write(page)
+            os.replace(out + '.fit', out)
+        try:
+            guard = guard_layout(out, _put)
+            if guard is not None:
+                log['layout'] = guard
+                if guard['fitted'] and isinstance(best_manifest, dict): best_manifest = dict(best_manifest, html=digest(out))   # the page that ships is the fitted one
+                with open(os.path.join(slug_dir, 'layout.json'), 'w', encoding='utf-8') as f: json.dump(guard, f, indent=1, ensure_ascii=False)
+                ev('Layout', (f"{len(guard['breaks'])} break(s) measured at five widths" if guard['breaks'] else 'no break at five widths') + (f" · {len(guard['fitted'])} heading size(s) fitted" if guard['fitted'] else '') + (f" · still broken: " + ', '.join(f"{b['kind']} in {b.get('section')}" for b in guard['left'][:3]) if guard['left'] else ''))
+            else: ev('Layout', 'the page could not be measured')
+        except Exception as e: ev('Layout', 'unavailable: ' + str(e)[:90])
     # Audit the selected render, after rolling back any weaker candidate.
     # A text match is not a semantic guarantee; unmatched sections require review.
     try:
@@ -624,6 +684,10 @@ def _main(snapshot_dir):
     else: ev('Measure', 'the page was not measured')
     card = scorecard(log, best_round, report)
     if card:
+        still = (log.get('layout') or {}).get('left') or []
+        if still:   # typesetting that is still broken is a hard failure of the technical track, whatever the contract scored
+            card['technical']['hard_failures'] = list(card['technical'].get('hard_failures') or []) + [f"layout: {b['kind']} in {b.get('section')} at {b.get('widths')}" for b in still[:5]]
+            card['technical']['pass'] = False
         log['scores'] = card
         with open(os.path.join(slug_dir, 'scores.json'), 'w', encoding='utf-8') as f: json.dump(card, f, indent=1)
         tech = card['technical']
