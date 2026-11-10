@@ -40,6 +40,7 @@ How a studio uses a picture:
 - Many words (a list of rows, several paragraphs) do not stand in a narrow column beside a picture: put them under it (panorama, or stage with "side": "top").
 - The heading grows when the picture is small or calm ("title": xl) and stays modest when the picture is loud or the words are many.
 - A section you leave out stays as the template drew it. Leave one out only when the template's form is right for it.
+- Some sections are words only, while the job holds pictures the page does not show. Such a section lists the pictures offered to it: give it one ("picture": the address) when the picture belongs with what the section says — ★ marks a picture made or captured for that very section, and leaving a ★ picture unused is a waste a client would notice. A picture commissioned for atmosphere is never an object or a print: it is a ground (backdrop), an edge (bleed), a strip (panorama) or sits under a notch (card). A picture is shown once on a page. Look at what is offered before you take it: a document, a notice, a certificate, a logo sheet or a map is not a picture for a section — leave it unused.
 
 THE FORMAT — call write_pictures with "concept" (one sentence: what the pictures do on this page) and "pictures": one object per section you recompose. Every object has "section" (its id, as given) and "form"; the other fields depend on the form. Each section lists the forms open to its picture — its pixels and its kind decide them; a form that is not listed for a section is refused.
 - backdrop — the picture fills the section edge to edge and the words stand on it under a veil. "place": bottom-left | bottom-right | top-left | center | left | right (where the words stand). "height": md | lg | screen. "scrim": soft | mid | deep (the veil; it is thickened by rule if the words do not read).
@@ -47,20 +48,20 @@ THE FORMAT — call write_pictures with "concept" (one sentence: what the pictur
 - panorama — the picture crosses the whole screen as a strip. "ratio": 2/1 | 21/9 | 3/1. "words": above | below; the heading stands to the left and what it introduces to the right.
 - card — a large picture with the words on a card laid over its inner corner. "side": the picture's side. "cols": 7–9. "ratio": 1/1 | 4/5 | 4/3 | 3/2 | 16/10 | 16/9. "anchor": top | middle | bottom (where the card lies). "bleed": true lets the picture run off its edge of the screen.
 - offset — the picture cut to a proportion and hung beside the words. "side", "cols": 3–7, "ratio": own | 1/1 | 4/5 | 3/4 | 2/3 | 4/3 | 3/2 | 16/9 | 16/10 | 21/9, "shape": rect | soft | arch | circle | pill, "tilt": -4…4 degrees, "shadow": none | soft | hard, "frame": none | paper | browser, "drop": none | up | down (hung above or below the line of the words), "align".
-- stage — the picture shown whole on a ground that runs off the screen edge. "side": left | right | top (top: the picture across the top of the section on its ground, the words under it in two columns — the form for a section with many words or rows), "cols": 5–8 (the picture's share), "ground": own | accent | ink | alt, "tilt": -3…3, "align", "height": auto | md | lg (auto: as tall as what it shows). With "ground": "own" the whole section takes the picture's own ground colour, the words turn to the colour that reads on it, and the picture has no panel and no edge.
-- inline — the picture set into the section's heading like a word, as tall as its capitals. "at": start | end (of the heading), "shape": pill | soft | circle, "title": lg | xl. Photographs only; the heading becomes the picture's frame, so the heading is large.
+- stage — the picture shown whole on a ground that runs off the screen edge. "side": left | right | top (top: the picture across the top of the section on its ground, the words under it in two columns — the form for a section with many words or rows), "cols": 5–8 (the picture's share), "ground": own | accent | ink | alt, "tilt": -3…3, "align", "height": auto | md | lg (auto: as tall as what it shows). With "ground": "own" the whole section takes the picture's own ground colour, the words turn to the colour that reads on it, and the picture has no panel and no edge. "crop": whole | fade — for a product screen taller than it is wide, "fade" shows its top at full size and lets the rest fade into the stage, the way product pages show an interface; a screen is otherwise set down with a hairline ring and one soft shadow, never a heavy one.
+- inline — the picture set into the section's heading like a word, as tall as its capitals; it makes the picture small, so it is for a section whose words carry it (140 characters or more), not for showing the picture. "at": start | end (of the heading), "shape": pill | soft | circle, "title": lg | xl. Photographs only; the heading becomes the picture's frame, so the heading is large.
 On any form: "title": md | lg | xl (the heading's size), "enter": none | rise | clip | settle (how the picture arrives). On every form but stage: "tone": none | mono | duotone | tint, "grain": true, "focal": [x, y] each 0–1. On backdrop, bleed, panorama and card: "scroll": parallax.
 A screenshot is evidence of the product: it is never cropped, toned or written over — stage or offset only. A composition that breaks a rule is refused whole and you are told why."""
 
-FIELDS = ('side', 'cols', 'place', 'height', 'scrim', 'ratio', 'words', 'anchor', 'bleed', 'shape', 'tilt', 'shadow', 'frame', 'drop', 'align', 'ground', 'tone', 'grain', 'focal', 'title', 'enter', 'scroll', 'edge', 'overlap', 'at')
+FIELDS = ('crop', 'side', 'cols', 'place', 'height', 'scrim', 'ratio', 'words', 'anchor', 'bleed', 'shape', 'tilt', 'shadow', 'frame', 'drop', 'align', 'ground', 'tone', 'grain', 'focal', 'title', 'enter', 'scroll', 'edge', 'overlap', 'at')
 ENTRY = {"type": "object", "required": ["section", "form"], "properties": {
-    "section": {"type": "string"}, "form": {"type": "string", "enum": list(PICTURES.FORMS)}, "side": {"type": "string", "enum": list(PICTURES.SIDES) + ["top"]}, "cols": {"type": "integer"},
+    "section": {"type": "string"}, "picture": {"type": "string", "description": "only for a section of words: the address of the offered picture it takes"}, "form": {"type": "string", "enum": list(PICTURES.FORMS)}, "side": {"type": "string", "enum": list(PICTURES.SIDES) + ["top"]}, "cols": {"type": "integer"},
     "place": {"type": "string", "enum": list(PICTURES.PLACES)}, "height": {"type": "string", "enum": ["auto"] + list(PICTURES.HEIGHTS)}, "scrim": {"type": "string", "enum": list(PICTURES.SCRIMS)},
     "ratio": {"type": "string"}, "words": {"type": "string", "enum": list(PICTURES.WORDS)}, "anchor": {"type": "string", "enum": list(PICTURES.ANCHORS)}, "bleed": {"type": "boolean"},
     "shape": {"type": "string", "enum": list(V.SHAPES)}, "tilt": {"type": "integer"}, "shadow": {"type": "string", "enum": list(V.SHADOWS)}, "frame": {"type": "string", "enum": list(PICTURES.FRAMES)},
     "drop": {"type": "string", "enum": list(PICTURES.DROPS)}, "align": {"type": "string", "enum": list(PICTURES.ALIGN)}, "ground": {"type": "string", "enum": list(PICTURES.GROUNDS)},
     "tone": {"type": "string", "enum": list(V.TONES)}, "grain": {"type": "boolean"}, "focal": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
-    "edge": {"type": "string", "enum": list(PICTURES.EDGES)}, "overlap": {"type": "integer"}, "at": {"type": "string", "enum": ["start", "end"]},
+    "edge": {"type": "string", "enum": list(PICTURES.EDGES)}, "crop": {"type": "string", "enum": list(PICTURES.CROPS)}, "overlap": {"type": "integer"}, "at": {"type": "string", "enum": ["start", "end"]},
     "title": {"type": "string", "enum": list(PICTURES.TITLES)}, "enter": {"type": "string", "enum": list(V.MEDIA_ENTER)}, "scroll": {"type": "string", "enum": list(V.MEDIA_SCROLL)}}}
 TOOL = {"name": "write_pictures", "description": "What each picture below the first screen does.", "input_schema": {"type": "object", "required": ["concept", "pictures"], "properties": {
     "concept": {"type": "string", "description": "one sentence: what the pictures do on this page"},
@@ -147,20 +148,31 @@ def settle(page_html, doc, images, folder):
 def brief(page_html, images=None):
     """What may be recomposed, as text: every picture section with its picture, its words and the forms open to it, in the
     order of the page. → (text, [section ids])"""
-    lines, ids = ['THE PAGE, top to bottom (sections whose picture you direct are marked ▸):'], []
+    lines, ids = ['THE PAGE, top to bottom (sections whose picture you direct are marked ▸):'], []; thumbs = []
     page = PICTURES.readable(page_html, images); tokens = CONTENT.page_of(page_html)
     for sec in PICTURES.SECTIONS.sections(page_html):
         known = page.get(sec['id']); kind = next((k for k in sec['classes'] if k not in ('sec', 'compact', 'pc', 'lc') and not k.startswith(('band-', 'pc-', 'lc-'))), 'section')
-        if known and not isinstance(known[1], str):
+        if known and not isinstance(known[1], str) and not known[1].get('picture'):   # a section of words with pictures offered to it
+            c = known[1]; given = []
+            for address, pic in c['offers'].items():
+                forms = PICTURES.open_forms(dict(c, picture=pic), tokens)
+                if forms: given.append(f'{address}{" ★ made for this section" if pic["meant"] else ""} — {pic["w"]}×{pic["h"]} px, ' + ('a commissioned atmosphere picture' if pic['gen'] else 'a SCREENSHOT' if pic['shot'] else 'a photograph')
+                                       + (f', "{pic["alt"][:80]}"' if pic['alt'] else '') + ('' if pic.get('ground') else ', no ground of its own') + f' (forms: {", ".join(f["form"] for f in forms)})'); thumbs.append((address, pic['src']))
+            if not given: lines.append(f'  "{sec["id"]}" — {kind}, words only'); continue
+            ids.append(sec['id'])
+            lines.append(f'▸ "{sec["id"]}" — {kind}, WORDS ONLY, on the {c["band"]} band. Heading: "{c["words"]["heading"][:90]}". Words: {c["words"]["chars"]} characters' + (f', a list of {c["words"]["rows"]} rows' if c['words']['rows'] else '')
+                         + '.\n    It has no picture of its own: an entry for it MUST name one of these in "picture": ' + '; '.join(given) + '.')
+        elif known and not isinstance(known[1], str):
             c = known[1]; pic = c['picture']; forms = PICTURES.open_forms(c, tokens)
             if not forms: lines.append(f'  "{sec["id"]}" — {kind} (its picture is too small for any other form)'); continue
             ids.append(sec['id'])
-            opened = '; '.join(f'{f["form"]} (would draw it {f["box"][0]}×{f["box"][1]} px, {f["scale"]:.2f}× its pixels)' for f in forms)
+            opened = '; '.join(f'{f["form"]} (would draw it {f["box"][0]}×{f["box"][1]} px, {f["scale"]:.2f}× its pixels' + (f'; {f["note"]}' if f.get('note') else '') + ')' for f in forms)
             lines.append(f'▸ "{sec["id"]}" — on the {c["band"]} band. Picture: {pic["w"]}×{pic["h"]} px, {"a SCREENSHOT (evidence of the product)" if pic["shot"] else "a photograph or illustration"}'
                          + (f', described as "{pic["alt"][:90]}"' if pic['alt'] else '') + (f'; its edges are one even {"dark" if pic["ground"]["dark"] else "light"} colour (stage with "ground": "own" is open)' if pic.get('ground') else '; its edges are a scene (no ground of its own)') + f'. Heading: "{c["words"]["heading"][:90]}". Words: {c["words"]["chars"]} characters'
                          + (f', a list of {c["words"]["rows"]} rows' if c['words']['rows'] else '') + f'. The template put the {"picture first" if c["first"] == "picture" else "words first"}.\n    Forms open to it: {opened}.')
         else:
             lines.append(f'  "{sec["id"] or "-"}" — {kind}' + (f' (holds a picture but cannot be recomposed: {known[1][:70]})' if known else ''))
+    brief.offered = thumbs[:6]   # the pictures offered to sections of words, for the composer to look at
     return '\n'.join(lines), ids
 
 
@@ -180,19 +192,22 @@ def _broken(found): return [k for k in (found or {}) if any(b in k for b in BREA
 def _standing(found): return (len(_broken(found)), len([k for k in (found or {}) if not any(b in k for b in BREAKING)]))
 
 
-def compose(page_html, page_path, images=None, model=None, review=True, ask=None):
+def compose(page_html, page_path, images=None, model=None, review=True, ask=None, direction=None):
     """Compose the picture sections, correct once, settle against the render, look and revise once. Returns the last
     document that validates and breaks nothing, or none."""
     if ask is None:
         import agents; ask = agents.ask
     text, ids = brief(page_html, images); log, findings, best = [], None, None
     if not ids: return {'doc': None, 'drawn': False, 'attempts': 0, 'log': [{'stage': 'skip', 'errors': ['the page has no picture section that can be recomposed']}], 'measured': None}
-    material = [{"type": "text", "text": text}]
+    material = HERO._directed(direction) + [{"type": "text", "text": text}]
     try:
         shots = LISTED.section_shots(page_path, ids[:MAX_PICTURED]) if review else {}
         for sid in ids[:MAX_PICTURED]:
             if sid in shots: material += [{"type": "text", "text": f'SECTION "{sid}" AS THE TEMPLATE DREW IT:'}, HERO._image_block(shots[sid], 900)]
     except Exception as e: material.append({"type": "text", "text": f'(the sections could not be pictured: {str(e)[:80]})'})
+    for address, src in getattr(brief, 'offered', []) if review else []:   # what is on offer to the sections of words
+        data = HERO._thumb(src)
+        if data: material += [{"type": "text", "text": f'OFFERED PICTURE {address}'}, {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": data}}]
     folder = os.path.dirname(os.path.abspath(page_path))
 
     def attempt(stage, extra):
@@ -219,6 +234,9 @@ def compose(page_html, page_path, images=None, model=None, review=True, ask=None
     doc, errors, entry = attempt('compose', [])
     if errors and doc is not None:
         doc, errors, entry = attempt('correct', [{"type": "text", "text": "YOUR PREVIOUS COMPOSITION WAS REFUSED:\n" + json.dumps(doc['pictures'], ensure_ascii=False) + "\nReasons:\n" + '\n'.join('- ' + e for e in entry['errors'][:12]) + "\nKeep the idea; fix exactly these."}])
+    if errors and doc is not None:   # still refused: the entries at fault go back to the template's form, the rest stand if they validate whole
+        raw = PICTURES.validate(doc, page_html, images); smaller, dropped = HERO._pruned(doc, 'pictures', raw, lambda d: PICTURES.validate(d, page_html, images))
+        if smaller: doc, errors = smaller, []; log.append({'stage': 'prune', 'errors': [], 'dropped': dropped})
     if doc is not None and not errors:
         try:
             baseline = HERO.measured(page_path)

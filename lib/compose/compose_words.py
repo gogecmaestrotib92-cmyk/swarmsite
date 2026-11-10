@@ -71,13 +71,13 @@ def _to_doc(answer, page=None):
     return {'ir': V.VERSION, 'note': str(answer.get('concept') or '')[:300], 'words': words}
 
 
-def compose(page_html, page_path, model=None, review=True, ask=None):
+def compose(page_html, page_path, model=None, review=True, ask=None, direction=None):
     """Compose the sections of words, correct once, look and revise once. Returns the last document that validates and breaks nothing, or none."""
     if ask is None:
         import agents; ask = agents.ask
     text, ids = brief(page_html); log, findings, best = [], None, None
     if not ids: return {'doc': None, 'drawn': False, 'attempts': 0, 'log': [{'stage': 'skip', 'errors': ['the page has no section of words that can be recomposed']}], 'measured': None}
-    material = [{"type": "text", "text": text}]
+    material = HERO._directed(direction) + [{"type": "text", "text": text}]
     try:
         shots = LISTED.section_shots(page_path, ids[:MAX_PICTURED]) if review else {}
         for sid in ids[:MAX_PICTURED]:
@@ -95,6 +95,9 @@ def compose(page_html, page_path, model=None, review=True, ask=None):
     doc, errors, entry = attempt('compose', [])
     if errors and doc is not None:
         doc, errors, entry = attempt('correct', [{"type": "text", "text": "YOUR PREVIOUS COMPOSITION WAS REFUSED:\n" + json.dumps(doc['words'], ensure_ascii=False) + "\nReasons:\n" + '\n'.join('- ' + e for e in entry['errors'][:12]) + "\nKeep the idea; fix exactly these."}])
+    if errors and doc is not None:   # still refused: the entries at fault go back to the template's form, the rest stand if they validate whole
+        raw = WORDS.validate(doc, page_html); smaller, dropped = HERO._pruned(doc, 'words', raw, lambda d: WORDS.validate(d, page_html))
+        if smaller: doc, errors = smaller, []; log.append({'stage': 'prune', 'errors': [], 'dropped': dropped})
     if doc is not None and not errors: best = doc
     if best:
         folder = os.path.dirname(os.path.abspath(page_path))

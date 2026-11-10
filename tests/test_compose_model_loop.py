@@ -53,6 +53,13 @@ class Model:
 
 
 class Loop(unittest.TestCase):
+    def test_the_composer_of_the_first_screen_sets_a_direction_for_the_rest_of_the_page(self):
+        result = COMPOSE.compose(PAGE, IMAGES, review=False, ask=Model(answer(page_direction='  Hollow numerals;\n dark pauses. ')))
+        self.assertEqual(result['direction'], 'Hollow numerals; dark pauses.', 'words for the other composers: kept beside the composition, never in it')
+        self.assertNotIn('direction', result['ir']); self.assertNotIn('page_direction', json.dumps(result['ir'])); self.assertEqual(V.validate(result['ir'], BASE), [])
+        self.assertIsNone(COMPOSE.compose(PAGE, IMAGES, review=False, ask=Model(answer()))['direction']); self.assertIsNone(COMPOSE.compose(PAGE, IMAGES, review=False, ask=Model(answer(rows=['bad'], page_direction='x')))['direction'])
+        self.assertEqual(COMPOSE._directed(None), []); self.assertIn("THE PAGE'S DIRECTION", COMPOSE._directed('Loud type.')[0]['text'])
+
     def test_a_good_first_answer_is_the_composition(self):
         model = Model(answer())
         result = COMPOSE.compose(PAGE, IMAGES, review=False, ask=model)
@@ -252,10 +259,12 @@ class Typeface(unittest.TestCase):
 
     def test_the_registry_is_offered_with_each_faces_voice_and_measured_width(self):
         text, _ = COMPOSE.brief(BASE)
-        for f in V.FACES.all(): self.assertIn(f'- {f["id"]}: {f["family"]}', text); self.assertIn(f['voice'], text)
+        for f in V.FACES.of_role('display'): self.assertIn(f'- {f["id"]}: {f["family"]}', text); self.assertIn(f['voice'], text)
+        for f in V.FACES.of_role('body') + V.FACES.of_role('label'): self.assertIn(f'{f["id"]} ({f["family"]}', text)
+        self.assertIn('PAIRINGS', text); self.assertIn('SEEN EVERYWHERE', text); self.assertNotIn('- inter: Inter', text, 'a text face is not offered for headings')
         self.assertIn(f'the page is set in {BASE["page"]["display"]} now', text)
         offered = COMPOSE.TOOL['input_schema']['properties']['typeface']['enum']
-        self.assertEqual(offered, ['page'] + [f['id'] for f in V.FACES.all()], 'the tool offers the registry and nothing else')
+        self.assertEqual(offered, ['page'] + [f['id'] for f in V.FACES.of_role('display')], 'the tool offers the registry\'s display faces and nothing else')
 
     def test_a_face_that_breaks_a_section_further_down_is_measured_on_the_whole_page(self):
         from PIL import Image

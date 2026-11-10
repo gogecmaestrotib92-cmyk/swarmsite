@@ -99,6 +99,16 @@ class Loop(unittest.TestCase):
     def test_asking_for_the_ground_a_section_already_stands_on_is_asking_for_nothing(self):
         result = self.run_(answer({**STATEMENT, 'ground': 'alt'})); self.assertTrue(result['drawn']); self.assertNotIn('ground', result['doc']['words'][0]); self.assertEqual(len(self.asked), 1)
 
+    def test_the_pages_direction_is_the_first_thing_the_model_reads(self):
+        queue = [answer(COLUMNS)]
+        def ask(system, content, tool, **kw): self.asked.append(content); return queue.pop(0)
+        COMPOSE.compose(PAGE, self.path, ask=ask, review=False, direction='Loud type; one dark pause.')
+        self.assertTrue(self.asked[0][0]['text'].startswith("THE PAGE'S DIRECTION")); self.assertIn('Loud type; one dark pause.', self.asked[0][0]['text']); self.assertIn('▸ "menu"', self.asked[0][1]['text'])
+
+    def test_an_entry_still_refused_costs_its_own_section_not_the_others(self):
+        wrong = {'section': 'note', 'form': 'columns'}   # two columns want rows; this section has none
+        result = self.run_(answer(COLUMNS, wrong), answer(COLUMNS, wrong)); self.assertTrue(result['drawn']); self.assertEqual(result['doc']['words'], [COLUMNS]); self.assertEqual(result['log'][-1], {'stage': 'prune', 'errors': [], 'dropped': ['note']})
+
     def test_the_validators_reasons_go_back_once(self):
         result = self.run_(answer({**COLUMNS, 'form': 'statement'}), answer(COLUMNS)); self.assertTrue(result['drawn']); self.assertIn('IW021', self.said(1))
         self.asked.clear(); self.assertFalse(self.run_(answer({**COLUMNS, 'form': 'statement'}), answer({**COLUMNS, 'form': 'statement'}))['drawn']); self.assertEqual(len(self.asked), 2)

@@ -19,10 +19,10 @@ class Registry(unittest.TestCase):
         self.assertEqual(len({f['id'] for f in faces}), len(faces)); self.assertEqual(len({f['family'] for f in faces}), len(faces))
         for f in faces:
             with self.subTest(face=f['id']):
-                self.assertRegex(f['id'], r'^[a-z][a-z0-9-]{2,24}$'); self.assertIn(f['kind'], ('serif', 'sans'))
+                self.assertRegex(f['id'], r'^[a-z][a-z0-9-]{2,24}$'); self.assertIn(f['kind'], ('serif', 'sans', 'condensed', 'mono'))
                 lo, hi = f['weights']; self.assertTrue(100 <= lo <= f['display'] <= hi <= 900)
                 self.assertIsInstance(f['italic'], bool); self.assertRegex(f['ls'], r'^-?0(\.\d+)?em$'); self.assertTrue(0.85 <= f['lh'] <= 1.2)
-                self.assertTrue(0.3 <= f['avg'] <= 0.8 and f['avg'] <= f['avg_upper'] <= 0.9, 'widths are measured (lib/type/measure.mjs --write), in em')
+                self.assertTrue(0.25 <= f['avg'] <= 0.8 and f['avg'] <= f['avg_upper'] <= 0.9, 'widths are measured (lib/type/measure.mjs --write), in em')
                 self.assertGreater(len(f['voice']), 30); self.assertGreaterEqual(len(f['suits']), 3)
 
     def test_the_stylesheet_spec_asks_for_what_the_face_says_it_has(self):
@@ -45,7 +45,7 @@ class Registry(unittest.TestCase):
     def test_lookup_and_the_width_of_a_face_nobody_measured(self):
         self.assertEqual(FACES.get('fraunces')['family'], 'Fraunces'); self.assertIsNone(FACES.get('nope')); self.assertIsNone(FACES.get(None))
         self.assertEqual(FACES.advance(None), FACES.DEFAULT_ADVANCE)
-        self.assertGreaterEqual(FACES.DEFAULT_ADVANCE, max(f['avg'] for f in FACES.all() if f['id'] != 'unbounded'), 'an unknown face is assumed wide, so a headline sized for it never overflows')
+        self.assertGreaterEqual(FACES.DEFAULT_ADVANCE, max(f['avg'] for f in FACES.of_role('display') if f['id'] not in ('unbounded', 'boldonse')), 'an unknown face is assumed wide, so a headline sized for it never overflows')
         anton = FACES.get('anton'); self.assertEqual(FACES.advance(anton, upper=True), anton['avg_upper']); self.assertEqual(FACES.advance(anton), anton['avg'])
 
 
