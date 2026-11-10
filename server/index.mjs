@@ -259,7 +259,7 @@ function eventsRender(dir) { const html = (() => { try { return fs.readFileSync(
   return ev; }
 function eventsQA(qa) { return String(qa || '').split('\n').filter(Boolean).slice(0, 8).map(l => ({ role: 'QA', text: l.replace(/^\[(high|med|low)\]\s*/, '').slice(0, 70) })); }
 
-const ARTS = ['brief.json', 'critic.json', 'contract.json', 'scores.json', 'fingerprint.json', 'composition.json', 'coverage.json', 'factsheet.json', 'swarm.json', 'inventory.json', 'assets.json', 'images.json', 'geometry.json', 'audit.json', 'direction.json', 'mobile.json', 'index.html'];
+const ARTS = ['brief.json', 'critic.json', 'contract.json', 'scores.json', 'fingerprint.json', 'composition.json', 'coverage.json', 'factsheet.json', 'swarm.json', 'inventory.json', 'assets.json', 'images.json', 'geometry.json', 'audit.json', 'direction.json', 'mobile.json', 'findings.json', 'index.html'];
 async function uploadArtefacts(job, dir, diagnostics = false) { let uploaded = true; for (const f of ARTS) { const fp = path.join(dir, f); if (fs.existsSync(fp)) { try { await upload(fp, `${job.id}/${!diagnostics && job._previewVersion ? `v-${job._previewVersion}/` : ''}art/${f}`, f.endsWith('.html') ? 'text/html' : 'application/json'); } catch (e) { uploaded = false; console.warn('art', f, e.message); } } } return uploaded; }
 const BP = { software: ['butter', 'cerebrium', 'deepbook'], place: ['tengile', 'white-desert', 'belgrade-arbor', 'units'], service: ['lpas', 'aino', 'atelier'], product: ['crav', 'halfdays'] };
 async function checkpointCrawl(job, dir) {

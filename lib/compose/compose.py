@@ -251,12 +251,17 @@ def backdrop_findings(page_path):
     return found
 
 
+LEADS = {'picture': 0.4, 'headline': 0.6}   # under both, neither picture nor type leads the first screen (the references: a picture over 82% or more on 9 of 11; headline width median 81%)
 CUT_BY_FOLD = 0.2   # the share of a first-screen picture that may hang under the fold before it reads as cut off
 
 
 def hero_findings(seen):
     """Promises of a first screen that the page contract does not grade, from measure_hero()."""
     found = {}
+    lead = ((seen or {}).get('desktop') or {}).get('lead')
+    if isinstance(lead, dict) and lead.get('picture', 1) < LEADS['picture'] and lead.get('headline', 1) < LEADS['headline']:
+        found['desktop-hero-nothing-leads'] = (f"the largest picture covers {round(lead['picture'] * 100)}% of the first screen and the headline spans {round(lead['headline'] * 100)}% of its width: neither leads. "
+                                              f"A first screen is led by its picture or by its type — let the picture fill the screen (\"bleed\": \"full\", or many more columns and rows) or set the headline across the width (more columns, a larger \"size\")")
     for view in ('desktop', 'mobile'):
         v = (seen or {}).get(view) or {}
         for w in v.get('wrapped') or []:
