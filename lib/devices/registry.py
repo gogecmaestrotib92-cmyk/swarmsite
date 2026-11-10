@@ -44,7 +44,7 @@ def device(**d):
 
 device(id='line-rise', name='Headline lines rise out of a mask', kind='text',
        sees='Each line of a headline slides up from behind an invisible edge, one after another.',
-       measured={'source': 'cerebrium, load, 2026-11-10', 'travel_px': [61, 82], 'duration_ms': [167, 275], 'gap_ms': [34, 66], 'masked': True, 'lines': 7},
+       measured={'source': 'cerebrium, load, 2026-11-10', 'travel_px': [61, 82], 'duration_ms': [167, 275], 'gap_ms': [34, 66], 'masked': True, 'lines': 7, 'harvest': 'sixteen Sites of the Month measured 2026-11-11 (bench/runs/_research/harvest/SUMMARY.md)', 'seen_in': 'masked text reveals on 9 of 16; a load choreography on 11 of 16, settling in 456–5695 ms'},
        needs='a headline of 2–4 lines', use='the first screen and the one or two largest statements of a page', avoid='body text; more than three times a page',
        pairs=['rise-stagger', 'held-index'], markup='<h1 class="dv-lines"><span class="dv-ln"><span>line one</span></span><span class="dv-ln"><span>line two</span></span></h1>',
        css=""".dv-ln{display:block;overflow:hidden;padding-bottom:.12em;margin-bottom:-.12em}.dv-ln>span{display:block}
@@ -53,7 +53,7 @@ device(id='line-rise', name='Headline lines rise out of a mask', kind='text',
 
 device(id='rise-stagger', name='Things arrive in order', kind='reveal',
        sees='A paragraph, then the buttons, then a note fade in and settle a few pixels upward, a beat apart.',
-       measured={'source': 'cerebrium, scroll, 2026-11-10', 'fade_ms': [267, 350], 'travel_px': [9, 12], 'gap_ms': [67, 101], 'elements': 24},
+       measured={'source': 'cerebrium, scroll, 2026-11-10', 'fade_ms': [267, 350], 'travel_px': [9, 12], 'gap_ms': [67, 101], 'elements': 24, 'harvest': 'sixteen Sites of the Month measured 2026-11-11 (bench/runs/_research/harvest/SUMMARY.md)', 'seen_in': '16 of 16 fade, 13 of 16 travel, 10 of 16 staggered', 'fade_ms_median_by_site': [107, 635], 'travel_px_median_by_site': [8, 64], 'gap_ms_median_by_site': [34, 149]},
        needs='2–6 sibling elements', use='supporting text and actions beside a headline; rows of a list', avoid='whole sections at once; anything the visitor must read immediately on a phone',
        pairs=['line-rise'], markup='<p data-rise style="--i:0">…</p><div data-rise style="--i:1">…</div>',
        css=""".dv [data-rise]{opacity:0;transform:translateY(12px);transition:opacity .3s ease,transform .3s var(--ease);transition-delay:calc(var(--i,0) * 70ms)}.dv [data-rise].is-in{opacity:1;transform:none}""",
@@ -61,7 +61,7 @@ device(id='rise-stagger', name='Things arrive in order', kind='reveal',
 
 device(id='held-index', name='A list held while its panels pass', kind='scroll',
        sees='Short claims stand still on the left; on the right a panel for each scrolls by, and the claim it belongs to lights up.',
-       measured={'source': 'cerebrium, scroll, 2026-11-10', 'held_screens': 3.2, 'items': 4, 'name_px': 43.9, 'name_tracking_em': -0.05, 'name_weight': 300},
+       measured={'source': 'cerebrium, scroll, 2026-11-10', 'held_screens': 3.2, 'items': 4, 'name_px': 43.9, 'name_tracking_em': -0.05, 'name_weight': 300, 'harvest': 'sixteen Sites of the Month measured 2026-11-11 (bench/runs/_research/harvest/SUMMARY.md)', 'seen_in': '11 of 16 hold something while scrolling', 'longest_hold_screens': [0.5, 13]},
        needs='3–5 claims, each with a picture of the product or a set of true figures', use='the centre of a product page: what it does, shown', avoid='fewer than three items; items without anything to show',
        pairs=['line-rise', 'rise-stagger', 'figure-bars'],
        markup='<div class="dv-held"><div class="dv-held-side"><ol class="dv-held-names"><li>Claim</li>…</ol></div><div class="dv-held-items"><article class="dv-held-item"><p class="dv-held-m">Claim</p>…panel…</article>…</div></div>',
@@ -83,7 +83,7 @@ device(id='fact-ticker', name='A slow line of facts', kind='text',
 
 device(id='side-rail', name='A row that moves sideways as the page moves down', kind='scroll',
        sees='While you scroll through a section, a row of large words or cards slides across the screen.',
-       measured={'source': 'butter, scroll, 2026-11-10', 'per_px_scrolled': [-0.28, -0.47], 'screens_wide': 0.5, 'elements_with_scroll': 19},
+       measured={'source': 'butter, scroll, 2026-11-10', 'per_px_scrolled': [-0.28, -0.47], 'screens_wide': 0.5, 'elements_with_scroll': 19, 'harvest': 'sixteen Sites of the Month measured 2026-11-11 (bench/runs/_research/harvest/SUMMARY.md)', 'seen_in': '7 of 16'},
        needs='a short phrase set very large, or 4–8 cards', use='one change of pace in the middle of a page', avoid='twice on a page; with long text',
        pairs=['rise-stagger'], markup='<div class="dv-rail" style="--rate:.4"><div class="dv-rail-row">…large words or cards…</div></div>',
        css=""".dv-rail{overflow:hidden}.dv-rail-row{display:flex;gap:clamp(20px,3vw,56px);width:max-content;will-change:transform}
@@ -102,7 +102,7 @@ if(!calm)onScroll(()=>each('.dv-stack',s=>{const cs=[...s.children];cs.forEach((
 
 device(id='grow-to-bleed', name='A picture that grows to the full width', kind='media',
        sees='A framed picture sits inset with rounded corners; as it comes up the screen it widens until it touches both edges.',
-       measured=None, seen='common on product pages; numbers not yet measured',
+       measured={'source': 'harvest 2026-11-11: an element changes size with scroll on 12 of 16 sites (1–97 elements a site)', 'note': 'how far and over what distance was not extracted; our 72% → 100% over half a screen is our own choice'},
        needs='one strong, wide picture or video at least 1600 px wide', use='the one picture the page is about', avoid='screenshots with small text; more than once',
        pairs=['line-rise'], markup='<figure class="dv-grow"><img …></figure>',
        css=""".dv-grow{margin:0 auto;width:calc(72% + var(--g,0) * 28%);border-radius:calc((1 - var(--g,0)) * 18px);overflow:hidden}.dv-grow img,.dv-grow video{display:block;width:100%;height:auto}
@@ -155,6 +155,39 @@ l.addEventListener('pointermove',e=>{im.style.left=e.clientX+24+'px';im.style.to
 l.querySelectorAll('[data-peek]').forEach(a=>{a.addEventListener('pointerenter',()=>{im.src=a.dataset.peek;im.classList.add('is-on')});a.addEventListener('pointerleave',()=>im.classList.remove('is-on'))})});""")
 
 
+device(id='depth', name='Layers that move at different speeds', kind='scroll',
+       sees='A picture drifts a little slower or faster than the page, so it seems to sit behind or in front of the text.',
+       measured={'source': 'harvest 2026-11-11', 'seen_in': '9 of 16', 'rate_median_by_site': [-0.47, 0.68], 'typical': [-0.14, 0.47], 'elements': [1, 65]},
+       needs='a picture or a large shape with room to move inside its frame', use='two or three pictures on a page, each in a frame that crops it', avoid='text blocks; screenshots that must be read; phones',
+       pairs=['grow-to-bleed', 'rise-stagger'], markup='<figure class="dv-depth" style="--rate:-.14"><img …></figure>',
+       css=""".dv-depth{overflow:hidden}.dv-depth>*{display:block;width:100%;height:auto;will-change:transform;transform:translate3d(0,calc(var(--y,0) * 1px),0) scale(1.16)}
+@media (max-width:700px),(prefers-reduced-motion:reduce){.dv-depth>*{transform:none!important}}""",
+       js="if(!calm)onScroll(()=>each('.dv-depth',f=>{const r=f.getBoundingClientRect(),rate=parseFloat(getComputedStyle(f).getPropertyValue('--rate'))||-.14;f.style.setProperty('--y',((r.top+r.height/2-innerHeight/2)*rate).toFixed(1))}));")
+
+device(id='eased-scroll', name='A page that glides to a stop', kind='scroll',
+       sees='After each turn of the wheel the page keeps moving for a moment and settles, instead of stopping dead.',
+       measured={'source': 'harvest 2026-11-11', 'seen_in': '12 of 16 (the page moves on 366–1158 ms after input, median per site; an unsmoothed page measures 0)', 'settle_ms_median_by_site': [366, 1158]},
+       needs='nothing', use='long pages with held scenes and depth, on a desk', avoid='touch screens (never), pages with forms or long reading; it is off under reduced motion and whenever a key or the scrollbar is used',
+       pairs=['held-index', 'depth', 'side-rail'], markup='<html data-eased-scroll>',
+       css="html[data-eased-scroll].dv-easing{scroll-behavior:auto}",
+       js="""if(!calm&&matchMedia('(hover:hover) and (pointer:fine)').matches&&R.hasAttribute('data-eased-scroll')){let to=scrollY,now=scrollY,run=0;R.classList.add('dv-easing');
+const step=()=>{now+=(to-now)*.12;if(Math.abs(to-now)<.5){now=to;run=0;scrollTo(0,now);return}scrollTo(0,now);run=requestAnimationFrame(step)};
+addEventListener('wheel',e=>{if(e.ctrlKey||e.defaultPrevented||e.target.closest('[data-native-scroll],textarea,select'))return;e.preventDefault();if(!run){to=now=scrollY}to=Math.max(0,Math.min(R.scrollHeight-innerHeight,to+e.deltaY*(e.deltaMode?32:1)));run||(run=requestAnimationFrame(step))},{passive:false});
+addEventListener('scroll',()=>{if(!run){to=now=scrollY}},{passive:true})}""")
+
+# What the measured pages have in common as whole pages — the builder's ground rules, each with its evidence.
+RULES = {
+    'source': 'sixteen Sites of the Month measured 2026-11-11 with lib/qa/inspect.mjs at 1440; ranges are across sites; bench/runs/_research/harvest/SUMMARY.md',
+    'display_px': {'range': [57, 194], 'typical': [110, 180], 'note': 'the largest type on the page; 11 of 16 set it at 80 px or more'},
+    'display_leading': {'range': [0.8, 1.2], 'typical': [0.8, 0.95]}, 'display_tracking_em': {'range': [-0.064, 0.32], 'typical': [-0.06, -0.02]},
+    'text_px': {'range': [10, 20.2], 'typical': [12, 16], 'note': 'the size most of the text is set in — small against a very large display'},
+    'families': {'range': [1, 5], 'typical': [1, 2]}, 'grounds': {'range': [1, 4], 'typical': [1, 3], 'note': 'few changes of ground; nine of sixteen use one or two'},
+    'page_screens': {'range': [3, 90.5], 'typical': [15, 28], 'note': 'long pages: scenes held and scrubbed, not stacked blocks'},
+    'motion': {'reveal_on_scroll': '16 of 16', 'eased_scroll': '12 of 16', 'something_held': '11 of 16', 'size_with_scroll': '12 of 16', 'parallax': '9 of 16', 'sideways': '7 of 16', 'load_choreography': '11 of 16', 'custom_cursor': '0 of 16'},
+    'material': {'video': '9 of 16', 'canvas': '13 of 16', 'pictures_that_bleed': '9 of 16', 'note': 'most of these pages rest on film or rendered scenes made for them — a page without such material leans on type and held scenes'},
+}
+
+
 def bundle(ids):
     """The stylesheet and the script of a page that uses these devices."""
     use = [DEVICES[i] for i in DEVICES if i in set(ids)]
@@ -179,9 +212,10 @@ def demo(ids=None):
         'side-rail': '<div class="dv-rail" style="--rate:.4"><div class="dv-rail-row huge"><span>One change of pace</span><span>in the middle</span><span>of a page</span><span>and no more</span></div></div>',
         'stack-cards': '<div class="dv-stack">' + ''.join(f'<article class="dv-card card"><p class="mono">0{k}</p><h2>Step {k}</h2><p>Each card is a complete thought and they are all about as tall.</p></article>' for k in (1, 2, 3, 4)) + '</div>',
         'grow-to-bleed': f'<figure class="dv-grow"><img src="{pic(1600, 800, "3a6ff2")}" alt="" width="1600" height="800"></figure>',
+        'depth': f'<figure class="dv-depth" style="--rate:-.14;margin:0;aspect-ratio:21/9;border-radius:15px"><img src="{pic(1600, 900, "2aa66b")}" alt="" width="1600" height="900"></figure>',
         'peek': '<ul class="dv-peek list">' + ''.join(f'<li><a href="#end" data-peek="{pic(800, 600, c)}">{t}</a></li>' for t, c in (('First piece of work', 'e85d3a'), ('Second piece of work', '2aa66b'), ('Third piece of work', '7a4de0'), ('Fourth piece of work', '222222'))) + '</ul>',
         'end-mark': '<div class="dv-endmark" style="--chars:7" aria-hidden="true">Library</div>'}
-    order = ['line-rise', 'rise-stagger', 'fact-ticker', 'held-index', 'side-rail', 'stack-cards', 'grow-to-bleed', 'peek', 'end-mark']
+    order = ['line-rise', 'rise-stagger', 'fact-ticker', 'held-index', 'side-rail', 'stack-cards', 'grow-to-bleed', 'depth', 'peek', 'end-mark']
     body = ''.join(f'<section id="{i}"><p class="mono tag">{i}</p>{blocks[i]}</section>' for i in order if i in ids and i in blocks)
     page_css = """*{box-sizing:border-box}body{margin:0;--ink:#101421;--paper:#fff;--accent:#ff488b;font:18px/1.5 'Geist',system-ui,sans-serif;color:var(--ink);background:var(--paper)}
 section{padding:clamp(56px,9vw,140px) clamp(20px,2.8vw,40px)}.big{font-weight:300;font-size:clamp(44px,6vw,104px);line-height:1;letter-spacing:-.03em;margin:0}.huge span{font-weight:300;font-size:clamp(56px,11vw,180px);letter-spacing:-.04em;white-space:nowrap}
@@ -189,7 +223,7 @@ section{padding:clamp(56px,9vw,140px) clamp(20px,2.8vw,40px)}.big{font-weight:30
 .btn{display:inline-flex;align-items:center;min-height:54px;padding:0 22px;border-radius:7px;background:var(--accent);color:#101421;text-decoration:none}
 .panel{background:#eef2f5;border-radius:10px;padding:clamp(28px,4vw,56px)}.card{background:#eef2f5;border-radius:15px;padding:clamp(24px,3vw,48px);min-height:300px;box-shadow:0 -1px 0 #fff}.card h2{font-weight:300;font-size:clamp(28px,3vw,44px);margin:8px 0}
 .list{list-style:none;padding:0;margin:0}.list a{display:block;padding:18px 0;border-bottom:1px solid #d9dee6;font-size:clamp(22px,2.4vw,34px);color:inherit;text-decoration:none}"""
-    return ('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Device library</title>'
+    return ('<!doctype html><html lang="en" data-eased-scroll><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Device library</title>'
             '<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">'
             f'<style>{page_css}{css}</style></head><body><main>{body}</main><div id="end"></div><script>{js}</script></body></html>')
 
