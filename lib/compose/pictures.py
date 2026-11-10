@@ -90,9 +90,9 @@ CSS = """
 .sec.pc .pc-words .rows li b{flex-shrink:0;max-width:100%;overflow-wrap:break-word}
 .sec.pc .pc-words .h2{text-wrap:balance;overflow-wrap:normal}.sec.pc .pc-words .h2.light{color:inherit}
 .sec.pc .pc-words .cap,.sec.pc .pc-words .lede{font-size:clamp(17px,1.35vw,21px);line-height:1.5;max-width:44ch;margin-top:clamp(14px,1.6vw,24px)}
-.sec.pc.pc-t-md .pc-words .h2{font-size:min(clamp(28px,3.2vw,46px),calc((100vw - 48px) / var(--lw,8) * 1.72))!important;line-height:1.06}
-.sec.pc.pc-t-lg .pc-words .h2{font-size:min(clamp(34px,4.4vw,64px),calc((100vw - 48px) / var(--lw,8) * 1.72))!important;line-height:1.02}
-.sec.pc.pc-t-xl .pc-words .h2{font-size:min(clamp(40px,6.2vw,96px),calc((100vw - 48px) / var(--lw,8) * 1.72))!important;line-height:.98;letter-spacing:var(--h1-ls,-.03em)}
+.sec.pc.pc-t-md .pc-words .h2{font-size:min(calc(clamp(28px,3.2vw,46px) * var(--face-grow,1)),calc((100vw - 48px) / var(--lw,8) * 1.72))!important;line-height:1.06}
+.sec.pc.pc-t-lg .pc-words .h2{font-size:min(calc(clamp(34px,4.4vw,64px) * var(--face-grow,1)),calc((100vw - 48px) / var(--lw,8) * 1.72))!important;line-height:1.02}
+.sec.pc.pc-t-xl .pc-words .h2{font-size:min(calc(clamp(40px,6.2vw,96px) * var(--face-grow,1)),calc((100vw - 48px) / var(--lw,8) * 1.72))!important;line-height:.98;letter-spacing:var(--h1-ls,-.03em)}
 .sec.pc .pc-al-start{align-content:start;align-self:start}.sec.pc .pc-al-center{align-content:center;align-self:center}.sec.pc .pc-al-end{align-content:end;align-self:end}
 .sec.pc.pc-flush{padding:0;display:block}
 .sec.pc.pc-flush .pc-tail{padding:clamp(20px,3vw,40px) 0 clamp(40px,6vw,80px)}.sec.pc.pc-flush .pc-tail>:first-child{margin-top:0}
