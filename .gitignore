@@ -15,3 +15,4 @@ out/*/hero.mp4
 # benchmark inputs and outputs: third-party text and images, regenerated with bench/fetch.py and bench/run.py
 bench/seed/
 bench/runs/
+experiments/studio/out/
