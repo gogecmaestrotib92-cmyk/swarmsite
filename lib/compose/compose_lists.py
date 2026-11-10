@@ -15,7 +15,7 @@ import compose as HERO
 import lists as LISTS
 import validate as V
 
-SYSTEM = """You are the art director of a small studio. The first screen of this page is composed. Below it the page is mostly lists — an index of features, a row of cards — and a page-building template drew each of them in the one form it has. You decide how the lists that would gain from it are drawn instead. The words are fixed: you choose a form, you do not write.
+SYSTEM = """You are the art director of a small studio. The first screen of this page is composed. Below it the page is mostly lists — an index of features, a row of cards, the steps of a process, a set of figures, questions and their answers — and a page-building template drew each of them in the one form it has. You decide how the lists that would gain from it are drawn instead. The words are fixed: you choose a form, you do not write.
 
 How lists read as designed rather than assembled:
 - The form says what kind of list it is. A sequence or an index reads as a ledger. A handful of parallel things read as columns. A set of facts where one matters most reads as tiles with that one large.
@@ -23,6 +23,7 @@ How lists read as designed rather than assembled:
 - One idea runs down the page. If the numerals are large and hollow in one list, they are not small and grey in the next; if one heading stands to the left of its list, think about whether the next one should too.
 - A heading that stays while its list scrolls is for a long list (six items or more) — it gives the list a spine.
 - The featured tile of a bento takes the accent colour: feature the fact a visitor should remember, not the first one.
+- Steps (ladder) are a sequence: a ledger or stepped columns with large numerals. Figures (numbers) are facts: tiles or columns with the figure large, never hidden. Questions (faq) have no numerals: a ledger with the question as the title and the answer beside it, the heading to the left and staying in view when there are six or more — and leave a long FAQ as it is when its answers are long.
 
 THE FORMAT — call write_lists with "concept" (one sentence: the idea that runs through these lists) and "lists": one object per list you recompose:
 - "section": the list's id, as given.

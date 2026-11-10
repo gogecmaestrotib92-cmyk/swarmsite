@@ -17,7 +17,7 @@ never draws a list it could not read completely. Deterministic, no network, no m
 import html as H, re
 from html.parser import HTMLParser
 
-LIST_KINDS = ('indexlist', 'cards')
+LIST_KINDS = ('indexlist', 'cards', 'ladder', 'numbers', 'faq')   # an index, a row of cards, steps, figures, questions: each is a heading block and items
 SAFE_URL = re.compile(r'^(https?://|mailto:|tel:|#)', re.I)
 VOID = ('img', 'br', 'source', 'hr', 'input', 'meta', 'link')
 
@@ -41,24 +41,27 @@ def sections(page_html):
 
 
 class _List(HTMLParser):
-    """Reads an index list or a row of cards: each item's tag (a number, a label or a figure), title, body, picture and link."""
-    def __init__(self):
-        super().__init__(convert_charrefs=True)
+    """Reads an index list, a row of cards, steps, figures or questions: each item's tag (a number, a label or a figure),
+    title, body, picture and link. `loose`: the items are the list's direct children, whatever they are called."""
+    def __init__(self, loose=False):
+        super().__init__(convert_charrefs=True); self.loose = loose
         self.items = []; self.item = None; self.field = None; self.depth = 0; self.item_depth = None; self.link = None; self.unknown = []
 
     def handle_starttag(self, tag, attrs):
         a = dict(attrs); classes = (a.get('class') or '').split()
         if tag not in VOID: self.depth += 1
         if self.item is None:
-            if (tag == 'li' and 'index-row' in classes) or (tag in ('div', 'a', 'article') and 'card' in classes):
+            if (tag == 'li' and (set(classes) & {'index-row', 'ladder-step'})) or (tag in ('div', 'a', 'article') and 'card' in classes) or tag == 'details' or (self.loose and tag == 'div' and self.depth == 2):
                 self.item = {'tag': '', 'title': '', 'body': '', 'picture': None, 'link': None}; self.item_depth = self.depth
                 if tag == 'a' and SAFE_URL.match(a.get('href') or ''): self.item['link'] = {'href': a['href'], 'label': ''}
             return
+        if tag == 'br' and self.field: self.item[self.field] += ' '   # a line break separates words
         if tag == 'img':
             if self.item['picture'] is None and (a.get('src') or '').startswith('data:image/'): self.item['picture'] = {'src': a['src'], 'alt': a.get('alt') or ''}
-        elif tag == 'h3': self.field = 'title'
+        elif tag in ('h3', 'summary'): self.field = 'title'
+        elif tag == 'p' and 'num-label' in classes and not self.item['title']: self.field = 'title'   # a figure's label is what it is called
         elif tag == 'p': self.field = 'body' if not self.item['body'] else 'more'
-        elif tag in ('span', 'b') and (set(classes) & {'idx', 'num', 'lab'}) and self.field is None: self.field = 'tag'
+        elif tag in ('span', 'b') and (set(classes) & {'idx', 'num', 'lab', 'ladder-n'}) and self.field is None: self.field = 'tag'
         elif tag == 'a' and SAFE_URL.match(a.get('href') or '') and self.item['link'] is None: self.link = {'href': a['href'], 'label': ''}
         elif tag in ('figure', 'div', 'span', 'em', 'strong', 'b', 'i', 'br', 'small', 'a'): pass
         else: self.unknown.append(tag)
@@ -66,7 +69,7 @@ class _List(HTMLParser):
     def handle_endtag(self, tag):
         if tag in VOID: return
         if self.item is not None:
-            if tag in ('h3', 'p') or (tag in ('span', 'b') and self.field == 'tag'): self.field = None
+            if tag in ('h3', 'p', 'summary') or (tag in ('span', 'b') and self.field == 'tag'): self.field = None
             if tag == 'a' and self.link is not None:
                 self.link['label'] = ' '.join(self.link['label'].split())
                 if self.link['label']: self.item['link'] = self.link
@@ -105,16 +108,16 @@ def from_section(section_html):
     wrap = re.match(r'\s*<div class="wrap[^"]*">', section_html[head.end():])
     if not wrap: raise ValueError('the section does not open the way this reader knows')
     inside = head.end() + wrap.end()
-    body_at = re.search(r'<ol class="index-list"|<div class="grid"', section_html)
+    body_at = re.search(r'<ol class="index-list"|<div class="grid"|<ol class="ladder-list"|<div class="nums"|<div class="qa"', section_html)
     if not body_at or body_at.start() < inside: raise ValueError('the list itself was not found')
     heading = section_html[inside:body_at.start()]
-    if heading.strip() and not (re.match(r'\s*<div class="gh[^"]*">', heading) and heading.count('<div') == heading.count('</div>')):
+    if heading.strip() and not (re.match(r'\s*<div(?: class="gh[^"]*")?>', heading) and heading.count('<div') == heading.count('</div>')):
         raise ValueError('the section has something before its list that is not its heading block')
     end = _element_end(section_html, body_at.start())
     tail = section_html[end:-len('</section>')]
     if not tail.lstrip().startswith('</div>') or tail.count('</div>') - len(re.findall(r'<div\b', tail)) != 1:
         raise ValueError('what follows the list in its section is not balanced the way this reader knows')
-    parser = _List(); parser.feed(section_html[body_at.start():end])
+    parser = _List(loose=kind == 'numbers'); parser.feed(section_html[body_at.start():end])
     if parser.unknown: raise ValueError('the list has markup this reader does not know: ' + ', '.join(sorted(set(parser.unknown))[:4]))
     items = [i for i in parser.items if i['title'] or i['body']]
     if len(items) != len(parser.items) or len(items) < 2: raise ValueError('the list has fewer than two readable items')
@@ -164,20 +167,45 @@ def from_picture(section_html):
     if 'hero' in classes or 'data-sig' in head.group(2) or any(k in classes for k in LIST_KINDS): raise ValueError('not a picture section')
     if 'data-pc' in head.group(2): raise ValueError('this section is already composed')
     if 'cta' in classes or any(c.startswith('cta-') for c in classes): raise ValueError('the closing call to action is not a picture section')
+    band = next((c[5:] for c in classes if c.startswith('band-')), 'paper')
+    def record(words, word_classes, picture, first, tail, parts=None):
+        if '<img' in words or '<section' in words or not re.sub(r'<[^>]+>', '', words).strip(): raise ValueError('the block beside the picture is not a block of words this reader knows')
+        plain = ' '.join(H.unescape(re.sub(r'<[^>]+>', ' ', words)).split())
+        return {'kind': 'picture', 'band': band, 'classes': classes,
+                'words': {'html': words, 'classes': word_classes, 'chars': len(plain), 'rows': len(re.findall(r'<li\b', words)), 'parts': parts,
+                          'heading': ' '.join(H.unescape(re.sub(r'<[^>]+>', ' ', (re.search(r'<h2\b[^>]*>(.*?)</h2>', words, re.S) or [None, ''])[1])).split())},
+                'picture': picture, 'first': first, 'tail': tail}
+    over = _heading_over_photo(section_html, head.end())
+    if over: return record(over['words'], ['photo-caption'], over['picture'], 'picture', over['tail'])
     wrap = re.match(r'\s*<div class="wrap[^"]*"[^>]*>', section_html[head.end():])
     if not wrap: raise ValueError('the section does not open the way this reader knows')
     blocks, close = _blocks(section_html, head.end() + wrap.end())
     if not section_html.startswith('</div>', close): raise ValueError('the section is not closed the way this reader knows')
     tail = section_html[close + len('</div>'):-len('</section>')]
     if len(re.findall(r'<div\b', tail)) != tail.count('</div>'): raise ValueError('what follows the picture in its section is not balanced the way this reader knows')
-    if len(blocks) != 2: raise ValueError(f'the section holds {len(blocks)} blocks side by side: a picture section is its words and one picture')
+    if not 2 <= len(blocks) <= 4: raise ValueError(f'the section holds {len(blocks)} blocks side by side: a picture section is its words and one picture')
     pictures = [_one_picture(name, section_html[a:b]) for name, _, a, b, _ in blocks]
-    if sum(p is not None for p in pictures) != 1: raise ValueError('the section is not one block of words and one picture')
-    at = 0 if pictures[0] else 1; name, opening, a, b, _ = blocks[1 - at]
-    words = section_html[a:b]
-    if name != 'div' or '<img' in words or '<section' in words or not re.sub(r'<[^>]+>', '', words).strip(): raise ValueError('the block beside the picture is not a block of words this reader knows')
-    plain = ' '.join(H.unescape(re.sub(r'<[^>]+>', ' ', words)).split())
-    return {'kind': 'picture', 'band': next((c[5:] for c in classes if c.startswith('band-')), 'paper'), 'classes': classes,
-            'words': {'html': words, 'classes': (re.search(r'class="([^"]*)"', opening) or [None, ''])[1].split(), 'chars': len(plain), 'rows': len(re.findall(r'<li\b', words)),
-                      'heading': ' '.join(H.unescape(re.sub(r'<[^>]+>', ' ', (re.search(r'<h2\b[^>]*>(.*?)</h2>', words, re.S) or [None, ''])[1])).split())},
-            'picture': pictures[at], 'first': 'picture' if at == 0 else 'words', 'tail': tail}
+    if sum(p is not None for p in pictures) != 1: raise ValueError('the section is not its words and one picture')
+    at = next(i for i, p in enumerate(pictures) if p); said = [b for i, b in enumerate(blocks) if i != at]; parts = None
+    if len(said) == 1: name, opening, a, b, _ = said[0]; words = section_html[a:b]
+    else:   # several blocks of words (a heading block and its rows): kept whole, in their order, as one block
+        parts = [section_html[a - len(opening):end] for _, opening, a, _, end in said]; words = ''.join(parts); name, opening = 'div', ''
+    if name != 'div': raise ValueError('the block beside the picture is not a block of words this reader knows')
+    return record(words, (re.search(r'class="([^"]*)"', opening) or [None, ''])[1].split(), pictures[at], 'picture' if at == 0 else 'words', tail, parts)
+
+
+def _heading_over_photo(section_html, start):
+    """The template's other photo form — the picture across the section with its heading set on it, the caption under
+    it: {'words', 'picture', 'tail'}, the words being the caption's own blocks with the heading in its place after the
+    label. None when the section is not that."""
+    try:
+        top, close = _blocks(section_html, start)
+        if section_html[close:] != '</section>' or len(top) < 2 or top[0][0] != 'figure' or top[1][1] != '<div class="wrap">': return None
+        inner, _ = _blocks(section_html, top[0][2]); held, _ = _blocks(section_html, top[1][2])
+    except ValueError: return None
+    if not (len(inner) == 2 and inner[0][0] == 'img' and inner[1][1] == '<div class="wrap over">' and len(held) == 1 and held[0][1] == '<div class="photo-caption">'): return None
+    picture = _one_picture('figure', inner[0][1])
+    if not picture: return None
+    heading = section_html[inner[1][2]:inner[1][3]]; caption = section_html[held[0][2]:held[0][3]]
+    label = re.match(r'\s*<span class="lab">.*?</span>', caption, re.S); at = label.end() if label else 0
+    return {'words': caption[:at] + heading + caption[at:], 'picture': picture, 'tail': section_html[top[1][4]:close]}
