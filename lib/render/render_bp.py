@@ -264,9 +264,9 @@ def build(slug_dir, bp_id, out_path=None):
     disp_name, disp_kind = blueprint_disp_name, blueprint_disp_kind
     body_name, body_kind = font_for((T.get('body') or {}).get('fam'), ('Inter Tight', 'sans'))
     label_name, _ = font_for((T.get('label') or {}).get('fam'), ('JetBrains Mono', 'mono'))
-    # running text on a phone: a desk size of 19–24 px steps down (a serif, drawn narrower, keeps 20; the rest 18); a recipe that sets its text as display is left alone
+    # running text on a phone: a desk size of 19–24 px steps down (a serif, drawn narrower, keeps 20; the rest 18); a recipe that filed display type as its text is read as 20
     _bpx = (T.get('body') or {}).get('px', 17); _bpx = _bpx if isinstance(_bpx, (int, float)) and not isinstance(_bpx, bool) else 17
-    phone_body = min(_bpx, 20 if body_kind == 'serif' else 18) if _bpx <= 24 else _bpx
+    phone_body = max(15, min(_bpx if _bpx <= 24 else 20, 20 if body_kind == 'serif' else 18))
     hint = b.get('font_hint'); extra_gf = {}
     if brief.get('keepFont', True) and b.get('keep_font') and isinstance(hint, str):
         # Never interpolate an arbitrary site-provided family into CSS or a URL.
@@ -318,7 +318,14 @@ def build(slug_dir, bp_id, out_path=None):
     # ---- type scale (blueprint px → clamp on vw so it holds on phones) ----
     def clampf(px_, lo_ratio=.45): px_ = px_ or 48; lo = max(28, int(px_ * lo_ratio)); return f'clamp({lo}px,{round(px_ / 14.4, 2)}vw,{px_}px)'
     D = T.get('display') or {'px': 72, 'w': 400, 'ls': -0.02, 'lh': 1.0}; H2 = T.get('h2') or D; H3 = T.get('h3') or {'px': 24, 'w': 500, 'ls': 0, 'lh': 1.2}
-    BO = T.get('body') or {'px': 17, 'lh': 1.4, 'maxw': 480}; LB = T.get('label') or {'px': 12, 'ls': .08, 'tt': 'uppercase'}
+    BO = dict(T.get('body') or {'px': 17, 'lh': 1.4, 'maxw': 480})
+    # running text is running text whatever a recipe measured under that name: 15–24 px, a leading it can be read at, and a
+    # measure of thirty characters or more (a recipe once filed a 40 px display line in a 189 px box as its body)
+    if isinstance(BO.get('px'), (int, float)) and not isinstance(BO.get('px'), bool):
+        if BO['px'] > 24: BO['px'] = 20; BO['lh'] = max(BO.get('lh') or 1.4, 1.35) if isinstance(BO.get('lh'), (int, float)) else 1.4
+        BO['px'] = max(15, BO['px'])
+        if isinstance(BO.get('maxw'), (int, float)): BO['maxw'] = max(BO['maxw'], round(BO['px'] * 15))
+    LB = T.get('label') or {'px': 12, 'ls': .08, 'tt': 'uppercase'}
     display_w = D.get('w', 400) if disp_kind != 'serif' or D.get('w', 400) >= 300 else 400
     if disp_kind == 'serif' and disp_name == 'Instrument Serif': display_w = 400
     tt = lambda t: 'uppercase' if t.get('tt') == 'uppercase' else 'none'
@@ -1864,7 +1871,9 @@ figure.lead{{overflow:hidden;border-radius:var(--radius);margin:0 0 clamp(28px,4
 @media(max-width:900px){{.collage .cl,.nums,.prs{{grid-template-columns:1fr 1fr}}.collage .c1{{grid-row:auto}}.overlay{{min-height:70svh}}}}
 /* signature components */
 .cta-ov{{align-content:center}}.cta-ov .ov-in{{gap:clamp(20px,2.2vw,32px)}}.cta-ov .h2{{max-width:16ch;text-wrap:balance;overflow-wrap:anywhere}}.cta-ov .btn{{font-size:max(var(--btn-px),16px);min-height:max(var(--btn-h),48px)}}.cta-ov .alts{{max-width:70ch}}
-.hero.split{{padding-top:96px;min-height:100svh;align-content:center}}.split-wrap{{display:grid;grid-template-columns:1fr 1.1fr;gap:var(--gutter);align-items:center}}.split-l .lede{{margin-top:18px}}.split-l .ctas{{margin-top:26px}}.shotframe.tall{{border-radius:max(12px,var(--radius));border:1px solid var(--line);box-shadow:none;overflow:hidden}}.shotframe.tall img{{width:100%;height:min(82vh,900px);object-fit:cover;object-position:left top}}.shotframe.tall.product-shot img{{display:block;width:100%;height:auto;max-height:min(82vh,900px);object-fit:contain}}
+.hero.split{{padding-top:96px;min-height:100svh;align-content:center}}.split-wrap{{display:grid;grid-template-columns:1fr 1.1fr;gap:var(--gutter);align-items:center}}
+/* a headline in half the screen fits its longest word in that half, not in the whole screen */
+@media(min-width:901px){{.hero.split .h1[style*="--lw"]{{font-size:min(var(--hero-size),calc((min(100vw,var(--container)) - 2 * var(--frame) - var(--gutter)) / 2.1 / var(--lw,8) * 1.72))}}.hero.split .h1[style*="--lw"][style*="text-transform:uppercase"]{{font-size:min(var(--hero-size),calc((min(100vw,var(--container)) - 2 * var(--frame) - var(--gutter)) / 2.1 / var(--lw,8) * 1.3))}}}}.split-l .lede{{margin-top:18px}}.split-l .ctas{{margin-top:26px}}.shotframe.tall{{border-radius:max(12px,var(--radius));border:1px solid var(--line);box-shadow:none;overflow:hidden}}.shotframe.tall img{{width:100%;height:min(82vh,900px);object-fit:cover;object-position:left top}}.shotframe.tall.product-shot img{{display:block;width:100%;height:auto;max-height:min(82vh,900px);object-fit:contain}}
 .sp{{display:grid;grid-template-columns:1fr 1.15fr;gap:calc(var(--gutter) * 1.5);align-items:stretch}}.sp-row{{min-height:46vh;display:grid;align-content:center;gap:12px;max-width:40ch;opacity:.28;transition:opacity .5s var(--ease)}}.sp-row.on{{opacity:1}}.sp-row .h3{{font-size:min(var(--h2),44px)}}.sp-row p{{color:var(--muted);font-size:calc(var(--body-px) + 1px)}}.sp-pin{{position:relative}}.sp-stage{{position:sticky;top:12vh;height:76vh;border-radius:max(12px,var(--radius));overflow:hidden;border:1px solid var(--line);background:color-mix(in srgb,var(--ink) 6%,var(--paper))}}.sp-f{{position:absolute;inset:0;margin:0;opacity:0;transform:scale(1.03);transition:opacity .6s var(--ease),transform .9s var(--ease)}}.sp-f.on{{opacity:1;transform:none}}.sp-f img{{width:100%;height:100%;object-fit:cover;object-position:top;transition:transform 1.2s var(--ease)}}.sp-stage.product-shot .sp-f img{{object-fit:contain}}
 .marquee{{padding:clamp(28px,4vw,56px) 0;overflow:hidden}}.marquee .gh{{margin-bottom:24px}}.mq{{overflow:hidden;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:18px 0}}.mq-track{{display:flex;gap:0;width:max-content;animation:mq 46s linear infinite}}.mq-i{{display:inline-flex;align-items:center;gap:28px;padding:0 14px 0 28px;font-family:var(--display);font-weight:var(--h2-w);font-size:min(var(--h2),56px);letter-spacing:-.02em;white-space:nowrap}}.mq-i i{{font-style:normal;font-size:.45em;color:var(--accent)}}@keyframes mq{{to{{transform:translateX(-50%)}}}}.marquee:hover .mq-track{{animation-play-state:paused}}.no-motion .mq-track{{animation:none!important;transform:none;padding-left:var(--frame)}}
 .marquee-static{{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}}

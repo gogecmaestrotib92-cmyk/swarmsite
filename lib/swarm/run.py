@@ -202,6 +202,38 @@ def keep_plain(doc, record):
     return (doc if left else None), dropped
 
 
+def layout_breaks(page_path):
+    """What lib/qa/layout.mjs measures on the page: [{'kind', 'section', 'text', 'detail', 'widths'}], or None when it could not be measured."""
+    try:
+        r = subprocess.run(['node', os.path.join(ROOT, 'lib', 'qa', 'layout.mjs'), page_path], capture_output=True, text=True, timeout=150)
+        return json.loads(r.stdout.strip().splitlines()[-1])['breaks']
+    except Exception: return None
+
+
+def mend_layout(out, before, replace):
+    """No broken typesetting leaves the loop. The composed page is measured at five widths; a section below the first
+    screen in which something is broken — a heading stacked a word to a line, a word split, a paragraph in a sliver of a
+    column, text cut off or lying over other text — is put back as it stood before it was composed, and the page is
+    measured again. `before` is the page as it stood after the first screen was drawn. Returns the record:
+    {'breaks': found first, 'reverted': [ids], 'left': what is still broken after}; 'left' in the first screen or the
+    frame of the page is for the caller to judge."""
+    import sections as SECTIONS
+    found = layout_breaks(out)
+    record = {'breaks': found, 'reverted': [], 'left': found}
+    if not found: return record
+    with open(out, encoding='utf-8') as f: page = f.read()
+    was = {s['id']: before[s['span'][0]:s['span'][1]] for s in SECTIONS.sections(before) if s.get('id')}
+    for sec in sorted((s for s in SECTIONS.sections(page) if s.get('id') in {b['section'] for b in found} and s['id'] in was), key=lambda s: -s['span'][0]):
+        if page[sec['span'][0]:sec['span'][1]] == was[sec['id']]: continue   # it was broken before anything was composed: not this pass's to mend
+        page = page[:sec['span'][0]] + was[sec['id']] + page[sec['span'][1]:]; record['reverted'].append(sec['id'])
+    if record['reverted']:
+        replace(page); record['left'] = layout_breaks(out)
+    now = {s['id']: page[s['span'][0]:s['span'][1]] for s in SECTIONS.sections(page) if s.get('id')}
+    # what is still broken and is the composition's doing: the first screen it drew, or a section it changed that could not be put back
+    record['own'] = [b for b in record['left'] or [] if b.get('section') == 'top' or (b.get('section') in now and b['section'] in was and now[b['section']] != was[b['section']])]
+    return record
+
+
 def compose_first_screen(slug_dir, out, deadline=None):
     """Recompose the page at `out` (lib/compose) — its first screen, then the lists below it, then the sections that show a
     picture, then the sections that are words only, each a document that is validated, measured on its own render and refused whole if it breaks anything — and
@@ -225,6 +257,7 @@ def compose_first_screen(slug_dir, out, deadline=None):
     if ir:
         composed, report = IR.transplant(page, ir, images)
         if report['drawn']: replace(composed); page = composed; record['drawn'] = True
+    after_first_screen = page   # what each section below was before any composer touched it: where a broken one goes back to
     record['direction'] = result.get('direction') if record['drawn'] else None
     record['plan'] = result.get('plan') if record['drawn'] else None
     def directed():
@@ -277,6 +310,10 @@ def compose_first_screen(slug_dir, out, deadline=None):
             record['device'] = report
             if report['drawn']: replace(carried)
         except Exception as e: record['device'] = {'drawn': False, 'error': str(e)[:160]}
+    wanted = os.environ.get('SWARM_LAYOUT', '0' if os.environ.get('LIVETEST') else '1') != '0'
+    if record.get('drawn') and wanted:
+        try: record['layout'] = mend_layout(out, after_first_screen, replace)
+        except Exception as e: record['layout'] = {'error': str(e)[:160]}
     with open(os.path.join(slug_dir, 'composition.json'), 'w', encoding='utf-8') as f: json.dump(record, f, indent=1, ensure_ascii=False)
     return record
 
@@ -295,6 +332,11 @@ def composed_candidate(slug_dir, out, best_score, best_broken, grade, deadline=N
                 'words': (record.get('words') or {}).get('forms') if (record.get('words') or {}).get('drawn') else None}
     if not record['drawn']:
         decision['why'] = 'no composition passed validation and measurement'; return decision
+    layout = record.get('layout') or {}
+    if layout.get('reverted'): decision['layout_reverted'] = layout['reverted']
+    if layout.get('own'):   # broken typesetting is not weighed against taste: the page does not go out
+        decision['layout'] = layout['own']
+        decision['why'] = 'its layout is broken: ' + '; '.join(f"{b['kind']} in \"{b.get('section')}\" at {b.get('widths')} ({b.get('detail')})" for b in layout['own'][:3]); return decision
     con, rep = grade()
     taste = rep.get('score') if isinstance(rep, dict) and isinstance(rep.get('score'), (int, float)) else None
     if taste is None or not isinstance(con.get('score'), (int, float)):
