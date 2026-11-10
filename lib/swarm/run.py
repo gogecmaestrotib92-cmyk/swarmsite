@@ -125,10 +125,10 @@ def compose_wanted(slug_dir):
 
 def compose_first_screen(slug_dir, out, deadline=None):
     """Recompose the page at `out` (lib/compose) — its first screen, then the lists below it, then the sections that show a
-    picture, each a document that is validated, measured on its own render and refused whole if it breaks anything — and
+    picture, then the sections that are words only, each a document that is validated, measured on its own render and refused whole if it breaks anything — and
     write composition.json. The page file is replaced only by what passed; a part that did not pass leaves that part of
     the page as it was. The pictures are composed only while there is time left in the job (`deadline`, a clock time).
-    Returns the record: {'drawn', 'attempts', 'concept', 'face', 'measured', 'wishes', 'log', 'ir', 'lists', 'pictures'};
+    Returns the record: {'drawn', 'attempts', 'concept', 'face', 'measured', 'wishes', 'log', 'ir', 'lists', 'pictures', 'words'};
     'drawn' is true when any part was drawn."""
     if os.path.join(ROOT, 'lib', 'compose') not in sys.path: sys.path.insert(0, os.path.join(ROOT, 'lib', 'compose'))
     import compose as COMPOSE, render_ir as IR
@@ -140,7 +140,7 @@ def compose_first_screen(slug_dir, out, deadline=None):
     result = COMPOSE.compose(page, images, job_dir=slug_dir, page_path=out, concepts=COMPOSE_CONCEPTS)
     ir = result.get('ir')
     record = {'drawn': False, 'attempts': result.get('attempts'), 'concept': (ir or {}).get('note'), 'face': ((ir or {}).get('hero') or {}).get('face'),
-              'measured': result.get('measured'), 'wishes': result.get('wishes'), 'log': result.get('log'), 'ir': ir, 'lists': None, 'pictures': None,
+              'measured': result.get('measured'), 'wishes': result.get('wishes'), 'log': result.get('log'), 'ir': ir, 'lists': None, 'pictures': None, 'words': None,
               **{k: result[k] for k in ('concepts', 'chosen', 'verdict') if k in result}}
     if ir:
         composed, report = IR.transplant(page, ir, images)
@@ -166,6 +166,18 @@ def compose_first_screen(slug_dir, out, deadline=None):
                 composed, report = PICTURES.transplant(page, doc, images)
                 if report['drawn']: replace(composed); record['pictures']['drawn'] = True; record['drawn'] = True
         except Exception as e: record['pictures'] = {'drawn': False, 'error': str(e)[:160]}
+    if deadline is not None and time.time() > deadline: record['words'] = {'drawn': False, 'error': 'no time left in this job'}
+    else:
+        try:   # the sections that are words only — price lists, menus, a paragraph under its heading — on the page as it now stands
+            import compose_words as COMPOSE_WORDS, words as WORDS
+            with open(out, encoding='utf-8') as f: page = f.read()
+            chosen = COMPOSE_WORDS.compose(page, out); doc = chosen.get('doc')
+            record['words'] = {'drawn': False, 'attempts': chosen.get('attempts'), 'concept': (doc or {}).get('note'), 'forms': {w['section']: w['form'] for w in (doc or {}).get('words', [])},
+                               'measured': chosen.get('measured'), 'log': chosen.get('log'), 'doc': doc}
+            if doc:
+                composed, report = WORDS.transplant(page, doc)
+                if report['drawn']: replace(composed); record['words']['drawn'] = True; record['drawn'] = True
+        except Exception as e: record['words'] = {'drawn': False, 'error': str(e)[:160]}
     with open(os.path.join(slug_dir, 'composition.json'), 'w', encoding='utf-8') as f: json.dump(record, f, indent=1, ensure_ascii=False)
     return record
 
@@ -178,7 +190,8 @@ def composed_candidate(slug_dir, out, best_score, best_broken, grade, deadline=N
     record = compose_first_screen(slug_dir, out, deadline)
     decision = {'kept': False, 'drawn': record['drawn'], 'attempts': record.get('attempts'), 'concept': record.get('concept'), 'face': record.get('face'), 'before': best_score,
                 'first_screen': bool(record.get('ir')), 'lists': (record.get('lists') or {}).get('forms') if (record.get('lists') or {}).get('drawn') else None,
-                'pictures': (record.get('pictures') or {}).get('forms') if (record.get('pictures') or {}).get('drawn') else None}
+                'pictures': (record.get('pictures') or {}).get('forms') if (record.get('pictures') or {}).get('drawn') else None,
+                'words': (record.get('words') or {}).get('forms') if (record.get('words') or {}).get('drawn') else None}
     if not record['drawn']:
         decision['why'] = 'no composition passed validation and measurement'; return decision
     con, rep = grade()
@@ -218,6 +231,7 @@ def recompose(slug_dir, out, log, best_score, best_round, best_manifest, best_fi
         best_score, best_round = decision['score'], k; best_manifest = dict(best_manifest, html=digest(out))
         if decision.get('first_screen'): ev('Concept', 'first screen recomposed: ' + str(decision.get('concept') or '')[:110])
         if decision.get('lists'): ev('Concept', 'lists recomposed: ' + ', '.join(f'{k} as {v}' for k, v in decision['lists'].items())[:110])
+        if decision.get('words'): ev('Concept', 'sections of words recomposed: ' + ', '.join(f'{k} as {v}' for k, v in decision['words'].items())[:100])
         if decision.get('pictures'): ev('Visual', 'pictures recomposed: ' + ', '.join(f'{k} as {v}' for k, v in decision['pictures'].items())[:110])
         ev('Critic', f"composed page kept: {decision['score']}/100 (was {decision['before']}) · taste {decision['taste']} · contract {decision['contract']}")
     else:   # the winner's page, documents, contract, critic and screenshots go back exactly as they were

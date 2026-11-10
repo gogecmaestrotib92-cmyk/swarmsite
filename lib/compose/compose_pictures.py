@@ -24,32 +24,43 @@ import validate as V
 
 SYSTEM = """You are the art director of a small studio. The first screen of this page is composed. Below it, every section that shows a picture was drawn by a page-building template in the one way it has: the picture in a box and its words beside it. That is what makes a page look assembled rather than designed. You decide what each picture does instead. The words and the pictures are fixed: you choose a form, you do not write.
 
+The one thing that must not be left on the page: a rectangle on one side and the words on the other. Decorating the rectangle — a frame, a tilt, a rounded corner, a coloured panel behind it — does not change what it is. On a designed page a picture never has a box of its own: it belongs to the look of its section.
+
+How a picture belongs to its section:
+- It has no visible edge. It fills the section (backdrop), or it runs off the screen and its inner edge dissolves into the section's ground while the heading reaches into it (bleed with "edge": "fade" and "overlap"), or the section takes the picture's own ground colour so that the picture simply stands in it (stage with "ground": "own" — offered when the picture's edges are one even colour: a product on white, a render on black, a screen on its own dark).
+- Or it is cut by the type: the words sit in a notch cut out of its corner (card), or the picture is set into the heading itself, as tall as the capitals, like a word (inline) — the honest form for a small photograph, which cannot be made large.
+- Or it is the whole width (panorama).
+- offset — a picture cut and hung beside the words — and a stage on accent, ink or alt are the weakest forms: use them only when nothing above is open to the picture, and never twice on a page.
+
 How a studio uses a picture:
 - A picture is given a job. It is the ground the words stand on; or it runs off the edge of the screen from the top of the section to the bottom; or it crosses the page as a strip; or it carries the words on a card laid over its corner; or it is cut to a proportion that suits what it shows and hung off the line of the text; or it is set on a stage of colour like an object.
 - The picture decides. A wide, atmospheric photograph with a quiet area wants to be a backdrop or a panorama. A photograph with one strong subject wants to bleed off an edge with the words beside it. A small photograph cannot be made large — it becomes a print: framed in paper, turned a few degrees, beside a very large heading. A screenshot, a document or a cover is an object: shown whole, on a stage.
 - When the picture becomes the backdrop the words move to where the picture is quiet. Look at it: say where the words stand ("place") and set "focal" on its subject, so that the crop keeps the subject and the words do not sit on it.
 - Sections that follow each other never take the same form on the same side. Alternate the side, vary the form, and let one idea run down the page.
+- Many words (a list of rows, several paragraphs) do not stand in a narrow column beside a picture: put them under it (panorama, or stage with "side": "top").
 - The heading grows when the picture is small or calm ("title": xl) and stays modest when the picture is loud or the words are many.
 - A section you leave out stays as the template drew it. Leave one out only when the template's form is right for it.
 
 THE FORMAT — call write_pictures with "concept" (one sentence: what the pictures do on this page) and "pictures": one object per section you recompose. Every object has "section" (its id, as given) and "form"; the other fields depend on the form. Each section lists the forms open to its picture — its pixels and its kind decide them; a form that is not listed for a section is refused.
 - backdrop — the picture fills the section edge to edge and the words stand on it under a veil. "place": bottom-left | bottom-right | top-left | center | left | right (where the words stand). "height": md | lg | screen. "scrim": soft | mid | deep (the veil; it is thickened by rule if the words do not read).
-- bleed — the picture runs off one edge of the screen, as tall as the section; the words stand beside it. "side": left | right (the picture's side). "cols": 5–7 of twelve. "height": md | lg. "align": start | center | end (the words, top to bottom).
+- bleed — the picture runs off one edge of the screen, as tall as the section. "side": left | right (the picture's side). "cols": 5–7 of twelve. "height": md | lg. "align": start | center | end (the words, top to bottom). "edge": fade | hard — fade (the default) dissolves the picture's inner edge into the section; "overlap": 0 | 1 | 2 columns the words then reach into that dissolved edge, so heading and picture interlock (it is taken back by rule if the words do not read there).
 - panorama — the picture crosses the whole screen as a strip. "ratio": 2/1 | 21/9 | 3/1. "words": above | below; the heading stands to the left and what it introduces to the right.
 - card — a large picture with the words on a card laid over its inner corner. "side": the picture's side. "cols": 7–9. "ratio": 1/1 | 4/5 | 4/3 | 3/2 | 16/10 | 16/9. "anchor": top | middle | bottom (where the card lies). "bleed": true lets the picture run off its edge of the screen.
 - offset — the picture cut to a proportion and hung beside the words. "side", "cols": 3–7, "ratio": own | 1/1 | 4/5 | 3/4 | 2/3 | 4/3 | 3/2 | 16/9 | 16/10 | 21/9, "shape": rect | soft | arch | circle | pill, "tilt": -4…4 degrees, "shadow": none | soft | hard, "frame": none | paper | browser, "drop": none | up | down (hung above or below the line of the words), "align".
-- stage — the picture shown whole on a panel of colour that runs off the screen edge, as tall as the section. "side", "cols": 5–8 (the panel), "ground": accent | ink | alt, "tilt": -3…3, "align", "height": auto | md | lg (auto: as tall as what it shows).
+- stage — the picture shown whole on a ground that runs off the screen edge. "side": left | right | top (top: the picture across the top of the section on its ground, the words under it in two columns — the form for a section with many words or rows), "cols": 5–8 (the picture's share), "ground": own | accent | ink | alt, "tilt": -3…3, "align", "height": auto | md | lg (auto: as tall as what it shows). With "ground": "own" the whole section takes the picture's own ground colour, the words turn to the colour that reads on it, and the picture has no panel and no edge.
+- inline — the picture set into the section's heading like a word, as tall as its capitals. "at": start | end (of the heading), "shape": pill | soft | circle, "title": lg | xl. Photographs only; the heading becomes the picture's frame, so the heading is large.
 On any form: "title": md | lg | xl (the heading's size), "enter": none | rise | clip | settle (how the picture arrives). On every form but stage: "tone": none | mono | duotone | tint, "grain": true, "focal": [x, y] each 0–1. On backdrop, bleed, panorama and card: "scroll": parallax.
 A screenshot is evidence of the product: it is never cropped, toned or written over — stage or offset only. A composition that breaks a rule is refused whole and you are told why."""
 
-FIELDS = ('side', 'cols', 'place', 'height', 'scrim', 'ratio', 'words', 'anchor', 'bleed', 'shape', 'tilt', 'shadow', 'frame', 'drop', 'align', 'ground', 'tone', 'grain', 'focal', 'title', 'enter', 'scroll')
+FIELDS = ('side', 'cols', 'place', 'height', 'scrim', 'ratio', 'words', 'anchor', 'bleed', 'shape', 'tilt', 'shadow', 'frame', 'drop', 'align', 'ground', 'tone', 'grain', 'focal', 'title', 'enter', 'scroll', 'edge', 'overlap', 'at')
 ENTRY = {"type": "object", "required": ["section", "form"], "properties": {
-    "section": {"type": "string"}, "form": {"type": "string", "enum": list(PICTURES.FORMS)}, "side": {"type": "string", "enum": list(PICTURES.SIDES)}, "cols": {"type": "integer"},
+    "section": {"type": "string"}, "form": {"type": "string", "enum": list(PICTURES.FORMS)}, "side": {"type": "string", "enum": list(PICTURES.SIDES) + ["top"]}, "cols": {"type": "integer"},
     "place": {"type": "string", "enum": list(PICTURES.PLACES)}, "height": {"type": "string", "enum": ["auto"] + list(PICTURES.HEIGHTS)}, "scrim": {"type": "string", "enum": list(PICTURES.SCRIMS)},
     "ratio": {"type": "string"}, "words": {"type": "string", "enum": list(PICTURES.WORDS)}, "anchor": {"type": "string", "enum": list(PICTURES.ANCHORS)}, "bleed": {"type": "boolean"},
     "shape": {"type": "string", "enum": list(V.SHAPES)}, "tilt": {"type": "integer"}, "shadow": {"type": "string", "enum": list(V.SHADOWS)}, "frame": {"type": "string", "enum": list(PICTURES.FRAMES)},
     "drop": {"type": "string", "enum": list(PICTURES.DROPS)}, "align": {"type": "string", "enum": list(PICTURES.ALIGN)}, "ground": {"type": "string", "enum": list(PICTURES.GROUNDS)},
     "tone": {"type": "string", "enum": list(V.TONES)}, "grain": {"type": "boolean"}, "focal": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+    "edge": {"type": "string", "enum": list(PICTURES.EDGES)}, "overlap": {"type": "integer"}, "at": {"type": "string", "enum": ["start", "end"]},
     "title": {"type": "string", "enum": list(PICTURES.TITLES)}, "enter": {"type": "string", "enum": list(V.MEDIA_ENTER)}, "scroll": {"type": "string", "enum": list(V.MEDIA_SCROLL)}}}
 TOOL = {"name": "write_pictures", "description": "What each picture below the first screen does.", "input_schema": {"type": "object", "required": ["concept", "pictures"], "properties": {
     "concept": {"type": "string", "description": "one sentence: what the pictures do on this page"},
@@ -91,6 +102,9 @@ def findings_of(seen):
 def _eased(entry, kind):
     """The entry changed by rule so that what was measured no longer holds, or None when the form has nothing left to give."""
     e = dict(entry); form = e['form']
+    if kind == 'words-on-picture' and form == 'bleed':   # the words step back out of the picture's edge
+        if not e.get('overlap'): return None
+        e['overlap'] -= 1; return e
     if kind == 'words-on-picture':
         now = e.get('scrim', 'mid')
         if now not in THICKER: return None
@@ -143,7 +157,7 @@ def brief(page_html, images=None):
             ids.append(sec['id'])
             opened = '; '.join(f'{f["form"]} (would draw it {f["box"][0]}×{f["box"][1]} px, {f["scale"]:.2f}× its pixels)' for f in forms)
             lines.append(f'▸ "{sec["id"]}" — on the {c["band"]} band. Picture: {pic["w"]}×{pic["h"]} px, {"a SCREENSHOT (evidence of the product)" if pic["shot"] else "a photograph or illustration"}'
-                         + (f', described as "{pic["alt"][:90]}"' if pic['alt'] else '') + f'. Heading: "{c["words"]["heading"][:90]}". Words: {c["words"]["chars"]} characters'
+                         + (f', described as "{pic["alt"][:90]}"' if pic['alt'] else '') + (f'; its edges are one even {"dark" if pic["ground"]["dark"] else "light"} colour (stage with "ground": "own" is open)' if pic.get('ground') else '; its edges are a scene (no ground of its own)') + f'. Heading: "{c["words"]["heading"][:90]}". Words: {c["words"]["chars"]} characters'
                          + (f', a list of {c["words"]["rows"]} rows' if c['words']['rows'] else '') + f'. The template put the {"picture first" if c["first"] == "picture" else "words first"}.\n    Forms open to it: {opened}.')
         else:
             lines.append(f'  "{sec["id"] or "-"}" — {kind}' + (f' (holds a picture but cannot be recomposed: {known[1][:70]})' if known else ''))

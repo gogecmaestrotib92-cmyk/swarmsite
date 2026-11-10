@@ -71,10 +71,20 @@ class Reading(unittest.TestCase):
 
     def test_a_section_that_is_not_read_whole_is_refused(self):
         whole = section('mk'); words = MK['words']['html']
-        for broken, why in ((whole.replace(words, words, 1).replace('<figure', '<div class="extra">more</div><figure', 1), 'blocks'),
+        for broken, why in ((whole.replace('<figure', '<div>a</div><div>b</div><div>c</div><figure', 1), 'blocks'),
                             (whole.replace('<figure', 'loose words<figure', 1), 'outside its blocks'),
                             (re.sub(r'<img [^>]*>', lambda m: m.group(0) + m.group(0), whole, 1), 'one picture')):
             with self.assertRaisesRegex(ValueError, why): SECTIONS.from_picture(broken)
+
+    def test_the_templates_heading_over_a_photo_is_read_with_its_caption(self):
+        over = ('<section class="sec photo" id="story"><figure style="aspect-ratio:1.1"><img src="%s" alt="The room"><div class="wrap over"><h2 class="h2 light" style="--lw:12">Home cooking</h2></div></figure>'
+                '<div class="wrap"><div class="photo-caption"><span class="lab">Since 1996</span><p class="cap">One line about the house.</p><ul class="photo-details"><li>Leganés</li></ul></div></div></section>') % picture(1400, 600)
+        read = SECTIONS.from_picture(over); self.assertEqual((read['first'], read['tail'], read['words']['heading'], read['picture']['alt']), ('picture', '', 'Home cooking', 'The room'))
+        self.assertEqual(read['words']['html'], '<span class="lab">Since 1996</span><h2 class="h2 light" style="--lw:12">Home cooking</h2><p class="cap">One line about the house.</p><ul class="photo-details"><li>Leganés</li></ul>', 'the heading takes its place after the label; nothing else moves')
+        page = '<html><head></head><body><section class="sec hero" id="top"><h1>Hi</h1></section>' + over + '</body></html>'
+        out, report = PICTURES.transplant(page, doc({'section': 'story', 'form': 'bleed', 'side': 'left', 'cols': 7, 'overlap': 1}), []); self.assertTrue(report['drawn'], report['errors'])
+        self.assertEqual(out.count('Home cooking'), 1); self.assertIn('.sec.pc .pc-words .h2.light{color:inherit}', out, 'a heading that was light on its photo takes the colour of the ground it now stands on')
+        with self.assertRaises(ValueError): SECTIONS.from_picture(over.replace('<div class="wrap over">', '<div class="wrap over"><b>x</b>').replace('</h2></div>', '</h2></div><p>stray</p>'))
 
     def test_the_picture_is_measured_and_its_kind_known(self):
         _, content = PICTURES.readable(PAGE, IMAGES)['mk']; self.assertEqual((content['picture']['w'], content['picture']['h'], content['picture']['shot']), (1344, 896, False))
@@ -87,7 +97,7 @@ class OpenForms(unittest.TestCase):
     def forms(self, page, images): return [f['form'] for f in PICTURES.open_forms(PICTURES.readable(page, images)['mk'][1], CONTENT.page_of(page))]
     def test_the_picture_decides_which_forms_are_open(self):
         self.assertEqual(self.forms(PAGE, IMAGES), list(PICTURES.FORMS), 'a large photograph can do anything')
-        self.assertEqual(self.forms(SMALL, []), ['offset', 'stage'], 'a small photograph cannot be made large: a print or an object')
+        self.assertEqual(self.forms(SMALL, []), ['offset', 'stage', 'inline'], 'a small photograph cannot be made large: a print, an object, or a word of the heading')
         self.assertEqual(self.forms(PAGE, SHOT), ['offset', 'stage'], 'a screenshot is shown whole')
 
     def test_each_open_form_says_what_it_would_draw(self):
@@ -206,6 +216,69 @@ class Drawing(unittest.TestCase):
     def test_a_card_lies_over_the_inner_columns_of_its_picture(self):
         right = section('mk', self.draw(FORMS['card'])); self.assertIn('--c0:5;--c1:13', right); self.assertIn('--w0:1;--w1:7', right); self.assertIn('pc-bleeds', right)
         left = section('mk', self.draw({**FORMS['card'], 'side': 'left', 'cols': 9, 'bleed': False})); self.assertIn('--c0:1;--c1:10', left); self.assertIn('--w0:8;--w1:13', left)
+
+
+DARK = PAGE.replace(SRC, picture(1200, 900, (12, 14, 18)))     # the same page with a picture whose edges are one dark colour (a render on black)
+LIGHT = PAGE.replace(SRC, picture(1200, 900, (244, 240, 232)))   # … and one light colour (a product on white)
+def scene(width, height):
+    """A picture whose edges are a scene, not a colour."""
+    from PIL import Image
+    im = Image.new('RGB', (width, height)); im.putdata([((x * 7) % 256, (y * 5) % 256, (x + y) % 256) for y in range(height) for x in range(width)])
+    buf = io.BytesIO(); im.save(buf, 'PNG'); return 'data:image/png;base64,' + base64.b64encode(buf.getvalue()).decode()
+
+
+class NoBox(unittest.TestCase):
+    """A picture never stands in a box of its own: it dissolves into its section, the section takes its ground, the type
+    cuts it, or it is set into the heading."""
+    def draw(self, entry, page=PAGE, images=IMAGES):
+        out, report = PICTURES.transplant(page, doc(entry), images); self.assertTrue(report['drawn'], report['errors']); return section('mk', out)
+
+    def test_the_ground_of_a_picture_is_the_colour_its_edges_share(self):
+        dark = PICTURES._ground(picture(400, 300, (12, 14, 18))); self.assertTrue(dark['dark']); self.assertTrue(all(abs(a - b) <= 6 for a, b in zip(dark['rgb'], (12, 14, 18))))
+        self.assertFalse(PICTURES._ground(picture(400, 300, (244, 240, 232)))['dark']); self.assertIsNone(PICTURES._ground(scene(120, 90))); self.assertIsNone(PICTURES._ground('data:image/png;base64,AAAA'))
+        self.assertIsNone(PICTURES.readable(PAGE, IMAGES)['mk'][1]['picture']['ground'], 'a photograph of a room has no ground of its own')
+
+    def test_a_section_takes_the_pictures_own_ground_and_the_words_the_colour_that_reads_on_it(self):
+        own = {'section': 'mk', 'form': 'stage', 'side': 'left', 'cols': 6, 'ground': 'own'}
+        dark = self.draw(own, DARK, []); self.assertIn('pc-own', dark); self.assertRegex(dark, r'--pc-ground:rgb\(1\d,1\d,\d\d\)'); self.assertIn('pc-words', dark); self.assertRegex(dark, r'class="pc-words[^"]* pc-inv"')
+        self.assertRegex(self.draw(own, LIGHT, []), r'class="pc-words[^"]* pc-dk"')
+        found = PICTURES.validate(doc(own), PAGE, IMAGES); self.assertEqual([e['code'] for e in found], ['IP067']); self.assertIn('a scene, not one colour', found[0]['message'])
+        self.assertIn('.sec.pc.pc-own .pc-fig{box-shadow:none;border-radius:0}', PICTURES.CSS, 'on its own ground the picture has no edge and no shadow')
+
+    def test_a_picture_that_runs_off_the_screen_dissolves_into_its_section_and_the_words_may_reach_into_it(self):
+        self.assertIn('<i class="pc-fade"></i></figure>', self.draw(FORMS['bleed'])); self.assertIn('pc-edge-fade', self.draw(FORMS['bleed']))
+        hard = self.draw({**FORMS['bleed'], 'edge': 'hard'}); self.assertNotIn('pc-fade', hard); self.assertNotIn('data-over', hard)
+        reach = self.draw({**FORMS['bleed'], 'overlap': 2}); self.assertIn('pc-over-2', reach); self.assertIn('data-over="2"', reach)
+        self.assertEqual(codes(doc({**FORMS['bleed'], 'edge': 'hard', 'overlap': 1})), ['IP067']); self.assertEqual(codes(doc({**FORMS['bleed'], 'overlap': 3})), ['IP020']); self.assertEqual(codes(doc({**FORMS['bleed'], 'edge': 'soft'})), ['IP020'])
+        self.assertEqual(codes(doc({**FORMS['card'], 'edge': 'fade'})), ['IP001'])
+
+    def test_a_picture_is_set_into_the_heading_like_a_word(self):
+        heading = MK['words']['heading']; inline = {'section': 'mk', 'form': 'inline'}
+        end = self.draw(inline, SMALL, []); self.assertRegex(end, r' <span class="pc-fig pc-pill pc-pill-pill" data-limit="1.35" style="--focal:50% 50%"><img [^>]*></span></h2>'); self.assertIn('pc-t-xl', end)
+        start = self.draw({**inline, 'at': 'start', 'shape': 'circle', 'title': 'lg', 'tone': 'mono'}, SMALL, []); self.assertRegex(start, r'<h2\b[^>]*><span class="pc-fig pc-pill pc-pill-circle pc-tone"'); self.assertIn('pc-t-lg', start)
+        for drawn in (end, start): self.assertEqual(drawn.count('<img '), 1); self.assertNotIn('<figure', drawn); self.assertIn(heading.split()[0], drawn)
+        out, _ = PICTURES.transplant(SMALL, doc(inline), []); text = lambda html: ' '.join(re.sub(r'<[^>]+>', ' ', re.sub(r'<style.*?</style>', '', html, flags=re.S)).split())
+        self.assertEqual(text(out), text(SMALL), 'the heading says what it said')
+        self.assertEqual(codes(doc(inline), PAGE, SHOT), ['IP062']); self.assertEqual(codes(doc({**inline, 'title': 'md'}), SMALL, []), ['IP020']); self.assertEqual(codes(doc({**inline, 'shape': 'arch'}), SMALL, []), ['IP020'])
+        bare = SMALL.replace(re.search(r'<h2\b[^>]*>.*?</h2>', MK['words']['html'], re.S).group(0), '', 1); self.assertEqual(codes(doc(inline), bare, []), ['IP021'])
+
+    def test_a_stage_may_stand_across_the_top_with_the_words_under_it(self):
+        top = self.draw({'section': 'mk', 'form': 'stage', 'side': 'top', 'ground': 'ink'}); self.assertIn('pc-side-top', top)
+        self.assertLess(top.index('class="pc-panel"'), top.index('class="wrap pc-wrap"')); self.assertIn('pc-split', top); self.assertNotIn('pc-col', top)
+        self.assertEqual(codes(doc({**FORMS['bleed'], 'side': 'top'})), ['IP020'], 'only a stage stands across the top')
+
+    def test_a_picture_section_may_hold_several_blocks_of_words(self):
+        rows = '<ol class="rows"><li>First row</li><li>Second row</li></ol>'; whole = section('mk'); close = len(whole) - len(MK['tail'] + '</section>') - len('</div>')
+        page = PAGE.replace(whole, whole.replace('<figure', rows + '<figure', 1) if MK['first'] == 'words' else whole[:close] + rows + whole[close:], 1)   # the rows follow the words block
+        read = SECTIONS.from_picture(section('mk', page)); self.assertEqual(len(read['words']['parts']), 2); self.assertIn(rows, read['words']['html']); self.assertEqual(read['words']['rows'], MK['words']['rows'] + 2)
+        out, report = PICTURES.transplant(page, doc(FORMS['panorama']), IMAGES); self.assertTrue(report['drawn'], report['errors']); drawn = section('mk', out)
+        self.assertIn(f'<div class="pc-wr">{rows}</div>', drawn, 'the heading block to the left, the rows to the right, each whole'); self.assertEqual(drawn.count('First row'), 1)
+
+    def test_the_words_step_back_out_of_the_picture_when_they_do_not_read_there(self):
+        eased = COMPOSE._eased({**FORMS['bleed'], 'overlap': 2}, 'words-on-picture'); self.assertEqual(eased['overlap'], 1)
+        self.assertIsNone(COMPOSE._eased({**FORMS['bleed'], 'overlap': 0}, 'words-on-picture'))
+        text, _ = COMPOSE.brief(PAGE, IMAGES); self.assertIn('its edges are a scene', text); text, _ = COMPOSE.brief(DARK, []); self.assertIn('its edges are one even dark colour', text)
+        self.assertIn('a rectangle on one side and the words on the other', COMPOSE.SYSTEM)
 
 
 def answer(*entries, concept='Each picture gets a job.'): return {'concept': concept, 'pictures': [dict(e) for e in entries]}

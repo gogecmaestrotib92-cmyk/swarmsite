@@ -66,5 +66,11 @@ open(sys.argv[3], 'w', encoding='utf-8').write(page)
   const turned = measure(print);
   for (const view of ['desktop', 'mobile']) { const s = of(turned, view, 'mk'); assert.ok(s.scale <= 1.351, `${view}: ${s.scale}`); assert.equal(s.contrast, null); assert.equal(s.overlap, 0); }
   assert.ok(of(turned, 'desktop', 'mk').scale > 1.1, 'a small picture is drawn near the limit, not past it');
+  // a picture that dissolves into its section, the words reaching two columns into it: they are measured against what is really under them there
+  const reach = path.join(dir, 'reach.html'); draw({ section: 'mk', form: 'bleed', side: 'right', cols: 7, overlap: 2 }, [30, 28, 26], [1600, 1100], false, reach);
+  const into = of(measure(reach), 'desktop', 'mk');
+  assert.ok(into.contrast && into.contrast.ratio > 1, `words in a dissolved edge are measured: ${JSON.stringify(into)}`); assert.equal(into.overlap, 0, 'reaching into a dissolved edge is not lying on the picture');
+  const beside = path.join(dir, 'beside.html'); draw({ section: 'mk', form: 'bleed', side: 'right', cols: 6, edge: 'hard' }, [30, 28, 26], [1600, 1100], false, beside);
+  assert.equal(of(measure(beside), 'desktop', 'mk').contrast, null, 'words beside a hard edge stand on the section, not on the picture');
   console.log('compose-picture-measure: ok', JSON.stringify({ soft: mk.contrast.ratio, deep: read.contrast.ratio, hero: hero.contrast.ratio, print: of(turned, 'desktop', 'mk').scale }));
 } finally { fs.rmSync(dir, { recursive: true, force: true }); }

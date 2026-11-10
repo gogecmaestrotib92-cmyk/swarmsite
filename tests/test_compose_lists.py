@@ -56,9 +56,38 @@ class Reader(unittest.TestCase):
     def test_a_list_that_cannot_be_read_whole_is_refused(self):
         section = PAGE[BY_ID['feat']['span'][0]:BY_ID['feat']['span'][1]]
         with self.assertRaises(ValueError): SECTIONS.from_section(section.replace('<h3 class="h3">', '<table><tr><td>', 1))
-        with self.assertRaises(ValueError): SECTIONS.from_section(PAGE[BY_ID['how']['span'][0]:BY_ID['how']['span'][1]])   # a ladder is not a list this reader knows
+        with self.assertRaises(ValueError): SECTIONS.from_section(PAGE[BY_ID['jelovnik']['span'][0]:BY_ID['jelovnik']['span'][1]])   # a price ledger is not a list this reader knows
+        how = read('how'); self.assertEqual((how['kind'], len(how['items']), [i['tag'] for i in how['items']]), ('ladder', 3, ['01', '02', '03']), 'steps are a heading block and items too')
+        self.assertTrue(all(i['title'] for i in how['items'])); self.assertTrue(LISTS.numbering(how['items']))
         one = re.sub(r'(<li class="index-row">.*?</li>)(<li class="index-row">.*</li>)(</ol>)', r'\1\3', section, flags=re.S)
         with self.assertRaises(ValueError): SECTIONS.from_section(one)
+
+
+FAQ = ('<section class="sec faq band-paper" id="faq"><div class="wrap two"><div><span class="lab">FAQ</span><h2 class="h2">Questions</h2></div><div class="qa">'
+       '<details><summary>Can I import?</summary><p>Yes.<br>Drag files in.</p></details><details><summary>Is there a trial?</summary><p>Fourteen days.</p><p>No card.</p></details></div></div></section>')
+FIGURES = ('<section class="sec numbers band-alt" id="figs"><div class="wrap"><div class="gh one center"><h2 class="h2">In figures</h2></div><div class="nums">'
+           '<div><b class="num">&lt;30s</b><p class="num-label">Average redesign</p><p>On most documents</p></div><div><b class="num">5</b><p class="num-label">Art directions</p><p>Each complete</p></div>'
+           '<div><b class="num">0</b><p class="num-label">Words changed</p><p>Ever</p></div></div></div></section>')
+SMALL_PAGE = '<html><head></head><body><section class="sec hero" id="top"><h1>Hello</h1></section>' + FAQ + FIGURES + '</body></html>'
+
+
+class OtherKinds(unittest.TestCase):
+    """Questions and figures are a heading block and items like any list: read whole, drawn in the same forms."""
+    def test_questions_are_read_with_their_whole_answers(self):
+        faq = SECTIONS.from_section(FAQ); self.assertEqual((faq['kind'], faq['band'], len(faq['items'])), ('faq', 'paper', 2))
+        self.assertEqual([(i['tag'], i['title'], i['body']) for i in faq['items']], [('', 'Can I import?', 'Yes. Drag files in.'), ('', 'Is there a trial?', 'Fourteen days. No card.')])
+        self.assertIn('<h2 class="h2">Questions</h2>', faq['head'])
+
+    def test_figures_are_facts_with_a_name_and_a_line(self):
+        figs = SECTIONS.from_section(FIGURES); self.assertEqual([(i['tag'], i['title'], i['body']) for i in figs['items']], [('<30s', 'Average redesign', 'On most documents'), ('5', 'Art directions', 'Each complete'), ('0', 'Words changed', 'Ever')])
+        self.assertFalse(LISTS.numbering(figs['items'])); self.assertEqual({e['code'] for e in LISTS.validate({'ir': '0.2', 'lists': [{'section': 'figs', 'form': 'bento', 'numerals': 'none'}]}, SMALL_PAGE)}, {'IL022'})
+
+    def test_they_are_drawn_in_the_forms_a_list_has_and_say_what_they_said(self):
+        out, report = LISTS.transplant(SMALL_PAGE, {'ir': '0.2', 'lists': [{'section': 'faq', 'form': 'ledger', 'numerals': 'none', 'head': 'left'}, {'section': 'figs', 'form': 'bento', 'feature': 0}]})
+        self.assertTrue(report['drawn'], report['errors']); self.assertEqual(report['sections'], ['faq', 'figs'])
+        self.assertIn('<h3 class="h3 lc-title">Can I import?</h3><p>Yes. Drag files in.</p>', out); self.assertNotIn('<details', out, 'every answer is on the page, open')
+        self.assertIn('<span class="lc-tag">&lt;30s</span><h3 class="h3 lc-title">Average redesign</h3>', out); self.assertIn('class="sec faq band-paper lc lc-ledger"', out); self.assertIn('class="sec numbers band-alt lc lc-bento"', out)
+        words = lambda html: sorted(re.sub(r'<[^>]+>', ' ', re.sub(r'<style.*?</style>', '', html, flags=re.S)).split()); self.assertEqual(words(out), words(SMALL_PAGE.replace('<br>', ' ')))
 
 
 class Validator(unittest.TestCase):
@@ -71,7 +100,7 @@ class Validator(unittest.TestCase):
         self.assertEqual(codes(doc(dict(LEDGER, heading='A better heading'))), ['IL011']); self.assertEqual(codes(doc(dict(LEDGER, colour='#f00'))), ['IL001'])
 
     def test_only_lists_of_this_page_once_each(self):
-        self.assertEqual(codes(doc(dict(LEDGER, section='nowhere'))), ['IL010']); self.assertEqual(codes(doc(dict(LEDGER, section='how'))), ['IL010'], 'a ladder is not a list')
+        self.assertEqual(codes(doc(dict(LEDGER, section='nowhere'))), ['IL010']); self.assertEqual(codes(doc(dict(LEDGER, section='jelovnik'))), ['IL010'], 'a price ledger is not a list')
         self.assertEqual(codes(doc(LEDGER, dict(LEDGER, form='stagger'))), ['IL010'])
 
     def test_forms_and_their_parameters_come_from_the_vocabulary(self):
@@ -173,7 +202,7 @@ class Loop(unittest.TestCase):
 
     def test_the_brief_names_every_list_and_the_tool_has_no_field_for_words(self):
         text, ids = COMPOSE.brief(PAGE)
-        self.assertEqual(ids, ['feat', 'nums']); self.assertIn('▸ "feat" — indexlist', text); self.assertIn('(facts: cannot be hidden)', text); self.assertIn('"how" — ladder', text)
+        self.assertEqual(ids, ['feat', 'how', 'nums']); self.assertIn('▸ "feat" — indexlist', text); self.assertIn('(facts: cannot be hidden)', text); self.assertIn('"how" — ladder', text)
         fields = json.dumps(COMPOSE.TOOL['input_schema'])
         for forbidden in ('"text"', '"href"', '"label"', '"html"', '"items": {"type": "string"', '"heading"'): self.assertNotIn(forbidden, fields)
 
@@ -200,7 +229,8 @@ class Loop(unittest.TestCase):
         self.assertTrue(result['drawn']); self.assertEqual(result['measured'], {})
 
     def test_a_page_without_lists_asks_nobody(self):
-        bare = PAGE[:BY_ID['feat']['span'][0]] + PAGE[BY_ID['feat']['span'][1]:BY_ID['nums']['span'][0]] + PAGE[BY_ID['nums']['span'][1]:]
+        bare = PAGE
+        for sid in ('nums', 'how', 'feat'): bare = bare[:{s['id']: s for s in SECTIONS.sections(bare)}[sid]['span'][0]] + bare[{s['id']: s for s in SECTIONS.sections(bare)}[sid]['span'][1]:]
         model = Model({'concept': 'x', 'lists': [LEDGER]})
         result = COMPOSE.compose(bare, self.page, ask=model)
         self.assertFalse(result['drawn']); self.assertEqual(model.seen, [])
