@@ -41,6 +41,24 @@ def source_sections(inventory):
     cov = (inventory or {}).get('sourceCoverage') or {}
     return [s for s in (cov.get('sections') or []) if isinstance(s, dict) and s.get('title')]
 
+# The controls of a shop — its cart, its checkout, the customer's own account — are not pages a visitor reads or a search
+# engine ranks, and a redesign has no place for them. Named by the last segment of the path, whole, in the languages the
+# engine meets; a site's sign-up and sign-in stay links like any other (on a product site they are the point).
+UTILITY_SEGMENTS = {'cart', 'basket', 'checkout', 'wishlist', 'my-account', 'cesta', 'carrito', 'carro', 'mi-cuenta', 'warenkorb', 'kasse', 'mein-konto', 'panier', 'mon-compte',
+                    'carrello', 'il-mio-account', 'winkelwagen', 'kosarica', 'korpa', 'moj-nalog', 'moj-racun'}
+COUNT_LABEL = re.compile(r'\d+(\s+(products?|productos?|items?|art[ií]culos?|articles?|produits?|produkte?|prodotti|proizvoda?|artikala?))?', re.I)
+
+
+def utility_link(href):
+    """Is this link a control of the site's shop — cart, checkout, the customer's account — rather than a page?"""
+    try:
+        from urllib.parse import urlparse
+        u = urlparse(str(href))
+    except Exception: return False
+    segments = [x.lower() for x in u.path.split('/') if x]
+    return bool(segments and segments[-1] in UTILITY_SEGMENTS) or 'add-to-cart=' in (u.query or '').lower()
+
+
 def internal_links(inventory):
     """Every same-site link the source page offered: these keep the site's crawl paths and internal link equity."""
     url = (inventory or {}).get('url') or ''
@@ -57,10 +75,12 @@ def internal_links(inventory):
         except Exception: continue
         if u.username or u.password or not u.hostname or '.' not in u.hostname: continue  # credentials in a URL or a local host never leave the capture
         if host and h != host: continue
+        if utility_link(href): continue   # the shop's own controls are not pages
         key = href.rstrip('/')
         if key in seen: continue
-        # an anchor whose text is the URL itself (or empty) gets a readable label from its path: /blog/pdf-design-tips → "Pdf design tips"
-        if not text or re.fullmatch(r'(https?://)?[\w.-]+(/\S*)?', text):
+        # an anchor whose text is the URL itself, empty, or only a count ("5 products" on a category tile) gets a readable
+        # label from its path: /blog/pdf-design-tips → "Pdf design tips", /categorias/del-mar → "Del mar"
+        if not text or re.fullmatch(r'(https?://)?[\w.-]+(/\S*)?', text) or COUNT_LABEL.fullmatch(text):
             seg = [x for x in u.path.split('/') if x and not re.fullmatch(r'\d+', x)]
             text = (seg[-1] if seg else h).replace('-', ' ').replace('_', ' ').strip()
             text = re.sub(r'\.[a-z]{2,5}$', '', text); text = text[:1].upper() + text[1:]

@@ -17,6 +17,12 @@ TOOL = {"name": "report_fixes", "description": "Report concrete visual defects a
                 "craft": {"type": "integer", "minimum": 0, "maximum": 100, "description": "nothing broken, clipped, blurry, empty, repeated; phone holds — weight 25"},
                 "function": {"type": "integer", "minimum": 0, "maximum": 100, "description": "reads in 3 seconds, one action, proof before price, real facts — weight 20"}}},
             "score": {"type": "integer", "minimum": 0, "maximum": 100, "description": "weighted: .35 design + .20 originality + .25 craft + .20 function"},
+            "studio": {"type": "object", "description": "five closer readings, reported beside the score and not part of it", "properties": {
+                "typography": {"type": "integer", "minimum": 0, "maximum": 100, "description": "a system of faces with contrast of scale, set with care"},
+                "composition": {"type": "integer", "minimum": 0, "maximum": 100, "description": "each screen arranged on purpose: asymmetry, space, alignment"},
+                "imagery": {"type": "integer", "minimum": 0, "maximum": 100, "description": "pictures that belong to their section and are given room"},
+                "rhythm": {"type": "integer", "minimum": 0, "maximum": 100, "description": "the page changes pace and ground from screen to screen"},
+                "concept": {"type": "integer", "minimum": 0, "maximum": 100, "description": "one idea, stated by the page's own direction when there is one, and kept down the page"}}},
             "verdict": {"type": "string", "description": "one paragraph: the gap between this page and the reference it is closest to"},
             "fixes": {"type": "array", "maxItems": 10, "items": {"type": "object", "required": ["op", "reason"], "properties": {
                 "op": {"type": "string", "enum": ["drop_beat", "shorten", "swap_image", "hero_image", "hero_h1", "band", "layout", "reorder", "note"]},
@@ -29,9 +35,35 @@ CALIBRATION — score each axis against these measured references; the numbers a
 - Cerebrium (cerebrium.ai) = 88: dark and light bands, light-weight type, pinned feature tour, monospace labels, product widgets, a 3D hero and case studies.
 - Tengile (tengilemalamala.com) = 92: a place told in photographs; a full-bleed video hero, offset photo pairs and portrait cards, a quiet editorial serif, photo marquee and collage.
 A page that is tidy but anonymous (grid of cards, stock rhythm, no idea) sits at 45–55. A page with a broken screen, a blurry or repeated picture, or an empty half-screen cannot score above 60 on craft. 70 means "a good studio would ship after a day of polish"; 80 means "ship"; 90 means reference-level craft on this internal scale.
+WHAT SEPARATES STUDIO WORK — use it to place a page between 55 and 90: a system of type (a display face with character, a quiet face for text, small labels) with real contrast of scale; lists held as ruled rows with space and a hairline between them rather than as grids of boxes; pictures that belong to their section — running off the screen, dissolved into the ground, cut by the type, the ground of the words — rather than rectangles beside text; almost no shadows; grounds that change the pace; one idea that returns down the page. Tiles on every section, identical icon cards, a badge above the headline, gradients and glows read as machine-made.
 Look for: text clipped or overlapping, invisible text (same colour as background), empty or near-empty screens, images that are wrong for their slot (a UI screenshot stretched as a photo, a logo as a hero, a text-heavy crop), a hero that does not read in 3 seconds, sections that repeat the same idea, too many words on one screen, broken grids on the phone.
 Report only what you can SEE. Every fix must name the beat id (from the direction), the agent who owns it, and the reason — written so that agent can act without seeing the screenshot (say which element, where, how big, what it should become).
 Ops: shorten/hero_h1 → copy; swap_image/hero_image → visual (name the image id); band/layout → ui (columns, lead visual, compact, h2 size, head alignment); drop_beat/reorder → ux; note → anything else, to the right agent. Prefer dropping a weak section over padding it. Score 0–100 against award-level work (90+ = ship)."""
+
+LIST_FORMS = {'ledger': 'ruled rows across the width, each with its numeral or tag, its title and its body', 'stagger': 'two or three columns whose items step down against each other', 'bento': 'tiles on a grid, one of them large on the accent colour'}
+PICTURE_FORMS = {'backdrop': 'the picture fills the section and the words stand on it', 'bleed': 'the picture runs off one edge of the screen, dissolving into the section or cut clean, the words beside it',
+                 'panorama': 'the picture crosses the whole screen as a strip, the words above or below it', 'card': 'a large picture with the words in a notch cut from its corner',
+                 'offset': 'the picture cut to a proportion and hung beside the words', 'stage': 'the picture shown whole on a ground of colour, which may be the picture\'s own colour', 'inline': 'the picture set into the heading like a word',
+                 'gallery': 'neighbouring pictures in one row, each over its own heading and words'}
+WORD_FORMS = {'poster': 'the heading very large across the width, what it introduces set under it to one side', 'columns': 'the heading on top and the rows in two columns, like a printed menu', 'statement': 'a short section centred, the heading large'}
+
+
+def recomposed(page):
+    """{section id: what it now is} for the sections of this page that were redrawn as compositions after the direction was
+    written. The move the direction names for such a section no longer applies, and the critic is told what it is instead."""
+    out = {}
+    for tag in re.finditer(r'<section class="([^"]*)"([^>]*)>', page):
+        classes, rest = tag.group(1).split(), tag.group(2); sid = (re.search(r'\bid="([^"]*)"', rest) or [None, ''])[1]; form = (re.search(r'data-form="([^"]*)"', rest) or [None, ''])[1]
+        if 'data-ir=' in rest: out[sid or 'top'] = 'the first screen, composed on a twelve-column grid in the page\'s own type system'
+        elif 'data-lc=' in rest: kind = next((c[3:] for c in classes if c.startswith('lc-') and c[3:] in LIST_FORMS), ''); out[sid] = 'a list drawn as ' + LIST_FORMS.get(kind, 'a composed list')
+        elif 'data-pc=' in rest:
+            out[sid] = PICTURE_FORMS.get(form, 'a composed picture section')
+            if form == 'gallery':   # the sections that were run together keep their ids on the columns of the row
+                end = page.find('</section>', tag.end())
+                for member in re.findall(r'<article class="pc-gi" id="([^"]+)"', page[tag.end():end if end > 0 else len(page)]): out[member] = f'one picture of the row that begins at "{sid}"'
+        elif 'data-wc=' in rest: out[sid] = 'words only: ' + WORD_FORMS.get(form, 'a composed section of words')
+    return out
+
 
 def shots(html, outdir, fast=False):  # fast = intermediate rounds: desktop only, short waits; the final look sees both viewports
     os.makedirs(outdir, exist_ok=True)
@@ -94,21 +126,42 @@ def rendered_actions(html):
     with open(html, encoding='utf-8') as f: parser.feed(f.read())
     return parser.actions, parser.forms
 
-def critique(slug_dir, html, model='claude-sonnet-5-5', fast=False):
+def critique(slug_dir, html, model='claude-sonnet-5-5', fast=False, files=None):
+    """One reading of the page. `files`: screenshots already taken (critique_twice takes them once for both readings)."""
     import anthropic
     d = json.load(open(os.path.join(slug_dir, 'direction.json')))
     imgs_meta = [{k: v for k, v in i.items() if k != 'data'} for i in (json.load(open(os.path.join(slug_dir, 'images.json'))) if os.path.exists(os.path.join(slug_dir, 'images.json')) else [])]
-    files = shots(html, os.path.join(slug_dir, 'critic-shots'), fast)
+    files = files or shots(html, os.path.join(slug_dir, 'critic-shots'), fast)
     if not files: return {'score': -1, 'fixes': [], 'verdict': 'no screenshots'}
+    with open(html, encoding='utf-8') as f: redrawn = recomposed(f.read())
+    def J(name):
+        try:
+            with open(os.path.join(slug_dir, name), encoding='utf-8') as f: return json.load(f)
+        except (OSError, ValueError): return {}
+    composition, brief = J('composition.json') if redrawn else {}, J('brief.json')
     actions, embedded_forms = rendered_actions(html)
     form_ids = {b.get('id') for b in d.get('beats', []) if b.get('type') == 'form'}
     linked_forms = {a['section'] for a in actions if a['section'] in form_ids and a['section'] not in embedded_forms
                     and re.match(r'^(?:https?://|mailto:|tel:)', a['href'], re.I)}
     beats = [{k: v for k, v in beat.items() if k != 'fields' or beat.get('id') not in linked_forms}
              for beat in d.get('beats', [])]
-    moves = {b['id']: (b.get('ui') or {}).get('move') for b in d.get('beats', []) if (b.get('ui') or {}).get('move')}
-    content = [{"type": "text", "text": "SIGNATURE MOVES on this page (screenshots are the real layout with animation frozen: a pinned or sticky section is shown mid-scroll with its first frame on; slide-labeled images show later frames. Judge whether each move reads as designed — a pinned panel that is not on screen, a ticker that is one static line, a type-wall that is plain unlit text are defects): " + json.dumps(moves) + "\n- sticky-product: text blocks scroll on the left, the product stays pinned on the right and swaps per block\n- pinned-sequence: the section pins, each step takes the screen in turn\n- type-wall: one sentence in giant type lights up word by word as you scroll\n- marquee: a slow ticker of the section's words (one line IS the design)\n- story: text beside a visual\n\nRENDERED CTA LINKS (from the page HTML; destinations have not been tested)\n" + json.dumps(actions, ensure_ascii=False) + "\nSections " + json.dumps(sorted(linked_forms)) + " use a link to the source site or contact method in place of an A form beat must show real input fields; a bare link in its place is a defect.\n\nDIRECTION (beat ids + copy)\n" + json.dumps({'hero': d.get('hero', {}), 'beats': beats}, ensure_ascii=False)[:14000] + "\n\nIMAGES available (ids)\n" + json.dumps(imgs_meta, ensure_ascii=False)[:3000]}]
+    moves = {b['id']: (b.get('ui') or {}).get('move') for b in d.get('beats', []) if (b.get('ui') or {}).get('move') and b['id'] not in redrawn}
+    context = ''
+    if redrawn:   # the page was recomposed after the direction was written: what it set out to do, and what each redrawn section now is
+        said = ' '.join(str(x) for x in (composition.get('concept'), composition.get('direction')) if x)
+        context += ("RECOMPOSED ON PURPOSE — these sections were redrawn after the direction below was written. The move the direction names for them no longer applies and is not listed under SIGNATURE MOVES: judge each as what it now is, "
+                    "and whether that is done well.\n" + '\n'.join(f'- {k}: {v}' for k, v in redrawn.items()) + (f"\nTHE PAGE'S OWN DIRECTION (what it set out to do; judge whether it does it): {said[:1200]}" if said else '') + "\n\n")
+    if brief.get('mode') == 'seo-safe':
+        context += "THE WORDS ARE THE CLIENT'S OWN, kept as they are for search: a claim, a count or a phrase of the copy is not a defect of this page (report it once as a note for copy at most); how the words are set is.\n\n"
+    content = [{"type": "text", "text": context + "SIGNATURE MOVES on this page (screenshots are the real layout with animation frozen: a pinned or sticky section is shown mid-scroll with its first frame on; slide-labeled images show later frames. Judge whether each move reads as designed — a pinned panel that is not on screen, a ticker that is one static line, a type-wall that is plain unlit text are defects): " + json.dumps(moves) + "\n- sticky-product: text blocks scroll on the left, the product stays pinned on the right and swaps per block\n- pinned-sequence: the section pins, each step takes the screen in turn\n- type-wall: one sentence in giant type lights up word by word as you scroll\n- marquee: a slow ticker of the section's words (one line IS the design)\n- story: text beside a visual\n\nRENDERED CTA LINKS (from the page HTML; destinations have not been tested)\n" + json.dumps(actions, ensure_ascii=False) + "\nSections " + json.dumps(sorted(linked_forms)) + " use a link to the source site or to a contact method in place of an embedded form: a preview cannot take a booking or a message, so that is by design and not a defect. Any other form beat must show real input fields; a bare link in its place is a defect.\n\nDIRECTION (beat ids + copy)\n" + json.dumps({'hero': d.get('hero', {}), 'beats': beats}, ensure_ascii=False)[:14000] + "\n\nIMAGES available (ids)\n" + json.dumps(imgs_meta, ensure_ascii=False)[:3000]}]
     from PIL import Image; import io
+    before = os.path.join(slug_dir, 'before-hero.jpg')
+    if os.path.exists(before) and not fast:   # what the client has now: the new page is judged as a redesign of it
+        try:
+            im = Image.open(before).convert('RGB'); im.thumbnail((900, 900)); buf = io.BytesIO(); im.save(buf, 'JPEG', quality=68)
+            content += [{"type": "text", "text": "THE CLIENT'S CURRENT SITE, first screen — for comparison only: the new page should be a clear step up from it, in its own right."},
+                        {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": base64.b64encode(buf.getvalue()).decode()}}]
+        except Exception: pass
     for f in select_screenshots(files, 8 if fast else 20):  # a fast round looks at the shape (8 desktop frames), the final look at everything
         try:
             im = Image.open(f).convert('RGB'); im.thumbnail((1000, 1000)); buf = io.BytesIO(); im.save(buf, 'JPEG', quality=70)
@@ -126,6 +179,24 @@ def critique(slug_dir, html, model='claude-sonnet-5-5', fast=False):
     if isinstance(r.get('axes'), dict) and not isinstance(r.get('score'), (int, float)):
         ax = r['axes']; r['score'] = round(.35 * ax.get('design', 0) + .2 * ax.get('originality', 0) + .25 * ax.get('craft', 0) + .2 * ax.get('function', 0))
     return r
+
+def critique_twice(slug_dir, html, model='claude-sonnet-5-5', shots_dir='critic-shots'):
+    """Two readings of the same screenshots, averaged. One reading of a page moves about four points either way; where a
+    decision hangs on the score — is the composed page at least as good as the one it would replace — two are taken.
+    The verdict and the fixes are the harder reading's; `readings` keeps both scores."""
+    from concurrent.futures import ThreadPoolExecutor
+    files = shots(html, os.path.join(slug_dir, shots_dir), False)
+    if not files: return {'score': -1, 'fixes': [], 'verdict': 'no screenshots'}
+    with ThreadPoolExecutor(2) as pool: both = list(pool.map(lambda _: critique(slug_dir, html, model, False, files), range(2)))
+    read = [r for r in both if isinstance(r, dict) and isinstance(r.get('score'), (int, float)) and r['score'] >= 0]
+    if not read: return both[0]
+    hard = min(read, key=lambda r: r['score']); mean = lambda values: round(sum(values) / len(values))
+    merged = dict(hard, score=mean([r['score'] for r in read]), readings=[r['score'] for r in read])
+    for group in ('axes', 'studio'):
+        parts = [r[group] for r in read if isinstance(r.get(group), dict)]
+        if parts: merged[group] = {k: mean([p[k] for p in parts if isinstance(p.get(k), (int, float))]) for k in parts[0] if any(isinstance(p.get(k), (int, float)) for p in parts)}
+    return merged
+
 
 def apply(slug_dir, rep):
     p = os.path.join(slug_dir, 'direction.json'); d = json.load(open(p)); changed = 0

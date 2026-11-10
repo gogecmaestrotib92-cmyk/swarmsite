@@ -30,7 +30,7 @@ THE FORMAT — call write_lists with "concept" (one sentence: the idea that runs
 - "section": the list's id, as given.
 - "form": ledger | stagger | bento.
   · ledger: one item per row across the width — its numeral or tag large at the left, its title, its body — ruled with hairlines.
-  · stagger: two or three columns ("cols": 2 or 3) whose items step down against each other, the numeral large above each title.
+  · stagger: two or three columns ("cols": 2 or 3) whose items step down against each other, the numeral large above each title. Four items or more: with fewer, the one item out of line reads as a mistake.
   · bento: tiles on a grid; "feature" is the position (0 first) of the one drawn large on the accent colour. Three items or more; its heading sits on top.
 - "head": top | left | sticky — where the list's own heading block sits: above it, in a column to its left, or to its left and staying in view while the list scrolls (four items or more).
 - "numerals": big | outline | small | none — how each item's number or tag is drawn (outline: hollow figures). Tags that are facts ("14 days", "60+") are never hidden.

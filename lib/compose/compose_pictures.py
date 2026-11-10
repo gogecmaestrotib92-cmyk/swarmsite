@@ -30,7 +30,7 @@ How a picture belongs to its section:
 - It has no visible edge. It fills the section (backdrop), or it runs off the screen and its inner edge dissolves into the section's ground while the heading reaches into it (bleed with "edge": "fade" and "overlap"), or the section takes the picture's own ground colour so that the picture simply stands in it (stage with "ground": "own" — offered when the picture's edges are one even colour: a product on white, a render on black, a screen on its own dark).
 - Or it is cut by the type: the words sit in a notch cut out of its corner (card), or the picture is set into the heading itself, as tall as the capitals, like a word (inline) — the honest form for a small photograph, which cannot be made large.
 - Or it is the whole width (panorama).
-- offset — a picture cut and hung beside the words — and a stage on accent, ink or alt are the weakest forms: use them only when nothing above is open to the picture, and never twice on a page.
+- offset — a picture cut and hung beside the words — and a stage on accent, ink or alt are the weakest forms: use them only when nothing above is open to the picture, and never twice on a page. A photograph takes no shadow: studios separate with space, a hairline or a change of ground.
 
 How a studio uses a picture:
 - A picture is given a job. It is the ground the words stand on; or it runs off the edge of the screen from the top of the section to the bottom; or it crosses the page as a strip; or it carries the words on a card laid over its corner; or it is cut to a proportion that suits what it shows and hung off the line of the text; or it is set on a stage of colour like an object.
@@ -39,6 +39,7 @@ How a studio uses a picture:
 - Sections that follow each other never take the same form on the same side. Alternate the side, vary the form, and let one idea run down the page.
 - Many words (a list of rows, several paragraphs) do not stand in a narrow column beside a picture: put them under it (panorama, or stage with "side": "top").
 - The heading grows when the picture is small or calm ("title": xl) and stays modest when the picture is loud or the words are many.
+- Neighbours that each show a small photograph — the rooms of a place, its dishes, its people — are a set, and three small pictures one under the other are three weak sections. Run them as one GALLERY ("galleries"): the pictures side by side in one row, cut to one proportion, each over its own heading and words. Together they are the photographic spine none of them can be alone. The brief names the runs that can be one.
 - A section you leave out stays as the template drew it. Leave one out only when the template's form is right for it.
 - Some sections are words only, while the job holds pictures the page does not show. Such a section lists the pictures offered to it: give it one ("picture": the address) when the picture belongs with what the section says — ★ marks a picture made or captured for that very section, and leaving a ★ picture unused is a waste a client would notice. A picture commissioned for atmosphere is never an object or a print: it is a ground (backdrop), an edge (bleed), a strip (panorama) or sits under a notch (card). A picture is shown once on a page. Look at what is offered before you take it: a document, a notice, a certificate, a logo sheet or a map is not a picture for a section — leave it unused.
 
@@ -51,6 +52,7 @@ THE FORMAT — call write_pictures with "concept" (one sentence: what the pictur
 - stage — the picture shown whole on a ground that runs off the screen edge. "side": left | right | top (top: the picture across the top of the section on its ground, the words under it in two columns — the form for a section with many words or rows), "cols": 5–8 (the picture's share), "ground": own | accent | ink | alt, "tilt": -3…3, "align", "height": auto | md | lg (auto: as tall as what it shows). With "ground": "own" the whole section takes the picture's own ground colour, the words turn to the colour that reads on it, and the picture has no panel and no edge. "crop": whole | fade — for a product screen taller than it is wide, "fade" shows its top at full size and lets the rest fade into the stage, the way product pages show an interface; a screen is otherwise set down with a hairline ring and one soft shadow, never a heavy one.
 - inline — the picture set into the section's heading like a word, as tall as its capitals; it makes the picture small, so it is for a section whose words carry it (140 characters or more), not for showing the picture. "at": start | end (of the heading), "shape": pill | soft | circle, "title": lg | xl. Photographs only; the heading becomes the picture's frame, so the heading is large.
 On any form: "title": md | lg | xl (the heading's size), "enter": none | rise | clip | settle (how the picture arrives). On every form but stage: "tone": none | mono | duotone | tint, "grain": true, "focal": [x, y] each 0–1. On backdrop, bleed, panorama and card: "scroll": parallax.
+"galleries": a list of {"sections": [the ids of two to four neighbouring picture sections, in page order], "ratio": 1/1 | 4/5 | 3/4 | 4/3 | 3/2 (one proportion for all its pictures), "title": md | lg, "tone", "enter"}. A section in a gallery has no entry in "pictures".
 A screenshot is evidence of the product: it is never cropped, toned or written over — stage or offset only. A composition that breaks a rule is refused whole and you are told why."""
 
 FIELDS = ('crop', 'side', 'cols', 'place', 'height', 'scrim', 'ratio', 'words', 'anchor', 'bleed', 'shape', 'tilt', 'shadow', 'frame', 'drop', 'align', 'ground', 'tone', 'grain', 'focal', 'title', 'enter', 'scroll', 'edge', 'overlap', 'at')
@@ -63,9 +65,11 @@ ENTRY = {"type": "object", "required": ["section", "form"], "properties": {
     "tone": {"type": "string", "enum": list(V.TONES)}, "grain": {"type": "boolean"}, "focal": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
     "edge": {"type": "string", "enum": list(PICTURES.EDGES)}, "crop": {"type": "string", "enum": list(PICTURES.CROPS)}, "overlap": {"type": "integer"}, "at": {"type": "string", "enum": ["start", "end"]},
     "title": {"type": "string", "enum": list(PICTURES.TITLES)}, "enter": {"type": "string", "enum": list(V.MEDIA_ENTER)}, "scroll": {"type": "string", "enum": list(V.MEDIA_SCROLL)}}}
-TOOL = {"name": "write_pictures", "description": "What each picture below the first screen does.", "input_schema": {"type": "object", "required": ["concept", "pictures"], "properties": {
+TOOL = {"name": "write_pictures", "description": "What each picture below the first screen does.", "input_schema": {"type": "object", "required": ["concept"], "properties": {
     "concept": {"type": "string", "description": "one sentence: what the pictures do on this page"},
-    "pictures": {"type": "array", "minItems": 1, "maxItems": 12, "items": ENTRY}}}}
+    "pictures": {"type": "array", "maxItems": 12, "items": ENTRY},
+    "galleries": {"type": "array", "maxItems": 4, "items": {"type": "object", "required": ["sections"], "properties": {"sections": {"type": "array", "items": {"type": "string"}, "minItems": 2, "maxItems": 4},
+        "ratio": {"type": "string", "enum": list(PICTURES.GALLERY_RATIOS)}, "title": {"type": "string", "enum": list(PICTURES.TITLES[:2])}, "tone": {"type": "string", "enum": list(V.TONES)}, "enter": {"type": "string", "enum": list(V.MEDIA_ENTER)}}}}}}}
 MAX_PICTURED = 6
 BREAKING = HERO.BREAKING + ('picture-over-pixels', 'words-on-picture', 'heading-out', 'words-over-picture')
 SMALLER = {'xl': 'lg', 'lg': 'md'}; THICKER = {'soft': 'mid', 'mid': 'deep'}; LOWER = {'screen': 'lg', 'lg': 'md'}; FLATTER = {'2/1': '21/9', '21/9': '3/1'}
@@ -126,7 +130,7 @@ def settle(page_html, doc, images, folder):
     → (the settled document, or None when no section is left; what was changed; the findings that remain)."""
     changes, seen = [], None
     for _ in range(4):
-        if not doc or not doc.get('pictures'): return None, changes, {}
+        if not doc or not (doc.get('pictures') or doc.get('galleries')): return None, changes, {}
         page, report = PICTURES.transplant(page_html, doc, images)
         if not report['drawn']: return None, changes + ['refused after easing: ' + '; '.join(e['message'][:80] for e in report['errors'][:2])], {}
         with tempfile.NamedTemporaryFile('w', suffix='.html', delete=False, encoding='utf-8', dir=folder) as f: f.write(page); drawn = f.name
@@ -134,15 +138,17 @@ def settle(page_html, doc, images, folder):
         finally: os.unlink(drawn)
         found = problems(seen)
         if not found: return doc, changes, {}
-        entries = {e['section']: e for e in doc['pictures']}
+        entries = {e['section']: e for e in doc.get('pictures', [])}; runs = {g['sections'][0]: g for g in doc.get('galleries', [])}
         for view, sid, kind, detail in found:
+            if sid in runs: changes.append(f'{sid}: {kind} at {view} ({detail}) → the gallery goes back to the template\'s sections'); del runs[sid]; continue
             if sid not in entries: continue
             eased = _eased(entries[sid], kind)
             if eased is not None and not PICTURES.validate({'ir': V.VERSION, 'pictures': [eased]}, page_html, images):
                 changes.append(f'{sid}: {kind} at {view} ({detail}) → {", ".join(f"{k} {entries[sid].get(k)}→{eased[k]}" for k in eased if eased[k] != entries[sid].get(k))}'); entries[sid] = eased
             else: changes.append(f'{sid}: {kind} at {view} ({detail}) → back to the template\'s form'); del entries[sid]
-        doc = {**doc, 'pictures': [entries[e['section']] for e in doc['pictures'] if e['section'] in entries]}
-    return (doc if doc.get('pictures') else None), changes, findings_of(seen)
+        doc = {**doc, 'pictures': [entries[e['section']] for e in doc.get('pictures', []) if e['section'] in entries], 'galleries': [g for g in doc.get('galleries', []) if g['sections'][0] in runs]}
+        if not doc['galleries']: doc.pop('galleries')
+    return (doc if doc.get('pictures') or doc.get('galleries') else None), changes, findings_of(seen)
 
 
 def brief(page_html, images=None):
@@ -172,6 +178,15 @@ def brief(page_html, images=None):
                          + (f', a list of {c["words"]["rows"]} rows' if c['words']['rows'] else '') + f'. The template put the {"picture first" if c["first"] == "picture" else "words first"}.\n    Forms open to it: {opened}.')
         else:
             lines.append(f'  "{sec["id"] or "-"}" — {kind}' + (f' (holds a picture but cannot be recomposed: {known[1][:70]})' if known else ''))
+    run, runs = [], []
+    for sec in PICTURES.SECTIONS.sections(page_html)[1:] + [{'id': None}]:   # neighbouring sections that each show a small photograph of their own
+        c = page.get(sec['id'], (None, None))[1] if sec['id'] else None
+        fits = isinstance(c, dict) and c.get('picture') and not c['picture']['shot'] and c['words']['chars'] <= PICTURES.GALLERY_WORDS and c['words']['rows'] <= 3
+        if fits: run.append(sec['id'])
+        else:
+            if len(run) >= 2: runs.append(run[:4])
+            run = []
+    if runs: lines.append('RUNS OF NEIGHBOURS that can be one gallery ("galleries"): ' + '; '.join(json.dumps(r) for r in runs) + '.')
     brief.offered = thumbs[:6]   # the pictures offered to sections of words, for the composer to look at
     return '\n'.join(lines), ids
 
@@ -185,7 +200,13 @@ def _to_doc(answer):
         except ValueError: pass
     if isinstance(pictures, list):
         pictures = [{k: v for k, v in p.items() if v is not None and (p.get('form') not in PICTURES.KEYS or k not in FIELDS or k in PICTURES.KEYS[p['form']])} if isinstance(p, dict) else p for p in pictures]
-    return {'ir': V.VERSION, 'note': str(answer.get('concept') or '')[:300], 'pictures': pictures}
+    galleries = answer.get('galleries')
+    if isinstance(galleries, str) and galleries.strip()[:1] == '[':
+        try: galleries = json.loads(galleries)
+        except ValueError: pass
+    doc = {'ir': V.VERSION, 'note': str(answer.get('concept') or '')[:300], 'pictures': pictures if pictures is not None else []}
+    if galleries: doc['galleries'] = [{k: v for k, v in g.items() if v is not None} if isinstance(g, dict) else g for g in galleries] if isinstance(galleries, list) else galleries
+    return doc
 
 
 def _broken(found): return [k for k in (found or {}) if any(b in k for b in BREAKING)]
@@ -215,7 +236,7 @@ def compose(page_html, page_path, images=None, model=None, review=True, ask=None
         if not isinstance(answer, dict):
             entry = {'stage': stage, 'errors': ['no composition returned']}; log.append(entry); return None, ['none'], entry
         doc = _to_doc(answer); errors = PICTURES.validate(doc, page_html, images)
-        entry = {'stage': stage, 'concept': doc['note'], 'errors': [f"{e['code']} {e['at']}: {e['message']}" for e in errors], **({'refused': doc['pictures']} if errors else {})}; log.append(entry)
+        entry = {'stage': stage, 'concept': doc['note'], 'errors': [f"{e['code']} {e['at']}: {e['message']}" for e in errors], **({'refused': {k: doc[k] for k in ('pictures', 'galleries') if doc.get(k)}} if errors else {})}; log.append(entry)
         return doc, errors, entry
 
     def look_at(candidate):
@@ -226,7 +247,7 @@ def compose(page_html, page_path, images=None, model=None, review=True, ask=None
         page, _ = PICTURES.transplant(page_html, settled, images)
         with tempfile.NamedTemporaryFile('w', suffix='.html', delete=False, encoding='utf-8', dir=folder) as f: f.write(page); drawn = f.name
         try:
-            pictures = LISTED.section_shots(drawn, [p['section'] for p in settled['pictures']][:MAX_PICTURED]) if review else {}
+            pictures = LISTED.section_shots(drawn, ([g['sections'][0] for g in settled.get('galleries', [])] + [p['section'] for p in settled.get('pictures', [])])[:MAX_PICTURED]) if review else {}
             found = {**HERO.measured(drawn), **left}
         finally: os.unlink(drawn)
         return settled, pictures, {k: v for k, v in found.items() if k not in baseline}
@@ -235,7 +256,11 @@ def compose(page_html, page_path, images=None, model=None, review=True, ask=None
     if errors and doc is not None:
         doc, errors, entry = attempt('correct', [{"type": "text", "text": "YOUR PREVIOUS COMPOSITION WAS REFUSED:\n" + json.dumps(doc['pictures'], ensure_ascii=False) + "\nReasons:\n" + '\n'.join('- ' + e for e in entry['errors'][:12]) + "\nKeep the idea; fix exactly these."}])
     if errors and doc is not None:   # still refused: the entries at fault go back to the template's form, the rest stand if they validate whole
-        raw = PICTURES.validate(doc, page_html, images); smaller, dropped = HERO._pruned(doc, 'pictures', raw, lambda d: PICTURES.validate(d, page_html, images))
+        raw = PICTURES.validate(doc, page_html, images)
+        if doc.get('galleries') and any(e['at'].startswith('galleries') for e in raw):   # a gallery that is refused goes back to its sections; the rest is looked at again
+            doc = {k: v for k, v in doc.items() if k != 'galleries'}; raw = PICTURES.validate(doc, page_html, images) if doc.get('pictures') else raw; log.append({'stage': 'prune', 'errors': [], 'dropped': ['galleries']})
+            if doc.get('pictures') and not raw: errors = []
+        smaller, dropped = HERO._pruned(doc, 'pictures', raw, lambda d: PICTURES.validate(d, page_html, images)) if errors else (None, [])
         if smaller: doc, errors = smaller, []; log.append({'stage': 'prune', 'errors': [], 'dropped': dropped})
     if doc is not None and not errors:
         try:

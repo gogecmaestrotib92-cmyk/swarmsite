@@ -170,7 +170,7 @@ def compose_first_screen(slug_dir, out, deadline=None):
             import compose_pictures as COMPOSE_PICTURES, pictures as PICTURES
             with open(out, encoding='utf-8') as f: page = f.read()
             chosen = COMPOSE_PICTURES.compose(page, out, images=images, direction=directed()); doc = chosen.get('doc')
-            record['pictures'] = {'drawn': False, 'attempts': chosen.get('attempts'), 'concept': (doc or {}).get('note'), 'forms': {p['section']: p['form'] for p in (doc or {}).get('pictures', [])},
+            record['pictures'] = {'drawn': False, 'attempts': chosen.get('attempts'), 'concept': (doc or {}).get('note'), 'forms': {**{p['section']: p['form'] for p in (doc or {}).get('pictures', [])}, **{g['sections'][0]: 'gallery' for g in (doc or {}).get('galleries', [])}},
                                   'measured': chosen.get('measured'), 'log': chosen.get('log'), 'doc': doc}
             if doc:
                 composed, report = PICTURES.transplant(page, doc, images)
@@ -192,7 +192,7 @@ def compose_first_screen(slug_dir, out, deadline=None):
     return record
 
 
-def composed_candidate(slug_dir, out, best_score, best_broken, grade, deadline=None):
+def composed_candidate(slug_dir, out, best_score, best_broken, grade, deadline=None, reference=None):
     """The composed page is one more candidate, held to the loop's own rule: it replaces the winner only if the contract
     and the critic, looking at its own render, score it at least as high and it breaks no hard promise the winner kept.
     `grade()` → (contract report, critic report) for the page at `out`. Returns the decision; when 'kept' is false the
@@ -209,6 +209,8 @@ def composed_candidate(slug_dir, out, best_score, best_broken, grade, deadline=N
     if taste is None or not isinstance(con.get('score'), (int, float)):
         decision['why'] = 'the composed page could not be graded'; return decision
     score = round(0.55 * taste + 0.45 * con['score']); failed = con.get('failed', [])
+    against = reference() if reference else None   # the page it would replace, read again now by the same critic: like against like
+    if isinstance(against, (int, float)): decision['reference'] = against; best_score = against
     hard = lambda ids: {i for i in ids if any(i.endswith(h) or i == h for h in HARD)}
     newly = sorted(hard(f['id'] for f in failed) - hard(f['id'] for f in (best_broken or [])))
     decision.update(score=score, taste=taste, contract=con['score'], broken=failed, critic=rep)
@@ -223,14 +225,31 @@ def recompose(slug_dir, out, log, best_score, best_round, best_manifest, best_fi
     manifest) of the page that stands. A composed page that is kept becomes one more round in the log, with the critic's
     and the contract's reports of that page; a refused one leaves every file of the winner exactly as it was."""
     winner = next((r for r in log['rounds'] if r.get('k') == best_round), {})
+    kept_page = out + '.ref.html'; reread = ThreadPoolExecutor(1)
     try:
+        # One reading of a page moves about four points either way, and the winner's score is one reading from its round.
+        # So the winner is read again — twice, by the critic as it is now — while the page is composed, and the composed
+        # page is read twice too: the decision compares two averages of the same kind.
+        shutil.copyfile(out, kept_page); again = reread.submit(C.critique_twice, slug_dir, kept_page, A.MODEL, 'critic-shots-ref')
+        def reference():
+            try: rep = again.result(timeout=240)
+            except Exception: return None
+            taste = rep.get('score') if isinstance(rep, dict) else None
+            if not isinstance(taste, (int, float)) or taste < 0 or not isinstance(winner.get('contract'), (int, float)): return None
+            return round(0.55 * taste + 0.45 * winner['contract'])
         def grade():
             with ThreadPoolExecutor(2) as ex:
-                fcon = ex.submit(contract, slug_dir, out); frep = ex.submit(C.critique, slug_dir, out, A.MODEL, False)
+                fcon = ex.submit(contract, slug_dir, out); frep = ex.submit(C.critique_twice, slug_dir, out, A.MODEL)
                 return fcon.result(), frep.result()
-        decision = composed_candidate(slug_dir, out, best_score, winner.get('broken'), grade, deadline)
+        decision = composed_candidate(slug_dir, out, best_score, winner.get('broken'), grade, deadline, reference)
+        decision['before'] = best_score   # what the round recorded; `reference` is the same page as the critic reads it now
     except Exception as e:
         decision = {'kept': False, 'drawn': False, 'before': best_score, 'why': 'failed: ' + str(e)[:120]}
+    finally:
+        reread.shutdown(wait=False)
+        for leftover in (kept_page,):
+            if os.path.exists(leftover): os.remove(leftover)
+        shutil.rmtree(os.path.join(slug_dir, 'critic-shots-ref'), ignore_errors=True)
     rep = decision.pop('critic', None); cfail = decision.pop('broken', None)
     if isinstance(rep, dict):   # what the critic said of the composed page is kept whether or not the page is: a refusal is where there is most to learn
         decision['verdict'] = str(rep.get('verdict') or '')[:1500]; decision['axes'] = rep.get('axes') if isinstance(rep.get('axes'), dict) else None
@@ -245,7 +264,7 @@ def recompose(slug_dir, out, log, best_score, best_round, best_manifest, best_fi
         if decision.get('lists'): ev('Concept', 'lists recomposed: ' + ', '.join(f'{k} as {v}' for k, v in decision['lists'].items())[:110])
         if decision.get('words'): ev('Concept', 'sections of words recomposed: ' + ', '.join(f'{k} as {v}' for k, v in decision['words'].items())[:100])
         if decision.get('pictures'): ev('Visual', 'pictures recomposed: ' + ', '.join(f'{k} as {v}' for k, v in decision['pictures'].items())[:110])
-        ev('Critic', f"composed page kept: {decision['score']}/100 (was {decision['before']}) · taste {decision['taste']} · contract {decision['contract']}")
+        ev('Critic', f"composed page kept: {decision['score']}/100 (was {decision['before']}" + (f", read again {decision['reference']}" if decision.get('reference') is not None else '') + f") · taste {decision['taste']} · contract {decision['contract']}")
     else:   # the winner's page, documents, contract, critic and screenshots go back exactly as they were
         for path, data in best_files.items():
             with open(path, 'wb') as f: f.write(data)
@@ -255,7 +274,7 @@ def recompose(slug_dir, out, log, best_score, best_round, best_manifest, best_fi
     log['composition'] = decision
     try:
         record = A.J(slug_dir, 'composition.json') or {}
-        record.update({key: decision.get(key) for key in ('kept', 'why', 'before', 'score', 'taste', 'contract', 'first_screen', 'verdict', 'axes')})
+        record.update({key: decision.get(key) for key in ('kept', 'why', 'before', 'reference', 'score', 'taste', 'contract', 'first_screen', 'verdict', 'axes')})
         with open(os.path.join(slug_dir, 'composition.json'), 'w', encoding='utf-8') as f: json.dump(record, f, indent=1, ensure_ascii=False)
     except Exception: pass
     return best_score, best_round, best_manifest

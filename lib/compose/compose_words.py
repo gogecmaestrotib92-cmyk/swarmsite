@@ -24,6 +24,7 @@ How words-only sections read as designed:
 - columns: the heading on top and the rows in two columns, like a printed menu. For a list of four rows or more.
 - statement: everything centred and short, the heading large. For a section that says one thing and has a button — up to 280 characters and two rows.
 - A ground of colour breaks a run of pale sections: "accent" for the one section a visitor should not scroll past (once or twice a page, never two neighbours), "ink" for a dark pause, "alt" for a quiet shift. A page of nothing but coloured grounds is as flat as a page with none.
+- The brief gives the ground of every section down the page. Three or more neighbours on one ground are a flat stretch: break it with a ground of colour on the section of words that deserves it, and do not put two coloured grounds next to each other.
 - A section you leave out stays as the template drew it; leave one out only when its form is right as it is.
 
 THE FORMAT — call write_words with "concept" (one sentence: the rhythm these sections give the page) and "words": one object per section you recompose:
@@ -50,7 +51,7 @@ def brief(page_html):
         if known and not isinstance(known[1], str):
             c = known[1]; ids.append(sec['id'])
             lines.append(f'▸ "{sec["id"]}" — {kind}, on the {c["band"]} band. Heading: "{c["heading"][:90]}". {c["chars"]} characters, {c["rows"]} rows' + (f', {c["buttons"]} button(s)' if c['buttons'] else '') + '.')
-        else: lines.append(f'  "{sec["id"] or "-"}" — {kind}')
+        else: lines.append(f'  "{sec["id"] or "-"}" — {kind}, on the {next((c[5:] for c in sec["classes"] if c.startswith("band-")), "paper")} ground')
     return '\n'.join(lines), ids
 
 

@@ -349,6 +349,51 @@ class Screens(unittest.TestCase):
         whole = section('mk', PICTURES.transplant(PAGE, doc(FORMS['stage']), SHOT)[0]); self.assertIn('pc-contain pc-screen', whole); self.assertNotIn('pc-screen', section('mk', PICTURES.transplant(PAGE, doc(FORMS['stage']), IMAGES)[0]))
 
 
+def room(sid, band, title, colour, extra=''):
+    return (f'<section class="sec photo inset band-{band}" id="{sid}"><div class="wrap inset-wrap"><figure style="aspect-ratio:1.327"><img src="{picture(418, 315, colour)}" alt="{title}"></figure>'
+            f'<div class="photo-caption"><span class="lab">Rooms</span><h2 class="h2">{title}</h2><p class="cap">One line about the {title.lower()}.</p>{extra}</div></div></section>')
+ROOMS = ('<html><head><style>:root{--paper:#ffffff;--container:1300px;--frame:40px}</style></head><body><section class="sec hero" id="top"><h1>Hello</h1></section>'
+         + room('terrace', 'paper', 'Terrace', (200, 180, 150)) + room('hall', 'alt', 'Hall', (150, 120, 100)) + room('lounge', 'dark', 'Lounge', (30, 60, 90)) + LEDGER + room('garden', 'paper', 'Garden', (60, 120, 60)) + '</body></html>')
+ROW = {'sections': ['terrace', 'hall', 'lounge'], 'ratio': '4/3', 'title': 'lg'}
+def gallery(*runs, pictures=()): return {'ir': '0.2', 'pictures': [dict(p) for p in pictures], 'galleries': [dict(r) for r in runs]}
+
+
+class Galleries(unittest.TestCase):
+    """Neighbouring sections that each show a small photograph are run as one row: together they are a spine."""
+    def test_a_run_of_neighbours_becomes_one_row_and_every_section_keeps_its_words_and_its_anchor(self):
+        self.assertEqual(PICTURES.validate(gallery(ROW), ROOMS, []), []); self.assertEqual(PICTURES.validate({'ir': '0.2', 'galleries': [ROW]}, ROOMS, []), [], 'a document may be galleries alone')
+        out, report = PICTURES.transplant(ROOMS, gallery(ROW), []); self.assertTrue(report['drawn'], report['errors']); self.assertEqual(report['sections'], ['hall', 'lounge', 'terrace'])
+        row = section('terrace', out); self.assertRegex(row, r'^<section class="sec photo inset band-paper pc pc-f-gallery pc-t-lg" id="terrace" data-pc="0.2" data-form="gallery"'); self.assertIn('style="--n:3;--ratio:4/3"', row)
+        self.assertEqual(row.count('<article class="pc-gi"'), 3); self.assertIn('<article class="pc-gi" id="hall">', row); self.assertIn('<article class="pc-gi" id="lounge">', row); self.assertEqual(row.count('<img '), 3)
+        for title in ('Terrace', 'Hall', 'Lounge'): self.assertIn(f'<h2 class="h2">{title}</h2><p class="cap">One line about the {title.lower()}.</p>', row)
+        text = lambda html: ' '.join(re.sub(r'<[^>]+>', ' ', re.sub(r'<style.*?</style>', '', html, flags=re.S)).split()); self.assertEqual(text(out), text(ROOMS))
+        self.assertEqual(len(SECTIONS.sections(out)), len(SECTIONS.sections(ROOMS)) - 2); self.assertIn('id="garden"', out); self.assertEqual(PICTURES.readable(out, [])['terrace'][1], 'this section is already composed', 'a composed row is not composed again')
+
+    def test_one_defect_per_rule(self):
+        for bad, code in (({'sections': ['terrace', 'lounge']}, 'IP010'), ({'sections': ['hall', 'terrace']}, 'IP010'), ({'sections': ['terrace']}, 'IP010'), ({'sections': ['terrace', 'hall', 'lounge', 'menu']}, 'IP010'),
+                          ({'sections': ['lounge', 'garden']}, 'IP010'), ({**ROW, 'ratio': '21/9'}, 'IP020'), ({**ROW, 'title': 'xl'}, 'IP020'), ({**ROW, 'cols': 3}, 'IP001'), ({'sections': ['terrace', 'hall'], 'ratio': '3/4'}, 'IP060')):
+            self.assertEqual(codes(gallery(bad), ROOMS, []), [code], bad)
+        self.assertEqual(codes(gallery(ROW, pictures=[{'section': 'hall', 'form': 'stage', 'ground': 'ink'}]), ROOMS, []), ['IP010'], 'a section is in a gallery or has an entry of its own, not both')
+        self.assertEqual(codes({'ir': '0.2', 'pictures': [], 'galleries': []}, ROOMS, []), ['IP001'])
+        shot = [{'id': 'h', 'data': picture(418, 315, (150, 120, 100)), 'w': 418, 'h': 315, 'shot': True}]; self.assertEqual(codes(gallery(ROW), ROOMS, shot), ['IP062'])
+        wordy = ROOMS.replace('One line about the hall.', 'A long account of the hall. ' * 14); self.assertEqual(codes(gallery(ROW), wordy, []), ['IP021'])
+
+    def test_the_composer_is_shown_the_runs_and_a_refused_gallery_goes_back_to_its_sections(self):
+        text, ids = COMPOSE.brief(ROOMS, []); self.assertIn('RUNS OF NEIGHBOURS that can be one gallery ("galleries"): ["terrace", "hall", "lounge"]', text); self.assertNotIn('"garden"]', text.split('RUNS OF NEIGHBOURS')[1])
+        doc_ = COMPOSE._to_doc({'concept': 'A row of rooms.', 'galleries': [dict(ROW, tone=None)]}); self.assertEqual(doc_['pictures'], []); self.assertEqual(doc_['galleries'], [ROW])
+        self.assertEqual(COMPOSE.settle.__doc__ is not None, True)
+        with tempfile.TemporaryDirectory() as temp:
+            path = os.path.join(temp, 'rooms.html'); Path(path).write_text(ROOMS, encoding='utf-8'); asked = []
+            def ask(system, content, tool, **kw): asked.append(1); return {'concept': 'Rooms.', 'pictures': [{'section': 'garden', 'form': 'stage', 'ground': 'ink'}], 'galleries': [{'sections': ['terrace', 'lounge']}]}
+            with patch.object(COMPOSE, 'measure', lambda p: {'desktop': [], 'mobile': []}), patch.object(COMPOSE.HERO, 'measured', lambda p: {}), patch.object(COMPOSE.LISTED, 'section_shots', lambda p, i: {}):
+                result = COMPOSE.compose(ROOMS, path, images=[], ask=ask, review=False)
+                self.assertTrue(result['drawn']); self.assertNotIn('galleries', result['doc']); self.assertEqual([p['section'] for p in result['doc']['pictures']], ['garden']); self.assertEqual(len(asked), 2)
+                self.assertIn({'stage': 'prune', 'errors': [], 'dropped': ['galleries']}, result['log'])
+                over = lambda p: {'desktop': [{'id': 'terrace', 'form': 'gallery', 'scale': 1.7, 'limit': 1.35, 'contrast': None, 'heading_out': 0, 'overlap': 0}], 'mobile': []}
+                with patch.object(COMPOSE, 'measure', over): settled, changes, _ = COMPOSE.settle(ROOMS, gallery(ROW), [], temp)
+                self.assertIsNone(settled); self.assertIn("goes back to the template's sections", changes[0])
+
+
 def answer(*entries, concept='Each picture gets a job.'): return {'concept': concept, 'pictures': [dict(e) for e in entries]}
 CLEAN = {'desktop': [{'id': 'mk', 'form': 'x', 'scale': 1.0, 'limit': 1.35, 'contrast': None, 'heading_out': 0, 'overlap': 0}], 'mobile': []}
 def seen(**change): return {'desktop': [{**CLEAN['desktop'][0], **change}], 'mobile': []}
