@@ -427,6 +427,7 @@ def build(slug_dir, bp_id, out_path=None):
                     if u.scheme not in ('http', 'https') or not host or u.username or u.password or host == 'localhost' or host.endswith(('.local','.internal','.localhost')) or ':' in host or re.fullmatch(r'\d+\.\d+\.\d+\.\d+', host): continue
                 except ValueError: continue
                 label = unarrowed(' '.join(label.split()))   # the client's own arrow is not part of the name: the same link is not drawn twice, nor with two arrows
+                if not re.search(r'\w', re.sub(r'[→➝➔⟶›»↗]|->', '', label)): continue   # a link whose whole name is an arrow names nothing
                 pair = (url, label.casefold())
                 if pair in anchors.pairs: continue
                 anchors.pairs.add(pair)
