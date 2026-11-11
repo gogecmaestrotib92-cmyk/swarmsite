@@ -37,6 +37,22 @@ def text_coverage(source_text, page_text):
     page = set(words(page_text))
     return len(src & page) / len(src)
 
+def leftover(inventory, page_text, least=4):
+    """The source's running text that no section holds and the page does not carry: the page's whole text with the labels
+    of its links and buttons taken out, cut at those labels and at the ends of sentences, and of the pieces only those of
+    `least` words or more that still hold a word the page lacks. The client's own words, in their own order."""
+    text = ' '.join(str(((inventory or {}).get('copy') or {}).get('text') or '')[:40000].split())
+    if not text: return []
+    labels = sorted({' '.join(str(a.get('text') or '').split()) for a in (inventory or {}).get('actions') or [] if len(str(a.get('text') or '').strip()) >= 3}, key=len, reverse=True)
+    for label in labels[:200]: text = re.sub(r'(?<![^\W_])' + re.escape(label) + r'(?![^\W_])', ' \x00 ', text)
+    page = set(words(page_text)); out = []; seen = set()
+    for piece in re.split(r'\x00|(?<=[.!?…])\s+', text):
+        piece = ' '.join(piece.split()).strip(' ·|-–—')
+        lacking = {w for w in words(piece) if w not in STOP and w not in page}
+        if len(piece.split()) < least or not lacking or piece.lower() in seen: continue
+        seen.add(piece.lower()); page |= set(words(piece)); out.append(piece[:1200])
+    return out[:40]
+
 def source_sections(inventory):
     cov = (inventory or {}).get('sourceCoverage') or {}
     return [s for s in (cov.get('sections') or []) if isinstance(s, dict) and s.get('title')]

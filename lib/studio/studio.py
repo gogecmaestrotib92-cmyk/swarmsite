@@ -23,6 +23,8 @@ HOW TO CHOOSE
 - A place (restaurant, hotel, shop) is shown with its photographs: "open-picture", "window", "gallery", its list as a "carte", and "visit" for where and when. Software is shown with "held-product", "stage", "figures". When there is no picture strong enough to open on, "open-atmosphere" or "open-statement".
 - "statement" carries the thesis once, early. "steps" shows how something goes when the client describes a process. "rooms" holds words while two to four of the client's photographs pass. "voices" only with testimonials given to you, word for word. "faq" for six or more questions, "ledger" for fewer.
 - "scatter" lays three to five of the client's pictures out loose at different sizes (work, dishes, rooms, products). "bento" sets four to six facts in tiles of different sizes when there is little to picture. "kinetic-line" is a statement in two or three huge rows that slide apart — use it or "rail", never both.
+- "collage" lays exactly three sharp photographs over one another, each drifting at its own pace — only for a place or a maker with three strong photographs; use it or "scatter", never both.
+- "mark": "drawn" pulls a hand-drawn stroke under the one marked phrase of each heading instead of colouring it. Choose it for at most one variant in spirit — pages with a serif or editorial voice — and keep every marked phrase to one to three words.
 - Scheme "tone" (three steps of one muted tone from the brand colour) suits brands whose colour is strong and whose pictures are few.
 - 5–9 scenes including exactly one opening and one close. At most one "rail". Use "held-product" only with three or more claims that each have something to SHOW; give every panel the tightest, most readable real picture (prefer crops made for the purpose over whole pages of small text) or real figures. Use "stage" for the one whole screen worth seeing large. Use "figures" only for numbers that are an argument.
 - Headings are written for their scene: display lines are short and break into rows with " / " (2–3 rows, 1–4 words a row); mark ONE phrase per line with *asterisks* at most. A heading over cards must agree with the number of cards.
@@ -39,7 +41,7 @@ TOOL = {'name': 'compose_page', 'description': 'The whole page as a plan.', 'inp
     'story': {'type': 'object', 'required': ['doubt', 'turn', 'proof', 'ask'], 'properties': {'doubt': {'type': 'string', 'description': 'what the visitor does not know or believe on arrival'}, 'turn': {'type': 'string', 'description': 'the one thing that, once seen, changes that'}, 'proof': {'type': 'string'}, 'ask': {'type': 'string'}, 'idea': {'type': 'string', 'description': 'the one idea every scene expresses'}}},
     'title': {'type': 'string'}, 'description': {'type': 'string'},
     'brand': {'type': 'object', 'required': ['name', 'accent', 'night'], 'properties': {'name': {'type': 'string'}, 'accent': {'type': 'string'}, 'night': {'type': 'string'}, 'lang': {'type': 'string'}}},
-    'type': {'type': 'string', 'enum': list(S.TYPE)}, 'scheme': {'type': 'string', 'enum': list(S.SCHEMES)}, 'eased': {'type': 'boolean', 'description': 'the page glides to a stop after the wheel (desk only)'},
+    'type': {'type': 'string', 'enum': list(S.TYPE)}, 'scheme': {'type': 'string', 'enum': list(S.SCHEMES)}, 'mark': {'type': 'string', 'enum': ['colour', 'drawn'], 'description': 'how the one *marked phrase* of a heading is set: in the accent colour, or in the ink with a hand-drawn stroke pulled under it (suits serif and editorial pages; mark one to three words only)'}, 'eased': {'type': 'boolean', 'description': 'the page glides to a stop after the wheel (desk only)'},
     'why': {'type': 'string', 'description': 'why this type system and scheme for this client, in two sentences'},
     'nav': {'type': 'array', 'items': {'type': 'object', 'properties': {'label': {'type': 'string'}, 'url': {'type': 'string'}}}},
     'action': {'type': 'object', 'properties': {'label': {'type': 'string'}, 'url': {'type': 'string'}}}, 'action2': {'type': 'object', 'properties': {'label': {'type': 'string'}, 'url': {'type': 'string'}}},
@@ -64,6 +66,10 @@ def check(plan, page, ev, allowed, images):
             bad['pictures'].append(f'{pid}: out of focus (or a frame of a video) — not a picture to show across the screen in "{sc["scene"]}"')
         elif sc.get('scene') in ('open-picture', 'window', 'stage') and pid in images and max(int(images[pid].get('w') or 0), int(images[pid].get('h') or 0)) < 900:
             bad['pictures'].append(f'{pid}: {images[pid].get("w")}×{images[pid].get("h")} px is too small to be shown across the screen in "{sc["scene"]}" — use a larger picture or a scene that shows it small')
+        if sc.get('scene') == 'collage':   # pictures laid over one another are each seen large: every one has to hold
+            for p in (sc.get('slots') or {}).get('pictures') or []:
+                im = images.get(p.get('image'))
+                if im and (im.get('soft') or im.get('video') or im.get('shot') or int(im.get('w') or 0) < 900): bad['pictures'].append(f'{p.get("image")}: "collage" takes only sharp photographs at least 900 px wide — use "scatter", which shows pictures small')
     quotes = [q.get('text') for s in plan.get('scenes') or [] if s.get('scene') == 'voices' for q in (s.get('slots') or {}).get('quotes') or []]
     source = ' '.join(json.dumps(ev, ensure_ascii=False).split())
     for q in quotes:
@@ -82,11 +88,12 @@ def check(plan, page, ev, allowed, images):
     return bad
 
 
-def one(material, ev, allowed, images, out, tag, hint):
+def one(material, ev, allowed, images, out, tag, hint, types=None):
     ask = material + [{'type': 'text', 'text': hint + '\nCompose the page. Call compose_page.'}]; plan = page = bad = None; tries = []
     for k in range(2):
         plan = E.call(SYSTEM, ask, f'{tag}-compose-{k}', tool=TOOL, max_tokens=14000)
         with open(os.path.join(out, f'plan-{tag}-{k}.json'), 'w', encoding='utf-8') as f: json.dump(plan, f, indent=1, ensure_ascii=False)
+        if types and plan.get('type') not in types: plan['type_asked'] = plan.get('type'); plan['type'] = types[0]   # variants differ by construction: each of B and C has its own share of the type systems
         page = S.page(plan, images); bad = check(plan, page, ev, allowed, images); path = os.path.join(out, f'page-{tag}.html')
         with open(path, 'w', encoding='utf-8') as f: f.write(page)
         try:
@@ -164,8 +171,10 @@ def build(src, out, n=3, atmosphere_wanted=False):
     from concurrent.futures import ThreadPoolExecutor
     first = one(material, ev, allowed, images, out, *VARIANTS[0]); results = [first]
     taken = f'\nVARIANT A ALREADY EXISTS: type system "{first["type"]}", scheme "{first["scheme"]}", opening "{(first["scenes"] or [""])[0]}", scenes {first["scenes"]}. You MUST choose a different type system'
-    rest = [(VARIANTS[1][0], VARIANTS[1][1] + taken + ', and differ in the scheme or the opening scene as well.'), (VARIANTS[2][0], VARIANTS[2][1] + taken + ' — and not the one a careful second designer would pick either: the third character this client could honestly have.')][:max(0, n - 1)]
-    with ThreadPoolExecutor(2) as ex: results += list(ex.map(lambda v: one(material, ev, allowed, images, out, v[0], v[1]), rest))
+    others = [t for t in S.TYPE if t != first['type']]; shares = [others[0::2], others[1::2]]   # B and C are composed at the same time: disjoint shares keep them from landing on one type system
+    rest = [(VARIANTS[1][0], VARIANTS[1][1] + taken + f', one of {shares[0]}, and differ in the scheme or the opening scene as well.', shares[0]),
+            (VARIANTS[2][0], VARIANTS[2][1] + taken + f', one of {shares[1]} — the third character this client could honestly have.', shares[1])][:max(0, n - 1)]
+    with ThreadPoolExecutor(2) as ex: results += list(ex.map(lambda v: one(material, ev, allowed, images, out, v[0], v[1], v[2]), rest))
     priced = [u['usd'] for u in E.USAGE if u['usd'] is not None]
     report = {'atmosphere': made, 'variants': results, 'usage': E.USAGE, 'usd': round(sum(priced), 3), 'seconds': round(time.time() - t0)}
     with open(os.path.join(out, 'report.json'), 'w', encoding='utf-8') as f: json.dump(report, f, indent=1, ensure_ascii=False)

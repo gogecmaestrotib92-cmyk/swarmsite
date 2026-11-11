@@ -71,3 +71,20 @@ def test_a_picture_without_detail_is_soft_kept_small_and_never_shown_across_the_
     assert any('out of focus' in x for x in ST.check(plan, page, {'links': []}, set(), images)['pictures'])
     grid = page.split('class="sc-grid"')[1]
     assert grid.index('<b>A</b>') > grid.index('<b>B</b>') and 'max-width:max(17.5rem,744px)' in grid, 'the soft picture takes the smallest place and stays under its own size'
+
+
+def test_the_second_and_third_variant_cannot_land_on_one_type_system(tmp_path, monkeypatch):
+    import studio as ST, scenes as S
+    asked = []
+    def one(material, ev, allowed, images, out, tag, hint, types=None):
+        asked.append((tag, types, hint)); return {'tag': tag, 'type': (types or ['soft-serif'])[0], 'scheme': 'paper', 'scenes': ['open-statement'], 'clean': True}
+    monkeypatch.setattr(ST, 'one', one); monkeypatch.setattr(ST.E, 'evidence', lambda src: ({'sections': [{'text': 'word ' * 60}], 'factsheet': {}, 'links': [], 'url': 'https://x.test'}, []))
+    ST.build(str(tmp_path), str(tmp_path / 'out'))
+    b, c = asked[1][1], asked[2][1]
+    assert asked[0][1] is None and b and c and not set(b) & set(c) and 'soft-serif' not in b + c and set(b + c) == set(S.TYPE) - {'soft-serif'}
+    assert all(t in asked[1][2] for t in b), 'the variant is told which type systems are its own'
+    monkeypatch.undo(); sent = run(monkeypatch, [('tool_use', 'tool_use', {'type': 'soft-serif', 'scheme': 'paper', 'brand': {'name': 'X', 'accent': '#2a8f5a'}, 'scenes': [{'scene': 'open-statement', 'slots': {'h1': 'A / line'}}]})] * 2)
+    monkeypatch.setattr(ST.subprocess, 'run', lambda *a, **k: types.SimpleNamespace(stdout='{"breaks":[]}'))
+    os.makedirs(tmp_path / 'o2', exist_ok=True)
+    got = ST.one([], {'links': []}, set(), {}, str(tmp_path / 'o2'), 'b', 'hint', ['tight-bold', 'wide-geometric'])
+    assert got['type'] == 'tight-bold' and 'tight-bold' in (tmp_path / 'o2' / 'page-b.html').read_text().split('<body')[1][:60], 'a plan that takes a type system outside its share is set in the first of its own'

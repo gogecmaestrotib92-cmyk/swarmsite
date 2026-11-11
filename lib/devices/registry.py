@@ -303,6 +303,16 @@ device(id='grain', name='A fine grain over the whole page', kind='background',
        css=".dv-grain{position:fixed;inset:0;z-index:80;pointer-events:none;opacity:.07;mix-blend-mode:multiply;background-image:url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .9 0'/></filter><rect width='180' height='180' filter='url(%23n)'/></svg>\")}",
        js="")
 
+device(id='draw', name='A line drawn under the phrase that matters', kind='text',
+       sees='When a headline arrives, a hand-drawn stroke is pulled from left to right under its marked phrase.',
+       measured=None, seen='SVG path drawing: 15 mentions in the technique survey (rank 31), hand-drawn accents 11 (rank 41); timings not measured — ours draws in 0.9 s after the line has risen', survey=True,
+       needs='a headline with one marked phrase of one to three words', use='the one phrase a page turns on, once or twice a page', avoid='body text; more than one phrase in a heading',
+       pairs=['line-rise'], markup='<em class="dv-draw">phrase<svg viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true"><path d="M1 8C16 3 31 11 50 6S84 3 99 7" pathLength="1"/></svg></em>',
+       css=""".dv-draw{position:relative}.dv-draw svg{position:absolute;left:-1%;bottom:-.12em;width:102%;height:.16em;overflow:visible;pointer-events:none}.dv-draw path{fill:none;stroke:var(--accent);stroke-width:2.4;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:0}
+.dv .dv-lines .dv-draw path,.dv [data-rise] .dv-draw path{stroke-dashoffset:1;transition:stroke-dashoffset .9s var(--ease) .45s}.dv .is-in .dv-draw path,.dv .is-in.dv-draw path{stroke-dashoffset:0}
+@media (prefers-reduced-motion:reduce){.dv .dv-draw path{stroke-dashoffset:0!important}}""",
+       js="")
+
 device(id='tilt', name='A card that leans under the pointer', kind='pointer',
        sees='Moving over a card, it tips a few degrees toward the cursor as if it had weight, and settles when the pointer leaves.',
        measured=None, seen='4 mentions in the technique survey (rank 64, "3D tilt card")', survey=True,
@@ -367,9 +377,10 @@ def demo(ids=None):
         'kinetic': '<p class="dv-kinetic big"><span class="dv-k">Rows that</span><span class="dv-k">slide apart</span></p>',
         'letters': '<p class="big"><span class="dv-letters">Letter by letter</span></p>',
         'focus-in': '<p class="lede" data-focus>A paragraph that comes into focus as it enters the screen, and stays sharp once it has.</p>',
+        'draw': '<p class="big dv-lines"><span class="dv-ln"><span>A line <em class="dv-draw">drawn<svg viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true"><path d="M1 8C16 3 31 11 50 6S84 3 99 7" pathLength="1"/></svg></em> under it</span></span></p>',
         'tilt': '<div class="grid">' + ''.join(f'<article class="card dv-tilt"><p class="mono">0{k + 1}</p><h2>{t}</h2></article>' for k, t in enumerate(('Leans', 'Under the', 'Pointer'))) + '</div>',
         'end-mark': '<div class="dv-endmark" style="--chars:7" aria-hidden="true">Library</div>'}
-    order = ['overlay-menu', 'line-rise', 'rise-stagger', 'fact-ticker', 'read-along', 'count-up', 'held-index', 'held-pictures', 'side-rail', 'stack-cards', 'grow-to-bleed', 'depth', 'slides', 'ground-shift', 'peek', 'kinetic', 'letters', 'focus-in', 'tilt', 'end-mark']
+    order = ['overlay-menu', 'line-rise', 'rise-stagger', 'fact-ticker', 'read-along', 'count-up', 'held-index', 'held-pictures', 'side-rail', 'stack-cards', 'grow-to-bleed', 'depth', 'slides', 'ground-shift', 'peek', 'draw', 'kinetic', 'letters', 'focus-in', 'tilt', 'end-mark']
     body = ''.join(f'<section id="{i}"><p class="mono tag">{i}</p>{blocks[i]}</section>' for i in order if i in ids and i in blocks)
     page_css = """*{box-sizing:border-box}body{margin:0;--ink:#101421;--paper:#fff;--accent:#ff488b;font:18px/1.5 'Geist',system-ui,sans-serif;color:var(--ink);background:var(--paper)}
 section{padding:clamp(56px,9vw,140px) clamp(20px,2.8vw,40px)}.big{font-weight:300;font-size:clamp(44px,6vw,104px);line-height:1;letter-spacing:-.03em;margin:0}.huge span{font-weight:300;font-size:clamp(56px,11vw,180px);letter-spacing:-.04em;white-space:nowrap}

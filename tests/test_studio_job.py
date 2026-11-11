@@ -44,3 +44,47 @@ def test_the_switch(tmp_path, monkeypatch):
     (tmp_path / 'brief.json').write_text(json.dumps({'studio': True})); assert RUN.studio_wanted(str(tmp_path)) is True
     monkeypatch.delenv('LIVETEST'); (tmp_path / 'brief.json').write_text('{}'); assert RUN.studio_wanted(str(tmp_path)) is True
     monkeypatch.setenv('SWARM_STUDIO', '0'); assert RUN.studio_wanted(str(tmp_path)) is False
+
+
+def graded(tmp_path, monkeypatch, con, crit):
+    log = {'rounds': [{'k': 1, 'score': 64, 'taste': 42, 'contract': 92, 'broken': [{'id': 'seo-text-kept'}], 'fixes': []}], 'studio': {'kept': 'a'}}
+    def contract(slug, page):
+        if isinstance(con, Exception): raise con
+        return con
+    def critique(slug, page, model, fast, files=None, measured=None, own=None):
+        assert own and own.get('scenes'), "the critic is told the page's own plan, not the template's direction"
+        if isinstance(crit, Exception): raise crit
+        return crit
+    monkeypatch.setattr(RUN, 'contract', contract); monkeypatch.setattr(RUN.C, 'critique', critique)
+    got = RUN.grade_studio(str(tmp_path), str(tmp_path / 'page.html'), log, __import__('time').time(), {'scenes': ['open-picture', 'close']})
+    return got, log
+
+
+def test_the_scores_of_a_job_are_of_the_studio_page(tmp_path, monkeypatch):
+    got, log = graded(tmp_path, monkeypatch, {'score': 100, 'failed': []}, {'score': 70, 'verdict': 'Reads as designed.', 'axes': {'design': 70}, 'fixes': []})
+    assert got == (round(.55 * 70 + .45 * 100), 2) and log['rounds'][-1]['studio'] is True
+    card = RUN.scorecard(log, got[1]); critic = json.loads((tmp_path / 'critic.json').read_text())
+    assert card['page'] == 'studio' and card['taste'] == 70 and card['contract'] == 100 and card['technical']['pass'] and card['technical']['hard_failures'] == []
+    assert critic['studio'] is True and critic['verdict'] == 'Reads as designed.' and critic['taste'] == 70
+
+
+def test_a_studio_page_the_critic_did_not_read_shows_no_taste_rather_than_another_pages(tmp_path, monkeypatch):
+    got, log = graded(tmp_path, monkeypatch, {'score': 95, 'failed': [{'id': 'seo-text-kept', 'detail': '90%', 'weight': 3}]}, RuntimeError('overloaded'))
+    card = RUN.scorecard(log, got[1])
+    assert got == (95, 2) and card['page'] == 'studio' and card['taste'] is None and card['creative']['pass'] is False and card['contract'] == 95 and card['technical']['hard_failures'] == ['seo-text-kept']
+
+
+def test_a_studio_page_nothing_could_grade_says_whose_scores_these_are(tmp_path, monkeypatch):
+    got, log = graded(tmp_path, monkeypatch, RuntimeError('no browser'), {'score': 70})
+    assert got is None and len(log['rounds']) == 1 and log['studio']['graded'] is False
+    assert RUN.scorecard(log, 1)['page'] == 'replaced'
+
+
+def test_what_no_section_holds_is_kept_and_the_structured_data_is_the_sources_own():
+    import seo
+    inv = dict(INV, title='X — home', copy={'text': 'Pricing Deep page Made with care in a small kitchen since 1996. Shopping cart Close. Every dish is cooked to order by two people.'},
+               seo={'canonical': 'https://x.test/', 'structuredData': {'raw': ['{"@type":"Restaurant","name":"X"}', 'not json']}})
+    rest = seo.leftover(inv, 'Every dish is cooked to order by two people.')
+    assert rest == ['Made with care in a small kitchen since 1996.'], 'labels of links are cut out, short scraps are dropped, what the page already says is not repeated'
+    page = SCENES.keep(PAGE, inv)
+    assert 'Made with care in a small kitchen' in page and page.count('application/ld+json') == 1 and '"@type":"Restaurant"' in page and 'not json' not in page

@@ -19,11 +19,16 @@ import registry as LIB
 e = lambda s: H.escape(str(s if s is not None else ''), quote=True)
 
 
+STROKE = '<svg viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true"><path d="M1 8C16 3 31 11 50 6S84 3 99 7" pathLength="1"/></svg>'
+
+
 def mark(text):
-    parts = re.split(r'\*([^*]+)\*', str(text or '')); return ''.join(f'<em>{e(p)}</em>' if i % 2 else e(p) for i, p in enumerate(parts))
+    """The marked phrase of a line. It always carries the stroke of the `draw` device; the page shows the stroke only
+    where its plan asks for a drawn mark (body class mark-drawn), and colours the phrase otherwise."""
+    parts = re.split(r'\*([^*]+)\*', str(text or '')); return ''.join(f'<em class="dv-draw">{e(p)}{STROKE}</em>' if i % 2 else e(p) for i, p in enumerate(parts))
 
 
-def lines(text, cls='display'):
+def lines(text, cls='display', most=4):
     """A display line as masked rows: the writer breaks it with ' / ' (two to four rows); each row rises on its own."""
     rows = [r.strip() for r in str(text or '').split(' / ') if r.strip()] or ['']
     merged = []
@@ -31,8 +36,10 @@ def lines(text, cls='display'):
         if merged and len(re.sub(r'[*\W]', '', r)) <= 3: merged[-1] += ' ' + r   # "11" alone on a line is an orphan, not a row
         else: merged.append(r)
     rows = merged
+    while len(rows) > most:   # more rows than a heading holds is a column of words: the two neighbours that are shortest together become one
+        k = min(range(len(rows) - 1), key=lambda i: len(rows[i]) + len(rows[i + 1])); rows[k:k + 2] = [rows[k] + ' ' + rows[k + 1]]
     longest = max((len(w) for r in rows for w in re.sub(r'\*', '', r).split()), default=6)
-    return f'<span class="dv-lines {cls}" style="--lw:{max(4, longest)}">' + ' '.join(f'<span class="dv-ln"><span>{mark(r)}</span></span>' for r in rows) + '</span>'
+    return f'<span class="dv-lines {cls}" style="--lw:{max(4, longest)};--lr:{len(rows)}">' + ' '.join(f'<span class="dv-ln"><span>{mark(r)}</span></span>' for r in rows) + '</span>'
 
 
 # ---- type: systems of different character. k = how many px of font-size one character of the longest word needs room for ----
@@ -130,9 +137,10 @@ def _open_statement(s, ctx):
 @scene('open-picture', name='Opening: a statement, then the picture grows to the edges', role='open', devices=['line-rise', 'rise-stagger', 'grow-to-bleed'],
        needs='one strong wide picture (≥ 1400 px, not a screenshot with small text)', slots={'kicker': 'mono', 'h1': 'rows split by " / "', 'lede': '≤ 2 sentences', 'image': 'picture id', 'alt': 'what the picture shows'})
 def _open_picture(s, ctx):
+    im = ctx['images'].get(s.get('image')) or {}; wide = ' wide' if (im.get('w') or 0) > 2.05 * (im.get('h') or 1) else ''   # a strip of a picture is given height, cropped at its sides
     return (f'<section class="sc open open-pic" id="top"><div class="wrap"><p class="mono kicker" data-rise>{e(s.get("kicker"))}</p><h1>{lines(s.get("h1"))}</h1>'
             f'<div class="open-foot"><p class="lede" data-rise style="--i:1">{e(s.get("lede"))}</p><div class="acts" data-rise style="--i:2">{_btn(ctx["action"], "dv-magnet")}{_btn(ctx.get("action2"), "quiet")}</div></div></div>'
-            f'<figure class="dv-grow">{_shot(ctx["images"], s.get("image"), s.get("alt"))}</figure></section>')
+            f'<figure class="dv-grow{wide}">{_shot(ctx["images"], s.get("image"), s.get("alt"))}</figure></section>')
 
 
 @scene('held-product', name='The product, claim by claim, held', role='show', devices=['held-index', 'figure-bars', 'scramble', 'rise-stagger'],
@@ -238,6 +246,17 @@ def _gallery(s, ctx):
             f'<div class="dv-slides" style="--ratio:16/9"><div class="dv-slides-view">{pics}</div><p class="dv-slides-ui mono"><button data-step="-1" aria-label="Previous">←</button><span class="dv-slides-n"></span><button data-step="1" aria-label="Next">→</button></p></div></div></section>')
 
 
+@scene('collage', name='Photographs laid over one another, each moving at its own pace', role='show', devices=['depth', 'clip-reveal', 'line-rise', 'rise-stagger'],
+       needs='exactly 3 of the client\'s own photographs, sharp and at least 900 px wide (never screenshots, never stills from film), and one short statement', slots={'label': 'mono', 'h2': 'rows split by " / "', 'say': '≤ 2 sentences', 'pictures': [{'image': 'id', 'alt': ''}]})
+def _collage(s, ctx):
+    pics = [p for p in (s.get('pictures') or []) if p.get('image') in ctx['images']][:3]
+    if len(pics) < 3: return ''
+    pics.sort(key=lambda p: -(ctx['images'][p['image']].get('w') or 0))   # the widest picture is the ground the others lie on
+    figs = ''.join(f'<figure class="co-{k} dv-depth dv-clip" style="--rate:{r}">{_shot(ctx["images"], p["image"], p.get("alt"))}</figure>' for k, (p, r) in enumerate(zip(pics, ('-.06', '.1', '-.14'))))
+    return (f'<section class="sc collage" id="look"><div class="wrap"><p class="mono kicker">{e(s.get("label"))}</p><h2>{lines(s.get("h2"), "h2")}</h2><div class="co">{figs}</div>'
+            + (f'<p class="lede co-say" data-rise>{e(s["say"])}</p>' if s.get('say') else '') + '</div></section>')
+
+
 @scene('carte', name='A menu or price list set like a printed card', role='decide', devices=['rise-stagger'], needs='6–24 items with their prices or values, in 1–4 groups, exactly as the client lists them',
        slots={'label': 'mono', 'h2': 'rows split by " / "', 'groups': [{'title': '', 'items': [{'name': '', 'note': 'optional, ≤ 70 chars', 'price': 'as written'}]}], 'action': {'label': '', 'url': ''}})
 def _carte(s, ctx):
@@ -254,7 +273,7 @@ def _carte(s, ctx):
        slots={'label': 'mono', 'where': 'the address or place, rows split by " / "', 'rows': [{'k': 'e.g. a day or "Phone"', 'v': 'as written'}], 'action': {'label': 'e.g. Reserve', 'url': ''}})
 def _visit(s, ctx):
     rows = ''.join(f'<li><span class="mono">{e(r.get("k"))}</span><b>{e(r.get("v"))}</b></li>' for r in (s.get('rows') or [])[:9] if r.get('k'))
-    return (f'<section class="sc visit" id="visit"><div class="wrap visit-in"><div><p class="mono kicker">{e(s.get("label"))}</p><h2>{lines(s.get("where"), "h2")}</h2><div class="acts" data-rise>{_btn(s.get("action") or ctx["action"], "dv-magnet")}</div></div>'
+    return (f'<section class="sc visit" id="visit"><div class="wrap visit-in"><div><p class="mono kicker">{e(s.get("label"))}</p><h2>{lines(s.get("where"), "h2", 3)}</h2><div class="acts" data-rise>{_btn(s.get("action") or ctx["action"], "dv-magnet")}</div></div>'
             f'<ul class="kv" data-rise style="--i:1">{rows}</ul></div></section>')
 
 
@@ -319,7 +338,7 @@ def _bento(s, ctx):
     def tile(k, t):
         pic = f'<div class="b-pic">{_shot(ctx["images"], t.get("image"), "")}</div>' if k == 0 and t.get('image') in ctx['images'] else ''
         fig = f'<p class="b-fig">{e(t["figure"])}</p>' if t.get('figure') else ''
-        return f'<article class="b-tile b-{k}{" b-shown" if pic else " b-bare" if k == 0 and not fig else ""}" data-rise style="--i:{k % 3}">{pic}{fig}<h3>{e(t["title"])}</h3>' + (f'<p>{e(t["say"])}</p>' if t.get('say') else '') + '</article>'
+        return f'<article class="b-tile b-{k}{" b-shown" if pic else " b-bare" if k == 0 and not fig else " b-plain" if not fig else ""}" data-rise style="--i:{k % 3}">{pic}{fig}<h3>{e(t["title"])}</h3>' + (f'<p>{e(t["say"])}</p>' if t.get('say') else '') + '</article>'
     return f'<section class="sc bento" id="what"><div class="wrap"><p class="mono kicker">{e(s.get("label"))}</p><h2>{lines(s.get("h2"), "h2")}</h2><div class="b-grid b-n{len(tiles)}">{"".join(tile(k, t) for k, t in enumerate(tiles))}</div></div></section>' if len(tiles) >= 4 else ''
 
 
@@ -338,8 +357,9 @@ a{color:inherit}img{display:block;max-width:100%;height:auto;background:var(--gr
 :focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .skip{position:absolute;left:-999px}.skip:focus{left:16px;top:16px;z-index:99;background:var(--paper);color:var(--ink);padding:10px 14px}
 .wrap{padding-inline:var(--pad);max-width:1760px;margin-inline:auto}.sc{padding-block:clamp(72px,9.4vw,156px)}
+.sc:not(.night):not(.open):not(.keep)+.sc:not(.night){padding-top:clamp(16px,2.4vw,40px)}
 .mono{font-family:var(--mono);font-size:12px;line-height:1.35;letter-spacing:.08em;text-transform:uppercase}.kicker{color:var(--mute);margin-bottom:clamp(20px,2.4vw,36px)}.note{color:var(--mute);margin-top:22px}
-em{font-style:normal;color:var(--em)}.display-serif em,.soft-serif em{font-style:italic}
+em{font-style:normal;color:var(--em)}em svg{display:none}.mark-drawn .display em,.mark-drawn .h2 em{color:inherit;white-space:nowrap}.mark-drawn .display em svg,.mark-drawn .h2 em svg{display:block}.dv-ln:has(.dv-draw){padding-bottom:.34em;margin-bottom:-.34em}.display-serif em,.soft-serif em{font-style:italic}
 .display,.h2{display:block;font-family:var(--display);font-weight:var(--dw);letter-spacing:var(--dls);line-height:var(--dlh);text-transform:var(--dcase)}
 .display{font-size:min(clamp(48px,11.6vw,196px),calc((100vw - 2 * var(--pad)) / var(--lw,8) * var(--k)))}
 .h2{font-size:min(clamp(40px,8.2vw,140px),calc((100vw - 2 * var(--pad)) / var(--lw,8) * var(--k)))}
@@ -356,6 +376,7 @@ em{font-style:normal;color:var(--em)}.display-serif em,.soft-serif em{font-style
 .open{min-height:100svh;display:grid;align-content:end;padding-top:clamp(120px,16vh,200px);padding-bottom:0}.open .wrap{width:100%;padding-bottom:clamp(40px,6vh,80px)}
 .open-foot{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:clamp(24px,4vw,64px);align-items:end;margin-top:clamp(28px,4vw,64px)}.open-foot .note{grid-column:1/-1;margin-top:0}
 .open-tick{border-top:1px solid var(--line);padding:22px 0;color:var(--mute)}.open-pic{padding-bottom:clamp(88px,13vw,224px)}.open-pic .dv-grow{margin-top:clamp(40px,6vw,96px)}
+@media (min-width:701px){.open-pic{min-height:0;align-content:start;padding-top:clamp(104px,13svh,150px)}.open-pic .wrap{padding-bottom:0}.open-pic .display{font-size:max(48px,min(clamp(48px,11.6vw,196px),calc((100vw - 2 * var(--pad)) / var(--lw,8) * var(--k)),calc(34svh / var(--lr,2))))}.open-pic .open-foot{margin-top:clamp(30px,4.6svh,56px)}.mark-drawn .open-foot{margin-top:clamp(40px,6.4svh,76px)}.open-pic .dv-grow{margin-top:clamp(28px,5svh,56px)}.open-pic .dv-grow.wide img{aspect-ratio:2/1;object-fit:cover}}
 /* held product */
 .held{background:var(--ground2)}.dv-held{grid-template-columns:minmax(0,5fr) minmax(0,7fr)!important}.dv-held-names li{font-family:var(--display);font-weight:var(--dw);text-transform:var(--dcase);letter-spacing:var(--dls);font-size:clamp(30px,3.6vw,60px)!important;line-height:1.04!important}
 .held-intro{margin-top:clamp(24px,3vw,44px);max-width:30ch;color:var(--mute)}.dv-held-item{display:grid;gap:clamp(18px,2vw,28px)}.say{font-size:clamp(17px,1.5vw,22px);line-height:1.38;max-width:34ch}
@@ -384,7 +405,9 @@ em{font-style:normal;color:var(--em)}.display-serif em,.soft-serif em{font-style
 .open-atmos{position:relative;isolation:isolate;overflow:hidden}.atmos{position:absolute;inset:0;z-index:-1;margin:0}.atmos svg,.atmos img{width:100%;height:100%;object-fit:cover}.open-atmos .atmos::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,color-mix(in srgb,var(--night) 70%,transparent))}
 .open-atmos .btn.quiet{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--on-night) 30%,transparent)}
 .window{padding-block:0}.win{margin:0;aspect-ratio:21/9;max-height:92svh;width:100%}.win img{height:100%;object-fit:cover}.win-foot{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,8fr);gap:clamp(24px,4vw,64px);padding-block:clamp(20px,2.4vw,36px) 0;color:var(--mute)}.window+.sc{padding-top:clamp(64px,8vw,128px)}.win-foot .say{color:var(--ink);max-width:38ch;font-size:clamp(16px,1.3vw,20px)}
-.gallery h2{margin-bottom:clamp(40px,6vw,96px)}.dv-slides-view{border-radius:14px}
+.gallery h2{margin-bottom:clamp(40px,6vw,96px)}
+.co{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));align-items:start;margin-top:clamp(40px,6vw,96px)}.co figure{margin:0;border-radius:14px;grid-row:1}.co img{width:100%;height:100%;object-fit:cover}.co-0{grid-column:1/9;aspect-ratio:3/2}.co-1{grid-column:8/13;aspect-ratio:4/5;margin-top:clamp(64px,12vw,220px)!important;z-index:1;border:clamp(6px,.7vw,12px) solid var(--paper)}.co-2{grid-column:2/6;align-self:end;aspect-ratio:1;z-index:2;border:clamp(6px,.7vw,12px) solid var(--paper)}.co-say{margin-top:clamp(28px,4vw,56px);margin-left:auto}
+@media (max-width:700px){.co{display:block}.co figure{margin-top:14px!important;aspect-ratio:4/3;border:0}}.dv-slides-view{border-radius:14px}
 .grps{columns:2 22rem;column-gap:clamp(32px,5vw,96px);margin-top:clamp(48px,7vw,120px)}.grp{break-inside:avoid;margin-bottom:clamp(40px,5vw,72px)}.grps.flow .grp{break-inside:auto}.grps.flow li{break-inside:avoid}.grps.flow h3{break-after:avoid}.grp h3{color:var(--mute);padding-bottom:14px;border-bottom:1px solid var(--ink)}
 .grp li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--line)}.grp b{font-weight:500;font-size:clamp(17px,1.4vw,21px)}.grp small{display:block;color:var(--mute);font-size:14px;margin-top:3px}.grp .pr{font-family:var(--mono);font-size:14px;white-space:nowrap}.carte .acts{margin-top:clamp(32px,4vw,56px)}
 .visit-in{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(32px,5vw,96px);align-items:end}.visit .acts{margin-top:clamp(28px,4vw,56px)}
@@ -402,7 +425,7 @@ em{font-style:normal;color:var(--em)}.display-serif em,.soft-serif em{font-style
 .sc-it .dv-clip{border-radius:24px}.sc-it img{width:100%}.sc-it figcaption{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:10px 16px;margin-top:14px}.sc-it b{font-family:var(--display);font-weight:var(--dw);text-transform:var(--dcase);letter-spacing:var(--dls);font-size:clamp(22px,2.2vw,36px);line-height:1}.sc-it .mono{color:var(--mute);border:1px solid var(--line);border-radius:999px;padding:6px 12px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .b-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:clamp(10px,1.2vw,18px);margin-top:clamp(48px,7vw,120px)}.b-tile{grid-column:span 2;background:var(--ground2);border-radius:24px;padding:clamp(20px,2.4vw,36px);display:flex;flex-direction:column;justify-content:flex-end;min-height:clamp(200px,20vw,320px);overflow:hidden;position:relative}
 .b-0{grid-column:span 4;grid-row:span 2;background:var(--lead);color:var(--on-lead)}.b-n5 .b-3,.b-n5 .b-4{grid-column:span 3}.b-n4 .b-3{grid-column:span 6;min-height:clamp(140px,12vw,200px)}.b-n4 .b-1,.b-n4 .b-2{grid-column:span 2}.b-n6 .b-5{grid-column:span 2}
-.b-tile h3{font-family:var(--display);font-weight:var(--dw);text-transform:var(--dcase);letter-spacing:var(--dls);line-height:1.02;font-size:clamp(22px,2.1vw,34px)}.b-0 h3{font-size:clamp(28px,3.4vw,56px)}.b-bare{justify-content:space-between}.b-bare h3{font-size:clamp(40px,6vw,104px);line-height:.94;max-width:11ch}.b-bare p{max-width:30ch;font-size:clamp(16px,1.2vw,19px)}.b-tile p{margin-top:10px;color:var(--mute);max-width:34ch}.b-0 p{color:color-mix(in srgb,var(--on-lead) 78%,transparent)}
+.b-tile h3{font-family:var(--display);font-weight:var(--dw);text-transform:var(--dcase);letter-spacing:var(--dls);line-height:1.02;font-size:clamp(22px,2.1vw,34px)}.b-0 h3{font-size:clamp(28px,3.4vw,56px)}.b-bare,.b-plain{justify-content:space-between}.b-plain h3{font-size:clamp(24px,2.5vw,40px);max-width:14ch}.b-plain{min-height:clamp(180px,16vw,260px)}.b-plain p{margin-top:clamp(20px,3vw,48px)}.b-bare h3{font-size:clamp(40px,6vw,104px);line-height:.94;max-width:11ch}.b-bare p{max-width:30ch;font-size:clamp(16px,1.2vw,19px)}.b-tile p{margin-top:10px;color:var(--mute);max-width:34ch}.b-0 p{color:color-mix(in srgb,var(--on-lead) 78%,transparent)}
 .b-fig{font-family:var(--display);font-weight:var(--dw);letter-spacing:var(--dls);line-height:.9;font-size:clamp(48px,7vw,120px)!important;color:inherit!important;margin:0 0 auto!important}.b-shown{background:#0b0c0f;color:#f1f1ee}.b-shown p{color:rgba(241,241,238,.8)}.b-pic{position:absolute;inset:0}.b-pic img{width:100%;height:100%;object-fit:cover;opacity:.55}.b-pic~*{position:relative}
 .kinetic-sc{padding-block:clamp(56px,8vw,128px)}.dv-k{font-family:var(--display);font-weight:var(--dw);text-transform:var(--dcase);letter-spacing:var(--dls);line-height:.9;font-size:clamp(56px,13.5vw,230px);text-align:center}.dv-k.hollow{color:transparent;-webkit-text-stroke:max(1px,.012em) var(--ink)}
 /* what is kept for search, one quiet row */
@@ -432,6 +455,8 @@ def page(plan, images):
         html = meta['render'](sc.get('slots') or {}, ctx)
         if html: body.append(html); used |= set(meta['devices'])
     if plan.get('eased'): used.add('eased-scroll')
+    drawn = plan.get('mark') == 'drawn'
+    if drawn: used.add('draw')
     css, js = LIB.bundle(sorted(used))
     nav = [n for n in plan.get('nav') or [] if n.get('label') and n.get('url')][:5]
     links = ''.join(f'<a href="{e(n["url"])}">{e(n["label"])}</a>' for n in nav)
@@ -441,7 +466,7 @@ def page(plan, images):
     under = ''.join(foot).replace('<footer class="', '<footer class="dv-under ', 1)   # named outside the f-string: nested quotes there need Python 3.12
     return (f'<!doctype html><html lang="{e(brand.get("lang") or "en")}"{" data-eased-scroll" if plan.get("eased") else ""}><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{e(plan.get("title") or brand.get("name"))}</title>'
             f'<meta name="description" content="{e(plan.get("description"))}"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family={t["gf"]}&display=swap" rel="stylesheet">'
-            f'<style>{tokens}{CSS}{css}</style></head><body class="{e(plan.get("type") or "light-grotesk")}"><a class="skip" href="#main">Skip to content</a>'
+            f'<style>{tokens}{CSS}{css}</style></head><body class="{e(plan.get("type") or "light-grotesk")}{" mark-drawn" if drawn else ""}"><a class="skip" href="#main">Skip to content</a>'
             f'<div class="dv-progress" aria-hidden="true"></div><header class="bar dv-tuck"><a class="name" href="#top">{e(brand.get("name"))}</a><div class="bar-r">' + (f'<nav class="bar-links" aria-label="Primary">{links}</nav>' if links else '')
             + f'{_btn(ctx["action"])}<button class="dv-menu-btn mono" aria-expanded="false" aria-controls="menu">Menu</button></div></header>'
             f'<nav class="dv-menu" id="menu" aria-label="Menu">{links}<a class="btn" href="{e((ctx["action"] or {}).get("url") or "#top")}">{e((ctx["action"] or {}).get("label") or "")}</a></nav>'
@@ -461,6 +486,8 @@ def keep(page_html, inventory):
         if len(words.split()) < 8 or SEO.text_coverage(words, text) >= .85: continue
         faq = ''.join(f'<p><b>{e(q.get("question"))}</b> {e(q.get("answer"))}</p>' for q in (sec.get('faq') or []) if isinstance(q, dict) and q.get('answer'))
         items.append(f'<details><summary><span>{e(sec.get("title"))}</span></summary><p>{e(words[:6000])}</p>{faq}</details>')
+    rest = SEO.leftover(inventory, text + ' ' + ' '.join(re.sub(r'<[^>]+>', ' ', i) for i in items))
+    if rest: items.append(f'<details><summary><span>{e((inventory or {}).get("title") or (inventory or {}).get("url") or "")[:90]}</span></summary>' + ''.join(f'<p>{e(piece)}</p>' for piece in rest) + '</details>')
     hrefs = {h.rstrip('/') for h in re.findall(r'href="([^"]+)"', page_html)}
     lost = [l for l in SEO.internal_links(inventory) if str(l.get('href') or '').rstrip('/') not in hrefs]
     links = ''.join(f'<li><a href="{e(l["href"])}">{e(l["text"])}</a></li>' for l in lost)
@@ -473,8 +500,12 @@ def keep(page_html, inventory):
         at = out.find('</main>'); out = out[:at] + block + out[at:] if at >= 0 else out
     seo = (inventory or {}).get('seo') or {}; head = ''
     if seo.get('canonical') and 'rel="canonical"' not in out: head += f'<link rel="canonical" href="{e(seo["canonical"])}">'
-    for ld in (seo.get('jsonld') or [])[:4]:
-        if isinstance(ld, (dict, list)): head += '<script type="application/ld+json">' + __import__('json').dumps(ld, ensure_ascii=False).replace('</', '<\\/') + '</script>'
+    if 'application/ld+json' not in out:   # the source's structured data, as the source wrote it
+        for raw in ((seo.get('structuredData') or {}).get('raw') or seo.get('jsonld') or [])[:6]:
+            if not isinstance(raw, str): raw = __import__('json').dumps(raw, ensure_ascii=False)
+            try: __import__('json').loads(raw)
+            except ValueError: continue
+            head += '<script type="application/ld+json">' + raw.replace('</', '<\\/') + '</script>'
     if head: out = out.replace('</head>', head + '</head>', 1)
     return out
 
