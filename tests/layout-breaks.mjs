@@ -22,6 +22,9 @@ assert.ok(kinds(b).includes('thin-column@t'), 'a paragraph in a sliver is named'
 b = run('clipped', '<section id="c"><div style="width:300px;overflow:hidden"><h2 style="white-space:nowrap">A very long line indeed</h2></div></section>', '1440');
 assert.ok(kinds(b).includes('clipped@c'), 'a heading cut off by its box is named');
 
+b = run('off', '<section id="f"><figure style="width:200px;margin:0 0 0 250px"><figcaption style="display:flex;gap:16px"><b>Events</b><span style="white-space:nowrap">Celebrate with us here</span></figcaption></figure><div style="overflow-x:auto"><span style="white-space:nowrap;margin-left:500px">A strip the visitor scrolls sideways</span></div></section>', '390');
+assert.deepEqual(kinds(b), ['clipped@f'], 'a label running off the screen is named, and a strip that scrolls sideways is not: ' + JSON.stringify(b));
+
 b = run('overlap', '<section id="o"><h2>Create, publish</h2><p style="margin-top:-50px">Words that were pulled up under the heading by a negative margin and now lie across it.</p></section>', '1440');
 assert.ok(kinds(b).includes('overlap@o'), 'a heading lying over text is named');
 
