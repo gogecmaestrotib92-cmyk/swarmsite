@@ -1,0 +1,102 @@
+"""compose.py — a page for one client, composed from authored scenes: a story, a type system, a palette, scenes in order.
+
+  python3 lib/studio/compose.py <evidence dir> <out dir> [--variants 3] [--model claude-opus-5-5]
+
+The art director (one model call per variant) decides what a designer decides — the story, which type system suits this
+client's voice, which palette scheme, which scenes in which order, what goes in each slot — and draws nothing: every
+composition is lib/studio/scenes.py, every motion is lib/devices. Variants are told to differ in story, type and scheme,
+so an owner can choose; the choice is the data a judge can later be trained on.
+Checks: every number against the evidence, every link the client's own, pictures real and used once, layout at five
+widths (lib/qa/layout.mjs). A plan that fails is sent back once with the reasons. Nothing is deployed."""
+import json, os, re, subprocess, sys, time
+HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(os.path.dirname(HERE))
+sys.path.insert(0, HERE); sys.path.insert(0, os.path.join(ROOT, 'lib'))
+import _evidence as E, scenes as S
+
+SYSTEM = """You are the art director of a studio, composing a client's new homepage from the studio's own SCENES. A scene is a finished composition — layout, motion and picture rules are already decided and measured; you choose scenes, order them as a story, and fill their slots with the client's own material. You draw nothing and you invent nothing.
+
+THE STORY comes first. Before choosing a scene, decide: what does a visitor not know or not believe when they arrive; what one thing, once seen, changes that; what proves it; what they should do. The page is that argument in order: open → show → prove → breathe → decide → close. Never the stock order (hero, features, stats, pricing, FAQ) for its own sake: a scene earns its place by moving the argument, and a scene that only repeats an earlier one is cut.
+
+HOW TO CHOOSE
+- Type system: by the client's voice (read the names in TYPE). If the client's own headline face is one of them in spirit, keep that character.
+- Scheme: "paper", "night" or "tint" — from the client's brand and from what its pictures need (dark screenshots sit badly on white unless framed; photographs want paper).
+- 5–8 scenes including exactly one opening and one close. At most one "rail". Use "held-product" only with three or more claims that each have something to SHOW; give every panel the tightest, most readable real picture (prefer crops made for the purpose over whole pages of small text) or real figures. Use "stage" for the one whole screen worth seeing large. Use "figures" only for numbers that are an argument.
+- Headings are written for their scene: display lines are short and break into rows with " / " (2–3 rows, 1–4 words a row); mark ONE phrase per line with *asterisks* at most. A heading over cards must agree with the number of cards.
+- Secondary pages go in one "index" near the end (6–12 links, short names). Nothing is repeated, nothing is dumped.
+
+RULES THAT ARE NOT YOURS TO BEND
+- Every fact, number, price, name and claim comes from the evidence, in the client's meaning. Reword for length; never add. An empty slot is better than an invented one.
+- Every url is one of the links given. Every image id is one given; a generated picture is never shown as the product; a picture is used once.
+- Write in the language of the client's site. Plain and specific. No exclamation marks, no marketing filler.
+- brand.accent and brand.night are the client's OWN signature colour and darkest ground (hex)."""
+
+TOOL = {'name': 'compose_page', 'description': 'The whole page as a plan.', 'input_schema': {'type': 'object', 'required': ['story', 'brand', 'type', 'scheme', 'action', 'scenes'], 'properties': {
+    'story': {'type': 'object', 'required': ['doubt', 'turn', 'proof', 'ask'], 'properties': {'doubt': {'type': 'string', 'description': 'what the visitor does not know or believe on arrival'}, 'turn': {'type': 'string', 'description': 'the one thing that, once seen, changes that'}, 'proof': {'type': 'string'}, 'ask': {'type': 'string'}, 'idea': {'type': 'string', 'description': 'the one idea every scene expresses'}}},
+    'title': {'type': 'string'}, 'description': {'type': 'string'},
+    'brand': {'type': 'object', 'required': ['name', 'accent', 'night'], 'properties': {'name': {'type': 'string'}, 'accent': {'type': 'string'}, 'night': {'type': 'string'}, 'lang': {'type': 'string'}}},
+    'type': {'type': 'string', 'enum': list(S.TYPE)}, 'scheme': {'type': 'string', 'enum': list(S.SCHEMES)}, 'eased': {'type': 'boolean', 'description': 'the page glides to a stop after the wheel (desk only)'},
+    'why': {'type': 'string', 'description': 'why this type system and scheme for this client, in two sentences'},
+    'nav': {'type': 'array', 'items': {'type': 'object', 'properties': {'label': {'type': 'string'}, 'url': {'type': 'string'}}}},
+    'action': {'type': 'object', 'properties': {'label': {'type': 'string'}, 'url': {'type': 'string'}}}, 'action2': {'type': 'object', 'properties': {'label': {'type': 'string'}, 'url': {'type': 'string'}}},
+    'scenes': {'type': 'array', 'minItems': 5, 'maxItems': 8, 'items': {'type': 'object', 'required': ['scene', 'moves', 'slots'], 'properties': {'scene': {'type': 'string', 'enum': list(S.SCENES)}, 'moves': {'type': 'string', 'description': 'how this scene moves the argument forward'}, 'slots': {'type': 'object'}}}}}}}
+
+
+def check(plan, page, ev, allowed, images):
+    bad = {'invented_numbers': E.invented_numbers(re.sub(r'src="data:[^"]+"', '', page), json.dumps(ev, ensure_ascii=False)), 'foreign_links': [], 'pictures': [], 'structure': []}
+    for href in set(re.findall(r'<a\b[^>]*\bhref="([^"]+)"', page)):
+        if not href.startswith('#') and href.rstrip('/') not in allowed: bad['foreign_links'].append(href[:90])
+    used = re.findall(r'"image":\s*"([^"]+)"', json.dumps(plan))
+    for pid in used:
+        if pid not in images: bad['pictures'].append(f'{pid}: not a picture of this client')
+        elif images[pid].get('gen'): bad['pictures'].append(f'{pid}: a generated picture shown as the product')
+    if len(set(used)) != len(used): bad['pictures'].append('a picture is used more than once')
+    roles = [S.SCENES[s['scene']]['role'] for s in plan.get('scenes') or [] if s.get('scene') in S.SCENES]
+    if roles.count('open') != 1 or roles[:1] != ['open']: bad['structure'].append('exactly one opening scene, first')
+    if roles.count('close') != 1 or roles[-1:] != ['close']: bad['structure'].append('exactly one close, last')
+    for s in plan.get('scenes') or []:
+        if s.get('scene') == 'stack':
+            n = len((s.get('slots') or {}).get('cards') or []); words = {'two': 2, 'three': 3, 'four': 4, 'five': 5, 'dva': 2, 'tri': 3, 'dos': 2, 'tres': 3}
+            said = [v for w, v in words.items() if re.search(rf'\b{w}\b', str((s.get('slots') or {}).get('h2') or ''), re.I)]
+            if said and said[0] != n: bad['structure'].append(f'the stack\'s heading says {said[0]} and shows {n} cards')
+    return bad
+
+
+def one(material, ev, allowed, images, out, tag, hint):
+    ask = material + [{'type': 'text', 'text': hint + '\nCompose the page. Call compose_page.'}]; plan = page = bad = None; tries = []
+    for k in range(2):
+        plan = E.call(SYSTEM, ask, f'{tag}-compose-{k}', tool=TOOL, max_tokens=14000)
+        with open(os.path.join(out, f'plan-{tag}-{k}.json'), 'w', encoding='utf-8') as f: json.dump(plan, f, indent=1, ensure_ascii=False)
+        page = S.page(plan, images); bad = check(plan, page, ev, allowed, images); path = os.path.join(out, f'page-{tag}.html')
+        with open(path, 'w', encoding='utf-8') as f: f.write(page)
+        try:
+            lay = subprocess.run(['node', os.path.join(ROOT, 'lib', 'qa', 'layout.mjs'), path], capture_output=True, text=True, timeout=240, cwd=ROOT); bad['layout'] = [{x: b.get(x) for x in ('kind', 'section', 'text', 'detail', 'widths')} for b in json.loads(lay.stdout.strip().splitlines()[-1])['breaks']]
+        except Exception as err: bad['layout'] = [{'kind': 'unmeasured', 'detail': str(err)[:100]}]
+        tries.append(bad)
+        if not any(bad.values()): break
+        ask = material + [{'type': 'text', 'text': hint + '\nYOUR PREVIOUS PLAN:\n' + json.dumps(plan, ensure_ascii=False) + '\n\nIT WAS RENDERED AND CHECKED, AND REFUSED FOR:\n' + json.dumps(bad, ensure_ascii=False) + '\n(A layout break names the scene and the text: shorten or re-break that heading, or choose another scene.)\nCorrect exactly these and call compose_page again with the whole page.'}]
+    return {'tag': tag, 'type': plan.get('type'), 'scheme': plan.get('scheme'), 'story': plan.get('story'), 'why': plan.get('why'), 'scenes': [s.get('scene') for s in plan.get('scenes') or []], 'checks': tries, 'clean': not any(tries[-1].values())}
+
+
+VARIANTS = [('a', 'VARIANT A — the page you believe is right for this client.'),
+            ('b', 'VARIANT B — a different reading of the same client: a different type system and a different scheme from the obvious choice, a different opening scene if the material allows, and the story told in another order. It must still be true to the brand.'),
+            ('c', 'VARIANT C — the boldest honest version: the fewest scenes that carry the argument, the largest type, one accent used once or twice. A different type system again.')]
+
+
+def main():
+    args = sys.argv[1:]; src, out = os.path.abspath(args[0]), os.path.abspath(args[1]); n = int(args[args.index('--variants') + 1]) if '--variants' in args else 3
+    if '--model' in args: E.MODEL = args[args.index('--model') + 1]
+    os.makedirs(out, exist_ok=True); t0 = time.time()
+    ev, imgs = E.evidence(src); images = {i['id']: i for i in imgs}; allowed = {l['url'].rstrip('/') for l in ev['links']} | {str(ev.get('url') or '').rstrip('/')}
+    material = [{'type': 'text', 'text': 'THE STUDIO\'S SCENES, TYPE SYSTEMS AND SCHEMES:\n' + json.dumps(S.catalogue(), ensure_ascii=False, indent=1)}, {'type': 'text', 'text': 'THE EVIDENCE (the client\'s existing site):\n' + json.dumps(ev, ensure_ascii=False, indent=1)}]
+    for i in imgs[:12]:
+        try: material += [{'type': 'text', 'text': f'PICTURE {i["id"]} ({i.get("w")}×{i.get("h")})' + (' — GENERATED atmosphere, not the product' if i.get('gen') else (' — a crop of ' + i['crop_of'] if i.get('crop_of') else ' — screenshot of the real product' if i.get('shot') else ''))}, {'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/jpeg', 'data': E.thumb(i['data'])}}]
+        except Exception: pass
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(3) as ex: results = list(ex.map(lambda v: one(material, ev, allowed, images, out, v[0], v[1]), VARIANTS[:n]))
+    priced = [u['usd'] for u in E.USAGE if u['usd'] is not None]
+    report = {'variants': results, 'usage': E.USAGE, 'usd': round(sum(priced), 3), 'seconds': round(time.time() - t0)}
+    with open(os.path.join(out, 'report.json'), 'w', encoding='utf-8') as f: json.dump(report, f, indent=1, ensure_ascii=False)
+    print(json.dumps({'variants': [(r['tag'], r['type'], r['scheme'], r['scenes'], r['clean']) for r in results], 'usd': report['usd'], 'seconds': report['seconds']}, ensure_ascii=False))
+
+
+if __name__ == '__main__': main()
