@@ -4,41 +4,52 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Your projects — Swarmsite</title><meta name="robots" content="noindex">
 <link rel="preload" href="/fonts/instrument-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Shrikhand&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/header.css">
 <style>
 @font-face{font-family:'Instrument Sans';font-weight:400;font-display:swap;src:url(/fonts/instrument-sans-latin-400-normal.woff2) format('woff2')}
 @font-face{font-family:'Instrument Sans';font-weight:500;font-display:swap;src:url(/fonts/instrument-sans-latin-500-normal.woff2) format('woff2')}
 @font-face{font-family:'JetBrains Mono';font-weight:400;font-display:swap;src:url(/fonts/jetbrains-mono-latin-400-normal.woff2) format('woff2')}
-:root{--paper:#F5F5F4;--ink:#111;--muted:#6B6B68;--line:rgba(17,17,17,.12);--sans:'Instrument Sans',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace}
+:root{--paper:#f1f1ee;--ink:#141414;--muted:#66665f;--line:rgba(20,20,20,.14);--accent:#833b46;--sans:'Instrument Sans',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace}
 *{box-sizing:border-box;margin:0;padding:0}body{min-height:100svh;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
 a{color:inherit;text-decoration:none}.lab{font-family:var(--mono);font-size:11.5px;color:var(--muted);letter-spacing:.02em}
-.top{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 22px;background:rgba(245,245,244,.86);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
-.brand{font-weight:500;letter-spacing:-.02em}.grp{display:flex;align-items:center;gap:10px;min-width:0}.who{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:32vw}
-.pill{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:9px 16px;font:500 14px var(--sans);border:1px solid var(--line);background:#fff;min-height:40px;cursor:pointer;transition:transform .3s cubic-bezier(.2,.8,.2,1)}.pill.ink{background:var(--ink);color:#fff;border-color:var(--ink)}.pill:hover{transform:translateY(-1px)}.pill:active{transform:scale(.98)}
-a:focus-visible,button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
-main{width:min(1120px,100%);margin:0 auto;padding:clamp(28px,5vw,64px) 22px 96px}
-.head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:16px 32px;margin-bottom:clamp(24px,4vw,44px)}h1{font-weight:400;font-size:clamp(30px,4.6vw,52px);line-height:1.05;letter-spacing:-.03em}
+.pill{display:inline-flex;align-items:center;justify-content:center;gap:10px;border-radius:999px;padding:0 22px;font:500 15px var(--sans);border:0;background:var(--ink);color:var(--paper);min-height:44px;white-space:nowrap;cursor:pointer;transition:transform .2s cubic-bezier(.22,1,.36,1)}.pill.accent{background:var(--accent);color:#fff}.pill:active{transform:scale(.97)}
+main :focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+main{width:min(1180px,100%);margin:0 auto;padding:clamp(120px,15vh,168px) clamp(20px,4vw,64px) 96px}
+.head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:16px 32px;margin-bottom:clamp(24px,4vw,44px)}h1{font-weight:400;font-size:clamp(34px,5vw,64px);line-height:1;letter-spacing:-.045em}
 .meter{display:grid;gap:6px;min-width:200px}.meter i{display:block;height:4px;border-radius:99px;background:var(--line);overflow:hidden}.meter i b{display:block;height:100%;background:var(--ink);border-radius:99px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:16px}
-.card{display:grid;grid-template-rows:auto 1fr;background:#fff;border:1px solid var(--line);border-radius:20px;overflow:hidden;transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s}.card:hover{transform:translateY(-3px);box-shadow:0 22px 50px -24px rgba(17,17,17,.28)}
+.card{display:grid;grid-template-rows:auto 1fr;background:#fff;box-shadow:0 0 0 1px var(--line);border-radius:20px;overflow:hidden;transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s}.card:hover{transform:translateY(-3px);box-shadow:0 0 0 1px var(--line),0 22px 50px -24px rgba(17,17,17,.28)}
 .shot{aspect-ratio:16/10;background:#e9e8e4 center/cover;border-bottom:1px solid var(--line);display:grid;place-items:center}.shot span{font-family:var(--mono);font-size:12px;color:var(--muted)}
 .body{display:grid;gap:8px;padding:16px 18px 18px}.site{font-weight:500;font-size:17px;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.row{display:flex;justify-content:space-between;gap:12px;align-items:center}
 .state{display:inline-flex;align-items:center;gap:7px;font-size:13px}.state::before{content:"";width:7px;height:7px;border-radius:50%;background:#9a9a96}.state.done::before{background:#1f9d55}.state.running::before,.state.queued::before{background:#d99a1c;animation:pulse 1.4s ease-in-out infinite}.state.failed::before{background:#c0392b}
 @keyframes pulse{50%{opacity:.35}}@media (prefers-reduced-motion:reduce){.state::before{animation:none!important}.card,.pill{transition:none}}
-.empty{border:1px dashed var(--line);border-radius:20px;padding:clamp(28px,6vw,64px);display:grid;gap:14px;justify-items:start}.empty p{color:var(--muted);max-width:46ch}.note{color:var(--muted);margin-top:18px}.note.err{color:#b3261e}[hidden]{display:none!important}
-@media (max-width:600px){.who{display:none}}
+.empty{color:var(--muted);border:1px dashed var(--line);border-radius:20px;padding:clamp(20px,4vw,36px)}
+.new{display:grid;gap:12px;margin-bottom:clamp(36px,5vw,64px)}.new label{font-family:var(--mono);font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.urlbox{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 22px;border-radius:999px;background:#fff;box-shadow:0 0 0 1px var(--line),0 18px 50px rgba(17,17,17,.05);transition:box-shadow .2s}.urlbox:focus-within{box-shadow:0 0 0 1px #6f6f69,0 0 0 4px rgba(17,17,17,.06),0 18px 50px rgba(17,17,17,.08)}
+.urlbox .pre{font-family:var(--mono);font-size:13px;color:var(--muted)}.urlbox input{flex:1;min-width:0;min-height:48px;border:0;outline:0;background:transparent;font:500 18px var(--sans);color:var(--ink)}.urlbox input::placeholder{color:#6e6e68;opacity:1}
+@media (max-width:640px){.urlbox{flex-wrap:wrap;border-radius:26px;padding:8px 8px 8px 18px}.urlbox .pre{display:none}.urlbox input{flex:1 1 100%}.urlbox .pill{width:100%;min-height:50px}}
+.help{color:var(--muted);font-size:14px;padding-left:22px}@media (max-width:640px){.help{padding-left:4px}}.help.err{color:#b3261e}.sub{font-family:var(--mono);font-weight:400;font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:16px}.note{color:var(--muted);margin-top:18px}.note.err{color:#b3261e}[hidden]{display:none!important}
 </style>
 </head>
 <body>
-<div class="top"><a class="brand" href="/">swarmsite</a><div class="grp"><span class="lab who" id="who"></span><a class="pill ink" href="/app">New project</a><button class="pill" id="out" type="button">Sign out</button></div></div>
+<header class="hd" data-hd data-hd-page="dashboard"><div class="hd-grp"><a class="hd-brand" href="/" aria-label="Swarmsite, front page">swarmsite</a><a class="hd-item hd-wide" data-hd-projects href="/dashboard" hidden>Projects</a></div><div class="hd-grp" data-hd-right><a class="hd-cta" href="#new">New project</a></div></header>
 <main>
   <div class="head"><h1>Your projects</h1><div class="meter" id="meter" hidden><span class="lab" id="meterText"></span><i><b id="meterBar"></b></i></div></div>
+  <form class="new" id="new" onsubmit="return false" novalidate>
+    <label for="site">Start a project</label>
+    <div class="urlbox"><span class="pre" aria-hidden="true">https://</span><input id="site" type="text" inputmode="url" autocomplete="url" autocapitalize="none" spellcheck="false" placeholder="yourwebsite.com" aria-describedby="newHelp"><button class="pill accent" id="go" type="submit">Get three designs <span aria-hidden="true">→</span></button></div>
+    <p class="help" id="newHelp">Paste the address of a site. You choose what to keep on the next screen; the designs are saved here.</p>
+  </form>
+  <h2 class="sub" id="listHead" hidden>Saved projects</h2>
   <div class="grid" id="grid" aria-live="polite"></div>
-  <div class="empty" id="empty" hidden><h2 style="font-weight:400;font-size:24px;letter-spacing:-.02em">Nothing here yet</h2><p>Paste the address of a site and you get three designs to choose from. They are kept here.</p><a class="pill ink" href="/app">Start a project</a></div>
+  <p class="empty" id="empty" hidden>No projects yet — your first one will appear here when you start it.</p>
   <p class="note" id="note" role="status"></p>
 </main>
 <script src="/config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="/js/auth.js"></script>
+<script src="/js/header.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 const host = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return String(u || '').slice(0, 60); } };
@@ -56,15 +67,20 @@ async function load() {
   if (me.status === 401 || jobs.status === 401) { location.replace('/login?next=' + encodeURIComponent('/dashboard')); return; }
   if (!me.ok || !jobs.ok) throw new Error('unavailable');
   const who = await me.json(), list = await jobs.json();
-  $('#who').textContent = who.email || '';
   if (who.previews && who.previews.free) { $('#meter').hidden = false; $('#meterText').textContent = who.previews.used + ' of ' + who.previews.free + ' free previews used'; $('#meterBar').style.width = Math.min(100, Math.round(100 * who.previews.used / who.previews.free)) + '%'; }
-  $('#grid').replaceChildren(...list.map(card)); $('#empty').hidden = list.length > 0;
+  $('#grid').replaceChildren(...list.map(card)); $('#empty').hidden = list.length > 0; $('#listHead').hidden = list.length === 0;
   if (list.some(j => j.status === 'running' || j.status === 'queued')) setTimeout(() => load().catch(() => {}), 15000);   // a working project updates by itself
 }
+/* Starting a project happens here: the address goes straight to the screen where the direction is set. */
+const startNew = () => { const raw = $('#site').value.trim().replace(/^https?:\/\//i, '').replace(/\s+/g, ''); const help = $('#newHelp');
+  if (!/^[^\s/]+\.[^\s/]{2,}/.test(raw)) { help.textContent = 'Type the address of a site, for example yoursite.com.'; help.classList.add('err'); $('#site').focus(); return; }
+  location.href = '/app?url=' + encodeURIComponent(raw); };
+$('#go').onclick = startNew; $('#site').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); startNew(); } });
+document.addEventListener('click', e => { if (!e.target.closest('.hd a[href="#new"]')) return; e.preventDefault(); $('#new').scrollIntoView({ behavior: 'smooth', block: 'center' }); $('#site').focus({ preventScroll: true }); });   // "New project", in the header or in the account panel
+if (location.hash === '#new') setTimeout(() => $('#site').focus(), 60);
 (async () => {
-  if (!Auth.enabled) { $('#note').textContent = 'Accounts are not switched on for this site yet.'; $('#empty').hidden = false; $('#out').hidden = true; return; }
+  if (!Auth.enabled) { $('#note').textContent = 'Accounts are not switched on for this site yet.'; return; }
   if (!(await Auth.session())) { location.replace('/login?next=' + encodeURIComponent('/dashboard')); return; }
-  $('#out').onclick = async () => { await Auth.signOut(); location.replace('/'); };
   try { await load(); } catch (e) { $('#note').textContent = 'Your projects could not be loaded. Try again in a moment.'; $('#note').classList.add('err'); }
 })();
 </script>

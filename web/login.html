@@ -4,23 +4,25 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sign in — Swarmsite</title><meta name="robots" content="noindex">
 <link rel="preload" href="/fonts/instrument-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Shrikhand&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/header.css">
 <style>
 @font-face{font-family:'Instrument Sans';font-weight:400;font-display:swap;src:url(/fonts/instrument-sans-latin-400-normal.woff2) format('woff2')}
 @font-face{font-family:'Instrument Sans';font-weight:500;font-display:swap;src:url(/fonts/instrument-sans-latin-500-normal.woff2) format('woff2')}
 @font-face{font-family:'JetBrains Mono';font-weight:400;font-display:swap;src:url(/fonts/jetbrains-mono-latin-400-normal.woff2) format('woff2')}
-:root{--paper:#F5F5F4;--ink:#111;--muted:#6B6B68;--line:rgba(17,17,17,.12);--sans:'Instrument Sans',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace}
-*{box-sizing:border-box;margin:0;padding:0}body{min-height:100svh;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;display:grid;grid-template-rows:auto 1fr}
-a{color:inherit}.top{display:flex;justify-content:space-between;align-items:center;padding:18px 22px}.brand{font-weight:500;letter-spacing:-.02em;text-decoration:none}.lab{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
-main{display:grid;place-items:center;padding:24px 20px 80px}.card{width:min(420px,100%);background:#fff;border:1px solid var(--line);border-radius:24px;padding:clamp(24px,5vw,36px);display:grid;gap:18px;box-shadow:0 25px 70px rgba(17,17,17,.06)}
+:root{--paper:#f1f1ee;--ink:#141414;--muted:#66665f;--line:rgba(20,20,20,.14);--sans:'Instrument Sans',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace}
+*{box-sizing:border-box;margin:0;padding:0}body{min-height:100svh;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;display:grid}
+a{color:inherit}.lab{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+main{display:grid;place-items:center;padding:104px 20px 64px}.card{width:min(420px,100%);background:#fff;border:1px solid var(--line);border-radius:24px;padding:clamp(24px,5vw,36px);display:grid;gap:18px;box-shadow:0 25px 70px rgba(17,17,17,.06)}
 h1{font-weight:400;font-size:clamp(26px,4vw,34px);line-height:1.1;letter-spacing:-.025em}p{color:var(--muted)}
 label{font-size:13px;font-weight:500}input{width:100%;min-height:48px;border:1px solid var(--line);border-radius:14px;padding:0 14px;font:inherit;background:#fff}input:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
-.pill{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:48px;border-radius:999px;border:1px solid var(--line);background:#fff;font:500 15px var(--sans);cursor:pointer;transition:transform .3s cubic-bezier(.2,.8,.2,1)}.pill.ink{background:var(--ink);color:#fff;border-color:var(--ink)}.pill:hover{transform:translateY(-1px)}.pill:active{transform:scale(.98)}.pill[disabled]{opacity:.5;cursor:default;transform:none}
+.pill{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:48px;border-radius:999px;border:1px solid var(--line);background:#fff;font:500 15px var(--sans);cursor:pointer;transition:transform .3s cubic-bezier(.2,.8,.2,1)}.pill.ink{background:var(--ink);color:#fff;border-color:var(--ink)}.pill:hover{transform:translateY(-1px)}.pill:active{transform:scale(.98)}.pill[disabled]{opacity:.5;cursor:default;transform:none}.pill svg{flex:none}
 .or{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;color:var(--muted);font-size:13px}.or::before,.or::after{content:"";height:1px;background:var(--line)}
 .stack{display:grid;gap:10px}.note{font-size:14px;min-height:1.5em}.note.err{color:#b3261e}.fine{font-size:13px}[hidden]{display:none!important}
 </style>
 </head>
 <body>
-<div class="top"><a class="brand" href="/">swarmsite</a><span class="lab">sign in</span></div>
+<header class="hd" data-hd data-hd-page="login"><div class="hd-grp"><a class="hd-brand" href="/" aria-label="Swarmsite, front page">swarmsite</a></div><div class="hd-grp"><a class="hd-item" href="/">Back to the site</a></div></header>
 <main><div class="card">
   <div><h1>Sign in to keep your designs</h1><p>Your previews, the designs you chose and what you bought stay in one place.</p></div>
   <div class="stack" id="providers"></div>
@@ -30,7 +32,7 @@ label{font-size:13px;font-weight:500}input{width:100%;min-height:48px;border:1px
     <button class="pill ink" id="send">Send me a sign-in link</button>
   </form>
   <p class="note" id="note" role="status" aria-live="polite"></p>
-  <p class="fine" id="off" hidden>Accounts are not switched on for this site yet. You can still <a href="/app">start a preview</a>.</p>
+  <p class="fine" id="off" hidden>Accounts are not switched on for this site yet. You can still <a href="/">start a preview</a>.</p>
   <p class="fine">By signing in you accept the <a href="/terms">terms</a> and the <a href="/privacy">privacy notice</a>.</p>
 </div></main>
 <script src="/config.js"></script>
@@ -40,12 +42,15 @@ label{font-size:13px;font-weight:500}input{width:100%;min-height:48px;border:1px
 const $ = s => document.querySelector(s); const next = Auth.safeNext(new URLSearchParams(location.search).get('next'));
 const say = (text, bad) => { const n = $('#note'); n.textContent = text; n.classList.toggle('err', !!bad); };
 const NAMES = { github: 'Continue with GitHub', google: 'Continue with Google' };
+/* The providers' own marks, drawn here so the page asks nobody else for a picture. Static markup, never built from input. */
+const MARKS = { github: '<svg viewBox="0 0 16 16" width="20" height="20" aria-hidden="true"><path fill="#181717" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>',
+  google: '<svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>' };
 (async () => {
   if (!Auth.enabled) { $('#off').hidden = false; return; }
   if (await Auth.session()) { location.replace(next); return; }
   Auth.onChange(s => { if (s) location.replace(next); });   // arriving from the link in the e-mail, or back from GitHub or Google
   const providers = Auth.methods.filter(m => NAMES[m]);
-  for (const p of providers) { const b = document.createElement('button'); b.className = 'pill'; b.type = 'button'; b.textContent = NAMES[p]; b.onclick = async () => { say('Opening ' + p + '…'); const { error } = await Auth.signInWith(p, next); if (error) say('That did not work: ' + String(error.message || error).slice(0, 120), true); }; $('#providers').appendChild(b); }
+  for (const p of providers) { const b = document.createElement('button'); b.className = 'pill'; b.type = 'button'; b.innerHTML = MARKS[p]; b.append(NAMES[p]); b.onclick = async () => { say('Opening ' + p + '…'); const { error } = await Auth.signInWith(p, next); if (error) say('That did not work: ' + String(error.message || error).slice(0, 120), true); }; $('#providers').appendChild(b); }
   if (Auth.methods.includes('email')) { $('#byEmail').hidden = false; $('#or').hidden = providers.length === 0; }
   $('#send').onclick = async () => { const email = $('#email').value.trim(); if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { say('That does not look like an e-mail address.', true); return; }
     $('#send').disabled = true; say('Sending…'); const { error } = await Auth.signInEmail(email, next);

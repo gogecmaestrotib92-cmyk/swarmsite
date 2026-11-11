@@ -1,0 +1,42 @@
+/* header.css — the product's header (the form, sign-in, the dashboard): the front page's own language, so the site reads
+   as one thing — two floating pills on a hairline, the brand in its face, one ink button, and the account as a small
+   round chip that opens a panel. Tokens are the front page's (web/landing.css). Behaviour: web/js/header.js. */
+.hd{--hd-paper:#f1f1ee;--hd-ink:#141414;--hd-mute:#66665f;--hd-line:rgba(20,20,20,.14);--hd-accent:#833b46;--hd-rose:#edc5be;--hd-ease:cubic-bezier(.22,1,.36,1);
+  position:fixed;inset:0 0 auto 0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px clamp(20px,4vw,64px) 0;pointer-events:none;
+  font-family:'Instrument Sans',system-ui,sans-serif;font-size:14px;line-height:1;color:var(--hd-ink);-webkit-font-smoothing:antialiased}
+.hd *{box-sizing:border-box}.hd [hidden]{display:none!important}
+.hd-grp{position:relative;pointer-events:auto;display:flex;align-items:center;gap:4px;min-width:0;padding:6px;border-radius:999px;background:rgba(249,249,247,.86);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 0 0 1px var(--hd-line)}
+.hd-grp:empty{display:none}
+:where(.hd) :where(a,button){font:inherit;color:inherit;text-decoration:none;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}   /* :where — a reset must not outrank the parts below */
+.hd :focus-visible{outline:2px solid var(--hd-accent);outline-offset:3px}
+.hd-brand{display:inline-flex;align-items:center;min-height:44px;padding:0 10px 2px 14px;border-radius:999px;font-family:'Shrikhand',Georgia,serif;font-size:20px;letter-spacing:-.01em;white-space:nowrap}
+.hd-item{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;border-radius:999px;font-weight:500;white-space:nowrap;transition:background-color .2s}
+@media (hover:hover){.hd-item:hover{background:rgba(20,20,20,.07)}}.hd-item:active{background:rgba(20,20,20,.12)}
+.hd-item[aria-current="page"]::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--hd-accent);box-shadow:0 0 0 4px rgba(131,59,70,.11)}   /* where you are: the front page's own live dot */
+.hd-cta{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 20px;border-radius:999px;background:var(--hd-ink);color:var(--hd-paper);font-weight:500;font-size:15px;white-space:nowrap;transition:transform .2s var(--hd-ease),background-color .2s}
+.hd-cta:active{transform:scale(.97)}
+/* the label rolls up into itself under the pointer — the engine's own "roll" device */
+.hd-roll{position:relative;display:inline-block;overflow:hidden;line-height:1.3;vertical-align:top}.hd-roll>span{display:block;transition:transform .35s var(--hd-ease)}.hd-roll>span+span{position:absolute;left:0;top:100%}
+@media (hover:hover){.hd-cta:hover .hd-roll>span{transform:translateY(-100%)}}
+/* the account: a round chip with the visitor's initial */
+.hd-me{display:grid;place-items:center;flex:none;width:44px;height:44px;border-radius:50%;background:var(--hd-rose);font-weight:500;font-size:15px;text-transform:uppercase;transition:box-shadow .2s,transform .2s var(--hd-ease)}
+.hd-me:active{transform:scale(.95)}.hd-me[aria-expanded="true"]{box-shadow:0 0 0 2px var(--hd-paper),0 0 0 3.5px var(--hd-ink)}
+@media (hover:hover){.hd-me:hover{box-shadow:0 0 0 2px var(--hd-paper),0 0 0 3.5px rgba(20,20,20,.35)}.hd-me[aria-expanded="true"]:hover{box-shadow:0 0 0 2px var(--hd-paper),0 0 0 3.5px var(--hd-ink)}}
+.hd-pop{position:absolute;top:calc(100% + 10px);right:0;width:min(308px,calc(100vw - 32px));padding:8px;border-radius:22px;background:#fdfdfc;box-shadow:0 0 0 1px var(--hd-line),0 28px 64px -22px rgba(20,20,20,.34),0 6px 18px -10px rgba(20,20,20,.14);
+  transform-origin:calc(100% - 28px) 0;opacity:0;visibility:hidden;transform:translateY(-6px) scale(.97);transition:opacity .16s ease,transform .22s var(--hd-ease),visibility 0s .22s}
+.hd-pop.is-open{opacity:1;visibility:visible;transform:none;transition:opacity .16s ease,transform .28s var(--hd-ease)}
+.hd-who{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:12px;padding:10px 10px 14px;margin-bottom:6px;border-bottom:1px solid var(--hd-line)}
+.hd-who i{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:var(--hd-rose);font-style:normal;font-weight:500;font-size:15px;text-transform:uppercase}
+.hd-who small{display:block;margin-bottom:6px;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--hd-mute)}
+.hd-who b{display:block;font-weight:500;font-size:14px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hd-row{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:46px;padding:0 12px;border-radius:14px;font-weight:500;font-size:15px;text-align:left;transition:background-color .2s}
+.hd-row::after{content:"→";color:var(--hd-mute);transition:transform .25s var(--hd-ease)}
+@media (hover:hover){.hd-row:hover{background:rgba(20,20,20,.06)}.hd-row:hover::after{transform:translateX(3px)}}.hd-row:active{background:rgba(20,20,20,.1)}
+.hd-row[aria-current="page"]::after{content:"";width:6px;height:6px;margin-right:4px;border-radius:50%;background:var(--hd-accent);transform:none}
+.hd-row.hd-out{margin-top:6px;color:var(--hd-mute);border-top:1px solid var(--hd-line);border-radius:0 0 14px 14px;min-height:48px}.hd-row.hd-out::after{content:none}
+.hd-pop>*{opacity:0;transform:translateY(6px);transition:opacity .2s ease,transform .3s var(--hd-ease),background-color .2s}.hd-pop.is-open>*{opacity:1;transform:none;transition-delay:calc(40ms + var(--i,0) * 35ms),calc(40ms + var(--i,0) * 35ms),0s}
+@media (max-width:640px){.hd-wide{display:none!important}}
+@media (max-width:380px){.hd{padding-inline:14px;gap:8px}.hd-cta{padding:0 15px;font-size:14px}.hd-brand{font-size:18px;padding-left:10px;padding-right:8px}}
+@media (max-width:340px){.hd{padding-inline:10px}.hd-cta{padding:0 12px}.hd-brand{font-size:17px;padding-left:8px;padding-right:6px}}
+@media (prefers-reduced-transparency:reduce),(prefers-contrast:more){.hd-grp{background:var(--hd-paper);backdrop-filter:none;-webkit-backdrop-filter:none}}
+@media (prefers-reduced-motion:reduce){.hd *,.hd *::after{transition:none!important}.hd-cta:hover .hd-roll>span{transform:none}}
