@@ -24,6 +24,14 @@ HOW TO CHOOSE
 - TWO SEPARATE DECISIONS. What kind of page it is decides WHAT is shown; the client's character decides HOW. Never let the trade choose the look: a sports-prediction product and a bank's API are both software and must not look alike.
 - Character first. Read EVIDENCE.brand.character (measured on the client's page: how it sets its headline, its ground, its accent), its photographs and its words, then state "character" and "character_why". Type system, scheme and movement follow the character: energetic → "condensed-caps" or "tight-bold", the client's dark ground when it has one, its vivid accent, "kinetic-line" or "rail" welcome; calm → "light-grotesk" or "wide-geometric", few scenes, nothing that slides; warm → "soft-serif"; refined → "display-serif"; playful → "wide-geometric" or "tight-bold" with the accent used freely. Keep the client's own ground: a brand that lives on black is not moved to white paper, nor the reverse, unless a variant is told to differ in scheme.
 - Software (an app, a SaaS product, a tool for developers) takes "scale": "product" and opens on "open-product" when there is a real screenshot of it: the product is the picture and the line is short. When the client has a wide photograph of its own world (a stadium, a kitchen, a workshop), name it as the "ground" of "open-product" so the product stands in that world. Its plans go in "plans" and, when the client publishes a feature comparison, "compare" — only what the client states, never a price, a limit or a plan of your own. A calm software page leaves out "kinetic-line", "rail" and the closing wordmark; an energetic one may use them.
+- THE PARTS OF A SOFTWARE PAGE, top to bottom — use what the client has the material for, and do not repeat one form:
+  · opening: "open-product" with "align": "beside" when the line is long and the screenshot wide; with "more" (two or three more screenshots or crops) when the product is best shown as pieces; "news" when the client announces one new thing.
+  · "logos" directly after the opening whenever EVIDENCE.logos is present (label = said_with_them).
+  · showing: "features" (cards; give it the client's photograph as "ground" when it has one), "lines" (ruled rows with links — for a product of named parts), "tabs" (two to four modes, one word each), "held-product" (claims read one at a time), "code" (only code the client itself publishes). Choose two of these at most, of different form.
+  · "chips" for a long list of names (features, methods, integrations); "figures" for numbers.
+  · proving: "quote" for one strong testimonial, "voices" for two or three, "cases" for customer stories with links.
+  · deciding: "plans" (with "tag" and the "switch" when the client publishes both prices), "compare", "faq".
+  · ending: "ways" (two to four next steps) before the close when the client has a demo, docs, a sandbox or pricing to send people to; "close" with "form": "centre" for software (or "card" on a photograph, or "split"), the "wordmark" ("faint" for a calm brand); "tone": "paper" when the page is light and calm. "reads" only for real articles.
 - Movement the visitor makes happen: set "cover": true on one or two scenes where the argument turns (after the product has been shown, before the plans or the proof) — that scene slides up over the one before it. The product in "open-product" rises into place by itself. Cards arrive one at a time.
 - "features" shows three to five things the product does, each in a card with its own real screenshot or crop — use it whenever a software client has three or more screenshots; it replaces icon lists. "held-product" is for claims that need to be read one at a time.
 - The first screen always shows a picture when the client has one: a place opens on "open-picture", software on "open-product". "open-statement" is for a client with no usable picture at all.
@@ -53,9 +61,10 @@ TOOL = {'name': 'compose_page', 'description': 'The whole page as a plan.', 'inp
     'character_why': {'type': 'string', 'description': 'what on the client\'s own page shows this character — its headline face and weight, its ground, its accent, its photographs, its words. One sentence, naming them'},
     'scale': {'type': 'string', 'enum': ['display', 'product'], 'description': '"display": headlines set very large, the page led by type and photographs (places, brands, studios). "product": software — headlines near 64 px, quick small reveals, the product screenshots are the pictures'}, 'eased': {'type': 'boolean', 'description': 'the page glides to a stop after the wheel (desk only)'},
     'why': {'type': 'string', 'description': 'why this type system and scheme for this client, in two sentences'},
-    'nav': {'type': 'array', 'items': {'type': 'object', 'properties': {'label': {'type': 'string'}, 'url': {'type': 'string'}}}},
+    'nav': {'type': 'array', 'description': 'up to five; an item may hold "links" (2–6 of the client\'s own pages) instead of a url — it then opens a small panel', 'items': {'type': 'object', 'properties': {'label': {'type': 'string'}, 'url': {'type': 'string'}, 'links': {'type': 'array', 'items': {'type': 'object', 'properties': {'label': {'type': 'string'}, 'url': {'type': 'string'}}}}}}},
+    'guides': {'type': 'boolean', 'description': 'true: hairline column guides run down the page behind everything — for exact, technical, financial brands; never with photographs as grounds'},
     'action': {'type': 'object', 'properties': {'label': {'type': 'string'}, 'url': {'type': 'string'}}}, 'action2': {'type': 'object', 'properties': {'label': {'type': 'string'}, 'url': {'type': 'string'}}},
-    'scenes': {'type': 'array', 'minItems': 5, 'maxItems': 9, 'items': {'type': 'object', 'required': ['scene', 'moves', 'slots'], 'properties': {'scene': {'type': 'string', 'enum': list(S.SCENES)}, 'moves': {'type': 'string', 'description': 'how this scene moves the argument forward'}, 'cover': {'type': 'boolean', 'description': 'true: this scene slides up over the one before it, which stays in place — once or twice a page, where the argument turns; never the first scene, never two in a row'}, 'slots': {'type': 'object'}}}}}}}
+    'scenes': {'type': 'array', 'minItems': 5, 'maxItems': 11, 'items': {'type': 'object', 'required': ['scene', 'moves', 'slots'], 'properties': {'scene': {'type': 'string', 'enum': list(S.SCENES)}, 'moves': {'type': 'string', 'description': 'how this scene moves the argument forward'}, 'cover': {'type': 'boolean', 'description': 'true: this scene slides up over the one before it, which stays in place — once or twice a page, where the argument turns; never the first scene, never two in a row'}, 'slots': {'type': 'object'}}}}}}}
 
 
 known_quotes = []
@@ -92,7 +101,7 @@ def check(plan, page, ev, allowed, images):
             for p in (sc.get('slots') or {}).get('pictures') or []:
                 im = images.get(p.get('image'))
                 if im and (im.get('soft') or im.get('video') or im.get('shot') or int(im.get('w') or 0) < 900): bad['pictures'].append(f'{p.get("image")}: "collage" takes only sharp photographs at least 900 px wide — use "scatter", which shows pictures small')
-    quotes = [q.get('text') for s in plan.get('scenes') or [] if s.get('scene') == 'voices' for q in (s.get('slots') or {}).get('quotes') or []]
+    quotes = [q.get('text') for s in plan.get('scenes') or [] if s.get('scene') == 'voices' for q in (s.get('slots') or {}).get('quotes') or []] + [(s.get('slots') or {}).get('text') for s in plan.get('scenes') or [] if s.get('scene') == 'quote']
     source = ' '.join(json.dumps(ev, ensure_ascii=False).split())
     for q in quotes:
         if q and ' '.join(str(q).split())[:60] not in source and ' '.join(str(q).split())[:60] not in ' '.join(known_quotes): bad['pictures'].append('a quote that is not on the client\'s site, word for word')
@@ -107,7 +116,7 @@ def check(plan, page, ev, allowed, images):
         bad['structure'].append(f'software with a real screenshot opens on "open-product" (the product is the picture of the first screen): use one of {shots[:4]}')
     elif first.get('scene') == 'open-statement' and (photos or shots):
         bad['structure'].append(f'the first screen shows no picture although the client has one: open on "open-picture" with one of {photos[:4]}' + (f' or on "open-product" with one of {shots[:4]}' if shots else ''))
-    if first.get('scene') == 'open-product' and photos and not slots0.get('ground'):
+    if first.get('scene') == 'open-product' and photos and not slots0.get('ground') and not slots0.get('more'):   # a cluster of pieces stands on the page itself
         bad['pictures'].append(f'the client has a wide photograph of its own world {photos[:4]}: name one as the "ground" of "open-product" so the product stands in it')
     if ev.get('h1') and ev.get('seo_safe', True):
         import seo as SEO_
@@ -119,6 +128,19 @@ def check(plan, page, ev, allowed, images):
                 im = images.get(it.get('image'))
                 if im is None: bad['pictures'].append(f'"features": {it.get("image")} is not a picture of this client — every card holds a real screenshot')
                 elif im.get('soft') or im.get('gen'): bad['pictures'].append(f'"features": {it.get("image")} is soft or generated — a card holds the real interface, crisp')
+    for sc in scenes_:
+        sl = sc.get('slots') or {}
+        if sc.get('scene') == 'logos' and not (ev.get('logos') or {}).get('count'): bad['structure'].append('"logos" needs the customer logos captured from the client\'s page, and none were found: leave the scene out')
+        if sc.get('scene') == 'code':
+            def said(v): return ''.join(said(x) for x in (v.values() if isinstance(v, dict) else v)) if isinstance(v, (dict, list)) else str(v) if isinstance(v, str) else ''
+            flat = lambda t: re.sub(r'\s+', '', str(t or ''))
+            if flat(sl.get('code'))[:80] not in flat(said(ev)): bad['structure'].append('"code": the code must be the client\'s own, as its page publishes it — this block is not in the evidence')
+        if sc.get('scene') == 'plans' and sl.get('switch') and not all(p.get('price_b') for p in sl.get('plans') or [] if re.search(r'[1-9]', str(p.get('price') or ''))): bad['structure'].append('"plans": the switch needs the second price on every paid plan, as the client publishes it — or no switch')
+        if sc.get('scene') == 'close' and sl.get('form') == 'card':
+            g = images.get(sl.get('ground'))
+            if not g or g.get('shot') or g.get('soft') or int(g.get('w') or 0) < 1000: bad['pictures'].append('"close" as a card lies on one of the client\'s own sharp photographs at least 1000 px wide: name it in "ground", or use form "centre"')
+    shown = [sc.get('scene') for sc in scenes_ if sc.get('scene') in ('features', 'lines', 'tabs', 'held-product', 'code')]
+    if len(shown) > 3: bad['structure'].append(f'the product is shown {len(shown)} times over ({shown}): two forms, three at most')
     covers = [k for k, sc in enumerate(scenes_) if sc.get('cover') in (True, 'true')]
     if len(covers) > 2 or 0 in covers or any(b - a == 1 for a, b in zip(covers, covers[1:])): bad['structure'].append('"cover" is for one or two scenes where the argument turns: not the first scene, not two in a row')
     roles = [S.SCENES[s['scene']]['role'] for s in plan.get('scenes') or [] if s.get('scene') in S.SCENES]
@@ -208,7 +230,7 @@ def build(src, out, n=3, atmosphere_wanted=False):
     ev['kind'] = kind; ev['seo_safe'] = str((E.J(src, 'brief.json') or {}).get('mode') or '').lower() not in ('free', 'studio', 'creative')   # read by check(): which pictures are the product, and whether the headline's keywords are owed
     shot_is = ' — screenshot of the real product' if kind == 'software' else ' — a SCREENSHOT OF THE CLIENT\'S OLD WEBSITE: not content, never shown'
     material.append({'type': 'text', 'text': f'KIND OF BUSINESS (as captured): {kind}'})
-    for i in imgs[:14]:
+    for i in [x for x in imgs if not x.get('logo')][:14]:
         try: material += [{'type': 'text', 'text': f'PICTURE {i["id"]} ({i.get("w")}×{i.get("h")})' + (' — GENERATED atmosphere, not the client\'s own' if i.get('gen') else (' — a crop of ' + i['crop_of'] if i.get('crop_of') else shot_is if i.get('shot') else (' — a still from the client\'s own film' if i.get('video') else ' — the client\'s own picture (look: is it a photograph?)')))}, {'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/jpeg', 'data': E.thumb(i['data'])}}]
         except Exception: pass
     made = None

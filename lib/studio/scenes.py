@@ -116,6 +116,12 @@ def scene(id, **meta):
     return wrap
 
 
+def _news(s):
+    """A pill above the headline: the one new thing the client itself announces, as a link."""
+    n = s.get('news') if isinstance(s.get('news'), dict) else {}
+    return (f'<a class="news" href="{e(n["url"])}" data-rise>' + (f'<b class="mono">{e(n["label"])}</b>' if n.get('label') else '') + f'<span>{e(n["text"])}</span><i aria-hidden="true">→</i></a>') if n.get('text') and n.get('url') else ''
+
+
 def _btn(a, cls=''):
     return f'<a class="btn dv-roll {cls}" href="{e(a.get("url"))}">{e(a.get("label"))}</a>' if isinstance(a, dict) and a.get('label') and a.get('url') else ''
 
@@ -130,7 +136,7 @@ def _shot(images, pid, alt=''):
 def _open_statement(s, ctx):
     facts = [f for f in s.get('facts') or [] if str(f).strip()][:8]
     tick = f'<div class="dv-tick mono open-tick"><ul>{"".join(f"<li>{e(f)}</li>" for f in facts)}</ul></div>' if len(facts) >= 4 else ''
-    return (f'<section class="sc open" id="top"><div class="wrap"><p class="mono kicker" data-rise>{e(s.get("kicker"))}</p><h1>{lines(s.get("h1"))}</h1>'
+    return (f'<section class="sc open" id="top"><div class="wrap">{_news(s)}<p class="mono kicker" data-rise>{e(s.get("kicker"))}</p><h1>{lines(s.get("h1"))}</h1>'
             f'<div class="open-foot"><p class="lede" data-rise style="--i:1">{e(s.get("lede"))}</p><div class="acts" data-rise style="--i:2">{_btn(ctx["action"], "dv-magnet")}{_btn(ctx.get("action2"), "quiet")}</div>'
             + (f'<p class="mono note" data-rise style="--i:3">{e(s["note"])}</p>' if s.get('note') else '') + f'</div></div>{tick}</section>')
 
@@ -139,7 +145,7 @@ def _open_statement(s, ctx):
        needs='one strong wide picture (≥ 1400 px, not a screenshot with small text)', slots={'kicker': 'mono', 'h1': 'rows split by " / "', 'lede': '≤ 2 sentences', 'image': 'picture id', 'alt': 'what the picture shows'})
 def _open_picture(s, ctx):
     im = ctx['images'].get(s.get('image')) or {}; wide = ' wide' if (im.get('w') or 0) > 2.05 * (im.get('h') or 1) else ''   # a strip of a picture is given height, cropped at its sides
-    return (f'<section class="sc open open-pic" id="top"><div class="wrap"><p class="mono kicker" data-rise>{e(s.get("kicker"))}</p><h1>{lines(s.get("h1"))}</h1>'
+    return (f'<section class="sc open open-pic" id="top"><div class="wrap">{_news(s)}<p class="mono kicker" data-rise>{e(s.get("kicker"))}</p><h1>{lines(s.get("h1"))}</h1>'
             f'<div class="open-foot"><p class="lede" data-rise style="--i:1">{e(s.get("lede"))}</p><div class="acts" data-rise style="--i:2">{_btn(ctx["action"], "dv-magnet")}{_btn(ctx.get("action2"), "quiet")}</div></div></div>'
             f'<figure class="dv-grow{wide}">{_shot(ctx["images"], s.get("image"), s.get("alt"))}</figure></section>')
 
@@ -214,13 +220,120 @@ def _index(s, ctx):
 
 
 @scene('close', name='The close: one line, the action, the name', role='close', devices=['line-rise', 'magnet', 'end-mark'], needs='one line that asks for the action',
-       slots={'line': 'rows split by " / "', 'note': 'mono, optional', 'columns': [{'title': '', 'links': [{'label': '', 'url': ''}]}], 'legal': 'as the client writes it', 'wordmark': 'true to end on the name set across the footer'})
+       slots={'line': 'rows split by " / "', 'form': '"left" (a very large line, for pages led by type), "centre" (a short centred line and the buttons, with air — software), "split" (the line at the left, the button at the right) or "card" (the call on one of the client\'s photographs: name it in "ground")',
+              'ground': 'photograph id, only with form "card"', 'tone': '"night" (default) or "paper" — a light page may end light', 'note': 'mono, optional', 'columns': [{'title': '', 'links': [{'label': '', 'url': ''}]}], 'legal': 'as the client writes it',
+              'wordmark': 'true to end on the name set across the footer; "faint" sets it tone on tone'})
 def _close(s, ctx):
-    cols = ''.join(f'<div><p class="mono">{e(c.get("title"))}</p>' + ''.join(f'<a href="{e(l["url"])}">{e(l["label"])}</a>' for l in (c.get('links') or [])[:7] if l.get('label') and l.get('url')) + '</div>' for c in (s.get('columns') or [])[:4])
-    name = ctx['brand'].get('name') or ''
-    markw = f'<div class="dv-endmark{" low" if re.search("[gjpqyQ,;ç]", name) else ""}" style="--chars:{max(4, len(name))}" aria-hidden="true">{e(name)}</div>' if s.get('wordmark') and 3 <= len(name) <= 14 else ''
-    return (f'<footer class="sc close night" id="end"><div class="wrap"><h2>{lines(s.get("line"))}</h2><div class="acts" data-rise>{_btn(ctx["action"], "dv-magnet")}{_btn(ctx.get("action2"), "quiet")}</div>'
-            + (f'<p class="mono note">{e(s["note"])}</p>' if s.get('note') else '') + (f'<div class="cols">{cols}</div>' if cols else '') + f'<p class="mono legal">{e(s.get("legal"))}</p></div>{markw}</footer>')
+    cols = ''.join(f'<div><p class="mono">{e(c.get("title"))}</p>' + ''.join(f'<a href="{e(l["url"])}">{e(l["label"])}</a>' for l in (c.get('links') or [])[:7] if l.get('label') and l.get('url')) + '</div>' for c in (s.get('columns') or [])[:5])
+    name = ctx['brand'].get('name') or ''; form = s.get('form') if s.get('form') in ('centre', 'split', 'card') else 'left'
+    g = ctx['images'].get(s.get('ground')) if form == 'card' else None
+    if form == 'card' and (not g or g.get('shot')): form = 'centre'   # a card needs a photograph to lie on
+    markw = (f'<div class="dv-endmark{" low" if re.search("[gjpqyQ,;ç]", name) else ""}{" faint" if s.get("wordmark") == "faint" else ""}" style="--chars:{max(4, len(name))}" aria-hidden="true">{e(name)}</div>'
+             if s.get('wordmark') and 3 <= len(name) <= 14 else '')
+    ground = f'<img class="cta-ground" src="{g["data"]}" alt="" width="{int(g.get("w") or 1400)}" height="{int(g.get("h") or 800)}" loading="lazy">' if form == 'card' else ''
+    cta = (f'<div class="cta">{ground}<h2>{lines(s.get("line"))}</h2><div class="acts" data-rise>{_btn(ctx["action"], "dv-magnet")}{_btn(ctx.get("action2"), "quiet")}</div>' + (f'<p class="mono note">{e(s["note"])}</p>' if s.get('note') else '') + '</div>')
+    foot = f'<div class="cols"><p class="foot-mark">{e(name)}</p>{cols}</div>' if cols else ''
+    return (f'<footer class="sc close close-{form}{"" if s.get("tone") == "paper" else " night"}" id="end"><div class="wrap">{cta}{foot}<p class="mono legal">{e(s.get("legal"))}</p></div>{markw}</footer>')
+
+
+@scene('ways', name='Next steps: a few doors, each with an arrow', role='decide', devices=['rise-stagger', 'line-rise'], needs='2–4 places the client really has for a visitor to go next (pricing, docs, a demo, a sandbox), each with one line',
+       slots={'label': 'mono', 'h2': 'rows split by " / "', 'say': 'one sentence, optional', 'items': [{'title': '≤ 24 chars', 'say': 'one line', 'url': 'the client\'s own address'}]})
+def _ways(s, ctx):
+    items = [i for i in (s.get('items') or []) if i.get('title') and i.get('url')][:4]
+    if len(items) < 2: return ''
+    cards = ''.join(f'<a class="way" href="{e(i["url"])}" data-rise style="--i:{k}"><b>{e(i["title"])}</b><i aria-hidden="true">→</i>' + (f'<span>{e(i["say"])}</span>' if i.get('say') else '') + '</a>' for k, i in enumerate(items))
+    return (f'<section class="sc ways" id="next"><div class="wrap"><div class="ways-head"><div><p class="mono kicker">{e(s.get("label"))}</p><h2>{lines(s.get("h2"), "h2")}</h2></div>' + (f'<p class="lede" data-rise>{e(s["say"])}</p>' if s.get('say') else '')
+            + f'</div><div class="ways-grid" style="--n:{len(items)}">{cards}</div></div></section>')
+
+
+@scene('logos', name='Who uses it: the client\'s own row of customer logos', role='prove', devices=['rise-stagger'], needs='the logos captured from the client\'s page (EVIDENCE.logos says how many there are; under four, this scene is not available). They are placed for you',
+       slots={'label': 'the client\'s own words above them, e.g. "Trusted by 80+ companies"'})
+def _logos(s, ctx):
+    marks = [i for i in ctx['images'].values() if i.get('logo')][:12]
+    if len(marks) < 4: return ''
+    cells = ''.join(f'<li><img src="{i["data"]}" alt="{e(i.get("alt") or "")}" width="{int(i.get("w") or 120)}" height="{int(i.get("h") or 40)}" loading="lazy"></li>' for i in marks)
+    return f'<section class="sc logos" aria-label="{e(s.get("label") or "Customers")}"><div class="wrap">' + (f'<p class="mono kicker">{e(s["label"])}</p>' if s.get('label') else '') + f'<ul class="lg-row" data-rise>{cells}</ul></div></section>'
+
+
+@scene('lines', name='Ruled rows: what it is at the left, a piece of it in the middle, where to go at the right', role='show', devices=['rise-stagger', 'line-rise', 'frame'],
+       needs='2–5 parts of the product, each with a name, one or two sentences, its own screenshot or crop, and one to four of the client\'s own links',
+       slots={'label': 'mono', 'h2': 'rows split by " / "', 'rows': [{'title': '≤ 28 chars', 'say': 'one or two sentences', 'image': 'id', 'alt': '', 'links': [{'label': '', 'url': ''}]}]})
+def _lines(s, ctx):
+    rows = [r for r in (s.get('rows') or []) if r.get('title')][:5]
+    if len(rows) < 2: return ''
+    def row(k, r):
+        im = ctx['images'].get(r.get('image')); phone = im and .42 <= (im.get('w') or 1) / max(1, im.get('h') or 1) <= .62
+        pic = '' if not im else f'<figure class="dv-phone">{_shot(ctx["images"], r["image"], r.get("alt"))}</figure>' if phone else f'<figure class="ln-shot" style="max-width:{int((im.get("w") or 800) * 1.15)}px;--w:{int(im.get("w") or 800)}px">{_shot(ctx["images"], r["image"], r.get("alt"))}</figure>'
+        links = ''.join(f'<a href="{e(l["url"])}">{e(l["label"])}</a>' for l in (r.get('links') or [])[:4] if l.get('label') and l.get('url'))
+        return f'<li class="ln" data-rise><div class="ln-words"><p class="mono">{e(r["title"])}</p><p>{e(r.get("say"))}</p></div><div class="ln-pic">{pic}</div><div class="ln-links">{links}</div></li>'
+    return f'<section class="sc lines" id="parts"><div class="wrap"><p class="mono kicker">{e(s.get("label"))}</p><h2>{lines(s.get("h2"), "h2")}</h2><ul class="ln-list">{"".join(row(k, r) for k, r in enumerate(rows))}</ul></div></section>'
+
+
+@scene('tabs', name='Large words as tabs: each turns the panel beneath', role='show', devices=['tabs', 'frame', 'rise-stagger'], needs='2–4 modes or parts of one product, each with ONE word, a title, a sentence and a real screenshot',
+       slots={'label': 'mono', 'tabs': [{'word': 'one word', 'title': '≤ 40 chars', 'say': 'one or two sentences', 'image': 'id', 'alt': '', 'link': {'label': '', 'url': ''}}]})
+def _tabs(s, ctx):
+    tabs = [t for t in (s.get('tabs') or []) if t.get('word') and t.get('image') in ctx['images']][:4]
+    if len(tabs) < 2: return ''
+    row = ''.join(f'<button type="button" role="tab" aria-selected="{"true" if k == 0 else "false"}">{e(t["word"])}</button>' for k, t in enumerate(tabs))
+    def panel(t):
+        im = ctx['images'][t['image']]; link = t.get('link') if isinstance(t.get('link'), dict) else {}
+        return (f'<div class="dv-tab tb-panel" role="tabpanel"><div class="tb-words"><h3>{e(t.get("title"))}</h3><p>{e(t.get("say"))}</p>' + (f'<a class="tb-link" href="{e(link["url"])}">{e(link["label"])} →</a>' if link.get('label') and link.get('url') else '')
+                + f'</div><figure class="tb-pic" style="max-width:{int((im.get("w") or 1200) * 1.15)}px"><div class="ft-shot">{_shot(ctx["images"], t["image"], t.get("alt"))}</div></figure></div>')
+    return f'<section class="sc tabs" id="modes"><div class="wrap"><p class="mono kicker">{e(s.get("label"))}</p><div class="dv-tabs"><div class="dv-tabs-row tb-row" role="tablist">{row}</div>{"".join(panel(t) for t in tabs)}</div></div></section>'
+
+
+@scene('quote', name='One customer, said large', role='prove', devices=['rise-stagger'], needs='ONE testimonial given to you, word for word, with the person\'s name; a link to the client\'s own case study if there is one',
+       slots={'label': 'mono, e.g. the customer\'s company', 'text': 'the testimonial exactly', 'name': '', 'role': '', 'link': {'label': '', 'url': ''}})
+def _quote(s, ctx):
+    if not (s.get('text') and s.get('name')): return ''
+    link = s.get('link') if isinstance(s.get('link'), dict) else {}
+    return (f'<section class="sc quote1"><div class="wrap"><p class="mono kicker">{e(s.get("label"))}</p><blockquote class="q1" data-rise>{e(s["text"])}</blockquote><p class="q1-by" data-rise style="--i:1"><b>{e(s["name"])}</b>' + (f'<span>{e(s["role"])}</span>' if s.get('role') else '')
+            + '</p>' + (f'<a class="btn quiet small" href="{e(link["url"])}">{e(link["label"])}</a>' if link.get('label') and link.get('url') else '') + '</div></section>')
+
+
+@scene('cases', name='Customers as cards: a picture, what happened, who', role='prove', devices=['rise-stagger', 'line-rise'], needs='2–4 customer stories the client itself publishes: for each a result in its own words (a figure it states, or a sentence), the customer\'s name, the client\'s link to the story; a photograph of its own if it has one',
+       slots={'label': 'mono', 'h2': 'rows split by " / "', 'items': [{'figure': 'a number the client states, optional', 'title': 'what happened, ≤ 90 chars, the client\'s words', 'who': 'the customer', 'image': 'photograph id, optional', 'alt': '', 'url': ''}]})
+def _cases(s, ctx):
+    items = [i for i in (s.get('items') or []) if i.get('title') and i.get('who')][:4]
+    if len(items) < 2: return ''
+    def card(k, i):
+        pic = f'<figure class="cs-pic">{_shot(ctx["images"], i["image"], i.get("alt"))}</figure>' if i.get('image') in ctx['images'] and not ctx['images'][i['image']].get('shot') else ''
+        inner = pic + '<div class="cs-in">' + (f'<p class="cs-fig">{e(i["figure"])}</p>' if i.get('figure') else '') + f'<p class="cs-t">{e(i["title"])}</p><p class="mono cs-who">{e(i["who"])}</p></div>'
+        return f'<a class="cs{" has-pic" if pic else ""}" href="{e(i["url"])}" data-rise style="--i:{k}">{inner}</a>' if i.get('url') else f'<article class="cs{" has-pic" if pic else ""}" data-rise style="--i:{k}">{inner}</article>'
+    return f'<section class="sc cases" id="customers"><div class="wrap"><p class="mono kicker">{e(s.get("label"))}</p><h2>{lines(s.get("h2"), "h2")}</h2><div class="cs-grid" style="--n:{len(items)}">{"".join(card(k, i) for k, i in enumerate(items))}</div></div></section>'
+
+
+@scene('code', name='The product as code: a request, and what comes back', role='show', devices=['frame', 'rise-stagger', 'line-rise'], needs='a piece of code or a command the client itself publishes on its page (never written by you), and what it is for',
+       slots={'label': 'mono', 'h2': 'rows split by " / "', 'say': '≤ 2 sentences', 'points': ['≤ 4 short facts'], 'title': 'the file name or "Request", optional', 'code': 'the code exactly as the client publishes it, ≤ 18 lines', 'ground': 'optional: one of the client\'s own photographs to lie behind the block'})
+def _code(s, ctx):
+    code = str(s.get('code') or '').strip('\n')
+    if len(code) < 12: return ''
+    g = ctx['images'].get(s.get('ground')); onpic = bool(g) and not g.get('shot')
+    pts = ''.join(f'<li>{e(x)}</li>' for x in (s.get('points') or [])[:4] if x)
+    block = f'<figure class="dv-window cd-win"><figcaption class="mono">{e(s.get("title") or "")}</figcaption><pre tabindex="0"><code>{e(chr(10).join(code.split(chr(10))[:18]))}</code></pre></figure>'
+    stage = (f'<div class="cd-stage on-pic"><img class="cd-ground" src="{g["data"]}" alt="" width="{int(g.get("w") or 1400)}" height="{int(g.get("h") or 800)}" loading="lazy">{block}</div>' if onpic else f'<div class="cd-stage">{block}</div>')
+    return (f'<section class="sc code" id="build"><div class="wrap cd-in"><div><p class="mono kicker">{e(s.get("label"))}</p><h2>{lines(s.get("h2"), "h2")}</h2>' + (f'<p class="lede" data-rise>{e(s["say"])}</p>' if s.get('say') else '') + (f'<ul class="cd-points" data-rise style="--i:1">{pts}</ul>' if pts else '')
+            + f'<div class="acts" data-rise style="--i:2">{_btn(ctx["action"], "small")}{_btn(ctx.get("action2"), "small quiet")}</div></div>{stage}</div></section>')
+
+
+@scene('chips', name='Everything it covers, as two rows of chips sliding past each other', role='breathe', devices=['fact-ticker'], needs='8–18 short names the client itself uses for what it does or covers (features, methods, integrations by name), each ≤ 24 chars',
+       slots={'label': 'mono, optional', 'items': ['short names']})
+def _chips(s, ctx):
+    items = [str(x).strip() for x in (s.get('items') or []) if str(x).strip()][:18]
+    if len(items) < 8: return ''
+    half = (len(items) + 1) // 2; row = lambda xs, back: f'<div class="dv-tick ch-row{" back" if back else ""}"><ul>{"".join(f"<li>{e(x)}</li>" for x in xs)}</ul></div>'
+    return f'<section class="sc chips-sc">' + (f'<div class="wrap"><p class="mono kicker">{e(s["label"])}</p></div>' if s.get('label') else '') + row(items[:half], False) + row(items[half:], True) + '</section>'
+
+
+@scene('reads', name='Things to read: the client\'s own articles or a report, as cards', role='quiet', devices=['rise-stagger'], needs='2–4 articles, guides or reports the client itself links to, each with its real title and address',
+       slots={'label': 'mono', 'h2': 'one short line', 'items': [{'kind': 'mono, e.g. "Report", "Guide"', 'title': 'the article\'s own title', 'url': '', 'image': 'photograph or cover id, optional', 'alt': ''}]})
+def _reads(s, ctx):
+    items = [i for i in (s.get('items') or []) if i.get('title') and i.get('url')][:4]
+    if len(items) < 2: return ''
+    def card(k, i):
+        pic = f'<figure class="rd-pic">{_shot(ctx["images"], i["image"], i.get("alt"))}</figure>' if i.get('image') in ctx['images'] else ''
+        return f'<a class="rd" href="{e(i["url"])}" data-rise style="--i:{k}">{pic}<p class="mono">{e(i.get("kind"))}</p><b>{e(i["title"])}</b><i aria-hidden="true">→</i></a>'
+    return f'<section class="sc reads" id="reading"><div class="wrap"><p class="mono kicker">{e(s.get("label"))}</p><h2>{lines(s.get("h2"), "h2")}</h2><div class="rd-grid" style="--n:{len(items)}">{"".join(card(k, i) for k, i in enumerate(items))}</div></div></section>'
 
 
 @scene('open-atmosphere', name='Opening: a statement over a field of the brand\'s own colour', role='open', devices=['line-rise', 'rise-stagger', 'magnet', 'depth'],
@@ -260,29 +373,37 @@ def _collage(s, ctx):
 
 @scene('open-product', name='Opening for software: a quiet line, and the product itself running off the first screen', role='open', devices=['line-rise', 'rise-stagger', 'magnet', 'frame', 'lift'],
        needs='one real screenshot of the product: a wide one at least 1000 px across (shown in a window), or an upright phone screenshot (shown in a phone). A headline of 4–9 words',
-       slots={'kicker': 'mono label ≤ 40 chars', 'h1': 'rows split by " / ", one *marked phrase*', 'lede': '≤ 2 sentences', 'image': 'id of the screenshot', 'alt': 'what the screenshot shows', 'align': '"left" (wide screenshot) or "centre" (phone)', 'ground': 'optional: id of one of the client\'s own wide, sharp photographs to lie behind the product'})
+       slots={'kicker': 'mono label ≤ 40 chars', 'h1': 'rows split by " / ", one *marked phrase*', 'lede': '≤ 2 sentences', 'image': 'id of the screenshot', 'alt': 'what the screenshot shows', 'align': '"left" (the window under the line), "beside" (the line at the left, the window at the right running off the edge) or "centre" (phone)', 'more': 'optional: 1–3 more screenshot or crop ids — the product is then shown as a cluster of pieces beside the line', 'news': {'label': 'e.g. "New"', 'text': 'the one new thing the client announces, ≤ 50 chars', 'url': ''}, 'ground': 'optional: id of one of the client\'s own wide, sharp photographs to lie behind the product'})
 def _open_product(s, ctx):
     im = ctx['images'].get(s.get('image'))
     if not im: return ''
-    tall = .42 <= (im.get('w') or 1) / max(1, im.get('h') or 1) <= .62; centre = ' centre' if s.get('align') == 'centre' or tall else ''
+    tall = .42 <= (im.get('w') or 1) / max(1, im.get('h') or 1) <= .62; centre = ' centre' if s.get('align') == 'centre' or tall else ' beside' if s.get('align') == 'beside' else ''
+    more = [m for m in (s.get('more') or []) if m in ctx['images'] and m != s.get('image')][:3]
+    if more and not tall:   # a cluster: the product in pieces of different sizes beside the line
+        tiles = ''.join(f'<figure class="cl cl-{k} dv-window" data-rise style="--i:{k + 1}">{_shot(ctx["images"], m, "")}</figure>' for k, m in enumerate([s.get('image')] + more))
+        return (f'<section class="sc open open-prod cluster" id="top"><div class="wrap cl-in"><div>{_news(s)}<p class="mono kicker" data-rise>{e(s.get("kicker"))}</p><h1>{lines(s.get("h1"))}</h1><p class="lede" data-rise style="--i:1">{e(s.get("lede"))}</p>'
+                f'<div class="acts" data-rise style="--i:2">{_btn(ctx["action"], "dv-magnet")}{_btn(ctx.get("action2"), "quiet")}</div></div><div class="cl-grid cl-n{len(more) + 1}">{tiles}</div></div></section>')
     g = ctx['images'].get(s.get('ground')); ground = f'<img class="op-ground" src="{g["data"]}" alt="" width="{int(g.get("w") or 1400)}" height="{int(g.get("h") or 700)}">' if g and g is not im and not g.get('shot') else ''
     frame = (f'<figure class="dv-phone">{_shot(ctx["images"], s.get("image"), s.get("alt"))}</figure>' if tall else f'<figure class="dv-window dv-lift">{_shot(ctx["images"], s.get("image"), s.get("alt"))}</figure>')
-    return (f'<section class="sc open open-prod{centre}" id="top"><div class="wrap"><p class="mono kicker" data-rise>{e(s.get("kicker"))}</p><h1>{lines(s.get("h1"))}</h1>'
+    return (f'<section class="sc open open-prod{centre}" id="top"><div class="wrap">{_news(s)}<p class="mono kicker" data-rise>{e(s.get("kicker"))}</p><h1>{lines(s.get("h1"))}</h1>'
             f'<div class="open-foot"><p class="lede" data-rise style="--i:1">{e(s.get("lede"))}</p><div class="acts" data-rise style="--i:2">{_btn(ctx["action"], "dv-magnet")}{_btn(ctx.get("action2"), "quiet")}</div></div></div>'
             f'<div class="op-stage{" tall" if tall else ""}{" has-ground" if ground else ""}">{ground}{frame}</div></section>')
 
 
-@scene('plans', name='The plans, side by side', role='decide', devices=['rise-stagger', 'line-rise'], needs='2–4 plans exactly as the client states them: name, price, who it is for, what is in it. Never a plan, a price or a limit the client does not publish',
-       slots={'label': 'mono', 'h2': 'rows split by " / "', 'plans': [{'name': '', 'price': 'as written, e.g. "$20"', 'per': 'e.g. "/ month", optional', 'for': 'one line: who it is for', 'points': ['≤ 7 short facts'], 'action': {'label': '', 'url': ''}, 'marked': 'true on the one plan the client itself marks'}], 'note': 'mono, the client\'s own small print, optional'})
+@scene('plans', name='The plans, side by side', role='decide', devices=['rise-stagger', 'line-rise', 'switch'], needs='2–4 plans exactly as the client states them: name, price, who it is for, what is in it. Never a plan, a price or a limit the client does not publish',
+       slots={'label': 'mono', 'h2': 'rows split by " / "', 'plans': [{'name': '', 'price': 'as written, e.g. "$20"', 'per': 'e.g. "/ month", optional', 'for': 'one line: who it is for', 'points': ['≤ 7 short facts'], 'action': {'label': '', 'url': ''}, 'marked': 'true on the one plan the client itself marks', 'tag': 'the client\'s own label on that plan, e.g. "Most popular", optional', 'price_b': 'the second price when the client publishes two (yearly), optional', 'per_b': ''}], 'switch': ['"Monthly"', '"Yearly" — only when every paid plan has price_b'], 'note': 'mono, the client\'s own small print, optional'})
 def _plans(s, ctx):
     plans = [p for p in (s.get('plans') or []) if p.get('name')][:4]
     if len(plans) < 2: return ''
+    sw = [str(x) for x in (s.get('switch') or []) if x][:2]; both = len(sw) == 2 and any(p.get('price_b') for p in plans)
+    switch = f'<div class="dv-switch" role="group" aria-label="{e(sw[0])} / {e(sw[1])}"><button type="button" aria-pressed="true">{e(sw[0])}</button><button type="button" aria-pressed="false">{e(sw[1])}</button></div>' if both else ''
     def card(k, p):
         pts = ''.join(f'<li>{e(x)}</li>' for x in (p.get('points') or [])[:7] if x)
-        return (f'<article class="pl{" is-marked" if p.get("marked") in (True, "true") else ""}" data-rise style="--i:{k}"><p class="mono pl-name">{e(p["name"])}</p><p class="pl-price">{e(p.get("price"))}'
-                + (f'<small>{e(p["per"])}</small>' if p.get('per') else '') + '</p>' + (f'<p class="pl-for">{e(p["for"])}</p>' if p.get('for') else '') + _btn(p.get('action') or ctx['action'], 'small' if p.get('marked') in (True, 'true') else 'small quiet')
+        two = both and p.get('price_b')
+        price = (f'<span class="sw-a">{e(p.get("price"))}' + (f'<small>{e(p["per"])}</small>' if p.get('per') else '') + f'</span><span class="sw-b">{e(p["price_b"])}' + (f'<small>{e(p.get("per_b") or p.get("per"))}</small>' if p.get('per_b') or p.get('per') else '') + '</span>') if two else e(p.get('price')) + (f'<small>{e(p["per"])}</small>' if p.get('per') else '')
+        return (f'<article class="pl{" is-marked" if p.get("marked") in (True, "true") else ""}" data-rise style="--i:{k}"><p class="mono pl-name">{e(p["name"])}' + (f'<span class="pl-tag">{e(p["tag"])}</span>' if p.get('tag') else '') + f'</p><p class="pl-price">{price}</p>' + (f'<p class="pl-for">{e(p["for"])}</p>' if p.get('for') else '') + _btn(p.get('action') or ctx['action'], 'small' if p.get('marked') in (True, 'true') else 'small quiet')
                 + (f'<ul class="pl-points">{pts}</ul>' if pts else '') + '</article>')
-    return (f'<section class="sc plans" id="pricing"><div class="wrap"><p class="mono kicker">{e(s.get("label"))}</p><h2>{lines(s.get("h2"), "h2")}</h2><div class="pl-grid" style="--n:{len(plans)}">{"".join(card(k, p) for k, p in enumerate(plans))}</div>'
+    return (f'<section class="sc plans" id="pricing"><div class="wrap"><p class="mono kicker">{e(s.get("label"))}</p><div class="pl-head"><h2>{lines(s.get("h2"), "h2")}</h2>{switch}</div><div class="pl-grid" data-switch style="--n:{len(plans)}">{"".join(card(k, p) for k, p in enumerate(plans))}</div>'
             + (f'<p class="mono note">{e(s["note"])}</p>' if s.get('note') else '') + '</div></section>')
 
 
@@ -308,16 +429,18 @@ def _compare(s, ctx):
 
 @scene('features', name='What it does, each in a card with the real interface in it', role='show', devices=['rise-stagger', 'line-rise', 'frame'],
        needs='3–5 things the product does, each with its own real screenshot or tight crop of the interface (a phone-shaped one stands in a phone). Never an icon, never a drawn interface',
-       slots={'label': 'mono', 'h2': 'rows split by " / "', 'items': [{'title': '≤ 32 chars', 'say': 'one or two sentences', 'image': 'id of a screenshot or crop', 'alt': ''}]})
+       slots={'label': 'mono', 'h2': 'rows split by " / "', 'items': [{'title': '≤ 32 chars', 'say': 'one or two sentences', 'image': 'id of a screenshot or crop', 'alt': ''}], 'ground': 'optional: id of one of the client\'s own photographs — every card\'s interface then lies on it'})
 def _features(s, ctx):
     items = [i for i in (s.get('items') or []) if i.get('title') and i.get('image') in ctx['images']][:5]
     if len(items) < 3: return ''
+    g = ctx['images'].get(s.get('ground')); onpic = bool(g) and not g.get('shot')
     def card(k, i):
         im = ctx['images'][i['image']]; phone = .42 <= (im.get('w') or 1) / max(1, im.get('h') or 1) <= .62
         pic = (f'<div class="ft-pic ft-phone"><figure class="dv-phone">{_shot(ctx["images"], i["image"], i.get("alt"))}</figure></div>' if phone
-               else f'<div class="ft-pic" style="max-width:{int((im.get("w") or 1200) * 1.15)}px;--w:{int(im.get("w") or 1200)}px"><figure class="ft-shot">{_shot(ctx["images"], i["image"], i.get("alt"))}</figure></div>')
+               else f'<div class="ft-pic{" on-pic" if onpic else ""}" style="max-width:{int((im.get("w") or 1200) * 1.15)}px;--w:{int(im.get("w") or 1200)}px;--at:{(k * 37) % 100}%"><figure class="ft-shot">{_shot(ctx["images"], i["image"], i.get("alt"))}</figure></div>')
         return f'<article class="ft ft-{k}" data-rise style="--i:{k % 3}"><div class="ft-words"><h3>{e(i["title"])}</h3>' + (f'<p>{e(i["say"])}</p>' if i.get('say') else '') + f'</div>{pic}</article>'
-    return (f'<section class="sc features" id="features"><div class="wrap"><p class="mono kicker">{e(s.get("label"))}</p><h2>{lines(s.get("h2"), "h2")}</h2>'
+    paint = f'<style>.features .on-pic{{background-image:url({g["data"]})}}</style>' if onpic else ''   # the photograph once, behind every card at a different place
+    return (paint + f'<section class="sc features" id="features"><div class="wrap"><p class="mono kicker">{e(s.get("label"))}</p><h2>{lines(s.get("h2"), "h2")}</h2>'
             f'<div class="ft-grid ft-n{len(items)}">{"".join(card(k, i) for k, i in enumerate(items))}</div></div></section>')
 
 
@@ -540,6 +663,36 @@ em{font-style:normal;color:var(--em)}em svg{display:none}.mark-drawn .display em
 .ft h3{font-family:var(--display);font-weight:var(--dw);text-transform:var(--dcase);letter-spacing:var(--dls);line-height:1.04;font-size:clamp(22px,2.2vw,36px);max-width:16ch}.ft p{margin-top:10px;color:var(--mute);max-width:40ch}
 .ft-pic{margin-top:auto;width:100%}.ft-shot{margin:0;border-radius:10px 10px 0 0;overflow:hidden;box-shadow:0 0 0 1px var(--line);max-height:clamp(200px,24vw,380px)}.ft-shot img{display:block;width:max(100%,min(var(--w,100%),860px));max-width:none;height:auto}   /* the interface is shown near its own size and cut by the card, not shrunk until its words cannot be read */.ft-phone{display:grid;justify-items:center;max-height:clamp(240px,28vw,420px);overflow:hidden}.ft-phone .dv-phone{--pw:clamp(170px,17vw,250px)}
 @media (max-width:900px){.ft,.ft-0,.ft-1,.ft-2,.ft-3,.ft-4{grid-column:1/-1!important;min-height:0;flex-direction:column!important;align-items:stretch!important}.ft-n3 .ft-2 .ft-words{padding-bottom:0}}
+/* ---- the inventory of 2026-11-11 (bench/runs/_research/harvest-saas/INVENTORY.md): parts seen on the owner's six references ---- */
+.news{display:inline-flex;align-items:center;gap:10px;min-height:34px;padding:0 14px 0 6px;margin-bottom:clamp(16px,2vw,28px);border-radius:999px;box-shadow:inset 0 0 0 1px var(--line);text-decoration:none;font-size:14px}.news b{background:var(--accent);color:var(--on-accent);border-radius:999px;padding:4px 9px;font-weight:400}.news:not(:has(b)){padding-left:14px}.news i{font-style:normal;color:var(--mute)}
+.open-prod.beside{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);align-items:center;column-gap:clamp(24px,4vw,64px);padding-bottom:clamp(40px,6vw,96px);min-height:min(100svh,880px)}.open-prod.beside .open-foot{grid-template-columns:minmax(0,1fr);gap:clamp(20px,2.4vw,32px)}.open-prod.beside .op-stage{margin:0;border-radius:20px 0 0 20px;padding:clamp(24px,4vw,64px) 0 clamp(24px,4vw,64px) clamp(24px,4vw,64px);max-height:none}.open-prod.beside .op-stage .dv-window{width:128%;max-width:none;border-radius:12px 0 0 12px}.open-prod.beside .dv-lift{transform-origin:0 50%}
+.cl-in{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(24px,4vw,64px);align-items:center;padding-bottom:clamp(48px,6vw,96px)!important}.open-prod.cluster .lede{margin-top:clamp(20px,2.4vw,32px)}.open-prod.cluster .acts{margin-top:clamp(20px,2.4vw,32px)}.cl-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:clamp(8px,1vw,14px);align-items:end}.cl{margin:0;overflow:hidden;max-height:clamp(150px,19vw,290px)}.cl img{width:max(100%,420px);max-width:none}
+.cl-0{grid-column:1/5}.cl-1{grid-column:5/7}.cl-2{grid-column:1/3}.cl-3{grid-column:3/7}.cl-n2 .cl-0{grid-column:1/7}.cl-n2 .cl-1{grid-column:2/6}.cl-n3 .cl-2{grid-column:1/7}
+.ft-pic.on-pic{background-size:cover;background-position:var(--at,50%) 50%;border-radius:14px 14px 0 0;padding:clamp(16px,2.6vw,40px) clamp(16px,2.6vw,40px) 0;max-width:none!important}.ft-pic.on-pic .ft-shot{box-shadow:0 0 0 1px rgba(0,0,0,.18)}
+.pl-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:20px 40px}.pl-tag{margin-left:10px;padding:3px 8px;border-radius:999px;background:var(--accent);color:var(--on-accent);letter-spacing:.04em}.pl .btn{align-self:stretch}.pl-name{display:flex;align-items:center;min-height:22px}
+.cta{position:relative}.close-centre{padding-top:clamp(88px,11vw,170px)}.close-centre .cta{text-align:center}.close-centre .cta .display{margin-inline:auto;font-size:min(clamp(34px,4.6vw,76px),calc((100vw - 2 * var(--pad)) / var(--lw,8) * var(--k)));line-height:1.04}.close-centre .acts{justify-content:center}.close-centre .cols{margin-top:clamp(88px,11vw,170px)}
+.close-split .cta{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:clamp(24px,4vw,64px);align-items:end}.close-split .cta .display{font-size:min(clamp(30px,3.6vw,60px),calc((100vw - 2 * var(--pad)) / var(--lw,8) * var(--k)));line-height:1.06}.close-split .acts{margin-top:0}.close-split .note{grid-column:1/-1}
+.close-card .cta{isolation:isolate;overflow:hidden;border-radius:clamp(18px,2.2vw,32px);padding:clamp(28px,5vw,88px);min-height:clamp(320px,36vw,540px);display:flex;flex-direction:column;justify-content:flex-end;color:#f5f4f0;--line:rgba(245,244,240,.3)}.cta-ground{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover}.close-card .cta::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.62))}
+.close-card .cta .display{font-size:min(clamp(32px,4.2vw,68px),calc((100vw - 2 * var(--pad)) / var(--lw,8) * var(--k)));line-height:1.04}.close-card .btn.quiet{box-shadow:inset 0 0 0 1px rgba(245,244,240,.5)}.close:not(.night){background:var(--ground2)}
+.close .cols{grid-template-columns:minmax(0,1.6fr) repeat(auto-fit,minmax(min(100%,9rem),1fr));grid-auto-flow:column}.foot-mark{font-family:var(--display);font-weight:var(--dw);text-transform:var(--dcase);letter-spacing:var(--dls);font-size:clamp(20px,1.9vw,28px);color:inherit!important;line-height:1.1}
+.ways-head{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,4fr);gap:clamp(24px,4vw,64px);align-items:end}.ways-grid{display:grid;grid-template-columns:repeat(var(--n,4),minmax(0,1fr));gap:clamp(10px,1.2vw,18px);margin-top:clamp(36px,4.6vw,72px)}
+.way{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 16px;align-content:start;min-height:clamp(120px,11vw,170px);padding:clamp(18px,2vw,28px);border-radius:16px;box-shadow:inset 0 0 0 1px var(--line);text-decoration:none;transition:background-color .2s,transform .3s var(--ease)}.way b{font-weight:500;font-size:clamp(18px,1.5vw,22px)}.way i{font-style:normal;transition:transform .3s var(--ease)}.way span{grid-column:1/-1;color:var(--mute);font-size:15px}.way:hover{background:var(--ground2)}.way:hover i{transform:translateX(4px)}
+.logos{padding-block:clamp(28px,3.6vw,56px)!important}.logos .kicker{text-align:center;margin-bottom:clamp(18px,2vw,28px)}.lg-row{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:clamp(20px,3vw,44px) clamp(28px,5vw,80px)}.lg-row img{height:clamp(20px,2.1vw,30px);width:auto;max-width:150px;object-fit:contain;background:none;filter:brightness(0);opacity:.62}.night .lg-row img,body.is-night .lg-row img{filter:brightness(0) invert(1)}
+.ln-list{margin-top:clamp(36px,4.6vw,72px);border-top:1px solid var(--line)}.ln{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,4fr) minmax(0,3fr);gap:clamp(20px,3vw,56px);align-items:center;padding:clamp(28px,3.6vw,56px) 0;border-bottom:1px solid var(--line)}.ln-words p+p{margin-top:10px;color:var(--mute);max-width:36ch}.ln-words .mono{color:var(--ink)}
+.ln-pic{display:grid;justify-items:center}.ln-shot{margin:0;width:100%;border-radius:12px;overflow:hidden;box-shadow:0 0 0 1px var(--line);max-height:clamp(160px,18vw,260px)}.ln-shot img{width:max(100%,min(var(--w,100%),640px));max-width:none}.ln .dv-phone{--pw:clamp(130px,12vw,180px);max-height:clamp(200px,20vw,300px);overflow:hidden;border-radius:calc(var(--pw) * .16) calc(var(--pw) * .16) 0 0}.ln-links{display:grid;gap:6px;justify-items:end;text-align:right}.ln-links a{text-decoration:none}.ln-links a:hover{text-decoration:underline;text-underline-offset:.25em}
+.tb-row{font-family:var(--display);font-weight:var(--dw);text-transform:var(--dcase);letter-spacing:var(--dls);line-height:1.05;font-size:clamp(34px,5.4vw,92px)}.scale-product .tb-row{font-size:clamp(30px,4.4vw,72px)}.tb-panel{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,7fr);gap:clamp(24px,4vw,64px);align-items:start;margin-top:clamp(28px,3.6vw,56px)}
+.tb-words h3{font-family:var(--display);font-weight:var(--dw);letter-spacing:var(--dls);line-height:1.06;font-size:clamp(24px,2.5vw,40px);max-width:16ch}.tb-words p{margin-top:14px;color:var(--mute);max-width:40ch}.tb-link{display:inline-block;margin-top:18px;text-underline-offset:.25em}.tb-pic{margin:0;width:100%;background:var(--ground2);border-radius:20px;padding:clamp(16px,2.6vw,40px) clamp(16px,2.6vw,40px) 0;overflow:hidden}.tb-pic .ft-shot{max-height:clamp(240px,30vw,460px)}
+.q1{font-family:var(--display);font-weight:var(--dw);letter-spacing:var(--dls);line-height:1.1;font-size:clamp(28px,4vw,68px);max-width:24ch;text-wrap:balance;quotes:"“" "”"}.q1::before{content:open-quote}.q1::after{content:close-quote}.scale-product .q1{font-size:clamp(24px,3vw,48px);max-width:30ch}.q1-by{display:grid;gap:2px;margin:clamp(24px,3vw,44px) 0 clamp(18px,2vw,28px)}.q1-by span{color:var(--mute);font-size:14px}
+.cs-grid{display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,1fr));gap:clamp(10px,1.2vw,18px);margin-top:clamp(36px,4.6vw,72px)}.cs{display:flex;flex-direction:column;border-radius:18px;overflow:hidden;background:var(--ground2);text-decoration:none;min-height:clamp(220px,22vw,340px)}.cs-pic{margin:0;aspect-ratio:16/10;overflow:hidden}.cs-pic img{width:100%;height:100%;object-fit:cover;transition:transform .6s var(--ease)}a.cs:hover .cs-pic img{transform:scale(1.04)}
+.cs-in{display:flex;flex-direction:column;gap:12px;padding:clamp(18px,2vw,28px);margin-top:auto}.cs-fig{font-family:var(--display);font-weight:var(--dw);letter-spacing:var(--dls);line-height:.95;font-size:clamp(40px,4.6vw,76px)}.cs-t{font-size:clamp(17px,1.4vw,21px);line-height:1.3;max-width:30ch}.cs-who{color:var(--mute)}
+.cd-in{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(24px,4vw,64px);align-items:center}.code .lede{margin-top:clamp(18px,2vw,28px)}.cd-points{display:grid;gap:10px;margin-top:clamp(18px,2vw,28px)}.cd-points li{padding-left:24px;position:relative}.cd-points li::before{content:"✓";position:absolute;left:0;color:var(--accent)}.code .acts{margin-top:clamp(22px,2.6vw,36px)}
+.cd-stage{min-width:0}.cd-stage.on-pic{position:relative;isolation:isolate;border-radius:20px;overflow:hidden;padding:clamp(20px,4vw,64px)}.cd-ground{position:absolute;inset:0;z-index:-1;width:100%;height:100%;object-fit:cover}.cd-win{background:#0d0e11;color:#e9e8e3;--line:rgba(233,232,227,.16)}.cd-win figcaption{position:absolute;margin:-26px 0 0 74px;font-size:11px;color:rgba(233,232,227,.6)}.cd-win{position:relative}.cd-win pre{margin:0;padding:clamp(16px,1.8vw,24px);overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.6;tab-size:2}
+.chips-sc{padding-block:clamp(40px,5vw,80px)!important;overflow:hidden}.ch-row{padding:5px 0}.ch-row ul{gap:10px!important}.ch-row li{font-size:clamp(18px,2vw,30px);padding:.28em .6em;border-radius:.3em;background:var(--ground2)}.dv .ch-row ul{animation-duration:60s}
+.rd-grid{display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,1fr));gap:clamp(10px,1.2vw,18px);margin-top:clamp(32px,4vw,64px)}.rd{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 14px;align-content:start;padding:clamp(16px,1.8vw,24px);border-radius:16px;box-shadow:inset 0 0 0 1px var(--line);text-decoration:none}.rd-pic{grid-column:1/-1;margin:0 0 6px;aspect-ratio:16/9;border-radius:10px;overflow:hidden}.rd-pic img{width:100%;height:100%;object-fit:cover}.rd .mono{grid-column:1/-1;color:var(--mute)}.rd b{font-weight:500;font-size:clamp(17px,1.4vw,21px);line-height:1.25}.rd i{font-style:normal}
+.guides .dv-sheet{background-image:linear-gradient(to right,var(--line) 1px,transparent 1px);background-size:calc((100% - 2 * var(--pad)) / 4) 100%;background-position:var(--pad) 0;background-repeat:repeat-x}
+.bar-dd{position:relative}.bar-dd>button{font:inherit;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;border:0;background:none;color:inherit;padding:10px 12px;cursor:pointer}.bar-dd>button::after{content:"";display:inline-block;width:5px;height:5px;margin:0 0 3px 7px;border:solid currentColor;border-width:0 1px 1px 0;transform:rotate(45deg)}
+.bar-dd-p{position:absolute;top:100%;left:0;min-width:220px;display:grid;gap:2px;padding:10px;border-radius:14px;background:var(--paper);box-shadow:0 0 0 1px var(--line),0 24px 48px -24px rgba(0,0,0,.35);opacity:0;visibility:hidden;transform:translateY(-4px);transition:opacity .16s,transform .2s var(--ease),visibility .16s}.bar-dd:hover .bar-dd-p,.bar-dd:focus-within .bar-dd-p{opacity:1;visibility:visible;transform:none}.bar-dd-p a{padding:9px 10px!important;border-radius:8px;text-transform:none!important;font-family:var(--text)!important;font-size:14px!important;letter-spacing:0!important}.bar-dd-p a:hover{background:var(--ground2)}
+@media (max-width:900px){.open-prod.beside,.cl-in,.ways-head,.ln,.tb-panel,.cd-in,.close-split .cta{grid-template-columns:minmax(0,1fr)}.open-prod.beside{min-height:0;padding-bottom:0}.open-prod.beside .op-stage{border-radius:0;padding:clamp(18px,5vw,32px) 0 0 clamp(18px,5vw,32px);margin-top:clamp(28px,6vw,48px)}.ways-grid,.cs-grid,.rd-grid{grid-template-columns:minmax(0,1fr)}.way{min-height:0}.ln-links{justify-items:start;text-align:left}.close .cols{grid-auto-flow:row;grid-template-columns:repeat(2,minmax(0,1fr))}.foot-mark{grid-column:1/-1}.close-card .cta{min-height:0}.pl-head{align-items:flex-start}}
 """
 
 
@@ -558,18 +711,22 @@ def page(plan, images):
     drawn = plan.get('mark') == 'drawn'; quiet = plan.get('scale') == 'product'
     if drawn: used.add('draw')
     css, js = LIB.bundle(sorted(used))
-    nav = [n for n in plan.get('nav') or [] if n.get('label') and n.get('url')][:5]
-    links = ''.join(f'<a href="{e(n["url"])}">{e(n["label"])}</a>' for n in nav)
+    nav = [n for n in plan.get('nav') or [] if n.get('label') and (n.get('url') or n.get('links'))][:5]
+    def item(n):   # a label with links under it opens a small panel; the phone menu lists them flat
+        kids = [k for k in (n.get('links') or []) if isinstance(k, dict) and k.get('label') and k.get('url')][:6]
+        return (f'<div class="bar-dd"><button type="button" aria-haspopup="true">{e(n["label"])}</button><div class="bar-dd-p">' + ''.join(f'<a href="{e(k["url"])}">{e(k["label"])}</a>' for k in kids) + '</div></div>') if kids else f'<a href="{e(n["url"])}">{e(n["label"])}</a>' if n.get('url') else ''
+    links = ''.join(item(n) for n in nav)
+    flat = ''.join(f'<a href="{e(k["url"])}">{e(k["label"])}</a>' for n in nav for k in ([n] if n.get('url') else []) + [k for k in (n.get('links') or []) if isinstance(k, dict) and k.get('label') and k.get('url')][:6])
     tokens = (f":root{{--paper:{p['paper']};--ink:{p['ink']};--accent:{p['accent']};--em:{p['em']};--on-accent:{p['on_accent']};--ground2:{p['ground2']};--mute:{p['mute']};--line:{p['line']};--night:{p['night']};--on-night:{p['on_night']};--lead:{p['lead']};--on-lead:{p['on_lead']};"
               f"--display:{t['display']};--dw:{t['w']};--dls:{t['ls']};--dlh:{t['lh']};--dcase:{t['case']};--k:{t['k']};--text:{t['text']};--mono:{t['mono']};--pad:clamp(20px,3.4vw,56px)}}")
     main = [b for b in body if '<footer' not in b]; foot = [b for b in body if '<footer' in b]
     under = ''.join(foot).replace('<footer class="', '<footer class="dv-under ', 1)   # named outside the f-string: nested quotes there need Python 3.12
     return (f'<!doctype html><html lang="{e(brand.get("lang") or "en")}"{" data-eased-scroll" if plan.get("eased") else ""}><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{e(plan.get("title") or brand.get("name"))}</title>'
             f'<meta name="description" content="{e(plan.get("description"))}"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family={t["gf"]}&display=swap" rel="stylesheet">'
-            f'<style>{tokens}{CSS}{css}</style></head><body class="{e(plan.get("type") or "light-grotesk")}{" mark-drawn" if drawn else ""}{" scale-product" if quiet else ""}{" ch-" + plan["character"] if plan.get("character") in ("calm", "energetic", "warm", "refined", "playful") else ""}"><a class="skip" href="#main">Skip to content</a>'
+            f'<style>{tokens}{CSS}{css}</style></head><body class="{e(plan.get("type") or "light-grotesk")}{" mark-drawn" if drawn else ""}{" scale-product" if quiet else ""}{" guides" if plan.get("guides") in (True, "true") else ""}{" ch-" + plan["character"] if plan.get("character") in ("calm", "energetic", "warm", "refined", "playful") else ""}"><a class="skip" href="#main">Skip to content</a>'
             f'<div class="dv-progress" aria-hidden="true"></div><header class="bar dv-tuck"><a class="name" href="#top">{e(brand.get("name"))}</a><div class="bar-r">' + (f'<nav class="bar-links" aria-label="Primary">{links}</nav>' if links else '')
             + f'{_btn(ctx["action"])}<button class="dv-menu-btn mono" aria-expanded="false" aria-controls="menu">Menu</button></div></header>'
-            f'<nav class="dv-menu" id="menu" aria-label="Menu">{links}<a class="btn" href="{e((ctx["action"] or {}).get("url") or "#top")}">{e((ctx["action"] or {}).get("label") or "")}</a></nav>'
+            f'<nav class="dv-menu" id="menu" aria-label="Menu">{flat}<a class="btn" href="{e((ctx["action"] or {}).get("url") or "#top")}">{e((ctx["action"] or {}).get("label") or "")}</a></nav>'
             f'<main id="main" class="dv-sheet">{"".join(main)}</main>{under}<div class="dv-grain" aria-hidden="true"></div><script>{js}</script></body></html>')
 
 
