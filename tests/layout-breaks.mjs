@@ -35,3 +35,12 @@ assert.ok(kinds(b).includes('link-dump@d'), 'a run of bare links standing in a s
 b = run('kept', '<section id="k"><h2>Toolkit</h2><details><summary>More in this section</summary><ul>' + Array.from({ length: 9 }, (_, i) => `<li><a href="https://x.test/${i}" style="text-decoration:underline">Explore page ${i}</a></li>`).join('') + '</ul></details></section>', '1440');
 assert.deepEqual(b, [], 'the same links kept behind one row a reader opens are not a dump');
 console.log('The layout detector names stacked, split, thin, clipped and overlapping text and passes a sound page');
+
+// A name set across the end of the page is seen whole: cut below the line its letters stand on, it is named; standing on the edge, it is not.
+const ending = (css, more = '') => `<section id="a" style="min-height:1400px"><h2>Above</h2><p>Enough words here to make a paragraph that is set at a readable measure on the page.</p></section><footer id="end" style="overflow:hidden;padding:0"><div style="font:700 300px/${css} Arial,sans-serif;white-space:nowrap;${more}">Name</div></footer>`;
+b = run('cut-name', ending('.8', 'margin-bottom:-.3em'), '1440');
+assert.ok(kinds(b).includes('cut-name@end'), 'a closing name cut through its letters is named: ' + JSON.stringify(b));
+b = run('hidden-name', ending('1', 'opacity:0'), '1440');
+assert.ok(kinds(b).includes('cut-name@end'), 'a closing name that never arrives is named');
+b = run('whole-name', ending('1'), '1440');
+assert.deepEqual(kinds(b), [], 'a closing name standing whole on the edge is sound: ' + JSON.stringify(b));

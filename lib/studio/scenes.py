@@ -217,7 +217,7 @@ def _index(s, ctx):
 def _close(s, ctx):
     cols = ''.join(f'<div><p class="mono">{e(c.get("title"))}</p>' + ''.join(f'<a href="{e(l["url"])}">{e(l["label"])}</a>' for l in (c.get('links') or [])[:7] if l.get('label') and l.get('url')) + '</div>' for c in (s.get('columns') or [])[:4])
     name = ctx['brand'].get('name') or ''
-    markw = f'<div class="dv-endmark" style="--chars:{max(4, len(name))}" aria-hidden="true">{e(name)}</div>' if s.get('wordmark') and 3 <= len(name) <= 14 else ''
+    markw = f'<div class="dv-endmark{" low" if re.search("[gjpqyQ,;ç]", name) else ""}" style="--chars:{max(4, len(name))}" aria-hidden="true">{e(name)}</div>' if s.get('wordmark') and 3 <= len(name) <= 14 else ''
     return (f'<footer class="sc close night" id="end"><div class="wrap"><h2>{lines(s.get("line"))}</h2><div class="acts" data-rise>{_btn(ctx["action"], "dv-magnet")}{_btn(ctx.get("action2"), "quiet")}</div>'
             + (f'<p class="mono note">{e(s["note"])}</p>' if s.get('note') else '') + (f'<div class="cols">{cols}</div>' if cols else '') + f'<p class="mono legal">{e(s.get("legal"))}</p></div>{markw}</footer>')
 
@@ -412,7 +412,7 @@ em{font-style:normal;color:var(--em)}em svg{display:none}.mark-drawn .display em
 .grp li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--line)}.grp b{font-weight:500;font-size:clamp(17px,1.4vw,21px)}.grp small{display:block;color:var(--mute);font-size:14px;margin-top:3px}.grp .pr{font-family:var(--mono);font-size:14px;white-space:nowrap}.carte .acts{margin-top:clamp(32px,4vw,56px)}
 .visit-in{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(32px,5vw,96px);align-items:end}.visit .acts{margin-top:clamp(28px,4vw,56px)}
 /* statement, rooms, steps, voices, faq */
-.thesis{font-family:var(--display);font-weight:var(--dw);letter-spacing:var(--dls);text-transform:var(--dcase);line-height:1.06;font-size:clamp(30px,4.6vw,84px);max-width:22ch;text-wrap:balance}.statement .note{margin-top:clamp(24px,3vw,44px)}
+.thesis{font-family:var(--display);font-weight:var(--dw);letter-spacing:var(--dls);text-transform:var(--dcase);line-height:1.06;font-size:clamp(30px,4.6vw,84px);max-width:30ch;text-wrap:pretty}.statement .note{margin-top:clamp(24px,3vw,44px)}
 .h2s{font-size:min(clamp(36px,5.2vw,92px),calc((100vw - 2 * var(--pad)) / var(--lw,8) * var(--k)))}.rooms .lede{margin-top:clamp(20px,2.4vw,36px)}.rooms .acts{margin-top:clamp(20px,2.4vw,36px)}
 .dv-split-flow figure{margin:0}.dv-split-flow .dv-clip{border-radius:14px}.dv-split-flow img{width:100%}.dv-split-flow figcaption{margin-top:12px;color:var(--mute)}
 .step-row{display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,1fr));gap:clamp(24px,3vw,56px);margin-top:clamp(48px,7vw,120px);counter-reset:none}.step-row li{border-top:1px solid var(--ink);padding-top:clamp(18px,2vw,28px)}
