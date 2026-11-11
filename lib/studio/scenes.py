@@ -258,7 +258,7 @@ def _collage(s, ctx):
             + (f'<p class="lede co-say" data-rise>{e(s["say"])}</p>' if s.get('say') else '') + '</div></section>')
 
 
-@scene('open-product', name='Opening for software: a quiet line, and the product itself running off the first screen', role='open', devices=['line-rise', 'rise-stagger', 'magnet', 'frame'],
+@scene('open-product', name='Opening for software: a quiet line, and the product itself running off the first screen', role='open', devices=['line-rise', 'rise-stagger', 'magnet', 'frame', 'lift'],
        needs='one real screenshot of the product: a wide one at least 1000 px across (shown in a window), or an upright phone screenshot (shown in a phone). A headline of 4–9 words',
        slots={'kicker': 'mono label ≤ 40 chars', 'h1': 'rows split by " / ", one *marked phrase*', 'lede': '≤ 2 sentences', 'image': 'id of the screenshot', 'alt': 'what the screenshot shows', 'align': '"left" (wide screenshot) or "centre" (phone)', 'ground': 'optional: id of one of the client\'s own wide, sharp photographs to lie behind the product'})
 def _open_product(s, ctx):
@@ -266,10 +266,10 @@ def _open_product(s, ctx):
     if not im: return ''
     tall = .42 <= (im.get('w') or 1) / max(1, im.get('h') or 1) <= .62; centre = ' centre' if s.get('align') == 'centre' or tall else ''
     g = ctx['images'].get(s.get('ground')); ground = f'<img class="op-ground" src="{g["data"]}" alt="" width="{int(g.get("w") or 1400)}" height="{int(g.get("h") or 700)}">' if g and g is not im and not g.get('shot') else ''
-    frame = (f'<figure class="dv-phone">{_shot(ctx["images"], s.get("image"), s.get("alt"))}</figure>' if tall else f'<figure class="dv-window">{_shot(ctx["images"], s.get("image"), s.get("alt"))}</figure>')
+    frame = (f'<figure class="dv-phone">{_shot(ctx["images"], s.get("image"), s.get("alt"))}</figure>' if tall else f'<figure class="dv-window dv-lift">{_shot(ctx["images"], s.get("image"), s.get("alt"))}</figure>')
     return (f'<section class="sc open open-prod{centre}" id="top"><div class="wrap"><p class="mono kicker" data-rise>{e(s.get("kicker"))}</p><h1>{lines(s.get("h1"))}</h1>'
             f'<div class="open-foot"><p class="lede" data-rise style="--i:1">{e(s.get("lede"))}</p><div class="acts" data-rise style="--i:2">{_btn(ctx["action"], "dv-magnet")}{_btn(ctx.get("action2"), "quiet")}</div></div></div>'
-            f'<div class="op-stage{" tall" if tall else ""}{" has-ground" if ground else ""}" data-rise style="--i:3">{ground}{frame}</div></section>')
+            f'<div class="op-stage{" tall" if tall else ""}{" has-ground" if ground else ""}">{ground}{frame}</div></section>')
 
 
 @scene('plans', name='The plans, side by side', role='decide', devices=['rise-stagger', 'line-rise'], needs='2–4 plans exactly as the client states them: name, price, who it is for, what is in it. Never a plan, a price or a limit the client does not publish',
@@ -530,7 +530,9 @@ em{font-style:normal;color:var(--em)}em svg{display:none}.mark-drawn .display em
 .scale-product .display{font-size:min(clamp(38px,4.7vw,80px),calc((100vw - 2 * var(--pad)) / var(--lw,8) * var(--k)));line-height:1.03}.scale-product .h2{font-size:min(clamp(30px,3.3vw,56px),calc((100vw - 2 * var(--pad)) / var(--lw,8) * var(--k)));line-height:1.06}.scale-product .thesis{font-size:clamp(24px,2.6vw,44px);line-height:1.14}.scale-product .sc{padding-block:clamp(64px,7vw,120px)}.scale-product .open-prod{padding-bottom:0}
 .op-stage.has-ground{position:relative;isolation:isolate;background:var(--night);padding-top:clamp(44px,9vw,150px)}.op-ground{position:absolute;inset:0;z-index:-1;width:100%;height:100%;object-fit:cover}.op-stage.has-ground::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,.35))}
 /* the client's character decides how much moves and how loud the type is — not its trade */
-.dv .ch-calm [data-rise]{transition-duration:.25s}.dv .ch-calm [data-rise]:not(.is-in){transform:translateY(8px)}
+.dv .scale-product [data-rise]{transition-duration:.26s}.dv .scale-product [data-rise]:not(.is-in){transform:translateY(22px)}   /* harvest-saas home pages: travel 22 px median (n=7), 248 ms; fade 258 ms (n=10) */
+.dv .ft[data-rise],.dv .pl[data-rise],.dv .b-tile[data-rise]{transition-duration:.55s;transition-delay:calc(var(--i,0) * 90ms)}.dv .ft[data-rise]:not(.is-in),.dv .pl[data-rise]:not(.is-in),.dv .b-tile[data-rise]:not(.is-in){transform:translateY(40px) scale(.985)}   /* a card is a thing that arrives: each as it enters, its neighbours a beat apart */
+.dv .ch-calm .ft[data-rise]:not(.is-in),.dv .ch-calm .pl[data-rise]:not(.is-in),.dv .ch-calm .b-tile[data-rise]:not(.is-in){transform:translateY(22px)}.dv .ch-calm .ft[data-rise],.dv .ch-calm .pl[data-rise]{transition-duration:.3s;transition-delay:calc(var(--i,0) * 60ms)}   /* a calm brand's cards arrive too, quietly: how far and how long follows the character */
 .scale-product.ch-energetic .display,.scale-product.ch-playful .display{font-size:min(clamp(44px,6.4vw,112px),calc((100vw - 2 * var(--pad)) / var(--lw,8) * var(--k)));line-height:.98}.scale-product.ch-energetic .h2,.scale-product.ch-playful .h2{font-size:min(clamp(34px,4.4vw,76px),calc((100vw - 2 * var(--pad)) / var(--lw,8) * var(--k)))}
 @media (max-width:900px){.pl-grid{grid-template-columns:minmax(0,1fr)}.pl-for{min-height:0}.op-stage{margin-inline:0;border-radius:0;max-height:none;padding-bottom:0}.op-stage.tall .dv-phone{--pw:min(72vw,300px)}.cmp tbody th{width:auto;min-width:150px}}
 .ft-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:clamp(10px,1.2vw,18px);margin-top:clamp(40px,5vw,80px)}.ft{grid-column:span 6;display:flex;flex-direction:column;gap:clamp(20px,2.4vw,36px);background:var(--ground2);border-radius:22px;padding:clamp(20px,2.4vw,36px) clamp(20px,2.4vw,36px) 0;overflow:hidden;min-height:clamp(320px,34vw,520px)}
@@ -550,6 +552,7 @@ def page(plan, images):
         meta = SCENES.get(sc.get('scene'))
         if not meta: continue
         html = meta['render'](sc.get('slots') or {}, ctx)
+        if html and sc.get('cover') in (True, 'true') and body and html.startswith('<section class="'): html = html.replace('<section class="', '<section class="dv-cover ', 1); used.add('cover')
         if html: body.append(html); used |= set(meta['devices'])
     if plan.get('eased'): used.add('eased-scroll')
     drawn = plan.get('mark') == 'drawn'; quiet = plan.get('scale') == 'product'

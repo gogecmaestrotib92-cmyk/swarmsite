@@ -24,6 +24,7 @@ HOW TO CHOOSE
 - TWO SEPARATE DECISIONS. What kind of page it is decides WHAT is shown; the client's character decides HOW. Never let the trade choose the look: a sports-prediction product and a bank's API are both software and must not look alike.
 - Character first. Read EVIDENCE.brand.character (measured on the client's page: how it sets its headline, its ground, its accent), its photographs and its words, then state "character" and "character_why". Type system, scheme and movement follow the character: energetic → "condensed-caps" or "tight-bold", the client's dark ground when it has one, its vivid accent, "kinetic-line" or "rail" welcome; calm → "light-grotesk" or "wide-geometric", few scenes, nothing that slides; warm → "soft-serif"; refined → "display-serif"; playful → "wide-geometric" or "tight-bold" with the accent used freely. Keep the client's own ground: a brand that lives on black is not moved to white paper, nor the reverse, unless a variant is told to differ in scheme.
 - Software (an app, a SaaS product, a tool for developers) takes "scale": "product" and opens on "open-product" when there is a real screenshot of it: the product is the picture and the line is short. When the client has a wide photograph of its own world (a stadium, a kitchen, a workshop), name it as the "ground" of "open-product" so the product stands in that world. Its plans go in "plans" and, when the client publishes a feature comparison, "compare" — only what the client states, never a price, a limit or a plan of your own. A calm software page leaves out "kinetic-line", "rail" and the closing wordmark; an energetic one may use them.
+- Movement the visitor makes happen: set "cover": true on one or two scenes where the argument turns (after the product has been shown, before the plans or the proof) — that scene slides up over the one before it. The product in "open-product" rises into place by itself. Cards arrive one at a time.
 - "features" shows three to five things the product does, each in a card with its own real screenshot or crop — use it whenever a software client has three or more screenshots; it replaces icon lists. "held-product" is for claims that need to be read one at a time.
 - The first screen always shows a picture when the client has one: a place opens on "open-picture", software on "open-product". "open-statement" is for a client with no usable picture at all.
 - In SEO-safe jobs the h1 keeps at least half of the content words of the client's own h1 (EVIDENCE.h1). Write the stronger line around those words; do not move them to the label above.
@@ -54,7 +55,7 @@ TOOL = {'name': 'compose_page', 'description': 'The whole page as a plan.', 'inp
     'why': {'type': 'string', 'description': 'why this type system and scheme for this client, in two sentences'},
     'nav': {'type': 'array', 'items': {'type': 'object', 'properties': {'label': {'type': 'string'}, 'url': {'type': 'string'}}}},
     'action': {'type': 'object', 'properties': {'label': {'type': 'string'}, 'url': {'type': 'string'}}}, 'action2': {'type': 'object', 'properties': {'label': {'type': 'string'}, 'url': {'type': 'string'}}},
-    'scenes': {'type': 'array', 'minItems': 5, 'maxItems': 9, 'items': {'type': 'object', 'required': ['scene', 'moves', 'slots'], 'properties': {'scene': {'type': 'string', 'enum': list(S.SCENES)}, 'moves': {'type': 'string', 'description': 'how this scene moves the argument forward'}, 'slots': {'type': 'object'}}}}}}}
+    'scenes': {'type': 'array', 'minItems': 5, 'maxItems': 9, 'items': {'type': 'object', 'required': ['scene', 'moves', 'slots'], 'properties': {'scene': {'type': 'string', 'enum': list(S.SCENES)}, 'moves': {'type': 'string', 'description': 'how this scene moves the argument forward'}, 'cover': {'type': 'boolean', 'description': 'true: this scene slides up over the one before it, which stays in place — once or twice a page, where the argument turns; never the first scene, never two in a row'}, 'slots': {'type': 'object'}}}}}}}
 
 
 known_quotes = []
@@ -118,6 +119,8 @@ def check(plan, page, ev, allowed, images):
                 im = images.get(it.get('image'))
                 if im is None: bad['pictures'].append(f'"features": {it.get("image")} is not a picture of this client — every card holds a real screenshot')
                 elif im.get('soft') or im.get('gen'): bad['pictures'].append(f'"features": {it.get("image")} is soft or generated — a card holds the real interface, crisp')
+    covers = [k for k, sc in enumerate(scenes_) if sc.get('cover') in (True, 'true')]
+    if len(covers) > 2 or 0 in covers or any(b - a == 1 for a, b in zip(covers, covers[1:])): bad['structure'].append('"cover" is for one or two scenes where the argument turns: not the first scene, not two in a row')
     roles = [S.SCENES[s['scene']]['role'] for s in plan.get('scenes') or [] if s.get('scene') in S.SCENES]
     if roles.count('open') != 1 or roles[:1] != ['open']: bad['structure'].append('exactly one opening scene, first')
     if roles.count('close') != 1 or roles[-1:] != ['close']: bad['structure'].append('exactly one close, last')

@@ -322,6 +322,24 @@ device(id='frame', name='A window or a phone around a real screenshot', kind='me
 .dv-phone{--pw:300px;position:relative;margin:0;width:min(100%,var(--pw));padding:calc(var(--pw) * .032);border-radius:calc(var(--pw) * .16);background:#0c0c0e;box-shadow:inset 0 0 0 1px rgba(255,255,255,.16),0 0 0 1px rgba(0,0,0,.5)}.dv-phone img{display:block;width:100%;height:auto;border-radius:calc(var(--pw) * .13)}.dv-phone::after{content:"";position:absolute;left:50%;top:calc(var(--pw) * .06);width:27%;height:calc(var(--pw) * .07);transform:translateX(-50%);border-radius:99px;background:#0c0c0e}""",
        js="")
 
+device(id='lift', name='The product rises and grows into place as the page moves', kind='scroll',
+       sees='The window with the product starts a little small and low and comes up to full size while you scroll toward it.',
+       measured={'source': 'harvests of 2026-11-11 (bench/runs/_research/harvest-apps, harvest-saas)', 'pages_with_something_scaling_with_scroll': '11 of 20 app pages (median 3 elements), 2 of 14 SaaS home pages', 'note': 'that things scale with scroll is measured; our amounts (6% and 56 px) are not copied from one page'},
+       needs='one framed screenshot', use='the product on its first appearance', avoid='more than once a page; phones (it simply stands there)',
+       pairs=['frame'], markup='<figure class="dv-window dv-lift">…</figure>',
+       css=""".dv-lift{transform-origin:50% 100%;will-change:transform}.dv .dv-lift{transform:translate3d(0,calc((1 - var(--g,1)) * 56px),0) scale(calc(.94 + var(--g,1) * .06))}
+@media (max-width:700px),(prefers-reduced-motion:reduce){.dv .dv-lift{transform:none}}""",
+       js="if(!calm)onScroll(()=>each('.dv-lift',f=>f.style.setProperty('--g',Math.min(1,progress(f)*2.6).toFixed(3))));")
+
+device(id='cover', name='A section that slides over the one before it', kind='transition',
+       sees='The section you were reading stays where it is, and the next one comes up over it like a sheet with rounded shoulders.',
+       measured={'source': 'harvests of 2026-11-11', 'pages_holding_something_while_scrolling': '14 of 23 app pages, 5 of 14 SaaS home pages', 'held_for_screens_typical': [0.5, 3], 'note': 'that sections are held is measured; this particular form (the next section covering it) is seen on them, its radius and timing are ours'},
+       needs='two sections one after the other; the second opens a new subject', use='once or twice a page, where the argument turns', avoid='the first scene; two in a row; phones and reduced motion (the sections simply follow each other)',
+       pairs=['rise-stagger'], markup='<section>…</section><section class="dv-cover">…</section>',
+       css=""".dv-cover{position:relative;z-index:1}.dv .dv-covered{position:sticky;z-index:0}.dv .dv-cover.is-cover{border-radius:clamp(20px,2.4vw,36px) clamp(20px,2.4vw,36px) 0 0;box-shadow:0 -1px 0 var(--line,rgba(0,0,0,.12)),0 -30px 60px -30px rgba(0,0,0,.28)}.dv .dv-cover.is-cover:not(.night):not(.stage){background:var(--paper)}
+.dv .dv-covered~*{position:relative;z-index:1}.dv .dv-covered~*:not(.night):not(.stage):not(.dv-cover){background:var(--paper)}   /* everything after the held section lies over it: a held section that shows through what follows is a fault (seen on the first recording, 2026-11-11) */""",
+       js="each('.dv-cover',c=>{const p=c.previousElementSibling;if(!p)return;const set=()=>{const on=!calm&&innerWidth>900&&p.offsetHeight<=innerHeight*2.2;c.classList.toggle('is-cover',on);p.classList.toggle('dv-covered',on);p.style.top=on?Math.min(0,innerHeight-p.offsetHeight)+'px':''};set();addEventListener('resize',set)});")
+
 device(id='tilt', name='A card that leans under the pointer', kind='pointer',
        sees='Moving over a card, it tips a few degrees toward the cursor as if it had weight, and settles when the pointer leaves.',
        measured=None, seen='4 mentions in the technique survey (rank 64, "3D tilt card")', survey=True,
@@ -388,9 +406,10 @@ def demo(ids=None):
         'focus-in': '<p class="lede" data-focus>A paragraph that comes into focus as it enters the screen, and stays sharp once it has.</p>',
         'draw': '<p class="big dv-lines"><span class="dv-ln"><span>A line <em class="dv-draw">drawn<svg viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true"><path d="M1 8C16 3 31 11 50 6S84 3 99 7" pathLength="1"/></svg></em> under it</span></span></p>',
         'frame': f'<div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:32px;align-items:start"><figure class="dv-window"><img src="{pic(1200, 750, "3a6ff2")}" alt="" width="1200" height="750"></figure><figure class="dv-phone" style="--pw:clamp(110px,22vw,256px)"><img src="{pic(390, 844, "2aa66b")}" alt="" width="390" height="844"></figure></div>',
+        'lift': f'<figure class="dv-window dv-lift"><img src="{pic(1600, 800, "7a4de0")}" alt="" width="1600" height="800"></figure>',
         'tilt': '<div class="grid">' + ''.join(f'<article class="card dv-tilt"><p class="mono">0{k + 1}</p><h2>{t}</h2></article>' for k, t in enumerate(('Leans', 'Under the', 'Pointer'))) + '</div>',
         'end-mark': '<div class="dv-endmark" style="--chars:7" aria-hidden="true">Library</div>'}
-    order = ['overlay-menu', 'line-rise', 'rise-stagger', 'fact-ticker', 'read-along', 'count-up', 'held-index', 'held-pictures', 'side-rail', 'stack-cards', 'grow-to-bleed', 'depth', 'slides', 'ground-shift', 'peek', 'draw', 'frame', 'kinetic', 'letters', 'focus-in', 'tilt', 'end-mark']
+    order = ['overlay-menu', 'line-rise', 'rise-stagger', 'fact-ticker', 'read-along', 'count-up', 'held-index', 'held-pictures', 'side-rail', 'stack-cards', 'grow-to-bleed', 'depth', 'slides', 'ground-shift', 'peek', 'draw', 'frame', 'lift', 'kinetic', 'letters', 'focus-in', 'tilt', 'end-mark']
     body = ''.join(f'<section id="{i}"><p class="mono tag">{i}</p>{blocks[i]}</section>' for i in order if i in ids and i in blocks)
     page_css = """*{box-sizing:border-box}body{margin:0;--ink:#101421;--paper:#fff;--accent:#ff488b;font:18px/1.5 'Geist',system-ui,sans-serif;color:var(--ink);background:var(--paper)}
 section{padding:clamp(56px,9vw,140px) clamp(20px,2.8vw,40px)}.big{font-weight:300;font-size:clamp(44px,6vw,104px);line-height:1;letter-spacing:-.03em;margin:0}.huge span{font-weight:300;font-size:clamp(56px,11vw,180px);letter-spacing:-.04em;white-space:nowrap}
