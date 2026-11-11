@@ -137,11 +137,11 @@ device(id='figure-bars', name='Figures drawn as bars that fill', kind='data',
        js="each('.dv-bars',b=>seen.observe(b));")
 
 device(id='end-mark', name='The name set across the whole footer', kind='text',
-       sees='At the very end the brand name fills the width of the screen, cut off slightly by the bottom edge.',
+       sees='At the very end the brand name fills the width of the screen and stands whole on the bottom edge.',
        measured=None, seen='on several of the twelve measured references as a closing wordmark; one option among closings, not a default',
        needs='a brand name of 3–14 characters', use='a page that ends quietly and wants one last gesture', avoid='long names; pages that already close on a large line',
        pairs=[], markup='<div class="dv-endmark" style="--chars:9" aria-hidden="true">Brand name</div>',
-       css=".dv-endmark{font-weight:500;line-height:.8;letter-spacing:-.04em;white-space:nowrap;text-align:center;overflow:hidden;font-size:calc(165vw / var(--chars,10));margin-bottom:-.12em}",
+       css=".dv-endmark{font-weight:500;line-height:1;letter-spacing:-.04em;white-space:nowrap;text-align:center;overflow-x:clip;font-size:calc(165vw / var(--chars,10));margin-bottom:-.06em}.dv-endmark.low{line-height:1.22;margin-bottom:0}",
        js="")
 
 device(id='peek', name='A picture that follows the pointer over a list', kind='pointer',
