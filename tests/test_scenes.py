@@ -38,3 +38,33 @@ def test_text_is_readable_in_every_scheme_for_any_accent():
 def test_an_empty_slot_draws_nothing_and_a_picture_that_is_not_there_is_not_drawn():
     page = S.page({**PLAN, 'scenes': [{'scene': 'open-picture', 'slots': {'h1': 'A / line', 'image': 'missing'}}, {'scene': 'close', 'slots': {'line': 'End'}}]}, {})
     assert '<img' not in page and 'undefined' not in page and 'None' not in page
+
+
+MORE = [{'scene': 'scatter', 'slots': {'h2': 'Recent / work', 'items': [{'image': f'p{k}', 'title': f'Piece {k}', 'tag': 'tag'} for k in range(4)]}},
+        {'scene': 'bento', 'slots': {'h2': 'What / is here', 'tiles': [{'title': 'First', 'figure': '120', 'image': 'p0'}, {'title': 'Second', 'say': 's'}, {'title': 'Third'}, {'title': 'Fourth', 'say': 's'}]}},
+        {'scene': 'kinetic-line', 'slots': {'rows': ['Made by', 'hand here']}}]
+PICS = {f'p{k}': {'data': f'https://x.test/{k}.jpg', 'w': 1600, 'h': 1100} for k in range(4)}
+
+
+def test_the_looser_scenes_draw_with_pictures_and_stay_whole_without_them():
+    plan = {**PLAN, 'scenes': [PLAN['scenes'][0]] + MORE + [PLAN['scenes'][-1]]}
+    for scheme in S.SCHEMES:
+        page = S.page({**plan, 'scheme': scheme}, PICS)
+        assert page.count('dv-k') >= 2 and page.count('dv-tilt') >= 3 and 'b-grid' in page and page.count('<img') >= 4, scheme
+    bare = S.page(plan, {})
+    assert '<img' not in bare and 'b-grid' in bare and 'undefined' not in bare and 'None' not in bare
+    assert 'scatter' not in bare.split('</style>')[-1], 'a layout of pictures with no pictures is not drawn'
+
+
+def test_a_kinetic_line_needs_two_rows_and_every_page_folds_over_its_footer():
+    page = S.page({**PLAN, 'scenes': [PLAN['scenes'][0], {'scene': 'kinetic-line', 'slots': {'rows': ['Alone']}}, PLAN['scenes'][-1]]}, {})
+    body = page.split('</style>')[-1]
+    assert 'dv-kinetic' not in body and 'dv-sheet' in body and 'dv-under' in body and 'dv-grain' in body
+
+
+def test_the_surface_that_leads_never_melts_into_the_page():
+    """On a night page the night is the page itself: a tile drawn in it would vanish (seen on a real composition)."""
+    for accent in ('#2af6a0', '#ffe600', '#0a2bff', '#ff488b', '#4a3fd8', '#7ab030'):
+        for scheme in S.SCHEMES:
+            p = S.palette(accent, '#0b0b0d', scheme)
+            assert S.contrast(p['lead'], p['paper']) >= 2.2 and S.contrast(p['on_lead'], p['lead']) >= 4.5, (accent, scheme, p)

@@ -26,9 +26,16 @@ def test_bundle_carries_each_device_once_and_the_demo_uses_them():
     css, js = R.bundle(['line-rise', 'held-index'])
     assert css.count('.dv-held{display:grid') == 1 and '.dv-rail' not in css and 'dv-held' in js
     page = R.demo()
-    assert all(f'id="{i}"' in page for i in ('line-rise', 'held-index', 'stack-cards', 'side-rail')) and page.count('<h1') == 1
+    assert all(f'id="{i}"' in page for i in ('line-rise', 'held-index', 'stack-cards', 'side-rail', 'kinetic', 'letters', 'focus-in', 'tilt')) and page.count('<h1') == 1
 
 
 def test_the_catalogue_is_what_a_builder_reads():
     cat = R.catalogue()
     assert len(cat) == len(R.DEVICES) and all('css' not in c and 'js' not in c and c['markup'] for c in cat)
+
+
+def test_a_device_that_moves_stands_still_for_a_visitor_who_asked_for_less_motion():
+    """Pointer and scroll-driven devices read the visitor's setting through `calm` or a media query; none moves regardless."""
+    for i in ('kinetic', 'letters', 'tilt', 'focus-in'):
+        d = R.DEVICES[i]
+        assert 'calm' in (d.get('js') or '') or 'prefers-reduced-motion' in d['css'], i

@@ -17,7 +17,7 @@ common practice and says so — it is a candidate until a harvest confirms its n
 Shared tokens a page provides: --ink, --paper, --accent, --ease (default cubic-bezier(.2,.7,.2,1))."""
 
 BASE_CSS = """
-:root{--ease:cubic-bezier(.2,.7,.2,1)}
+:root{--ease:cubic-bezier(.22,1,.36,1);--spring:cubic-bezier(.2,.9,.3,1.3)}   /* both measured on squared-media.nl 2026-11-11: the settle used for most movement, the overshoot used on small controls */
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 @media (prefers-reduced-motion:reduce){.dv [data-rise],.dv .dv-lines .dv-ln>span,.dv .dv-bars .b i{opacity:1!important;transform:none!important}}
 """
@@ -270,6 +270,55 @@ device(id='held-pictures', name='Words held while pictures pass', kind='scroll',
 @media (max-width:900px){.dv-split{grid-template-columns:minmax(0,1fr)}.dv-split-side{position:static}}""",
        js="")
 
+device(id='kinetic', name='Rows of a huge line that slide apart as you scroll', kind='text',
+       sees='A statement set in two or three very large rows: as the page moves, the rows slide sideways in opposite directions.',
+       measured={'source': 'squared-media.nl, scroll, 2026-11-11', 'per_px_scrolled': [1.67, 2.01], 'screens_wide': [0.53, 0.69], 'width_px_from_to': [[1158, 879], [1158, 542]], 'display_px': 216, 'leading': 0.84, 'tracking_em': -0.06,
+                 'note': 'theirs moves about two pixels a pixel and narrows; ours moves a fifth of that so the words stay readable'},
+       needs='a statement of 2–3 rows of 1–3 words each', use='one moment in a page — the thesis or the close', avoid='long sentences; twice on a page; with the sideways rail',
+       pairs=['line-rise'], markup='<p class="dv-kinetic"><span class="dv-k">Row one</span><span class="dv-k">Row two</span></p>',
+       css=".dv-kinetic{overflow:hidden}.dv-k{display:block;white-space:nowrap;will-change:transform}@media (max-width:700px),(prefers-reduced-motion:reduce){.dv-k{transform:none!important;white-space:normal}}",
+       js="if(!calm)onScroll(()=>each('.dv-kinetic',k=>{const t=progress(k)-.5;[...k.children].forEach((r,i)=>{r.style.transform=`translate3d(${(i%2?-1:1)*t*innerWidth*.36}px,0,0)`})}));")
+
+device(id='letters', name='A word that arrives letter by letter', kind='text',
+       sees='A short display word assembles itself, each letter rising into place a moment after the one before.',
+       measured=None, seen='19 mentions in the technique survey (rank 23, "character split stagger"); timings not measured — ours staggers 28 ms a letter', survey=True,
+       needs='one to three words, at most 18 letters', use='a name, a number-word, a single claim', avoid='sentences; more than once in view',
+       pairs=['rise-stagger'], markup='<span class="dv-letters">Word</span>',
+       css=".dv-letters .c{display:inline-block;white-space:pre}.dv .dv-letters .c{transform:translateY(.6em);opacity:0;transition:transform .5s var(--ease),opacity .35s ease;transition-delay:calc(var(--n) * 28ms)}.dv .dv-letters.is-in .c{transform:none;opacity:1}",
+       js="each('.dv-letters',w=>{if(calm||w.children.length)return;const t=w.textContent;if(t.length>24)return;w.setAttribute('aria-label',t);w.innerHTML=[...t].map((c,i)=>`<span class=\"c\" aria-hidden=\"true\" style=\"--n:${i}\">${c===' '?' ':c.replace(/[&<>]/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[x]))}</span>`).join('');seen.observe(w)});")
+
+device(id='focus-in', name='Text that comes into focus', kind='reveal',
+       sees='A block of text arrives slightly blurred and sharpens as it settles.',
+       measured=None, seen='2 mentions in the technique survey (rank 77, "scroll-blur text reveal"); ours clears 8 px of blur in 0.6 s', survey=True,
+       needs='a short paragraph or a caption', use='one or two quiet passages', avoid='long text; everything on a page',
+       pairs=['line-rise'], markup='<p data-focus>…</p>',
+       css=".dv [data-focus]{filter:blur(8px);opacity:0;transition:filter .6s ease,opacity .45s ease}.dv [data-focus].is-in{filter:none;opacity:1}@media (prefers-reduced-motion:reduce){.dv [data-focus]{filter:none!important;opacity:1!important}}",
+       js="each('[data-focus]',el=>seen.observe(el));")
+
+device(id='grain', name='A fine grain over the whole page', kind='background',
+       sees='Flat grounds have a barely visible photographic grain, so large areas of colour do not look like a screen fill.',
+       measured=None, seen='3 mentions in the technique survey (rank 74); on flat single-ground pages it is what keeps a large field from reading as empty', survey=True,
+       needs='nothing', use='pages of one or two flat grounds with large type', avoid='pages full of photographs (they bring their own)',
+       pairs=[], markup='<div class="dv-grain" aria-hidden="true"></div>',
+       css=".dv-grain{position:fixed;inset:0;z-index:80;pointer-events:none;opacity:.07;mix-blend-mode:multiply;background-image:url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .9 0'/></filter><rect width='180' height='180' filter='url(%23n)'/></svg>\")}",
+       js="")
+
+device(id='tilt', name='A card that leans under the pointer', kind='pointer',
+       sees='Moving over a card, it tips a few degrees toward the cursor as if it had weight, and settles when the pointer leaves.',
+       measured=None, seen='4 mentions in the technique survey (rank 64, "3D tilt card")', survey=True,
+       needs='cards with a picture or a strong figure', use='two to five cards in a row', avoid='touch screens (nothing happens); cards of text only',
+       pairs=['rise-stagger'], markup='<article class="dv-tilt">…</article>',
+       css=".dv-tilt{transition:transform .5s var(--ease);transform-style:preserve-3d;will-change:transform}",
+       js="if(!calm&&matchMedia('(hover:hover)').matches)each('.dv-tilt',c=>{c.addEventListener('pointermove',e=>{const r=c.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;c.style.transform=`perspective(900px) rotateX(${(-y*5).toFixed(2)}deg) rotateY(${(x*6).toFixed(2)}deg)`});c.addEventListener('pointerleave',()=>c.style.transform='')});")
+
+device(id='curtain-foot', name='A footer the page lifts off', kind='transition',
+       sees='At the end the page slides up like a sheet and the footer is found lying underneath it, already in place.',
+       measured=None, seen='7 mentions in the technique survey (rank 49, "footer reveal")', survey=True,
+       needs='a footer no taller than the screen', use='the close of a long page', avoid='tall footers (the script leaves those alone); pages with a fixed bottom bar',
+       pairs=['end-mark'], markup='<main class="dv-sheet">…</main><footer class="dv-under">…</footer>',
+       css=".dv-sheet{position:relative;z-index:2;background:var(--paper)}.dv .dv-under.is-under{position:sticky;bottom:0;z-index:1}",
+       js="each('.dv-under',f=>{const set=()=>f.classList.toggle('is-under',!calm&&f.offsetHeight<=innerHeight&&innerWidth>900);set();addEventListener('resize',set)});")
+
 # What the measured pages have in common as whole pages — the builder's ground rules, each with its evidence.
 RULES = {
     'source': 'sixteen Sites of the Month measured 2026-11-11 with lib/qa/inspect.mjs at 1440; ranges are across sites; bench/runs/_research/harvest/SUMMARY.md',
@@ -315,8 +364,12 @@ def demo(ids=None):
         'read-along': '<p class="dv-read big" style="max-width:22ch">A paragraph set large lights up word by word as it crosses the screen, at the pace of the hand that scrolls it, and stands whole when motion is unwanted.</p>',
         'held-pictures': '<div class="dv-split"><div class="dv-split-side"><p class="big">Words held</p><p class="lede"><a class="btn dv-roll" href="#end">A rolling label</a></p></div><div class="dv-split-flow">' + ''.join(f'<figure class="dv-clip" style="margin:0;border-radius:15px"><img src="{pic(1200, 800, c)}" alt="" width="1200" height="800"></figure>' for c in ('e85d3a', '2aa66b', '7a4de0')) + '</div></div>',
         'peek': '<ul class="dv-peek list">' + ''.join(f'<li><a href="#end" data-peek="{pic(800, 600, c)}">{t}</a></li>' for t, c in (('First piece of work', 'e85d3a'), ('Second piece of work', '2aa66b'), ('Third piece of work', '7a4de0'), ('Fourth piece of work', '222222'))) + '</ul>',
+        'kinetic': '<p class="dv-kinetic big"><span class="dv-k">Rows that</span><span class="dv-k">slide apart</span></p>',
+        'letters': '<p class="big"><span class="dv-letters">Letter by letter</span></p>',
+        'focus-in': '<p class="lede" data-focus>A paragraph that comes into focus as it enters the screen, and stays sharp once it has.</p>',
+        'tilt': '<div class="grid">' + ''.join(f'<article class="card dv-tilt"><p class="mono">0{k + 1}</p><h2>{t}</h2></article>' for k, t in enumerate(('Leans', 'Under the', 'Pointer'))) + '</div>',
         'end-mark': '<div class="dv-endmark" style="--chars:7" aria-hidden="true">Library</div>'}
-    order = ['overlay-menu', 'line-rise', 'rise-stagger', 'fact-ticker', 'read-along', 'count-up', 'held-index', 'held-pictures', 'side-rail', 'stack-cards', 'grow-to-bleed', 'depth', 'slides', 'ground-shift', 'peek', 'end-mark']
+    order = ['overlay-menu', 'line-rise', 'rise-stagger', 'fact-ticker', 'read-along', 'count-up', 'held-index', 'held-pictures', 'side-rail', 'stack-cards', 'grow-to-bleed', 'depth', 'slides', 'ground-shift', 'peek', 'kinetic', 'letters', 'focus-in', 'tilt', 'end-mark']
     body = ''.join(f'<section id="{i}"><p class="mono tag">{i}</p>{blocks[i]}</section>' for i in order if i in ids and i in blocks)
     page_css = """*{box-sizing:border-box}body{margin:0;--ink:#101421;--paper:#fff;--accent:#ff488b;font:18px/1.5 'Geist',system-ui,sans-serif;color:var(--ink);background:var(--paper)}
 section{padding:clamp(56px,9vw,140px) clamp(20px,2.8vw,40px)}.big{font-weight:300;font-size:clamp(44px,6vw,104px);line-height:1;letter-spacing:-.03em;margin:0}.huge span{font-weight:300;font-size:clamp(56px,11vw,180px);letter-spacing:-.04em;white-space:nowrap}
