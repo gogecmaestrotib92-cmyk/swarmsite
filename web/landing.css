@@ -1,0 +1,126 @@
+/* Swarmsite landing — our own page, held to what the engine asks of a client's page.
+   Rules: SWARMSITE_STUDIO_QUALITY_STANDARD.md (lib/qa/standard.py). Devices: lib/devices/registry.py, inlined in index.html
+   before this file, so what is written here can adjust them. Scale and movement are the engine's for software with a
+   playful character (lib/studio/scenes.py: scale-product, reveals of 22 px / 260 ms). Gate: tests/landing-layout.mjs. */
+:root{--paper:#f1f1ee;--ink:#141414;--accent:#833b46;--on-accent:#fff;--em:#833b46;--rose:#edc5be;--mute:#66665f;--line:rgba(20,20,20,.14);
+  --night:#171717;--on-night:#f6f6f2;--lead:#171717;--on-lead:#f6f6f2;--sans:'Instrument Sans',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;--brand:'Shrikhand',Georgia,serif;
+  --pad:clamp(20px,4vw,64px)}
+*{box-sizing:border-box;margin:0}html{-webkit-text-size-adjust:100%;scroll-padding-top:96px;scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{font-family:var(--sans);font-size:clamp(15px,1.11vw,17px);line-height:1.5;color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased;overflow-x:clip;font-variant-numeric:tabular-nums;font-kerning:normal;text-rendering:optimizeLegibility}
+a{color:inherit;text-decoration:none}img{display:block;max-width:100%;height:auto}ul,ol{list-style:none;padding:0}button,input{font:inherit;color:inherit}
+h1,h2,h3{font-weight:400;text-wrap:balance}p{text-wrap:pretty}::selection{background:var(--accent);color:var(--on-accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}.night :focus-visible,.pl.is-marked :focus-visible{outline-color:var(--rose)}.urlbox :focus-visible{outline-color:var(--accent)}   /* a ring is seen on the ground it is drawn on: rose on the night, the accent on the white field wherever that stands */
+.skip{position:absolute;left:-999px;display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;background:var(--paper);color:var(--ink)}.skip:focus{left:16px;top:16px;z-index:99}
+.wrap{padding-inline:var(--pad);max-width:1800px;margin-inline:auto}.sc{padding-block:clamp(96px,12.5vw,210px)}.anchor{height:0}section[tabindex="-1"]:focus,.anchor:focus,.op-wrap:focus{outline:0}   /* where a link inside the page lands: focus moves there, and a whole section is not ringed */
+.mono{font-family:var(--mono);font-size:11.5px;line-height:1.35;letter-spacing:.09em;text-transform:uppercase}.kicker{color:var(--mute);margin-bottom:clamp(20px,2.4vw,36px)}
+em{font-style:normal;color:var(--em)}
+.display,.h2{display:block;letter-spacing:-.055em;line-height:.98}
+.display{font-size:clamp(44px,min(6.6vw,11svh),118px)}   /* sized by the width and by the height of the screen, so the product still enters a short one */
+.h2{font-size:clamp(38px,5.4vw,88px)}.h3x{font-size:clamp(30px,3.6vw,60px);letter-spacing:-.05em;line-height:1.02}
+.display .dv-ln,.h2 .dv-ln{padding-top:.06em;margin-top:-.06em}.dv-ln:has(.dv-draw){padding-bottom:.34em;margin-bottom:-.34em}.display em.dv-draw{color:inherit;white-space:nowrap}
+.lede{font-size:clamp(16px,1.3vw,20px);line-height:1.5;color:var(--mute);max-width:40ch}
+/* software, playful: things arrive over 22 px in 260 ms (harvest-saas, lib/studio/scenes.py); a card is a thing that arrives a beat after its neighbour */
+.dv [data-rise]{transition-duration:.26s}.dv [data-rise]:not(.is-in){transform:translateY(22px)}.dv .pl[data-rise],.dv .step-row li[data-rise]{transition-duration:.4s;transition-delay:calc(var(--i,0) * 90ms)}
+
+/* actions answer a press; a target is a finger wide */
+.pill{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:44px;padding:0 20px;border-radius:999px;border:0;background:var(--ink);color:var(--paper);font-weight:500;font-size:15px;white-space:nowrap;cursor:pointer;transition:transform .2s var(--ease),background-color .2s}
+.pill.accent{background:var(--accent);color:var(--on-accent)}.pill.light{background:var(--on-lead);color:var(--lead)}.pill:active{transform:scale(.97)}
+@media (hover:hover){.pill:hover{background:#2e2e2e}.pill.accent:hover{background:#692e38}.pill.light:hover{background:#fff}}
+.text-link{display:inline-flex;align-items:center;min-height:44px;font-weight:500;background:linear-gradient(currentColor,currentColor) 0 calc(100% - 9px)/100% 1px no-repeat;transition:background-size .3s var(--ease),opacity .2s}
+@media (hover:hover){.text-link:hover{background-size:0 1px;background-position:100% calc(100% - 9px)}}.text-link:active{opacity:.6}
+
+/* the bar: two panes that float; it steps aside while a visitor reads down */
+.nav{position:fixed;inset:0 0 auto 0;z-index:50;padding-top:14px;pointer-events:none}.nav.dv-tuck.is-solid{background:none;backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none}
+.nav .wrap{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.nav .grp{pointer-events:auto;display:flex;gap:4px;align-items:center;padding:6px;border-radius:999px;background:rgba(249,249,247,.86);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 0 0 1px var(--line)}
+.nav .links{display:flex;gap:4px}.nav .grp a:not(.pill){display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:999px;font-size:14px;font-weight:500;transition:background-color .2s}
+@media (hover:hover){.nav .grp a:not(.pill):not(.brand):hover{background:rgba(20,20,20,.07)}}.nav .grp a:not(.pill):active{background:rgba(20,20,20,.12)}
+.nav .grp a.brand{font-family:var(--brand);font-weight:400;font-size:20px;line-height:1;letter-spacing:-.01em;gap:8px;padding:0 12px 0 6px}.brand .mark{width:44px;height:44px}   /* the mark is the picture the owner chose, as it was drawn (web/logo/): the crew carrying the s — never redrawn */
+.foot-brand{display:inline-flex;align-items:center;gap:12px}.disc{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:var(--paper)}.disc .mark{width:42px;height:42px}   /* drawn in ink: on the night it stands on a disc of paper */
+.nav .dv-menu-btn{display:none;border-radius:999px;background:none;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line);font-size:14px;font-weight:500}.dv-menu{display:none}
+@media (prefers-reduced-transparency:reduce),(prefers-contrast:more){.nav .grp{background:var(--paper);backdrop-filter:none;-webkit-backdrop-filter:none}}
+
+/* the first screen: the line, the field, and the product running off its foot. The field is white wherever it stands, so it keeps its own ink — on the night too. */
+.open{padding-top:clamp(96px,11svh,140px);text-align:center}.hero-label{display:inline-flex;align-items:center;gap:10px;color:var(--mute)}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px rgba(131,59,70,.11)}
+.open .display{margin-top:clamp(18px,2.4vw,32px)}.open .sub{margin:clamp(16px,2vw,26px) auto 0;max-width:48ch}
+.url-stage{position:relative;max-width:640px;margin:clamp(70px,8svh,78px) auto 0}
+.urlbox{--ink:#141414;--mute:#66665f;color:var(--ink);position:relative;z-index:2;display:flex;align-items:center;gap:8px;padding:6px 6px 6px 22px;border-radius:999px;background:#fff;box-shadow:0 0 0 1px var(--line),0 18px 50px rgba(17,17,17,.05);text-align:left;transition:box-shadow .2s}
+.urlbox:focus-within{box-shadow:0 0 0 1px #6f6f69,0 0 0 4px rgba(17,17,17,.06),0 18px 50px rgba(17,17,17,.08)}.night .urlbox:focus-within{box-shadow:0 0 0 1px #fff,0 0 0 4px rgba(241,198,194,.6)}.urlbox .pre{font-family:var(--mono);font-size:13px;color:var(--mute)}
+.urlbox input{flex:1;min-width:0;min-height:44px;border:0;outline:0;background:transparent;font-weight:500;font-size:18px;color:var(--ink)}.urlbox input::placeholder{color:#6e6e68;opacity:1}
+.urlbox .pill{min-height:50px;padding:0 22px;font-size:16px}
+/* what the crew will build waits unseen; while it builds, nothing of the first screen also arrives by itself */
+.sw-pre .hero-top .hero-label,.sw-pre .hero-top .sub,.sw-pre .hero-top .urlbox,.sw-pre .hero-top h1,.sw-pre .hero-crew,.sw-pre .nav .grp{visibility:hidden}
+.pill.sw-hidden-box,.dv-menu-btn.sw-hidden-box,.nav .grp.sw-hidden-box{backdrop-filter:none;-webkit-backdrop-filter:none}.pill.sw-hidden-box,.dv-menu-btn.sw-hidden-box,.urlbox.sw-hidden-box input{visibility:hidden}.hero-crew{transition:opacity .4s}.url-stage:has(.urlbox.sw-hidden-box) .hero-crew{opacity:0}   /* from nothing: a thing not yet placed is not there at all, and the crew on the field arrives with the field */
+.sw-pre .hero-top [data-rise],.sw-building .hero-top [data-rise]{opacity:1!important;transform:none!important;transition:none!important}.sw-pre .dv-lines .dv-ln>span,.sw-building .hero-top .dv-lines .dv-ln>span{transform:none!important;transition:none!important}
+
+/* the crew: hands planted on the edge of the field, each helmet rising and looking round in its own time */
+.hero-crew{position:absolute;z-index:3;bottom:100%;left:5%;right:5%;height:0;display:flex;justify-content:space-between;pointer-events:none}
+.crew-robot{--sheet:url('/agents/peek-blue.webp');position:relative;display:block;flex:0 0 104px;width:104px;height:139px;top:-104px;pointer-events:none}
+.crew-blue{--sheet:url('/agents/peek-blue.webp')}.crew-rose{--sheet:url('/agents/peek-rose.webp')}.crew-ivory{--sheet:url('/agents/peek-ivory.webp')}.crew-sage{--sheet:url('/agents/peek-sage.webp')}
+.crew-robot:nth-child(2){--delay:-2.2s}.crew-robot:nth-child(3){--delay:-4.5s}.crew-robot:nth-child(4){--delay:-6.5s}
+.crew-robot .pose{position:absolute;inset:0;background:var(--sheet) 66.6667% 0/400% 100% no-repeat}
+.crew-robot .pose-1,.crew-robot .pose-2{z-index:2;animation:grip-left 5.2s ease-in-out infinite;animation-delay:var(--delay,0s);transform-origin:15% 68%;clip-path:inset(60% 50% 20% 0)}
+.crew-robot .pose-2{animation-name:grip-right;transform-origin:85% 68%;clip-path:inset(60% 0 20% 50%)}
+.crew-robot .pose-3{background:none;clip-path:inset(0 0 34% 0)}
+.crew-robot .pose-3::before{content:"";position:absolute;inset:0;background:var(--sheet) 66.6667% 0/400% 100% no-repeat;transform-origin:50% 64%;animation:look-over 5.2s cubic-bezier(.22,.61,.36,1) infinite;animation-delay:var(--delay,0s)}
+.hero-crew .crew-ivory{transform:scaleX(-1)}
+.hero-crew .crew-blue .pose-3::before{animation:crew-inspect 7.2s ease-in-out infinite;animation-delay:-.5s}.hero-crew .crew-rose .pose-3::before{animation:crew-listen 6.6s ease-in-out infinite;animation-delay:-2.1s}
+.hero-crew .crew-ivory .pose-3::before{animation:crew-check 8s ease-in-out infinite;animation-delay:-4.3s}.hero-crew .crew-sage .pose-3::before{animation:crew-peek-again 5.8s ease-in-out infinite;animation-delay:-3.4s}
+.hero-crew .crew-blue .pose-1{animation-duration:7.2s}.hero-crew .crew-rose .pose-2{animation-duration:6.6s}.hero-crew .crew-ivory .pose-1{animation-duration:8s}.hero-crew .crew-sage .pose-2{animation-duration:5.8s}
+@keyframes look-over{0%,9%,90%,100%{transform:translateY(23px) rotate(0)}20%,35%{transform:translateY(0) rotate(-1deg)}47%,56%{transform:translateY(1px) rotate(-5deg)}67%,76%{transform:translateY(0) rotate(3deg)}84%{transform:translateY(3px) rotate(0)}}
+@keyframes grip-left{0%,9%,90%,100%{transform:rotate(0)}17%,24%{transform:rotate(-5deg) translateY(1px)}33%,76%{transform:rotate(0)}84%{transform:rotate(-3deg)}}
+@keyframes grip-right{0%,9%,90%,100%{transform:rotate(0)}17%,24%{transform:rotate(5deg) translateY(1px)}33%,76%{transform:rotate(0)}84%{transform:rotate(3deg)}}
+@keyframes crew-inspect{0%,10%,90%,100%{transform:translateY(20px)}24%,40%{transform:translate(0,0) rotate(5deg)}52%,67%{transform:translate(-3px,1px) rotate(-7deg)}78%{transform:translate(0,0) rotate(0)}}
+@keyframes crew-listen{0%,15%,90%,100%{transform:translateY(20px)}28%,45%{transform:translate(2px,0) rotate(-8deg)}55%,72%{transform:translate(0,0) rotate(2deg)}80%{transform:translateY(2px)}}
+@keyframes crew-check{0%,20%,92%,100%{transform:translateY(20px)}33%,49%{transform:translate(0,0) rotate(8deg)}59%,67%{transform:translateY(5px) rotate(2deg)}76%{transform:translateY(0) rotate(-4deg)}}
+@keyframes crew-peek-again{0%,12%,92%,100%{transform:translateY(20px)}24%,34%{transform:translateY(0) rotate(-3deg)}44%{transform:translateY(10px) rotate(3deg)}57%,74%{transform:translate(2px,0) rotate(6deg)}82%{transform:translateY(3px)}}
+.peek{position:absolute;display:block;width:140px;height:0;pointer-events:none;z-index:4}.peek .crew-robot{width:140px;height:186.667px;top:-140px}
+.peek-side{right:-30px;top:50%;transform:rotate(-90deg)}.peek-side .crew-robot{--delay:-2.4s}.peek-closing{right:22px;top:0;z-index:1}.peek-closing .crew-robot{--delay:-4s}
+
+/* no example is shown until the engine makes one worth showing (owner, 2026-11-11): the first screen is the line, the field and the facts */
+.open{min-height:min(100svh,920px);display:flex;flex-direction:column}.open>*{min-width:0;width:100%}   /* a row that runs sideways must not widen the column that holds it */.open .hero-top{width:100%;margin-block:auto;padding-bottom:clamp(40px,7svh,90px)}
+.open-tick{padding:20px 0;color:var(--mute)}.dv-grain{opacity:.045}   /* the product's own picture stands under it: a breath of grain, not a film */
+
+/* how it works: three steps in a row, each under its own line */
+.steps{padding-top:clamp(48px,7vw,112px)}.head2{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,4fr);gap:clamp(24px,4vw,64px);align-items:end}
+.step-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(24px,3vw,56px);margin-top:clamp(56px,8vw,128px)}.step-row li{border-top:1px solid var(--ink);padding-top:clamp(18px,2vw,28px)}
+.step-row .num{display:block;color:var(--mute);margin-bottom:clamp(36px,5vw,84px)}.step-row h3{font-size:clamp(26px,2.6vw,42px);letter-spacing:-.045em;line-height:1.02}.step-row p{margin-top:12px;color:var(--mute);max-width:32ch}
+
+/* the night: the one change of ground, for what the page holds to */
+.night{position:relative;isolation:isolate;overflow:hidden;background:var(--night);color:var(--on-night);--line:rgba(246,246,242,.17);--mute:#a9a9a3;--em:#f1c6c2;--ink:var(--on-night)}
+.atmos{position:absolute;inset:0;z-index:-1;margin:0;opacity:.7}.atmos.dv-depth>img{height:100%;object-fit:cover;object-position:right center}
+.atmos::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(23,23,23,.97),rgba(23,23,23,.9) 46%,rgba(23,23,23,.42))}
+.statement{padding-block:clamp(96px,12vw,200px)}.thesis{font-size:clamp(28px,3.5vw,60px);line-height:1.1;letter-spacing:-.045em;max-width:30ch}
+
+/* what you get: two cards, the one that exists on the lead surface */
+.pl-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(10px,1.2vw,18px);margin-top:clamp(48px,6.4vw,104px)}
+.pl{display:flex;flex-direction:column;gap:14px;padding:clamp(22px,2.6vw,40px);border-radius:20px;box-shadow:inset 0 0 0 1px var(--line);min-height:clamp(320px,31vw,480px)}
+.pl.is-marked{background:var(--lead);color:var(--on-lead);box-shadow:none;--line:rgba(246,246,242,.2);--mute:#a9a9a3}.pl-name{color:var(--mute)}
+.pl h3{font-size:clamp(28px,3.1vw,50px);letter-spacing:-.05em;line-height:1}.pl-points{display:grid;gap:9px;margin-top:6px;padding-top:18px;border-top:1px solid var(--line);color:var(--mute)}
+.pl-points li{padding-left:22px;position:relative}.pl-points li::before{content:"—";position:absolute;left:0}.pl .pill,.pl .pl-note{align-self:flex-start;margin-top:auto}.pl-note{color:var(--mute);min-height:44px;display:flex;align-items:center}
+
+/* questions */
+.faq{padding-top:clamp(16px,2.4vw,40px)}.faq-in{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,8fr);gap:clamp(24px,4vw,64px)}
+.acc details{border-top:1px solid var(--line)}.acc details:last-child{border-bottom:1px solid var(--line)}
+.acc summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;gap:20px;align-items:baseline;padding:clamp(16px,1.8vw,24px) 0;font-weight:500;font-size:clamp(17px,1.5vw,22px);letter-spacing:-.015em;line-height:1.3;transition:color .2s}
+.acc summary::-webkit-details-marker{display:none}.acc summary::after{content:"+";font-family:var(--mono);color:var(--mute);transition:transform .3s var(--ease)}.acc details[open] summary::after{transform:rotate(45deg)}
+@media (hover:hover){.acc summary:hover{color:var(--mute)}}.acc summary:active{color:var(--accent)}.acc details p{color:var(--mute);max-width:62ch;padding:0 0 clamp(18px,2vw,26px)}
+
+/* the close: the field again, where the visitor now is; the page lifts off it */
+.close{padding-top:clamp(84px,10vw,150px)}.close .display em{color:var(--em)}
+.close-foot{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,640px);gap:clamp(24px,4vw,64px);align-items:end;margin-top:clamp(32px,4vw,64px)}.close-foot .url-stage{margin:0;max-width:none}
+.foot-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px 24px;margin-top:clamp(64px,8vw,120px);padding:14px 0 18px;border-top:1px solid var(--line);font-size:14px;color:var(--mute)}
+.foot-links{display:flex;gap:4px}.foot-links a{display:inline-flex;align-items:center;min-height:44px;padding:0 10px;border-radius:999px;transition:color .2s,background-color .2s}.foot-links a:last-child{margin-right:-10px}
+@media (hover:hover){.foot-links a:hover{color:var(--on-night)}}.foot-links a:active{background:rgba(246,246,242,.12)}
+
+@media (max-width:820px){
+  .nav .links,.nav .grp a.nav-faq{display:none}.dv .nav .dv-menu-btn{display:inline-flex;align-items:center}.dv .dv-menu{display:flex}.dv-menu a{font-weight:400;letter-spacing:-.045em;display:flex;align-items:center;min-height:48px}.dv-menu a.btn{color:var(--on-accent);min-height:50px;padding:0 22px}
+  .nav .grp a.brand{font-size:17px;gap:5px;padding:0 9px 0 4px}.brand .mark{width:36px;height:36px}.open{padding-top:104px}.open .sub{max-width:34ch}
+  .url-stage{margin-top:64px}.urlbox{flex-wrap:wrap;border-radius:26px;padding:10px 10px 10px 16px}.urlbox .pre{display:none}.urlbox input{flex:1 1 100%;padding:4px 0}.urlbox .pill{width:100%}
+  .hero-crew{left:2%;right:2%}.crew-robot{flex-basis:70px;width:70px;height:93.333px;top:-70px}.peek{width:100px}.peek .crew-robot{width:100px;height:133.333px;top:-100px}.peek-side{display:none}.peek-closing{right:10px}
+  .head2,.step-row,.pl-grid,.faq-in,.close-foot{grid-template-columns:minmax(0,1fr)}.head2{align-items:start}.step-row .num{margin-bottom:16px}.pl{min-height:0}.pl .pill,.pl .pl-note{margin-top:14px}
+  .close-foot .url-stage{margin-top:70px}.foot-row{justify-content:flex-start}.foot-links a:first-child{margin-left:-10px}
+}
+@media (prefers-reduced-motion:reduce){.crew-robot .pose-1,.crew-robot .pose-2,.crew-robot .pose-3::before{animation:none!important;transform:none!important}}
