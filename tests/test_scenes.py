@@ -68,3 +68,23 @@ def test_the_surface_that_leads_never_melts_into_the_page():
         for scheme in S.SCHEMES:
             p = S.palette(accent, '#0b0b0d', scheme)
             assert S.contrast(p['lead'], p['paper']) >= 2.2 and S.contrast(p['on_lead'], p['lead']) >= 4.5, (accent, scheme, p)
+
+
+def test_a_collage_takes_three_pictures_and_a_drawn_mark_is_asked_for_by_the_plan():
+    import scenes as SC
+    px = 'data:image/png;base64,iVBORw0KGgo='
+    images = {k: {'id': k, 'data': px, 'w': w, 'h': 800} for k, w in (('a', 1000), ('b', 1600), ('c', 1200))}
+    def plan(pics, **more): return {'brand': {'name': 'X', 'accent': '#2a8f5a'}, **more, 'scenes': [{'scene': 'open-statement', 'slots': {'h1': 'A place / for *everyone*'}}, {'scene': 'collage', 'slots': {'h2': 'Three / *rooms*', 'pictures': [{'image': k} for k in pics]}}, {'scene': 'close', 'slots': {'line': 'Come by'}}]}
+    two = SC.page(plan('ab'), images); three = SC.page(plan('abc', mark='drawn'), images); plain = SC.page(plan('abc'), images)
+    assert 'class="sc collage"' not in two, 'two pictures do not make a collage: the scene stands down'
+    grid = three.split('class="co"')[1]
+    assert grid.count('<figure') == 3 and grid.index('width="1600"') < grid.index('width="1200"') < grid.index('width="1000"'), 'the widest picture is the ground the others lie on'
+    assert 'mark-drawn' in three.split('<body')[1][:80] and 'stroke-dashoffset' in three and 'mark-drawn' not in plain.split('<body')[1][:80]
+    assert '<em class="dv-draw">everyone<svg' in plain and 'em svg{display:none}' in plain, 'without the plan asking, the stroke is in the markup and not shown'
+
+
+def test_a_heading_given_more_rows_than_it_holds_is_set_in_fewer():
+    import scenes as SC
+    five = SC.lines('Parque Butarque / s/n / 28918 / Leganés / Madrid', 'h2', 3)
+    assert five.count('class="dv-ln"') == 3 and '--lr:3' in five and 'Leganés' in five and 'Madrid' in five
+    assert SC.lines('First row / second row / third row', 'h2').count('class="dv-ln"') == 3
