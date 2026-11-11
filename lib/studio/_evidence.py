@@ -132,7 +132,7 @@ def evidence(d):
     links, seen = [], set()
     for a in inv.get('actions') or []:
         href, text = str(a.get('href') or ''), ' '.join(str(a.get('text') or '').split())
-        if not href.startswith('http') or not text or len(text) > 120 or (href, text.casefold()) in seen: continue
+        if not href.startswith('http') or not text or len(text) > 120 or (href, text.casefold()) in seen or re.match(r'skip to\b|saltar al?\b|ir al contenido|preskoči', text, re.I): continue   # a skip link is a control of the old page, never an action to offer
         seen.add((href, text.casefold())); links.append({'label': text, 'url': href})
     for i in images:
         if 'sharp_w' not in i:
@@ -144,7 +144,30 @@ def evidence(d):
     pictures = [{'id': i['id'], 'w': i.get('w'), 'h': i.get('h'), 'kind': 'generated atmosphere (not the product, never evidence)' if i.get('gen') else 'screenshot of the real product' if i.get('shot') else 'the client\'s own picture',
                  'note': ' '.join(str(i.get('alt') or '').split())[:140], **({'page': str(i['page'])[:60]} if i.get('page') else {}), **({'soft': f"out of focus or a frame of a video — crisp only up to about {i.get('sharp_w')} px wide: show it small, never across the screen"} if i.get('soft') else {})} for i in images]
     return {'url': inv.get('url'), 'title': inv.get('title'), 'lang': inv.get('lang'), 'factsheet': fact, 'sections': sections, 'links': links[:120],
-            'brand': {'colours': inv.get('colors'), 'type': inv.get('typography'), 'name': (inv.get('brand') or {}).get('name')}, 'pictures': pictures}, images
+            'brand': {'colours': inv.get('colors'), 'type': inv.get('typography'), 'name': (inv.get('brand') or {}).get('name'), 'character': character(inv)}, 'pictures': pictures}, images
+
+
+SERIF = re.compile(r'serif|garamond|playfair|didot|bodoni|cormorant|fraunces|canela|times|georgia|caslon|baskerville|tiempos|domaine|reckless|editorial', re.I)
+
+
+def character(inv):
+    """What the client's own page shows of its character, read off its measured type and colours — never off the name of
+    its trade. Returns the readings and what they suggest; the composer states the character itself and says why. A sports
+    product set in heavy condensed capitals on black and a ledger set in a light grotesque on white are both software."""
+    typ = (inv or {}).get('typography') or {}; h1 = typ.get('h1') or {}; col = (inv or {}).get('colors') or {}
+    def hexes(key): return [str(c.get('c')) for c in col.get(key) or [] if isinstance(c, dict) and re.fullmatch(r'#[0-9a-fA-F]{6}', str(c.get('c') or ''))]
+    def lum(h): r, g, b = (int(h[i:i + 2], 16) / 255 for i in (1, 3, 5)); return .2126 * r + .7152 * g + .0722 * b
+    def sat(h): r, g, b = (int(h[i:i + 2], 16) / 255 for i in (1, 3, 5)); return (max(r, g, b) - min(r, g, b)) / max(r, g, b) if max(r, g, b) else 0
+    font = str(h1.get('font') or '').strip('_ ').replace('_', ' ')
+    try: weight = int(float(h1.get('weight') or 400))
+    except (TypeError, ValueError): weight = 400
+    grounds = hexes('bg'); accents = [h for h in hexes('buttons') + hexes('text') if sat(h) >= .35 and .08 < lum(h) < .95]
+    dark = bool(grounds) and lum(grounds[0]) < .2; loud = str(h1.get('tt') or '').lower() == 'uppercase' or weight >= 800 or 'condensed' in font.lower() or 'impact' in font.lower()   # a bold 700 sans is ordinary; capitals, a condensed face or a black weight are a voice
+    serif = bool(SERIF.search(font)); vivid = bool(accents) and sat(accents[0]) >= .6
+    suggests = None if not h1 else 'energetic' if loud and (dark or vivid) else 'refined' if serif else 'calm' if weight <= 500 and not loud else None   # nothing measured, nothing suggested
+    return {'headline_as_the_client_sets_it': {'face': font[:60] or None, 'weight': weight, 'case': h1.get('tt') or 'none', 'px': h1.get('size')} if h1 else None,
+            'ground': {'colour': grounds[0], 'dark': dark} if grounds else None, 'accent': {'colour': accents[0], 'vivid': vivid} if accents else None,
+            'suggests': suggests, 'note': 'measured on the client\'s page; "suggests" is a reading of these three, not a rule — its photographs and its words count too'}
 
 
 DIRECTION_TOOL = {'name': 'write_direction', 'description': 'The creative direction of this one page, decided before any code.', 'input_schema': {'type': 'object', 'required': ['distinctive', 'idea', 'feeling', 'metaphor', 'type', 'palette', 'composition', 'product', 'narrative', 'interactions', 'content', 'not_this'], 'properties': {

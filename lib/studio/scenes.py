@@ -258,6 +258,54 @@ def _collage(s, ctx):
             + (f'<p class="lede co-say" data-rise>{e(s["say"])}</p>' if s.get('say') else '') + '</div></section>')
 
 
+@scene('open-product', name='Opening for software: a quiet line, and the product itself running off the first screen', role='open', devices=['line-rise', 'rise-stagger', 'magnet', 'frame'],
+       needs='one real screenshot of the product: a wide one at least 1000 px across (shown in a window), or an upright phone screenshot (shown in a phone). A headline of 4–9 words',
+       slots={'kicker': 'mono label ≤ 40 chars', 'h1': 'rows split by " / ", one *marked phrase*', 'lede': '≤ 2 sentences', 'image': 'id of the screenshot', 'alt': 'what the screenshot shows', 'align': '"left" (wide screenshot) or "centre" (phone)', 'ground': 'optional: id of one of the client\'s own wide, sharp photographs to lie behind the product'})
+def _open_product(s, ctx):
+    im = ctx['images'].get(s.get('image'))
+    if not im: return ''
+    tall = .42 <= (im.get('w') or 1) / max(1, im.get('h') or 1) <= .62; centre = ' centre' if s.get('align') == 'centre' or tall else ''
+    g = ctx['images'].get(s.get('ground')); ground = f'<img class="op-ground" src="{g["data"]}" alt="" width="{int(g.get("w") or 1400)}" height="{int(g.get("h") or 700)}">' if g and g is not im and not g.get('shot') else ''
+    frame = (f'<figure class="dv-phone">{_shot(ctx["images"], s.get("image"), s.get("alt"))}</figure>' if tall else f'<figure class="dv-window">{_shot(ctx["images"], s.get("image"), s.get("alt"))}</figure>')
+    return (f'<section class="sc open open-prod{centre}" id="top"><div class="wrap"><p class="mono kicker" data-rise>{e(s.get("kicker"))}</p><h1>{lines(s.get("h1"))}</h1>'
+            f'<div class="open-foot"><p class="lede" data-rise style="--i:1">{e(s.get("lede"))}</p><div class="acts" data-rise style="--i:2">{_btn(ctx["action"], "dv-magnet")}{_btn(ctx.get("action2"), "quiet")}</div></div></div>'
+            f'<div class="op-stage{" tall" if tall else ""}{" has-ground" if ground else ""}" data-rise style="--i:3">{ground}{frame}</div></section>')
+
+
+@scene('plans', name='The plans, side by side', role='decide', devices=['rise-stagger', 'line-rise'], needs='2–4 plans exactly as the client states them: name, price, who it is for, what is in it. Never a plan, a price or a limit the client does not publish',
+       slots={'label': 'mono', 'h2': 'rows split by " / "', 'plans': [{'name': '', 'price': 'as written, e.g. "$20"', 'per': 'e.g. "/ month", optional', 'for': 'one line: who it is for', 'points': ['≤ 7 short facts'], 'action': {'label': '', 'url': ''}, 'marked': 'true on the one plan the client itself marks'}], 'note': 'mono, the client\'s own small print, optional'})
+def _plans(s, ctx):
+    plans = [p for p in (s.get('plans') or []) if p.get('name')][:4]
+    if len(plans) < 2: return ''
+    def card(k, p):
+        pts = ''.join(f'<li>{e(x)}</li>' for x in (p.get('points') or [])[:7] if x)
+        return (f'<article class="pl{" is-marked" if p.get("marked") in (True, "true") else ""}" data-rise style="--i:{k}"><p class="mono pl-name">{e(p["name"])}</p><p class="pl-price">{e(p.get("price"))}'
+                + (f'<small>{e(p["per"])}</small>' if p.get('per') else '') + '</p>' + (f'<p class="pl-for">{e(p["for"])}</p>' if p.get('for') else '') + _btn(p.get('action') or ctx['action'], 'small' if p.get('marked') in (True, 'true') else 'small quiet')
+                + (f'<ul class="pl-points">{pts}</ul>' if pts else '') + '</article>')
+    return (f'<section class="sc plans" id="pricing"><div class="wrap"><p class="mono kicker">{e(s.get("label"))}</p><h2>{lines(s.get("h2"), "h2")}</h2><div class="pl-grid" style="--n:{len(plans)}">{"".join(card(k, p) for k, p in enumerate(plans))}</div>'
+            + (f'<p class="mono note">{e(s["note"])}</p>' if s.get('note') else '') + '</div></section>')
+
+
+@scene('compare', name='What each plan holds, row by row', role='decide', devices=['rise-stagger', 'line-rise'], needs='the client\'s own comparison of 2–4 plans or options: 6–30 rows in 1–5 groups, each cell "yes", "no" or the short value the client gives',
+       slots={'label': 'mono', 'h2': 'rows split by " / "', 'columns': ['plan names, 2–4'], 'groups': [{'title': '', 'rows': [{'name': '', 'values': ['"yes" | "no" | a short value — one per column']}]}]})
+def _compare(s, ctx):
+    cols = [str(c) for c in (s.get('columns') or []) if c][:4]
+    if len(cols) < 2: return ''
+    def cell(v):
+        v = str(v if v is not None else '').strip()
+        if v.lower() in ('yes', 'true', '✓'): return '<td><span class="cmp-y" aria-label="yes">✓</span></td>'
+        if v.lower() in ('no', 'false', '', '—', '-'): return '<td><span class="cmp-n" aria-label="no">—</span></td>'
+        return f'<td>{e(v)}</td>'
+    body = ''
+    for g in (s.get('groups') or [])[:5]:
+        rows = [r for r in (g.get('rows') or []) if r.get('name') and len(r.get('values') or []) == len(cols)][:12]
+        if not rows: continue
+        body += (f'<tr class="cmp-g"><th colspan="{len(cols) + 1}" scope="colgroup">{e(g.get("title"))}</th></tr>' if g.get('title') else '') + ''.join(f'<tr><th scope="row">{e(r["name"])}</th>{"".join(cell(v) for v in r["values"])}</tr>' for r in rows)
+    if not body: return ''
+    head = '<tr><td></td>' + ''.join(f'<th scope="col">{e(c)}</th>' for c in cols) + '</tr>'
+    return (f'<section class="sc compare" id="compare"><div class="wrap"><p class="mono kicker">{e(s.get("label"))}</p><h2>{lines(s.get("h2"), "h2")}</h2><div class="cmp" tabindex="0" role="region" aria-label="{e(s.get("label") or "Comparison")}"><table style="--n:{len(cols)}"><thead>{head}</thead><tbody>{body}</tbody></table></div></div></section>')
+
+
 @scene('carte', name='A menu or price list set like a printed card', role='decide', devices=['rise-stagger'], needs='6–24 items with their prices or values, in 1–4 groups, exactly as the client lists them',
        slots={'label': 'mono', 'h2': 'rows split by " / "', 'groups': [{'title': '', 'items': [{'name': '', 'note': 'optional, ≤ 70 chars', 'price': 'as written'}]}], 'action': {'label': '', 'url': ''}})
 def _carte(s, ctx):
@@ -454,6 +502,22 @@ em{font-style:normal;color:var(--em)}em svg{display:none}.mark-drawn .display em
 .open-foot,.stage-head,.ledger-in,.index-in,.rows .row,.win-foot,.visit-in{grid-template-columns:minmax(0,1fr)}.step-row{grid-template-columns:minmax(0,1fr)}.sc-row{display:block}.sc-it{margin:0 0 clamp(28px,7vw,48px);max-width:none!important}.sc-it .dv-clip{aspect-ratio:4/3!important;flex:none}.b-grid{grid-template-columns:minmax(0,1fr)}.b-tile,.b-0{grid-column:auto!important;grid-row:auto;min-height:0}.b-0{min-height:220px}.dv-k{font-size:clamp(44px,14vw,96px);text-align:left;padding-inline:var(--pad)}.step-row .num{margin-bottom:18px}.win{aspect-ratio:4/3}.dv-held{grid-template-columns:minmax(0,1fr)!important}
 .card{grid-template-columns:minmax(0,1fr);min-height:0}.dv-held-m{font-family:var(--display);font-weight:var(--dw)!important;text-transform:var(--dcase);letter-spacing:var(--dls)!important}
 }
+/* software: the product is the picture, the type is quiet (harvest-saas 2026-11-11: h1 64 px median, 8 reveals a page) */
+.open-prod{min-height:0;align-content:start;padding-top:clamp(104px,13svh,150px);padding-bottom:0;overflow:hidden}.open-prod .wrap{padding-bottom:0}.open-prod .open-foot{margin-top:clamp(24px,3.4svh,40px)}
+.open-prod.centre .wrap{text-align:center}.open-prod.centre .display{margin-inline:auto}.open-prod.centre .open-foot{grid-template-columns:minmax(0,1fr);justify-items:center}.open-prod.centre .lede{margin-inline:auto}.open-prod.centre .acts{justify-content:center}
+.op-stage{margin:clamp(32px,5svh,64px) var(--pad) 0;padding:clamp(18px,4vw,64px) clamp(14px,5vw,88px) 0;border-radius:20px 20px 0 0;background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 26%,var(--ground2)),color-mix(in srgb,var(--accent) 7%,var(--ground2)) 62%);max-height:max(52svh,360px);overflow:hidden}.op-stage .dv-window{border-radius:12px 12px 0 0}
+.op-stage.tall{display:grid;justify-items:center;padding-inline:clamp(14px,4vw,64px)}.op-stage.tall .dv-phone{--pw:clamp(230px,25vw,350px)}
+.pl-grid{display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,1fr));gap:clamp(10px,1.2vw,18px);margin-top:clamp(40px,5vw,80px);align-items:stretch}.pl{display:flex;flex-direction:column;gap:14px;padding:clamp(20px,2.2vw,32px);border-radius:18px;box-shadow:inset 0 0 0 1px var(--line)}
+.pl.is-marked{background:var(--lead);color:var(--on-lead);box-shadow:none;--line:color-mix(in srgb,var(--on-lead) 22%,transparent);--mute:color-mix(in srgb,var(--on-lead) 72%,transparent)}.pl-name{color:var(--mute)}.pl-price{font-family:var(--display);font-weight:var(--dw);letter-spacing:var(--dls);line-height:1;font-size:clamp(34px,3.4vw,52px)}.pl-price small{font-family:var(--mono);font-size:12px;letter-spacing:.04em;margin-left:8px;color:var(--mute)}
+.pl-for{color:var(--mute);min-height:3em}.pl .btn{align-self:flex-start}.pl-points{display:grid;gap:9px;margin-top:8px;padding-top:18px;border-top:1px solid var(--line);font-size:15px}.pl-points li{padding-left:22px;position:relative}.pl-points li::before{content:"✓";position:absolute;left:0;font-size:12px;top:.2em;color:var(--mute)}.plans .note{margin-top:22px}
+.cmp{margin-top:clamp(40px,5vw,80px);overflow-x:auto}.cmp table{width:100%;min-width:calc(220px + var(--n,3) * 120px);border-collapse:collapse;table-layout:fixed;font-size:15px}.cmp thead td{width:38%}.cmp thead th{position:sticky;top:0;text-align:left;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:400;padding:14px 12px;background:var(--paper);box-shadow:inset 0 -1px 0 var(--line)}
+.cmp tbody th{text-align:left;font-weight:400;padding:13px 12px 13px 0;width:38%}.cmp td{padding:13px 12px;color:var(--mute)}.cmp tbody tr{border-bottom:1px solid var(--line)}.cmp-g th{font-family:var(--display);font-weight:var(--dw);font-size:clamp(18px,1.5vw,22px);padding-top:clamp(28px,3vw,44px)!important;color:var(--ink)}.cmp-y{color:var(--ink)}.cmp-n{opacity:.45}
+.scale-product .display{font-size:min(clamp(38px,4.7vw,80px),calc((100vw - 2 * var(--pad)) / var(--lw,8) * var(--k)));line-height:1.03}.scale-product .h2{font-size:min(clamp(30px,3.3vw,56px),calc((100vw - 2 * var(--pad)) / var(--lw,8) * var(--k)));line-height:1.06}.scale-product .thesis{font-size:clamp(24px,2.6vw,44px);line-height:1.14}.scale-product .sc{padding-block:clamp(64px,7vw,120px)}.scale-product .open-prod{padding-bottom:0}
+.op-stage.has-ground{position:relative;isolation:isolate;background:var(--night);padding-top:clamp(44px,9vw,150px)}.op-ground{position:absolute;inset:0;z-index:-1;width:100%;height:100%;object-fit:cover}.op-stage.has-ground::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,.35))}
+/* the client's character decides how much moves and how loud the type is — not its trade */
+.dv .ch-calm [data-rise]{transition-duration:.25s}.dv .ch-calm [data-rise]:not(.is-in){transform:translateY(8px)}
+.scale-product.ch-energetic .display,.scale-product.ch-playful .display{font-size:min(clamp(44px,6.4vw,112px),calc((100vw - 2 * var(--pad)) / var(--lw,8) * var(--k)));line-height:.98}.scale-product.ch-energetic .h2,.scale-product.ch-playful .h2{font-size:min(clamp(34px,4.4vw,76px),calc((100vw - 2 * var(--pad)) / var(--lw,8) * var(--k)))}
+@media (max-width:900px){.pl-grid{grid-template-columns:minmax(0,1fr)}.pl-for{min-height:0}.op-stage{margin-inline:0;border-radius:0;max-height:none;padding-bottom:0}.op-stage.tall .dv-phone{--pw:min(72vw,300px)}.cmp tbody th{width:auto;min-width:150px}}
 """
 
 
@@ -468,7 +532,7 @@ def page(plan, images):
         html = meta['render'](sc.get('slots') or {}, ctx)
         if html: body.append(html); used |= set(meta['devices'])
     if plan.get('eased'): used.add('eased-scroll')
-    drawn = plan.get('mark') == 'drawn'
+    drawn = plan.get('mark') == 'drawn'; quiet = plan.get('scale') == 'product'
     if drawn: used.add('draw')
     css, js = LIB.bundle(sorted(used))
     nav = [n for n in plan.get('nav') or [] if n.get('label') and n.get('url')][:5]
@@ -479,7 +543,7 @@ def page(plan, images):
     under = ''.join(foot).replace('<footer class="', '<footer class="dv-under ', 1)   # named outside the f-string: nested quotes there need Python 3.12
     return (f'<!doctype html><html lang="{e(brand.get("lang") or "en")}"{" data-eased-scroll" if plan.get("eased") else ""}><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{e(plan.get("title") or brand.get("name"))}</title>'
             f'<meta name="description" content="{e(plan.get("description"))}"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family={t["gf"]}&display=swap" rel="stylesheet">'
-            f'<style>{tokens}{CSS}{css}</style></head><body class="{e(plan.get("type") or "light-grotesk")}{" mark-drawn" if drawn else ""}"><a class="skip" href="#main">Skip to content</a>'
+            f'<style>{tokens}{CSS}{css}</style></head><body class="{e(plan.get("type") or "light-grotesk")}{" mark-drawn" if drawn else ""}{" scale-product" if quiet else ""}{" ch-" + plan["character"] if plan.get("character") in ("calm", "energetic", "warm", "refined", "playful") else ""}"><a class="skip" href="#main">Skip to content</a>'
             f'<div class="dv-progress" aria-hidden="true"></div><header class="bar dv-tuck"><a class="name" href="#top">{e(brand.get("name"))}</a><div class="bar-r">' + (f'<nav class="bar-links" aria-label="Primary">{links}</nav>' if links else '')
             + f'{_btn(ctx["action"])}<button class="dv-menu-btn mono" aria-expanded="false" aria-controls="menu">Menu</button></div></header>'
             f'<nav class="dv-menu" id="menu" aria-label="Menu">{links}<a class="btn" href="{e((ctx["action"] or {}).get("url") or "#top")}">{e((ctx["action"] or {}).get("label") or "")}</a></nav>'
