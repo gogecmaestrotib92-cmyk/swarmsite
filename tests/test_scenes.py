@@ -131,3 +131,23 @@ def test_the_plans_character_is_on_the_page_and_the_product_can_stand_in_the_cli
     assert 'ch-calm' in calm.split('<body')[1][:120] and 'class="op-ground"' not in calm
     assert '.dv .ch-calm [data-rise]' in calm and '.dv .scale-product [data-rise]' not in calm, 'how much moves follows the character, not the kind of page'
     assert any('ground behind the product' in x for x in ST.check(plan('small', 'energetic'), SC.page(plan('small', 'energetic'), images), {'links': []}, set(), images)['pictures'])
+
+
+def test_features_hold_the_real_interface_and_a_plan_is_sent_back_for_what_its_first_screen_owes():
+    import scenes as SC, studio as ST
+    px = 'data:image/png;base64,iVBORw0KGgo='
+    images = {**{f's{k}': {'id': f's{k}', 'data': px, 'w': 1440, 'h': 800, 'shot': True} for k in range(1, 5)}, 'phone': {'id': 'phone', 'data': px, 'w': 390, 'h': 844, 'shot': True}, 'stadium': {'id': 'stadium', 'data': px, 'w': 1400, 'h': 594}}
+    ev = {'links': [], 'kind': 'software', 'h1': 'AI sports match analysis', 'seo_safe': True}
+    feats = {'scene': 'features', 'slots': {'h2': 'What / it does', 'items': [{'title': 'Prices', 'say': 'A sentence about prices that is long enough to be a sentence.', 'image': 's2'}, {'title': 'Record', 'say': 'A sentence about the record kept in public.', 'image': 's3'}, {'title': 'On the phone', 'say': 'The same on the phone.', 'image': 'phone'}]}}
+    def plan(opening): return {'brand': {'name': 'X', 'accent': '#2af6a0'}, 'scale': 'product', 'character': 'energetic', 'scheme': 'night', 'scenes': [opening, feats, {'scene': 'close', 'slots': {'line': 'Start'}}]}
+    good = plan({'scene': 'open-product', 'slots': {'h1': 'Sports match / *analysis* first', 'lede': 'A sentence about what the product does for the people who use it, long enough to count.', 'image': 's1', 'ground': 'stadium'}})
+    page = SC.page(good, images); bad = ST.check(good, page, ev, set(), images)
+    assert page.count('class="ft ft-') == 3 and 'class="ft-pic ft-phone"' in page and '--w:1440px' in page and not bad['structure'] and not bad['pictures'], bad
+    words = plan({'scene': 'open-statement', 'slots': {'h1': 'Never place / a bad bet', 'lede': 'A sentence about what the product does for the people who use it, long enough to count.'}})
+    found = ST.check(words, SC.page(words, images), ev, set(), images)['structure']
+    assert any('opens on "open-product"' in x for x in found) and any('found by' in x for x in found), found
+    bare = plan({'scene': 'open-product', 'slots': {'h1': 'Sports match / analysis', 'lede': 'A sentence about what the product does for the people who use it, long enough to count.', 'image': 's1'}})
+    assert any('stadium' in x and 'ground' in x for x in ST.check(bare, SC.page(bare, images), ev, set(), images)['pictures'])
+    place = {'brand': {'name': 'X', 'accent': '#2a8f5a'}, 'scenes': [{'scene': 'open-statement', 'slots': {'h1': 'A place / for all', 'lede': 'A sentence about the place and the people who come to it, long enough to count as words.'}}, {'scene': 'close', 'slots': {'line': 'Come'}}]}
+    assert any('shows no picture' in x for x in ST.check(place, SC.page(place, images), {'links': []}, set(), {'stadium': images['stadium']})['structure']), 'a client with a wide photograph does not open on words alone'
+    assert not any('shows no picture' in x for x in ST.check(place, SC.page(place, {}), {'links': []}, set(), {})['structure']), 'a client with no picture may'
