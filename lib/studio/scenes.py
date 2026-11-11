@@ -461,6 +461,8 @@ def keep(page_html, inventory):
         if len(words.split()) < 8 or SEO.text_coverage(words, text) >= .85: continue
         faq = ''.join(f'<p><b>{e(q.get("question"))}</b> {e(q.get("answer"))}</p>' for q in (sec.get('faq') or []) if isinstance(q, dict) and q.get('answer'))
         items.append(f'<details><summary><span>{e(sec.get("title"))}</span></summary><p>{e(words[:6000])}</p>{faq}</details>')
+    rest = SEO.leftover(inventory, text + ' ' + ' '.join(re.sub(r'<[^>]+>', ' ', i) for i in items))
+    if rest: items.append(f'<details><summary><span>{e((inventory or {}).get("title") or (inventory or {}).get("url") or "")[:90]}</span></summary>' + ''.join(f'<p>{e(piece)}</p>' for piece in rest) + '</details>')
     hrefs = {h.rstrip('/') for h in re.findall(r'href="([^"]+)"', page_html)}
     lost = [l for l in SEO.internal_links(inventory) if str(l.get('href') or '').rstrip('/') not in hrefs]
     links = ''.join(f'<li><a href="{e(l["href"])}">{e(l["text"])}</a></li>' for l in lost)
@@ -473,8 +475,12 @@ def keep(page_html, inventory):
         at = out.find('</main>'); out = out[:at] + block + out[at:] if at >= 0 else out
     seo = (inventory or {}).get('seo') or {}; head = ''
     if seo.get('canonical') and 'rel="canonical"' not in out: head += f'<link rel="canonical" href="{e(seo["canonical"])}">'
-    for ld in (seo.get('jsonld') or [])[:4]:
-        if isinstance(ld, (dict, list)): head += '<script type="application/ld+json">' + __import__('json').dumps(ld, ensure_ascii=False).replace('</', '<\\/') + '</script>'
+    if 'application/ld+json' not in out:   # the source's structured data, as the source wrote it
+        for raw in ((seo.get('structuredData') or {}).get('raw') or seo.get('jsonld') or [])[:6]:
+            if not isinstance(raw, str): raw = __import__('json').dumps(raw, ensure_ascii=False)
+            try: __import__('json').loads(raw)
+            except ValueError: continue
+            head += '<script type="application/ld+json">' + raw.replace('</', '<\\/') + '</script>'
     if head: out = out.replace('</head>', head + '</head>', 1)
     return out
 

@@ -165,9 +165,11 @@ def rendered_actions(html):
     with open(html, encoding='utf-8') as f: parser.feed(f.read())
     return parser.actions, parser.forms
 
-def critique(slug_dir, html, model='claude-sonnet-5-5', fast=False, files=None, measured=None):
+def critique(slug_dir, html, model='claude-sonnet-5-5', fast=False, files=None, measured=None, own=None):
     """One reading of the page. `files`: screenshots already taken (critique_twice takes them once for both readings).
-    `measured`: the findings a browser measured on this page (lib/qa/standard.py), handed to the final look as fact."""
+    `measured`: the findings a browser measured on this page (lib/qa/standard.py), handed to the final look as fact.
+    `own`: the page's own plan, when the page was not rendered from direction.json (the studio's page): the critic is
+    then told what this page set out to be and is not shown a direction, beats or moves that describe another page."""
     import anthropic
     d = json.load(open(os.path.join(slug_dir, 'direction.json')))
     imgs_meta = [{k: v for k, v in i.items() if k != 'data'} for i in (json.load(open(os.path.join(slug_dir, 'images.json'))) if os.path.exists(os.path.join(slug_dir, 'images.json')) else [])]
@@ -193,7 +195,11 @@ def critique(slug_dir, html, model='claude-sonnet-5-5', fast=False, files=None, 
                     "and whether that is done well.\n" + '\n'.join(f'- {k}: {v}' for k, v in redrawn.items()) + (f"\nTHE PAGE'S OWN DIRECTION (what it set out to do; judge whether it does it): {said[:1200]}" if said else '') + "\n\n")
     if brief.get('mode') == 'seo-safe':
         context += "THE WORDS ARE THE CLIENT'S OWN, kept as they are for search: a claim, a count or a phrase of the copy is not a defect of this page (report it once as a note for copy at most); how the words are set is.\n\n"
-    content = [{"type": "text", "text": context + "SIGNATURE MOVES on this page (screenshots are the real layout with animation frozen: a pinned or sticky section is shown mid-scroll with its first frame on; slide-labeled images show later frames. Judge whether each move reads as designed — a pinned panel that is not on screen, a ticker that is one static line, a type-wall that is plain unlit text are defects): " + json.dumps(moves) + "\n- sticky-product: text blocks scroll on the left, the product stays pinned on the right and swaps per block\n- pinned-sequence: the section pins, each step takes the screen in turn\n- type-wall: one sentence in giant type lights up word by word as you scroll\n- marquee: a slow ticker of the section's words (one line IS the design)\n- story: text beside a visual\n\nRENDERED CTA LINKS (from the page HTML; destinations have not been tested)\n" + json.dumps(actions, ensure_ascii=False) + "\nSections " + json.dumps(sorted(linked_forms)) + " use a link to the source site or to a contact method in place of an embedded form: a preview cannot take a booking or a message, so that is by design and not a defect. Any other form beat must show real input fields; a bare link in its place is a defect.\n\nDIRECTION (beat ids + copy)\n" + json.dumps({'hero': d.get('hero', {}), 'beats': beats}, ensure_ascii=False)[:14000] + "\n\nIMAGES available (ids)\n" + json.dumps(imgs_meta, ensure_ascii=False)[:3000]}]
+    if own:
+        moves = {}; redrawn = {}
+        context += ("THIS PAGE WAS COMPOSED FROM AUTHORED SCENES, not rendered from a direction: there are no beat ids and none of the signature moves listed below is promised. Judge the page in the screenshots as what it is. "
+                    "ITS OWN PLAN (what it set out to do; judge whether it does it): " + json.dumps(own, ensure_ascii=False)[:3000] + "\n\n")
+    content = [{"type": "text", "text": context + "SIGNATURE MOVES on this page (screenshots are the real layout with animation frozen: a pinned or sticky section is shown mid-scroll with its first frame on; slide-labeled images show later frames. Judge whether each move reads as designed — a pinned panel that is not on screen, a ticker that is one static line, a type-wall that is plain unlit text are defects): " + json.dumps(moves) + "\n- sticky-product: text blocks scroll on the left, the product stays pinned on the right and swaps per block\n- pinned-sequence: the section pins, each step takes the screen in turn\n- type-wall: one sentence in giant type lights up word by word as you scroll\n- marquee: a slow ticker of the section's words (one line IS the design)\n- story: text beside a visual\n\nRENDERED CTA LINKS (from the page HTML; destinations have not been tested)\n" + json.dumps(actions, ensure_ascii=False) + "\nSections " + json.dumps(sorted(linked_forms)) + " use a link to the source site or to a contact method in place of an embedded form: a preview cannot take a booking or a message, so that is by design and not a defect. Any other form beat must show real input fields; a bare link in its place is a defect.\n\n" + ("" if own else "DIRECTION (beat ids + copy)\n" + json.dumps({'hero': d.get('hero', {}), 'beats': beats}, ensure_ascii=False)[:14000]) + "\n\nIMAGES available (ids)\n" + json.dumps(imgs_meta, ensure_ascii=False)[:3000]}]
     from PIL import Image; import io
     before = os.path.join(slug_dir, 'before-hero.jpg')
     if os.path.exists(before) and not fast:   # what the client has now: the new page is judged as a redesign of it

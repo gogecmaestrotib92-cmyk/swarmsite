@@ -149,7 +149,11 @@ def scorecard(log, best_round, report=None):
     contract, taste = rec.get('contract'), rec.get('taste')
     hard = [str(f.get('id')) for f in rec.get('broken') or [] if isinstance(f, dict) and any(h in str(f.get('id')) for h in HARD)]
     number = lambda v: isinstance(v, (int, float)) and not isinstance(v, bool)
-    return {'round': best_round, 'taste': taste, 'contract': contract, 'blended': rec.get('score'), 'axes': rec.get('axes'),
+    studio = log.get('studio') if isinstance(log.get('studio'), dict) else {}
+    # Which page these numbers are of: the studio's (read by the contract, and by the critic unless taste is None), a
+    # round's, or — when a studio page shipped but could not be graded — the page it replaced.
+    of = 'studio' if rec.get('studio') else 'replaced' if studio.get('kept') else 'composed' if rec.get('composed') else 'round'
+    return {'round': best_round, 'page': of, 'taste': taste, 'contract': contract, 'blended': rec.get('score'), 'axes': rec.get('axes'),
             'technical': {'pass': bool(number(contract) and contract >= technical_min and not hard), 'min': technical_min, 'hard_failures': hard},
             'creative': {'pass': bool(number(taste) and taste >= creative_min), 'min': creative_min, 'level': STANDARD.level_of(taste),
                          **({'levels': rec['levels'], 'page_level': rec.get('page_level')} if isinstance(rec.get('levels'), dict) and rec['levels'] else {})},
@@ -207,6 +211,39 @@ def studio_page(slug_dir, out):
     shutil.copyfile(os.path.join(folder, f'page-{first["tag"]}.html'), out + '.studio'); os.replace(out + '.studio', out)
     info['kept'] = first['tag']; info['others'] = [v['tag'] for v in clean[1:]]
     return info
+
+
+STUDIO_READ_BY = 720   # seconds into the loop after which the critic no longer reads the studio page (the contract still does)
+
+
+def grade_studio(slug_dir, out, log, started, plan=None):
+    """The studio page as one more round of the log: the contract's report of it always, the critic's when there is time
+    and it answers. Returns (score, round) for the caller to stand on, or None when not even the contract could read the
+    page — then the log says the scores are of the page before. A studio round the critic did not read has taste None:
+    the card shows that nobody judged it rather than the number of another page."""
+    k = max(r['k'] for r in log['rounds']) + 1; rep = {}
+    with ThreadPoolExecutor(2) as ex:
+        fcon = ex.submit(contract, slug_dir, out)
+        frep = ex.submit(C.critique, slug_dir, out, A.MODEL, False, None, None, plan or {'composed': 'from authored scenes'}) if time.time() - started < STUDIO_READ_BY else None
+        try: con = fcon.result()
+        except Exception as e:
+            ev('Contract', 'studio page not graded: ' + str(e)[:90]); log['studio']['graded'] = False; return None
+        if frep:
+            try: rep = frep.result()
+            except Exception as e: ev('Critic', 'studio page not read: ' + str(e)[:90])
+    if not isinstance(rep, dict): rep = {}
+    taste = rep.get('score') if isinstance(rep.get('score'), (int, float)) and rep.get('score') >= 0 else None
+    cfail = con.get('failed', []); score = round(0.55 * taste + 0.45 * con['score']) if taste is not None else con.get('score')
+    fixes = [f for f in (rep.get('fixes') if isinstance(rep.get('fixes'), list) else []) if isinstance(f, dict)]
+    log['rounds'].append({'k': k, 'studio': True, 'score': score, 'taste': taste, 'contract': con.get('score'), 'axes': rep.get('axes') if isinstance(rep.get('axes'), dict) else None, 'broken': cfail, 'fixes': fixes, 'verdict': rep.get('verdict'),
+                          **{key: rep[key] for key in ('levels', 'page_level', 'findings') if rep.get(key) is not None}})
+    with open(os.path.join(slug_dir, 'critic.json'), 'w') as f:
+        json.dump({**rep, 'score': score, 'taste': taste, 'contract': con.get('score'), 'broken': cfail, 'round': k, 'best': score, 'studio': True}, f, indent=1, ensure_ascii=False)
+    log['studio']['graded'] = True
+    ev('Contract', f"studio page: {con.get('score')}/100 · {len(cfail)} broken promise(s)")
+    for f in cfail[:4]: ev('Contract', f"✗ {f['id']}: {f['detail']}"[:160])
+    ev('Critic', f"studio page: taste {taste} · {str(rep.get('verdict') or '')[:120]}" if taste is not None else 'studio page: not read by the critic')
+    return score, k
 
 
 def compose_wanted(slug_dir):
@@ -682,6 +719,11 @@ def _main(snapshot_dir):
             made = studio_page(slug_dir, out); log['studio'] = made
             if made.get('kept'):
                 best_manifest = dict(best_manifest, html=digest(out))
+                # The page that ships is now the studio's: the contract and the critic read IT, and the job's scores,
+                # critic.json and contract.json describe it — never the round's page it replaced.
+                try: graded = grade_studio(slug_dir, out, log, started, next(({k: v.get(k) for k in ('story', 'type', 'scheme', 'scenes')} for v in made['variants'] if v.get('tag') == made['kept']), None))
+                except Exception as e: graded = None; made['graded'] = False; ev('Contract', 'studio page not graded: ' + str(e)[:90])   # a page that passed its checks is not dropped for want of a grade
+                if graded: best_score, best_round = graded
                 ev('Concept', f"studio page: variant {made['kept']} of {len(made['variants'])} — " + ', '.join(f"{v['tag']}: {v['type']}/{v['scheme']}" for v in made['variants'])[:120])
             else: ev('Concept', 'studio page not kept: ' + str(made.get('why'))[:100])
         except Exception as e:
