@@ -163,3 +163,64 @@ def test_a_scene_can_slide_over_the_one_before_it_once_or_twice_and_never_first(
     assert '<section class="dv-cover ' not in SC.page(plan(), {}) and not any('"cover"' in x for x in ST.check(plan(1), page, {'links': []}, set(), {})['structure'])
     assert '<section class="dv-cover ' not in SC.page(plan(0), {}).split('id="top"')[0][-60:], 'the first scene has nothing to slide over'
     for wrong in (plan(0), plan(1, 2)): assert any('"cover"' in x for x in ST.check(wrong, SC.page(wrong, {}), {'links': []}, set(), {})['structure'])
+
+
+PX = 'data:image/png;base64,iVBORw0KGgo='
+PARTS = {**{f's{k}': {'id': f's{k}', 'data': PX, 'w': 1440, 'h': 800, 'shot': True} for k in range(1, 6)}, 'photo': {'id': 'photo', 'data': PX, 'w': 1400, 'h': 800},
+         **{f'logo{k}': {'id': f'logo{k}', 'data': PX, 'w': 120, 'h': 30, 'logo': True, 'alt': f'L{k}'} for k in range(1, 6)}}
+LEDE = 'A sentence about what the product does for the people who use it, long enough to count among the words of a page.'
+
+
+def soft_plan(*scenes, opening=None, close=None, **more):
+    return {'brand': {'name': 'Example', 'accent': '#3b5bff'}, 'scale': 'product', 'character': 'calm', **more,
+            'scenes': [opening or {'scene': 'open-product', 'slots': {'h1': 'A quiet / *line*', 'lede': LEDE, 'image': 's1'}}, *scenes, close or {'scene': 'close', 'slots': {'line': 'Start / now'}}]}
+
+
+def test_the_close_has_forms_a_mark_beside_its_columns_and_a_name_tone_on_tone():
+    import scenes as SC, studio as ST
+    cols = [{'title': 'Product', 'links': [{'label': 'Pricing', 'url': 'https://x.test/p'}]}]
+    def close(**s): return SC.page(soft_plan(close={'scene': 'close', 'slots': {'line': 'Start / now', 'columns': cols, **s}}), PARTS).split('<footer')[1]
+    centre, card, split, left = close(form='centre', tone='paper', wordmark='faint'), close(form='card', ground='photo'), close(form='split'), close()
+    assert 'close-centre"' in centre.split('>')[0] and ' night' not in centre.split('>')[0] and ' faint" style=' in centre and '<p class="foot-mark">Example</p>' in centre
+    assert 'close-card night' in card and 'class="cta-ground"' in card and 'close-split' in split and 'close-left night' in left and 'dv-endmark' not in left.split('</footer>')[0]
+    assert 'close-centre' in close(form='card', ground='s1') and 'close-centre' in close(form='card'), 'a card needs a photograph to lie on: without one the call is centred'
+    bad = soft_plan(close={'scene': 'close', 'slots': {'line': 'Start', 'form': 'card', 'ground': 's1'}})
+    assert any('"close" as a card' in x for x in ST.check(bad, SC.page(bad, PARTS), {'links': [], 'kind': 'software'}, set(), PARTS)['pictures'])
+
+
+def test_plans_carry_the_clients_tag_and_both_prices_behind_a_switch():
+    import scenes as SC, studio as ST
+    def plans(**s): return {'scene': 'plans', 'slots': {'h2': 'Plans', 'plans': [{'name': 'Free', 'price': '$0'}, {'name': 'Pro', 'price': '$20', 'per': '/ month', 'price_b': '$16', 'per_b': '/ month, yearly', 'tag': 'Most popular', 'marked': True}, {'name': 'Team', 'price': '$90', **s.pop('team', {})}], **s}}
+    both = SC.page(soft_plan(plans(switch=['Monthly', 'Yearly'])), PARTS)
+    assert 'class="dv-switch"' in both and '<span class="sw-a">$20<small>/ month</small></span><span class="sw-b">$16<small>/ month, yearly</small></span>' in both and '<span class="pl-tag">Most popular</span>' in both and 'data-switch' in both
+    assert 'class="dv-switch"' not in SC.page(soft_plan(plans()), PARTS).split('<body')[1], 'no switch unless the plan asks for one'
+    half = soft_plan(plans(switch=['Monthly', 'Yearly']))
+    assert any('second price on every paid plan' in x for x in ST.check(half, SC.page(half, PARTS), {'links': [], 'kind': 'software'}, set(), PARTS)['structure']), 'Team has one price: the switch is refused'
+
+
+def test_the_parts_of_a_software_page_each_draw_and_stand_down_without_their_material():
+    import scenes as SC, studio as ST
+    U = 'https://x.test/'
+    page = SC.page(soft_plan(
+        {'scene': 'logos', 'slots': {'label': 'Trusted by teams'}},
+        {'scene': 'tabs', 'slots': {'tabs': [{'word': 'Read', 'title': 'One', 'say': 'First.', 'image': 's2'}, {'word': 'Decide', 'title': 'Two', 'say': 'Second.', 'image': 's3'}]}},
+        {'scene': 'lines', 'slots': {'h2': 'Parts', 'rows': [{'title': 'Prices', 'say': 'A.', 'image': 's4', 'links': [{'label': 'More', 'url': U + 'a'}]}, {'title': 'Record', 'say': 'B.', 'image': 's5'}]}},
+        {'scene': 'chips', 'slots': {'items': [f'Name {k}' for k in range(10)]}},
+        {'scene': 'quote', 'slots': {'text': 'Said exactly so.', 'name': 'A. Person', 'role': 'Head'}},
+        {'scene': 'cases', 'slots': {'h2': 'Customers', 'items': [{'title': 'What happened.', 'who': 'Acme', 'image': 'photo', 'url': U + 's1'}, {'figure': '3', 'title': 'Another.', 'who': 'Globex'}]}},
+        {'scene': 'code', 'slots': {'h2': 'Build', 'code': 'curl https://api.x.test/v1/matches', 'ground': 'photo'}},
+        {'scene': 'reads', 'slots': {'h2': 'Reading', 'items': [{'kind': 'Guide', 'title': 'One', 'url': U + 'r1'}, {'kind': 'Note', 'title': 'Two', 'url': U + 'r2'}]}},
+        {'scene': 'ways', 'slots': {'h2': 'Next', 'items': [{'title': 'Pricing', 'url': U + 'p'}, {'title': 'Docs', 'url': U + 'd'}]}},
+        opening={'scene': 'open-product', 'slots': {'h1': 'A quiet / *line*', 'lede': LEDE, 'image': 's1', 'align': 'beside', 'news': {'label': 'New', 'text': 'One thing', 'url': U + 'n'}}},
+        guides=True, nav=[{'label': 'Product', 'links': [{'label': 'Docs', 'url': U + 'd'}]}, {'label': 'Pricing', 'url': U + 'p'}]), PARTS)
+    body = page.split('<body')[1]
+    for mark in ('open-prod beside', 'class="news"', 'class="lg-row"', 'class="dv-tabs"', 'role="tab"', 'class="ln-list"', 'dv-tick ch-row back', 'class="q1"', 'class="cs has-pic"', 'class="cs-fig">3<', 'class="dv-window cd-win"', 'class="cd-ground"', 'class="rd-grid"', 'class="ways-grid"', 'class="bar-dd"', ' guides'):
+        assert mark in body, mark
+    assert body.count('<li><img') == 5 and page.count('aria-haspopup') == 1 and body.split('id="menu"')[1].split('</nav>')[0].count('<a ') == 3, 'the phone menu lists a panel\'s links flat'
+    bare = SC.page(soft_plan({'scene': 'logos', 'slots': {}}, {'scene': 'tabs', 'slots': {'tabs': [{'word': 'One', 'image': 's2'}]}}, {'scene': 'chips', 'slots': {'items': ['a', 'b']}}, {'scene': 'quote', 'slots': {'text': 'No name'}}, {'scene': 'ways', 'slots': {'items': [{'title': 'One', 'url': U}]}}, {'scene': 'code', 'slots': {'code': 'x'}}), {k: v for k, v in PARTS.items() if not v.get('logo')}).split('<body')[1]
+    for gone in ('lg-row', 'dv-tabs"', 'ch-row', 'class="q1"', 'ways-grid', 'cd-win'): assert gone not in bare, gone + ': a part without its material is not drawn'
+    cluster = SC.page(soft_plan(opening={'scene': 'open-product', 'slots': {'h1': 'A / line', 'lede': LEDE, 'image': 's1', 'more': ['s2', 's3']}}), PARTS)
+    assert 'open-prod cluster' in cluster and cluster.count('class="cl cl-') == 3
+    made = soft_plan({'scene': 'logos', 'slots': {}}, {'scene': 'code', 'slots': {'h2': 'Build', 'code': 'curl https://api.invented.test/never-published'}})
+    found = ST.check(made, SC.page(made, PARTS), {'links': [], 'kind': 'software', 'sections': [{'text': 'curl https://api.x.test/v1/matches'}]}, set(), PARTS)['structure']
+    assert any('"logos" needs' in x for x in found) and any('"code": the code must be the client' in x for x in found), found

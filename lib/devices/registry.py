@@ -77,7 +77,7 @@ device(id='fact-ticker', name='A slow line of facts', kind='text',
        measured={'source': 'cerebrium (logo row), 2026-11-10', 'note': 'presence and placement under the first screen; speed not measured'},
        needs='4–8 true facts under 40 characters each (or logos the client really has)', use='directly under the first screen, once', avoid='sentences; anything that must be read',
        pairs=['line-rise'], markup='<div class="dv-tick"><ul><li>fact</li>…</ul></div>',
-       css=""".dv-tick{overflow:hidden}.dv-tick ul{display:flex;gap:clamp(32px,5vw,88px);width:max-content;list-style:none;padding:0;margin:0}.dv-tick li{white-space:nowrap}
+       css=""".dv-tick{overflow:hidden}.dv-tick ul{display:flex;gap:clamp(32px,5vw,88px);width:max-content;list-style:none;padding:0;margin:0}.dv-tick li{white-space:nowrap}.dv .dv-tick.back ul{animation-direction:reverse}
 .dv .dv-tick ul{animation:dv-tick 46s linear infinite}@keyframes dv-tick{to{transform:translateX(-50%)}}""",
        js="each('.dv-tick ul',u=>{if(!calm&&!u.dataset.x){u.dataset.x=1;[...u.children].forEach(c=>{const k=c.cloneNode(true);k.setAttribute('aria-hidden','true');u.appendChild(k)})}});")
 
@@ -141,7 +141,7 @@ device(id='end-mark', name='The name set across the whole footer', kind='text',
        measured=None, seen='on several of the twelve measured references as a closing wordmark; one option among closings, not a default',
        needs='a brand name of 3–14 characters', use='a page that ends quietly and wants one last gesture', avoid='long names; pages that already close on a large line',
        pairs=[], markup='<div class="dv-endmark" style="--chars:9" aria-hidden="true">Brand name</div>',
-       css=".dv-endmark{font-weight:500;line-height:1;letter-spacing:-.04em;white-space:nowrap;text-align:center;overflow-x:clip;font-size:calc(165vw / var(--chars,10));margin-bottom:0}.dv-endmark.low{line-height:1.22;margin-bottom:0}",
+       css=".dv-endmark{font-weight:500;line-height:1;letter-spacing:-.04em;white-space:nowrap;text-align:center;overflow-x:clip;font-size:calc(165vw / var(--chars,10));margin-bottom:0}.dv-endmark.low{line-height:1.22;margin-bottom:0}.dv-endmark.faint{opacity:1!important;color:color-mix(in srgb,currentColor 13%,transparent)!important}   /* tone on tone by colour, not by fading the element: it is there, and meant to be quiet */",
        js="")
 
 device(id='peek', name='A picture that follows the pointer over a list', kind='pointer',
@@ -340,6 +340,23 @@ device(id='cover', name='A section that slides over the one before it', kind='tr
 .dv .dv-covered~*{position:relative;z-index:1}.dv .dv-covered~*:not(.night):not(.stage):not(.dv-cover){background:var(--paper)}   /* everything after the held section lies over it: a held section that shows through what follows is a fault (seen on the first recording, 2026-11-11) */""",
        js="each('.dv-cover',c=>{const p=c.previousElementSibling;if(!p)return;const set=()=>{const on=!calm&&innerWidth>900&&p.offsetHeight<=innerHeight*2.2;c.classList.toggle('is-cover',on);p.classList.toggle('dv-covered',on);p.style.top=on?Math.min(0,innerHeight-p.offsetHeight)+'px':''};set();addEventListener('resize',set)});")
 
+device(id='switch', name='Two prices, one switch', kind='control',
+       sees='Above the plans a small switch — monthly, yearly — and the prices change with it.',
+       measured=None, seen='on the pricing pages of Cursor, Linear and Resend (harvest-saas, 2026-11-11); not timed', survey=False,
+       needs='plans for which the client publishes both prices', use='the plans, once', avoid='plans with one price; inventing the second price',
+       pairs=['rise-stagger'], markup='<div class="dv-switch" role="group"><button aria-pressed="true">Monthly</button><button aria-pressed="false">Yearly</button></div><div data-switch>…<span class="sw-a">$20</span><span class="sw-b">$16</span>…</div>',
+       css=""".dv-switch{display:inline-flex;padding:4px;border-radius:999px;box-shadow:inset 0 0 0 1px var(--line,rgba(0,0,0,.14))}.dv-switch button{font:inherit;font-family:var(--mono,monospace);font-size:12px;letter-spacing:.06em;text-transform:uppercase;min-height:36px;padding:0 16px;border:0;border-radius:999px;background:none;color:inherit;cursor:pointer}.dv-switch button[aria-pressed="true"]{background:var(--ink,#111);color:var(--paper,#fff)}
+.sw-b{display:none}[data-switch].is-b .sw-a{display:none}[data-switch].is-b .sw-b{display:inline}""",
+       js="each('.dv-switch',g=>{const t=g.parentElement.querySelector('[data-switch]')||D.querySelector('[data-switch]');const bs=[...g.querySelectorAll('button')];bs.forEach((b,k)=>b.addEventListener('click',()=>{bs.forEach((x,j)=>x.setAttribute('aria-pressed',j===k));t&&t.classList.toggle('is-b',k===1)}))});")
+
+device(id='tabs', name='Large words that turn the panel beneath them', kind='control',
+       sees='Two to four words set large in a row; the one you choose is dark, and the panel under them shows what it means.',
+       measured=None, seen='on maze.co (Recruit / Research / Decide), harvest-saas 2026-11-11; not timed', survey=False,
+       needs='2–4 parts of one product, each with a word, a sentence and a real screenshot', use='once a page, where the product has distinct modes', avoid='more than four; parts without a picture',
+       pairs=['frame'], markup='<div class="dv-tabs"><div class="dv-tabs-row" role="tablist"><button role="tab">Word</button>…</div><div class="dv-tab">…</div>…</div>',
+       css=""".dv-tabs-row{display:flex;flex-wrap:wrap;gap:4px clamp(10px,2vw,32px)}.dv-tabs-row button{font:inherit;border:0;background:none;color:inherit;cursor:pointer;padding:.08em .22em;border-radius:.16em;opacity:.38;transition:opacity .2s,background-color .2s}.dv-tabs-row button[aria-selected="true"]{opacity:1;background:var(--ground2,rgba(0,0,0,.06))}.dv .dv-tabs.is-on .dv-tab{display:none}.dv .dv-tabs.is-on .dv-tab.is-open{display:grid}.dv-tab+.dv-tab{margin-top:clamp(24px,3vw,48px)}.dv .dv-tabs.is-on .dv-tab+.dv-tab{margin-top:0}""",
+       js="each('.dv-tabs',t=>{const bs=[...t.querySelectorAll('[role=tab]')],ps=[...t.querySelectorAll('.dv-tab')];if(bs.length<2||bs.length!==ps.length)return;t.classList.add('is-on');const go=k=>{bs.forEach((b,j)=>b.setAttribute('aria-selected',j===k));ps.forEach((p,j)=>p.classList.toggle('is-open',j===k))};bs.forEach((b,k)=>b.addEventListener('click',()=>go(k)));go(0)});")
+
 device(id='tilt', name='A card that leans under the pointer', kind='pointer',
        sees='Moving over a card, it tips a few degrees toward the cursor as if it had weight, and settles when the pointer leaves.',
        measured=None, seen='4 mentions in the technique survey (rank 64, "3D tilt card")', survey=True,
@@ -407,9 +424,11 @@ def demo(ids=None):
         'draw': '<p class="big dv-lines"><span class="dv-ln"><span>A line <em class="dv-draw">drawn<svg viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true"><path d="M1 8C16 3 31 11 50 6S84 3 99 7" pathLength="1"/></svg></em> under it</span></span></p>',
         'frame': f'<div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:32px;align-items:start"><figure class="dv-window"><img src="{pic(1200, 750, "3a6ff2")}" alt="" width="1200" height="750"></figure><figure class="dv-phone" style="--pw:clamp(110px,22vw,256px)"><img src="{pic(390, 844, "2aa66b")}" alt="" width="390" height="844"></figure></div>',
         'lift': f'<figure class="dv-window dv-lift"><img src="{pic(1600, 800, "7a4de0")}" alt="" width="1600" height="800"></figure>',
+        'switch': '<div class="dv-switch" role="group"><button aria-pressed="true">Monthly</button><button aria-pressed="false">Yearly</button></div><p class="big" data-switch><span class="sw-a">20 a month</span><span class="sw-b">16 a month</span></p>',
+        'tabs': '<div class="dv-tabs"><div class="dv-tabs-row big" role="tablist"><button role="tab">Recruit</button><button role="tab">Research</button><button role="tab">Decide</button></div>' + ''.join(f'<div class="dv-tab"><p class="lede">{t}</p></div>' for t in ('The first panel of three.', 'The second panel.', 'The third panel.')) + '</div>',
         'tilt': '<div class="grid">' + ''.join(f'<article class="card dv-tilt"><p class="mono">0{k + 1}</p><h2>{t}</h2></article>' for k, t in enumerate(('Leans', 'Under the', 'Pointer'))) + '</div>',
         'end-mark': '<div class="dv-endmark" style="--chars:7" aria-hidden="true">Library</div>'}
-    order = ['overlay-menu', 'line-rise', 'rise-stagger', 'fact-ticker', 'read-along', 'count-up', 'held-index', 'held-pictures', 'side-rail', 'stack-cards', 'grow-to-bleed', 'depth', 'slides', 'ground-shift', 'peek', 'draw', 'frame', 'lift', 'kinetic', 'letters', 'focus-in', 'tilt', 'end-mark']
+    order = ['overlay-menu', 'line-rise', 'rise-stagger', 'fact-ticker', 'read-along', 'count-up', 'held-index', 'held-pictures', 'side-rail', 'stack-cards', 'grow-to-bleed', 'depth', 'slides', 'ground-shift', 'peek', 'draw', 'frame', 'lift', 'switch', 'tabs', 'kinetic', 'letters', 'focus-in', 'tilt', 'end-mark']
     body = ''.join(f'<section id="{i}"><p class="mono tag">{i}</p>{blocks[i]}</section>' for i in order if i in ids and i in blocks)
     page_css = """*{box-sizing:border-box}body{margin:0;--ink:#101421;--paper:#fff;--accent:#ff488b;font:18px/1.5 'Geist',system-ui,sans-serif;color:var(--ink);background:var(--paper)}
 section{padding:clamp(56px,9vw,140px) clamp(20px,2.8vw,40px)}.big{font-weight:300;font-size:clamp(44px,6vw,104px);line-height:1;letter-spacing:-.03em;margin:0}.huge span{font-weight:300;font-size:clamp(56px,11vw,180px);letter-spacing:-.04em;white-space:nowrap}

@@ -143,7 +143,10 @@ def evidence(d):
     images = sorted(images, key=lambda i: (bool(i.get('shot')), bool(i.get('soft')), -int(i.get('sharp_w') or 0)))[:14]
     pictures = [{'id': i['id'], 'w': i.get('w'), 'h': i.get('h'), 'kind': 'generated atmosphere (not the product, never evidence)' if i.get('gen') else 'screenshot of the real product' if i.get('shot') else 'the client\'s own picture',
                  'note': ' '.join(str(i.get('alt') or '').split())[:140], **({'page': str(i['page'])[:60]} if i.get('page') else {}), **({'soft': f"out of focus or a frame of a video — crisp only up to about {i.get('sharp_w')} px wide: show it small, never across the screen"} if i.get('soft') else {})} for i in images]
-    return {'url': inv.get('url'), 'title': inv.get('title'), 'lang': inv.get('lang'), 'h1': (inv.get('copy') or {}).get('h1') or None, 'factsheet': fact, 'sections': sections, 'links': links[:120],
+    found = J(d, 'logos.json') or {}; marks = [m for m in (found.get('items') or []) if isinstance(m, dict) and str(m.get('data') or '').startswith('data:image/')][:12]
+    logos = [{'id': f'logo{k + 1}', 'logo': True, 'data': m['data'], 'w': m.get('w'), 'h': m.get('h'), 'alt': m.get('alt') or ''} for k, m in enumerate(marks)] if len(marks) >= 4 else []
+    images = images + logos   # placed by the scene "logos", never offered as pictures
+    return {'url': inv.get('url'), 'title': inv.get('title'), 'lang': inv.get('lang'), 'logos': {'count': len(logos), 'said_with_them': str(found.get('label') or '')[:90]} if logos else None, 'h1': (inv.get('copy') or {}).get('h1') or None, 'factsheet': fact, 'sections': sections, 'links': links[:120],
             'brand': {'colours': inv.get('colors'), 'type': inv.get('typography'), 'name': (inv.get('brand') or {}).get('name'), 'character': character(inv)}, 'pictures': pictures}, images
 
 
