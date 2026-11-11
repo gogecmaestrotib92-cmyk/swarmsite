@@ -351,6 +351,9 @@ em{font-style:normal;color:var(--em)}.display-serif em,.soft-serif em{font-style
 .voice-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:clamp(40px,6vw,96px)}.voice{margin:0}.voice blockquote{font-family:var(--display);font-weight:var(--dw);letter-spacing:var(--dls);line-height:1.12;font-size:clamp(24px,2.7vw,44px);text-wrap:balance;quotes:"“" "”"}.voice blockquote::before{content:open-quote}.voice blockquote::after{content:close-quote}.voice figcaption{margin-top:22px;color:var(--mute)}
 .acc details{border-top:1px solid var(--line)}.acc details:last-child{border-bottom:1px solid var(--line)}.acc summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;gap:20px;align-items:baseline;padding:clamp(16px,1.8vw,24px) 0;font:500 clamp(16px,1.3vw,19px)/1.35 var(--text)}.acc summary::-webkit-details-marker{display:none}
 .acc summary::after{content:"+";font-family:var(--mono);color:var(--mute);transition:transform .3s var(--ease)}.acc details[open] summary::after{transform:rotate(45deg)}.acc details p{color:var(--mute);max-width:60ch;padding:0 0 clamp(18px,2vw,26px)}
+/* what is kept for search, one quiet row */
+.keep{padding-block:clamp(16px,2vw,28px)}.keep-all>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;min-height:44px;color:var(--mute)}.keep-all>summary::-webkit-details-marker{display:none}.keep-all>summary::after{content:"+";font-family:var(--mono)}.keep-all[open]>summary::after{content:"–"}
+.keep-links{display:flex;flex-wrap:wrap;gap:6px 24px;margin-top:20px;color:var(--mute)}.keep-links a{display:inline-flex;min-height:44px;align-items:center}
 /* close */
 .night{background:var(--night);color:var(--on-night);--line:color-mix(in srgb,var(--on-night) 16%,transparent);--mute:color-mix(in srgb,var(--on-night) 62%,transparent);--em:var(--accent)}
 .close{padding-bottom:0;overflow:hidden}.close .acts{margin-top:clamp(28px,4vw,64px)}.close .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr));gap:clamp(24px,4vw,64px);margin-top:clamp(72px,10vw,160px);padding-top:28px;border-top:1px solid var(--line)}
@@ -388,6 +391,37 @@ def page(plan, images):
             + f'{_btn(ctx["action"])}<button class="dv-menu-btn mono" aria-expanded="false" aria-controls="menu">Menu</button></div></header>'
             f'<nav class="dv-menu" id="menu" aria-label="Menu">{links}<a class="btn" href="{e((ctx["action"] or {}).get("url") or "#top")}">{e((ctx["action"] or {}).get("label") or "")}</a></nav>'
             f'<main id="main">{"".join(main)}</main>{"".join(foot)}<script>{js}</script></body></html>')
+
+
+def keep(page_html, inventory):
+    """The client's search standing, kept without being shown as a dump: every source section whose words the page does
+    not already carry, and every same-site link the page lost, in ONE quiet row before the close that a reader may open;
+    the source's canonical address and structured data in the head. Nothing a search engine read on the old page is
+    missing from this one. Deterministic; returns the page."""
+    import seo as SEO
+    text = re.sub(r'<[^>]+>', ' ', re.sub(r'<(script|style)\b.*?</\1>', ' ', page_html, flags=re.S))
+    items = []
+    for sec in SEO.source_sections(inventory):
+        words = ' '.join(str(sec.get('text') or '').split())
+        if len(words.split()) < 8 or SEO.text_coverage(words, text) >= .85: continue
+        faq = ''.join(f'<p><b>{e(q.get("question"))}</b> {e(q.get("answer"))}</p>' for q in (sec.get('faq') or []) if isinstance(q, dict) and q.get('answer'))
+        items.append(f'<details><summary><span>{e(sec.get("title"))}</span></summary><p>{e(words[:6000])}</p>{faq}</details>')
+    hrefs = {h.rstrip('/') for h in re.findall(r'href="([^"]+)"', page_html)}
+    lost = [l for l in SEO.internal_links(inventory) if str(l.get('href') or '').rstrip('/') not in hrefs]
+    links = ''.join(f'<li><a href="{e(l["href"])}">{e(l["text"])}</a></li>' for l in lost)
+    out = page_html
+    if items or links:
+        lang = str((inventory or {}).get('lang') or '').lower().split('-')[0]
+        title = {'sr': 'Više o nama', 'hr': 'Više o nama', 'es': 'Más información', 'fr': 'En savoir plus', 'de': 'Mehr erfahren', 'it': 'Maggiori informazioni', 'pt': 'Mais informações'}.get(lang, 'More about us')
+        block = (f'<section class="sc keep" id="more-about"><div class="wrap"><details class="keep-all"><summary><span class="mono">{e(title)}</span></summary><div class="acc">{"".join(items)}</div>'
+                 + (f'<ul class="keep-links">{links}</ul>' if links else '') + '</details></div></section>')
+        at = out.find('</main>'); out = out[:at] + block + out[at:] if at >= 0 else out
+    seo = (inventory or {}).get('seo') or {}; head = ''
+    if seo.get('canonical') and 'rel="canonical"' not in out: head += f'<link rel="canonical" href="{e(seo["canonical"])}">'
+    for ld in (seo.get('jsonld') or [])[:4]:
+        if isinstance(ld, (dict, list)): head += '<script type="application/ld+json">' + __import__('json').dumps(ld, ensure_ascii=False).replace('</', '<\\/') + '</script>'
+    if head: out = out.replace('</head>', head + '</head>', 1)
+    return out
 
 
 def catalogue():

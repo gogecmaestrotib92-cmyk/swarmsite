@@ -42,6 +42,8 @@ def call(system, content, who, tool=None, max_tokens=8000, model=None):
     if tool: kwargs.update(tools=[tool], tool_choice={'type': 'auto'})
     with client.messages.stream(**kwargs) as stream: msg = stream.get_final_message()
     u = msg.usage; tin = (u.input_tokens or 0) + (getattr(u, 'cache_creation_input_tokens', 0) or 0); tout = u.output_tokens or 0
+    try: BUDGET.charge(u, 'studio_' + re.sub(r'[^a-z]+', '_', who.lower()).strip('_'), model)   # a job's ledger counts these calls like any other
+    except Exception: pass
     USAGE.append({'who': who, 'model': model, 'in': tin, 'out': tout, 'seconds': round(time.time() - t0, 1), 'usd': BUDGET.cost(model, tin, tout, getattr(u, 'cache_read_input_tokens', 0) or 0), 'stop': msg.stop_reason})
     if tool:
         for block in msg.content:

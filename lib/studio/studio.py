@@ -1,6 +1,6 @@
-"""compose.py — a page for one client, composed from authored scenes: a story, a type system, a palette, scenes in order.
+"""studio.py — a page for one client, composed from authored scenes: a story, a type system, a palette, scenes in order.
 
-  python3 lib/studio/compose.py <evidence dir> <out dir> [--variants 3] [--model claude-opus-5-5]
+  python3 lib/studio/studio.py <evidence dir> <out dir> [--variants 3] [--model claude-opus-5-5]
 
 The art director (one model call per variant) decides what a designer decides — the story, which type system suits this
 client's voice, which palette scheme, which scenes in which order, what goes in each slot — and draws nothing: every
@@ -127,10 +127,10 @@ VARIANTS = [('a', 'VARIANT A — the page you believe is right for this client.'
             ('c', 'VARIANT C — the boldest honest version: the fewest scenes that carry the argument, the largest type, one accent used once or twice. A different type system again.')]
 
 
-def main():
-    args = sys.argv[1:]; src, out = os.path.abspath(args[0]), os.path.abspath(args[1]); n = int(args[args.index('--variants') + 1]) if '--variants' in args else 3
-    if '--model' in args: E.MODEL = args[args.index('--model') + 1]
-    os.makedirs(out, exist_ok=True); t0 = time.time()
+def build(src, out, n=3, atmosphere_wanted=False):
+    """Compose `n` variants of the page for the evidence in `src` into `out`; returns the report (also written to report.json)."""
+    src, out = os.path.abspath(src), os.path.abspath(out); args = ['--atmosphere'] if atmosphere_wanted else []
+    os.makedirs(out, exist_ok=True); t0 = time.time(); del E.USAGE[:]; del known_quotes[:]
     ev, imgs = E.evidence(src); images = {i['id']: i for i in imgs}; allowed = {l['url'].rstrip('/') for l in ev['links']} | {str(ev.get('url') or '').rstrip('/')}
     material = [{'type': 'text', 'text': 'THE STUDIO\'S SCENES, TYPE SYSTEMS AND SCHEMES:\n' + json.dumps(S.catalogue(), ensure_ascii=False, indent=1)}, {'type': 'text', 'text': 'THE EVIDENCE (the client\'s existing site):\n' + json.dumps(ev, ensure_ascii=False, indent=1)}]
     said = [{'text': ' '.join(str(t.get('text') or t.get('quote') or '').split())[:500], 'name': t.get('name') or t.get('author'), 'role': t.get('role')} for sec in ((E.J(src, 'inventory.json') or {}).get('sourceCoverage') or {}).get('sections') or [] for t in (sec.get('testimonials') or []) if isinstance(t, dict)]
@@ -155,7 +155,14 @@ def main():
     priced = [u['usd'] for u in E.USAGE if u['usd'] is not None]
     report = {'atmosphere': made, 'variants': results, 'usage': E.USAGE, 'usd': round(sum(priced), 3), 'seconds': round(time.time() - t0)}
     with open(os.path.join(out, 'report.json'), 'w', encoding='utf-8') as f: json.dump(report, f, indent=1, ensure_ascii=False)
-    print(json.dumps({'variants': [(r['tag'], r['type'], r['scheme'], r['scenes'], r['clean']) for r in results], 'usd': report['usd'], 'seconds': report['seconds']}, ensure_ascii=False))
+    return report
+
+
+def main():
+    args = sys.argv[1:]
+    if '--model' in args: E.MODEL = args[args.index('--model') + 1]
+    report = build(args[0], args[1], int(args[args.index('--variants') + 1]) if '--variants' in args else 3, '--atmosphere' in args)
+    print(json.dumps({'variants': [(r['tag'], r['type'], r['scheme'], r['scenes'], r['clean']) for r in report['variants']], 'usd': report['usd'], 'seconds': report['seconds']}, ensure_ascii=False))
 
 
 if __name__ == '__main__': main()

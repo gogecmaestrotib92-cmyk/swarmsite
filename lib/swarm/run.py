@@ -172,6 +172,43 @@ def checked_render(slug_dir, bp, out):
         ev('Patterns', f"{len(selection['choices'])} verified section move(s) · {selection['reason']}")
     return render(slug_dir, bp, out)
 
+STUDIO_BY = 620   # seconds into the loop after which the studio page is no longer composed: the server stops the loop at 900
+
+
+def studio_wanted(slug_dir):
+    """The page is composed from authored scenes (lib/studio) unless the job or the deployment says no: brief.json
+    "studio": false, or SWARM_STUDIO=0. Under tests nothing is composed unless asked."""
+    asked = (A.J(slug_dir, 'brief.json') or {}).get('studio'); env = os.environ.get('SWARM_STUDIO')
+    if asked is True or asked is False: return asked
+    if env in ('0', '1'): return env == '1'
+    return not os.environ.get('LIVETEST')
+
+
+def studio_page(slug_dir, out):
+    """Compose three variants of the page from the studio's scenes and stand the first clean one in place of the page the
+    round made. Returns what happened: {'kept': tag | None, 'variants': […], 'usd', 'seconds', 'why'}. The page at `out`
+    is replaced only by a variant that passed every check (numbers, links, pictures, layout at five widths); the other
+    clean variants stay in <job>/studio/ for the server to publish beside it. Anything else leaves `out` untouched."""
+    for sub in ('studio', 'devices'):
+        if os.path.join(ROOT, 'lib', sub) not in sys.path: sys.path.insert(0, os.path.join(ROOT, 'lib', sub))
+    import studio as STUDIO, scenes as SCENES
+    folder = os.path.join(slug_dir, 'studio'); report = STUDIO.build(slug_dir, folder, 3)
+    clean = [v for v in report['variants'] if v.get('clean')]
+    info = {'kept': None, 'variants': [{k: v.get(k) for k in ('tag', 'type', 'scheme', 'scenes', 'clean', 'story')} for v in report['variants']], 'usd': report.get('usd'), 'seconds': report.get('seconds')}
+    if not clean: info['why'] = 'no variant passed its checks'; return info
+    inventory = A.J(slug_dir, 'inventory.json') or {}; brief = A.J(slug_dir, 'brief.json') or {}
+    import seo as SEO
+    for v in clean:   # every clean variant carries what the client's search standing needs, when the job asked for that
+        path = os.path.join(folder, f'page-{v["tag"]}.html')
+        with open(path, encoding='utf-8') as f: page = f.read()
+        if SEO.mode(brief) == 'seo-safe': page = SCENES.keep(page, inventory)
+        with open(path, 'w', encoding='utf-8') as f: f.write(page)
+    first = clean[0]
+    shutil.copyfile(os.path.join(folder, f'page-{first["tag"]}.html'), out + '.studio'); os.replace(out + '.studio', out)
+    info['kept'] = first['tag']; info['others'] = [v['tag'] for v in clean[1:]]
+    return info
+
+
 def compose_wanted(slug_dir):
     """The page that won the rounds is recomposed (lib/compose) unless the job or the deployment says no: brief.json
     "compose": false, or SWARM_COMPOSE=0. Since 2026-11-10 this is the ordinary path — the form a visitor fills in has no
@@ -523,6 +560,8 @@ def _main(snapshot_dir):
     slug_dir, bp = sys.argv[1], sys.argv[2]; args = sys.argv[3:]
     out = args[args.index('--out') + 1] if '--out' in args else os.path.join(slug_dir, f'bp-{bp}.html')
     rounds = int(args[args.index('--rounds') + 1]) if '--rounds' in args else 3
+    studio = studio_wanted(slug_dir)
+    if studio: rounds = 1   # the round's page is the fallback; the page that ships is composed after it
     target = int(args[args.index('--target') + 1]) if '--target' in args else 80
     if rounds < 1: raise ValueError('at least one review round is required')
     log = {'rounds': [], 'blueprint': bp}
@@ -638,7 +677,19 @@ def _main(snapshot_dir):
     if isinstance(best_manifest, dict) and (best_manifest['fingerprints'] != fingerprints(slug_dir, best_bp) or best_manifest['html'] != digest(out)):
         raise RuntimeError('best snapshot changed after render')
     # Opt-in: an art director recomposes the first screen of the page that won. The composed page is one more candidate.
-    if compose_wanted(slug_dir) and isinstance(best_manifest, dict) and best_files and time.time() - started < COMPOSE_BY:
+    if studio and isinstance(best_manifest, dict) and best_files and time.time() - started < STUDIO_BY:
+        try:
+            made = studio_page(slug_dir, out); log['studio'] = made
+            if made.get('kept'):
+                best_manifest = dict(best_manifest, html=digest(out))
+                ev('Concept', f"studio page: variant {made['kept']} of {len(made['variants'])} — " + ', '.join(f"{v['tag']}: {v['type']}/{v['scheme']}" for v in made['variants'])[:120])
+            else: ev('Concept', 'studio page not kept: ' + str(made.get('why'))[:100])
+        except Exception as e:
+            log['studio'] = {'kept': None, 'why': 'failed: ' + str(e)[:160]}; ev('Concept', 'studio page failed: ' + str(e)[:100])
+            if isinstance(best_manifest, dict) and best_manifest['html'] != digest(out):   # never leave a half-written page behind
+                for path, data in best_files.items():
+                    with open(path, 'wb') as f: f.write(data)
+    elif compose_wanted(slug_dir) and isinstance(best_manifest, dict) and best_files and time.time() - started < COMPOSE_BY:
         best_score, best_round, best_manifest = recompose(slug_dir, out, log, best_score, best_round, best_manifest, best_files, snapshot_dir, deadline=started + COMPOSE_PICTURES_BY)
     # Whatever page won — a template round or the composed one — is measured as typesetting before anything else reads it.
     if os.environ.get('SWARM_LAYOUT', '0' if os.environ.get('LIVETEST') else '1') != '0':

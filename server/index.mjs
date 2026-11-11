@@ -133,7 +133,8 @@ app.get('/p/:id', async (req, res) => {
   const version = active.version; const prefix = version ? `${req.params.id}/v-${version}` : req.params.id;
   if (active.failed) return res.status(404).send('preview not found');
   if (bp && Array.isArray(active.blueprints) && !active.blueprints.includes(bp)) return res.status(404).send('preview not found');
-  const file = bp && !(version && bp === active.blueprints[0]) ? 'bp-' + bp + '.html' : 'index.html';
+  const studioTag = req.query.s == null ? '' : String(req.query.s); if (req.query.s != null && !/^[a-z]$/.test(studioTag)) return res.status(400).end();
+  const file = studioTag ? `studio-${studioTag}.html` : bp && !(version && bp === active.blueprints[0]) ? 'bp-' + bp + '.html' : 'index.html';
   const { data, error } = await sb.storage.from(BUCKET).download(`${prefix}/${file}`);
   if (error || !data) return res.status(404).send('preview not found');
   // These are temporary design previews, not the customer's published site.
@@ -435,9 +436,14 @@ async function process_(job) {
   const result = await timed('upload', async () => {
     const published = await publishSelected({dir, root:ROOT, primary:job._primary, alternate:job._alternative, manifest:job._manifest, out:path.join(dir, 'index.html'), jobId:job.id, upload});
     job._bps = published.blueprints; job._previewVersion = published.version; const previewUrl = `${SELF}/p/${job.id}?v=${published.version}`;
+    // The studio composes three variants; the first clean one is the page, the others are published beside it (…/p/<id>?s=b).
+    const studioLog = (J(path.join(dir, 'swarm.json')) || {}).studio || null; const studioOthers = [];
+    if (studioLog?.kept) for (const tag of (Array.isArray(studioLog.others) ? studioLog.others : []).slice(0, 4)) { const f = path.join(dir, 'studio', `page-${tag}.html`);
+      if (/^[a-z]$/.test(String(tag)) && fs.existsSync(f)) { try { await upload(f, `${job.id}/v-${published.version}/studio-${tag}.html`, 'text/html'); studioOthers.push(tag); } catch (e) { console.warn('studio variant not uploaded', tag, e.message); } } }
+    job._studio = studioLog ? { kept: studioLog.kept || null, why: studioLog.why || null, variants: (studioLog.variants || []).map(v => ({ tag: v.tag, type: v.type, scheme: v.scheme, scenes: v.scenes, clean: !!v.clean })), others: studioOthers.map(tag => ({ tag, url: `${SELF}/p/${job.id}?v=${published.version}&s=${tag}` })) } : null;
     const beforeUrl = fs.existsSync(path.join(dir, 'before-hero.jpg')) ? await upload(path.join(dir, 'before-hero.jpg'), `${job.id}/before.jpg`, 'image/jpeg') : null;
     const direction = JSON.parse(fs.readFileSync(path.join(dir, 'direction.json'), 'utf8'));
-    return { ...(job._result || {}), previewUrl, previewVersion:published.version, beforeUrl, qa, budget: J(path.join(dir, 'budget.json')), seo: (J(path.join(dir, 'contract.json')) || {}).seo || null, coverage: J(path.join(dir, 'coverage.json')), blueprints: job._bps || [], critic: job._critic || null, scores: J(path.join(dir, 'scores.json')), composition: (c => c ? { drawn: !!c.drawn, kept: !!c.kept, concept: c.concept ?? null, face: c.face ?? null, lists: c.lists?.drawn ? (c.lists.forms ?? null) : null, pictures: c.pictures?.drawn ? (c.pictures.forms ?? null) : null, words: c.words?.drawn ? (c.words.forms ?? null) : null, before: c.before ?? null, score: c.score ?? null, taste: c.taste ?? null, why: c.why ?? null } : null)(J(path.join(dir, 'composition.json'))), fingerprint: (f => f ? { hero: f.hero, body: f.body, digest: f.digest } : null)(J(path.join(dir, 'fingerprint.json'))), direction: { kind: direction.kind, concept: direction.concept, voice: direction.voice, brand: direction.brand, beats: direction.beats.map(b => b.type), audit_notes: direction.audit_notes }, seconds: Math.round((Date.now() - t0) / 1000) };
+    return { ...(job._result || {}), previewUrl, previewVersion:published.version, beforeUrl, qa, budget: J(path.join(dir, 'budget.json')), studio: job._studio || null, seo: (J(path.join(dir, 'contract.json')) || {}).seo || null, coverage: J(path.join(dir, 'coverage.json')), blueprints: job._bps || [], critic: job._critic || null, scores: J(path.join(dir, 'scores.json')), composition: (c => c ? { drawn: !!c.drawn, kept: !!c.kept, concept: c.concept ?? null, face: c.face ?? null, lists: c.lists?.drawn ? (c.lists.forms ?? null) : null, pictures: c.pictures?.drawn ? (c.pictures.forms ?? null) : null, words: c.words?.drawn ? (c.words.forms ?? null) : null, before: c.before ?? null, score: c.score ?? null, taste: c.taste ?? null, why: c.why ?? null } : null)(J(path.join(dir, 'composition.json'))), fingerprint: (f => f ? { hero: f.hero, body: f.body, digest: f.digest } : null)(J(path.join(dir, 'fingerprint.json'))), direction: { kind: direction.kind, concept: direction.concept, voice: direction.voice, brand: direction.brand, beats: direction.beats.map(b => b.type), audit_notes: direction.audit_notes }, seconds: Math.round((Date.now() - t0) / 1000) };
   });
   job._artifactsUploaded = await uploadArtefacts(job, dir);
   result.artifactsAvailable = job._artifactsUploaded; result.artifactsVersion = job._previewVersion;
