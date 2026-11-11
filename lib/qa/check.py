@@ -10,11 +10,12 @@ PROBE = r"""
 window.__qa = async function(){
   const H = innerHeight, W = innerWidth;
   const secs=[...document.querySelectorAll('main > section, body > section, body > nav, body > footer, section.hero')].filter((s,i,a)=>a.indexOf(s)===i);
-  const out={H,W,scrollW:document.documentElement.scrollWidth,sections:[],h1:(document.querySelector('h1')||{}).textContent||'',buttons:[...document.querySelectorAll('a.btn,.pillb,.cta')].map(b=>b.textContent.trim()).filter(Boolean),links:document.querySelectorAll('footer a, footer li').length};
+  const out={H,W,scrollW:document.documentElement.scrollWidth,sections:[],h1:(document.querySelector('h1')||{}).textContent||'',buttons:[...document.querySelectorAll('a.btn,.pillb,.cta')].map(b=>(b.getAttribute('aria-label')||(()=>{const c=b.cloneNode(true);c.querySelectorAll('[aria-hidden="true"]').forEach(x=>x.remove());return c.textContent})()).trim()).filter(Boolean),links:document.querySelectorAll('footer a, footer li').length};
   for(const s of secs){ if(s.tagName==='NAV') continue; const r=s.getBoundingClientRect(); const top=r.top+scrollY;
     const cl=s.cloneNode(true); cl.querySelectorAll('.card,.marquee,.dcard .card,.sw-hud').forEach(x=>x.remove()); document.body.appendChild(cl); const words=(cl.innerText||'').split(/\s+/).filter(Boolean).length; cl.remove();
     const moves=s.querySelectorAll('[data-move]').length;
-    const ovEls=[...s.querySelectorAll('*')].filter(el=>!el.closest('.marquee,.sw-hud,#sw-intro') && el.getClientRects().length && (()=>{const b=el.getBoundingClientRect();return b.width>0 && (b.right>W+1||b.left<-1)})()); const over=ovEls.length; const overEls=ovEls.slice(0,4).map(el=>el.tagName.toLowerCase()+(el.className&&typeof el.className==='string'?'.'+el.className.split(' ')[0]:'')+'@'+Math.round(el.getBoundingClientRect().right));
+    const held=el=>{for(let n=el.parentElement;n&&n!==document.body;n=n.parentElement){if(getComputedStyle(n).overflowX!=='visible'){const b=n.getBoundingClientRect();if(b.left>=-1&&b.right<=W+1)return true}}return false};  /* cut or scrolled by a box that is itself on screen: a strip, a crop, a row that slides — not a spill */
+    const ovEls=[...s.querySelectorAll('*')].filter(el=>!el.closest('.marquee,.sw-hud,#sw-intro,[aria-hidden="true"]') && !held(el) && el.getClientRects().length && (()=>{const b=el.getBoundingClientRect();return b.width>0 && (b.right>W+1||b.left<-1)})()); const over=ovEls.length; const overEls=ovEls.slice(0,4).map(el=>el.tagName.toLowerCase()+(el.className&&typeof el.className==='string'?'.'+el.className.split(' ')[0]:'')+'@'+Math.round(el.getBoundingClientRect().right));
     const heads=[...s.querySelectorAll('h1,h2')].map(h=>h.textContent.trim());
     out.sections.push({id:s.id||s.className.split(' ')[0]||s.tagName,top:Math.round(top),h:Math.round(r.height),screens:+(r.height/H).toFixed(2),words,moves,over,heads,overEls}); }
   const t=document.createElement('pre'); t.id='__qa'; t.textContent=JSON.stringify(out); document.body.appendChild(t);
@@ -73,7 +74,8 @@ def check(path):
             if h1w > 8: findings.append(('h1-length', 'med', f'H1 has {h1w} words'))
             if d['links'] > 14: findings.append(('link-count', 'low', f'footer has {d["links"]} links/items'))
             labels = [b for b in d['buttons'] if not re.match(r'^(book|buy|order|pre-order|reserve|try|start|get|download|compare|see|watch|read|find|join|subscribe|sign up|contact|configure|add|send|email|request|check|go|replay|skip|rebuild)', b.lower())]
-            if labels: findings.append(('button-labels', 'low', 'not verb+object: ' + ', '.join(sorted(set(labels))[:6])))
+            english = (re.search(r'<html[^>]*\blang="([a-zA-Z-]+)"', open(path).read(2000)) or [None, 'en'])[1].lower().startswith('en')   # the list of verbs is English: a Spanish or Serbian label is not judged by it
+            if labels and english: findings.append(('button-labels', 'low', 'not verb+object: ' + ', '.join(sorted(set(labels))[:6])))
         print(f'-- {tag} H={d["H"]} scrollW={d["scrollW"]}')
         for s in secs: print(f'   {s["id"]:<10} top={s["top"]:<6} h={s["h"]:<5} screens={s["screens"]:<5} words={s["words"]:<4} moves={s["moves"]} over={s["over"]}')
     return findings
