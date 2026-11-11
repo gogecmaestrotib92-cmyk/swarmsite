@@ -96,7 +96,7 @@ device(id='stack-cards', name='Cards that stack as you scroll', kind='scroll',
        needs='3–6 cards of similar height, each a complete thought', use='steps, plans, case studies', avoid='cards taller than the screen; on a phone with long cards',
        pairs=['rise-stagger'], markup='<div class="dv-stack"><article class="dv-card">…</article>…</div>',
        css=""".dv-stack{display:grid;gap:clamp(16px,2vw,28px)}.dv-card{position:sticky;top:calc(clamp(84px,12vh,128px) + var(--k,0) * 14px);transform-origin:50% 0;will-change:transform}
-@media (max-width:700px),(prefers-reduced-motion:reduce){.dv-card{position:static;transform:none!important}}""",
+@media (max-width:900px),(prefers-reduced-motion:reduce){.dv-card{position:static;transform:none!important}}""",
        js="""each('.dv-stack',s=>[...s.children].forEach((c,k)=>c.style.setProperty('--k',k)));
 if(!calm)onScroll(()=>each('.dv-stack',s=>{const cs=[...s.children];cs.forEach((c,k)=>{const nx=cs[k+1];if(!nx)return;const top=parseFloat(getComputedStyle(c).top)||0,gap=nx.getBoundingClientRect().top-top;const t=Math.min(1,Math.max(0,1-gap/c.offsetHeight));c.style.transform=`scale(${1-t*.045})`})}));""")
 
@@ -124,7 +124,7 @@ device(id='scramble', name='A label that resolves from noise', kind='text',
        pairs=['held-index'], markup='<span class="dv-scramble">LABEL</span>',
        css=".dv-scramble{font-variant-numeric:tabular-nums}",
        js="""if(!calm)each('.dv-scramble',el=>{const word=el.textContent,pool='ABCDEFGHJKLMNPRSTUVXYZ0123456789';el.setAttribute('aria-label',word);
-new IntersectionObserver((es,o)=>es.forEach(x=>{if(!x.isIntersecting)return;o.disconnect();let f=0;const n=word.length,t=setInterval(()=>{f++;el.textContent=[...word].map((c,i)=>c===' '||i<f/2?c:pool[(Math.random()*pool.length)|0]).join('');if(f>=n*2){clearInterval(t);el.textContent=word}},28)}),{threshold:.6}).observe(el)});""")
+new IntersectionObserver((es,o)=>es.forEach(x=>{if(!x.isIntersecting)return;o.disconnect();let f=0;const n=word.length,steps=14,t=setInterval(()=>{f++;const done=Math.ceil(n*f/steps);el.textContent=[...word].map((c,i)=>c===' '||i<done?c:pool[(Math.random()*pool.length)|0]).join('');if(f>=steps){clearInterval(t);el.textContent=word}},34)}),{threshold:.6}).observe(el)});""")
 
 device(id='figure-bars', name='Figures drawn as bars that fill', kind='data',
        sees='A few true numbers stand in a panel, each with a bar that grows to its length when it comes into view.',
@@ -192,9 +192,9 @@ device(id='overlay-menu', name='A menu that takes the whole screen', kind='navig
        pairs=[], markup='<button class="dv-menu-btn" aria-expanded="false" aria-controls="menu">Menu</button> … <nav class="dv-menu" id="menu" aria-label="Menu"><a href="#…">Link</a>…</nav>',
        css=""".dv-menu-btn{min-height:44px;padding:0 16px;border-radius:7px;border:0;font:inherit;background:var(--ink);color:var(--paper);cursor:pointer}
 .dv-menu{display:flex;flex-direction:column;gap:.1em;padding:clamp(20px,4vw,48px) 0}.dv-menu a{font-weight:300;font-size:clamp(34px,9vw,92px);line-height:1.08;letter-spacing:-.03em;color:inherit;text-decoration:none}
-.dv .dv-menu{position:fixed;inset:0;z-index:60;background:var(--ink);color:var(--paper);padding:clamp(88px,14vh,140px) clamp(20px,2.8vw,40px) 32px;justify-content:flex-end;overflow:auto;visibility:hidden;opacity:0;transition:opacity .25s ease,visibility 0s .25s}
+.dv .dv-menu{position:fixed;inset:0;z-index:38;background:var(--paper);color:var(--ink);padding:clamp(104px,16vh,160px) var(--pad,clamp(20px,2.8vw,40px)) 32px;justify-content:flex-start;overflow:auto;visibility:hidden;opacity:0;transition:opacity .25s ease,visibility 0s .25s}
 .dv .dv-menu.is-open{visibility:visible;opacity:1;transition:opacity .25s ease}.dv .dv-menu a{transform:translateY(24px);opacity:0;transition:transform .45s var(--ease),opacity .3s ease;transition-delay:calc(var(--i,0) * 50ms)}.dv .dv-menu.is-open a{transform:none;opacity:1}
-.dv .dv-menu-btn{position:relative;z-index:61}.dv-menu-lock{overflow:hidden}""",
+.dv-menu-lock{overflow:hidden}.dv-menu a.btn{font-size:12px;font-weight:400;letter-spacing:.08em;line-height:1;align-self:flex-start;margin-top:clamp(28px,6vh,56px);transform:none}.dv .dv-menu a.btn{opacity:1}""",
        js="""each('.dv-menu-btn',b=>{const m=D.getElementById(b.getAttribute('aria-controls'));if(!m)return;[...m.querySelectorAll('a')].forEach((a,i)=>a.style.setProperty('--i',i));const word=b.textContent;
 const set=o=>{m.classList.toggle('is-open',o);b.setAttribute('aria-expanded',o);R.classList.toggle('dv-menu-lock',o);b.textContent=o?'Close':word;m.querySelectorAll('a').forEach(a=>a.tabIndex=o?0:-1)};set(false);
 b.addEventListener('click',()=>set(!m.classList.contains('is-open')));m.addEventListener('click',e=>e.target.closest('a')&&set(false));addEventListener('keydown',e=>e.key==='Escape'&&m.classList.contains('is-open')&&(set(false),b.focus()))});""")
@@ -258,8 +258,8 @@ device(id='bar-tuck', name='A bar that steps aside while you read and returns wh
        measured=None, seen='7 mentions in the technique survey (rank 51, "hide-on-scroll header")', survey=True,
        needs='a fixed top bar', use='any long page with a fixed bar', avoid='pages whose bar carries the only route to the main action',
        pairs=['progress'], markup='<header class="bar dv-tuck">…</header>',
-       css=".dv-tuck{transition:transform .4s var(--ease)}.dv-tuck.is-away{transform:translateY(-110%)}",
-       js="{let last=scrollY;onScroll(()=>{const y=scrollY,d=y-last;if(Math.abs(d)<6)return;each('.dv-tuck',b=>b.classList.toggle('is-away',d>0&&y>innerHeight*.6&&!R.classList.contains('dv-menu-lock')));last=y})}")
+       css=".dv-tuck{transition:transform .4s var(--ease),background-color .3s ease}.dv-tuck.is-away{transform:translateY(-110%)}.dv-tuck.is-solid{background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 1px 0 var(--line,rgba(0,0,0,.08))}",
+       js="{let last=scrollY;onScroll(()=>{const y=scrollY,d=y-last;each('.dv-tuck',b=>b.classList.toggle('is-solid',y>24||R.classList.contains('dv-menu-lock')));if(Math.abs(d)<6)return;each('.dv-tuck',b=>b.classList.toggle('is-away',d>0&&y>innerHeight*.6&&!R.classList.contains('dv-menu-lock')));last=y})}")
 
 device(id='held-pictures', name='Words held while pictures pass', kind='scroll',
        sees='A heading and a few lines stay where they are on one side while two to four photographs scroll past on the other.',
