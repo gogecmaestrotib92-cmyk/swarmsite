@@ -21,6 +21,7 @@ HOW TO CHOOSE
 - Type system: by the client's voice (read the names in TYPE). If the client's own headline face is one of them in spirit, keep that character.
 - Scheme: "paper", "night" or "tint" — from the client's brand and from what its pictures need (dark screenshots sit badly on white unless framed; photographs want paper).
 - A place (restaurant, hotel, shop) is shown with its photographs: "open-picture", "window", "gallery", its list as a "carte", and "visit" for where and when. Software is shown with "held-product", "stage", "figures". When there is no picture strong enough to open on, "open-atmosphere" or "open-statement".
+- Software (an app, a SaaS product, a tool for developers) takes "scale": "product" and opens on "open-product" when there is a real screenshot of it: the product is the picture, the line is short and quiet. Its plans go in "plans" and, when the client publishes a feature comparison, "compare" — only what the client states, never a price, a limit or a plan of your own. With "scale": "product" do not use "kinetic-line", "rail" or the closing wordmark: these pages are calm.
 - A place is its rooms. Every room, terrace or space the client names and has a photograph of is shown by that photograph, and the photographs of the place itself lead: a dish or a detail never takes the first or the largest place in a scene about the place. Put the largest, sharpest photograph of the place where it is seen widest.
 - "statement" carries the thesis once, early. "steps" shows how something goes when the client describes a process. "rooms" holds words while two to four of the client's photographs pass. "voices" only with testimonials given to you, word for word. "faq" for six or more questions, "ledger" for fewer.
 - "scatter" sets three to five of the client's pictures in rows that close — one large with two beside it, or two side by side — each cropped to its place (work, dishes, rooms, products). The sharpest takes the largest place; a picture marked soft is left out of it. "bento" sets four to six facts in tiles of different sizes when there is little to picture. "kinetic-line" is a statement in two or three huge rows that slide apart — use it or "rail", never both.
@@ -42,7 +43,7 @@ TOOL = {'name': 'compose_page', 'description': 'The whole page as a plan.', 'inp
     'story': {'type': 'object', 'required': ['doubt', 'turn', 'proof', 'ask'], 'properties': {'doubt': {'type': 'string', 'description': 'what the visitor does not know or believe on arrival'}, 'turn': {'type': 'string', 'description': 'the one thing that, once seen, changes that'}, 'proof': {'type': 'string'}, 'ask': {'type': 'string'}, 'idea': {'type': 'string', 'description': 'the one idea every scene expresses'}}},
     'title': {'type': 'string'}, 'description': {'type': 'string'},
     'brand': {'type': 'object', 'required': ['name', 'accent', 'night'], 'properties': {'name': {'type': 'string'}, 'accent': {'type': 'string'}, 'night': {'type': 'string'}, 'lang': {'type': 'string'}}},
-    'type': {'type': 'string', 'enum': list(S.TYPE)}, 'scheme': {'type': 'string', 'enum': list(S.SCHEMES)}, 'mark': {'type': 'string', 'enum': ['colour', 'drawn'], 'description': 'how the one *marked phrase* of a heading is set: in the accent colour, or in the ink with a hand-drawn stroke pulled under it (suits serif and editorial pages; mark one to three words only)'}, 'eased': {'type': 'boolean', 'description': 'the page glides to a stop after the wheel (desk only)'},
+    'type': {'type': 'string', 'enum': list(S.TYPE)}, 'scheme': {'type': 'string', 'enum': list(S.SCHEMES)}, 'mark': {'type': 'string', 'enum': ['colour', 'drawn'], 'description': 'how the one *marked phrase* of a heading is set: in the accent colour, or in the ink with a hand-drawn stroke pulled under it (suits serif and editorial pages; mark one to three words only)'}, 'scale': {'type': 'string', 'enum': ['display', 'product'], 'description': '"display": headlines set very large, the page led by type and photographs (places, brands, studios). "product": software — headlines near 64 px, quick small reveals, the product screenshots are the pictures'}, 'eased': {'type': 'boolean', 'description': 'the page glides to a stop after the wheel (desk only)'},
     'why': {'type': 'string', 'description': 'why this type system and scheme for this client, in two sentences'},
     'nav': {'type': 'array', 'items': {'type': 'object', 'properties': {'label': {'type': 'string'}, 'url': {'type': 'string'}}}},
     'action': {'type': 'object', 'properties': {'label': {'type': 'string'}, 'url': {'type': 'string'}}}, 'action2': {'type': 'object', 'properties': {'label': {'type': 'string'}, 'url': {'type': 'string'}}},
@@ -67,6 +68,16 @@ def check(plan, page, ev, allowed, images):
             bad['pictures'].append(f'{pid}: out of focus (or a frame of a video) — not a picture to show across the screen in "{sc["scene"]}"')
         elif sc.get('scene') in ('open-picture', 'window', 'stage') and pid in images and (max(int(images[pid].get('w') or 0), int(images[pid].get('h') or 0)) < 900 or int(images[pid].get('sharp_w') or 900) < 900):
             bad['pictures'].append(f'{pid}: {images[pid].get("w")}×{images[pid].get("h")} px (crisp up to {images[pid].get("sharp_w") or images[pid].get("w")} px) is too small to be shown across the screen in "{sc["scene"]}" — use a larger picture or a scene that shows it small')
+        if sc.get('scene') == 'open-product':   # the product on the first screen has to be read
+            im = images.get(pid)
+            if not im: bad['pictures'].append('"open-product" has no screenshot — use "open-statement"')
+            else:
+                phone = .42 <= int(im.get('w') or 1) / max(1, int(im.get('h') or 1)) <= .62
+                if not im.get('shot') and not phone: bad['pictures'].append(f'{pid}: "open-product" shows the product itself — a screenshot of it, or a phone screen; this is a photograph or a cover')
+                elif im.get('soft') or (not phone and int(im.get('w') or 0) < 900): bad['pictures'].append(f'{pid}: too small or too soft to stand as the product on the first screen — a wide screenshot needs 900 px')
+        if sc.get('scene') == 'compare':
+            cols = (sc.get('slots') or {}).get('columns') or []
+            if any(len(r.get('values') or []) != len(cols) for g in (sc.get('slots') or {}).get('groups') or [] for r in g.get('rows') or []): bad['structure'].append('"compare": every row needs one value for each column')
         if sc.get('scene') == 'collage':   # pictures laid over one another are each seen large: every one has to hold
             for p in (sc.get('slots') or {}).get('pictures') or []:
                 im = images.get(p.get('image'))

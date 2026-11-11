@@ -313,6 +313,15 @@ device(id='draw', name='A line drawn under the phrase that matters', kind='text'
 @media (prefers-reduced-motion:reduce){.dv .dv-draw path{stroke-dashoffset:0!important}}""",
        js="")
 
+device(id='frame', name='A window or a phone around a real screenshot', kind='media',
+       sees='A screenshot of the product stands inside a plain window with its three dots, or inside a phone, instead of lying bare on the page.',
+       measured={'source': 'harvests of 2026-11-11 (bench/runs/_research/harvest-apps, harvest-saas)', 'phone_height_px_in_900': [549, 777], 'phone_on': '10 of 23 app pages', 'product_picture_share_of_first_screen_saas_median': .5},
+       needs='a real screenshot: wide for the window, upright (about 9:19) for the phone', use='the product on its first appearance and wherever it is the picture', avoid='photographs; a drawn or invented interface — the frame holds only what the client\'s product really shows',
+       pairs=['rise-stagger'], markup='<figure class="dv-window"><img …></figure> · <figure class="dv-phone" style="--pw:300px"><img …></figure>',
+       css=""".dv-window{margin:0;border-radius:12px;overflow:hidden;background:var(--paper,#fff);box-shadow:0 0 0 1px var(--line,rgba(0,0,0,.14))}.dv-window::before{content:"";display:block;height:clamp(22px,2.4vw,34px);border-bottom:1px solid var(--line,rgba(0,0,0,.14));background:radial-gradient(circle at 18px 50%,var(--line,rgba(0,0,0,.2)) 4px,transparent 4.6px),radial-gradient(circle at 34px 50%,var(--line,rgba(0,0,0,.2)) 4px,transparent 4.6px),radial-gradient(circle at 50px 50%,var(--line,rgba(0,0,0,.2)) 4px,transparent 4.6px)}.dv-window img{display:block;width:100%;height:auto}
+.dv-phone{--pw:300px;position:relative;margin:0;width:min(100%,var(--pw));padding:calc(var(--pw) * .032);border-radius:calc(var(--pw) * .16);background:#0c0c0e;box-shadow:inset 0 0 0 1px rgba(255,255,255,.16),0 0 0 1px rgba(0,0,0,.5)}.dv-phone img{display:block;width:100%;height:auto;border-radius:calc(var(--pw) * .13)}.dv-phone::after{content:"";position:absolute;left:50%;top:calc(var(--pw) * .06);width:27%;height:calc(var(--pw) * .07);transform:translateX(-50%);border-radius:99px;background:#0c0c0e}""",
+       js="")
+
 device(id='tilt', name='A card that leans under the pointer', kind='pointer',
        sees='Moving over a card, it tips a few degrees toward the cursor as if it had weight, and settles when the pointer leaves.',
        measured=None, seen='4 mentions in the technique survey (rank 64, "3D tilt card")', survey=True,
@@ -378,9 +387,10 @@ def demo(ids=None):
         'letters': '<p class="big"><span class="dv-letters">Letter by letter</span></p>',
         'focus-in': '<p class="lede" data-focus>A paragraph that comes into focus as it enters the screen, and stays sharp once it has.</p>',
         'draw': '<p class="big dv-lines"><span class="dv-ln"><span>A line <em class="dv-draw">drawn<svg viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true"><path d="M1 8C16 3 31 11 50 6S84 3 99 7" pathLength="1"/></svg></em> under it</span></span></p>',
+        'frame': f'<div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:32px;align-items:start"><figure class="dv-window"><img src="{pic(1200, 750, "3a6ff2")}" alt="" width="1200" height="750"></figure><figure class="dv-phone" style="--pw:clamp(110px,22vw,256px)"><img src="{pic(390, 844, "2aa66b")}" alt="" width="390" height="844"></figure></div>',
         'tilt': '<div class="grid">' + ''.join(f'<article class="card dv-tilt"><p class="mono">0{k + 1}</p><h2>{t}</h2></article>' for k, t in enumerate(('Leans', 'Under the', 'Pointer'))) + '</div>',
         'end-mark': '<div class="dv-endmark" style="--chars:7" aria-hidden="true">Library</div>'}
-    order = ['overlay-menu', 'line-rise', 'rise-stagger', 'fact-ticker', 'read-along', 'count-up', 'held-index', 'held-pictures', 'side-rail', 'stack-cards', 'grow-to-bleed', 'depth', 'slides', 'ground-shift', 'peek', 'draw', 'kinetic', 'letters', 'focus-in', 'tilt', 'end-mark']
+    order = ['overlay-menu', 'line-rise', 'rise-stagger', 'fact-ticker', 'read-along', 'count-up', 'held-index', 'held-pictures', 'side-rail', 'stack-cards', 'grow-to-bleed', 'depth', 'slides', 'ground-shift', 'peek', 'draw', 'frame', 'kinetic', 'letters', 'focus-in', 'tilt', 'end-mark']
     body = ''.join(f'<section id="{i}"><p class="mono tag">{i}</p>{blocks[i]}</section>' for i in order if i in ids and i in blocks)
     page_css = """*{box-sizing:border-box}body{margin:0;--ink:#101421;--paper:#fff;--accent:#ff488b;font:18px/1.5 'Geist',system-ui,sans-serif;color:var(--ink);background:var(--paper)}
 section{padding:clamp(56px,9vw,140px) clamp(20px,2.8vw,40px)}.big{font-weight:300;font-size:clamp(44px,6vw,104px);line-height:1;letter-spacing:-.03em;margin:0}.huge span{font-weight:300;font-size:clamp(56px,11vw,180px);letter-spacing:-.04em;white-space:nowrap}

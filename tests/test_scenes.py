@@ -100,3 +100,22 @@ def test_an_address_is_sized_to_the_column_it_stands_in_and_its_longest_row():
     assert 'class="dv-endmark"' not in page, 'a one-letter name gets no wordmark'
     named = SC.page({**plan, 'brand': {'name': 'Bálamo', 'accent': '#2a8f5a'}}, {})
     assert 'class="dv-endmark"' in named and 'margin-bottom:0}' in named and 'class="dv-endmark low"' in SC.page({**plan, 'brand': {'name': 'Papagayo', 'accent': '#2a8f5a'}}, {})
+
+
+def test_software_is_set_quietly_with_its_product_in_a_frame_and_its_plans_as_the_client_states_them():
+    import scenes as SC, studio as ST
+    px = 'data:image/png;base64,iVBORw0KGgo='
+    images = {'wide': {'id': 'wide', 'data': px, 'w': 1440, 'h': 820, 'shot': True}, 'phone': {'id': 'phone', 'data': px, 'w': 390, 'h': 844}, 'cover': {'id': 'cover', 'data': px, 'w': 800, 'h': 1193}}
+    def plan(pid, **more): return {'brand': {'name': 'X', 'accent': '#3b5bff'}, 'scale': 'product', **more, 'scenes': [
+        {'scene': 'open-product', 'slots': {'h1': 'A quiet / *line*', 'lede': 'One sentence that says what the product does for the people who use it every day.', 'image': pid}},
+        {'scene': 'plans', 'slots': {'h2': 'Plans', 'plans': [{'name': 'Free', 'price': '$0', 'points': ['One']}, {'name': 'Pro', 'price': '$20', 'per': '/ month', 'marked': True, 'points': ['Two']}]}},
+        {'scene': 'compare', 'slots': {'h2': 'Compare', 'columns': ['Free', 'Pro'], 'groups': [{'title': 'Core', 'rows': [{'name': 'Seats', 'values': ['1', '10']}, {'name': 'Export', 'values': ['no', 'yes']}, {'name': 'Broken row', 'values': ['yes']}]}]}},
+        {'scene': 'close', 'slots': {'line': 'Start'}}]}
+    wide, phone = SC.page(plan('wide'), images), SC.page(plan('phone'), images)
+    assert 'scale-product' in wide.split('<body')[1][:90] and 'class="dv-window"' in wide and 'class="dv-phone"' not in wide.split('<body')[1]
+    assert 'class="dv-phone"' in phone and 'open-prod centre' in phone, 'a phone screen stands in a phone, centred'
+    assert wide.count('class="pl') >= 2 and wide.count('is-marked') >= 1 and '$20' in wide and '<th scope="row">Seats</th><td>1</td><td>10</td>' in wide
+    assert 'aria-label="no">—' in wide and 'aria-label="yes">✓' in wide and 'Broken row' not in wide, 'a row without a value for every column is not drawn'
+    bad = ST.check(plan('cover'), SC.page(plan('cover'), images), {'links': []}, set(), images)
+    assert any('photograph or a cover' in x for x in bad['pictures']) and any('one value for each column' in x for x in bad['structure'])
+    assert 'class="sc plans"' not in SC.page({**plan('wide'), 'scenes': [{'scene': 'plans', 'slots': {'plans': [{'name': 'Only', 'price': '$1'}]}}]}, images), 'one plan is not a choice: the scene stands down'
