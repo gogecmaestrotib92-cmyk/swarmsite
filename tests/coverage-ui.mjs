@@ -117,7 +117,10 @@ try {
   await page.locator('#variants button').first().click();
   assert.equal(await page.locator('#coverage').isVisible(), true, 'primary report returns with selected variant');
   await page.locator('[data-v="mobile"]').click();
-  assert.match(await page.locator('#preview').getAttribute('style'), /width:\s*390px/);
+  // measured, not read off the style attribute: the frame is a flex item, and a width merely written on it was ignored — the old assertion passed while the phone view did nothing
+  const frameWidth = async () => Math.round(await page.locator('#preview').evaluate(f => f.getBoundingClientRect().width));
+  if ((await page.viewportSize()).width > 500) assert.equal(await frameWidth(), 390, 'the phone view narrows the preview to a phone');
+  assert.ok(await page.locator('.preview-stage').evaluate(s => s.classList.contains('is-phone')));
   await page.close();
  }
  console.log('Coverage UI explains limits, handles variants and treats source content as text');

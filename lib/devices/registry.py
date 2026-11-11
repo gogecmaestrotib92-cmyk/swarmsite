@@ -66,7 +66,7 @@ device(id='held-index', name='A list held while its panels pass', kind='scroll',
        pairs=['line-rise', 'rise-stagger', 'figure-bars'],
        markup='<div class="dv-held"><div class="dv-held-side"><ol class="dv-held-names"><li>Claim</li>…</ol></div><div class="dv-held-items"><article class="dv-held-item"><p class="dv-held-m">Claim</p>…panel…</article>…</div></div>',
        css=""".dv-held{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(24px,4vw,64px);align-items:start}.dv-held-side{position:sticky;top:clamp(96px,14vh,150px)}
-.dv-held-names{list-style:none;padding:0;margin:0}.dv-held-names li{font-weight:300;font-size:clamp(28px,3.05vw,46px);line-height:1.14;letter-spacing:-.035em;color:color-mix(in srgb,var(--ink) 24%,var(--paper));transition:color .35s var(--ease)}.dv-held-names li.is-on{color:var(--ink)}
+.dv-held-names{list-style:none;padding:0;margin:0}.dv-held-names li{font-weight:300;font-size:clamp(28px,3.05vw,46px);line-height:1.14;letter-spacing:-.035em;color:color-mix(in srgb,var(--ink) 38%,var(--paper));transition:color .35s var(--ease)}.dv-held-names li.is-on{color:var(--ink)}
 .dv-held-item{padding-bottom:clamp(64px,9vw,144px)}.dv-held-item:last-child{padding-bottom:0}.dv-held-m{display:none}
 @media (max-width:900px){.dv-held{grid-template-columns:minmax(0,1fr)}.dv-held-side{position:static}.dv-held-names{display:none}.dv-held-m{display:block;font-weight:300;font-size:clamp(30px,8vw,44px);line-height:1.1;letter-spacing:-.035em;margin:0 0 18px}}""",
        js="""each('.dv-held',h=>{const n=[...h.querySelectorAll('.dv-held-names li')],it=[...h.querySelectorAll('.dv-held-item')];if(!n.length)return;n[0].classList.add('is-on');
