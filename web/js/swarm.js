@@ -100,13 +100,15 @@
     snapshot() {
       const sections = [...document.querySelectorAll(this.opts.sectionSelector)];
       this.sections = sections.map(sec => {
-        const BS = this.opts.boxSel || BOX_SEL; const boxes = [...sec.querySelectorAll(BS)].concat(sec.matches(BS) ? [sec] : []);
-        const texts = [...sec.querySelectorAll('*')].filter(isLeafText);
+        // opts.keep: what stands from the first paint and is never blanked — the headline, which a visitor must be able to read at once (Standard MOT-03: within 1.5 s; the crew builds everything around it)
+        const kept = el => !!this.opts.keep && !!el.closest(this.opts.keep);
+        const BS = this.opts.boxSel || BOX_SEL; const boxes = [...sec.querySelectorAll(BS)].concat(sec.matches(BS) ? [sec] : []).filter(el => !kept(el));
+        const texts = [...sec.querySelectorAll('*')].filter(isLeafText).filter(el => !kept(el));
         const layers = [];
         boxes.forEach(el => layers.push({ kind: 'box', el, sec }));
         texts.forEach(el => layers.push({ kind: 'text', el, sec, html: el.innerHTML, text: el.textContent }));
         // visual-only elements (svg/img/decorative divs with background)
-        [...sec.querySelectorAll('img, svg, i')].filter(el => !el.closest('.hero-crew, .peek')).forEach(el => layers.push({ kind: 'img', el, sec }));
+        [...sec.querySelectorAll('img, svg, i')].filter(el => !el.closest('.hero-crew, .peek') && !kept(el)).forEach(el => layers.push({ kind: 'img', el, sec }));
         const lab = sec.querySelector('.lab, h2, h1'); const nm = sec.getAttribute('data-agent') || (lab && lab.textContent.trim().slice(0, 24)) || sec.id || sec.tagName.toLowerCase(); return { el: sec, name: nm, layers };
       });
       this.total = this.sections.reduce((n, s) => n + s.layers.length, 0);
@@ -181,6 +183,7 @@
       if (simple && len <= 220) {
         // type it out
         const caret = document.createElement('i'); caret.className = 'sw-caret'; caret.style.background = c.role.color;
+        const held = getComputedStyle(L.el).display !== 'inline'; if (held) { L.el.style.minHeight = p.h + 'px'; L.el.style.minWidth = p.w + 'px'; }
         L.el.textContent = ''; L.el.appendChild(caret);
         const perChar = Math.max(6, Math.min(28, 900 / len)) / sp;
         for (let i = 1; i <= len; i++) {
@@ -188,7 +191,7 @@
           if (i % 2 === 0) await sleep(perChar);
           if (i % 12 === 0) { const q = this.pageXY(L.el); c.x = Math.min(q.x + q.w, q.x + i * (q.w / len)) - scrollX; c.y = q.y - scrollY + Math.min(q.h, 28) / 2; c.render(); }
         }
-        caret.remove(); L.el.innerHTML = L.html;
+        caret.remove(); L.el.innerHTML = L.html; if (held) { L.el.style.minHeight = ''; L.el.style.minWidth = ''; }
       } else {
         L.el.classList.add('sw-fade');
         await sleep(240 / sp);
@@ -207,7 +210,7 @@
       this.t0 = performance.now();
       this.snapshot(); this.blank(); this.mountUI(); this.progress('Touring');
       if (!this.opts.noScroll) scrollTo(0, 0);
-      await sleep(600);
+      await sleep(this.opts.delay == null ? 600 : this.opts.delay);
       for (const sec of this.sections) {
         if (this.skip) break;
         sec.el.classList.remove('sw-sec-pending');
@@ -215,7 +218,10 @@
         this.progress(sec.name);
         // order: boxes → text (top to bottom) → imgs ; run with a pool of cursors
         const queue = [...sec.layers.filter(l => l.kind === 'box'), ...sec.layers.filter(l => l.kind === 'text').sort((a, b) => this.pageXY(a.el).y - this.pageXY(b.el).y), ...sec.layers.filter(l => l.kind === 'img')];
-        const pool = Math.min(this.cursors.length, Math.max(3, Math.ceil(queue.length / 3)), innerWidth < 700 ? 4 : 7);
+        // opts.first: what is built before anything else — the headline, so that a visitor can read what this is while the rest is still being placed
+        if (this.opts.first) queue.sort((a, b) => (b.el.closest(this.opts.first) ? 1 : 0) - (a.el.closest(this.opts.first) ? 1 : 0));
+        // opts.pool: how many work at once, when the page wants a crowd that is done quickly rather than a few that take their time
+        const pool = this.opts.pool ? Math.min(this.cursors.length, this.opts.pool, Math.max(1, queue.length)) : Math.min(this.cursors.length, Math.max(3, Math.ceil(queue.length / 3)), innerWidth < 700 ? 4 : 7);
         const free = this.cursors.slice().sort(() => Math.random() - 0.5).slice(0, pool);
         const worker = async c => {
           while (queue.length && !this.skip) {

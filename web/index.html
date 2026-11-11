@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-eased-scroll>
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Shrikhand&display=swap" rel="stylesheet">
 <title>Swarmsite — see your website in a new light</title>
 <meta name="description" content="Paste your website URL and see a redesigned landing-page preview built from your existing content, imagery and brand.">
 <link rel="canonical" href="https://swarmsite.si/"><meta property="og:url" content="https://swarmsite.si/"><meta property="og:type" content="website"><meta property="og:image" content="https://swarmsite.si/after-960.webp"><meta property="og:title" content="Swarmsite — see your website in a new light"><meta property="og:description" content="Paste a URL to explore a redesigned landing-page preview built from your content and imagery.">
+<link rel="icon" type="image/png" href="/favicon.png"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="preload" href="/fonts/instrument-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <style>
 @font-face{font-family:'Instrument Sans';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/instrument-sans-latin-400-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
@@ -13,175 +14,158 @@
 @font-face{font-family:'Instrument Sans';font-style:normal;font-weight:500;font-display:swap;src:url(/fonts/instrument-sans-latin-500-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 @font-face{font-family:'Instrument Sans';font-style:normal;font-weight:500;font-display:swap;src:url(/fonts/instrument-sans-latin-ext-500-normal.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
 @font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/jetbrains-mono-latin-400-normal.woff2) format('woff2')}
-/* Reference: butter.video (C5 calm light SaaS) — regular-weight big type on near-white, soft gradient paper, dark rounded panel, pill nav, blur-in words. */
-:root{--paper:#F5F5F4;--paper-2:#FAFAF9;--ink:#111111;--muted:#6B6B68;--line:rgba(17,17,17,.12);--panel:#141414;--accent:#111111;--sans:'Instrument Sans',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;--max:1240px;--gutter:clamp(20px,4vw,48px)}
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{overflow-x:hidden}
-body{background:linear-gradient(180deg,var(--paper) 0%,var(--paper-2) 100%);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.5;-webkit-font-smoothing:antialiased}
-a{color:inherit;text-decoration:none}img{display:block;max-width:100%}
-.wrap{max-width:var(--max);margin:0 auto;padding:0 var(--gutter);width:100%;min-width:0}
-.lab{font-family:var(--mono);font-size:11.5px;letter-spacing:.02em;color:var(--muted)}
-.h1{font-weight:400;font-size:clamp(40px,6.2vw,80px);line-height:1.02;letter-spacing:-.03em}
-.h2{font-weight:400;font-size:clamp(30px,3.6vw,48px);line-height:1.08;letter-spacing:-.025em}
-.big{font-weight:400;font-size:clamp(22px,2.4vw,32px);line-height:1.25;letter-spacing:-.015em}
-.pill{display:inline-flex;align-items:center;gap:10px;border-radius:999px;padding:12px 20px;font-weight:500;font-size:15px;border:1px solid var(--line);background:#fff;transition:transform .35s cubic-bezier(.2,.8,.2,1),background .25s}
-.pill.ink{background:var(--ink);color:#fff;border-color:var(--ink)}.pill:hover{transform:translateY(-2px)}.pill:active{transform:scale(.97);transition:transform 100ms ease-out}
-.pill,.nav .grp a,.urlbox button{min-height:44px}
-.price{font-variant-numeric:tabular-nums}
-@media(prefers-reduced-transparency:reduce){.nav .grp{background:#fff;backdrop-filter:none}}
-/* nav: two floating pills */
-.nav{position:fixed;top:16px;left:0;right:0;z-index:50;pointer-events:none}
-.nav .wrap{display:flex;justify-content:space-between;align-items:center}
-.nav .grp{pointer-events:auto;display:flex;gap:6px;align-items:center;background:rgba(255,255,255,.8);backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:999px;padding:6px}
-.nav .grp a{padding:8px 14px;border-radius:999px;font-size:14px;font-weight:500}.nav .grp a:hover{background:rgba(17,17,17,.06)}
-.nav .brand{display:inline-flex;align-items:center;padding:0 12px 2px 14px;line-height:1;font-family:'Shrikhand',Georgia,serif;font-weight:400;font-size:34px;letter-spacing:-.01em;color:var(--ink)}
-@media(max-width:700px){.nav .brand{font-size:26px}}
-.nav .grp a.pill.ink:hover{background:#2b2b2b;color:#fff;border-color:#2b2b2b}
-/* hero */
-.hero{min-height:100svh;display:grid;align-content:center;padding:140px 0 60px;text-align:center}
-.hero .h1{max-width:16ch;margin:18px auto 0}
-.hero .h1 em{font-style:normal;color:var(--muted)}
-.hero p.sub{max-width:52ch;margin:22px auto 0;color:var(--muted);font-size:clamp(17px,1.4vw,20px)}
-.urlbox{margin:38px auto 0;max-width:720px;display:flex;background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 6px 6px 22px;box-shadow:0 20px 50px rgba(17,17,17,.08);align-items:center;gap:8px}
-.urlbox .pre{font-family:var(--mono);font-size:13px;color:var(--muted)}
-.urlbox input{flex:1;border:0;outline:0;font:500 18px var(--sans);background:transparent;min-width:0;color:var(--ink)}
-.urlbox input::placeholder{color:#B0B0AC}
-.urlbox button{border:0;cursor:pointer;font:inherit}
-.hero .micro{margin-top:16px;display:flex;gap:18px;justify-content:center;flex-wrap:wrap}
-/* three steps */
-.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:64px;text-align:left}
-.step{background:#fff;border:1px solid var(--line);border-radius:22px;padding:24px;min-height:150px;display:grid;align-content:space-between}
-.step b{font-weight:500;font-size:19px;letter-spacing:-.01em}.step .lab{margin-bottom:22px}
-/* before/after */
-.sec{padding:clamp(72px,9vw,120px) 0}
-.ba{margin-top:36px;background:var(--panel);border-radius:28px;padding:clamp(16px,2.4vw,28px);box-shadow:0 40px 100px rgba(17,17,17,.18);color:#fff}
-.ba .row{display:grid;grid-template-columns:1fr 1fr;gap:clamp(12px,2vw,24px);align-items:start}
-.ba .bf{position:relative;border-radius:14px;overflow:hidden}
-.ba img{border-radius:14px;width:100%;aspect-ratio:16/10;object-fit:cover;object-position:top}
-.ba .cap{display:flex;justify-content:space-between;margin-top:12px;font-family:var(--mono);font-size:11.5px;color:rgba(255,255,255,.6)}
-.ba .cap b{color:#fff;font-weight:500}
-/* manifesto */
-.mani{max-width:980px}
-.mani .big{font-size:clamp(26px,3.4vw,44px)}
-/* two paths */
-.paths{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:36px}
-.path{border:1px solid var(--line);border-radius:26px;padding:28px;background:#fff;display:grid;gap:14px;align-content:start}
-.path.dark{background:var(--panel);color:#fff;border-color:var(--panel)}
-.path ul{list-style:none;display:grid;gap:8px;color:var(--muted);font-size:16px}.path.dark ul{color:rgba(255,255,255,.7)}
-.path li::before{content:"— ";}
-.path .price{font-size:clamp(28px,3vw,40px);letter-spacing:-.02em;font-weight:400}
-/* marquee */
-.marq{overflow:hidden;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:14px 0}
-.marq .t{display:flex;gap:48px;white-space:nowrap;width:max-content;font-family:var(--mono);font-size:12px;color:var(--muted)}
-/* faq */
-.faq details{border-top:1px solid var(--line);padding:18px 0}.faq details:last-child{border-bottom:1px solid var(--line)}
-.faq summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;font-size:19px;font-weight:500;letter-spacing:-.01em}
-.faq summary::after{content:"+";color:var(--muted)}.faq details[open] summary::after{content:"–"}
-.faq p{margin-top:10px;color:var(--muted);max-width:62ch}
-/* footer */
-.foot{padding:60px 0 24px}.foot .row{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
-/* swarm demo stripe */
-.stripe{margin-top:36px;border-radius:22px;border:1px solid var(--line);background:#fff;padding:18px 22px;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
-.stripe .dots{display:flex;gap:4px}.stripe .dots i{width:8px;height:8px;border-radius:50%;background:var(--ink);opacity:.2;animation:blink 1.6s infinite}
-.stripe .dots i:nth-child(2){animation-delay:.2s}.stripe .dots i:nth-child(3){animation-delay:.4s}.stripe .dots i:nth-child(4){animation-delay:.6s}
-@keyframes blink{0%,100%{opacity:.2}50%{opacity:1}}
-.urlbox input{min-width:0}
-@media(max-width:820px){.urlbox{flex-wrap:wrap;border-radius:24px;padding:10px 10px 10px 16px}.urlbox input{width:100%;flex:1 1 100%;padding:8px 0}.urlbox button{width:100%;justify-content:center}.steps,.ba .row,.paths{grid-template-columns:1fr}.nav .links{display:none}.hero{padding-top:110px}.urlbox{padding-left:16px}.urlbox .pre{display:none}.hero .h1{font-size:clamp(36px,10vw,56px)}}
-
-/* Editorial refinements build on the existing monochrome Swarmsite identity. */
-.hero{padding-bottom:82px}.hero-label{display:inline-flex;align-items:center;gap:10px;letter-spacing:.12em;font-size:10px}.live-dot{width:7px;height:7px;border-radius:50%;background:#111;box-shadow:0 0 0 4px #1111}.hero .h1{max-width:19ch;font-size:clamp(48px,6.5vw,88px);letter-spacing:-.055em;line-height:1.04}.hero .h1 em{color:#898984}.hero p.sub{max-width:50ch;line-height:1.6}.urlbox{max-width:650px;box-shadow:0 18px 50px #1111110c}.urlbox:focus-within{border-color:#777;box-shadow:0 18px 50px #11111116,0 0 0 3px #1111110c}.hero .micro{gap:12px 22px}.hero .micro .lab{font-size:10.5px}
-.steps-intro{display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:14px;margin-top:100px;text-align:left}.steps-intro .lab{font-size:10px;letter-spacing:.07em}.steps{margin-top:0;gap:0}.step{border:0;border-radius:0;background:transparent;border-right:1px solid var(--line);padding:25px 28px 10px;min-height:170px}.step:first-child{padding-left:0}.step:last-child{border:0}.step b{font-size:21px}.step .lab:last-child{font-family:var(--sans);font-size:14px;line-height:1.6;margin:0;max-width:30ch}
-#proof{background:#ededeb}.proof-intro{display:flex;align-items:end;justify-content:space-between;gap:32px}.proof-intro h2{margin-top:20px;font-size:clamp(40px,5.4vw,70px);letter-spacing:-.055em}.proof-intro h2 em{font-style:normal;color:#8e8e89}.proof-intro p{max-width:29ch;color:var(--muted);font-size:16px;line-height:1.55}.ba{margin-top:50px;border-radius:24px;padding:18px;background:#181818;box-shadow:0 32px 90px #1112}.ba-header{display:flex;justify-content:space-between;padding:4px 3px 18px;font:10px/1 var(--mono);letter-spacing:.05em;color:#aaa}.ba .row{gap:12px}.ba .bf,.ba img{border-radius:11px}.ba .cap{padding:4px 4px 6px;gap:12px}.ba .cap b{letter-spacing:.07em}.stripe{background:transparent;border:0;padding:20px 4px;margin:0;border-bottom:1px solid var(--line);border-radius:0}.case-count{margin-left:auto}.case-second-head{display:flex;justify-content:space-between;align-items:end;gap:30px;margin-top:100px}.case-second-head h3{font-size:clamp(36px,4vw,54px);font-weight:400;line-height:1.08;letter-spacing:-.05em;margin-top:16px}.case-second-head p{font-size:15px;color:var(--muted)}.case-second{margin-top:35px}.case-scroll{height:clamp(400px,52vw,650px);overflow:auto;overscroll-behavior:contain;background:#f5f5f5;border-radius:11px}.case-scroll img{width:100%;height:auto;aspect-ratio:auto;object-fit:contain;border-radius:0}.case-preview iframe{width:100%;height:100%;border:0;background:#fff}.case-title{display:flex;justify-content:space-between;gap:10px;padding:0 4px 12px;font:10px/1.4 var(--mono);color:#aaa}.case-title b{color:#fff;font-weight:500}.case-note{font:11px/1.5 var(--sans);color:#a6a6a2;padding:10px 4px 0}.case-link{font-size:13px;font-weight:500;margin-left:auto;border-bottom:1px solid #111;padding-bottom:3px}.case-link:hover{opacity:.6}
-.mani{max-width:1240px}.manifesto-top{display:flex;justify-content:space-between;margin-bottom:70px}.mani .big{font-size:clamp(38px,5.3vw,70px);line-height:1.12;letter-spacing:-.05em}.mani .big span{color:#999994}.manifesto-copy{margin-top:30px;margin-left:auto;max-width:38ch;color:var(--muted);line-height:1.6}.path{min-height:300px;padding:36px;gap:20px}.path .big{font-size:clamp(24px,2.4vw,32px)}.path .pill{justify-self:start;margin-top:auto}.faq summary{padding-right:8px}
-.closing{background:#181818;color:#fff;padding:clamp(70px,9vw,130px) 0}.closing .lab{color:#a8a8a4;letter-spacing:.08em}.closing-row{display:flex;align-items:end;justify-content:space-between;gap:30px;margin-top:32px}.closing h2{font-size:clamp(48px,6.4vw,88px);line-height:1.02;letter-spacing:-.06em;font-weight:400}.closing h2 em{font-style:normal;color:#8e8e8b}.closing-btn{background:#fff;color:#111;min-width:220px;justify-content:space-between}.closing p{color:#aaa;margin-top:25px;font-size:15px}.foot{background:#181818;padding:30px 0;color:#fff}.foot .row{border-top:1px solid #ffffff2b;padding-top:25px;color:#aaa}
-@media(max-width:820px){.hero{padding-bottom:55px}.hero .h1{font-size:clamp(42px,10vw,65px)}.steps-intro{margin-top:65px}.steps-intro .lab:last-child{display:none}.step,.step:first-child{padding:22px 0;border-right:0;border-bottom:1px solid var(--line);min-height:130px}.step:last-child{border:0}.proof-intro{align-items:start;flex-direction:column;gap:20px}.case-second-head{margin-top:70px;align-items:start;flex-direction:column;gap:14px}.proof-intro h2{font-size:clamp(38px,9vw,60px)}.ba{margin-top:30px;padding:12px}.ba-header{font-size:8px}.ba .row{gap:28px}.manifesto-top{margin-bottom:45px}.manifesto-top .lab:last-child{display:none}.manifesto-copy{margin-left:0}.closing-row{align-items:start;flex-direction:column}.closing-btn{width:100%}.path{min-height:260px;padding:28px}.stripe .lab{font-size:10px}}
-@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important}}
 </style>
-<link rel="stylesheet" href="/landing-editorial.css?v=28">
+<!-- The engine's own devices (lib/devices/registry.py), the same code a client's page is built with. Written here by scripts/landing_devices.py from the list in data-devices; tests/test_landing_devices.py fails when the two differ. Do not edit by hand. -->
+<style id="dv-css" data-devices="line-rise,rise-stagger,fact-ticker,scramble,depth,eased-scroll,overlay-menu,read-along,roll,progress,bar-tuck,grain,draw,cover,curtain-foot,magnet">
+:root{--ease:cubic-bezier(.22,1,.36,1);--spring:cubic-bezier(.2,.9,.3,1.3)}   /* both measured on squared-media.nl 2026-11-11: the settle used for most movement, the overshoot used on small controls */
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+@media (prefers-reduced-motion:reduce){.dv [data-rise],.dv .dv-lines .dv-ln>span,.dv .dv-bars .b i{opacity:1!important;transform:none!important}}
+.dv-ln{display:block;overflow:hidden;padding-bottom:.12em;margin-bottom:-.12em}.dv-ln>span{display:block}
+.dv .dv-lines .dv-ln>span{transform:translateY(105%);transition:transform .275s var(--ease);transition-delay:calc(var(--n,0) * 40ms)}.dv .dv-lines.is-in .dv-ln>span{transform:none}
+.dv [data-rise]{opacity:0;transform:translateY(12px);transition:opacity .3s ease,transform .3s var(--ease);transition-delay:calc(var(--i,0) * 70ms)}.dv [data-rise].is-in{opacity:1;transform:none}
+.dv-tick{overflow:hidden}.dv-tick ul{display:flex;flex-wrap:wrap;gap:.8em clamp(32px,5vw,88px);list-style:none;padding:0;margin:0}.dv-tick li{white-space:nowrap}
+.dv .dv-tick ul.is-run{flex-wrap:nowrap;width:max-content;animation:dv-tick 46s linear infinite}.dv .dv-tick ul.is-run::after{content:""}.dv .dv-tick.back ul.is-run{animation-direction:reverse}@keyframes dv-tick{to{transform:translateX(-50%)}}
+.dv-magnet{transition:transform .35s var(--ease)}
+.dv-scramble{font-variant-numeric:tabular-nums}
+.dv-depth{overflow:hidden}.dv-depth>*{display:block;width:100%;height:auto;will-change:transform;transform:translate3d(0,calc(var(--y,0) * 1px),0) scale(1.16)}
+@media (max-width:700px),(prefers-reduced-motion:reduce){.dv-depth>*{transform:none!important}}
+html[data-eased-scroll].dv-easing{scroll-behavior:auto}
+.dv-menu-btn{min-height:44px;padding:0 16px;border-radius:7px;border:0;font:inherit;background:var(--ink);color:var(--paper);cursor:pointer}
+.dv-menu{display:flex;flex-direction:column;gap:.1em;padding:clamp(20px,4vw,48px) 0}.dv-menu a{font-weight:300;font-size:clamp(34px,9vw,92px);line-height:1.08;letter-spacing:-.03em;color:inherit;text-decoration:none}
+.dv .dv-menu{position:fixed;inset:0;z-index:38;background:var(--paper);color:var(--ink);padding:clamp(104px,16vh,160px) var(--pad,clamp(20px,2.8vw,40px)) 32px;justify-content:flex-start;overflow:auto;visibility:hidden;opacity:0;transition:opacity .25s ease,visibility 0s .25s}
+.dv .dv-menu.is-open{visibility:visible;opacity:1;transition:opacity .25s ease}.dv .dv-menu a{transform:translateY(24px);opacity:0;transition:transform .45s var(--ease),opacity .3s ease;transition-delay:calc(var(--i,0) * 50ms)}.dv .dv-menu.is-open a{transform:none;opacity:1}
+.dv-menu-lock{overflow:hidden}.dv-menu a.btn{font-size:12px;font-weight:400;letter-spacing:.08em;line-height:1;align-self:flex-start;margin-top:clamp(28px,6vh,56px);transform:none}.dv .dv-menu a.btn{opacity:1}
+.dv-read .w{transition:opacity .25s linear}.dv .dv-read .w{opacity:.22}.dv .dv-read .w.is-lit{opacity:1}
+.dv-roll .r{position:relative;display:inline-block;overflow:hidden;vertical-align:top;line-height:1.3}.dv-roll .r>span{display:block;transition:transform .35s var(--ease)}.dv-roll .r>span+span{position:absolute;left:0;top:100%}@media (hover:hover){.dv-roll:hover .r>span{transform:translateY(-100%)}}
+.dv-progress{position:fixed;inset:0 0 auto 0;height:2px;z-index:70;background:var(--accent);transform-origin:0 50%;transform:scaleX(var(--p,0));pointer-events:none}
+.dv-tuck{transition:transform .4s var(--ease),background-color .3s ease}.dv-tuck.is-away{transform:translateY(-110%)}.dv-tuck.is-away:focus-within{transform:none}.dv-tuck.is-solid{background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 1px 0 var(--line,rgba(0,0,0,.08))}
+.dv-grain{position:fixed;inset:0;z-index:80;pointer-events:none;opacity:.07;mix-blend-mode:multiply;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .9 0'/></filter><rect width='180' height='180' filter='url(%23n)'/></svg>")}
+.dv-draw{position:relative}.dv-draw svg{position:absolute;left:-1%;bottom:-.12em;width:102%;height:.16em;overflow:visible;pointer-events:none}.dv-draw path{fill:none;stroke:var(--accent);stroke-width:2.4;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:0}
+.dv .dv-lines .dv-draw path,.dv [data-rise] .dv-draw path{stroke-dashoffset:1;transition:stroke-dashoffset .9s var(--ease) .45s}.dv .is-in .dv-draw path,.dv .is-in.dv-draw path{stroke-dashoffset:0}
+@media (prefers-reduced-motion:reduce){.dv .dv-draw path{stroke-dashoffset:0!important}}
+.dv-cover{position:relative;z-index:1}.dv .dv-covered{position:sticky;z-index:0}.dv .dv-cover.is-cover{border-radius:clamp(20px,2.4vw,36px) clamp(20px,2.4vw,36px) 0 0;box-shadow:0 -1px 0 var(--line,rgba(0,0,0,.12)),0 -30px 60px -30px rgba(0,0,0,.28)}.dv .dv-cover.is-cover:not(.night):not(.stage){background:var(--paper)}
+.dv .dv-covered~*{position:relative;z-index:1}.dv .dv-covered~*:not(.night):not(.stage):not(.dv-cover){background:var(--paper)}   /* everything after the held section lies over it: a held section that shows through what follows is a fault (seen on the first recording, 2026-11-11) */
+.dv-sheet{position:relative;z-index:2;background:var(--paper)}.dv .dv-under.is-under{position:sticky;bottom:0;z-index:1}</style>
+<link rel="stylesheet" href="/landing.css?v=1">
+<!-- The crew builds the first screen from nothing (js/landing.js), on a desk and on a phone. What it will build waits unseen from the first paint instead of flashing and being taken away; if the script never comes, three seconds later it simply stands. -->
+<script>if(!matchMedia('(prefers-reduced-motion:reduce)').matches){document.documentElement.classList.add('sw-pre');setTimeout(function(){document.documentElement.classList.remove('sw-pre')},3000)}</script>
 </head>
 <body>
-<nav class="nav"><div class="wrap"><div class="grp"><a class="brand" href="#" aria-label="Swarmsite">swarmsite</a><span class="links"><a href="#how">How it works</a><a href="#proof">Before / after</a><a href="#paths">What's next</a></span></div><div class="grp"><a href="#faq">FAQ</a><a class="pill ink" href="#top" style="padding:8px 16px">Try it free</a></div></div></nav>
+<a class="skip" href="#main">Skip to content</a>
+<div class="dv-progress" aria-hidden="true"></div>
+<header class="nav dv-tuck"><div class="wrap"><div class="grp"><a class="brand" href="#top" aria-label="Swarmsite"><img class="mark" src="/logo/swarmsite-mark-96.webp" srcset="/logo/swarmsite-mark-96.webp 1x, /logo/swarmsite-mark-192.webp 2x" width="96" height="96" alt="">swarmsite</a><nav class="links" aria-label="Primary"><a href="#how">How it works</a><a href="#paths">What's next</a></nav></div><div class="grp"><a class="nav-faq" href="#faq">FAQ</a><a class="pill dv-roll" href="#top">Try it free</a><button class="dv-menu-btn" type="button" aria-expanded="false" aria-controls="menu">Menu</button></div></div></header>
+<nav class="dv-menu" id="menu" aria-label="Menu"><a href="#how">How it works</a><a href="#paths">What's next</a><a href="#faq">FAQ</a><a class="btn pill accent" href="#top">Try it free</a></nav>
 
-<section class="hero" id="top" data-move="hero-intro" data-agent="Hero">
+<main id="main" class="dv-sheet">
+<section class="open" id="top">
+  <div class="wrap hero-top" data-agent="Hero">
+    <p class="mono hero-label"><span class="live-dot"></span> AN INDEPENDENT TEAM OF AI AGENTS</p>
+    <h1 class="display dv-lines"><span class="dv-ln"><span>A better website.</span></span> <span class="dv-ln"><span>Built from <em class="dv-draw">yours.<svg viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true"><path d="M1 8C16 3 31 11 50 6S84 3 99 7" pathLength="1"/></svg></em></span></span></h1>
+    <p class="lede sub" data-rise style="--i:1">AI agents study your site and redesign your landing page, with a studio-inspired approach to layout, typography and color.</p>
+    <div class="url-stage" data-rise style="--i:2"><div class="hero-crew" aria-hidden="true"><span class="crew-robot crew-blue"><i class="pose pose-1"></i><i class="pose pose-2"></i><i class="pose pose-3"></i></span><span class="crew-robot crew-rose"><i class="pose pose-1"></i><i class="pose pose-2"></i><i class="pose pose-3"></i></span><span class="crew-robot crew-ivory"><i class="pose pose-1"></i><i class="pose pose-2"></i><i class="pose pose-3"></i></span><span class="crew-robot crew-sage"><i class="pose pose-1"></i><i class="pose pose-2"></i><i class="pose pose-3"></i></span></div><form class="urlbox" onsubmit="go(event)"><span class="pre" aria-hidden="true">https://</span><input id="url" aria-label="Website URL" placeholder="yourwebsite.com" autocomplete="url" inputmode="url" required><button class="pill accent dv-roll dv-magnet" type="submit">Create my preview →</button></form></div>
+  </div>
+  <div class="wrap"><div class="dv-tick mono open-tick"><ul><li>Checked at five screen widths</li><li>Up to three designs to compare</li><li>Desktop and phone</li><li>Open-licence typefaces</li><li>Reduced motion respected</li><li>Your site stays as it is</li><li>Ready in 5–15 minutes</li></ul></div></div>
+</section>
+
+<div class="anchor" id="how"></div>
+<section class="sc steps" id="steps">
   <div class="wrap">
-    <div class="hero-top" data-agent="Hero">
-    <span class="lab hero-label"><span class="live-dot"></span> AN INDEPENDENT TEAM OF AI AGENTS</span>
-    <h1 class="h1" data-move="word-blur-in">A better website.<br><em>Built from yours.</em></h1>
-    <p class="sub">AI agents study your site and redesign your landing page, with a studio-inspired approach to layout, typography and color.</p>
-    <div class="url-stage"><div class="hero-crew" aria-hidden="true"><span class="crew-robot crew-blue"><i class="pose pose-1"></i><i class="pose pose-2"></i><i class="pose pose-3"></i><i class="pose pose-4"></i></span><span class="crew-robot crew-rose"><i class="pose pose-1"></i><i class="pose pose-2"></i><i class="pose pose-3"></i><i class="pose pose-4"></i></span><span class="crew-robot crew-ivory"><i class="pose pose-1"></i><i class="pose pose-2"></i><i class="pose pose-3"></i><i class="pose pose-4"></i></span><span class="crew-robot crew-sage"><i class="pose pose-1"></i><i class="pose pose-2"></i><i class="pose pose-3"></i><i class="pose pose-4"></i></span></div><form class="urlbox" onsubmit="go(event)"><span class="pre" aria-hidden="true">https://</span><input id="url" aria-label="Website URL" placeholder="yourwebsite.com" autocomplete="url" inputmode="url" required><button class="pill ink" type="submit">Create my preview →</button></form></div>
-    </div>
-    <div class="process" id="how">
-      <div class="process-heading"><span class="lab">HOW IT WORKS</span><h2>Your content.<br><em>A new direction.</em></h2><p>We use what makes your business yours as the starting point for a more considered design.</p></div>
-      <div class="steps">
-        <div class="step"><span class="step-number">01</span><b>Understand your site</b><p>We read your site to understand your business, content and imagery.</p></div>
-        <div class="step"><span class="step-number">02</span><b>Shape a direction</b><p>Our agents shape a visual direction and refine the layout, typography and color.</p></div>
-        <div class="step"><span class="step-number">03</span><b>Explore your redesign</b><p>Explore your redesigned landing page on desktop and phone.</p></div>
-      </div>
-    </div>
+    <p class="mono kicker"><span class="dv-scramble">HOW IT WORKS</span></p>
+    <div class="head2"><h2 class="h2 dv-lines"><span class="dv-ln"><span>Your content.</span></span> <span class="dv-ln"><span><em>A new direction.</em></span></span></h2><p class="lede" data-rise>We use what makes your business yours as the starting point for a more considered design.</p></div>
+    <ol class="step-row">
+      <li data-rise style="--i:0"><span class="num mono">01</span><h3>Understand your site</h3><p>We read your site to understand your business, content and imagery.</p></li>
+      <li data-rise style="--i:1"><span class="num mono">02</span><h3>Shape a direction</h3><p>Our agents shape a visual direction and refine the layout, typography and color.</p></li>
+      <li data-rise style="--i:2"><span class="num mono">03</span><h3>Explore your redesign</h3><p>Explore your redesigned landing page on desktop and phone.</p></li>
+    </ol>
   </div>
 </section>
 
-
-<section class="sec proof" id="proof" data-agent="Before / after">
+<section class="sc night statement dv-cover" id="idea">
+  <figure class="atmos dv-depth" style="--rate:-.14" aria-hidden="true"><img src="/visuals/titanium-arc.webp" alt="" loading="lazy" width="1400" height="784"></figure>
+  <span class="peek peek-side" aria-hidden="true"><span class="crew-robot crew-blue"><i class="pose pose-1"></i><i class="pose pose-2"></i><i class="pose pose-3"></i></span></span>
   <div class="wrap">
-    <div class="proof-head"><div class="proof-art" data-move="parallax" data-parallax="5" aria-hidden="true"><img src="/visuals/titanium-arc.webp" alt="" loading="lazy"></div><div><span class="lab">A REAL REDESIGN</span><h2>See the<br><em>difference.</em></h2></div><p>Explore the original site and its redesigned landing page. Each window scrolls independently.</p></div>
-    <article class="case">
-      <div class="case-heading"><div><span class="lab">RESTAURANT / MADRID</span><h3>Coimbra II</h3></div><a class="case-open" href="/examples/coimbra-preview.html?nomotion=1" target="_blank" rel="noopener noreferrer">Open redesign ↗</a></div>
-      <div class="compare"><div class="compare-panel"><div class="compare-label"><b>BEFORE</b><span>THE ORIGINAL</span></div><div class="window original-window" tabindex="0" role="region" aria-label="Scroll the original Coimbra website screenshot"><img src="/coimbra-before-full.webp" loading="lazy" width="1200" height="4227" alt="Full-page screenshot of the original Coimbra II website"></div><p class="window-note">Scroll inside to explore ↓</p></div>
-      <div class="compare-panel"><div class="compare-label"><b>AFTER</b><span>THE SWARMSITE PREVIEW</span></div><div class="window preview-window"><iframe title="Scroll through Coimbra II redesign" loading="lazy" src="/examples/coimbra-preview.html?nomotion=1"></iframe></div><p class="window-note">Scroll inside to explore ↓</p><span class="peek peek-case has-gif" aria-hidden="true"><img class="gif-robot" src="/agents/peek-motion-rose.gif" alt=""><span class="crew-robot crew-rose"><i class="pose pose-1"></i><i class="pose pose-2"></i><i class="pose pose-3"></i></span></span></div></div>
-    </article>
-    <p class="case-disclaimer">Previews show redesigned landing pages. Review details and original links before use.</p>
+    <p class="mono kicker"><span class="dv-scramble">DESIGN DIRECTION</span></p>
+    <p class="thesis dv-read">Your content and imagery guide the redesign. The agents bring them together with a new visual hierarchy, typography and composition — a stronger first impression.</p>
   </div>
 </section>
 
-<section class="sec manifesto-section" id="idea" style="padding-top:0" data-agent="How">
-  <div class="ambient-art ambient-light" data-move="parallax" data-parallax="5" aria-hidden="true"><img src="/visuals/paper-fold.webp" alt="" loading="lazy"></div>
-  <div class="wrap mani"><span class="peek peek-mani" aria-hidden="true"><span class="crew-robot crew-blue"><i class="pose pose-1"></i><i class="pose pose-2"></i><i class="pose pose-3"></i></span></span>
-    <div class="manifesto-top"><span class="lab">DESIGN DIRECTION</span></div><p class="big">Your content.<br><span>A stronger first impression.</span></p><p class="manifesto-copy">Your content and imagery guide the redesign. The agents bring them together with a new visual hierarchy, typography and composition.</p>
-  </div>
-</section>
-
-<section class="sec" id="paths" style="padding-top:0" data-agent="Pricing">
+<section class="sc plans" id="paths">
   <div class="wrap">
-    <span class="lab">WHAT YOU GET</span>
-    <h2 class="h2" style="margin-top:14px;max-width:20ch" data-move="masked-line-reveal">Your redesign, ready to explore.</h2>
-    <div class="paths">
-      <div class="path"><span class="lab">AVAILABLE NOW</span><b class="big">The preview</b><ul><li>Generate a landing-page preview from your URL</li><li>Compare available visual directions</li><li>Review desktop and phone layouts</li></ul><a class="pill ink" href="#top">Create a preview →</a></div>
-      <div class="path dark"><span class="lab">IN DEVELOPMENT</span><b class="big">A kit for your project</b><ul><li>Bring the preview's visual language into your workflow</li><li>Made for developers using Claude Code or Codex</li><li>Designed to help apply the style across an existing site</li></ul><span class="lab">Not available yet</span></div>
+    <p class="mono kicker"><span class="dv-scramble">WHAT YOU GET</span></p>
+    <h2 class="h2" data-rise>Your redesign, ready to explore.</h2>
+    <div class="pl-grid">
+      <article class="pl is-marked" data-rise style="--i:0"><p class="mono pl-name">AVAILABLE NOW</p><h3>The preview</h3><ul class="pl-points"><li>Generate a landing-page preview from your URL</li><li>Compare available visual directions</li><li>Review desktop and phone layouts</li></ul><a class="pill light dv-roll" href="#top">Create a preview →</a></article>
+      <article class="pl" data-rise style="--i:1"><p class="mono pl-name">IN DEVELOPMENT</p><h3>A kit for your project</h3><ul class="pl-points"><li>Bring the preview's visual language into your workflow</li><li>Made for developers using Claude Code or Codex</li><li>Designed to help apply the style across an existing site</li></ul><p class="mono pl-note">Not available yet</p></article>
     </div>
   </div>
 </section>
 
-<section class="sec faq" id="faq" style="padding-top:0" data-agent="FAQ">
-  <div class="wrap" style="max-width:860px">
-    <h2 class="h2" style="margin-bottom:28px">Questions</h2>
-    <details open><summary>Does this change my real website?</summary><p>No. We only read it. You get a preview on our side; your site stays exactly as it is until you decide.</p></details>
-    <details><summary>What if my photos are bad?</summary><p>The preview uses images found on your site. Image quality and relevance vary, so review the result before using it.</p></details>
-    <details><summary>How long does it take?</summary><p>Five to fifteen minutes. It's real work: reading your site, choosing a concept, setting type, placing photos, checking every screen on a phone.</p></details>
-    <details><summary>Does it rebuild all my pages?</summary><p>The current preview focuses on a landing page and can link to pages on your original site. Review the content check and your preview for anything that needs attention.</p></details>
-    <details><summary>Can I use the design in my existing project?</summary><p>A kit for developers using Claude Code and Codex is in development. The current experience lets you explore the redesign preview.</p></details>
+<section class="sc faq" id="faq">
+  <div class="wrap faq-in">
+    <h2 class="h3x" data-rise>Questions</h2>
+    <div class="acc">
+      <details open><summary>Does this change my real website?</summary><p>No. We only read it. You get a preview on our side; your site stays exactly as it is until you decide.</p></details>
+      <details><summary>What if my photos are bad?</summary><p>The preview uses images found on your site. Image quality and relevance vary, so review the result before using it.</p></details>
+      <details><summary>How long does it take?</summary><p>Five to fifteen minutes. It's real work: reading your site, choosing a concept, setting type, placing photos, checking every screen on a phone.</p></details>
+      <details><summary>Does it rebuild all my pages?</summary><p>The current preview focuses on a landing page and can link to pages on your original site. Review the content check and your preview for anything that needs attention.</p></details>
+      <details><summary>Can I use the design in my existing project?</summary><p>A kit for developers using Claude Code and Codex is in development. The current experience lets you explore the redesign preview.</p></details>
+    </div>
   </div>
 </section>
+</main>
 
-<section class="closing" id="closing" data-agent="Invitation"><div class="ambient-art ambient-dark" data-move="parallax" data-parallax="6" aria-hidden="true"><img src="/visuals/metal-fold.webp" alt="" loading="lazy"></div><div class="wrap"><span class="lab">START WITH YOUR WEBSITE</span><div class="closing-row"><h2>See your website<br><em>in a new design.</em></h2><a class="pill closing-btn" href="#top"><span class="peek peek-closing" aria-hidden="true"><span class="crew-robot crew-ivory"><i class="pose pose-1"></i><i class="pose pose-2"></i><i class="pose pose-3"></i></span></span>Create my preview <span>↗</span></a></div><p>Enter your URL to start your redesign preview.</p></div></section>
-<footer class="foot" data-agent="Footer"><div class="wrap"><div class="row"><span>© 2026 Swarmsite</span><span>An AI team for your website.</span><span><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="mailto:hello@swarmsite.si">Contact</a></span></div></div></footer>
+<footer class="night close dv-under" id="closing">
+  <figure class="atmos dv-depth" style="--rate:-.14" aria-hidden="true"><img src="/visuals/metal-fold.webp" alt="" loading="lazy" width="1400" height="784"></figure>
+  <div class="wrap">
+    <p class="mono kicker"><span class="dv-scramble">START WITH YOUR WEBSITE</span></p>
+    <h2 class="display dv-lines"><span class="dv-ln"><span>See your website</span></span> <span class="dv-ln"><span><em>in a new design.</em></span></span></h2>
+    <div class="close-foot">
+      <p class="lede" data-rise>Enter your URL to start your redesign preview.</p>
+      <div class="url-stage" data-rise style="--i:1"><span class="peek peek-closing" aria-hidden="true"><span class="crew-robot crew-ivory"><i class="pose pose-1"></i><i class="pose pose-2"></i><i class="pose pose-3"></i></span></span><form class="urlbox" onsubmit="go(event)"><span class="pre" aria-hidden="true">https://</span><input id="url2" aria-label="Website URL" placeholder="yourwebsite.com" autocomplete="url" inputmode="url" required><button class="pill accent dv-roll dv-magnet" type="submit">Create my preview →</button></form></div>
+    </div>
+    <div class="foot-row"><span class="foot-brand"><span class="disc"><img class="mark" src="/logo/swarmsite-mark-96.webp" srcset="/logo/swarmsite-mark-96.webp 1x, /logo/swarmsite-mark-192.webp 2x" width="96" height="96" alt=""></span>© 2026 Swarmsite</span><span>An AI team for your website.</span><span class="foot-links"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="mailto:hello@swarmsite.si">Contact</a></span></div>
+  </div>
+</footer>
+<div class="dv-grain" aria-hidden="true"></div>
 
+<script>function go(e){e.preventDefault();var v=e.target.querySelector('input').value.trim();if(!v)return;location.href='/app?url='+encodeURIComponent(v.replace(/^https?:\/\//,''));}</script>
+<script id="dv-js">{
+const D=document,R=D.documentElement;R.classList.add('dv');
+const calm=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const covered=el=>{const u=el.closest('.dv-under.is-under'),s=u&&D.querySelector('.dv-sheet');return !!s&&s.getBoundingClientRect().bottom>el.getBoundingClientRect().top+24};   /* a footer the page lifts off stands in the screen from the start, under the sheet: what is in it arrives when it is uncovered, not unseen at load */
+const waiting=new Set(),io=new IntersectionObserver(es=>es.forEach(x=>{if((x.isIntersecting||x.boundingClientRect.bottom<0)&&!covered(x.target))show(x.target)}),{rootMargin:'0px 0px -8% 0px',threshold:.12});
+const show=el=>{el.classList.add('is-in');io.unobserve(el);waiting.delete(el)};
+const seen={observe:el=>{waiting.add(el);io.observe(el)}};
+const each=(q,f)=>D.querySelectorAll(q).forEach(f);
+const onScroll=f=>{let t=0;const run=()=>{t=0;f()};addEventListener('scroll',()=>{t||(t=requestAnimationFrame(run))},{passive:true});addEventListener('resize',run);run()};
+const progress=el=>{const r=el.getBoundingClientRect(),h=innerHeight;return Math.min(1,Math.max(0,(h-r.top)/(r.height+h)))};
+onScroll(()=>waiting.forEach(el=>{if(el.getBoundingClientRect().top<innerHeight*.9&&!covered(el))show(el)}));   /* nothing a visitor has scrolled to stays hidden, however fast they went */
+const through=el=>{const r=el.getBoundingClientRect();return Math.min(1,Math.max(0,-r.top/Math.max(1,r.height-innerHeight)))};
+each('.dv-lines',h=>{[...h.querySelectorAll('.dv-ln')].forEach((l,i)=>l.style.setProperty('--n',i));seen.observe(h)});
+each('[data-rise]',el=>seen.observe(el));
+each('.dv-tick ul',u=>{if(!calm&&!u.dataset.x){u.dataset.x=1;u.classList.add('is-run');[...u.children].forEach(c=>{const k=c.cloneNode(true);k.setAttribute('aria-hidden','true');u.appendChild(k)})}});
+if(!calm&&matchMedia('(hover:hover)').matches)each('.dv-magnet',b=>{b.addEventListener('pointermove',e=>{const r=b.getBoundingClientRect();b.style.transform=`translate(${((e.clientX-r.left)/r.width-.5)*12}px,${((e.clientY-r.top)/r.height-.5)*10}px)`});b.addEventListener('pointerleave',()=>b.style.transform='')});
+if(!calm)each('.dv-scramble',el=>{const word=el.textContent,pool='ABCDEFGHJKLMNPRSTUVXYZ0123456789';el.setAttribute('aria-label',word);
+new IntersectionObserver((es,o)=>es.forEach(x=>{if(!x.isIntersecting)return;o.disconnect();let f=0;const n=word.length,steps=14,t=setInterval(()=>{f++;const done=Math.ceil(n*f/steps);el.textContent=[...word].map((c,i)=>c===' '||i<done?c:pool[(Math.random()*pool.length)|0]).join('');if(f>=steps){clearInterval(t);el.textContent=word}},34)}),{threshold:.6}).observe(el)});
+if(!calm)onScroll(()=>each('.dv-depth',f=>{const r=f.getBoundingClientRect(),rate=parseFloat(getComputedStyle(f).getPropertyValue('--rate'))||-.14;f.style.setProperty('--y',((r.top+r.height/2-innerHeight/2)*rate).toFixed(1))}));
+if(!calm&&matchMedia('(hover:hover) and (pointer:fine)').matches&&R.hasAttribute('data-eased-scroll')){let to=scrollY,now=scrollY,run=0;R.classList.add('dv-easing');
+const step=()=>{now+=(to-now)*.12;if(Math.abs(to-now)<.5){now=to;run=0;scrollTo(0,now);return}scrollTo(0,now);run=requestAnimationFrame(step)};
+const halt=()=>{if(run){cancelAnimationFrame(run);run=0}to=now=scrollY};   /* a key, a press or a link takes over at once: a glide still running swallowed a click on a link inside the page */
+addEventListener('pointerdown',halt,{passive:true});addEventListener('keydown',halt);
+addEventListener('wheel',e=>{if(e.ctrlKey||e.defaultPrevented||R.classList.contains('dv-menu-lock')||e.target.closest('[data-native-scroll],textarea,select'))return;e.preventDefault();if(!run){to=now=scrollY}to=Math.max(0,Math.min(R.scrollHeight-innerHeight,to+e.deltaY*(e.deltaMode?32:1)));run||(run=requestAnimationFrame(step))},{passive:false});
+addEventListener('scroll',()=>{if(!run){to=now=scrollY}},{passive:true})}
+each('.dv-menu-btn',b=>{const m=D.getElementById(b.getAttribute('aria-controls'));if(!m)return;[...m.querySelectorAll('a')].forEach((a,i)=>a.style.setProperty('--i',i));const word=b.textContent;
+const set=o=>{m.classList.toggle('is-open',o);b.setAttribute('aria-expanded',o);R.classList.toggle('dv-menu-lock',o);b.textContent=o?'Close':word;m.querySelectorAll('a').forEach(a=>a.tabIndex=o?0:-1)};set(false);
+b.addEventListener('click',()=>set(!m.classList.contains('is-open')));m.addEventListener('click',e=>e.target.closest('a')&&set(false));addEventListener('keydown',e=>e.key==='Escape'&&m.classList.contains('is-open')&&(set(false),b.focus()));
+addEventListener('resize',()=>m.classList.contains('is-open')&&!b.getClientRects().length&&set(false))});
+each('.dv-read',p=>{if(calm)return;const words=p.textContent.trim().split(/\s+/);p.innerHTML=words.map(w=>`<span class="w">${w.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</span>`).join(' ')});   /* the words stay real text: a label on a paragraph is not read out, and with every word hidden the passage was silent */
+if(!calm)onScroll(()=>each('.dv-read',p=>{const r=p.getBoundingClientRect(),t=Math.min(1,Math.max(0,(innerHeight*.8-r.top)/(r.height+innerHeight*.5))),ws=p.children,n=Math.round(t*ws.length);for(let i=0;i<ws.length;i++)ws[i].classList.toggle('is-lit',i<n)}));
+each('.dv-roll',b=>{if(calm||b.children.length)return;const t=b.textContent.trim(),esc=t.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));b.setAttribute('aria-label',t);b.innerHTML=`<span class="r" aria-hidden="true"><span>${esc}</span><span>${esc}</span></span>`});
+onScroll(()=>each('.dv-progress',b=>b.style.setProperty('--p',(scrollY/Math.max(1,R.scrollHeight-innerHeight)).toFixed(4))));
+{let last=scrollY;onScroll(()=>{const y=scrollY,d=y-last;each('.dv-tuck',b=>b.classList.toggle('is-solid',y>24||R.classList.contains('dv-menu-lock')));if(Math.abs(d)<6)return;each('.dv-tuck',b=>b.classList.toggle('is-away',d>0&&y>innerHeight*.6&&!R.classList.contains('dv-menu-lock')));last=y})}
+each('.dv-cover',c=>{const p=c.previousElementSibling;if(!p)return;const set=()=>{const on=!calm&&innerWidth>900&&p.offsetHeight<=innerHeight*2.2;c.classList.toggle('is-cover',on);p.classList.toggle('dv-covered',on);p.style.top=on?Math.min(0,innerHeight-p.offsetHeight)+'px':''};set();addEventListener('resize',set)});
+each('.dv-under',f=>{const set=()=>f.classList.toggle('is-under',!calm&&f.offsetHeight<=innerHeight&&innerWidth>900);set();addEventListener('resize',set);f.addEventListener('focusin',()=>f.classList.contains('is-under')&&scrollTo(0,R.scrollHeight))});}</script>
 <script src="/js/nav-account.js" defer></script>
-<script src="/js/gsap.min.js" defer></script>
-<script src="/js/ScrollTrigger.min.js" defer></script>
-<script src="/js/lenis.min.js" defer></script>
-<script src="/js/moves.js?v=ceee019" defer></script>
-<script>
-function go(e){e.preventDefault();const v=document.getElementById('url').value.trim();if(!v)return;location.href='/app?url='+encodeURIComponent(v.replace(/^https?:\/\//,''));}
-addEventListener('DOMContentLoaded',()=>{if(window.Moves)Moves.init();else addEventListener('load',()=>Moves.init());});
-</script>
-<script src="/js/swarm.js?v=agent10" defer></script>
-<script>addEventListener('load',()=>{ try{ if(!window.Swarm||matchMedia('(prefers-reduced-motion:reduce)').matches) return;
-  // The full-page rebuild is a desktop show. On a phone it hides the headline, hijacks the scroll and
-  // leaves people wondering what to tap (tester feedback), so phones get the finished page at once.
-  if(innerWidth<900||matchMedia('(pointer:coarse)').matches) return;
-  // Desktop: the crew builds only the first screen (label, headline, sub, URL box), never scrolls the page
-  // and shows no HUD; the rest of the landing is readable from the first paint.
-  new Swarm({agents:10,speed:1.4,hud:false,noScroll:true,skin:'character',sectionSelector:'.hero-top',boxSel:'.urlbox'}).run(); }catch(e){} });</script>
-
+<script src="/js/swarm.js?v=agent13" defer></script>
+<script src="/js/landing.js?v=1" defer></script>
 </body></html>

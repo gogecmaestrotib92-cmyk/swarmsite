@@ -24,13 +24,14 @@ BASE_CSS = """
 BASE_JS = """
 const D=document,R=D.documentElement;R.classList.add('dv');
 const calm=matchMedia('(prefers-reduced-motion: reduce)').matches;
-const waiting=new Set(),io=new IntersectionObserver(es=>es.forEach(x=>{if(x.isIntersecting||x.boundingClientRect.bottom<0)show(x.target)}),{rootMargin:'0px 0px -8% 0px',threshold:.12});
+const covered=el=>{const u=el.closest('.dv-under.is-under'),s=u&&D.querySelector('.dv-sheet');return !!s&&s.getBoundingClientRect().bottom>el.getBoundingClientRect().top+24};   /* a footer the page lifts off stands in the screen from the start, under the sheet: what is in it arrives when it is uncovered, not unseen at load */
+const waiting=new Set(),io=new IntersectionObserver(es=>es.forEach(x=>{if((x.isIntersecting||x.boundingClientRect.bottom<0)&&!covered(x.target))show(x.target)}),{rootMargin:'0px 0px -8% 0px',threshold:.12});
 const show=el=>{el.classList.add('is-in');io.unobserve(el);waiting.delete(el)};
 const seen={observe:el=>{waiting.add(el);io.observe(el)}};
 const each=(q,f)=>D.querySelectorAll(q).forEach(f);
 const onScroll=f=>{let t=0;const run=()=>{t=0;f()};addEventListener('scroll',()=>{t||(t=requestAnimationFrame(run))},{passive:true});addEventListener('resize',run);run()};
 const progress=el=>{const r=el.getBoundingClientRect(),h=innerHeight;return Math.min(1,Math.max(0,(h-r.top)/(r.height+h)))};
-onScroll(()=>waiting.forEach(el=>{if(el.getBoundingClientRect().top<innerHeight*.9)show(el)}));   /* nothing a visitor has scrolled to stays hidden, however fast they went */
+onScroll(()=>waiting.forEach(el=>{if(el.getBoundingClientRect().top<innerHeight*.9&&!covered(el))show(el)}));   /* nothing a visitor has scrolled to stays hidden, however fast they went */
 const through=el=>{const r=el.getBoundingClientRect();return Math.min(1,Math.max(0,-r.top/Math.max(1,r.height-innerHeight)))};
 """
 
@@ -77,9 +78,11 @@ device(id='fact-ticker', name='A slow line of facts', kind='text',
        measured={'source': 'cerebrium (logo row), 2026-11-10', 'note': 'presence and placement under the first screen; speed not measured'},
        needs='4–8 true facts under 40 characters each (or logos the client really has)', use='directly under the first screen, once', avoid='sentences; anything that must be read',
        pairs=['line-rise'], markup='<div class="dv-tick"><ul><li>fact</li>…</ul></div>',
-       css=""".dv-tick{overflow:hidden}.dv-tick ul{display:flex;gap:clamp(32px,5vw,88px);width:max-content;list-style:none;padding:0;margin:0}.dv-tick li{white-space:nowrap}.dv .dv-tick.back ul{animation-direction:reverse}
-.dv .dv-tick ul{animation:dv-tick 46s linear infinite}@keyframes dv-tick{to{transform:translateX(-50%)}}""",
-       js="each('.dv-tick ul',u=>{if(!calm&&!u.dataset.x){u.dataset.x=1;[...u.children].forEach(c=>{const k=c.cloneNode(true);k.setAttribute('aria-hidden','true');u.appendChild(k)})}});")
+       # A row that does not run — no script, or a visitor who asked for less motion — wraps, so every fact can still be read (it was one line cut by the screen: seen on our own landing, 2026-11-11).
+       # A running row ends in one more gap (an empty last item), so that half of it is exactly one period whatever the gap is: without it the row jumped back half a gap at every turn.
+       css=""".dv-tick{overflow:hidden}.dv-tick ul{display:flex;flex-wrap:wrap;gap:.8em clamp(32px,5vw,88px);list-style:none;padding:0;margin:0}.dv-tick li{white-space:nowrap}
+.dv .dv-tick ul.is-run{flex-wrap:nowrap;width:max-content;animation:dv-tick 46s linear infinite}.dv .dv-tick ul.is-run::after{content:""}.dv .dv-tick.back ul.is-run{animation-direction:reverse}@keyframes dv-tick{to{transform:translateX(-50%)}}""",
+       js="each('.dv-tick ul',u=>{if(!calm&&!u.dataset.x){u.dataset.x=1;u.classList.add('is-run');[...u.children].forEach(c=>{const k=c.cloneNode(true);k.setAttribute('aria-hidden','true');u.appendChild(k)})}});")
 
 device(id='side-rail', name='A row that moves sideways as the page moves down', kind='scroll',
        sees='While you scroll through a section, a row of large words or cards slides across the screen.',
@@ -172,7 +175,9 @@ device(id='eased-scroll', name='A page that glides to a stop', kind='scroll',
        css="html[data-eased-scroll].dv-easing{scroll-behavior:auto}",
        js="""if(!calm&&matchMedia('(hover:hover) and (pointer:fine)').matches&&R.hasAttribute('data-eased-scroll')){let to=scrollY,now=scrollY,run=0;R.classList.add('dv-easing');
 const step=()=>{now+=(to-now)*.12;if(Math.abs(to-now)<.5){now=to;run=0;scrollTo(0,now);return}scrollTo(0,now);run=requestAnimationFrame(step)};
-addEventListener('wheel',e=>{if(e.ctrlKey||e.defaultPrevented||e.target.closest('[data-native-scroll],textarea,select'))return;e.preventDefault();if(!run){to=now=scrollY}to=Math.max(0,Math.min(R.scrollHeight-innerHeight,to+e.deltaY*(e.deltaMode?32:1)));run||(run=requestAnimationFrame(step))},{passive:false});
+const halt=()=>{if(run){cancelAnimationFrame(run);run=0}to=now=scrollY};   /* a key, a press or a link takes over at once: a glide still running swallowed a click on a link inside the page */
+addEventListener('pointerdown',halt,{passive:true});addEventListener('keydown',halt);
+addEventListener('wheel',e=>{if(e.ctrlKey||e.defaultPrevented||R.classList.contains('dv-menu-lock')||e.target.closest('[data-native-scroll],textarea,select'))return;e.preventDefault();if(!run){to=now=scrollY}to=Math.max(0,Math.min(R.scrollHeight-innerHeight,to+e.deltaY*(e.deltaMode?32:1)));run||(run=requestAnimationFrame(step))},{passive:false});
 addEventListener('scroll',()=>{if(!run){to=now=scrollY}},{passive:true})}""")
 
 device(id='count-up', name='A number that counts up to its value', kind='data',
@@ -197,7 +202,8 @@ device(id='overlay-menu', name='A menu that takes the whole screen', kind='navig
 .dv-menu-lock{overflow:hidden}.dv-menu a.btn{font-size:12px;font-weight:400;letter-spacing:.08em;line-height:1;align-self:flex-start;margin-top:clamp(28px,6vh,56px);transform:none}.dv .dv-menu a.btn{opacity:1}""",
        js="""each('.dv-menu-btn',b=>{const m=D.getElementById(b.getAttribute('aria-controls'));if(!m)return;[...m.querySelectorAll('a')].forEach((a,i)=>a.style.setProperty('--i',i));const word=b.textContent;
 const set=o=>{m.classList.toggle('is-open',o);b.setAttribute('aria-expanded',o);R.classList.toggle('dv-menu-lock',o);b.textContent=o?'Close':word;m.querySelectorAll('a').forEach(a=>a.tabIndex=o?0:-1)};set(false);
-b.addEventListener('click',()=>set(!m.classList.contains('is-open')));m.addEventListener('click',e=>e.target.closest('a')&&set(false));addEventListener('keydown',e=>e.key==='Escape'&&m.classList.contains('is-open')&&(set(false),b.focus()))});""")
+b.addEventListener('click',()=>set(!m.classList.contains('is-open')));m.addEventListener('click',e=>e.target.closest('a')&&set(false));addEventListener('keydown',e=>e.key==='Escape'&&m.classList.contains('is-open')&&(set(false),b.focus()));
+addEventListener('resize',()=>m.classList.contains('is-open')&&!b.getClientRects().length&&set(false))});""")
 
 device(id='slides', name='Pictures that replace each other behind a moving edge', kind='media',
        sees='One large picture at a time; the next one is uncovered from one side while a counter and two buttons stand beside it.',
@@ -226,7 +232,7 @@ device(id='read-along', name='A paragraph that lights up word by word as you rea
        needs='one paragraph of 20–60 words that is the client\'s own position', use='the page\'s thesis, once', avoid='more than once; body copy; text a visitor must scan quickly',
        pairs=['line-rise'], markup='<p class="dv-read">The paragraph, plain text.</p>',
        css=".dv-read .w{transition:opacity .25s linear}.dv .dv-read .w{opacity:.22}.dv .dv-read .w.is-lit{opacity:1}",
-       js=r"""each('.dv-read',p=>{if(calm)return;const words=p.textContent.trim().split(/\s+/);p.setAttribute('aria-label',words.join(' '));p.innerHTML=words.map(w=>`<span class="w" aria-hidden="true">${w.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</span>`).join(' ')});
+       js=r"""each('.dv-read',p=>{if(calm)return;const words=p.textContent.trim().split(/\s+/);p.innerHTML=words.map(w=>`<span class="w">${w.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</span>`).join(' ')});   /* the words stay real text: a label on a paragraph is not read out, and with every word hidden the passage was silent */
 if(!calm)onScroll(()=>each('.dv-read',p=>{const r=p.getBoundingClientRect(),t=Math.min(1,Math.max(0,(innerHeight*.8-r.top)/(r.height+innerHeight*.5))),ws=p.children,n=Math.round(t*ws.length);for(let i=0;i<ws.length;i++)ws[i].classList.toggle('is-lit',i<n)}));""")
 
 device(id='clip-reveal', name='A picture uncovered from one edge', kind='media',
@@ -258,7 +264,7 @@ device(id='bar-tuck', name='A bar that steps aside while you read and returns wh
        measured=None, seen='7 mentions in the technique survey (rank 51, "hide-on-scroll header")', survey=True,
        needs='a fixed top bar', use='any long page with a fixed bar', avoid='pages whose bar carries the only route to the main action',
        pairs=['progress'], markup='<header class="bar dv-tuck">…</header>',
-       css=".dv-tuck{transition:transform .4s var(--ease),background-color .3s ease}.dv-tuck.is-away{transform:translateY(-110%)}.dv-tuck.is-solid{background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 1px 0 var(--line,rgba(0,0,0,.08))}",
+       css=".dv-tuck{transition:transform .4s var(--ease),background-color .3s ease}.dv-tuck.is-away{transform:translateY(-110%)}.dv-tuck.is-away:focus-within{transform:none}.dv-tuck.is-solid{background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 1px 0 var(--line,rgba(0,0,0,.08))}",
        js="{let last=scrollY;onScroll(()=>{const y=scrollY,d=y-last;each('.dv-tuck',b=>b.classList.toggle('is-solid',y>24||R.classList.contains('dv-menu-lock')));if(Math.abs(d)<6)return;each('.dv-tuck',b=>b.classList.toggle('is-away',d>0&&y>innerHeight*.6&&!R.classList.contains('dv-menu-lock')));last=y})}")
 
 device(id='held-pictures', name='Words held while pictures pass', kind='scroll',
@@ -371,7 +377,7 @@ device(id='curtain-foot', name='A footer the page lifts off', kind='transition',
        needs='a footer no taller than the screen', use='the close of a long page', avoid='tall footers (the script leaves those alone); pages with a fixed bottom bar',
        pairs=['end-mark'], markup='<main class="dv-sheet">…</main><footer class="dv-under">…</footer>',
        css=".dv-sheet{position:relative;z-index:2;background:var(--paper)}.dv .dv-under.is-under{position:sticky;bottom:0;z-index:1}",
-       js="each('.dv-under',f=>{const set=()=>f.classList.toggle('is-under',!calm&&f.offsetHeight<=innerHeight&&innerWidth>900);set();addEventListener('resize',set)});")
+       js="each('.dv-under',f=>{const set=()=>f.classList.toggle('is-under',!calm&&f.offsetHeight<=innerHeight&&innerWidth>900);set();addEventListener('resize',set);f.addEventListener('focusin',()=>f.classList.contains('is-under')&&scrollTo(0,R.scrollHeight))});")   # focus that lands in the footer while it lies under the page brings the page's end with it: Tab went to controls nobody could see
 
 # What the measured pages have in common as whole pages — the builder's ground rules, each with its evidence.
 RULES = {
