@@ -10,7 +10,15 @@ PLAN = {'brand': {'name': 'Example', 'accent': '#2af6a0', 'night': '#0b0b0d'}, '
                    {'scene': 'rail', 'slots': {'words': 'Know the price'}}, {'scene': 'carte', 'slots': {'h2': 'The card', 'groups': [{'title': 'G', 'items': [{'name': 'Dish', 'price': '12 €'}]}]}},
                    {'scene': 'visit', 'slots': {'where': 'Street 1 / Town', 'rows': [{'k': 'Mon', 'v': '9–17'}]}}, {'scene': 'stack', 'slots': {'h2': 'Two plans', 'cards': [{'title': 'A', 'say': 's'}, {'title': 'B', 'say': 's'}]}},
                    {'scene': 'ledger', 'slots': {'h2': 'Answers', 'rows': [{'q': 'Q', 'a': 'A'}]}}, {'scene': 'index', 'slots': {'links': [{'label': 'L', 'url': 'https://x.test/2'}]}},
+                   {'scene': 'statement', 'slots': {'text': 'One paragraph of the thesis that is read word by word as it passes.'}},
+                   {'scene': 'steps', 'slots': {'h2': 'How / it goes', 'steps': [{'title': 'One', 'say': 's'}, {'title': 'Two', 'say': 's'}, {'title': 'Three', 'say': 's'}]}},
+                   {'scene': 'voices', 'slots': {'quotes': [{'text': 'Good.', 'name': 'Ana'}]}}, {'scene': 'faq', 'slots': {'h2': 'Before', 'rows': [{'q': 'Q?', 'a': 'A.'}] * 6}},
                    {'scene': 'close', 'slots': {'line': 'Begin / today', 'legal': '©', 'wordmark': True}}]}
+
+
+def test_a_scene_with_nothing_true_to_show_draws_nothing():
+    page = S.page({**PLAN, 'scenes': [{'scene': 'open-statement', 'slots': {'h1': 'A'}}, {'scene': 'voices', 'slots': {'quotes': []}}, {'scene': 'close', 'slots': {'line': 'B'}}]}, {})
+    assert 'voices' not in page.split('</style>')[-1]
 
 
 def test_every_type_system_and_scheme_draws_the_page():

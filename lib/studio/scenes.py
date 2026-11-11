@@ -95,7 +95,7 @@ def scene(id, **meta):
 
 
 def _btn(a, cls=''):
-    return f'<a class="btn {cls}" href="{e(a.get("url"))}">{e(a.get("label"))}</a>' if isinstance(a, dict) and a.get('label') and a.get('url') else ''
+    return f'<a class="btn dv-roll {cls}" href="{e(a.get("url"))}">{e(a.get("label"))}</a>' if isinstance(a, dict) and a.get('label') and a.get('url') else ''
 
 
 def _shot(images, pid, alt=''):
@@ -241,13 +241,51 @@ def _visit(s, ctx):
             f'<ul class="kv" data-rise style="--i:1">{rows}</ul></div></section>')
 
 
+@scene('statement', name='The thesis, read word by word', role='turn', devices=['read-along'],
+       needs='one paragraph of 20–60 words in the client\'s own terms — what it believes, why it exists', slots={'label': 'mono', 'text': 'the paragraph, plain (no asterisks)', 'by': 'mono: who says it, optional'})
+def _statement(s, ctx):
+    return (f'<section class="sc statement"><div class="wrap"><p class="mono kicker">{e(s.get("label"))}</p><p class="dv-read thesis">{e(s.get("text"))}</p>'
+            + (f'<p class="mono note">{e(s["by"])}</p>' if s.get('by') else '') + '</div></section>')
+
+
+@scene('rooms', name='Words held while the photographs pass', role='show', devices=['held-pictures', 'clip-reveal', 'line-rise', 'rise-stagger'],
+       needs='2–4 of the client\'s own photographs (at least 700 px wide, never screenshots), each with a short caption', slots={'label': 'mono', 'h2': 'rows split by " / "', 'say': '≤ 3 sentences', 'action': {'label': '', 'url': ''}, 'pictures': [{'image': 'id', 'alt': '', 'caption': 'mono ≤ 50 chars'}]})
+def _rooms(s, ctx):
+    pics = ''.join(f'<figure><div class="dv-clip">{_shot(ctx["images"], p.get("image"), p.get("alt"))}</div><figcaption class="mono">{e(p.get("caption"))}</figcaption></figure>' for p in (s.get('pictures') or [])[:4] if p.get('image') in ctx['images'])
+    return (f'<section class="sc rooms" id="place"><div class="wrap dv-split"><div class="dv-split-side"><p class="mono kicker">{e(s.get("label"))}</p><h2>{lines(s.get("h2"), "h2 h2s")}</h2><p class="lede" data-rise>{e(s.get("say"))}</p>'
+            + (f'<div class="acts" data-rise style="--i:1">{_btn(s.get("action"), "quiet")}</div>' if s.get('action') else '') + f'</div><div class="dv-split-flow">{pics}</div></div></section>')
+
+
+@scene('steps', name='How it goes, in numbered steps', role='show', devices=['rise-stagger', 'line-rise'], needs='3–5 steps the client itself describes, each a short title and one sentence',
+       slots={'label': 'mono', 'h2': 'rows split by " / "', 'steps': [{'title': '≤ 30 chars', 'say': 'one sentence'}]})
+def _steps(s, ctx):
+    st = [x for x in (s.get('steps') or [])[:5] if x.get('title')]
+    items = ''.join(f'<li data-rise style="--i:{k}"><span class="num">{k + 1:02d}</span><h3>{e(x["title"])}</h3><p>{e(x.get("say"))}</p></li>' for k, x in enumerate(st))
+    return f'<section class="sc steps" id="how"><div class="wrap"><p class="mono kicker">{e(s.get("label"))}</p><h2>{lines(s.get("h2"), "h2")}</h2><ol class="step-row" style="--n:{len(st)}">{items}</ol></div></section>'
+
+
+@scene('voices', name='What people say, one voice at a time', role='prove', devices=['rise-stagger'], needs='1–3 REAL testimonials that are in the evidence, word for word, with the name as given — never written, never paraphrased into a quote',
+       slots={'label': 'mono', 'quotes': [{'text': 'the client\'s visitor\'s words exactly', 'name': 'as given', 'role': 'as given, optional'}]})
+def _voices(s, ctx):
+    qs = ''.join(f'<figure class="voice" data-rise style="--i:{k}"><blockquote>{e(q.get("text"))}</blockquote><figcaption class="mono">{e(q.get("name"))}' + (f' · {e(q["role"])}' if q.get('role') else '') + '</figcaption></figure>' for k, q in enumerate((s.get('quotes') or [])[:3]) if q.get('text') and q.get('name'))
+    return f'<section class="sc voices alt"><div class="wrap"><p class="mono kicker">{e(s.get("label"))}</p><div class="voice-row">{qs}</div></div></section>' if qs else ''
+
+
+@scene('faq', name='Many questions, opened one at a time', role='quiet', devices=['rise-stagger'], needs='6–12 questions with the client\'s own answers (for fewer, use "ledger")', slots={'label': 'mono', 'h2': 'one short line', 'rows': [{'q': '', 'a': ''}]})
+def _faq(s, ctx):
+    rows = ''.join(f'<details><summary><span>{e(r.get("q"))}</span></summary><p>{e(r.get("a"))}</p></details>' for r in (s.get('rows') or [])[:12] if r.get('q') and r.get('a'))
+    return f'<section class="sc ledger faq" id="answers"><div class="wrap ledger-in"><div><p class="mono kicker">{e(s.get("label"))}</p><h2 class="h3x">{e(s.get("h2"))}</h2></div><div class="acc">{rows}</div></div></section>'
+
+
 CSS = """
 *{box-sizing:border-box;margin:0}html{-webkit-text-size-adjust:100%}
 body{font-family:var(--text);font-size:clamp(15px,1.11vw,17px);line-height:1.5;color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased;overflow-x:clip}
-a{color:inherit}img{display:block;max-width:100%;height:auto}ul,ol{list-style:none;padding:0}
+a{color:inherit}img{display:block;max-width:100%;height:auto;background:var(--ground2)}ul,ol{list-style:none;padding:0}
+::selection{background:var(--accent);color:var(--on-accent)}html{scroll-padding-top:96px;scroll-behavior:smooth}h1,h2,h3{text-wrap:balance;font-weight:inherit}p{text-wrap:pretty}body{font-variant-numeric:tabular-nums;font-kerning:normal;text-rendering:optimizeLegibility}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 :focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .skip{position:absolute;left:-999px}.skip:focus{left:16px;top:16px;z-index:99;background:var(--paper);color:var(--ink);padding:10px 14px}
-.wrap{padding-inline:var(--pad);max-width:1760px;margin-inline:auto}.sc{padding-block:clamp(88px,13vw,224px)}
+.wrap{padding-inline:var(--pad);max-width:1760px;margin-inline:auto}.sc{padding-block:clamp(72px,9.4vw,156px)}
 .mono{font-family:var(--mono);font-size:12px;line-height:1.35;letter-spacing:.08em;text-transform:uppercase}.kicker{color:var(--mute);margin-bottom:clamp(20px,2.4vw,36px)}.note{color:var(--mute);margin-top:22px}
 em{font-style:normal;color:var(--em)}.display-serif em,.soft-serif em{font-style:italic}
 .display,.h2{display:block;font-family:var(--display);font-weight:var(--dw);letter-spacing:var(--dls);line-height:var(--dlh);text-transform:var(--dcase)}
@@ -298,6 +336,15 @@ em{font-style:normal;color:var(--em)}.display-serif em,.soft-serif em{font-style
 .grps{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:clamp(40px,6vw,96px) clamp(32px,5vw,96px);margin-top:clamp(48px,7vw,120px)}.grp h3{color:var(--mute);padding-bottom:14px;border-bottom:1px solid var(--ink)}
 .grp li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--line)}.grp b{font-weight:500;font-size:clamp(17px,1.4vw,21px)}.grp small{display:block;color:var(--mute);font-size:14px;margin-top:3px}.grp .pr{font-family:var(--mono);font-size:14px;white-space:nowrap}.carte .acts{margin-top:clamp(32px,4vw,56px)}
 .visit-in{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(32px,5vw,96px);align-items:end}.visit .acts{margin-top:clamp(28px,4vw,56px)}
+/* statement, rooms, steps, voices, faq */
+.thesis{font-family:var(--display);font-weight:var(--dw);letter-spacing:var(--dls);text-transform:var(--dcase);line-height:1.06;font-size:clamp(30px,4.6vw,84px);max-width:22ch;text-wrap:balance}.statement .note{margin-top:clamp(24px,3vw,44px)}
+.h2s{font-size:min(clamp(36px,5.2vw,92px),calc((100vw - 2 * var(--pad)) / var(--lw,8) * var(--k)))}.rooms .lede{margin-top:clamp(20px,2.4vw,36px)}.rooms .acts{margin-top:clamp(20px,2.4vw,36px)}
+.dv-split-flow figure{margin:0}.dv-split-flow .dv-clip{border-radius:14px}.dv-split-flow img{width:100%}.dv-split-flow figcaption{margin-top:12px;color:var(--mute)}
+.step-row{display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,1fr));gap:clamp(24px,3vw,56px);margin-top:clamp(48px,7vw,120px);counter-reset:none}.step-row li{border-top:1px solid var(--ink);padding-top:clamp(18px,2vw,28px)}
+.step-row .num{display:block;font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--mute);margin-bottom:clamp(40px,6vw,96px)}.step-row h3{font-family:var(--display);font-weight:var(--dw);text-transform:var(--dcase);letter-spacing:var(--dls);line-height:1.02;font-size:clamp(26px,2.6vw,42px);text-wrap:balance}.step-row p{margin-top:12px;color:var(--mute);max-width:30ch}
+.voice-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:clamp(40px,6vw,96px)}.voice{margin:0}.voice blockquote{font-family:var(--display);font-weight:var(--dw);letter-spacing:var(--dls);line-height:1.12;font-size:clamp(24px,2.7vw,44px);text-wrap:balance;quotes:"“" "”"}.voice blockquote::before{content:open-quote}.voice blockquote::after{content:close-quote}.voice figcaption{margin-top:22px;color:var(--mute)}
+.acc details{border-top:1px solid var(--line)}.acc details:last-child{border-bottom:1px solid var(--line)}.acc summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;gap:20px;align-items:baseline;padding:clamp(16px,1.8vw,24px) 0;font:500 clamp(16px,1.3vw,19px)/1.35 var(--text)}.acc summary::-webkit-details-marker{display:none}
+.acc summary::after{content:"+";font-family:var(--mono);color:var(--mute);transition:transform .3s var(--ease)}.acc details[open] summary::after{transform:rotate(45deg)}.acc details p{color:var(--mute);max-width:60ch;padding:0 0 clamp(18px,2vw,26px)}
 /* close */
 .night{background:var(--night);color:var(--on-night);--line:color-mix(in srgb,var(--on-night) 16%,transparent);--mute:color-mix(in srgb,var(--on-night) 62%,transparent);--em:var(--accent)}
 .close{padding-bottom:0;overflow:hidden}.close .acts{margin-top:clamp(28px,4vw,64px)}.close .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr));gap:clamp(24px,4vw,64px);margin-top:clamp(72px,10vw,160px);padding-top:28px;border-top:1px solid var(--line)}
@@ -305,7 +352,7 @@ em{font-style:normal;color:var(--em)}.display-serif em,.soft-serif em{font-style
 .dv-endmark{font-family:var(--display);font-weight:var(--dw);text-transform:var(--dcase);color:var(--on-night);opacity:.94}
 @media (max-width:900px){
 .bar-links{display:none}.dv-menu-btn{display:inline-flex;align-items:center}.bar .btn{display:none}
-.open-foot,.stage-head,.ledger-in,.index-in,.rows .row,.win-foot,.visit-in{grid-template-columns:minmax(0,1fr)}.win{aspect-ratio:4/3}.dv-held{grid-template-columns:minmax(0,1fr)!important}
+.open-foot,.stage-head,.ledger-in,.index-in,.rows .row,.win-foot,.visit-in{grid-template-columns:minmax(0,1fr)}.step-row{grid-template-columns:minmax(0,1fr)}.step-row .num{margin-bottom:18px}.win{aspect-ratio:4/3}.dv-held{grid-template-columns:minmax(0,1fr)!important}
 .card{grid-template-columns:minmax(0,1fr);min-height:0}.dv-held-m{font-family:var(--display);font-weight:var(--dw)!important;text-transform:var(--dcase);letter-spacing:var(--dls)!important}
 }
 """
@@ -315,7 +362,7 @@ def page(plan, images):
     """The document: the plan's type system and palette, its scenes in its order, the library's code for the devices they use."""
     brand = plan.get('brand') or {}; t = TYPE.get(plan.get('type')) or TYPE['light-grotesk']; p = palette(brand.get('accent') or '#2f6bff', brand.get('night') or '#0e0f12', plan.get('scheme') if plan.get('scheme') in SCHEMES else 'paper')
     ctx = {'images': images, 'brand': brand, 'action': plan.get('action') or {}, 'action2': plan.get('action2')}
-    body, used = [], {'overlay-menu', 'rise-stagger'}
+    body, used = [], {'overlay-menu', 'rise-stagger', 'roll', 'progress', 'bar-tuck'}
     for sc in plan.get('scenes') or []:
         meta = SCENES.get(sc.get('scene'))
         if not meta: continue
@@ -331,7 +378,7 @@ def page(plan, images):
     return (f'<!doctype html><html lang="{e(brand.get("lang") or "en")}"{" data-eased-scroll" if plan.get("eased") else ""}><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{e(plan.get("title") or brand.get("name"))}</title>'
             f'<meta name="description" content="{e(plan.get("description"))}"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family={t["gf"]}&display=swap" rel="stylesheet">'
             f'<style>{tokens}{CSS}{css}</style></head><body class="{e(plan.get("type") or "light-grotesk")}"><a class="skip" href="#main">Skip to content</a>'
-            f'<header class="bar"><a class="name" href="#top">{e(brand.get("name"))}</a><div class="bar-r">' + (f'<nav class="bar-links" aria-label="Primary">{links}</nav>' if links else '')
+            f'<div class="dv-progress" aria-hidden="true"></div><header class="bar dv-tuck"><a class="name" href="#top">{e(brand.get("name"))}</a><div class="bar-r">' + (f'<nav class="bar-links" aria-label="Primary">{links}</nav>' if links else '')
             + f'{_btn(ctx["action"])}<button class="dv-menu-btn mono" aria-expanded="false" aria-controls="menu">Menu</button></div></header>'
             f'<nav class="dv-menu" id="menu" aria-label="Menu">{links}<a href="{e((ctx["action"] or {}).get("url") or "#top")}">{e((ctx["action"] or {}).get("label") or "")}</a></nav>'
             f'<main id="main">{"".join(main)}</main>{"".join(foot)}<script>{js}</script></body></html>')

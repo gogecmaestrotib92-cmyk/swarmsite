@@ -21,7 +21,8 @@ HOW TO CHOOSE
 - Type system: by the client's voice (read the names in TYPE). If the client's own headline face is one of them in spirit, keep that character.
 - Scheme: "paper", "night" or "tint" — from the client's brand and from what its pictures need (dark screenshots sit badly on white unless framed; photographs want paper).
 - A place (restaurant, hotel, shop) is shown with its photographs: "open-picture", "window", "gallery", its list as a "carte", and "visit" for where and when. Software is shown with "held-product", "stage", "figures". When there is no picture strong enough to open on, "open-atmosphere" or "open-statement".
-- 5–8 scenes including exactly one opening and one close. At most one "rail". Use "held-product" only with three or more claims that each have something to SHOW; give every panel the tightest, most readable real picture (prefer crops made for the purpose over whole pages of small text) or real figures. Use "stage" for the one whole screen worth seeing large. Use "figures" only for numbers that are an argument.
+- "statement" carries the thesis once, early. "steps" shows how something goes when the client describes a process. "rooms" holds words while two to four of the client's photographs pass. "voices" only with testimonials given to you, word for word. "faq" for six or more questions, "ledger" for fewer.
+- 5–9 scenes including exactly one opening and one close. At most one "rail". Use "held-product" only with three or more claims that each have something to SHOW; give every panel the tightest, most readable real picture (prefer crops made for the purpose over whole pages of small text) or real figures. Use "stage" for the one whole screen worth seeing large. Use "figures" only for numbers that are an argument.
 - Headings are written for their scene: display lines are short and break into rows with " / " (2–3 rows, 1–4 words a row); mark ONE phrase per line with *asterisks* at most. A heading over cards must agree with the number of cards.
 - Secondary pages go in one "index" near the end (6–12 links, short names). Nothing is repeated, nothing is dumped.
 
@@ -39,7 +40,10 @@ TOOL = {'name': 'compose_page', 'description': 'The whole page as a plan.', 'inp
     'why': {'type': 'string', 'description': 'why this type system and scheme for this client, in two sentences'},
     'nav': {'type': 'array', 'items': {'type': 'object', 'properties': {'label': {'type': 'string'}, 'url': {'type': 'string'}}}},
     'action': {'type': 'object', 'properties': {'label': {'type': 'string'}, 'url': {'type': 'string'}}}, 'action2': {'type': 'object', 'properties': {'label': {'type': 'string'}, 'url': {'type': 'string'}}},
-    'scenes': {'type': 'array', 'minItems': 5, 'maxItems': 8, 'items': {'type': 'object', 'required': ['scene', 'moves', 'slots'], 'properties': {'scene': {'type': 'string', 'enum': list(S.SCENES)}, 'moves': {'type': 'string', 'description': 'how this scene moves the argument forward'}, 'slots': {'type': 'object'}}}}}}}
+    'scenes': {'type': 'array', 'minItems': 5, 'maxItems': 9, 'items': {'type': 'object', 'required': ['scene', 'moves', 'slots'], 'properties': {'scene': {'type': 'string', 'enum': list(S.SCENES)}, 'moves': {'type': 'string', 'description': 'how this scene moves the argument forward'}, 'slots': {'type': 'object'}}}}}}}
+
+
+known_quotes = []
 
 
 def check(plan, page, ev, allowed, images):
@@ -51,6 +55,10 @@ def check(plan, page, ev, allowed, images):
         if pid not in images: bad['pictures'].append(f'{pid}: not a picture of this client')
         elif images[pid].get('gen'): bad['pictures'].append(f'{pid}: a generated picture shown as the product')
     if len(set(used)) != len(used): bad['pictures'].append('a picture is used more than once')
+    quotes = [q.get('text') for s in plan.get('scenes') or [] if s.get('scene') == 'voices' for q in (s.get('slots') or {}).get('quotes') or []]
+    source = ' '.join(json.dumps(ev, ensure_ascii=False).split())
+    for q in quotes:
+        if q and ' '.join(str(q).split())[:60] not in source and ' '.join(str(q).split())[:60] not in ' '.join(known_quotes): bad['pictures'].append('a quote that is not on the client\'s site, word for word')
     roles = [S.SCENES[s['scene']]['role'] for s in plan.get('scenes') or [] if s.get('scene') in S.SCENES]
     if roles.count('open') != 1 or roles[:1] != ['open']: bad['structure'].append('exactly one opening scene, first')
     if roles.count('close') != 1 or roles[-1:] != ['close']: bad['structure'].append('exactly one close, last')
@@ -124,6 +132,9 @@ def main():
     os.makedirs(out, exist_ok=True); t0 = time.time()
     ev, imgs = E.evidence(src); images = {i['id']: i for i in imgs}; allowed = {l['url'].rstrip('/') for l in ev['links']} | {str(ev.get('url') or '').rstrip('/')}
     material = [{'type': 'text', 'text': 'THE STUDIO\'S SCENES, TYPE SYSTEMS AND SCHEMES:\n' + json.dumps(S.catalogue(), ensure_ascii=False, indent=1)}, {'type': 'text', 'text': 'THE EVIDENCE (the client\'s existing site):\n' + json.dumps(ev, ensure_ascii=False, indent=1)}]
+    said = [{'text': ' '.join(str(t.get('text') or t.get('quote') or '').split())[:500], 'name': t.get('name') or t.get('author'), 'role': t.get('role')} for sec in ((E.J(src, 'inventory.json') or {}).get('sourceCoverage') or {}).get('sections') or [] for t in (sec.get('testimonials') or []) if isinstance(t, dict)]
+    said = [t for t in said if t['text'] and t['name']][:8]; known_quotes.extend(t['text'] for t in said)
+    material.append({'type': 'text', 'text': 'TESTIMONIALS FOUND ON THE CLIENT\'S SITE (the only words that may be shown as a quote): ' + (json.dumps(said, ensure_ascii=False) if said else 'none — the scene "voices" may not be used')})
     kind = (E.J(src, 'direction.json') or {}).get('kind') or (E.J(src, 'brief.json') or {}).get('kind') or 'software'
     shot_is = ' — screenshot of the real product' if kind == 'software' else ' — a SCREENSHOT OF THE CLIENT\'S OLD WEBSITE: not content, never shown'
     material.append({'type': 'text', 'text': f'KIND OF BUSINESS (as captured): {kind}'})
@@ -136,7 +147,10 @@ def main():
         pic, made = atmosphere(ev, accent, out)
         if pic: images['atmos'] = pic; material += [{'type': 'text', 'text': 'PICTURE atmos — a commissioned abstract ground in the client\'s colours, kept after a strict second look: the scene "open-atmosphere" stands on it (it is placed for you; do not name it in a slot)'}, {'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/jpeg', 'data': E.thumb(pic['data'])}}]
     from concurrent.futures import ThreadPoolExecutor
-    with ThreadPoolExecutor(3) as ex: results = list(ex.map(lambda v: one(material, ev, allowed, images, out, v[0], v[1]), VARIANTS[:n]))
+    first = one(material, ev, allowed, images, out, *VARIANTS[0]); results = [first]
+    taken = f'\nVARIANT A ALREADY EXISTS: type system "{first["type"]}", scheme "{first["scheme"]}", opening "{(first["scenes"] or [""])[0]}", scenes {first["scenes"]}. You MUST choose a different type system'
+    rest = [(VARIANTS[1][0], VARIANTS[1][1] + taken + ', and differ in the scheme or the opening scene as well.'), (VARIANTS[2][0], VARIANTS[2][1] + taken + ' — and not the one a careful second designer would pick either: the third character this client could honestly have.')][:max(0, n - 1)]
+    with ThreadPoolExecutor(2) as ex: results += list(ex.map(lambda v: one(material, ev, allowed, images, out, v[0], v[1]), rest))
     priced = [u['usd'] for u in E.USAGE if u['usd'] is not None]
     report = {'atmosphere': made, 'variants': results, 'usage': E.USAGE, 'usd': round(sum(priced), 3), 'seconds': round(time.time() - t0)}
     with open(os.path.join(out, 'report.json'), 'w', encoding='utf-8') as f: json.dump(report, f, indent=1, ensure_ascii=False)

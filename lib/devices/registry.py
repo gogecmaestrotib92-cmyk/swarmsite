@@ -220,6 +220,56 @@ device(id='ground-shift', name='The ground changes colour as a scene arrives', k
        js="""{const base={g:getComputedStyle(D.body).backgroundColor,i:getComputedStyle(D.body).color},zones=[...D.querySelectorAll('[data-ground]')];
 if(zones.length)onScroll(()=>{const mid=innerHeight*.55,z=zones.find(z=>{const r=z.getBoundingClientRect();return r.top<mid&&r.bottom>mid});D.body.style.backgroundColor=z?z.dataset.ground:base.g;D.body.style.color=z?(z.dataset.ink||base.i):base.i})}""")
 
+device(id='read-along', name='A paragraph that lights up word by word as you read down', kind='text',
+       sees='A large paragraph stands in a pale tone; as it crosses the screen its words turn to full ink one after another, at the pace of the scroll.',
+       measured=None, seen='15 mentions in the technique survey (rank 32, "scroll-linked word highlight"); pace not measured — ours fills between 80% and 30% of the screen height', survey=True,
+       needs='one paragraph of 20–60 words that is the client\'s own position', use='the page\'s thesis, once', avoid='more than once; body copy; text a visitor must scan quickly',
+       pairs=['line-rise'], markup='<p class="dv-read">The paragraph, plain text.</p>',
+       css=".dv-read .w{transition:opacity .25s linear}.dv .dv-read .w{opacity:.22}.dv .dv-read .w.is-lit{opacity:1}",
+       js=r"""each('.dv-read',p=>{if(calm)return;const words=p.textContent.trim().split(/\s+/);p.setAttribute('aria-label',words.join(' '));p.innerHTML=words.map(w=>`<span class="w" aria-hidden="true">${w.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</span>`).join(' ')});
+if(!calm)onScroll(()=>each('.dv-read',p=>{const r=p.getBoundingClientRect(),t=Math.min(1,Math.max(0,(innerHeight*.8-r.top)/(r.height+innerHeight*.5))),ws=p.children,n=Math.round(t*ws.length);for(let i=0;i<ws.length;i++)ws[i].classList.toggle('is-lit',i<n)}));""")
+
+device(id='clip-reveal', name='A picture uncovered from one edge', kind='media',
+       sees='When a picture comes into view it is drawn open from the bottom edge upward while it settles from a slight enlargement.',
+       measured=None, seen='15 mentions in the technique survey (rank 28, "clip-path image reveal"); timings not measured — ours opens in 0.9 s', survey=True,
+       needs='any photograph', use='the first appearance of the pictures that matter', avoid='screenshots of interfaces (they should simply be there); every image on a page',
+       pairs=['depth', 'rise-stagger'], markup='<figure class="dv-clip"><img …></figure>',
+       css=".dv-clip{overflow:hidden}.dv .dv-clip{clip-path:inset(100% 0 0 0);transition:clip-path .9s var(--ease)}.dv .dv-clip>*{transform:scale(1.12);transition:transform 1.3s var(--ease)}.dv .dv-clip.is-in{clip-path:inset(0)}.dv .dv-clip.is-in>*{transform:none}",
+       js="each('.dv-clip',f=>seen.observe(f));")
+
+device(id='roll', name='A button whose words roll over on hover', kind='pointer',
+       sees='Hovering a button, its label slides up and out while the same label rises in from below.',
+       measured=None, seen='11 mentions in the technique survey (rank 43, "rolling text button"); timings not measured — ours rolls in 0.35 s', survey=True,
+       needs='a short label', use='the page\'s buttons, consistently', avoid='labels that wrap',
+       pairs=['magnet'], markup='<a class="btn dv-roll" href="…">Label</a>',
+       css=".dv-roll .r{position:relative;display:inline-block;overflow:hidden;vertical-align:top;line-height:1.3}.dv-roll .r>span{display:block;transition:transform .35s var(--ease)}.dv-roll .r>span+span{position:absolute;left:0;top:100%}@media (hover:hover){.dv-roll:hover .r>span{transform:translateY(-100%)}}",
+       js="each('.dv-roll',b=>{if(calm||b.children.length)return;const t=b.textContent.trim(),esc=t.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));b.setAttribute('aria-label',t);b.innerHTML=`<span class=\"r\" aria-hidden=\"true\"><span>${esc}</span><span>${esc}</span></span>`});")
+
+device(id='progress', name='A hairline that shows how far down the page you are', kind='navigation',
+       sees='A one-pixel line along the top edge grows from left to right as the page is read.',
+       measured=None, seen='3 mentions in the technique survey (rank 75); a quiet aid on long pages', survey=True,
+       needs='a long page', use='pages of twelve screens or more', avoid='short pages',
+       pairs=['eased-scroll'], markup='<div class="dv-progress" aria-hidden="true"></div>',
+       css=".dv-progress{position:fixed;inset:0 0 auto 0;height:2px;z-index:70;background:var(--accent);transform-origin:0 50%;transform:scaleX(var(--p,0));pointer-events:none}",
+       js="onScroll(()=>each('.dv-progress',b=>b.style.setProperty('--p',(scrollY/Math.max(1,R.scrollHeight-innerHeight)).toFixed(4))));")
+
+device(id='bar-tuck', name='A bar that steps aside while you read and returns when you look for it', kind='navigation',
+       sees='Scrolling down, the top bar slides out of the way; the moment you scroll up it comes back.',
+       measured=None, seen='7 mentions in the technique survey (rank 51, "hide-on-scroll header")', survey=True,
+       needs='a fixed top bar', use='any long page with a fixed bar', avoid='pages whose bar carries the only route to the main action',
+       pairs=['progress'], markup='<header class="bar dv-tuck">…</header>',
+       css=".dv-tuck{transition:transform .4s var(--ease)}.dv-tuck.is-away{transform:translateY(-110%)}",
+       js="{let last=scrollY;onScroll(()=>{const y=scrollY,d=y-last;if(Math.abs(d)<6)return;each('.dv-tuck',b=>b.classList.toggle('is-away',d>0&&y>innerHeight*.6&&!R.classList.contains('dv-menu-lock')));last=y})}")
+
+device(id='held-pictures', name='Words held while pictures pass', kind='scroll',
+       sees='A heading and a few lines stay where they are on one side while two to four photographs scroll past on the other.',
+       measured={'source': 'harvest 2026-11-11', 'seen_in': '11 of 16 hold something while scrolling; split-screen sticky is rank 62 of the survey', 'longest_hold_screens': [0.5, 13]},
+       needs='2–4 photographs with a caption each', use='rooms, courses, projects — a place shown in a few pictures', avoid='a single picture; screenshots',
+       pairs=['clip-reveal', 'rise-stagger'], markup='<div class="dv-split"><div class="dv-split-side">…words…</div><div class="dv-split-flow"><figure>…</figure>…</div></div>',
+       css=""".dv-split{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(24px,5vw,96px);align-items:start}.dv-split-side{position:sticky;top:clamp(96px,16vh,170px)}.dv-split-flow{display:grid;gap:clamp(40px,7vw,120px)}
+@media (max-width:900px){.dv-split{grid-template-columns:minmax(0,1fr)}.dv-split-side{position:static}}""",
+       js="")
+
 # What the measured pages have in common as whole pages — the builder's ground rules, each with its evidence.
 RULES = {
     'source': 'sixteen Sites of the Month measured 2026-11-11 with lib/qa/inspect.mjs at 1440; ranges are across sites; bench/runs/_research/harvest/SUMMARY.md',
@@ -262,9 +312,11 @@ def demo(ids=None):
         'count-up': '<p class="big"><span class="dv-count" data-to="729">729</span> picks · <span class="dv-count" data-to="28188">28,188</span> analyses · +<span class="dv-count" data-to="6.28">6.28</span>u</p>',
         'slides': '<div class="dv-slides" style="--ratio:21/9"><div class="dv-slides-view">' + ''.join(f'<img src="{pic(1600, 700, c)}" alt="" width="1600" height="700">' for c in ('e85d3a', '2aa66b', '7a4de0')) + '</div><p class="dv-slides-ui mono"><button data-step="-1" aria-label="Previous">←</button><span class="dv-slides-n"></span><button data-step="1" aria-label="Next">→</button></p></div>',
         'ground-shift': '<div data-ground="#101421" data-ink="#ffffff" style="padding:12vh 0"><p class="big">The one change of ground</p><p class="lede">Scrolling in, the page behind this passage eases to night and back.</p></div>',
+        'read-along': '<p class="dv-read big" style="max-width:22ch">A paragraph set large lights up word by word as it crosses the screen, at the pace of the hand that scrolls it, and stands whole when motion is unwanted.</p>',
+        'held-pictures': '<div class="dv-split"><div class="dv-split-side"><p class="big">Words held</p><p class="lede"><a class="btn dv-roll" href="#end">A rolling label</a></p></div><div class="dv-split-flow">' + ''.join(f'<figure class="dv-clip" style="margin:0;border-radius:15px"><img src="{pic(1200, 800, c)}" alt="" width="1200" height="800"></figure>' for c in ('e85d3a', '2aa66b', '7a4de0')) + '</div></div>',
         'peek': '<ul class="dv-peek list">' + ''.join(f'<li><a href="#end" data-peek="{pic(800, 600, c)}">{t}</a></li>' for t, c in (('First piece of work', 'e85d3a'), ('Second piece of work', '2aa66b'), ('Third piece of work', '7a4de0'), ('Fourth piece of work', '222222'))) + '</ul>',
         'end-mark': '<div class="dv-endmark" style="--chars:7" aria-hidden="true">Library</div>'}
-    order = ['overlay-menu', 'line-rise', 'rise-stagger', 'fact-ticker', 'count-up', 'held-index', 'side-rail', 'stack-cards', 'grow-to-bleed', 'depth', 'slides', 'ground-shift', 'peek', 'end-mark']
+    order = ['overlay-menu', 'line-rise', 'rise-stagger', 'fact-ticker', 'read-along', 'count-up', 'held-index', 'held-pictures', 'side-rail', 'stack-cards', 'grow-to-bleed', 'depth', 'slides', 'ground-shift', 'peek', 'end-mark']
     body = ''.join(f'<section id="{i}"><p class="mono tag">{i}</p>{blocks[i]}</section>' for i in order if i in ids and i in blocks)
     page_css = """*{box-sizing:border-box}body{margin:0;--ink:#101421;--paper:#fff;--accent:#ff488b;font:18px/1.5 'Geist',system-ui,sans-serif;color:var(--ink);background:var(--paper)}
 section{padding:clamp(56px,9vw,140px) clamp(20px,2.8vw,40px)}.big{font-weight:300;font-size:clamp(44px,6vw,104px);line-height:1;letter-spacing:-.03em;margin:0}.huge span{font-weight:300;font-size:clamp(56px,11vw,180px);letter-spacing:-.04em;white-space:nowrap}
@@ -274,7 +326,7 @@ section{padding:clamp(56px,9vw,140px) clamp(20px,2.8vw,40px)}.big{font-weight:30
 .list{list-style:none;padding:0;margin:0}.list a{display:block;padding:18px 0;border-bottom:1px solid #d9dee6;font-size:clamp(22px,2.4vw,34px);color:inherit;text-decoration:none}"""
     return ('<!doctype html><html lang="en" data-eased-scroll><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Device library</title>'
             '<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">'
-            f'<style>{page_css}{css}</style></head><body><main>{body}</main><div id="end"></div><script>{js}</script></body></html>')
+            f'<style>{page_css}{css}</style></head><body><div class="dv-progress" aria-hidden="true"></div><main>{body}</main><div id="end"></div><script>{js}</script></body></html>')
 
 
 if __name__ == '__main__':
