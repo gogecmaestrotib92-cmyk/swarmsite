@@ -5,6 +5,7 @@
 <title>Swarmsite — rebuilding your site</title><meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Shrikhand&display=swap" rel="stylesheet">
 <link rel="preload" href="/fonts/instrument-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/header.css">
 <style>
 @font-face{font-family:'Instrument Sans';font-weight:400;font-display:swap;src:url(/fonts/instrument-sans-latin-400-normal.woff2) format('woff2')}
 @font-face{font-family:'Instrument Sans';font-weight:500;font-display:swap;src:url(/fonts/instrument-sans-latin-500-normal.woff2) format('woff2')}
@@ -14,9 +15,6 @@
 body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
 a{color:inherit;text-decoration:none}
 .lab{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
-.top{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:14px 20px;gap:12px}
-.top .grp{display:flex;gap:6px;align-items:center;background:rgba(255,255,255,.82);backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:999px;padding:6px 6px 6px 14px}
-.top .brand{font-weight:500;letter-spacing:-.02em;padding-right:6px}
 .pill{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:9px 16px;font-weight:500;font-size:14px;border:1px solid var(--line);background:#fff;min-height:40px;cursor:pointer;transition:transform .35s cubic-bezier(.2,.8,.2,1)}
 .pill.ink{background:var(--ink);color:#fff;border-color:var(--ink)}.pill:hover{transform:translateY(-2px)}.pill:active{transform:scale(.97);transition:transform 100ms ease-out}
 /* stage */
@@ -61,20 +59,58 @@ a{color:inherit;text-decoration:none}
 .seg.studio{order:-1;flex-basis:100%;align-items:center;border:0;border-radius:0;overflow:visible;gap:8px;flex-wrap:wrap;margin-bottom:6px}.seg.studio .pick{font:600 14px var(--sans);margin-right:6px}.seg.studio button{border:1px solid var(--line);border-radius:999px;padding:10px 18px;font-size:14px;min-height:44px}.seg.studio button.on{border-color:var(--ink)}
 .coverage{position:relative}.coverage[hidden]{display:none}.coverage>summary{list-style:none}.coverage>summary::-webkit-details-marker{display:none}.coverage-panel{position:fixed;bottom:calc(var(--result-bar-height,68px) + 12px);right:16px;width:min(440px,calc(100vw - 32px));max-height:min(65vh,520px,calc(100vh - var(--result-bar-height,68px) - var(--result-top-height,83px) - 24px));overflow:auto;background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 16px 45px rgba(0,0,0,.15);font-size:14px;line-height:1.45;z-index:30}.coverage-panel h2{font-size:18px;font-weight:500;margin-bottom:8px}.coverage-panel h3{font-size:14px;font-weight:500;margin:16px 0 5px}.coverage-panel p{color:var(--muted)}.coverage-panel ul{list-style:none}.coverage-panel li{padding:7px 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere}.coverage-panel .status{display:block;color:var(--muted);font-size:12px}.coverage-panel a{text-decoration:underline;text-underline-offset:3px}
 .err{color:#D9424A;max-width:60ch}
-@media(max-width:700px){.frame{aspect-ratio:3/4}.top .brand span{display:none}.bar{padding:10px 12px}}
-.top .brand{display:inline-flex;align-items:center;padding:0 10px 2px 0;line-height:1;font-family:'Shrikhand',Georgia,serif;font-weight:400;font-size:28px;letter-spacing:-.01em;color:var(--ink)}
+@media(max-width:700px){.frame{aspect-ratio:3/4}.bar{padding:10px 12px}}
 
 /* Same visual language as the landing; preserve the existing flow and controls. */
 .stage{padding-top:115px}.h{letter-spacing:-.045em}.brief{border-radius:24px;padding:28px;gap:20px;box-shadow:0 25px 70px rgba(17,17,17,.06)}.brief .row{gap:9px}.brief .row.col{gap:9px}.brief .row.col .lab{font-size:12px}.chip{min-height:40px;background:#fafafa;transition:background .2s,border-color .2s}.chip:has(input:checked){background:#ededeb;border-color:#888}.brief input[type=text],.brief input:not([type]){background:#fafafa;border-radius:12px}.frame{box-shadow:0 35px 90px #1112}.bar{padding:14px 20px}.stage:has(.brief:not(.hide)) .frame,.stage:has(.brief:not(.hide)) .log,.stage:has(.brief:not(.hide)) .steps,.stage:has(.brief:not(.hide))>.micro{display:none}
-@media(max-width:700px){.brief,.frame,.steps,.log{width:100%;max-width:100%}.top .lab{display:none}.top .pill{white-space:nowrap}.brief{padding:20px}.result iframe{max-width:100%}}
+@media(max-width:700px){.brief,.frame,.steps,.log{width:100%;max-width:100%}.brief{padding:20px}.result iframe{max-width:100%}}
 
 /* The brief is the first step of the product, so it uses the landing's type and color. */
 .stage{align-content:start;padding-top:clamp(118px,13vh,150px)}.stage>*{min-width:0}.brief-caption{width:100%;max-width:44ch;color:#69645f;font-size:16px;margin-top:-12px}.stage:has(.brief.hide) .brief-caption{display:none}.stage:has(.brief:not(.hide)) .h{font-size:clamp(38px,5vw,64px);max-width:none}.brief{width:min(820px,100%);padding:clamp(24px,4vw,48px);gap:30px;border-radius:8px;box-shadow:none}.option-group{border:0;min-width:0;display:grid;gap:12px}.option-group legend,.brief .row.col>label{font-size:16px;font-weight:500;letter-spacing:-.015em}.option-group legend{padding:0;margin-bottom:12px}.brief .row.col{gap:10px}.optional{font-size:12px;font-weight:400;color:#777;margin-left:6px}.chip{background:#f7f6f3;font-size:14px;min-height:44px;padding:9px 14px}.chip input{accent-color:#833b46}.chip:has(input:checked){background:#f3e1dd;border-color:#b67c80}.chip:focus-within{outline:2px solid #833b46;outline-offset:2px}.brief input[type=text],.brief input:not([type]){background:#faf9f7;border-radius:4px;min-height:50px}.brief input:focus{outline:2px solid #833b46;outline-offset:2px}.brief-action{display:flex;gap:20px;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding-top:26px}.brief-action .pill.ink{background:#833b46;border-color:#833b46;padding:12px 18px;min-width:210px;justify-content:space-between}.brief-action .pill.ink:disabled{opacity:.6;cursor:wait}.brief-action p{font-size:13px;color:#777}.err{font-size:14px}.stage:has(.brief:not(.hide)) .err:empty{display:none}
 @media(max-width:700px){.stage{padding:120px 20px 50px}.stage:has(.brief:not(.hide)) .h{font-size:40px}.brief-caption{font-size:15px}.brief{padding:24px 20px;gap:26px}.brief-action{flex-direction:column;align-items:stretch;gap:10px}.brief-action .pill.ink{width:100%}.brief-action p{text-align:center}.url{overflow-wrap:anywhere;max-width:100%}}
+/* ── The working window. A job takes minutes, so the window has to say, at every moment, that it is running: a light
+   that travels round the frame, the crew looking over its edge, agents that stay on the page, a bar with one segment
+   per step, and a clock. Everything it states is read from the job (step, count, time); nothing is invented. ── */
+.work{position:relative;width:max(min(1100px,94vw,(100svh - 410px) * 16 / 9),min(560px,94vw));margin-top:92px}   /* never taller than the screen leaves room for: the bar and the clock at its foot are seen without scrolling */.work .frame{position:relative;z-index:1;width:100%}
+.stage:has(.brief:not(.hide)) .work{display:none}
+@property --wk-a{syntax:'<angle>';inherits:false;initial-value:0deg}
+.work::before,.work::after{content:"";position:absolute;inset:-3px;border-radius:25px;background:conic-gradient(from var(--wk-a),rgba(237,197,190,0) 0 48%,#edc5be 68%,#833b46 86%,rgba(237,197,190,0));animation:wk-spin 4.2s linear infinite;pointer-events:none}
+.work::after{inset:-18px;border-radius:40px;filter:blur(34px);opacity:.9}
+@keyframes wk-spin{to{--wk-a:360deg}}
+.work.is-still::before,.work.is-still::after{display:none}.work.is-still .wk-crew{opacity:.0}
+.wk-crew{position:absolute;z-index:3;left:5%;right:5%;top:0;height:0;display:flex;justify-content:space-between;pointer-events:none;transition:opacity .5s}
+.wk-robot{--sheet:url('/agents/peek-blue.webp');position:relative;display:block;flex:0 0 104px;width:104px;height:139px;top:-104px}
+.wk-robot i{position:absolute;inset:0}
+.wk-robot .g1,.wk-robot .g2{z-index:2;background:var(--sheet) 66.6667% 0/400% 100% no-repeat;animation:wk-grip-l 3.8s ease-in-out infinite;animation-delay:var(--delay,0s);transform-origin:15% 68%;clip-path:inset(60% 50% 20% 0)}
+.wk-robot .g2{animation-name:wk-grip-r;transform-origin:85% 68%;clip-path:inset(60% 0 20% 50%)}
+.wk-robot .hd3{clip-path:inset(0 0 34% 0)}.wk-robot .hd3::before{content:"";position:absolute;inset:0;background:var(--sheet) 66.6667% 0/400% 100% no-repeat;transform-origin:50% 64%;animation:wk-look 3.8s cubic-bezier(.22,.61,.36,1) infinite;animation-delay:var(--delay,0s)}
+@keyframes wk-look{0%,6%,92%,100%{transform:translateY(23px) rotate(0)}16%,30%{transform:translateY(0) rotate(-2deg)}42%,54%{transform:translateY(1px) rotate(-6deg)}66%,76%{transform:translateY(0) rotate(5deg)}86%{transform:translateY(4px) rotate(0)}}
+@keyframes wk-grip-l{0%,6%,92%,100%{transform:rotate(0)}14%,24%{transform:rotate(-5deg) translateY(1px)}33%,76%{transform:rotate(0)}86%{transform:rotate(-3deg)}}
+@keyframes wk-grip-r{0%,6%,92%,100%{transform:rotate(0)}14%,24%{transform:rotate(5deg) translateY(1px)}33%,76%{transform:rotate(0)}86%{transform:rotate(3deg)}}
+.frame .skel{background:#161616;animation:none}.frame .skel i{position:absolute;border-radius:8px;background:linear-gradient(100deg,#222 20%,#323232 40%,#222 60%);background-size:200% 100%;animation:sh 1.6s linear infinite}
+.sk-nav{left:5%;top:6%;width:90%;height:5%}.sk-h{left:5%;top:22%;width:44%;height:9%}.sk-h2{top:34%;width:33%}.sk-p{left:5%;top:49%;width:38%;height:4%}.frame .skel i.sk-btn{left:5%;top:59%;width:15%;height:8%;border-radius:99px}.frame .skel i.sk-img{left:56%;top:20%;width:39%;height:50%;border-radius:14px}
+.frame .hud{flex-direction:column;align-items:stretch;gap:12px;padding-top:56px}.hud-row{display:flex;justify-content:space-between;align-items:center;gap:16px}.hud-l{display:inline-flex;align-items:center;gap:10px;min-width:0}.hud-l .lab{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.hud-r{display:inline-flex;gap:14px;flex:none;font-variant-numeric:tabular-nums}
+.wk-live{flex:none;width:8px;height:8px;border-radius:50%;background:#edc5be;animation:wk-live 1.4s ease-out infinite}@keyframes wk-live{0%{box-shadow:0 0 0 0 rgba(237,197,190,.75)}100%{box-shadow:0 0 0 9px rgba(237,197,190,0)}}
+.work.is-still .wk-live{animation:none;background:#8a8a86}
+.wk-prog{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:5px}.wk-prog i{position:relative;height:3px;border-radius:9px;background:rgba(255,255,255,.24);overflow:hidden;transition:background-color .5s}.wk-prog i.done{background:#fff}
+.wk-prog i.run::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,#fff,transparent);animation:wk-run 1.3s ease-in-out infinite}@keyframes wk-run{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+.step{transition:background-color .3s,color .3s}.step.pending{color:var(--muted)}.step.running{background:#faf9f6}
+.step.running .dot{width:15px;height:15px;background:none;border:2px solid rgba(20,20,20,.16);border-top-color:var(--ink);animation:wk-turn .8s linear infinite}@keyframes wk-turn{to{transform:rotate(360deg)}}
+.step.done .dot{position:relative;width:15px;height:15px}.step.done .dot::after{content:"";position:absolute;left:5px;top:2.5px;width:3.5px;height:7px;border:solid #fff;border-width:0 1.6px 1.6px 0;transform:rotate(45deg)}
+.micro .lab.warn{color:#9a5a00}
+.notify label{text-align:center}.notify-row{padding:5px;border-radius:999px;background:#fff;box-shadow:0 0 0 1px var(--line);transition:box-shadow .2s}.notify-row:focus-within{box-shadow:0 0 0 1px #6f6f69,0 0 0 4px rgba(17,17,17,.06)}
+.notify .notify-row input{border:0;background:none;outline:0;padding:0 16px}.notify .pill{background:var(--ink);color:#fff;border-color:var(--ink);min-height:44px;padding-inline:20px}.notify .pill:disabled{opacity:.45;cursor:default;transform:none}.notify .lab{text-align:center}
+.draft-bar{position:relative;min-height:48px}.draft-dots i{background:#833b46}.draft-dots i:nth-child(2){background:#c0858c}.draft-dots i:nth-child(3){background:#edc5be}
+.draft-bar::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:linear-gradient(90deg,transparent,#833b46,transparent) no-repeat;background-size:36% 100%;animation:wk-sweep 1.9s ease-in-out infinite}@keyframes wk-sweep{from{background-position:-60% 0}to{background-position:160% 0}}
+.draft-bar .lab{padding:5px 9px;border-radius:99px;box-shadow:0 0 0 1px var(--line);font-variant-numeric:tabular-nums;white-space:nowrap;flex:none}.draft-bar #draftClock{margin-left:auto}.draft-bar #draftRound{margin-left:0}
+.seg button{min-height:44px;padding:8px 16px;font-size:14px;transition:background-color .2s,color .2s}.seg button:not(.on):hover{background:#f1f1ee}.bar .pill{min-height:44px}.pill:focus-visible,.seg button:focus-visible{outline:2px solid #833b46;outline-offset:2px}
+@media(max-width:700px){.work{width:100%;margin-top:64px}.wk-robot{flex-basis:70px;width:70px;height:93.333px;top:-70px}.wk-robot:nth-child(n+4){display:none}.frame .hud{padding:40px 14px 14px}.hud-r{gap:10px}
+  @keyframes wk-look{0%,6%,92%,100%{transform:translateY(16px) rotate(0)}16%,30%{transform:translateY(0) rotate(-2deg)}42%,54%{transform:translateY(1px) rotate(-6deg)}66%,76%{transform:translateY(0) rotate(5deg)}86%{transform:translateY(3px) rotate(0)}}}
+@media(prefers-reduced-motion:reduce){.work::before,.work::after,.wk-robot i,.wk-robot .hd3::before,.wk-live,.frame .skel i,.draft-bar::after,.step.running .dot{animation:none!important}.wk-prog i.run::after{animation:none;background:rgba(255,255,255,.55)}.draft-bar::after{background-size:100% 100%;opacity:.5}}
 </style>
 </head>
 <body>
-<div class="top"><div class="grp"><a class="brand" href="/" aria-label="Swarmsite">swarmsite</a><span class="lab">· live rebuild</span></div><div class="grp"><a class="pill" href="/">New URL</a><a class="pill" id="account" href="/login" hidden>Sign in</a></div></div>
+<header class="hd top" data-hd data-hd-page="app"><div class="hd-grp"><a class="hd-brand" href="/" aria-label="Swarmsite, front page">swarmsite</a><a class="hd-item hd-wide" data-hd-projects href="/dashboard" hidden>Projects</a></div><div class="hd-grp" data-hd-right><a class="hd-cta" href="/#top">New project</a></div></header>
 
 <section class="stage" id="stage">
   <span class="lab" id="urlLab"></span>
@@ -103,7 +139,8 @@ a{color:inherit;text-decoration:none}
     </details>
     <div class="brief-action"><button class="pill ink" id="go">Start my preview <span aria-hidden="true">↗</span></button><p>Your current website stays unchanged.</p></div>
   </form>
-  <div class="frame" id="frame"><div class="skel" id="skel"></div><img id="before" alt=""><div class="hud"><span class="lab" id="hudL">agents waking up</span><span class="lab" id="hudR">0 / 6</span></div></div>
+  <div class="work" id="work"><div class="wk-crew" aria-hidden="true"><span class="wk-robot" style="--sheet:url('/agents/peek-blue.webp');--delay:0s"><i class="g1"></i><i class="g2"></i><i class="hd3"></i></span><span class="wk-robot" style="--sheet:url('/agents/peek-rose.webp');--delay:-1.3s"><i class="g1"></i><i class="g2"></i><i class="hd3"></i></span><span class="wk-robot" style="--sheet:url('/agents/peek-ivory.webp');--delay:-2.6s"><i class="g1"></i><i class="g2"></i><i class="hd3"></i></span><span class="wk-robot" style="--sheet:url('/agents/peek-sage.webp');--delay:-0.7s"><i class="g1"></i><i class="g2"></i><i class="hd3"></i></span><span class="wk-robot" style="--sheet:url('/agents/peek-rose.webp');--delay:-3.1s"><i class="g1"></i><i class="g2"></i><i class="hd3"></i></span><span class="wk-robot" style="--sheet:url('/agents/peek-blue.webp');--delay:-1.9s"><i class="g1"></i><i class="g2"></i><i class="hd3"></i></span></div>
+  <div class="frame" id="frame"><div class="skel" id="skel"><i class="sk-nav"></i><i class="sk-h"></i><i class="sk-h sk-h2"></i><i class="sk-p"></i><i class="sk-btn"></i><i class="sk-img"></i></div><img id="before" alt=""><div class="hud"><div class="wk-prog" id="prog" role="progressbar" aria-label="Steps finished" aria-valuemin="0" aria-valuemax="6" aria-valuenow="0"></div><div class="hud-row"><span class="hud-l"><i class="wk-live" aria-hidden="true"></i><span class="lab" id="hudL" role="status">agents waking up</span></span><span class="lab hud-r"><span id="clock" aria-label="Time so far">00:00</span><span id="hudR">0 / 6</span></span></div></div></div></div>
   <div class="log" id="log"></div>
   <div class="steps" id="steps"></div>
   <div class="micro"><span class="lab" id="micro">First version in under a minute · stay or come back, this page remembers the job</span></div>
@@ -112,7 +149,7 @@ a{color:inherit;text-decoration:none}
 </section>
 
 <div class="result" id="result">
-  <div class="draft-bar" id="draftBar" hidden><span class="draft-dots" aria-hidden="true"><i></i><i></i><i></i></span><span id="draftText">Your first version is up — the agents are still polishing it</span><span class="lab" id="draftRound"></span></div>
+  <div class="draft-bar" id="draftBar" hidden><span class="draft-dots" aria-hidden="true"><i></i><i></i><i></i></span><span id="draftText">Your first version is up — the agents are still polishing it</span><span class="lab" id="draftClock" aria-label="Time so far"></span><span class="lab" id="draftRound"></span></div>
   <div class="preview-stage"><iframe id="preview" title="Your rebuilt site"></iframe><div class="draft-swarm" id="draftSwarm" aria-hidden="true"></div></div>
   <div class="bar">
     <div class="l"><span class="lab" id="meta"></span><div class="seg" id="variants"></div><div class="seg"><button class="on" data-v="desktop">Desktop</button><button data-v="mobile">Phone</button></div></div>
@@ -123,6 +160,7 @@ a{color:inherit;text-decoration:none}
 <script src="/config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js" defer></script>
 <script src="/js/auth.js" defer></script>
+<script src="/js/header.js" defer></script>
 <script src="/js/swarm2.js?v=agent9"></script>
 <script>
 const API = window.SWARMSITE_API; const qs = new URLSearchParams(location.search);
@@ -132,7 +170,15 @@ let sw=null, seen=0; const COL=Object.fromEntries((window.Swarm2&&Swarm2.ROLES)|
 function positionCoverage(){document.documentElement.style.setProperty('--result-bar-height',Math.ceil(document.querySelector('.result .bar').getBoundingClientRect().height)+'px');}
 function layoutResult(){document.documentElement.style.setProperty('--result-top-height',Math.ceil(document.querySelector('.top').getBoundingClientRect().bottom)+'px'); positionCoverage();}
 $('#coverage').addEventListener('toggle',positionCoverage); window.addEventListener('resize',layoutResult);
-function renderSteps(job){ const el=$('#steps'), rows=document.createDocumentFragment(); for(const s of job.steps){const row=document.createElement('div'); row.className='step'; if(['pending','running','done','failed'].includes(s.status)) row.classList.add(s.status); const dot=document.createElement('span'); dot.className='dot'; const label=document.createElement('span'); label.textContent=s.label; const note=document.createElement('span'); note.className='note'; note.textContent=s.status==='done'?(s.note||'done'):s.status==='running'?'working…':''; row.append(dot,label,note); rows.appendChild(row);} el.replaceChildren(rows);
+/* The clock: how long this job has been going, from the moment it was started (the job's own time when the page is
+   opened later; a browser clock that disagrees wildly is not believed). */
+let t0=0, ticking=null; const TITLE=document.title;
+function startClock(at){ if(t0) return; t0=at; const show=()=>{ const s=Math.max(0,Math.floor((Date.now()-t0)/1000)); const t=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); $('#clock').textContent=t; $('#draftClock').textContent=t; }; show(); ticking=setInterval(show,1000); }
+function still(){ clearInterval(ticking); ticking=null; $('#work').classList.add('is-still'); }
+function renderSteps(job){ if(!t0&&['queued','running'].includes(job.status)){ const made=Date.parse(job.created_at), age=Date.now()-made; startClock(age>=0&&age<3*3600e3?made:Date.now()); }
+  { const bar=$('#prog'), n=job.steps.length, done=job.steps.filter(s=>s.status==='done').length; if(bar.children.length!==n) bar.replaceChildren(...job.steps.map(()=>document.createElement('i'))); job.steps.forEach((s,i)=>{ bar.children[i].className=s.status==='done'?'done':s.status==='running'?'run':''; }); bar.setAttribute('aria-valuemax',n); bar.setAttribute('aria-valuenow',done);
+    document.title=job.status==='done'?'✓ Preview ready — Swarmsite':job.status==='failed'?TITLE:`${done}/${n} · ${job.status==='queued'?'In the queue':'Working'} — Swarmsite`; }   /* seen from another tab too */
+  const el=$('#steps'), rows=document.createDocumentFragment(); for(const s of job.steps){const row=document.createElement('div'); row.className='step'; if(['pending','running','done','failed'].includes(s.status)) row.classList.add(s.status); const dot=document.createElement('span'); dot.className='dot'; const label=document.createElement('span'); label.textContent=s.label; const note=document.createElement('span'); note.className='note'; note.textContent=s.status==='done'?(s.note||'done'):s.status==='running'?'working…':''; row.append(dot,label,note); rows.appendChild(row);} el.replaceChildren(rows);
   const done=job.steps.filter(s=>s.status==='done').length; $('#hudR').textContent=`${done} / ${job.steps.length}`; const cur=job.steps.find(s=>s.status==='running'); if(sw) sw.phase(cur?cur.id:(job.status==='done'?'done':'queued')); $('#hudL').textContent=cur?cur.label.toLowerCase():(job.status==='done'?'done':'queued'); $('#h').textContent=cur?cur.label.split(':')[0]+'…':(job.status==='queued'?'In the queue…':job.status==='done'?'Your preview is ready':'Reading your site…');
   if((job.result?.beforeFullUrl||job.result?.beforeUrl) && !$('#before').src){ const im=$('#before'); im.src=job.result.beforeFullUrl||job.result.beforeUrl; im.onload=()=>{ im.classList.add('in'); $('#skel').remove(); if(sw) sw.setPage(im, job.result.pageHeight||im.naturalHeight); }; }
   const evs=job.result?.events||[], offset=Number(job.result?.eventsOffset||0), end=offset+evs.length; if(end>seen){ const fresh=evs.slice(Math.max(0,seen-offset)); if(sw) sw.push(fresh); if(draftSw) draftSw.push(fresh); seen=end; const log=document.createDocumentFragment(); for(const event of evs.slice(-6)){const row=document.createElement('span'), dot=document.createElement('b'); dot.style.background=COL[event.role]||'#999'; row.append(dot,document.createTextNode(`${event.role} · ${event.text}`)); log.appendChild(row);} $('#log').replaceChildren(log); } }
@@ -168,15 +214,15 @@ function showResult(job){ const r=job.result; const pv=new URL(`${window.SWARMSI
 
 }
 
-/* The account: a link to sign in, or to the visitor's projects; a preview started before signing in becomes theirs. */
-addEventListener('DOMContentLoaded',async()=>{ if(!window.Auth||!Auth.enabled) return; const a=$('#account'); a.hidden=false; const here=location.pathname+location.search;
-  const paint=async()=>{ const s=await Auth.session(); a.textContent=s?'Your projects':'Sign in'; a.href=s?'/dashboard':'/login?next='+encodeURIComponent(here);
-    const id=new URLSearchParams(location.search).get('job'); if(s&&/^[0-9a-f-]{36}$/.test(id||'')) Auth.api('/jobs/'+id+'/claim',{method:'POST'}).catch(()=>{}); };
-  paint(); Auth.onChange(paint); });
+/* A preview started before signing in becomes the visitor's once they are signed in. The header itself: js/header.js. */
+addEventListener('DOMContentLoaded',()=>{ if(!window.Auth||!Auth.enabled) return;
+  const claim=async()=>{ const id=new URLSearchParams(location.search).get('job'); if(/^[0-9a-f-]{36}$/.test(id||'')&&await Auth.session()) Auth.api('/jobs/'+id+'/claim',{method:'POST'}).catch(()=>{}); };
+  claim(); Auth.onChange(claim); });
 /* Desktop / Phone: bound once, so it works on a draft too. The preview is a flex item that grows — a width set on it was
    ignored, which is why the phone view never changed anything; the stage now carries the state and the frame is sized by it. */
 document.querySelectorAll('.seg button[data-v]').forEach(b=>b.onclick=()=>{ document.querySelectorAll('.seg button[data-v]').forEach(x=>x.classList.toggle('on',x===b)); document.querySelector('.preview-stage').classList.toggle('is-phone',b.dataset.v==='mobile'); });
-let draftShown=-1, notifyDone=false, draftSw=null;
+let draftShown=-1, notifyDone=false, draftSw=null, lost=false, waited=false; const MICRO=$('#micro').textContent;
+const CREW=()=>({count:innerWidth<700?7:12,shape:'character',roam:true,busy:3});   /* a dozen agents, on the page from the first second and never idle while the job runs */
 $('#notifyGo').onclick=async()=>{ const email=$('#notifyEmail').value.trim(); if(!email) return; const id=new URLSearchParams(location.search).get('job'); if(!id) return; $('#notifyGo').disabled=true;
   try{ const r=await fetch(`${API}/jobs/${id}/notify`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email})}); if(!r.ok) throw new Error('could not save'); $('#notifyNote').textContent='We’ll email you the link. You can close this tab.'; $('#notifyEmail').disabled=true; notifyDone=true; }
   catch(e){ $('#notifyNote').textContent='Could not save that address — try again.'; $('#notifyGo').disabled=false; } };
@@ -186,20 +232,22 @@ function showDraft(job){ const d=job.result.draft; if(!d || d.round===draftShown
   $('#draftText').textContent=d.round===0?'Instant first version — your page in our template. The agents are now designing it properly':d.round===1?'The agents’ first design is up — they are still polishing it':'Updated — a better round just landed'; $('#draftRound').textContent=d.round===0?'v0':`round ${d.round}`;
   $('#draftBar').hidden=false; $('#stage').hidden=true; $('#result').classList.add('on'); layoutResult();
   // the same crew keeps working over the draft until the final page lands
-  if(!draftSw && window.Swarm2) draftSw=Swarm2.mount($('#draftSwarm'),{count:innerWidth<700?5:9,shape:'character'}); }
+  if(!draftSw && window.Swarm2) draftSw=Swarm2.mount($('#draftSwarm'),{count:innerWidth<700?5:9,shape:'character',busy:3}); }   /* over a draft the agents come only with something to show: the visitor is reading the page */
 async function poll(id){ try{ const r=await fetch(`${API}/jobs/${id}`); if(!r.ok) throw new Error('job not found'); const job=await r.json(); renderSteps(job);
-    if(job.status==='done'){ if(sw) sw.stop(); if(draftSw){ draftSw.stop(); draftSw=null; } $('#draftBar').hidden=true; showResult(job); return; }
+    if(lost||(waited&&job.status!=='queued')){ lost=false; waited=false; $('#micro').classList.remove('warn'); $('#micro').textContent=MICRO; }   /* what was said about the queue, or a lost connection, is taken back once it is no longer true */
+    if(job.status==='done'){ still(); if(sw) sw.stop(); if(draftSw){ draftSw.stop(); draftSw=null; } $('#draftBar').hidden=true; showResult(job); return; }
     if(job.status==='running' && job.result?.draft) showDraft(job);
-    if(job.status==='queued' && job.queue){ const q=job.queue; $('#h').textContent=q.ahead?`In the queue · ${q.ahead} ahead`:'In the queue…'; $('#micro').textContent=q.ahead?`${q.capacity>1?q.capacity+' teams of agents are working':'one site at a time'} · your turn in about ${q.eta_min} min · this page remembers the job`:'Starting any second'; }
-    if(['queued','running'].includes(job.status) && job.notify?.available && !notifyDone){ $('#notify').hidden=false; if(job.notify.email){ $('#notifyNote').textContent='We’ll email you the link.'; $('#notifyEmail').disabled=true; $('#notifyGo').disabled=true; notifyDone=true; } } if(job.status==='failed'){ if(sw) sw.stop(); const message=String(job.error||'unknown'); const providerUnavailable=/your credit balance is too low to access the anthropic api/i.test(message) || message==='The AI service is temporarily unavailable. Please try again later.'; $('#err').textContent=providerUnavailable?'The AI service is temporarily unavailable. Please try again later.':'Something broke: '+message+'. Try again or send us the URL.'; $('#h').textContent='That one didn’t go through.'; return; }
-  }catch(e){ $('#err').textContent=e.message; } setTimeout(()=>poll(id), 3000); }
+    if(job.status==='queued' && job.queue){ waited=true; const q=job.queue; $('#h').textContent=q.ahead?`In the queue · ${q.ahead} ahead`:'In the queue…'; $('#micro').textContent=q.ahead?`${q.capacity>1?q.capacity+' teams of agents are working':'one site at a time'} · your turn in about ${q.eta_min} min · this page remembers the job`:'Starting any second'; }
+    if(['queued','running'].includes(job.status) && job.notify?.available && !notifyDone){ $('#notify').hidden=false; if(job.notify.email){ $('#notifyNote').textContent='We’ll email you the link.'; $('#notifyEmail').disabled=true; $('#notifyGo').disabled=true; notifyDone=true; } } if(job.status==='failed'){ still(); if(sw) sw.stop(); if(draftSw){ draftSw.stop(); draftSw=null; } const message=String(job.error||'unknown'); const providerUnavailable=/your credit balance is too low to access the anthropic api/i.test(message) || message==='The AI service is temporarily unavailable. Please try again later.'; $('#err').textContent=providerUnavailable?'The AI service is temporarily unavailable. Please try again later.':'Something broke: '+message+'. Try again or send us the URL.'; $('#h').textContent='That one didn’t go through.'; return; }
+  }catch(e){ if(e instanceof TypeError){ lost=true; $('#micro').classList.add('warn'); $('#micro').textContent='Connection lost — the job keeps running; checking again…'; } else $('#err').textContent=e.message; }   /* a dropped connection is not a failed job */
+  setTimeout(()=>poll(id), 3000); }
 if(innerWidth>700){const m=document.getElementById('briefMore'); if(m) m.open=true;}
 function briefData(){ const f=$('#brief'); const d={keepFont:f.keepFont.checked,keepColours:f.keepColours.checked,keepLogo:f.keepLogo.checked,mode:(f.querySelector('[name=mode]:checked')||{}).value||'seo-safe',kind:(f.querySelector('[name=kind]:checked')||{}).value||'',keep:f.keep.value.trim(),goal:f.goal.value.trim()}; return d; }
 async function launch(url){
   const button=$('#go'); if(button.disabled) return; button.disabled=true; $('#err').textContent='';
   $('#brief').classList.add('hide'); $('#h').textContent='Reading your site…';
   try {
-    sw=Swarm2.mount($('#frame'),{count:9,shape:'character'});
+    $('#work').classList.remove('is-still'); startClock(Date.now()); sw=Swarm2.mount($('#frame'),CREW());
     const send=window.Auth&&Auth.enabled?(p,i)=>Auth.api(p,i):(p,i)=>fetch(API+p,i);   /* a signed-in visitor's preview is theirs from the start */
     const r=await send('/jobs',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url,options:briefData()})});
     const j=await r.json().catch(()=>({}));
@@ -208,14 +256,17 @@ async function launch(url){
     if(!r.ok || !j.id) throw new Error('Could not start preview');
     history.replaceState(null,'',`/app?url=${encodeURIComponent(url)}&job=${j.id}`); poll(j.id);
   } catch(e) {
-    if(sw){sw.stop();sw=null} if(draftSw){draftSw.stop();draftSw=null} $('#brief').classList.remove('hide'); $('#h').textContent='Set the direction.';
+    if(sw){sw.stop();sw=null} if(draftSw){draftSw.stop();draftSw=null} clearInterval(ticking); ticking=null; t0=0; document.title=TITLE; $('#brief').classList.remove('hide'); $('#h').textContent='Set the direction.';
     $('#err').textContent=e&&e.shown?e.message:'We couldn’t start your preview. Check your connection and try again.';
     setTimeout(()=>{button.disabled=false},750);
   }
 }
 async function start(){ let id=qs.get('job'); const url=qs.get('url'); $('#urlLab').textContent=url?('https://'+url.replace(/^https?:\/\//,'')):'';
-  if(id){ $('#brief').classList.add('hide'); sw=Swarm2.mount($('#frame'),{count:9,shape:'character'}); poll(id); return; }
-  if(!url){ location.href='/'; return; }
+  if(id){ $('#brief').classList.add('hide'); sw=Swarm2.mount($('#frame'),CREW()); poll(id); return; }
+  if(!url){ /* nothing to work on: a signed-in visitor starts one among their projects, anyone else on the front page.
+       The account script is deferred, so the answer is only known once the document is parsed. */
+    const leave=async()=>{ const signed=window.Auth&&Auth.enabled&&await Auth.session(); location.replace(signed?'/dashboard#new':'/#top'); };
+    if(document.readyState==='loading') addEventListener('DOMContentLoaded',leave); else leave(); return; }
   $('#h').textContent='Set the direction.'; $('#brief').querySelector('[name=kind][value=""]').checked=true; $('#go').onclick=()=>launch(url); }
 start();
 </script>

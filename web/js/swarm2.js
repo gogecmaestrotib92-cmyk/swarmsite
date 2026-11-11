@@ -1,7 +1,10 @@
 /* Swarmsite swarm v2 — the same principle as v1 (cursors that act on REAL events, on a screenshot of the client's site),
    at a premium visual level: restrained cursor, glass name tag, one gesture per role, mass-based motion, a spotlight that
    follows the work, and nothing fake while real events are flowing.
-   API (same as v1): const sw = Swarm2.mount(frame, {count, demo}); sw.setPage(img, pageH); sw.push(events); sw.phase(p); sw.stop(); */
+   API (same as v1): const sw = Swarm2.mount(frame, {count, demo, roam, busy}); sw.setPage(img, pageH); sw.push(events); sw.phase(p); sw.stop();
+   roam: an agent with no event of its own keeps moving over the page instead of leaving it — a job that is running looks
+   like one. It moves and looks; it never shows a finding, because only a real event carries one. busy: how many agents may
+   act on real events at once (2 unless given). */
 (function (g) {
   'use strict';
   const ROLES = [['Reader', '#7C3AED'], ['Concept', '#E63946'], ['UX', '#0EA5E9'], ['Copy', '#1D5CFF'], ['UI', '#F97316'], ['Visual', '#22C55E'], ['Critic', '#FF4D4D'], ['Contract', '#9BE94B'], ['Render', '#B9B9B9'],
@@ -74,9 +77,14 @@
   .s2-cur.photo-agent svg > :not(defs):not(.agent-work){display:none}
   .s2-cur.photo-agent .agent-tool{display:none}
   .s2-cur.photo-agent .agent-work{transform:translate(38px,-20px)}
-  .s2-cur.photo-agent .agent-photo{position:absolute;z-index:1;left:-5px;top:-4px;width:56px;height:56px;object-fit:contain;pointer-events:none;filter:drop-shadow(0 3px 5px #0004);transform-origin:50% 85%}
+  .s2-cur.photo-agent .agent-photo{position:absolute;z-index:1;left:-5px;top:-4px;width:56px;height:56px;opacity:1;max-width:none;object-fit:contain;pointer-events:none;filter:drop-shadow(0 3px 5px #0004);transform-origin:50% 85%}
   .s2-cur.photo-agent.on .agent-photo{animation:s2-lean .9s ease-in-out infinite alternate;animation-delay:var(--agent-delay,0s)}
   .s2-cur.photo-agent .tag{z-index:3;left:51px}
+  .s2-cur.roam .agent-photo,.s2-cur.roam svg{animation:s2-bob 1.6s ease-in-out infinite alternate;animation-delay:var(--agent-delay,0s)}
+  .s2-cur.look .agent-photo,.s2-cur.character.look svg{animation:s2-lean .9s ease-in-out infinite alternate;animation-delay:var(--agent-delay,0s)}
+  .s2-cur.look::after{content:"";position:absolute;left:-2px;top:44px;width:50px;height:12px;border-radius:50%;background:radial-gradient(closest-side,color-mix(in srgb,var(--c) 75%,transparent),transparent);animation:s2-ping 1.1s ease-out infinite}
+  @keyframes s2-bob{from{transform:translateY(-2px) rotate(-3deg)}to{transform:translateY(2px) rotate(3deg)}}
+  @keyframes s2-ping{0%{opacity:.9;transform:scale(.5)}100%{opacity:0;transform:scale(1.5)}}
   @media(prefers-reduced-motion:reduce){.s2-cur.photo-agent .agent-photo{animation:none!important}}
   .s2-ghost.character-ghost{display:none}
   @media(prefers-reduced-motion:reduce){.s2-cur,.s2-ghost,.s2-x,.s2-spot{display:none}}`;
@@ -117,7 +125,7 @@
       if (getComputedStyle(frame).position === 'static') frame.style.position = 'relative';
       this.spot = document.createElement('div'); this.spot.className = 's2-spot'; frame.appendChild(this.spot);
       const n = Math.min(opts.count || 9, ROLES.length);
-      ROLES.slice(0, n).forEach(([role, color], i) => { const c = new Cursor(frame, role, color, opts.shape); this.cursors.push(c); setTimeout(() => this.loop(c), 250 + i * 380); });
+      ROLES.slice(0, n).forEach(([role, color], i) => { const c = new Cursor(frame, role, color, opts.shape); this.cursors.push(c); setTimeout(() => this.loop(c), opts.roam ? 120 + i * 140 : 250 + i * 380); });
     }
     phase() {}
     setPage(img, pageH) { this.page = img; const imageHeight = img.naturalHeight * 1440 / (img.naturalWidth || 1440); this.pageH = Math.min(pageH || imageHeight, imageHeight); this.scale = this.frame.clientWidth / 1440; img.style.transition = 'transform 1.1s cubic-bezier(.2,.8,.2,1)'; }
@@ -134,16 +142,27 @@
         const want = ALIAS[c.role] || c.role; const qi = this.queue.findIndex(e => (ALIAS[e.role] || e.role) === want);
         const mine = qi >= 0 ? this.queue.splice(qi, 1)[0] : null;
         try {
-          if (mine && this.active < 2) { this.active++; try { await this.real(c, mine); } finally { this.active--; } }
+          if (mine && this.active < (this.opts.busy || 2)) { this.active++; try { await this.real(c, mine); } finally { this.active--; } }
           else if (mine) { this.queue.unshift(mine); await sleep(300); }
           else if (this.opts.demo && !this.queue.length && Math.random() < .5) await this.demo(c);
+          else if (this.opts.roam) await this.roam(c);
           else { c.say(''); c.el.classList.add('off'); c.ghost.classList.add('off'); await sleep(rnd(400, 900)); }
         } catch (e) { /* frame gone */ }
       }
     }
+    /* no event of its own: the agent crosses to another part of the page and looks at it. Each keeps to its own band of
+       the width, so a dozen of them cover the page instead of gathering in one corner. */
+    async roam(c) {
+      const W = this.frame.clientWidth, H = this.frame.clientHeight, n = this.cursors.length, i = this.cursors.indexOf(c), band = W / n;
+      if (c.el.classList.contains('off') || c.y < 0) { c.x = Math.max(8, Math.min(W - 60, band * (i + .5) + rnd(-20, 20))); c.y = c.y < 0 ? -50 : H + 20; c.hist = []; c.render(); c.el.classList.remove('off'); c.ghost.classList.remove('off'); }
+      c.say(''); c.el.classList.add('roam');
+      const x = Math.max(8, Math.min(W - 60, band * (i + .5) + rnd(-band * 1.4, band * 1.4))), y = rnd(H * .08, Math.max(H * .12, H * .78 - 56));
+      await c.moveTo(x, y, { dur: rnd(900, 1700) }); if (!this.alive) return;
+      c.el.classList.add('look'); await sleep(rnd(600, 1500)); c.el.classList.remove('look');
+    }
     /* ── one gesture per role, on the real rect, with the real text ── */
     async real(c, ev) {
-      const role = ALIAS[c.role] || c.role; const text = ev.text || '';
+      const role = ALIAS[c.role] || c.role; const text = ev.text || ''; c.el.classList.remove('roam', 'look');
       if (c.el.classList.contains('off')) { const r0 = ev.rect && this.page ? this.toLocal(ev.rect) : null; c.x = (r0 ? r0.x : this.frame.clientWidth * .5) + rnd(-160, 160); c.y = (r0 ? r0.y : this.frame.clientHeight * .5) + rnd(-120, 120); c.hist = []; c.render(); c.el.classList.remove('off'); c.ghost.classList.remove('off'); await sleep(250); }
       if (!(ev.rect && this.page && ev.rect.y < this.pageH)) { const p = this.park(c); await c.moveTo(p.x + rnd(-20, 20), p.y - rnd(40, 120)); c.say(text); await sleep(Math.min(2600, 900 + text.length * 25)); c.say(''); return; }
       this.panTo(ev.rect); await sleep(450); const r = this.toLocal(ev.rect); this.spotlight(r);
