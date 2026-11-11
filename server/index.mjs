@@ -9,6 +9,7 @@ import { prepareAlternative, publishSelected, verifySelected, verifyAlternative 
 import { saveCrawlCheckpoint, restoreCrawlCheckpoint } from './crawl_checkpoint.mjs';
 import { spawn } from 'node:child_process'; import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
+import { makeUserOf, allowance, mine } from './auth.mjs';
 import { AsyncLocalStorage } from 'node:async_hooks';
 const HERE = path.dirname(fileURLToPath(import.meta.url)); const ROOT = path.resolve(HERE, '..');
 const sb = createClient(process.env.SUPABASE_URL || 'https://placeholder.supabase.co', process.env.SUPABASE_SERVICE_KEY || 'placeholder', { auth: { persistSession: false } });
@@ -38,13 +39,37 @@ function rateLimited(ip) {
   if (ipHits.size > 5000) for (const [k, v] of ipHits) if (!v.length || now - v[v.length - 1] > 3600e3) ipHits.delete(k);
   if (hits.length >= RATE.perIpPerHour) return true; hits.push(now); return false;
 }
+// ---- accounts: a preview belongs to whoever started it. Off until the deployment says so (REQUIRE_LOGIN=1), so the public
+// form keeps working exactly as before while the web side is being set up; a signed-in visitor's jobs are theirs either way.
+const AUTH = { require: process.env.REQUIRE_LOGIN === '1', free: Math.max(0, Number(process.env.FREE_PREVIEWS_PER_USER || 3)) };
+const userOf = makeUserOf(sb);
+const usedBy = async userId => { const { count } = await sb.from('jobs').select('id', { count: 'exact', head: true }).eq('user_id', userId).neq('status', 'failed'); return count || 0; };
+app.get('/config', (_, res) => res.json({ auth: { require: AUTH.require, free: AUTH.free } }));
+app.get('/me', async (req, res) => { const user = await userOf(req); if (!user) return res.status(401).json({ error: 'sign in' }); res.json({ id: user.id, email: user.email, previews: allowance({ used: await usedBy(user.id), free: AUTH.free }) }); });
+app.get('/me/jobs', async (req, res) => {
+  const user = await userOf(req); if (!user) return res.status(401).json({ error: 'sign in' });
+  const { data, error } = await sb.from('jobs').select('id,url,status,step,created_at,result').eq('user_id', user.id).order('created_at', { ascending: false }).limit(60);
+  if (error) return res.status(500).json({ error: 'could not list' });
+  res.json((data || []).map(mine));
+});
+// A preview started before signing in becomes the visitor's own: its id is unguessable, and a job that already has an owner is never moved.
+app.post('/jobs/:id/claim', async (req, res) => {
+  if (!/^[0-9a-f-]{36}$/.test(req.params.id)) return res.status(400).end();
+  const user = await userOf(req); if (!user) return res.status(401).json({ error: 'sign in' });
+  const { data, error } = await sb.from('jobs').update({ user_id: user.id, email: user.email }).eq('id', req.params.id).is('user_id', null).select('id');
+  if (error) return res.status(500).json({ error: 'could not claim' });
+  res.json({ claimed: (data || []).length === 1 });
+});
 const canonicalUrl = url => { try { const u = new URL(url); u.hash = ''; u.hostname = u.hostname.toLowerCase().replace(/^www\./, ''); u.pathname = u.pathname.replace(/\/+$/, '') || '/'; return u.origin.replace(/^https?:\/\/www\./, m => m) + u.pathname + u.search; } catch { return url; } };
 app.post('/jobs', async (req, res) => {
   let url = String(req.body?.url || '').trim(); if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
   try { new URL(url); } catch { return res.status(400).json({ error: 'bad url' }); }
   if (/localhost|127\.|10\.|192\.168\.|\.internal/i.test(url)) return res.status(400).json({ error: 'not allowed' });
+  const user = await userOf(req);
+  if (AUTH.require && !user) return res.status(401).json({ error: 'Sign in to start a preview.', login: true });
+  if (user) { const a = allowance({ used: await usedBy(user.id), free: AUTH.free }); if (AUTH.require && !a.allowed) return res.status(402).json({ error: `Your ${a.free} free preview${a.free === 1 ? ' is' : 's are'} used.`, previews: a }); }
   const ip = clientIp(req);
-  if (rateLimited(ip)) return res.status(429).json({ error: 'You have started several previews recently. Please wait an hour before starting another.' });
+  if (!user && rateLimited(ip)) return res.status(429).json({ error: 'You have started several previews recently. Please wait an hour before starting another.' });
   // the same site already queued or running → hand back that job instead of paying twice
   const key = canonicalUrl(url);
   const { data: live } = await sb.from('jobs').select('id,url,status,created_at').in('status', ['queued', 'running']).order('created_at', { ascending: false }).limit(200);
@@ -55,7 +80,7 @@ app.post('/jobs', async (req, res) => {
   const { count } = await sb.from('jobs').select('id', { count: 'exact', head: true }).gte('created_at', since);
   if ((count || 0) >= RATE.perDay) return res.status(503).json({ error: 'Today\'s preview budget is used up. Please come back tomorrow.' });
   const options = { ...(req.body?.options || {}) }; const email = String(options.notify_email || '').trim().toLowerCase(); if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'bad email' }); if (email) options.notify_email = email; else delete options.notify_email;
-  const { data, error } = await sb.from('jobs').insert({ url, options, steps: STEPS.map(([id, label]) => ({ id, label, status: 'pending' })) }).select('id').single();
+  const { data, error } = await sb.from('jobs').insert({ url, options, steps: STEPS.map(([id, label]) => ({ id, label, status: 'pending' })), ...(user ? { user_id: user.id, email: user.email } : {}) }).select('id').single();
   if (error) return res.status(500).json({ error: error.message });
   res.json({ id: data.id });
 });
