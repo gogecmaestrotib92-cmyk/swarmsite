@@ -164,7 +164,7 @@ device(id='depth', name='Layers that move at different speeds', kind='scroll',
        needs='a picture or a large shape with room to move inside its frame', use='two or three pictures on a page, each in a frame that crops it', avoid='text blocks; screenshots that must be read; phones',
        pairs=['grow-to-bleed', 'rise-stagger'], markup='<figure class="dv-depth" style="--rate:-.14"><img …></figure>',
        css=""".dv-depth{overflow:hidden}.dv-depth>*{display:block;width:100%;height:auto;will-change:transform;transform:translate3d(0,calc(var(--y,0) * 1px),0) scale(1.16)}
-@media (max-width:700px),(prefers-reduced-motion:reduce){.dv-depth>*{transform:none!important}}""",
+@media (max-width:700px){.dv-depth:not([data-on-phone])>*{transform:none!important}}@media (prefers-reduced-motion:reduce){.dv-depth>*{transform:none!important}}   /* data-on-phone: a page that asks for it keeps the device on a phone (our own landing, owner 2026-11-11); a client's page is left as measured — off */""",
        js="if(!calm)onScroll(()=>each('.dv-depth',f=>{const r=f.getBoundingClientRect(),rate=parseFloat(getComputedStyle(f).getPropertyValue('--rate'))||-.14;f.style.setProperty('--y',((r.top+r.height/2-innerHeight/2)*rate).toFixed(1))}));")
 
 device(id='eased-scroll', name='A page that glides to a stop', kind='scroll',
@@ -344,7 +344,7 @@ device(id='cover', name='A section that slides over the one before it', kind='tr
        pairs=['rise-stagger'], markup='<section>…</section><section class="dv-cover">…</section>',
        css=""".dv-cover{position:relative;z-index:1}.dv .dv-covered{position:sticky;z-index:0}.dv .dv-cover.is-cover{border-radius:clamp(20px,2.4vw,36px) clamp(20px,2.4vw,36px) 0 0;box-shadow:0 -1px 0 var(--line,rgba(0,0,0,.12)),0 -30px 60px -30px rgba(0,0,0,.28)}.dv .dv-cover.is-cover:not(.night):not(.stage){background:var(--paper)}
 .dv .dv-covered~*{position:relative;z-index:1}.dv .dv-covered~*:not(.night):not(.stage):not(.dv-cover){background:var(--paper)}   /* everything after the held section lies over it: a held section that shows through what follows is a fault (seen on the first recording, 2026-11-11) */""",
-       js="each('.dv-cover',c=>{const p=c.previousElementSibling;if(!p)return;const set=()=>{const on=!calm&&innerWidth>900&&p.offsetHeight<=innerHeight*2.2;c.classList.toggle('is-cover',on);p.classList.toggle('dv-covered',on);p.style.top=on?Math.min(0,innerHeight-p.offsetHeight)+'px':''};set();addEventListener('resize',set)});")
+       js="each('.dv-cover',c=>{const p=c.previousElementSibling;if(!p)return;const set=()=>{const on=!calm&&(innerWidth>900||c.hasAttribute('data-on-phone'))&&p.offsetHeight<=innerHeight*2.2;c.classList.toggle('is-cover',on);p.classList.toggle('dv-covered',on);p.style.top=on?Math.min(0,innerHeight-p.offsetHeight)+'px':''};set();addEventListener('resize',set)});")
 
 device(id='switch', name='Two prices, one switch', kind='control',
        sees='Above the plans a small switch — monthly, yearly — and the prices change with it.',
@@ -377,7 +377,7 @@ device(id='curtain-foot', name='A footer the page lifts off', kind='transition',
        needs='a footer no taller than the screen', use='the close of a long page', avoid='tall footers (the script leaves those alone); pages with a fixed bottom bar',
        pairs=['end-mark'], markup='<main class="dv-sheet">…</main><footer class="dv-under">…</footer>',
        css=".dv-sheet{position:relative;z-index:2;background:var(--paper)}.dv .dv-under.is-under{position:sticky;bottom:0;z-index:1}",
-       js="each('.dv-under',f=>{const set=()=>f.classList.toggle('is-under',!calm&&f.offsetHeight<=innerHeight&&innerWidth>900);set();addEventListener('resize',set);f.addEventListener('focusin',()=>f.classList.contains('is-under')&&scrollTo(0,R.scrollHeight))});")   # focus that lands in the footer while it lies under the page brings the page's end with it: Tab went to controls nobody could see
+       js="each('.dv-under',f=>{const set=()=>f.classList.toggle('is-under',!calm&&f.offsetHeight<=innerHeight&&(innerWidth>900||f.hasAttribute('data-on-phone')));set();addEventListener('resize',set);f.addEventListener('focusin',()=>f.classList.contains('is-under')&&scrollTo(0,R.scrollHeight))});")   # focus that lands in the footer while it lies under the page brings the page's end with it: Tab went to controls nobody could see
 
 # What the measured pages have in common as whole pages — the builder's ground rules, each with its evidence.
 RULES = {

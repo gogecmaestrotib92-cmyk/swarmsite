@@ -28,7 +28,7 @@
 .dv-magnet{transition:transform .35s var(--ease)}
 .dv-scramble{font-variant-numeric:tabular-nums}
 .dv-depth{overflow:hidden}.dv-depth>*{display:block;width:100%;height:auto;will-change:transform;transform:translate3d(0,calc(var(--y,0) * 1px),0) scale(1.16)}
-@media (max-width:700px),(prefers-reduced-motion:reduce){.dv-depth>*{transform:none!important}}
+@media (max-width:700px){.dv-depth:not([data-on-phone])>*{transform:none!important}}@media (prefers-reduced-motion:reduce){.dv-depth>*{transform:none!important}}   /* data-on-phone: a page that asks for it keeps the device on a phone (our own landing, owner 2026-11-11); a client's page is left as measured — off */
 html[data-eased-scroll].dv-easing{scroll-behavior:auto}
 .dv-menu-btn{min-height:44px;padding:0 16px;border-radius:7px;border:0;font:inherit;background:var(--ink);color:var(--paper);cursor:pointer}
 .dv-menu{display:flex;flex-direction:column;gap:.1em;padding:clamp(20px,4vw,48px) 0}.dv-menu a{font-weight:300;font-size:clamp(34px,9vw,92px);line-height:1.08;letter-spacing:-.03em;color:inherit;text-decoration:none}
@@ -80,8 +80,8 @@ html[data-eased-scroll].dv-easing{scroll-behavior:auto}
   </div>
 </section>
 
-<section class="sc night statement dv-cover" id="idea">
-  <figure class="atmos dv-depth" style="--rate:-.14" aria-hidden="true"><img src="/visuals/titanium-arc.webp" alt="" loading="lazy" width="1400" height="784"></figure>
+<section class="sc night statement dv-cover" id="idea" data-on-phone>
+  <figure class="atmos dv-depth" data-on-phone style="--rate:-.14" aria-hidden="true"><img src="/visuals/titanium-arc.webp" alt="" loading="lazy" width="1400" height="784"></figure>
   <span class="peek peek-side" aria-hidden="true"><span class="crew-robot crew-blue"><i class="pose pose-1"></i><i class="pose pose-2"></i><i class="pose pose-3"></i></span></span>
   <div class="wrap">
     <p class="mono kicker"><span class="dv-scramble">DESIGN DIRECTION</span></p>
@@ -114,8 +114,8 @@ html[data-eased-scroll].dv-easing{scroll-behavior:auto}
 </section>
 </main>
 
-<footer class="night close dv-under" id="closing">
-  <figure class="atmos dv-depth" style="--rate:-.14" aria-hidden="true"><img src="/visuals/metal-fold.webp" alt="" loading="lazy" width="1400" height="784"></figure>
+<footer class="night close dv-under" id="closing" data-on-phone>
+  <figure class="atmos dv-depth" data-on-phone style="--rate:-.14" aria-hidden="true"><img src="/visuals/metal-fold.webp" alt="" loading="lazy" width="1400" height="784"></figure>
   <div class="wrap">
     <p class="mono kicker"><span class="dv-scramble">START WITH YOUR WEBSITE</span></p>
     <h2 class="display dv-lines"><span class="dv-ln"><span>See your website</span></span> <span class="dv-ln"><span><em>in a new design.</em></span></span></h2>
@@ -163,8 +163,8 @@ if(!calm)onScroll(()=>each('.dv-read',p=>{const r=p.getBoundingClientRect(),t=Ma
 each('.dv-roll',b=>{if(calm||b.children.length)return;const t=b.textContent.trim(),esc=t.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));b.setAttribute('aria-label',t);b.innerHTML=`<span class="r" aria-hidden="true"><span>${esc}</span><span>${esc}</span></span>`});
 onScroll(()=>each('.dv-progress',b=>b.style.setProperty('--p',(scrollY/Math.max(1,R.scrollHeight-innerHeight)).toFixed(4))));
 {let last=scrollY;onScroll(()=>{const y=scrollY,d=y-last;each('.dv-tuck',b=>b.classList.toggle('is-solid',y>24||R.classList.contains('dv-menu-lock')));if(Math.abs(d)<6)return;each('.dv-tuck',b=>b.classList.toggle('is-away',d>0&&y>innerHeight*.6&&!R.classList.contains('dv-menu-lock')));last=y})}
-each('.dv-cover',c=>{const p=c.previousElementSibling;if(!p)return;const set=()=>{const on=!calm&&innerWidth>900&&p.offsetHeight<=innerHeight*2.2;c.classList.toggle('is-cover',on);p.classList.toggle('dv-covered',on);p.style.top=on?Math.min(0,innerHeight-p.offsetHeight)+'px':''};set();addEventListener('resize',set)});
-each('.dv-under',f=>{const set=()=>f.classList.toggle('is-under',!calm&&f.offsetHeight<=innerHeight&&innerWidth>900);set();addEventListener('resize',set);f.addEventListener('focusin',()=>f.classList.contains('is-under')&&scrollTo(0,R.scrollHeight))});}</script>
+each('.dv-cover',c=>{const p=c.previousElementSibling;if(!p)return;const set=()=>{const on=!calm&&(innerWidth>900||c.hasAttribute('data-on-phone'))&&p.offsetHeight<=innerHeight*2.2;c.classList.toggle('is-cover',on);p.classList.toggle('dv-covered',on);p.style.top=on?Math.min(0,innerHeight-p.offsetHeight)+'px':''};set();addEventListener('resize',set)});
+each('.dv-under',f=>{const set=()=>f.classList.toggle('is-under',!calm&&f.offsetHeight<=innerHeight&&(innerWidth>900||f.hasAttribute('data-on-phone')));set();addEventListener('resize',set);f.addEventListener('focusin',()=>f.classList.contains('is-under')&&scrollTo(0,R.scrollHeight))});}</script>
 <script src="/js/nav-account.js" defer></script>
 <script src="/js/swarm.js?v=agent13" defer></script>
 <script src="/js/landing.js?v=1" defer></script>
