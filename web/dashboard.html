@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your projects — Swarmsite</title><meta name="robots" content="noindex">
+<link rel="preload" href="/fonts/instrument-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+@font-face{font-family:'Instrument Sans';font-weight:400;font-display:swap;src:url(/fonts/instrument-sans-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:'Instrument Sans';font-weight:500;font-display:swap;src:url(/fonts/instrument-sans-latin-500-normal.woff2) format('woff2')}
+@font-face{font-family:'JetBrains Mono';font-weight:400;font-display:swap;src:url(/fonts/jetbrains-mono-latin-400-normal.woff2) format('woff2')}
+:root{--paper:#F5F5F4;--ink:#111;--muted:#6B6B68;--line:rgba(17,17,17,.12);--sans:'Instrument Sans',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace}
+*{box-sizing:border-box;margin:0;padding:0}body{min-height:100svh;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}.lab{font-family:var(--mono);font-size:11.5px;color:var(--muted);letter-spacing:.02em}
+.top{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 22px;background:rgba(245,245,244,.86);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.brand{font-weight:500;letter-spacing:-.02em}.grp{display:flex;align-items:center;gap:10px;min-width:0}.who{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:32vw}
+.pill{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:9px 16px;font:500 14px var(--sans);border:1px solid var(--line);background:#fff;min-height:40px;cursor:pointer;transition:transform .3s cubic-bezier(.2,.8,.2,1)}.pill.ink{background:var(--ink);color:#fff;border-color:var(--ink)}.pill:hover{transform:translateY(-1px)}.pill:active{transform:scale(.98)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+main{width:min(1120px,100%);margin:0 auto;padding:clamp(28px,5vw,64px) 22px 96px}
+.head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:16px 32px;margin-bottom:clamp(24px,4vw,44px)}h1{font-weight:400;font-size:clamp(30px,4.6vw,52px);line-height:1.05;letter-spacing:-.03em}
+.meter{display:grid;gap:6px;min-width:200px}.meter i{display:block;height:4px;border-radius:99px;background:var(--line);overflow:hidden}.meter i b{display:block;height:100%;background:var(--ink);border-radius:99px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:16px}
+.card{display:grid;grid-template-rows:auto 1fr;background:#fff;border:1px solid var(--line);border-radius:20px;overflow:hidden;transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s}.card:hover{transform:translateY(-3px);box-shadow:0 22px 50px -24px rgba(17,17,17,.28)}
+.shot{aspect-ratio:16/10;background:#e9e8e4 center/cover;border-bottom:1px solid var(--line);display:grid;place-items:center}.shot span{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.body{display:grid;gap:8px;padding:16px 18px 18px}.site{font-weight:500;font-size:17px;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.row{display:flex;justify-content:space-between;gap:12px;align-items:center}
+.state{display:inline-flex;align-items:center;gap:7px;font-size:13px}.state::before{content:"";width:7px;height:7px;border-radius:50%;background:#9a9a96}.state.done::before{background:#1f9d55}.state.running::before,.state.queued::before{background:#d99a1c;animation:pulse 1.4s ease-in-out infinite}.state.failed::before{background:#c0392b}
+@keyframes pulse{50%{opacity:.35}}@media (prefers-reduced-motion:reduce){.state::before{animation:none!important}.card,.pill{transition:none}}
+.empty{border:1px dashed var(--line);border-radius:20px;padding:clamp(28px,6vw,64px);display:grid;gap:14px;justify-items:start}.empty p{color:var(--muted);max-width:46ch}.note{color:var(--muted);margin-top:18px}.note.err{color:#b3261e}[hidden]{display:none!important}
+@media (max-width:600px){.who{display:none}}
+</style>
+</head>
+<body>
+<div class="top"><a class="brand" href="/">swarmsite</a><div class="grp"><span class="lab who" id="who"></span><a class="pill ink" href="/app">New project</a><button class="pill" id="out" type="button">Sign out</button></div></div>
+<main>
+  <div class="head"><h1>Your projects</h1><div class="meter" id="meter" hidden><span class="lab" id="meterText"></span><i><b id="meterBar"></b></i></div></div>
+  <div class="grid" id="grid" aria-live="polite"></div>
+  <div class="empty" id="empty" hidden><h2 style="font-weight:400;font-size:24px;letter-spacing:-.02em">Nothing here yet</h2><p>Paste the address of a site and you get three designs to choose from. They are kept here.</p><a class="pill ink" href="/app">Start a project</a></div>
+  <p class="note" id="note" role="status"></p>
+</main>
+<script src="/config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="/js/auth.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const host = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return String(u || '').slice(0, 60); } };
+const when = t => { const d = new Date(t); return isNaN(d) ? '' : d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }); };
+const STATE = { done: 'Ready', running: 'Working', queued: 'In the queue', failed: 'Did not finish' };
+function card(j) {   // built with the DOM, never with markup: a site's address is whatever its owner typed
+  const a = document.createElement('a'); a.className = 'card'; a.href = '/app?job=' + encodeURIComponent(j.id) + '&url=' + encodeURIComponent(j.url || '');
+  const shot = document.createElement('div'); shot.className = 'shot'; if (j.before && /^https:\/\//.test(j.before)) shot.style.backgroundImage = 'url("' + j.before.replace(/["\\\n]/g, '') + '")'; else { const s = document.createElement('span'); s.textContent = STATE[j.status] || j.status; shot.appendChild(s); }
+  const body = document.createElement('div'); body.className = 'body'; const site = document.createElement('div'); site.className = 'site'; site.textContent = host(j.url);
+  const row = document.createElement('div'); row.className = 'row'; const st = document.createElement('span'); st.className = 'state ' + (STATE[j.status] ? j.status : ''); st.textContent = (STATE[j.status] || j.status) + (j.status === 'done' && j.designs ? ' · ' + j.designs + (j.designs === 1 ? ' design' : ' designs') : '');
+  const date = document.createElement('span'); date.className = 'lab'; date.textContent = when(j.created_at); row.append(st, date); body.append(site, row); a.append(shot, body); return a;
+}
+async function load() {
+  const [me, jobs] = await Promise.all([Auth.api('/me'), Auth.api('/me/jobs')]);
+  if (me.status === 401 || jobs.status === 401) { location.replace('/login?next=' + encodeURIComponent('/dashboard')); return; }
+  if (!me.ok || !jobs.ok) throw new Error('unavailable');
+  const who = await me.json(), list = await jobs.json();
+  $('#who').textContent = who.email || '';
+  if (who.previews && who.previews.free) { $('#meter').hidden = false; $('#meterText').textContent = who.previews.used + ' of ' + who.previews.free + ' free previews used'; $('#meterBar').style.width = Math.min(100, Math.round(100 * who.previews.used / who.previews.free)) + '%'; }
+  $('#grid').replaceChildren(...list.map(card)); $('#empty').hidden = list.length > 0;
+  if (list.some(j => j.status === 'running' || j.status === 'queued')) setTimeout(() => load().catch(() => {}), 15000);   // a working project updates by itself
+}
+(async () => {
+  if (!Auth.enabled) { $('#note').textContent = 'Accounts are not switched on for this site yet.'; $('#empty').hidden = false; $('#out').hidden = true; return; }
+  if (!(await Auth.session())) { location.replace('/login?next=' + encodeURIComponent('/dashboard')); return; }
+  $('#out').onclick = async () => { await Auth.signOut(); location.replace('/'); };
+  try { await load(); } catch (e) { $('#note').textContent = 'Your projects could not be loaded. Try again in a moment.'; $('#note').classList.add('err'); }
+})();
+</script>
+</body>
+</html>

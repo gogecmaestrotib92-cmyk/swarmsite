@@ -74,7 +74,7 @@ a{color:inherit;text-decoration:none}
 </style>
 </head>
 <body>
-<div class="top"><div class="grp"><a class="brand" href="/" aria-label="Swarmsite">swarmsite</a><span class="lab">· live rebuild</span></div><div class="grp"><a class="pill" href="/">New URL</a></div></div>
+<div class="top"><div class="grp"><a class="brand" href="/" aria-label="Swarmsite">swarmsite</a><span class="lab">· live rebuild</span></div><div class="grp"><a class="pill" href="/">New URL</a><a class="pill" id="account" href="/login" hidden>Sign in</a></div></div>
 
 <section class="stage" id="stage">
   <span class="lab" id="urlLab"></span>
@@ -121,6 +121,8 @@ a{color:inherit;text-decoration:none}
 </div>
 
 <script src="/config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js" defer></script>
+<script src="/js/auth.js" defer></script>
 <script src="/js/swarm2.js?v=agent9"></script>
 <script>
 const API = window.SWARMSITE_API; const qs = new URLSearchParams(location.search);
@@ -166,6 +168,11 @@ function showResult(job){ const r=job.result; const pv=new URL(`${window.SWARMSI
   document.querySelectorAll('.seg button[data-v]').forEach(b=>b.onclick=()=>{ document.querySelectorAll('.seg button[data-v]').forEach(x=>x.classList.remove('on')); b.classList.add('on'); const f=$('#preview'); if(b.dataset.v==='mobile'){ f.style.width='390px'; f.style.margin='0 auto'; f.style.borderLeft=f.style.borderRight='1px solid #ddd'; } else { f.style.width='100%'; f.style.border='0'; } });
 }
 
+/* The account: a link to sign in, or to the visitor's projects; a preview started before signing in becomes theirs. */
+addEventListener('DOMContentLoaded',async()=>{ if(!window.Auth||!Auth.enabled) return; const a=$('#account'); a.hidden=false; const here=location.pathname+location.search;
+  const paint=async()=>{ const s=await Auth.session(); a.textContent=s?'Your projects':'Sign in'; a.href=s?'/dashboard':'/login?next='+encodeURIComponent(here);
+    const id=new URLSearchParams(location.search).get('job'); if(s&&/^[0-9a-f-]{36}$/.test(id||'')) Auth.api('/jobs/'+id+'/claim',{method:'POST'}).catch(()=>{}); };
+  paint(); Auth.onChange(paint); });
 let draftShown=-1, notifyDone=false, draftSw=null;
 $('#notifyGo').onclick=async()=>{ const email=$('#notifyEmail').value.trim(); if(!email) return; const id=new URLSearchParams(location.search).get('job'); if(!id) return; $('#notifyGo').disabled=true;
   try{ const r=await fetch(`${API}/jobs/${id}/notify`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email})}); if(!r.ok) throw new Error('could not save'); $('#notifyNote').textContent='We’ll email you the link. You can close this tab.'; $('#notifyEmail').disabled=true; notifyDone=true; }
@@ -190,12 +197,16 @@ async function launch(url){
   $('#brief').classList.add('hide'); $('#h').textContent='Reading your site…';
   try {
     sw=Swarm2.mount($('#frame'),{count:9,shape:'character'});
-    const r=await fetch(`${API}/jobs`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url,options:briefData()})});
-    const j=await r.json(); if(!r.ok || !j.id) throw new Error('Could not start preview');
+    const send=window.Auth&&Auth.enabled?(p,i)=>Auth.api(p,i):(p,i)=>fetch(API+p,i);   /* a signed-in visitor's preview is theirs from the start */
+    const r=await send('/jobs',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url,options:briefData()})});
+    const j=await r.json().catch(()=>({}));
+    if(r.status===401&&j.login){ location.href='/login?next='+encodeURIComponent('/app?url='+encodeURIComponent(url)); return; }
+    if(r.status===402){ const e=new Error(j.error||'Your free previews are used.'); e.shown=true; throw e; }
+    if(!r.ok || !j.id) throw new Error('Could not start preview');
     history.replaceState(null,'',`/app?url=${encodeURIComponent(url)}&job=${j.id}`); poll(j.id);
   } catch(e) {
     if(sw){sw.stop();sw=null} if(draftSw){draftSw.stop();draftSw=null} $('#brief').classList.remove('hide'); $('#h').textContent='Set the direction.';
-    $('#err').textContent='We couldn’t start your preview. Check your connection and try again.';
+    $('#err').textContent=e&&e.shown?e.message:'We couldn’t start your preview. Check your connection and try again.';
     setTimeout(()=>{button.disabled=false},750);
   }
 }
