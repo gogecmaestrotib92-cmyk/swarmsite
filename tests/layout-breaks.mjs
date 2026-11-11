@@ -51,3 +51,10 @@ b = run('void', `<section id="work"><h2>Rooms</h2><div style="display:flex;gap:2
 assert.deepEqual(kinds(b), ['void@work'], 'a hole beside a short picture is named: ' + JSON.stringify(b));
 b = run('closed', `<section id="work"><h2>Rooms</h2><div style="display:flex;gap:24px">${pic(760, 480)}${pic(560, 480)}</div></section>`, '1440');
 assert.deepEqual(kinds(b), [], 'two pictures that close their row are sound: ' + JSON.stringify(b));
+
+// A section held in place is covered by the next one; seen under the sections after that, it is named.
+const held = fix => `<section id="a" style="position:sticky;top:0;min-height:700px;background:#ddd"><h2>Held</h2><p>Words of the held section, enough of them to be a paragraph at a readable measure.</p></section><section id="b" style="position:relative;z-index:1;background:#fff;min-height:900px"><h2>Covers</h2><p>The section that slides over the held one and hides it as it should.</p></section><section id="c" style="min-height:1200px;${fix}"><h2>After</h2><p>What follows the covering section and must not let the held one through.</p></section>`;
+b = run('through', held(''), '1440');
+assert.ok(kinds(b).includes('shows-through@c'), 'a held section seen under a later one is named: ' + JSON.stringify(b));
+b = run('through-fixed', held('position:relative;z-index:1;background:#fff'), '1440');
+assert.deepEqual(kinds(b), [], 'covered by everything after it, a held section is sound: ' + JSON.stringify(b));

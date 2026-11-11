@@ -112,7 +112,7 @@ def test_software_is_set_quietly_with_its_product_in_a_frame_and_its_plans_as_th
         {'scene': 'compare', 'slots': {'h2': 'Compare', 'columns': ['Free', 'Pro'], 'groups': [{'title': 'Core', 'rows': [{'name': 'Seats', 'values': ['1', '10']}, {'name': 'Export', 'values': ['no', 'yes']}, {'name': 'Broken row', 'values': ['yes']}]}]}},
         {'scene': 'close', 'slots': {'line': 'Start'}}]}
     wide, phone = SC.page(plan('wide'), images), SC.page(plan('phone'), images)
-    assert 'scale-product' in wide.split('<body')[1][:90] and 'class="dv-window"' in wide and 'class="dv-phone"' not in wide.split('<body')[1]
+    assert 'scale-product' in wide.split('<body')[1][:90] and 'class="dv-window dv-lift"' in wide and 'class="dv-phone"' not in wide.split('<body')[1]
     assert 'class="dv-phone"' in phone and 'open-prod centre' in phone, 'a phone screen stands in a phone, centred'
     assert wide.count('class="pl') >= 2 and wide.count('is-marked') >= 1 and '$20' in wide and '<th scope="row">Seats</th><td>1</td><td>10</td>' in wide
     assert 'aria-label="no">—' in wide and 'aria-label="yes">✓' in wide and 'Broken row' not in wide, 'a row without a value for every column is not drawn'
@@ -129,5 +129,37 @@ def test_the_plans_character_is_on_the_page_and_the_product_can_stand_in_the_cli
     loud, calm = SC.page(plan('stadium', 'energetic'), images), SC.page(plan(None, 'calm'), images)
     assert 'scale-product ch-energetic' in loud.split('<body')[1][:120] and 'class="op-ground"' in loud and 'has-ground' in loud.split('<body')[1]
     assert 'ch-calm' in calm.split('<body')[1][:120] and 'class="op-ground"' not in calm
-    assert '.dv .ch-calm [data-rise]' in calm and '.dv .scale-product [data-rise]' not in calm, 'how much moves follows the character, not the kind of page'
+    assert '.dv .ch-calm .ft[data-rise]:not(.is-in)' in calm and 'translateY(22px)' in calm and 'translateY(40px) scale(.985)' in calm, 'cards arrive on every page; how far and how long follows the character'
     assert any('ground behind the product' in x for x in ST.check(plan('small', 'energetic'), SC.page(plan('small', 'energetic'), images), {'links': []}, set(), images)['pictures'])
+
+
+def test_features_hold_the_real_interface_and_a_plan_is_sent_back_for_what_its_first_screen_owes():
+    import scenes as SC, studio as ST
+    px = 'data:image/png;base64,iVBORw0KGgo='
+    images = {**{f's{k}': {'id': f's{k}', 'data': px, 'w': 1440, 'h': 800, 'shot': True} for k in range(1, 5)}, 'phone': {'id': 'phone', 'data': px, 'w': 390, 'h': 844, 'shot': True}, 'stadium': {'id': 'stadium', 'data': px, 'w': 1400, 'h': 594}}
+    ev = {'links': [], 'kind': 'software', 'h1': 'AI sports match analysis', 'seo_safe': True}
+    feats = {'scene': 'features', 'slots': {'h2': 'What / it does', 'items': [{'title': 'Prices', 'say': 'A sentence about prices that is long enough to be a sentence.', 'image': 's2'}, {'title': 'Record', 'say': 'A sentence about the record kept in public.', 'image': 's3'}, {'title': 'On the phone', 'say': 'The same on the phone.', 'image': 'phone'}]}}
+    def plan(opening): return {'brand': {'name': 'X', 'accent': '#2af6a0'}, 'scale': 'product', 'character': 'energetic', 'scheme': 'night', 'scenes': [opening, feats, {'scene': 'close', 'slots': {'line': 'Start'}}]}
+    good = plan({'scene': 'open-product', 'slots': {'h1': 'Sports match / *analysis* first', 'lede': 'A sentence about what the product does for the people who use it, long enough to count.', 'image': 's1', 'ground': 'stadium'}})
+    page = SC.page(good, images); bad = ST.check(good, page, ev, set(), images)
+    assert page.count('class="ft ft-') == 3 and 'class="ft-pic ft-phone"' in page and '--w:1440px' in page and not bad['structure'] and not bad['pictures'], bad
+    words = plan({'scene': 'open-statement', 'slots': {'h1': 'Never place / a bad bet', 'lede': 'A sentence about what the product does for the people who use it, long enough to count.'}})
+    found = ST.check(words, SC.page(words, images), ev, set(), images)['structure']
+    assert any('opens on "open-product"' in x for x in found) and any('found by' in x for x in found), found
+    bare = plan({'scene': 'open-product', 'slots': {'h1': 'Sports match / analysis', 'lede': 'A sentence about what the product does for the people who use it, long enough to count.', 'image': 's1'}})
+    assert any('stadium' in x and 'ground' in x for x in ST.check(bare, SC.page(bare, images), ev, set(), images)['pictures'])
+    place = {'brand': {'name': 'X', 'accent': '#2a8f5a'}, 'scenes': [{'scene': 'open-statement', 'slots': {'h1': 'A place / for all', 'lede': 'A sentence about the place and the people who come to it, long enough to count as words.'}}, {'scene': 'close', 'slots': {'line': 'Come'}}]}
+    assert any('shows no picture' in x for x in ST.check(place, SC.page(place, images), {'links': []}, set(), {'stadium': images['stadium']})['structure']), 'a client with a wide photograph does not open on words alone'
+    assert not any('shows no picture' in x for x in ST.check(place, SC.page(place, {}), {'links': []}, set(), {})['structure']), 'a client with no picture may'
+
+
+def test_a_scene_can_slide_over_the_one_before_it_once_or_twice_and_never_first():
+    import scenes as SC, studio as ST
+    def plan(*covers): return {'brand': {'name': 'X', 'accent': '#3b5bff'}, 'scenes': [{'scene': 'open-statement', 'cover': 0 in covers, 'slots': {'h1': 'A line / of words', 'lede': 'A sentence long enough to be counted among the words of a page that says something to its reader.'}},
+        {'scene': 'statement', 'cover': 1 in covers, 'slots': {'text': 'A thesis of some length that the page is built around, said once and early so that the rest can lean on it without repeating it.'}},
+        {'scene': 'ledger', 'cover': 2 in covers, 'slots': {'h2': 'Facts', 'rows': [{'k': 'One', 'v': 'First'}, {'k': 'Two', 'v': 'Second'}]}}, {'scene': 'close', 'slots': {'line': 'End'}}]}
+    page = SC.page(plan(1), {})
+    assert page.count('<section class="dv-cover ') == 1 and 'dv-covered' in page, 'the scene is marked and the device that holds the one before it is on the page'
+    assert '<section class="dv-cover ' not in SC.page(plan(), {}) and not any('"cover"' in x for x in ST.check(plan(1), page, {'links': []}, set(), {})['structure'])
+    assert '<section class="dv-cover ' not in SC.page(plan(0), {}).split('id="top"')[0][-60:], 'the first scene has nothing to slide over'
+    for wrong in (plan(0), plan(1, 2)): assert any('"cover"' in x for x in ST.check(wrong, SC.page(wrong, {}), {'links': []}, set(), {})['structure'])
