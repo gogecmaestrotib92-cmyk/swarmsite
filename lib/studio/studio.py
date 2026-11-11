@@ -22,6 +22,8 @@ HOW TO CHOOSE
 - Scheme: "paper", "night" or "tint" — from the client's brand and from what its pictures need (dark screenshots sit badly on white unless framed; photographs want paper).
 - A place (restaurant, hotel, shop) is shown with its photographs: "open-picture", "window", "gallery", its list as a "carte", and "visit" for where and when. Software is shown with "held-product", "stage", "figures". When there is no picture strong enough to open on, "open-atmosphere" or "open-statement".
 - "statement" carries the thesis once, early. "steps" shows how something goes when the client describes a process. "rooms" holds words while two to four of the client's photographs pass. "voices" only with testimonials given to you, word for word. "faq" for six or more questions, "ledger" for fewer.
+- "scatter" lays three to five of the client's pictures out loose at different sizes (work, dishes, rooms, products). "bento" sets four to six facts in tiles of different sizes when there is little to picture. "kinetic-line" is a statement in two or three huge rows that slide apart — use it or "rail", never both.
+- Scheme "tone" (three steps of one muted tone from the brand colour) suits brands whose colour is strong and whose pictures are few.
 - 5–9 scenes including exactly one opening and one close. At most one "rail". Use "held-product" only with three or more claims that each have something to SHOW; give every panel the tightest, most readable real picture (prefer crops made for the purpose over whole pages of small text) or real figures. Use "stage" for the one whole screen worth seeing large. Use "figures" only for numbers that are an argument.
 - Headings are written for their scene: display lines are short and break into rows with " / " (2–3 rows, 1–4 words a row); mark ONE phrase per line with *asterisks* at most. A heading over cards must agree with the number of cards.
 - Secondary pages go in one "index" near the end (6–12 links, short names). Nothing is repeated, nothing is dumped.
@@ -56,6 +58,12 @@ def check(plan, page, ev, allowed, images):
         if pid not in images: bad['pictures'].append(f'{pid}: not a picture of this client')
         elif images[pid].get('gen'): bad['pictures'].append(f'{pid}: a generated picture shown as the product')
     if len(set(used)) != len(used): bad['pictures'].append('a picture is used more than once')
+    for sc in plan.get('scenes') or []:   # a picture shown edge to edge has to be large enough to be sharp there
+        pid = (sc.get('slots') or {}).get('image')
+        if sc.get('scene') in ('open-picture', 'window', 'stage') and pid in images and images[pid].get('soft'):
+            bad['pictures'].append(f'{pid}: out of focus (or a frame of a video) — not a picture to show across the screen in "{sc["scene"]}"')
+        elif sc.get('scene') in ('open-picture', 'window', 'stage') and pid in images and max(int(images[pid].get('w') or 0), int(images[pid].get('h') or 0)) < 900:
+            bad['pictures'].append(f'{pid}: {images[pid].get("w")}×{images[pid].get("h")} px is too small to be shown across the screen in "{sc["scene"]}" — use a larger picture or a scene that shows it small')
     quotes = [q.get('text') for s in plan.get('scenes') or [] if s.get('scene') == 'voices' for q in (s.get('slots') or {}).get('quotes') or []]
     source = ' '.join(json.dumps(ev, ensure_ascii=False).split())
     for q in quotes:
@@ -63,6 +71,9 @@ def check(plan, page, ev, allowed, images):
     roles = [S.SCENES[s['scene']]['role'] for s in plan.get('scenes') or [] if s.get('scene') in S.SCENES]
     if roles.count('open') != 1 or roles[:1] != ['open']: bad['structure'].append('exactly one opening scene, first')
     if roles.count('close') != 1 or roles[-1:] != ['close']: bad['structure'].append('exactly one close, last')
+    body = re.sub(r'<(script|style)\b.*?</\1>', ' ', page, flags=re.S); h1 = re.search(r'<h1\b[^>]*>(.*?)</h1>', body, re.S)
+    if not h1 or not re.sub(r'<[^>]+>|\s', '', h1.group(1)): bad['structure'].append('the opening has no headline')
+    if len(re.sub(r'<[^>]+>', ' ', body).split()) < 60: bad['structure'].append('the page says almost nothing')
     for s in plan.get('scenes') or []:
         if s.get('scene') == 'stack':
             n = len((s.get('slots') or {}).get('cards') or []); words = {'two': 2, 'three': 3, 'four': 4, 'five': 5, 'dva': 2, 'tri': 3, 'dos': 2, 'tres': 3}
@@ -132,6 +143,9 @@ def build(src, out, n=3, atmosphere_wanted=False):
     src, out = os.path.abspath(src), os.path.abspath(out); args = ['--atmosphere'] if atmosphere_wanted else []
     os.makedirs(out, exist_ok=True); t0 = time.time(); del E.USAGE[:]; del known_quotes[:]
     ev, imgs = E.evidence(src); images = {i['id']: i for i in imgs}; allowed = {l['url'].rstrip('/') for l in ev['links']} | {str(ev.get('url') or '').rstrip('/')}
+    if len(re.findall(r'\w{3,}', json.dumps([ev['sections'], ev['factsheet']], ensure_ascii=False))) < 40:   # a restaurant's page can be 17 words and a full fact sheet: both count
+        # Nothing to compose from: asking anyway buys an empty page that every check passes, because nothing in it is wrong.
+        raise RuntimeError(f'the evidence in {src} holds no text of the client\'s site — nothing is composed from nothing')
     material = [{'type': 'text', 'text': 'THE STUDIO\'S SCENES, TYPE SYSTEMS AND SCHEMES:\n' + json.dumps(S.catalogue(), ensure_ascii=False, indent=1)}, {'type': 'text', 'text': 'THE EVIDENCE (the client\'s existing site):\n' + json.dumps(ev, ensure_ascii=False, indent=1)}]
     said = [{'text': ' '.join(str(t.get('text') or t.get('quote') or '').split())[:500], 'name': t.get('name') or t.get('author'), 'role': t.get('role')} for sec in ((E.J(src, 'inventory.json') or {}).get('sourceCoverage') or {}).get('sections') or [] for t in (sec.get('testimonials') or []) if isinstance(t, dict)]
     said = [t for t in said if t['text'] and t['name']][:8]; known_quotes.extend(t['text'] for t in said)

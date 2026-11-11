@@ -40,15 +40,27 @@ def call(system, content, who, tool=None, max_tokens=8000, model=None):
     client = anthropic.Anthropic(); model = model or MODEL; t0 = time.time()
     kwargs = dict(model=model, max_tokens=max_tokens, system=system, messages=[{'role': 'user', 'content': content}], thinking={'type': 'adaptive'})
     if tool: kwargs.update(tools=[tool], tool_choice={'type': 'auto'})
-    with client.messages.stream(**kwargs) as stream: msg = stream.get_final_message()
-    u = msg.usage; tin = (u.input_tokens or 0) + (getattr(u, 'cache_creation_input_tokens', 0) or 0); tout = u.output_tokens or 0
-    try: BUDGET.charge(u, 'studio_' + re.sub(r'[^a-z]+', '_', who.lower()).strip('_'), model)   # a job's ledger counts these calls like any other
-    except Exception: pass
-    USAGE.append({'who': who, 'model': model, 'in': tin, 'out': tout, 'seconds': round(time.time() - t0, 1), 'usd': BUDGET.cost(model, tin, tout, getattr(u, 'cache_read_input_tokens', 0) or 0), 'stop': msg.stop_reason})
+    def ask(kw, attempt):
+        with client.messages.stream(**kw) as stream: msg = stream.get_final_message()
+        u = msg.usage; tin = (u.input_tokens or 0) + (getattr(u, 'cache_creation_input_tokens', 0) or 0); tout = u.output_tokens or 0
+        try: BUDGET.charge(u, 'studio_' + re.sub(r'[^a-z]+', '_', who.lower()).strip('_'), model)   # a job's ledger counts these calls like any other
+        except Exception: pass
+        USAGE.append({'who': who + attempt, 'model': model, 'in': tin, 'out': tout, 'seconds': round(time.time() - t0, 1), 'usd': BUDGET.cost(model, tin, tout, getattr(u, 'cache_read_input_tokens', 0) or 0), 'stop': msg.stop_reason})
+        return msg
+    msg = ask(kwargs, '')
     if tool:
-        for block in msg.content:
-            if block.type == 'tool_use': return block.input
-        raise RuntimeError(f'{who}: the model did not answer with the tool')
+        used = lambda m: next((b.input for b in m.content if b.type == 'tool_use'), None)
+        got = used(msg)
+        if got is None and msg.stop_reason != 'refusal':
+            # The tool is offered, not forced (a forced tool cannot be thought about first), so an answer can come back as prose
+            # or run out of room while thinking. Once more: with more room if it ran out, with the tool named if it wrote prose.
+            again = dict(kwargs)
+            if msg.stop_reason == 'max_tokens': again['max_tokens'] = int(max_tokens * 1.6)
+            else: again['messages'] = kwargs['messages'] + [{'role': 'assistant', 'content': msg.content}, {'role': 'user', 'content': f'Answer by calling the tool `{tool["name"]}` — nothing else is read.'}]
+            first = msg.stop_reason; msg = ask(again, ' (again)'); got = used(msg)
+            if got is None: raise RuntimeError(f'{who}: the model did not answer with the tool (stopped on {first}, then {msg.stop_reason})')
+        if got is None: raise RuntimeError(f'{who}: the model did not answer with the tool (stopped on {msg.stop_reason})')
+        return got
     return ''.join(b.text for b in msg.content if b.type == 'text')
 
 
@@ -56,6 +68,20 @@ def thumb(data_uri, side=900):
     from PIL import Image
     raw = base64.b64decode(data_uri.split(',', 1)[1]); im = Image.open(io.BytesIO(raw)).convert('RGB'); im.thumbnail((side, side)); buf = io.BytesIO(); im.save(buf, 'JPEG', quality=72)
     return base64.b64encode(buf.getvalue()).decode()
+
+
+def soft(data_uri, floor=200):
+    """Whether a picture has too little edge detail to be shown large. Measured, not judged: the variance of an edge
+    filter on the picture at no more than 640 px. Calibrated on few captures (2026-11-11): frames taken from videos read
+    29 and 109, 22 photographs and covers 287–7425; the floor sits between. A picture that cannot be read is not called soft."""
+    try:
+        import base64, io
+        from PIL import Image, ImageFilter, ImageStat
+        im = Image.open(io.BytesIO(base64.b64decode(data_uri.split(',', 1)[1]))).convert('L'); w, h = im.size; k = 640 / max(w, h)
+        if k < 1: im = im.resize((max(1, int(w * k)), max(1, int(h * k))), Image.LANCZOS)
+        edges = im.filter(ImageFilter.FIND_EDGES); edges = edges.crop((3, 3, edges.size[0] - 3, edges.size[1] - 3))   # the filter draws its own edge along the border
+        return ImageStat.Stat(edges).var[0] < floor
+    except Exception: return False
 
 
 def evidence(d):
@@ -69,8 +95,10 @@ def evidence(d):
         href, text = str(a.get('href') or ''), ' '.join(str(a.get('text') or '').split())
         if not href.startswith('http') or not text or len(text) > 120 or (href, text.casefold()) in seen: continue
         seen.add((href, text.casefold())); links.append({'label': text, 'url': href})
+    for i in images:
+        if 'soft' not in i: i['soft'] = soft(i['data'])
     pictures = [{'id': i['id'], 'w': i.get('w'), 'h': i.get('h'), 'kind': 'generated atmosphere (not the product, never evidence)' if i.get('gen') else 'screenshot of the real product' if i.get('shot') else 'the client\'s own picture',
-                 'note': ' '.join(str(i.get('alt') or '').split())[:140]} for i in images]
+                 'note': ' '.join(str(i.get('alt') or '').split())[:140], **({'soft': 'out of focus or a frame of a video — show it small, never across the screen'} if i.get('soft') else {})} for i in images]
     return {'url': inv.get('url'), 'title': inv.get('title'), 'lang': inv.get('lang'), 'factsheet': fact, 'sections': sections, 'links': links[:120],
             'brand': {'colours': inv.get('colors'), 'type': inv.get('typography'), 'name': (inv.get('brand') or {}).get('name')}, 'pictures': pictures}, images
 

@@ -32,7 +32,7 @@ def lines(text, cls='display'):
         else: merged.append(r)
     rows = merged
     longest = max((len(w) for r in rows for w in re.sub(r'\*', '', r).split()), default=6)
-    return f'<span class="dv-lines {cls}" style="--lw:{max(4, longest)}">' + ''.join(f'<span class="dv-ln"><span>{mark(r)}</span></span>' for r in rows) + '</span>'
+    return f'<span class="dv-lines {cls}" style="--lw:{max(4, longest)}">' + ' '.join(f'<span class="dv-ln"><span>{mark(r)}</span></span>' for r in rows) + '</span>'
 
 
 # ---- type: systems of different character. k = how many px of font-size one character of the longest word needs room for ----
@@ -42,7 +42,7 @@ TYPE = {
     'display-serif': {'name': 'Display serif — editorial, warm, considered', 'display': "'Instrument Serif',Georgia,serif", 'w': 400, 'ls': '-.02em', 'lh': '.95', 'case': 'none', 'k': 2.2, 'text': "'Inter',system-ui,sans-serif", 'mono': "'JetBrains Mono',ui-monospace,monospace", 'gf': 'Instrument+Serif:ital@0;1&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500'},
     'tight-bold': {'name': 'Tight bold grotesque — confident, product, direct', 'display': "'Inter Tight',system-ui,sans-serif", 'w': 700, 'ls': '-.045em', 'lh': '1', 'case': 'none', 'k': 1.8, 'text': "'Inter',system-ui,sans-serif", 'mono': "'JetBrains Mono',ui-monospace,monospace", 'gf': 'Inter+Tight:wght@600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500'},
     'soft-serif': {'name': 'Soft old-style serif — hospitality, craft, slow', 'display': "'Fraunces',Georgia,serif", 'w': 400, 'ls': '-.03em', 'lh': '.96', 'case': 'none', 'k': 2.0, 'text': "'Figtree',system-ui,sans-serif", 'mono': "'DM Mono',ui-monospace,monospace", 'gf': 'Fraunces:opsz,wght@9..144,300;9..144,400&family=Figtree:wght@400;500&family=DM+Mono:wght@400;500'},
-    'wide-geometric': {'name': 'Geometric grotesque — design-led, modern, a little odd', 'display': "'Space Grotesk',system-ui,sans-serif", 'w': 500, 'ls': '-.04em', 'lh': '.94', 'case': 'none', 'k': 1.75, 'text': "'Space Grotesk',system-ui,sans-serif", 'mono': "'Space Mono',ui-monospace,monospace", 'gf': 'Space+Grotesk:wght@400;500&family=Space+Mono:wght@400'},
+    'wide-geometric': {'name': 'Geometric grotesque — design-led, modern, a little odd', 'display': "'Space Grotesk',system-ui,sans-serif", 'w': 400, 'ls': '-.06em', 'lh': '.86', 'case': 'none', 'k': 1.75, 'text': "'Space Grotesk',system-ui,sans-serif", 'mono': "'Space Mono',ui-monospace,monospace", 'gf': 'Space+Grotesk:wght@400;500&family=Space+Mono:wght@400'},
 }
 
 
@@ -63,21 +63,30 @@ def _mix(a, b, t):
     return '#%02x%02x%02x' % tuple(round(x + (y - x) * t) for x, y in zip(_rgb(a), _rgb(b)))
 
 
-SCHEMES = ('paper', 'night', 'tint')
+SCHEMES = ('paper', 'night', 'tint', 'tone')
 
 
 def palette(accent, night='#0e0f12', scheme='paper'):
     """The page's colours from the client's own two: its signature colour and its darkest ground. `paper`: white with
     ink; `night`: the client's dark with light ink; `tint`: a paper carrying a breath of the accent. Text always clears
     4.5:1; where the accent cannot carry text on the ground it is kept for fills and the ink takes the emphasis."""
-    night = night if _lum(night) < .08 else '#0e0f12'
+    night = night if _lum(night) < .018 else _mix(accent, '#050506', .9)   # a grey is not a night: the dark ground is near black with a breath of the brand
+    if scheme == 'tone':   # three steps of one tone — pale, middle, near black — as measured on squared-media.nl (28% / 20% / 52% of the page)
+        import colorsys
+        r, g, b = (v / 255 for v in _rgb(accent)); h, _, _ = colorsys.rgb_to_hls(r, g, b); hx = lambda l, sat: '#%02x%02x%02x' % tuple(round(v * 255) for v in colorsys.hls_to_rgb(h, l, sat))
+        paper, ground2, night, ink = hx(.865, .2), hx(.735, .16), hx(.045, .1), hx(.085, .16)
+        em = ink if contrast(accent, paper) < 3 else accent
+        return {'paper': paper, 'ink': ink, 'accent': accent, 'em': em, 'on_accent': max(('#0b0c0f', '#ffffff'), key=lambda c: contrast(c, accent)), 'ground2': ground2,
+                'mute': _mix(ink, paper, .3), 'line': _mix(paper, ink, .16), 'night': night, 'on_night': hx(.92, .12), 'lead': night, 'on_lead': hx(.92, .12), 'scheme': scheme}
     if scheme == 'night': paper, ink = night, '#f1f1ee'
     elif scheme == 'tint': paper, ink = _mix('#ffffff', accent, .07), _mix(night, '#000000', .2)
     else: paper, ink = '#ffffff', _mix(night, '#000000', .1)
     ground2 = _mix(paper, ink, .06 if scheme != 'night' else .08)
     em = accent if contrast(accent, paper) >= 3 else ink   # a marked word must be readable: large type needs 3:1
     return {'paper': paper, 'ink': ink, 'accent': accent, 'em': em, 'on_accent': max(('#0b0c0f', '#ffffff'), key=lambda c: contrast(c, accent)), 'ground2': ground2,
-            'mute': _mix(ink, paper, .38), 'line': _mix(paper, ink, .14), 'night': night, 'on_night': '#f1f1ee', 'scheme': scheme}
+            'mute': _mix(ink, paper, .38), 'line': _mix(paper, ink, .14), 'night': night, 'on_night': '#f1f1ee', 'scheme': scheme,
+            # the surface that stands out from the page: the night on a light page — and on a night page, where the night is the page itself, the accent (lifted, where the accent itself is too dark to stand out)
+            **((lambda lead: {'lead': lead, 'on_lead': max(('#0b0c0f', '#ffffff'), key=lambda c: contrast(c, lead))})(accent if contrast(accent, night) >= 2.2 else em) if scheme == 'night' else {'lead': night, 'on_lead': '#f1f1ee'})}
 
 
 def backdrop(accent):
@@ -235,7 +244,9 @@ def _carte(s, ctx):
     def group(g):
         rows = ''.join(f'<li><span class="nm"><b>{e(i.get("name"))}</b>' + (f'<small>{e(i["note"])}</small>' if i.get('note') else '') + f'</span><span class="pr">{e(i.get("price"))}</span></li>' for i in (g.get('items') or [])[:10] if i.get('name'))
         return f'<div class="grp" data-rise><h3 class="mono">{e(g.get("title"))}</h3><ul>{rows}</ul></div>' if rows else ''
-    return (f'<section class="sc carte alt" id="menu-card"><div class="wrap"><p class="mono kicker">{e(s.get("label"))}</p><h2>{lines(s.get("h2"), "h2")}</h2><div class="grps">{"".join(group(g) for g in (s.get("groups") or [])[:4])}</div>'
+    sizes = [len([i for i in (g.get('items') or [])[:10] if i.get('name')]) for g in (s.get('groups') or [])[:4]]
+    flow = ' flow' if sum(sizes) >= 4 and max(sizes) > .6 * sum(sizes) else ''   # one long group beside a short one leaves half the band empty: let the long one run on into the next column, as a printed card does
+    return (f'<section class="sc carte alt" id="menu-card"><div class="wrap"><p class="mono kicker">{e(s.get("label"))}</p><h2>{lines(s.get("h2"), "h2")}</h2><div class="grps{flow}">{"".join(group(g) for g in (s.get("groups") or [])[:4])}</div>'
             + (f'<div class="acts">{_btn(s.get("action"), "quiet")}</div>' if s.get('action') else '') + '</div></section>')
 
 
@@ -283,6 +294,41 @@ def _faq(s, ctx):
     return f'<section class="sc ledger faq" id="answers"><div class="wrap ledger-in"><div><p class="mono kicker">{e(s.get("label"))}</p><h2 class="h3x">{e(s.get("h2"))}</h2></div><div class="acc">{rows}</div></div></section>'
 
 
+@scene('scatter', name='Pictures laid out loose, each a different size', role='show', devices=['clip-reveal', 'tilt', 'rise-stagger', 'line-rise'],
+       needs='3–5 of the client\'s own photographs or product pictures (never screenshots of a website), each with a name and a short tag', slots={'label': 'mono', 'h2': 'rows split by " / "', 'items': [{'image': 'id', 'alt': '', 'title': '≤ 30 chars', 'tag': 'mono ≤ 24 chars', 'url': 'optional link'}]})
+def _scatter(s, ctx):
+    # An arrangement per count, so no row is left with one picture and a hole beside it; the sharpest picture takes the
+    # widest place, and no picture is drawn wider than it is (a 418 px photograph across 700 px is a blur).
+    LAY = {3: ((1, 8), (9, 13), (4, 11)), 4: ((1, 7), (9, 13), (2, 6), (7, 13)), 5: ((1, 7), (9, 13), (2, 6), (7, 13), (4, 11))}
+    its = [i for i in (s.get('items') or [])[:5] if i.get('image') in ctx['images']]
+    if len(its) < 3: return ''
+    spans = LAY[len(its)]; by_room = sorted(range(len(spans)), key=lambda k: spans[k][0] - spans[k][1]); placed = [None] * len(its)
+    for k, it in zip(by_room, sorted(its, key=lambda i: (bool(ctx['images'][i['image']].get('soft')), -int(ctx['images'][i['image']].get('w') or 0)))): placed[k] = it
+    def item(k, it):
+        a, b = spans[k]; inner = f'<div class="dv-clip">{_shot(ctx["images"], it.get("image"), it.get("alt"))}</div><figcaption><b>{e(it.get("title"))}</b><span class="mono">{e(it.get("tag"))}</span></figcaption>'
+        body = f'<a href="{e(it["url"])}">{inner}</a>' if it.get('url') else inner
+        return f'<figure class="dv-tilt sc-it" style="--a:{a};--b:{b};--drop:{(k % 2) * 9}vw;max-width:max(17.5rem,{int((ctx["images"][it["image"]].get("w") or 1200) * (.62 if ctx["images"][it["image"]].get("soft") else 1.15))}px)" data-rise>{body}</figure>'
+    items = ''.join(item(k, it) for k, it in enumerate(placed))
+    return f'<section class="sc scatter" id="work"><div class="wrap"><p class="mono kicker">{e(s.get("label"))}</p><h2>{lines(s.get("h2"), "h2")}</h2><div class="sc-grid">{items}</div></div></section>' if items else ''
+
+
+@scene('bento', name='Facts in tiles of different sizes', role='show', devices=['rise-stagger', 'count-up', 'line-rise'],
+       needs='4–6 short true facts or capabilities; one of them a number or a picture that deserves the large tile', slots={'label': 'mono', 'h2': 'rows split by " / "', 'tiles': [{'title': '≤ 34 chars', 'say': 'one sentence, optional', 'figure': 'a number as written, optional', 'image': 'id, optional (only the first tile)'}]})
+def _bento(s, ctx):
+    tiles = [t for t in (s.get('tiles') or [])[:6] if t.get('title')]
+    def tile(k, t):
+        pic = f'<div class="b-pic">{_shot(ctx["images"], t.get("image"), "")}</div>' if k == 0 and t.get('image') in ctx['images'] else ''
+        fig = f'<p class="b-fig">{e(t["figure"])}</p>' if t.get('figure') else ''
+        return f'<article class="b-tile b-{k}{" b-shown" if pic else " b-bare" if k == 0 and not fig else ""}" data-rise style="--i:{k % 3}">{pic}{fig}<h3>{e(t["title"])}</h3>' + (f'<p>{e(t["say"])}</p>' if t.get('say') else '') + '</article>'
+    return f'<section class="sc bento" id="what"><div class="wrap"><p class="mono kicker">{e(s.get("label"))}</p><h2>{lines(s.get("h2"), "h2")}</h2><div class="b-grid b-n{len(tiles)}">{"".join(tile(k, t) for k, t in enumerate(tiles))}</div></div></section>' if len(tiles) >= 4 else ''
+
+
+@scene('kinetic-line', name='A statement whose rows slide apart', role='breathe', devices=['kinetic'], needs='a statement of 2–3 rows of 1–3 words each, the client\'s own position', slots={'rows': ['row one', 'row two', 'row three (optional)']})
+def _kinetic_line(s, ctx):
+    rows = [str(r).strip() for r in (s.get('rows') or [])[:3] if str(r).strip()]
+    return (f'<section class="sc kinetic-sc" aria-label="{e(" ".join(rows))}"><p class="dv-kinetic">' + ''.join(f'<span class="dv-k{" hollow" if k % 2 else ""}">{e(r)}</span>' for k, r in enumerate(rows)) + '</p></section>') if len(rows) >= 2 else ''
+
+
 CSS = """
 *{box-sizing:border-box;margin:0}html{-webkit-text-size-adjust:100%}
 body{font-family:var(--text);font-size:clamp(15px,1.11vw,17px);line-height:1.5;color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased;overflow-x:clip}
@@ -305,7 +351,7 @@ em{font-style:normal;color:var(--em)}.display-serif em,.soft-serif em{font-style
 .bar{position:fixed;inset:0 0 auto 0;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px var(--pad);mix-blend-mode:normal}
 .bar .name{color:var(--ink);background:color-mix(in srgb,var(--paper) 82%,transparent);backdrop-filter:blur(14px);padding:9px 16px;margin-left:-16px;border-radius:999px;transition:background-color .3s;font-family:var(--display);font-weight:var(--dw);text-transform:var(--dcase);letter-spacing:var(--dls);font-size:clamp(20px,1.7vw,26px);text-decoration:none;white-space:nowrap}
 .bar-r{display:flex;align-items:center;gap:10px}.bar-links{display:flex;gap:6px;padding:0 8px;min-height:44px;align-items:center;border-radius:999px;background:color-mix(in srgb,var(--paper) 82%,transparent);backdrop-filter:blur(14px)}
-.bar-links a{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;padding:10px 12px}.bar .btn{min-height:44px;padding:0 18px}.dv-menu-btn{display:none}.bar.is-solid .name,.bar.is-solid .bar-links{background:none;backdrop-filter:none}
+.bar-links a{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;padding:10px 12px}.bar .btn{min-height:44px;padding:0 18px}.dv-menu-btn{display:none}.bar.is-solid .name,.bar.is-solid .bar-links{background:none;backdrop-filter:none}.bar.is-solid{inset:10px 10px auto 10px;border-radius:18px;padding:10px calc(var(--pad) - 10px);box-shadow:0 0 0 1px var(--line),0 10px 40px -20px rgba(0,0,0,.35)}.bar{transition:inset .35s var(--ease),border-radius .35s var(--ease),padding .35s var(--ease),transform .4s var(--ease),background-color .3s}
 /* open */
 .open{min-height:100svh;display:grid;align-content:end;padding-top:clamp(120px,16vh,200px);padding-bottom:0}.open .wrap{width:100%;padding-bottom:clamp(40px,6vh,80px)}
 .open-foot{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:clamp(24px,4vw,64px);align-items:end;margin-top:clamp(28px,4vw,64px)}.open-foot .note{grid-column:1/-1;margin-top:0}
@@ -335,11 +381,11 @@ em{font-style:normal;color:var(--em)}.display-serif em,.soft-serif em{font-style
 .index{padding-block:clamp(56px,7vw,112px);background:var(--ground2)}.index-in{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,8fr);gap:clamp(24px,4vw,64px)}.index ul{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,15rem),1fr));column-gap:clamp(24px,3vw,48px)}
 .index a{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:54px;border-bottom:1px solid var(--line);text-decoration:none;transition:padding .25s var(--ease)}.index a::after{content:"→";font-family:var(--mono);opacity:.45}.index a:hover{padding-left:8px}
 /* atmosphere, window, gallery, carte, visit */
-.open-atmos{position:relative;isolation:isolate;overflow:hidden}.atmos{position:absolute;inset:0;z-index:-1;margin:0}.atmos svg,.atmos img{width:100%;height:100%;object-fit:cover}.open-atmos .atmos::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,color-mix(in srgb,var(--night) 30%,transparent),color-mix(in srgb,var(--night) 78%,transparent))}
+.open-atmos{position:relative;isolation:isolate;overflow:hidden}.atmos{position:absolute;inset:0;z-index:-1;margin:0}.atmos svg,.atmos img{width:100%;height:100%;object-fit:cover}.open-atmos .atmos::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,color-mix(in srgb,var(--night) 70%,transparent))}
 .open-atmos .btn.quiet{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--on-night) 30%,transparent)}
 .window{padding-block:0}.win{margin:0;aspect-ratio:21/9;max-height:92svh;width:100%}.win img{height:100%;object-fit:cover}.win-foot{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,8fr);gap:clamp(24px,4vw,64px);padding-block:clamp(20px,2.4vw,36px) 0;color:var(--mute)}.window+.sc{padding-top:clamp(64px,8vw,128px)}.win-foot .say{color:var(--ink);max-width:38ch;font-size:clamp(16px,1.3vw,20px)}
 .gallery h2{margin-bottom:clamp(40px,6vw,96px)}.dv-slides-view{border-radius:14px}
-.grps{columns:2 22rem;column-gap:clamp(32px,5vw,96px);margin-top:clamp(48px,7vw,120px)}.grp{break-inside:avoid;margin-bottom:clamp(40px,5vw,72px)}.grp h3{color:var(--mute);padding-bottom:14px;border-bottom:1px solid var(--ink)}
+.grps{columns:2 22rem;column-gap:clamp(32px,5vw,96px);margin-top:clamp(48px,7vw,120px)}.grp{break-inside:avoid;margin-bottom:clamp(40px,5vw,72px)}.grps.flow .grp{break-inside:auto}.grps.flow li{break-inside:avoid}.grps.flow h3{break-after:avoid}.grp h3{color:var(--mute);padding-bottom:14px;border-bottom:1px solid var(--ink)}
 .grp li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--line)}.grp b{font-weight:500;font-size:clamp(17px,1.4vw,21px)}.grp small{display:block;color:var(--mute);font-size:14px;margin-top:3px}.grp .pr{font-family:var(--mono);font-size:14px;white-space:nowrap}.carte .acts{margin-top:clamp(32px,4vw,56px)}
 .visit-in{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(32px,5vw,96px);align-items:end}.visit .acts{margin-top:clamp(28px,4vw,56px)}
 /* statement, rooms, steps, voices, faq */
@@ -351,6 +397,14 @@ em{font-style:normal;color:var(--em)}.display-serif em,.soft-serif em{font-style
 .voice-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:clamp(40px,6vw,96px)}.voice{margin:0}.voice blockquote{font-family:var(--display);font-weight:var(--dw);letter-spacing:var(--dls);line-height:1.12;font-size:clamp(24px,2.7vw,44px);text-wrap:balance;quotes:"“" "”"}.voice blockquote::before{content:open-quote}.voice blockquote::after{content:close-quote}.voice figcaption{margin-top:22px;color:var(--mute)}
 .acc details{border-top:1px solid var(--line)}.acc details:last-child{border-bottom:1px solid var(--line)}.acc summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;gap:20px;align-items:baseline;padding:clamp(16px,1.8vw,24px) 0;font:500 clamp(16px,1.3vw,19px)/1.35 var(--text)}.acc summary::-webkit-details-marker{display:none}
 .acc summary::after{content:"+";font-family:var(--mono);color:var(--mute);transition:transform .3s var(--ease)}.acc details[open] summary::after{transform:rotate(45deg)}.acc details p{color:var(--mute);max-width:60ch;padding:0 0 clamp(18px,2vw,26px)}
+/* scatter, bento, kinetic */
+.sc-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:clamp(16px,2vw,32px);row-gap:clamp(48px,7vw,120px);margin-top:clamp(48px,7vw,120px)}.sc-it{grid-column:var(--a)/var(--b);margin:var(--drop,0) 0 0;width:100%}.sc-it:nth-child(even){justify-self:end}.sc-it:last-child:nth-child(odd){justify-self:center}.sc-it a{text-decoration:none;display:block}
+.sc-it .dv-clip{border-radius:24px}.sc-it img{width:100%}.sc-it figcaption{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:10px 16px;margin-top:14px}.sc-it b{font-family:var(--display);font-weight:var(--dw);text-transform:var(--dcase);letter-spacing:var(--dls);font-size:clamp(22px,2.2vw,36px);line-height:1}.sc-it .mono{color:var(--mute);border:1px solid var(--line);border-radius:999px;padding:6px 12px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.b-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:clamp(10px,1.2vw,18px);margin-top:clamp(48px,7vw,120px)}.b-tile{grid-column:span 2;background:var(--ground2);border-radius:24px;padding:clamp(20px,2.4vw,36px);display:flex;flex-direction:column;justify-content:flex-end;min-height:clamp(200px,20vw,320px);overflow:hidden;position:relative}
+.b-0{grid-column:span 4;grid-row:span 2;background:var(--lead);color:var(--on-lead)}.b-n5 .b-3,.b-n5 .b-4{grid-column:span 3}.b-n4 .b-3{grid-column:span 6;min-height:clamp(140px,12vw,200px)}.b-n4 .b-1,.b-n4 .b-2{grid-column:span 2}.b-n6 .b-5{grid-column:span 2}
+.b-tile h3{font-family:var(--display);font-weight:var(--dw);text-transform:var(--dcase);letter-spacing:var(--dls);line-height:1.02;font-size:clamp(22px,2.1vw,34px)}.b-0 h3{font-size:clamp(28px,3.4vw,56px)}.b-bare{justify-content:space-between}.b-bare h3{font-size:clamp(40px,6vw,104px);line-height:.94;max-width:11ch}.b-bare p{max-width:30ch;font-size:clamp(16px,1.2vw,19px)}.b-tile p{margin-top:10px;color:var(--mute);max-width:34ch}.b-0 p{color:color-mix(in srgb,var(--on-lead) 78%,transparent)}
+.b-fig{font-family:var(--display);font-weight:var(--dw);letter-spacing:var(--dls);line-height:.9;font-size:clamp(48px,7vw,120px)!important;color:inherit!important;margin:0 0 auto!important}.b-shown{background:#0b0c0f;color:#f1f1ee}.b-shown p{color:rgba(241,241,238,.8)}.b-pic{position:absolute;inset:0}.b-pic img{width:100%;height:100%;object-fit:cover;opacity:.55}.b-pic~*{position:relative}
+.kinetic-sc{padding-block:clamp(56px,8vw,128px)}.dv-k{font-family:var(--display);font-weight:var(--dw);text-transform:var(--dcase);letter-spacing:var(--dls);line-height:.9;font-size:clamp(56px,13.5vw,230px);text-align:center}.dv-k.hollow{color:transparent;-webkit-text-stroke:max(1px,.012em) var(--ink)}
 /* what is kept for search, one quiet row */
 .keep{padding-block:clamp(16px,2vw,28px)}.keep-all>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;min-height:44px;color:var(--mute)}.keep-all>summary::-webkit-details-marker{display:none}.keep-all>summary::after{content:"+";font-family:var(--mono)}.keep-all[open]>summary::after{content:"–"}
 .keep-links{display:flex;flex-wrap:wrap;gap:6px 24px;margin-top:20px;color:var(--mute)}.keep-links a{display:inline-flex;min-height:44px;align-items:center}
@@ -361,7 +415,7 @@ em{font-style:normal;color:var(--em)}.display-serif em,.soft-serif em{font-style
 .dv-endmark{font-family:var(--display);font-weight:var(--dw);text-transform:var(--dcase);color:var(--on-night);opacity:.94}
 @media (max-width:900px){
 .bar-links{display:none}.dv-menu-btn{display:inline-flex;align-items:center}.bar .btn{display:none}.open{min-height:0;align-content:start;padding-top:clamp(104px,22vw,150px)}.open-pic{padding-bottom:clamp(56px,10vw,96px)}.figs{grid-template-columns:repeat(min(var(--n,3),2),minmax(0,1fr))}.fig{font-size:min(clamp(44px,13vw,96px),calc((100cqw / 2 - 24px) / var(--c,4) * var(--k) * .6))}
-.open-foot,.stage-head,.ledger-in,.index-in,.rows .row,.win-foot,.visit-in{grid-template-columns:minmax(0,1fr)}.step-row{grid-template-columns:minmax(0,1fr)}.step-row .num{margin-bottom:18px}.win{aspect-ratio:4/3}.dv-held{grid-template-columns:minmax(0,1fr)!important}
+.open-foot,.stage-head,.ledger-in,.index-in,.rows .row,.win-foot,.visit-in{grid-template-columns:minmax(0,1fr)}.step-row{grid-template-columns:minmax(0,1fr)}.sc-grid{display:block}.sc-it{margin:0 0 clamp(36px,8vw,64px)}.b-grid{grid-template-columns:minmax(0,1fr)}.b-tile,.b-0{grid-column:auto!important;grid-row:auto;min-height:0}.b-0{min-height:220px}.dv-k{font-size:clamp(44px,14vw,96px);text-align:left;padding-inline:var(--pad)}.step-row .num{margin-bottom:18px}.win{aspect-ratio:4/3}.dv-held{grid-template-columns:minmax(0,1fr)!important}
 .card{grid-template-columns:minmax(0,1fr);min-height:0}.dv-held-m{font-family:var(--display);font-weight:var(--dw)!important;text-transform:var(--dcase);letter-spacing:var(--dls)!important}
 }
 """
@@ -371,7 +425,7 @@ def page(plan, images):
     """The document: the plan's type system and palette, its scenes in its order, the library's code for the devices they use."""
     brand = plan.get('brand') or {}; t = TYPE.get(plan.get('type')) or TYPE['light-grotesk']; p = palette(brand.get('accent') or '#2f6bff', brand.get('night') or '#0e0f12', plan.get('scheme') if plan.get('scheme') in SCHEMES else 'paper')
     ctx = {'images': images, 'brand': brand, 'action': plan.get('action') or {}, 'action2': plan.get('action2')}
-    body, used = [], {'overlay-menu', 'rise-stagger', 'roll', 'progress', 'bar-tuck'}
+    body, used = [], {'overlay-menu', 'rise-stagger', 'roll', 'progress', 'bar-tuck', 'grain', 'curtain-foot'}
     for sc in plan.get('scenes') or []:
         meta = SCENES.get(sc.get('scene'))
         if not meta: continue
@@ -381,16 +435,17 @@ def page(plan, images):
     css, js = LIB.bundle(sorted(used))
     nav = [n for n in plan.get('nav') or [] if n.get('label') and n.get('url')][:5]
     links = ''.join(f'<a href="{e(n["url"])}">{e(n["label"])}</a>' for n in nav)
-    tokens = (f":root{{--paper:{p['paper']};--ink:{p['ink']};--accent:{p['accent']};--em:{p['em']};--on-accent:{p['on_accent']};--ground2:{p['ground2']};--mute:{p['mute']};--line:{p['line']};--night:{p['night']};--on-night:{p['on_night']};"
+    tokens = (f":root{{--paper:{p['paper']};--ink:{p['ink']};--accent:{p['accent']};--em:{p['em']};--on-accent:{p['on_accent']};--ground2:{p['ground2']};--mute:{p['mute']};--line:{p['line']};--night:{p['night']};--on-night:{p['on_night']};--lead:{p['lead']};--on-lead:{p['on_lead']};"
               f"--display:{t['display']};--dw:{t['w']};--dls:{t['ls']};--dlh:{t['lh']};--dcase:{t['case']};--k:{t['k']};--text:{t['text']};--mono:{t['mono']};--pad:clamp(20px,3.4vw,56px)}}")
     main = [b for b in body if '<footer' not in b]; foot = [b for b in body if '<footer' in b]
+    under = ''.join(foot).replace('<footer class="', '<footer class="dv-under ', 1)   # named outside the f-string: nested quotes there need Python 3.12
     return (f'<!doctype html><html lang="{e(brand.get("lang") or "en")}"{" data-eased-scroll" if plan.get("eased") else ""}><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{e(plan.get("title") or brand.get("name"))}</title>'
             f'<meta name="description" content="{e(plan.get("description"))}"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family={t["gf"]}&display=swap" rel="stylesheet">'
             f'<style>{tokens}{CSS}{css}</style></head><body class="{e(plan.get("type") or "light-grotesk")}"><a class="skip" href="#main">Skip to content</a>'
             f'<div class="dv-progress" aria-hidden="true"></div><header class="bar dv-tuck"><a class="name" href="#top">{e(brand.get("name"))}</a><div class="bar-r">' + (f'<nav class="bar-links" aria-label="Primary">{links}</nav>' if links else '')
             + f'{_btn(ctx["action"])}<button class="dv-menu-btn mono" aria-expanded="false" aria-controls="menu">Menu</button></div></header>'
             f'<nav class="dv-menu" id="menu" aria-label="Menu">{links}<a class="btn" href="{e((ctx["action"] or {}).get("url") or "#top")}">{e((ctx["action"] or {}).get("label") or "")}</a></nav>'
-            f'<main id="main">{"".join(main)}</main>{"".join(foot)}<script>{js}</script></body></html>')
+            f'<main id="main" class="dv-sheet">{"".join(main)}</main>{under}<div class="dv-grain" aria-hidden="true"></div><script>{js}</script></body></html>')
 
 
 def keep(page_html, inventory):
@@ -425,4 +480,4 @@ def keep(page_html, inventory):
 
 
 def catalogue():
-    return {'scenes': [{k: v for k, v in m.items() if k != 'render'} for m in SCENES.values()], 'type': {k: v['name'] for k, v in TYPE.items()}, 'schemes': {'paper': 'white ground, dark ink', 'night': "the client's dark ground, light ink", 'tint': 'a paper carrying a breath of the accent'}}
+    return {'scenes': [{k: v for k, v in m.items() if k != 'render'} for m in SCENES.values()], 'type': {k: v['name'] for k, v in TYPE.items()}, 'schemes': {'paper': 'white ground, dark ink', 'night': "the client's dark ground, light ink", 'tint': 'a paper carrying a breath of the accent', 'tone': 'three steps of one muted tone from the brand colour: a pale ground, a middle ground, near black'}}
