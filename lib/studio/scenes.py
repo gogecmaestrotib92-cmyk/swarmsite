@@ -32,7 +32,7 @@ def lines(text, cls='display'):
         else: merged.append(r)
     rows = merged
     longest = max((len(w) for r in rows for w in re.sub(r'\*', '', r).split()), default=6)
-    return f'<span class="dv-lines {cls}" style="--lw:{max(4, longest)}">' + ' '.join(f'<span class="dv-ln"><span>{mark(r)}</span></span>' for r in rows) + '</span>'
+    return f'<span class="dv-lines {cls}" style="--lw:{max(4, longest)};--lr:{len(rows)}">' + ' '.join(f'<span class="dv-ln"><span>{mark(r)}</span></span>' for r in rows) + '</span>'
 
 
 # ---- type: systems of different character. k = how many px of font-size one character of the longest word needs room for ----
@@ -130,9 +130,10 @@ def _open_statement(s, ctx):
 @scene('open-picture', name='Opening: a statement, then the picture grows to the edges', role='open', devices=['line-rise', 'rise-stagger', 'grow-to-bleed'],
        needs='one strong wide picture (≥ 1400 px, not a screenshot with small text)', slots={'kicker': 'mono', 'h1': 'rows split by " / "', 'lede': '≤ 2 sentences', 'image': 'picture id', 'alt': 'what the picture shows'})
 def _open_picture(s, ctx):
+    im = ctx['images'].get(s.get('image')) or {}; wide = ' wide' if (im.get('w') or 0) > 2.05 * (im.get('h') or 1) else ''   # a strip of a picture is given height, cropped at its sides
     return (f'<section class="sc open open-pic" id="top"><div class="wrap"><p class="mono kicker" data-rise>{e(s.get("kicker"))}</p><h1>{lines(s.get("h1"))}</h1>'
             f'<div class="open-foot"><p class="lede" data-rise style="--i:1">{e(s.get("lede"))}</p><div class="acts" data-rise style="--i:2">{_btn(ctx["action"], "dv-magnet")}{_btn(ctx.get("action2"), "quiet")}</div></div></div>'
-            f'<figure class="dv-grow">{_shot(ctx["images"], s.get("image"), s.get("alt"))}</figure></section>')
+            f'<figure class="dv-grow{wide}">{_shot(ctx["images"], s.get("image"), s.get("alt"))}</figure></section>')
 
 
 @scene('held-product', name='The product, claim by claim, held', role='show', devices=['held-index', 'figure-bars', 'scramble', 'rise-stagger'],
@@ -319,7 +320,7 @@ def _bento(s, ctx):
     def tile(k, t):
         pic = f'<div class="b-pic">{_shot(ctx["images"], t.get("image"), "")}</div>' if k == 0 and t.get('image') in ctx['images'] else ''
         fig = f'<p class="b-fig">{e(t["figure"])}</p>' if t.get('figure') else ''
-        return f'<article class="b-tile b-{k}{" b-shown" if pic else " b-bare" if k == 0 and not fig else ""}" data-rise style="--i:{k % 3}">{pic}{fig}<h3>{e(t["title"])}</h3>' + (f'<p>{e(t["say"])}</p>' if t.get('say') else '') + '</article>'
+        return f'<article class="b-tile b-{k}{" b-shown" if pic else " b-bare" if k == 0 and not fig else " b-plain" if not fig else ""}" data-rise style="--i:{k % 3}">{pic}{fig}<h3>{e(t["title"])}</h3>' + (f'<p>{e(t["say"])}</p>' if t.get('say') else '') + '</article>'
     return f'<section class="sc bento" id="what"><div class="wrap"><p class="mono kicker">{e(s.get("label"))}</p><h2>{lines(s.get("h2"), "h2")}</h2><div class="b-grid b-n{len(tiles)}">{"".join(tile(k, t) for k, t in enumerate(tiles))}</div></div></section>' if len(tiles) >= 4 else ''
 
 
@@ -338,6 +339,7 @@ a{color:inherit}img{display:block;max-width:100%;height:auto;background:var(--gr
 :focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .skip{position:absolute;left:-999px}.skip:focus{left:16px;top:16px;z-index:99;background:var(--paper);color:var(--ink);padding:10px 14px}
 .wrap{padding-inline:var(--pad);max-width:1760px;margin-inline:auto}.sc{padding-block:clamp(72px,9.4vw,156px)}
+.sc:not(.night):not(.open):not(.keep)+.sc:not(.night){padding-top:clamp(16px,2.4vw,40px)}
 .mono{font-family:var(--mono);font-size:12px;line-height:1.35;letter-spacing:.08em;text-transform:uppercase}.kicker{color:var(--mute);margin-bottom:clamp(20px,2.4vw,36px)}.note{color:var(--mute);margin-top:22px}
 em{font-style:normal;color:var(--em)}.display-serif em,.soft-serif em{font-style:italic}
 .display,.h2{display:block;font-family:var(--display);font-weight:var(--dw);letter-spacing:var(--dls);line-height:var(--dlh);text-transform:var(--dcase)}
@@ -356,6 +358,7 @@ em{font-style:normal;color:var(--em)}.display-serif em,.soft-serif em{font-style
 .open{min-height:100svh;display:grid;align-content:end;padding-top:clamp(120px,16vh,200px);padding-bottom:0}.open .wrap{width:100%;padding-bottom:clamp(40px,6vh,80px)}
 .open-foot{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:clamp(24px,4vw,64px);align-items:end;margin-top:clamp(28px,4vw,64px)}.open-foot .note{grid-column:1/-1;margin-top:0}
 .open-tick{border-top:1px solid var(--line);padding:22px 0;color:var(--mute)}.open-pic{padding-bottom:clamp(88px,13vw,224px)}.open-pic .dv-grow{margin-top:clamp(40px,6vw,96px)}
+@media (min-width:701px){.open-pic{min-height:0;align-content:start;padding-top:clamp(104px,13svh,150px)}.open-pic .wrap{padding-bottom:0}.open-pic .display{font-size:max(48px,min(clamp(48px,11.6vw,196px),calc((100vw - 2 * var(--pad)) / var(--lw,8) * var(--k)),calc(34svh / var(--lr,2))))}.open-pic .open-foot{margin-top:clamp(30px,4.6svh,56px)}.open-pic .dv-grow{margin-top:clamp(28px,5svh,56px)}.open-pic .dv-grow.wide img{aspect-ratio:2/1;object-fit:cover}}
 /* held product */
 .held{background:var(--ground2)}.dv-held{grid-template-columns:minmax(0,5fr) minmax(0,7fr)!important}.dv-held-names li{font-family:var(--display);font-weight:var(--dw);text-transform:var(--dcase);letter-spacing:var(--dls);font-size:clamp(30px,3.6vw,60px)!important;line-height:1.04!important}
 .held-intro{margin-top:clamp(24px,3vw,44px);max-width:30ch;color:var(--mute)}.dv-held-item{display:grid;gap:clamp(18px,2vw,28px)}.say{font-size:clamp(17px,1.5vw,22px);line-height:1.38;max-width:34ch}
@@ -402,7 +405,7 @@ em{font-style:normal;color:var(--em)}.display-serif em,.soft-serif em{font-style
 .sc-it .dv-clip{border-radius:24px}.sc-it img{width:100%}.sc-it figcaption{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:10px 16px;margin-top:14px}.sc-it b{font-family:var(--display);font-weight:var(--dw);text-transform:var(--dcase);letter-spacing:var(--dls);font-size:clamp(22px,2.2vw,36px);line-height:1}.sc-it .mono{color:var(--mute);border:1px solid var(--line);border-radius:999px;padding:6px 12px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .b-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:clamp(10px,1.2vw,18px);margin-top:clamp(48px,7vw,120px)}.b-tile{grid-column:span 2;background:var(--ground2);border-radius:24px;padding:clamp(20px,2.4vw,36px);display:flex;flex-direction:column;justify-content:flex-end;min-height:clamp(200px,20vw,320px);overflow:hidden;position:relative}
 .b-0{grid-column:span 4;grid-row:span 2;background:var(--lead);color:var(--on-lead)}.b-n5 .b-3,.b-n5 .b-4{grid-column:span 3}.b-n4 .b-3{grid-column:span 6;min-height:clamp(140px,12vw,200px)}.b-n4 .b-1,.b-n4 .b-2{grid-column:span 2}.b-n6 .b-5{grid-column:span 2}
-.b-tile h3{font-family:var(--display);font-weight:var(--dw);text-transform:var(--dcase);letter-spacing:var(--dls);line-height:1.02;font-size:clamp(22px,2.1vw,34px)}.b-0 h3{font-size:clamp(28px,3.4vw,56px)}.b-bare{justify-content:space-between}.b-bare h3{font-size:clamp(40px,6vw,104px);line-height:.94;max-width:11ch}.b-bare p{max-width:30ch;font-size:clamp(16px,1.2vw,19px)}.b-tile p{margin-top:10px;color:var(--mute);max-width:34ch}.b-0 p{color:color-mix(in srgb,var(--on-lead) 78%,transparent)}
+.b-tile h3{font-family:var(--display);font-weight:var(--dw);text-transform:var(--dcase);letter-spacing:var(--dls);line-height:1.02;font-size:clamp(22px,2.1vw,34px)}.b-0 h3{font-size:clamp(28px,3.4vw,56px)}.b-bare,.b-plain{justify-content:space-between}.b-plain h3{font-size:clamp(24px,2.5vw,40px);max-width:14ch}.b-plain{min-height:clamp(180px,16vw,260px)}.b-plain p{margin-top:clamp(20px,3vw,48px)}.b-bare h3{font-size:clamp(40px,6vw,104px);line-height:.94;max-width:11ch}.b-bare p{max-width:30ch;font-size:clamp(16px,1.2vw,19px)}.b-tile p{margin-top:10px;color:var(--mute);max-width:34ch}.b-0 p{color:color-mix(in srgb,var(--on-lead) 78%,transparent)}
 .b-fig{font-family:var(--display);font-weight:var(--dw);letter-spacing:var(--dls);line-height:.9;font-size:clamp(48px,7vw,120px)!important;color:inherit!important;margin:0 0 auto!important}.b-shown{background:#0b0c0f;color:#f1f1ee}.b-shown p{color:rgba(241,241,238,.8)}.b-pic{position:absolute;inset:0}.b-pic img{width:100%;height:100%;object-fit:cover;opacity:.55}.b-pic~*{position:relative}
 .kinetic-sc{padding-block:clamp(56px,8vw,128px)}.dv-k{font-family:var(--display);font-weight:var(--dw);text-transform:var(--dcase);letter-spacing:var(--dls);line-height:.9;font-size:clamp(56px,13.5vw,230px);text-align:center}.dv-k.hollow{color:transparent;-webkit-text-stroke:max(1px,.012em) var(--ink)}
 /* what is kept for search, one quiet row */
