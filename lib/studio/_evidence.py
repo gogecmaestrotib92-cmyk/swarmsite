@@ -70,24 +70,63 @@ def thumb(data_uri, side=900):
     return base64.b64encode(buf.getvalue()).decode()
 
 
-def soft(data_uri, floor=200):
-    """Whether a picture has too little edge detail to be shown large. Measured, not judged: the variance of an edge
-    filter on the picture at no more than 640 px. Calibrated on few captures (2026-11-11): frames taken from videos read
-    29 and 109, 22 photographs and covers 287–7425; the floor sits between. A picture that cannot be read is not called soft."""
+def sharp_width(data_uri, floor=200):
+    """The widest a picture may be drawn before it reads as blurred, in px; None when the picture cannot be read. Measured,
+    not judged: the variance of an edge filter, taken at the picture's own size (no more than 1400 px) and then at smaller
+    and smaller sizes until the edges are crisp. A picture that is blurred at its own size and crisp at half of it has
+    detail for half its width. Calibrated 2026-11-11 on the captures of one site at their own size: two frames of films read
+    42 and 79, a soft photograph 72 (it read 257 once reduced to 640 px, which is how it passed the earlier rule and was
+    drawn half a screen wide), a plate photographed with a shallow focus 481, ten photographs of rooms 2076-5849."""
     try:
         import base64, io
         from PIL import Image, ImageFilter, ImageStat
-        im = Image.open(io.BytesIO(base64.b64decode(data_uri.split(',', 1)[1]))).convert('L'); w, h = im.size; k = 640 / max(w, h)
-        if k < 1: im = im.resize((max(1, int(w * k)), max(1, int(h * k))), Image.LANCZOS)
-        edges = im.filter(ImageFilter.FIND_EDGES); edges = edges.crop((3, 3, edges.size[0] - 3, edges.size[1] - 3))   # the filter draws its own edge along the border
-        return ImageStat.Stat(edges).var[0] < floor
+        im = Image.open(io.BytesIO(base64.b64decode(data_uri.split(',', 1)[1]))).convert('L'); w, h = im.size
+        if max(w, h) > 1400: k = 1400 / max(w, h); im = im.resize((max(1, int(w * k)), max(1, int(h * k))), Image.LANCZOS)
+        for scale in (1, .8, .64, .5, .4, .32, .25):
+            at = im if scale == 1 else im.resize((max(8, int(im.size[0] * scale)), max(8, int(im.size[1] * scale))), Image.LANCZOS)
+            edges = at.filter(ImageFilter.FIND_EDGES); edges = edges.crop((3, 3, edges.size[0] - 3, edges.size[1] - 3))   # the filter draws its own edge along the border
+            if ImageStat.Stat(edges).var[0] >= floor: return int(w * scale)
+        return int(w * .2)
+    except Exception: return None
+
+
+def soft(data_uri, floor=200):
+    """Whether a picture is blurred at its own size (see sharp_width). A picture that cannot be read is not called soft."""
+    try:
+        import base64, io
+        from PIL import Image
+        got = sharp_width(data_uri, floor)
+        return got is not None and got < Image.open(io.BytesIO(base64.b64decode(data_uri.split(',', 1)[1]))).size[0]
     except Exception: return False
+
+
+def _look(data_uri):
+    """A 9x8 difference hash of a picture: two crops or two sizes of one photograph differ in a few of its 64 bits."""
+    import base64, io
+    from PIL import Image
+    im = Image.open(io.BytesIO(base64.b64decode(data_uri.split(',', 1)[1]))).convert('L').resize((9, 8), Image.LANCZOS); px = list(im.tobytes())
+    return [px[r * 9 + c] > px[r * 9 + c + 1] for r in range(8) for c in range(8)]
+
+
+def distinct(images, near=9):
+    """The pictures without the ones that are not photographs (a notice, a diagram: `plain` from the capture) and without
+    a second file of a photograph already held — the larger of two that look alike stays, in the place of the first."""
+    kept = []
+    for i in images:
+        if i.get('plain') and not i.get('shot') and not i.get('gen'): continue
+        try: i['_look'] = _look(i['data'])
+        except Exception: kept.append(i); continue
+        twin = next((k for k in kept if k.get('_look') and sum(a != b for a, b in zip(k['_look'], i['_look'])) <= near and not (k.get('shot') or i.get('shot'))), None)
+        if twin is None: kept.append(i)
+        elif (i.get('w') or 0) * (i.get('h') or 0) > (twin.get('w') or 0) * (twin.get('h') or 0) and not i.get('video'): kept[kept.index(twin)] = i
+    for i in kept: i.pop('_look', None)
+    return kept
 
 
 def evidence(d):
     """The source evidence as the model gets it: what the business is, every source section's words, the links the
     client's site offered, the brand's own colours and type, and the pictures by id."""
-    inv = J(d, 'inventory.json') or {}; fact = J(d, 'factsheet.json') or {}; images = [i for i in (J(d, 'images.json') or []) if i.get('data')]
+    inv = J(d, 'inventory.json') or {}; fact = J(d, 'factsheet.json') or {}; images = distinct([i for i in (J(d, 'images.json') or []) if i.get('data')])
     sections = [{'title': s.get('title'), 'text': ' '.join(str(s.get('text') or '').split())[:3000], 'faq': [{'q': q.get('question'), 'a': q.get('answer')} for q in (s.get('faq') or []) if isinstance(q, dict)][:14]}
                 for s in SEO.source_sections(inv)]
     links, seen = [], set()
@@ -96,9 +135,14 @@ def evidence(d):
         if not href.startswith('http') or not text or len(text) > 120 or (href, text.casefold()) in seen: continue
         seen.add((href, text.casefold())); links.append({'label': text, 'url': href})
     for i in images:
-        if 'soft' not in i: i['soft'] = soft(i['data'])
+        if 'sharp_w' not in i:
+            got = sharp_width(i['data']); i['sharp_w'] = got if got is not None else int(i.get('w') or 0)
+            if 'soft' not in i: i['soft'] = bool(i.get('video')) or (got is not None and got < int(i.get('w') or 0))   # a frame of a film is never the picture to show large
+    # The composer is shown fourteen pictures: the client's own photographs first, the ones with most detail before the
+    # rest, soft ones and frames of films after them, screenshots of the old site last. What it is not shown it is not offered.
+    images = sorted(images, key=lambda i: (bool(i.get('shot')), bool(i.get('soft')), -int(i.get('sharp_w') or 0)))[:14]
     pictures = [{'id': i['id'], 'w': i.get('w'), 'h': i.get('h'), 'kind': 'generated atmosphere (not the product, never evidence)' if i.get('gen') else 'screenshot of the real product' if i.get('shot') else 'the client\'s own picture',
-                 'note': ' '.join(str(i.get('alt') or '').split())[:140], **({'soft': 'out of focus or a frame of a video — show it small, never across the screen'} if i.get('soft') else {})} for i in images]
+                 'note': ' '.join(str(i.get('alt') or '').split())[:140], **({'page': str(i['page'])[:60]} if i.get('page') else {}), **({'soft': f"out of focus or a frame of a video — crisp only up to about {i.get('sharp_w')} px wide: show it small, never across the screen"} if i.get('soft') else {})} for i in images]
     return {'url': inv.get('url'), 'title': inv.get('title'), 'lang': inv.get('lang'), 'factsheet': fact, 'sections': sections, 'links': links[:120],
             'brand': {'colours': inv.get('colors'), 'type': inv.get('typography'), 'name': (inv.get('brand') or {}).get('name')}, 'pictures': pictures}, images
 

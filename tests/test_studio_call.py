@@ -69,8 +69,27 @@ def test_a_picture_without_detail_is_soft_kept_small_and_never_shown_across_the_
             {'scene': 'scatter', 'slots': {'h2': 'Work', 'items': [{'image': k, 'title': k.upper(), 'tag': 't'} for k in 'abc']}}, {'scene': 'close', 'slots': {'line': 'End'}}]}
     page = S.page(plan, images)
     assert any('out of focus' in x for x in ST.check(plan, page, {'links': []}, set(), images)['pictures'])
-    grid = page.split('class="sc-grid"')[1]
-    assert grid.index('<b>A</b>') > grid.index('<b>B</b>') and 'max-width:max(17.5rem,744px)' in grid, 'the soft picture takes the smallest place and stays under its own size'
+    grid = page.split('class="sc-grid"')[1].split('</section>')[0]
+    assert grid.index('<b>A</b>') > grid.index('<b>C</b>') > grid.index('<b>B</b>') or grid.index('<b>A</b>') > grid.index('<b>B</b>') > grid.index('<b>C</b>'), 'the soft picture takes the last, smallest place'
+    assert grid.count('class="sc-row') == 1 and 'sc-trio' in grid, 'three pictures close as one row: a large one with two beside it'
+    # how wide a picture stays crisp is measured, and its place follows: under its place it is held at that width; with almost no detail it is left out
+    held = S.page(plan, {**images, 'a': dict(images['a'], sharp_w=340)}).split('class="sc-grid"')[1]
+    assert 'style="max-width:425px"' in held, 'a picture without the detail for its place is drawn no wider than it is crisp'
+    assert 'class="sc scatter"' not in S.page(plan, {**images, 'a': dict(images['a'], sharp_w=200)}), 'with fewer than three pictures that hold, the scene stands down'
+
+
+def test_detail_is_measured_at_the_pictures_own_size_and_twins_and_notices_are_not_offered():
+    import base64, io
+    from PIL import Image, ImageDraw, ImageFilter
+    sharp = Image.new('RGB', (1200, 800), '#ddd'); d = ImageDraw.Draw(sharp)
+    for k in range(0, 1200, 24): d.line([(k, 0), (1200 - k, 800)], fill='#111', width=3)
+    def uri(im): b = io.BytesIO(); im.save(b, 'PNG'); return 'data:image/png;base64,' + base64.b64encode(b.getvalue()).decode()
+    mild = sharp.filter(ImageFilter.GaussianBlur(3))   # blurred at its own size, crisp once it is small: the kind that passed when detail was read at 640 px
+    assert E.sharp_width(uri(sharp)) == 1200 and 200 <= E.sharp_width(uri(mild)) < 1200 and E.soft(uri(mild)) and E.sharp_width('data:image/png;base64,AAAA') is None
+    other = Image.new('RGB', (900, 600), '#345'); ImageDraw.Draw(other).ellipse([200, 100, 700, 500], fill='#e94')
+    kept = E.distinct([{'id': 'small', 'data': uri(sharp.resize((600, 400))), 'w': 600, 'h': 400}, {'id': 'notice', 'data': uri(other), 'w': 900, 'h': 600, 'plain': True},
+                       {'id': 'large', 'data': uri(sharp), 'w': 1200, 'h': 800}, {'id': 'other', 'data': uri(other), 'w': 900, 'h': 600}])
+    assert [i['id'] for i in kept] == ['large', 'other'], 'of two files of one photograph the larger stays; what the capture marked as not a photograph is not offered'
 
 
 def test_the_second_and_third_variant_cannot_land_on_one_type_system(tmp_path, monkeypatch):

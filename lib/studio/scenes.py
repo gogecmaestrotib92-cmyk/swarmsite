@@ -39,7 +39,8 @@ def lines(text, cls='display', most=4):
     while len(rows) > most:   # more rows than a heading holds is a column of words: the two neighbours that are shortest together become one
         k = min(range(len(rows) - 1), key=lambda i: len(rows[i]) + len(rows[i + 1])); rows[k:k + 2] = [rows[k] + ' ' + rows[k + 1]]
     longest = max((len(w) for r in rows for w in re.sub(r'\*', '', r).split()), default=6)
-    return f'<span class="dv-lines {cls}" style="--lw:{max(4, longest)};--lr:{len(rows)}">' + ' '.join(f'<span class="dv-ln"><span>{mark(r)}</span></span>' for r in rows) + '</span>'
+    widest = max((len(re.sub(r'\*', '', r)) for r in rows), default=6)   # the longest row, for a heading whose rows must each stay on one line
+    return f'<span class="dv-lines {cls}" style="--lw:{max(4, longest)};--lr:{len(rows)};--lc:{max(4, widest)}">' + ' '.join(f'<span class="dv-ln"><span>{mark(r)}</span></span>' for r in rows) + '</span>'
 
 
 # ---- type: systems of different character. k = how many px of font-size one character of the longest word needs room for ----
@@ -316,19 +317,27 @@ def _faq(s, ctx):
 @scene('scatter', name='Pictures laid out loose, each a different size', role='show', devices=['clip-reveal', 'tilt', 'rise-stagger', 'line-rise'],
        needs='3–5 of the client\'s own photographs or product pictures (never screenshots of a website), each with a name and a short tag', slots={'label': 'mono', 'h2': 'rows split by " / "', 'items': [{'image': 'id', 'alt': '', 'title': '≤ 30 chars', 'tag': 'mono ≤ 24 chars', 'url': 'optional link'}]})
 def _scatter(s, ctx):
-    # An arrangement per count, so no row is left with one picture and a hole beside it; the sharpest picture takes the
-    # widest place, and no picture is drawn wider than it is (a 418 px photograph across 700 px is a blur).
-    LAY = {3: ((1, 8), (9, 13), (4, 11)), 4: ((1, 7), (9, 13), (2, 6), (7, 13)), 5: ((1, 7), (9, 13), (2, 6), (7, 13), (4, 11))}
-    its = [i for i in (s.get('items') or [])[:5] if i.get('image') in ctx['images']]
+    # Rows that close: a large picture with two stacked beside it (a trio), or two side by side, one wider (a pair), or
+    # three across. Every picture fills its place, cropped to it, so no row leaves a hole — the first version drew each
+    # picture at its own proportion in a wide span, and a tall one beside a short one left half a screen of nothing.
+    # Which place a picture takes follows how wide it stays crisp (`sharp_w`, measured): the place is given in px at 1440.
+    wide = lambda i: int(ctx['images'][i['image']].get('sharp_w') or (ctx['images'][i['image']].get('w') or 0) * (.5 if ctx['images'][i['image']].get('soft') else 1))
+    its = sorted([i for i in (s.get('items') or [])[:5] if i.get('image') in ctx['images'] and wide(i) >= 330], key=lambda i: -wide(i))
     if len(its) < 3: return ''
-    spans = LAY[len(its)]; by_room = sorted(range(len(spans)), key=lambda k: spans[k][0] - spans[k][1]); placed = [None] * len(its)
-    for k, it in zip(by_room, sorted(its, key=lambda i: (bool(ctx['images'][i['image']].get('soft')), -int(ctx['images'][i['image']].get('w') or 0)))): placed[k] = it
-    def item(k, it):
-        a, b = spans[k]; inner = f'<div class="dv-clip">{_shot(ctx["images"], it.get("image"), it.get("alt"))}</div><figcaption><b>{e(it.get("title"))}</b><span class="mono">{e(it.get("tag"))}</span></figcaption>'
-        body = f'<a href="{e(it["url"])}">{inner}</a>' if it.get('url') else inner
-        return f'<figure class="dv-tilt sc-it" style="--a:{a};--b:{b};--drop:{(k % 2) * 9}vw;max-width:max(17.5rem,{int((ctx["images"][it["image"]].get("w") or 1200) * (.62 if ctx["images"][it["image"]].get("soft") else 1.15))}px)" data-rise>{body}</figure>'
-    items = ''.join(item(k, it) for k, it in enumerate(placed))
-    return f'<section class="sc scatter" id="work"><div class="wrap"><p class="mono kicker">{e(s.get("label"))}</p><h2>{lines(s.get("h2"), "h2")}</h2><div class="sc-grid">{items}</div></div></section>' if items else ''
+    n = len(its); big = wide(its[0]) * 1.25 >= 800
+    rows = {3: ['trio'] if big else ['thirds'], 4: ['pair', 'pair'], 5: ['trio', 'pair'] if big else ['pair', 'thirds']}[n]
+    ROOM = {'trio': (800, 460, 460), 'pair': (760, 540), 'thirds': (430, 430, 430)}
+    out, k = [], 0
+    for r, kind in enumerate(rows):
+        cells = ''
+        for slot, room in enumerate(ROOM[kind]):
+            it = its[k]; k += 1; own = wide(it) * 1.25
+            inner = f'<div class="dv-clip">{_shot(ctx["images"], it.get("image"), it.get("alt"))}</div><figcaption><b>{e(it.get("title"))}</b><span class="mono">{e(it.get("tag"))}</span></figcaption>'
+            body = f'<a href="{e(it["url"])}">{inner}</a>' if it.get('url') else inner
+            hold = f' style="max-width:{int(own)}px"' if own < room else ''   # a picture without the detail for its place is kept at the width it is crisp at
+            cells += f'<figure class="dv-tilt sc-it sc-{slot}"{hold} data-rise>{body}</figure>'
+        out.append(f'<div class="sc-row sc-{kind}{" flip" if r % 2 else ""}">{cells}</div>')
+    return f'<section class="sc scatter" id="work"><div class="wrap"><p class="mono kicker">{e(s.get("label"))}</p><h2>{lines(s.get("h2"), "h2")}</h2><div class="sc-grid">{"".join(out)}</div></div></section>'
 
 
 @scene('bento', name='Facts in tiles of different sizes', role='show', devices=['rise-stagger', 'count-up', 'line-rise'],
@@ -410,7 +419,7 @@ em{font-style:normal;color:var(--em)}em svg{display:none}.mark-drawn .display em
 @media (max-width:700px){.co{display:block}.co figure{margin-top:14px!important;aspect-ratio:4/3;border:0}}.dv-slides-view{border-radius:14px}
 .grps{columns:2 22rem;column-gap:clamp(32px,5vw,96px);margin-top:clamp(48px,7vw,120px)}.grp{break-inside:avoid;margin-bottom:clamp(40px,5vw,72px)}.grps.flow .grp{break-inside:auto}.grps.flow li{break-inside:avoid}.grps.flow h3{break-after:avoid}.grp h3{color:var(--mute);padding-bottom:14px;border-bottom:1px solid var(--ink)}
 .grp li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--line)}.grp b{font-weight:500;font-size:clamp(17px,1.4vw,21px)}.grp small{display:block;color:var(--mute);font-size:14px;margin-top:3px}.grp .pr{font-family:var(--mono);font-size:14px;white-space:nowrap}.carte .acts{margin-top:clamp(32px,4vw,56px)}
-.visit-in{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(32px,5vw,96px);align-items:end}.visit .acts{margin-top:clamp(28px,4vw,56px)}
+.visit-in{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(32px,5vw,96px);align-items:end}.visit .acts{margin-top:clamp(28px,4vw,56px)}.visit-in>div{container-type:inline-size}.visit .h2{font-size:min(clamp(30px,5.2vw,92px),calc(100cqw / var(--lc,16) * var(--k) * .92))}
 /* statement, rooms, steps, voices, faq */
 .thesis{font-family:var(--display);font-weight:var(--dw);letter-spacing:var(--dls);text-transform:var(--dcase);line-height:1.06;font-size:clamp(30px,4.6vw,84px);max-width:30ch;text-wrap:pretty}.statement .note{margin-top:clamp(24px,3vw,44px)}
 .h2s{font-size:min(clamp(36px,5.2vw,92px),calc((100vw - 2 * var(--pad)) / var(--lw,8) * var(--k)))}.rooms .lede{margin-top:clamp(20px,2.4vw,36px)}.rooms .acts{margin-top:clamp(20px,2.4vw,36px)}
@@ -421,8 +430,12 @@ em{font-style:normal;color:var(--em)}em svg{display:none}.mark-drawn .display em
 .acc details{border-top:1px solid var(--line)}.acc details:last-child{border-bottom:1px solid var(--line)}.acc summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;gap:20px;align-items:baseline;padding:clamp(16px,1.8vw,24px) 0;font:500 clamp(16px,1.3vw,19px)/1.35 var(--text)}.acc summary::-webkit-details-marker{display:none}
 .acc summary::after{content:"+";font-family:var(--mono);color:var(--mute);transition:transform .3s var(--ease)}.acc details[open] summary::after{transform:rotate(45deg)}.acc details p{color:var(--mute);max-width:60ch;padding:0 0 clamp(18px,2vw,26px)}
 /* scatter, bento, kinetic */
-.sc-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:clamp(16px,2vw,32px);row-gap:clamp(48px,7vw,120px);margin-top:clamp(48px,7vw,120px)}.sc-it{grid-column:var(--a)/var(--b);margin:var(--drop,0) 0 0;width:100%}.sc-it:nth-child(even){justify-self:end}.sc-it:last-child:nth-child(odd){justify-self:center}.sc-it a{text-decoration:none;display:block}
-.sc-it .dv-clip{border-radius:24px}.sc-it img{width:100%}.sc-it figcaption{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:10px 16px;margin-top:14px}.sc-it b{font-family:var(--display);font-weight:var(--dw);text-transform:var(--dcase);letter-spacing:var(--dls);font-size:clamp(22px,2.2vw,36px);line-height:1}.sc-it .mono{color:var(--mute);border:1px solid var(--line);border-radius:999px;padding:6px 12px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.sc-grid{display:grid;gap:clamp(40px,5vw,84px);margin-top:clamp(48px,7vw,120px)}.sc-row{display:grid;gap:clamp(14px,1.6vw,26px) clamp(16px,2vw,32px);align-items:stretch}
+.sc-pair{grid-template-columns:7fr 5fr}.sc-pair.flip{grid-template-columns:5fr 7fr}.sc-pair.flip .sc-0{order:2}.sc-thirds{grid-template-columns:repeat(3,minmax(0,1fr))}
+.sc-trio{grid-template-columns:7fr 4fr;grid-template-rows:1fr 1fr}.sc-trio .sc-0{grid-row:1/3}.sc-trio.flip{grid-template-columns:4fr 7fr}.sc-trio.flip .sc-0{grid-column:2;grid-row:1/3}.sc-trio.flip .sc-1,.sc-trio.flip .sc-2{grid-column:1}
+.sc-it{margin:0;width:100%;display:flex;flex-direction:column;min-width:0}.sc-it>a{display:flex;flex-direction:column;flex:1;text-decoration:none}.sc-it .dv-clip{flex:1;min-height:0}.sc-it img{width:100%;height:100%;object-fit:cover}
+.sc-pair .sc-0 .dv-clip{aspect-ratio:16/10;flex:none}.sc-thirds .dv-clip{aspect-ratio:4/5;flex:none}.sc-trio .sc-1 .dv-clip,.sc-trio .sc-2 .dv-clip{aspect-ratio:3/2;flex:none}.sc-it[style]{justify-self:center;align-self:center}.sc-it[style] .dv-clip{flex:none;aspect-ratio:4/3}
+.sc-it .dv-clip{border-radius:24px}.sc-it figcaption{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:10px 16px;margin-top:14px}.sc-it b{font-family:var(--display);font-weight:var(--dw);text-transform:var(--dcase);letter-spacing:var(--dls);font-size:clamp(22px,2.2vw,36px);line-height:1}.sc-it .mono{color:var(--mute);border:1px solid var(--line);border-radius:999px;padding:6px 12px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .b-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:clamp(10px,1.2vw,18px);margin-top:clamp(48px,7vw,120px)}.b-tile{grid-column:span 2;background:var(--ground2);border-radius:24px;padding:clamp(20px,2.4vw,36px);display:flex;flex-direction:column;justify-content:flex-end;min-height:clamp(200px,20vw,320px);overflow:hidden;position:relative}
 .b-0{grid-column:span 4;grid-row:span 2;background:var(--lead);color:var(--on-lead)}.b-n5 .b-3,.b-n5 .b-4{grid-column:span 3}.b-n4 .b-3{grid-column:span 6;min-height:clamp(140px,12vw,200px)}.b-n4 .b-1,.b-n4 .b-2{grid-column:span 2}.b-n6 .b-5{grid-column:span 2}
 .b-tile h3{font-family:var(--display);font-weight:var(--dw);text-transform:var(--dcase);letter-spacing:var(--dls);line-height:1.02;font-size:clamp(22px,2.1vw,34px)}.b-0 h3{font-size:clamp(28px,3.4vw,56px)}.b-bare,.b-plain{justify-content:space-between}.b-plain h3{font-size:clamp(24px,2.5vw,40px);max-width:14ch}.b-plain{min-height:clamp(180px,16vw,260px)}.b-plain p{margin-top:clamp(20px,3vw,48px)}.b-bare h3{font-size:clamp(40px,6vw,104px);line-height:.94;max-width:11ch}.b-bare p{max-width:30ch;font-size:clamp(16px,1.2vw,19px)}.b-tile p{margin-top:10px;color:var(--mute);max-width:34ch}.b-0 p{color:color-mix(in srgb,var(--on-lead) 78%,transparent)}
@@ -438,7 +451,7 @@ em{font-style:normal;color:var(--em)}em svg{display:none}.mark-drawn .display em
 .dv-endmark{font-family:var(--display);font-weight:var(--dw);text-transform:var(--dcase);color:var(--on-night);opacity:.94}
 @media (max-width:900px){
 .bar-links{display:none}.dv-menu-btn{display:inline-flex;align-items:center}.bar .btn{display:none}.open{min-height:0;align-content:start;padding-top:clamp(104px,22vw,150px)}.open-pic{padding-bottom:clamp(56px,10vw,96px)}.figs{grid-template-columns:repeat(min(var(--n,3),2),minmax(0,1fr))}.fig{font-size:min(clamp(44px,13vw,96px),calc((100cqw / 2 - 24px) / var(--c,4) * var(--k) * .6))}
-.open-foot,.stage-head,.ledger-in,.index-in,.rows .row,.win-foot,.visit-in{grid-template-columns:minmax(0,1fr)}.step-row{grid-template-columns:minmax(0,1fr)}.sc-grid{display:block}.sc-it{margin:0 0 clamp(36px,8vw,64px)}.b-grid{grid-template-columns:minmax(0,1fr)}.b-tile,.b-0{grid-column:auto!important;grid-row:auto;min-height:0}.b-0{min-height:220px}.dv-k{font-size:clamp(44px,14vw,96px);text-align:left;padding-inline:var(--pad)}.step-row .num{margin-bottom:18px}.win{aspect-ratio:4/3}.dv-held{grid-template-columns:minmax(0,1fr)!important}
+.open-foot,.stage-head,.ledger-in,.index-in,.rows .row,.win-foot,.visit-in{grid-template-columns:minmax(0,1fr)}.step-row{grid-template-columns:minmax(0,1fr)}.sc-row{display:block}.sc-it{margin:0 0 clamp(28px,7vw,48px);max-width:none!important}.sc-it .dv-clip{aspect-ratio:4/3!important;flex:none}.b-grid{grid-template-columns:minmax(0,1fr)}.b-tile,.b-0{grid-column:auto!important;grid-row:auto;min-height:0}.b-0{min-height:220px}.dv-k{font-size:clamp(44px,14vw,96px);text-align:left;padding-inline:var(--pad)}.step-row .num{margin-bottom:18px}.win{aspect-ratio:4/3}.dv-held{grid-template-columns:minmax(0,1fr)!important}
 .card{grid-template-columns:minmax(0,1fr);min-height:0}.dv-held-m{font-family:var(--display);font-weight:var(--dw)!important;text-transform:var(--dcase);letter-spacing:var(--dls)!important}
 }
 """

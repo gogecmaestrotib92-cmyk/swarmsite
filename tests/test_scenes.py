@@ -88,3 +88,15 @@ def test_a_heading_given_more_rows_than_it_holds_is_set_in_fewer():
     five = SC.lines('Parque Butarque / s/n / 28918 / Leganés / Madrid', 'h2', 3)
     assert five.count('class="dv-ln"') == 3 and '--lr:3' in five and 'Leganés' in five and 'Madrid' in five
     assert SC.lines('First row / second row / third row', 'h2').count('class="dv-ln"') == 3
+
+
+def test_an_address_is_sized_to_the_column_it_stands_in_and_its_longest_row():
+    import scenes as SC
+    row = SC.lines('Calle Cooperación 11 / 28922 Alcorcón / Madrid', 'h2', 3)
+    assert '--lc:20' in row and '--lw:11' in row, 'the longest row is known beside the longest word'
+    plan = {'brand': {'name': 'X', 'accent': '#2a8f5a'}, 'scenes': [{'scene': 'open-statement', 'slots': {'h1': 'A / line'}}, {'scene': 'visit', 'slots': {'where': 'Calle Cooperación 11 / 28922 Alcorcón / Madrid', 'rows': [{'k': 'Hours', 'v': '12–24'}]}}, {'scene': 'close', 'slots': {'line': 'Come', 'wordmark': True}}]}
+    page = SC.page(plan, {})
+    assert '.visit .h2{font-size:min(' in page and '100cqw / var(--lc' in page and 'container-type:inline-size' in page
+    assert 'class="dv-endmark"' not in page, 'a one-letter name gets no wordmark'
+    named = SC.page({**plan, 'brand': {'name': 'Bálamo', 'accent': '#2a8f5a'}}, {})
+    assert 'class="dv-endmark"' in named and 'margin-bottom:0}' in named and 'class="dv-endmark low"' in SC.page({**plan, 'brand': {'name': 'Papagayo', 'accent': '#2a8f5a'}}, {})

@@ -44,3 +44,10 @@ b = run('hidden-name', ending('1', 'opacity:0'), '1440');
 assert.ok(kinds(b).includes('cut-name@end'), 'a closing name that never arrives is named');
 b = run('whole-name', ending('1'), '1440');
 assert.deepEqual(kinds(b), [], 'a closing name standing whole on the edge is sound: ' + JSON.stringify(b));
+
+// A section of pictures is a composition of them: a tall picture beside a short one leaves a hole, and the hole is named; two that close the row are sound.
+const pic = (w, h) => `<img alt="" width="${w}" height="${h}" style="display:block;width:${w}px;height:${h}px" src="data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="${w}" height="${h}" fill="#964"/></svg>`)}">`;
+b = run('void', `<section id="work"><h2>Rooms</h2><div style="display:flex;gap:24px;align-items:flex-start">${pic(560, 900)}${pic(420, 280)}</div></section>`, '1440');
+assert.deepEqual(kinds(b), ['void@work'], 'a hole beside a short picture is named: ' + JSON.stringify(b));
+b = run('closed', `<section id="work"><h2>Rooms</h2><div style="display:flex;gap:24px">${pic(760, 480)}${pic(560, 480)}</div></section>`, '1440');
+assert.deepEqual(kinds(b), [], 'two pictures that close their row are sound: ' + JSON.stringify(b));

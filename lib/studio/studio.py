@@ -23,7 +23,7 @@ HOW TO CHOOSE
 - A place (restaurant, hotel, shop) is shown with its photographs: "open-picture", "window", "gallery", its list as a "carte", and "visit" for where and when. Software is shown with "held-product", "stage", "figures". When there is no picture strong enough to open on, "open-atmosphere" or "open-statement".
 - A place is its rooms. Every room, terrace or space the client names and has a photograph of is shown by that photograph, and the photographs of the place itself lead: a dish or a detail never takes the first or the largest place in a scene about the place. Put the largest, sharpest photograph of the place where it is seen widest.
 - "statement" carries the thesis once, early. "steps" shows how something goes when the client describes a process. "rooms" holds words while two to four of the client's photographs pass. "voices" only with testimonials given to you, word for word. "faq" for six or more questions, "ledger" for fewer.
-- "scatter" lays three to five of the client's pictures out loose at different sizes (work, dishes, rooms, products). "bento" sets four to six facts in tiles of different sizes when there is little to picture. "kinetic-line" is a statement in two or three huge rows that slide apart — use it or "rail", never both.
+- "scatter" sets three to five of the client's pictures in rows that close — one large with two beside it, or two side by side — each cropped to its place (work, dishes, rooms, products). The sharpest takes the largest place; a picture marked soft is left out of it. "bento" sets four to six facts in tiles of different sizes when there is little to picture. "kinetic-line" is a statement in two or three huge rows that slide apart — use it or "rail", never both.
 - "collage" lays exactly three sharp photographs over one another, each drifting at its own pace — only for a place or a maker with three strong photographs; use it or "scatter", never both.
 - "mark": "drawn" pulls a hand-drawn stroke under the one marked phrase of each heading instead of colouring it. Choose it for at most one variant in spirit — pages with a serif or editorial voice — and keep every marked phrase to one to three words.
 - Scheme "tone" (three steps of one muted tone from the brand colour) suits brands whose colour is strong and whose pictures are few.
@@ -65,8 +65,8 @@ def check(plan, page, ev, allowed, images):
         pid = (sc.get('slots') or {}).get('image')
         if sc.get('scene') in ('open-picture', 'window', 'stage') and pid in images and images[pid].get('soft'):
             bad['pictures'].append(f'{pid}: out of focus (or a frame of a video) — not a picture to show across the screen in "{sc["scene"]}"')
-        elif sc.get('scene') in ('open-picture', 'window', 'stage') and pid in images and max(int(images[pid].get('w') or 0), int(images[pid].get('h') or 0)) < 900:
-            bad['pictures'].append(f'{pid}: {images[pid].get("w")}×{images[pid].get("h")} px is too small to be shown across the screen in "{sc["scene"]}" — use a larger picture or a scene that shows it small')
+        elif sc.get('scene') in ('open-picture', 'window', 'stage') and pid in images and (max(int(images[pid].get('w') or 0), int(images[pid].get('h') or 0)) < 900 or int(images[pid].get('sharp_w') or 900) < 900):
+            bad['pictures'].append(f'{pid}: {images[pid].get("w")}×{images[pid].get("h")} px (crisp up to {images[pid].get("sharp_w") or images[pid].get("w")} px) is too small to be shown across the screen in "{sc["scene"]}" — use a larger picture or a scene that shows it small')
         if sc.get('scene') == 'collage':   # pictures laid over one another are each seen large: every one has to hold
             for p in (sc.get('slots') or {}).get('pictures') or []:
                 im = images.get(p.get('image'))
