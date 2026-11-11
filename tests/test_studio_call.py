@@ -107,3 +107,13 @@ def test_the_second_and_third_variant_cannot_land_on_one_type_system(tmp_path, m
     os.makedirs(tmp_path / 'o2', exist_ok=True)
     got = ST.one([], {'links': []}, set(), {}, str(tmp_path / 'o2'), 'b', 'hint', ['tight-bold', 'wide-geometric'])
     assert got['type'] == 'tight-bold' and 'tight-bold' in (tmp_path / 'o2' / 'page-b.html').read_text().split('<body')[1][:60], 'a plan that takes a type system outside its share is set in the first of its own'
+
+
+def test_character_is_read_off_the_clients_own_page_not_off_its_trade():
+    def inv(face, weight, case, ground, accent): return {'typography': {'h1': {'font': face, 'weight': str(weight), 'tt': case, 'size': 80}}, 'colors': {'bg': [{'c': ground, 'n': 9}], 'buttons': [{'c': '#ffffff a0', 'n': 5}, {'c': accent, 'n': 3}]}}
+    sport = E.character(inv('__Barlow_Condensed_c1', 800, 'uppercase', '#0b0b0d', '#2af6a0')); ledger = E.character(inv('Inter Variable', 400, 'none', '#ffffff', '#5e6ad2'))
+    assert sport['suggests'] == 'energetic' and sport['ground']['dark'] and sport['accent'] == {'colour': '#2af6a0', 'vivid': True}, 'heavy condensed capitals on black with a vivid accent'
+    assert ledger['suggests'] == 'calm' and not ledger['ground']['dark'], 'both are software; they do not read alike'
+    assert E.character(inv('Cormorant Garamond', 500, 'none', '#f4efe6', '#7a2b2b'))['suggests'] == 'refined'
+    assert E.character(inv('-apple-system', 700, 'none', '#ffffff', '#2563eb'))['suggests'] is None, 'an ordinary bold sans says nothing: the composer decides'
+    assert E.character({'colors': {'bg': [{'c': '#ffffff'}]}})['suggests'] is None, 'nothing measured, nothing suggested'

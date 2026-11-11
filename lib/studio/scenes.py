@@ -260,15 +260,16 @@ def _collage(s, ctx):
 
 @scene('open-product', name='Opening for software: a quiet line, and the product itself running off the first screen', role='open', devices=['line-rise', 'rise-stagger', 'magnet', 'frame'],
        needs='one real screenshot of the product: a wide one at least 1000 px across (shown in a window), or an upright phone screenshot (shown in a phone). A headline of 4–9 words',
-       slots={'kicker': 'mono label ≤ 40 chars', 'h1': 'rows split by " / ", one *marked phrase*', 'lede': '≤ 2 sentences', 'image': 'id of the screenshot', 'alt': 'what the screenshot shows', 'align': '"left" (wide screenshot) or "centre" (phone)'})
+       slots={'kicker': 'mono label ≤ 40 chars', 'h1': 'rows split by " / ", one *marked phrase*', 'lede': '≤ 2 sentences', 'image': 'id of the screenshot', 'alt': 'what the screenshot shows', 'align': '"left" (wide screenshot) or "centre" (phone)', 'ground': 'optional: id of one of the client\'s own wide, sharp photographs to lie behind the product'})
 def _open_product(s, ctx):
     im = ctx['images'].get(s.get('image'))
     if not im: return ''
     tall = .42 <= (im.get('w') or 1) / max(1, im.get('h') or 1) <= .62; centre = ' centre' if s.get('align') == 'centre' or tall else ''
+    g = ctx['images'].get(s.get('ground')); ground = f'<img class="op-ground" src="{g["data"]}" alt="" width="{int(g.get("w") or 1400)}" height="{int(g.get("h") or 700)}">' if g and g is not im and not g.get('shot') else ''
     frame = (f'<figure class="dv-phone">{_shot(ctx["images"], s.get("image"), s.get("alt"))}</figure>' if tall else f'<figure class="dv-window">{_shot(ctx["images"], s.get("image"), s.get("alt"))}</figure>')
     return (f'<section class="sc open open-prod{centre}" id="top"><div class="wrap"><p class="mono kicker" data-rise>{e(s.get("kicker"))}</p><h1>{lines(s.get("h1"))}</h1>'
             f'<div class="open-foot"><p class="lede" data-rise style="--i:1">{e(s.get("lede"))}</p><div class="acts" data-rise style="--i:2">{_btn(ctx["action"], "dv-magnet")}{_btn(ctx.get("action2"), "quiet")}</div></div></div>'
-            f'<div class="op-stage{" tall" if tall else ""}" data-rise style="--i:3">{frame}</div></section>')
+            f'<div class="op-stage{" tall" if tall else ""}{" has-ground" if ground else ""}" data-rise style="--i:3">{ground}{frame}</div></section>')
 
 
 @scene('plans', name='The plans, side by side', role='decide', devices=['rise-stagger', 'line-rise'], needs='2–4 plans exactly as the client states them: name, price, who it is for, what is in it. Never a plan, a price or a limit the client does not publish',
@@ -512,7 +513,10 @@ em{font-style:normal;color:var(--em)}em svg{display:none}.mark-drawn .display em
 .cmp{margin-top:clamp(40px,5vw,80px);overflow-x:auto}.cmp table{width:100%;min-width:calc(220px + var(--n,3) * 120px);border-collapse:collapse;table-layout:fixed;font-size:15px}.cmp thead td{width:38%}.cmp thead th{position:sticky;top:0;text-align:left;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:400;padding:14px 12px;background:var(--paper);box-shadow:inset 0 -1px 0 var(--line)}
 .cmp tbody th{text-align:left;font-weight:400;padding:13px 12px 13px 0;width:38%}.cmp td{padding:13px 12px;color:var(--mute)}.cmp tbody tr{border-bottom:1px solid var(--line)}.cmp-g th{font-family:var(--display);font-weight:var(--dw);font-size:clamp(18px,1.5vw,22px);padding-top:clamp(28px,3vw,44px)!important;color:var(--ink)}.cmp-y{color:var(--ink)}.cmp-n{opacity:.45}
 .scale-product .display{font-size:min(clamp(38px,4.7vw,80px),calc((100vw - 2 * var(--pad)) / var(--lw,8) * var(--k)));line-height:1.03}.scale-product .h2{font-size:min(clamp(30px,3.3vw,56px),calc((100vw - 2 * var(--pad)) / var(--lw,8) * var(--k)));line-height:1.06}.scale-product .thesis{font-size:clamp(24px,2.6vw,44px);line-height:1.14}.scale-product .sc{padding-block:clamp(64px,7vw,120px)}.scale-product .open-prod{padding-bottom:0}
-.dv .scale-product [data-rise]{transition-duration:.25s}.dv .scale-product [data-rise]:not(.is-in){transform:translateY(8px)}
+.op-stage.has-ground{position:relative;isolation:isolate;background:var(--night);padding-top:clamp(44px,9vw,150px)}.op-ground{position:absolute;inset:0;z-index:-1;width:100%;height:100%;object-fit:cover}.op-stage.has-ground::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,.35))}
+/* the client's character decides how much moves and how loud the type is — not its trade */
+.dv .ch-calm [data-rise]{transition-duration:.25s}.dv .ch-calm [data-rise]:not(.is-in){transform:translateY(8px)}
+.scale-product.ch-energetic .display,.scale-product.ch-playful .display{font-size:min(clamp(44px,6.4vw,112px),calc((100vw - 2 * var(--pad)) / var(--lw,8) * var(--k)));line-height:.98}.scale-product.ch-energetic .h2,.scale-product.ch-playful .h2{font-size:min(clamp(34px,4.4vw,76px),calc((100vw - 2 * var(--pad)) / var(--lw,8) * var(--k)))}
 @media (max-width:900px){.pl-grid{grid-template-columns:minmax(0,1fr)}.pl-for{min-height:0}.op-stage{margin-inline:0;border-radius:0;max-height:none;padding-bottom:0}.op-stage.tall .dv-phone{--pw:min(72vw,300px)}.cmp tbody th{width:auto;min-width:150px}}
 """
 
@@ -539,7 +543,7 @@ def page(plan, images):
     under = ''.join(foot).replace('<footer class="', '<footer class="dv-under ', 1)   # named outside the f-string: nested quotes there need Python 3.12
     return (f'<!doctype html><html lang="{e(brand.get("lang") or "en")}"{" data-eased-scroll" if plan.get("eased") else ""}><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{e(plan.get("title") or brand.get("name"))}</title>'
             f'<meta name="description" content="{e(plan.get("description"))}"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family={t["gf"]}&display=swap" rel="stylesheet">'
-            f'<style>{tokens}{CSS}{css}</style></head><body class="{e(plan.get("type") or "light-grotesk")}{" mark-drawn" if drawn else ""}{" scale-product" if quiet else ""}"><a class="skip" href="#main">Skip to content</a>'
+            f'<style>{tokens}{CSS}{css}</style></head><body class="{e(plan.get("type") or "light-grotesk")}{" mark-drawn" if drawn else ""}{" scale-product" if quiet else ""}{" ch-" + plan["character"] if plan.get("character") in ("calm", "energetic", "warm", "refined", "playful") else ""}"><a class="skip" href="#main">Skip to content</a>'
             f'<div class="dv-progress" aria-hidden="true"></div><header class="bar dv-tuck"><a class="name" href="#top">{e(brand.get("name"))}</a><div class="bar-r">' + (f'<nav class="bar-links" aria-label="Primary">{links}</nav>' if links else '')
             + f'{_btn(ctx["action"])}<button class="dv-menu-btn mono" aria-expanded="false" aria-controls="menu">Menu</button></div></header>'
             f'<nav class="dv-menu" id="menu" aria-label="Menu">{links}<a class="btn" href="{e((ctx["action"] or {}).get("url") or "#top")}">{e((ctx["action"] or {}).get("label") or "")}</a></nav>'

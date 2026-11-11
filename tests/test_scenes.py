@@ -119,3 +119,15 @@ def test_software_is_set_quietly_with_its_product_in_a_frame_and_its_plans_as_th
     bad = ST.check(plan('cover'), SC.page(plan('cover'), images), {'links': []}, set(), images)
     assert any('photograph or a cover' in x for x in bad['pictures']) and any('one value for each column' in x for x in bad['structure'])
     assert 'class="sc plans"' not in SC.page({**plan('wide'), 'scenes': [{'scene': 'plans', 'slots': {'plans': [{'name': 'Only', 'price': '$1'}]}}]}, images), 'one plan is not a choice: the scene stands down'
+
+
+def test_the_plans_character_is_on_the_page_and_the_product_can_stand_in_the_clients_own_world():
+    import scenes as SC, studio as ST
+    px = 'data:image/png;base64,iVBORw0KGgo='
+    images = {'shot': {'id': 'shot', 'data': px, 'w': 1440, 'h': 820, 'shot': True}, 'stadium': {'id': 'stadium', 'data': px, 'w': 1400, 'h': 594}, 'small': {'id': 'small', 'data': px, 'w': 600, 'h': 400}}
+    def plan(ground, character): return {'brand': {'name': 'X', 'accent': '#2af6a0'}, 'scale': 'product', 'character': character, 'scheme': 'night', 'scenes': [{'scene': 'open-product', 'slots': {'h1': 'Match / *analysis*', 'lede': 'A sentence about what the product does for the people who use it, long enough to count as words.', 'image': 'shot', 'ground': ground}}, {'scene': 'close', 'slots': {'line': 'Start'}}]}
+    loud, calm = SC.page(plan('stadium', 'energetic'), images), SC.page(plan(None, 'calm'), images)
+    assert 'scale-product ch-energetic' in loud.split('<body')[1][:120] and 'class="op-ground"' in loud and 'has-ground' in loud.split('<body')[1]
+    assert 'ch-calm' in calm.split('<body')[1][:120] and 'class="op-ground"' not in calm
+    assert '.dv .ch-calm [data-rise]' in calm and '.dv .scale-product [data-rise]' not in calm, 'how much moves follows the character, not the kind of page'
+    assert any('ground behind the product' in x for x in ST.check(plan('small', 'energetic'), SC.page(plan('small', 'energetic'), images), {'links': []}, set(), images)['pictures'])
