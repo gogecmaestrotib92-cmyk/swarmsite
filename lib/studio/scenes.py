@@ -708,7 +708,7 @@ def page(plan, images):
         if html and sc.get('cover') in (True, 'true') and body and html.startswith('<section class="'): html = html.replace('<section class="', '<section class="dv-cover ', 1); used.add('cover')
         if html: body.append(html); used |= set(meta['devices'])
     if plan.get('eased'): used.add('eased-scroll')
-    drawn = plan.get('mark') == 'drawn'; quiet = plan.get('scale') == 'product'
+    drawn = False; quiet = plan.get('scale') == 'product'   # the stroke under the marked phrase is not offered: the owner saw it on a first screen and called it what it was — a tic (2026-11-11)
     if drawn: used.add('draw')
     css, js = LIB.bundle(sorted(used))
     nav = [n for n in plan.get('nav') or [] if n.get('label') and (n.get('url') or n.get('links'))][:5]
