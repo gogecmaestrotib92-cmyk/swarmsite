@@ -198,7 +198,7 @@ def studio_page(slug_dir, out):
     import studio as STUDIO, scenes as SCENES
     folder = os.path.join(slug_dir, 'studio'); report = STUDIO.build(slug_dir, folder, 3)
     clean = [v for v in report['variants'] if v.get('clean')]
-    info = {'kept': None, 'variants': [{k: v.get(k) for k in ('tag', 'type', 'scheme', 'scenes', 'clean', 'story')} for v in report['variants']], 'usd': report.get('usd'), 'seconds': report.get('seconds')}
+    info = {'kept': None, 'variants': [{**{k: v.get(k) for k in ('tag', 'type', 'scheme', 'scenes', 'clean', 'story')}, 'tries': len(v.get('checks') or []), 'refused_for': [str(x)[:160] for c in (v.get('checks') or [])[:1] for group in c.values() for x in (group or [])][:6]} for v in report['variants']], 'usd': report.get('usd'), 'seconds': report.get('seconds')}
     if not clean: info['why'] = 'no variant passed its checks'; return info
     inventory = A.J(slug_dir, 'inventory.json') or {}; brief = A.J(slug_dir, 'brief.json') or {}
     import seo as SEO

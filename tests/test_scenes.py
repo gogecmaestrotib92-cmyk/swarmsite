@@ -70,7 +70,7 @@ def test_the_surface_that_leads_never_melts_into_the_page():
             assert S.contrast(p['lead'], p['paper']) >= 2.2 and S.contrast(p['on_lead'], p['lead']) >= 4.5, (accent, scheme, p)
 
 
-def test_a_collage_takes_three_pictures_and_a_drawn_mark_is_asked_for_by_the_plan():
+def test_a_collage_takes_three_pictures_and_no_plan_gets_a_drawn_underline():
     import scenes as SC
     px = 'data:image/png;base64,iVBORw0KGgo='
     images = {k: {'id': k, 'data': px, 'w': w, 'h': 800} for k, w in (('a', 1000), ('b', 1600), ('c', 1200))}
@@ -79,7 +79,7 @@ def test_a_collage_takes_three_pictures_and_a_drawn_mark_is_asked_for_by_the_pla
     assert 'class="sc collage"' not in two, 'two pictures do not make a collage: the scene stands down'
     grid = three.split('class="co"')[1]
     assert grid.count('<figure') == 3 and grid.index('width="1600"') < grid.index('width="1200"') < grid.index('width="1000"'), 'the widest picture is the ground the others lie on'
-    assert 'mark-drawn' in three.split('<body')[1][:80] and 'stroke-dashoffset' in three and 'mark-drawn' not in plain.split('<body')[1][:80]
+    assert 'mark-drawn' not in three.split('<body')[1][:120] and 'stroke-dashoffset' not in three, 'the stroke under the marked phrase is not offered, whatever a plan asks'
     assert '<em class="dv-draw">everyone<svg' in plain and 'em svg{display:none}' in plain, 'without the plan asking, the stroke is in the markup and not shown'
 
 
@@ -224,3 +224,18 @@ def test_the_parts_of_a_software_page_each_draw_and_stand_down_without_their_mat
     made = soft_plan({'scene': 'logos', 'slots': {}}, {'scene': 'code', 'slots': {'h2': 'Build', 'code': 'curl https://api.invented.test/never-published'}})
     found = ST.check(made, SC.page(made, PARTS), {'links': [], 'kind': 'software', 'sections': [{'text': 'curl https://api.x.test/v1/matches'}]}, set(), PARTS)['structure']
     assert any('"logos" needs' in x for x in found) and any('"code": the code must be the client' in x for x in found), found
+
+
+def test_what_a_clients_material_obliges_is_said_before_the_first_try_and_a_ground_may_be_soft():
+    import scenes as SC, studio as ST
+    images = {'s1': {'id': 's1', 'data': PX, 'w': 1440, 'h': 800, 'shot': True}, 'night': {'id': 'night', 'data': PX, 'w': 1400, 'h': 594, 'soft': True}, 'logo1': {'id': 'logo1', 'data': PX, 'w': 120, 'h': 30, 'logo': True}}
+    ev = {'links': [], 'kind': 'software', 'h1': 'AI sports match analysis', 'seo_safe': True}
+    shots, photos, grounds, words = ST.owed(ev, images)
+    assert shots == ['s1'] and photos == [] and grounds == ['night'] and words == ['sports', 'match', 'analysis'], 'a soft photograph cannot open a page, and can lie behind the product'
+    told = ST.briefing(ev, images)
+    assert 'open-product' in told and "['night']" in told and 'at least 2 of' in told and 'sent back' in told
+    assert ST.briefing({'links': [], 'kind': 'place'}, {}) == '', 'nothing owed, nothing said'
+    plan = soft_plan(opening={'scene': 'open-product', 'slots': {'h1': 'Sports match / *analysis*', 'lede': LEDE, 'image': 's1', 'ground': 'night'}})
+    bad = ST.check(plan, SC.page(plan, images), ev, set(), images)
+    assert not bad['pictures'] and not any('open' in x or 'headline' in x for x in bad['structure']), bad
+    assert 'mark' not in ST.TOOL['input_schema']['properties']

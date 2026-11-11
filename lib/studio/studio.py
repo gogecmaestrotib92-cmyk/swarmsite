@@ -40,7 +40,6 @@ HOW TO CHOOSE
 - "statement" carries the thesis once, early. "steps" shows how something goes when the client describes a process. "rooms" holds words while two to four of the client's photographs pass. "voices" only with testimonials given to you, word for word. "faq" for six or more questions, "ledger" for fewer.
 - "scatter" sets three to five of the client's pictures in rows that close — one large with two beside it, or two side by side — each cropped to its place (work, dishes, rooms, products). The sharpest takes the largest place; a picture marked soft is left out of it. "bento" sets four to six facts in tiles of different sizes when there is little to picture. "kinetic-line" is a statement in two or three huge rows that slide apart — use it or "rail", never both.
 - "collage" lays exactly three sharp photographs over one another, each drifting at its own pace — only for a place or a maker with three strong photographs; use it or "scatter", never both.
-- "mark": "drawn" pulls a hand-drawn stroke under the one marked phrase of each heading instead of colouring it. Choose it for at most one variant in spirit — pages with a serif or editorial voice — and keep every marked phrase to one to three words.
 - Scheme "tone" (three steps of one muted tone from the brand colour) suits brands whose colour is strong and whose pictures are few.
 - 5–9 scenes including exactly one opening and one close. At most one "rail". Use "held-product" only with three or more claims that each have something to SHOW; give every panel the tightest, most readable real picture (prefer crops made for the purpose over whole pages of small text) or real figures. Use "stage" for the one whole screen worth seeing large. Use "figures" only for numbers that are an argument.
 - Headings are written for their scene: display lines are short and break into rows with " / " (2–3 rows, 1–4 words a row); mark ONE phrase per line with *asterisks* at most. A heading over cards must agree with the number of cards.
@@ -57,7 +56,7 @@ TOOL = {'name': 'compose_page', 'description': 'The whole page as a plan.', 'inp
     'story': {'type': 'object', 'required': ['doubt', 'turn', 'proof', 'ask'], 'properties': {'doubt': {'type': 'string', 'description': 'what the visitor does not know or believe on arrival'}, 'turn': {'type': 'string', 'description': 'the one thing that, once seen, changes that'}, 'proof': {'type': 'string'}, 'ask': {'type': 'string'}, 'idea': {'type': 'string', 'description': 'the one idea every scene expresses'}}},
     'title': {'type': 'string'}, 'description': {'type': 'string'},
     'brand': {'type': 'object', 'required': ['name', 'accent', 'night'], 'properties': {'name': {'type': 'string'}, 'accent': {'type': 'string'}, 'night': {'type': 'string'}, 'lang': {'type': 'string'}}},
-    'type': {'type': 'string', 'enum': list(S.TYPE)}, 'scheme': {'type': 'string', 'enum': list(S.SCHEMES)}, 'mark': {'type': 'string', 'enum': ['colour', 'drawn'], 'description': 'how the one *marked phrase* of a heading is set: in the accent colour, or in the ink with a hand-drawn stroke pulled under it (suits serif and editorial pages; mark one to three words only)'}, 'character': {'type': 'string', 'enum': ['calm', 'energetic', 'warm', 'refined', 'playful'], 'description': 'the temperament of THIS client, whatever its trade: calm (exact, technical, quiet), energetic (sport, games, nightlife, loud launches), warm (hospitality, craft, family), refined (luxury, editorial, finance that wants to look old), playful (consumer apps, children, food with a wink)'},
+    'type': {'type': 'string', 'enum': list(S.TYPE)}, 'scheme': {'type': 'string', 'enum': list(S.SCHEMES)}, 'character': {'type': 'string', 'enum': ['calm', 'energetic', 'warm', 'refined', 'playful'], 'description': 'the temperament of THIS client, whatever its trade: calm (exact, technical, quiet), energetic (sport, games, nightlife, loud launches), warm (hospitality, craft, family), refined (luxury, editorial, finance that wants to look old), playful (consumer apps, children, food with a wink)'},
     'character_why': {'type': 'string', 'description': 'what on the client\'s own page shows this character — its headline face and weight, its ground, its accent, its photographs, its words. One sentence, naming them'},
     'scale': {'type': 'string', 'enum': ['display', 'product'], 'description': '"display": headlines set very large, the page led by type and photographs (places, brands, studios). "product": software — headlines near 64 px, quick small reveals, the product screenshots are the pictures'}, 'eased': {'type': 'boolean', 'description': 'the page glides to a stop after the wheel (desk only)'},
     'why': {'type': 'string', 'description': 'why this type system and scheme for this client, in two sentences'},
@@ -68,6 +67,32 @@ TOOL = {'name': 'compose_page', 'description': 'The whole page as a plan.', 'inp
 
 
 known_quotes = []
+
+
+def owed(ev, images):
+    """What this client's material obliges a page to do, worked out once: the screenshots that can open a software page,
+    the crisp wide photographs that can open a place, the photographs that can lie behind a product (these may be soft —
+    they are grounds), and the words its own headline is found by. check() refuses a plan against these, and build()
+    says them to the composer before its first try: a rule first heard as a refusal costs a second call."""
+    wide = lambda i: int(i.get('w') or 0) >= 1000 and int(i.get('w') or 0) >= 1.2 * int(i.get('h') or 1)
+    mine = [i for i in images.values() if not i.get('logo') and not i.get('gen')]
+    shots = [i['id'] for i in mine if ev.get('kind') == 'software' and i.get('shot') and not i.get('soft') and int(i.get('w') or 0) >= 900]
+    photos = [i['id'] for i in mine if not i.get('shot') and not i.get('soft') and not i.get('video') and wide(i)]
+    grounds = [i['id'] for i in mine if not i.get('shot') and not i.get('video') and wide(i)]
+    import seo as SEO_
+    words = SEO_.keywords(ev['h1']) if ev.get('h1') and ev.get('seo_safe', True) else []
+    return shots, photos, grounds, words
+
+
+def briefing(ev, images):
+    """The same obligations as sentences for the composer, for this client."""
+    shots, photos, grounds, words = owed(ev, images); out = []
+    if shots: out.append(f'This is software with real screenshots: with "scale": "product" the page OPENS on "open-product", its "image" one of {shots[:5]}.')
+    if grounds and shots: out.append(f'The client has photographs of its own world {grounds[:4]}: name one as the "ground" of "open-product" (a ground may be soft or dark — it lies behind the product), unless you show the product as a cluster with "more".')
+    if photos and not shots: out.append(f'The client has wide, crisp photographs {photos[:5]}: the first screen shows one — open on "open-picture", not on "open-statement".')
+    if words: out.append(f'The h1 itself keeps at least {max(1, (len(words) + 1) // 2)} of these words the client\'s page is found by: {words}. Build the stronger line around them.')
+    if (ev.get('logos') or {}).get('count'): out.append(f'{ev["logos"]["count"]} customer logos were captured: place "logos" directly after the opening, labelled "{ev["logos"].get("said_with_them") or ""}".')
+    return ('CHECKED BEFORE THIS PAGE SHIPS — a plan that misses one is sent back, which costs a second try:\n- ' + '\n- '.join(out)) if out else ''
 
 
 def check(plan, page, ev, allowed, images):
@@ -93,7 +118,7 @@ def check(plan, page, ev, allowed, images):
                 if not im.get('shot') and not phone: bad['pictures'].append(f'{pid}: "open-product" shows the product itself — a screenshot of it, or a phone screen; this is a photograph or a cover')
                 elif im.get('soft') or (not phone and int(im.get('w') or 0) < 900): bad['pictures'].append(f'{pid}: too small or too soft to stand as the product on the first screen — a wide screenshot needs 900 px')
             g = images.get((sc.get('slots') or {}).get('ground'))
-            if (sc.get('slots') or {}).get('ground') and (not g or g.get('shot') or g.get('soft') or int(g.get('w') or 0) < 1000): bad['pictures'].append('"open-product": the ground behind the product is one of the client\'s own sharp photographs at least 1000 px wide — not a screenshot, not a soft picture')
+            if (sc.get('slots') or {}).get('ground') and (not g or g.get('shot') or g.get('gen') or int(g.get('w') or 0) < 1000): bad['pictures'].append('"open-product": the ground behind the product is one of the client\'s own photographs at least 1000 px wide — not a screenshot (it may be soft: it lies behind the product)')
         if sc.get('scene') == 'compare':
             cols = (sc.get('slots') or {}).get('columns') or []
             if any(len(r.get('values') or []) != len(cols) for g in (sc.get('slots') or {}).get('groups') or [] for r in g.get('rows') or []): bad['structure'].append('"compare": every row needs one value for each column')
@@ -110,14 +135,13 @@ def check(plan, page, ev, allowed, images):
     # stadium unused and dropped the words its headline ranked for.
     scenes_ = plan.get('scenes') or []; first = (scenes_[0] if scenes_ else {}); slots0 = first.get('slots') or {}
     wide = lambda i: int(i.get('w') or 0) >= 1000 and int(i.get('w') or 0) >= 1.2 * int(i.get('h') or 1)
-    shots = [i['id'] for i in images.values() if ev.get('kind') == 'software' and i.get('shot') and not i.get('soft') and int(i.get('w') or 0) >= 900]
-    photos = [i['id'] for i in images.values() if not i.get('shot') and not i.get('gen') and not i.get('soft') and not i.get('video') and wide(i)]
+    shots, photos, grounds, words = owed(ev, images)
     if plan.get('scale') == 'product' and shots and first.get('scene') != 'open-product':
         bad['structure'].append(f'software with a real screenshot opens on "open-product" (the product is the picture of the first screen): use one of {shots[:4]}')
     elif first.get('scene') == 'open-statement' and (photos or shots):
         bad['structure'].append(f'the first screen shows no picture although the client has one: open on "open-picture" with one of {photos[:4]}' + (f' or on "open-product" with one of {shots[:4]}' if shots else ''))
-    if first.get('scene') == 'open-product' and photos and not slots0.get('ground') and not slots0.get('more'):   # a cluster of pieces stands on the page itself
-        bad['pictures'].append(f'the client has a wide photograph of its own world {photos[:4]}: name one as the "ground" of "open-product" so the product stands in it')
+    if first.get('scene') == 'open-product' and grounds and not slots0.get('ground') and not slots0.get('more'):   # a cluster of pieces stands on the page itself
+        bad['pictures'].append(f'the client has a wide photograph of its own world {grounds[:4]}: name one as the "ground" of "open-product" so the product stands in it')
     if ev.get('h1') and ev.get('seo_safe', True):
         import seo as SEO_
         said = re.sub(r'[*/]', ' ', str(slots0.get('h1') or '')); kept = SEO_.keyword_coverage(ev['h1'], said)
@@ -138,7 +162,7 @@ def check(plan, page, ev, allowed, images):
         if sc.get('scene') == 'plans' and sl.get('switch') and not all(p.get('price_b') for p in sl.get('plans') or [] if re.search(r'[1-9]', str(p.get('price') or ''))): bad['structure'].append('"plans": the switch needs the second price on every paid plan, as the client publishes it — or no switch')
         if sc.get('scene') == 'close' and sl.get('form') == 'card':
             g = images.get(sl.get('ground'))
-            if not g or g.get('shot') or g.get('soft') or int(g.get('w') or 0) < 1000: bad['pictures'].append('"close" as a card lies on one of the client\'s own sharp photographs at least 1000 px wide: name it in "ground", or use form "centre"')
+            if not g or g.get('shot') or int(g.get('w') or 0) < 1000: bad['pictures'].append('"close" as a card lies on one of the client\'s own photographs at least 1000 px wide: name it in "ground", or use form "centre"')
     shown = [sc.get('scene') for sc in scenes_ if sc.get('scene') in ('features', 'lines', 'tabs', 'held-product', 'code')]
     if len(shown) > 3: bad['structure'].append(f'the product is shown {len(shown)} times over ({shown}): two forms, three at most')
     covers = [k for k, sc in enumerate(scenes_) if sc.get('cover') in (True, 'true')]
@@ -230,6 +254,8 @@ def build(src, out, n=3, atmosphere_wanted=False):
     ev['kind'] = kind; ev['seo_safe'] = str((E.J(src, 'brief.json') or {}).get('mode') or '').lower() not in ('free', 'studio', 'creative')   # read by check(): which pictures are the product, and whether the headline's keywords are owed
     shot_is = ' — screenshot of the real product' if kind == 'software' else ' — a SCREENSHOT OF THE CLIENT\'S OLD WEBSITE: not content, never shown'
     material.append({'type': 'text', 'text': f'KIND OF BUSINESS (as captured): {kind}'})
+    told = briefing(ev, images)
+    if told: material.append({'type': 'text', 'text': told})
     for i in [x for x in imgs if not x.get('logo')][:14]:
         try: material += [{'type': 'text', 'text': f'PICTURE {i["id"]} ({i.get("w")}×{i.get("h")})' + (' — GENERATED atmosphere, not the client\'s own' if i.get('gen') else (' — a crop of ' + i['crop_of'] if i.get('crop_of') else shot_is if i.get('shot') else (' — a still from the client\'s own film' if i.get('video') else ' — the client\'s own picture (look: is it a photograph?)')))}, {'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/jpeg', 'data': E.thumb(i['data'])}}]
         except Exception: pass
