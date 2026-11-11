@@ -71,8 +71,18 @@ def palette(accent, night='#0e0f12', scheme='paper'):
     else: paper, ink = '#ffffff', _mix(night, '#000000', .1)
     ground2 = _mix(paper, ink, .06 if scheme != 'night' else .08)
     em = accent if contrast(accent, paper) >= 3 else ink   # a marked word must be readable: large type needs 3:1
-    return {'paper': paper, 'ink': ink, 'accent': accent, 'em': em, 'on_accent': '#0b0c0f' if _lum(accent) > .32 else '#ffffff', 'ground2': ground2,
+    return {'paper': paper, 'ink': ink, 'accent': accent, 'em': em, 'on_accent': max(('#0b0c0f', '#ffffff'), key=lambda c: contrast(c, accent)), 'ground2': ground2,
             'mute': _mix(ink, paper, .38), 'line': _mix(paper, ink, .14), 'night': night, 'on_night': '#f1f1ee', 'scheme': scheme}
+
+
+def backdrop(accent):
+    """A ground drawn from the client's accent: wide arcs with a lit edge and grain. Drawn, not photographed and not generated; it claims nothing."""
+    r, g, b = _rgb(accent); c = lambda a, k=1.0: f'rgba({int(r * k)},{int(g * k)},{int(b * k)},{a})'
+    arcs = ''.join(f'<path d="M{x0} 1000 C {x0 + 180} {520 - i * 26}, {x0 + 420} {300 - i * 38}, {x0 + 760} {360 - i * 18} S {x0 + 1180} 700, {x0 + 1500} 1100" fill="none" stroke="url(#bd{i % 3})" stroke-width="{150 - i * 12}" stroke-linecap="round" opacity="{0.9 - i * 0.09:.2f}"/>' for i, x0 in enumerate((-160, 120, 420, 700, 980)))
+    grads = ''.join(f'<linearGradient id="bd{n}" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="{c(0, .2)}"/><stop offset=".5" stop-color="{c(a, k)}"/><stop offset="1" stop-color="{c(a * .5, k * .7)}"/></linearGradient>' for n, (a, k) in enumerate(((.8, .6), (.55, .42), (.36, .3))))
+    return (f'<svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs>{grads}<radialGradient id="bdg" cx=".78" cy=".42" r=".6"><stop offset="0" stop-color="{c(.32, .5)}"/><stop offset="1" stop-color="{c(0)}"/></radialGradient>'
+            '<filter id="bdn"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .1 0"/></filter></defs>'
+            f'<rect width="1440" height="900" fill="url(#bdg)"/><g transform="translate(360 0)">{arcs}</g><rect width="1440" height="900" filter="url(#bdn)"/></svg>')
 
 
 # ---- scenes ----
@@ -189,6 +199,48 @@ def _close(s, ctx):
             + (f'<p class="mono note">{e(s["note"])}</p>' if s.get('note') else '') + (f'<div class="cols">{cols}</div>' if cols else '') + f'<p class="mono legal">{e(s.get("legal"))}</p></div>{markw}</footer>')
 
 
+@scene('open-atmosphere', name='Opening: a statement over a field of the brand\'s own colour', role='open', devices=['line-rise', 'rise-stagger', 'magnet', 'depth'],
+       needs='nothing but a headline — the ground is drawn from the accent, or is the commissioned atmosphere picture when one is given (id "atmos")', slots={'kicker': 'mono', 'h1': 'rows split by " / "', 'lede': '≤ 2 sentences', 'note': 'mono, optional'})
+def _open_atmosphere(s, ctx):
+    bg = f'<figure class="atmos dv-depth" style="--rate:.12">{_shot(ctx["images"], "atmos")}</figure>' if 'atmos' in ctx['images'] else f'<div class="atmos">{backdrop(ctx["brand"].get("accent") or "#2f6bff")}</div>'
+    return (f'<section class="sc open open-atmos night" id="top">{bg}<div class="wrap"><p class="mono kicker" data-rise>{e(s.get("kicker"))}</p><h1>{lines(s.get("h1"))}</h1>'
+            f'<div class="open-foot"><p class="lede" data-rise style="--i:1">{e(s.get("lede"))}</p><div class="acts" data-rise style="--i:2">{_btn(ctx["action"], "dv-magnet")}{_btn(ctx.get("action2"), "quiet")}</div>'
+            + (f'<p class="mono note" data-rise style="--i:3">{e(s["note"])}</p>' if s.get('note') else '') + '</div></div></section>')
+
+
+@scene('window', name='One photograph, wide, moving slowly behind its frame', role='show', devices=['depth', 'rise-stagger'],
+       needs='one photograph at least 1200 px wide that can be cropped to a wide frame', slots={'image': 'id', 'alt': 'what it shows', 'caption': 'mono, ≤ 60 chars', 'say': 'one or two sentences set large beside the caption, optional'})
+def _window(s, ctx):
+    return (f'<section class="sc window"><figure class="dv-depth win" style="--rate:-.14">{_shot(ctx["images"], s.get("image"), s.get("alt"))}</figure>'
+            f'<div class="wrap win-foot"><p class="mono">{e(s.get("caption"))}</p>' + (f'<p class="say" data-rise>{e(s["say"])}</p>' if s.get('say') else '') + '</div></section>')
+
+
+@scene('gallery', name='Photographs, one at a time, uncovered from the side', role='show', devices=['slides', 'line-rise'],
+       needs='3–8 photographs of similar proportion, each at least 800 px wide (never screenshots)', slots={'label': 'mono', 'h2': 'rows split by " / "', 'images': [{'image': 'id', 'alt': ''}]})
+def _gallery(s, ctx):
+    pics = ''.join(_shot(ctx['images'], p.get('image'), p.get('alt')) for p in (s.get('images') or [])[:8] if p.get('image') in ctx['images'])
+    return (f'<section class="sc gallery" id="gallery"><div class="wrap"><p class="mono kicker">{e(s.get("label"))}</p><h2>{lines(s.get("h2"), "h2")}</h2>'
+            f'<div class="dv-slides" style="--ratio:16/9"><div class="dv-slides-view">{pics}</div><p class="dv-slides-ui mono"><button data-step="-1" aria-label="Previous">←</button><span class="dv-slides-n"></span><button data-step="1" aria-label="Next">→</button></p></div></div></section>')
+
+
+@scene('carte', name='A menu or price list set like a printed card', role='decide', devices=['rise-stagger'], needs='6–24 items with their prices or values, in 1–4 groups, exactly as the client lists them',
+       slots={'label': 'mono', 'h2': 'rows split by " / "', 'groups': [{'title': '', 'items': [{'name': '', 'note': 'optional, ≤ 70 chars', 'price': 'as written'}]}], 'action': {'label': '', 'url': ''}})
+def _carte(s, ctx):
+    def group(g):
+        rows = ''.join(f'<li><span class="nm"><b>{e(i.get("name"))}</b>' + (f'<small>{e(i["note"])}</small>' if i.get('note') else '') + f'</span><span class="pr">{e(i.get("price"))}</span></li>' for i in (g.get('items') or [])[:10] if i.get('name'))
+        return f'<div class="grp" data-rise><h3 class="mono">{e(g.get("title"))}</h3><ul>{rows}</ul></div>' if rows else ''
+    return (f'<section class="sc carte alt" id="menu-card"><div class="wrap"><p class="mono kicker">{e(s.get("label"))}</p><h2>{lines(s.get("h2"), "h2")}</h2><div class="grps">{"".join(group(g) for g in (s.get("groups") or [])[:4])}</div>'
+            + (f'<div class="acts">{_btn(s.get("action"), "quiet")}</div>' if s.get('action') else '') + '</div></section>')
+
+
+@scene('visit', name='Where and when, set large', role='decide', devices=['line-rise', 'rise-stagger', 'magnet'], needs='an address and opening hours (or how to get in touch), as the client states them',
+       slots={'label': 'mono', 'where': 'the address or place, rows split by " / "', 'rows': [{'k': 'e.g. a day or "Phone"', 'v': 'as written'}], 'action': {'label': 'e.g. Reserve', 'url': ''}})
+def _visit(s, ctx):
+    rows = ''.join(f'<li><span class="mono">{e(r.get("k"))}</span><b>{e(r.get("v"))}</b></li>' for r in (s.get('rows') or [])[:9] if r.get('k'))
+    return (f'<section class="sc visit" id="visit"><div class="wrap visit-in"><div><p class="mono kicker">{e(s.get("label"))}</p><h2>{lines(s.get("where"), "h2")}</h2><div class="acts" data-rise>{_btn(s.get("action") or ctx["action"], "dv-magnet")}</div></div>'
+            f'<ul class="kv" data-rise style="--i:1">{rows}</ul></div></section>')
+
+
 CSS = """
 *{box-sizing:border-box;margin:0}html{-webkit-text-size-adjust:100%}
 body{font-family:var(--text);font-size:clamp(15px,1.11vw,17px);line-height:1.5;color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased;overflow-x:clip}
@@ -207,7 +259,7 @@ em{font-style:normal;color:var(--em)}.display-serif em,.soft-serif em{font-style
 .acts{display:flex;flex-wrap:wrap;gap:12px}
 /* bar */
 .bar{position:fixed;inset:0 0 auto 0;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px var(--pad);mix-blend-mode:normal}
-.bar .name{font-family:var(--display);font-weight:var(--dw);text-transform:var(--dcase);letter-spacing:var(--dls);font-size:clamp(20px,1.7vw,26px);text-decoration:none;white-space:nowrap}
+.bar .name{color:#fff;mix-blend-mode:difference;font-family:var(--display);font-weight:var(--dw);text-transform:var(--dcase);letter-spacing:var(--dls);font-size:clamp(20px,1.7vw,26px);text-decoration:none;white-space:nowrap}
 .bar-r{display:flex;align-items:center;gap:10px}.bar-links{display:flex;gap:6px;padding:0 8px;min-height:44px;align-items:center;border-radius:999px;background:color-mix(in srgb,var(--paper) 82%,transparent);backdrop-filter:blur(14px)}
 .bar-links a{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;padding:10px 12px}.bar .btn{min-height:44px;padding:0 18px}.dv-menu-btn{display:none}
 /* open */
@@ -238,6 +290,14 @@ em{font-style:normal;color:var(--em)}.display-serif em,.soft-serif em{font-style
 .rows .row{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:clamp(16px,2.4vw,40px);padding:clamp(18px,2vw,28px) 0;border-top:1px solid var(--line)}.rows h3{font:500 clamp(16px,1.3vw,19px)/1.35 var(--text)}.rows p{color:var(--mute)}
 .index{padding-block:clamp(56px,7vw,112px);background:var(--ground2)}.index-in{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,8fr);gap:clamp(24px,4vw,64px)}.index ul{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,15rem),1fr));column-gap:clamp(24px,3vw,48px)}
 .index a{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:54px;border-bottom:1px solid var(--line);text-decoration:none;transition:padding .25s var(--ease)}.index a::after{content:"→";font-family:var(--mono);opacity:.45}.index a:hover{padding-left:8px}
+/* atmosphere, window, gallery, carte, visit */
+.open-atmos{position:relative;isolation:isolate;overflow:hidden}.atmos{position:absolute;inset:0;z-index:-1;margin:0}.atmos svg,.atmos img{width:100%;height:100%;object-fit:cover}.open-atmos .atmos::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,color-mix(in srgb,var(--night) 30%,transparent),color-mix(in srgb,var(--night) 78%,transparent))}
+.open-atmos .btn.quiet{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--on-night) 30%,transparent)}
+.window{padding-block:0}.win{margin:0;aspect-ratio:21/9;max-height:92svh;width:100%}.win img{height:100%;object-fit:cover}.win-foot{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,8fr);gap:clamp(24px,4vw,64px);padding-block:clamp(20px,2.4vw,36px) 0;color:var(--mute)}.window+.sc{padding-top:clamp(64px,8vw,128px)}.win-foot .say{color:var(--ink);max-width:30ch}
+.gallery h2{margin-bottom:clamp(40px,6vw,96px)}.dv-slides-view{border-radius:14px}
+.grps{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:clamp(40px,6vw,96px) clamp(32px,5vw,96px);margin-top:clamp(48px,7vw,120px)}.grp h3{color:var(--mute);padding-bottom:14px;border-bottom:1px solid var(--ink)}
+.grp li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--line)}.grp b{font-weight:500;font-size:clamp(17px,1.4vw,21px)}.grp small{display:block;color:var(--mute);font-size:14px;margin-top:3px}.grp .pr{font-family:var(--mono);font-size:14px;white-space:nowrap}.carte .acts{margin-top:clamp(32px,4vw,56px)}
+.visit-in{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(32px,5vw,96px);align-items:end}.visit .acts{margin-top:clamp(28px,4vw,56px)}
 /* close */
 .night{background:var(--night);color:var(--on-night);--line:color-mix(in srgb,var(--on-night) 16%,transparent);--mute:color-mix(in srgb,var(--on-night) 62%,transparent);--em:var(--accent)}
 .close{padding-bottom:0;overflow:hidden}.close .acts{margin-top:clamp(28px,4vw,64px)}.close .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr));gap:clamp(24px,4vw,64px);margin-top:clamp(72px,10vw,160px);padding-top:28px;border-top:1px solid var(--line)}
@@ -245,7 +305,7 @@ em{font-style:normal;color:var(--em)}.display-serif em,.soft-serif em{font-style
 .dv-endmark{font-family:var(--display);font-weight:var(--dw);text-transform:var(--dcase);color:var(--on-night);opacity:.94}
 @media (max-width:900px){
 .bar-links{display:none}.dv-menu-btn{display:inline-flex;align-items:center}.bar .btn{display:none}
-.open-foot,.stage-head,.ledger-in,.index-in,.rows .row{grid-template-columns:minmax(0,1fr)}.dv-held{grid-template-columns:minmax(0,1fr)!important}
+.open-foot,.stage-head,.ledger-in,.index-in,.rows .row,.win-foot,.visit-in{grid-template-columns:minmax(0,1fr)}.win{aspect-ratio:4/3}.dv-held{grid-template-columns:minmax(0,1fr)!important}
 .card{grid-template-columns:minmax(0,1fr);min-height:0}.dv-held-m{font-family:var(--display);font-weight:var(--dw)!important;text-transform:var(--dcase);letter-spacing:var(--dls)!important}
 }
 """

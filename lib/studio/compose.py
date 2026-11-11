@@ -20,6 +20,7 @@ THE STORY comes first. Before choosing a scene, decide: what does a visitor not 
 HOW TO CHOOSE
 - Type system: by the client's voice (read the names in TYPE). If the client's own headline face is one of them in spirit, keep that character.
 - Scheme: "paper", "night" or "tint" — from the client's brand and from what its pictures need (dark screenshots sit badly on white unless framed; photographs want paper).
+- A place (restaurant, hotel, shop) is shown with its photographs: "open-picture", "window", "gallery", its list as a "carte", and "visit" for where and when. Software is shown with "held-product", "stage", "figures". When there is no picture strong enough to open on, "open-atmosphere" or "open-statement".
 - 5–8 scenes including exactly one opening and one close. At most one "rail". Use "held-product" only with three or more claims that each have something to SHOW; give every panel the tightest, most readable real picture (prefer crops made for the purpose over whole pages of small text) or real figures. Use "stage" for the one whole screen worth seeing large. Use "figures" only for numbers that are an argument.
 - Headings are written for their scene: display lines are short and break into rows with " / " (2–3 rows, 1–4 words a row); mark ONE phrase per line with *asterisks* at most. A heading over cards must agree with the number of cards.
 - Secondary pages go in one "index" near the end (6–12 links, short names). Nothing is repeated, nothing is dumped.
@@ -77,6 +78,41 @@ def one(material, ev, allowed, images, out, tag, hint):
     return {'tag': tag, 'type': plan.get('type'), 'scheme': plan.get('scheme'), 'story': plan.get('story'), 'why': plan.get('why'), 'scenes': [s.get('scene') for s in plan.get('scenes') or []], 'checks': tries, 'clean': not any(tries[-1].values())}
 
 
+PICK_TOOL = {'name': 'pick', 'description': 'Which candidate, if any, may stand behind a headline.', 'input_schema': {'type': 'object', 'required': ['choice', 'why'], 'properties': {
+    'choice': {'type': 'integer', 'description': 'the number of the one candidate that passes, or 0 to reject them all'}, 'why': {'type': 'string'},
+    'faults': {'type': 'array', 'items': {'type': 'string'}, 'description': 'what disqualified the others: text or letters, a face or a hand, an interface, a recognisable object or logo, muddy or garish colour, the look of stock AI art'}}}}
+
+
+def atmosphere(ev, plan_hint, out, n=3):
+    """A commissioned ground for the opening: abstract, in the client's own colours, claiming nothing. Several are made
+    and a strict second look keeps at most one — rejecting them all is a normal outcome and the page then opens on type.
+    Returns an image record ({'id': 'atmos', 'gen': True, …}) or None, and what happened."""
+    sys.path.insert(0, os.path.join(ROOT, 'lib', 'swarm'))
+    import base64, io, gen as G
+    from PIL import Image
+    from concurrent.futures import ThreadPoolExecutor
+    if not G.enabled(): return None, {'made': 0, 'why': 'no image key in this environment'}
+    cols = [c.get('c') for c in ((ev.get('brand') or {}).get('colours') or {}).get('bg') or [] if isinstance(c, dict)][:3]
+    prompt = (f'Abstract photographic study of light and material, no subject. Wide soft bands and folds of light crossing a deep dark field, one clear direction of movement, large calm empty areas for text. '
+              f'Colour strictly from this palette: {", ".join(cols) or "near black"} with a single accent of {plan_hint}. Fine film grain, shallow depth, studio lighting, restrained, minimal, editorial. '
+              'Absolutely no text, no letters, no numbers, no logos, no people, no faces, no hands, no screens, no interface, no devices, no objects, no buildings, no borders.')
+    def one(k):
+        try:
+            im = Image.open(io.BytesIO(G.generate(prompt, '16:9'))).convert('RGB'); im.thumbnail((1920, 1920)); buf = io.BytesIO(); im.save(buf, 'JPEG', quality=86)
+            return {'w': im.size[0], 'h': im.size[1], 'data': 'data:image/jpeg;base64,' + base64.b64encode(buf.getvalue()).decode()}
+        except Exception as err: return {'error': str(err)[:140]}
+    with ThreadPoolExecutor(n) as ex: made = [m for m in ex.map(one, range(n))]
+    good = [m for m in made if m.get('data')]
+    for k, m in enumerate(good):
+        with open(os.path.join(out, f'atmos-candidate-{k + 1}.jpg'), 'wb') as f: f.write(base64.b64decode(m['data'].split(',', 1)[1]))
+    if not good: return None, {'made': 0, 'errors': [m.get('error') for m in made]}
+    content = [{'type': 'text', 'text': f'{len(good)} candidates for the ground behind a homepage headline. The accent is {plan_hint}. Keep at most one. Reject any with text or letters, a face or hand, an interface or device, a recognisable object or logo, muddy or garish colour, or the plastic look of stock AI art. A ground must be calm enough to carry large white type.'}]
+    for k, m in enumerate(good): content += [{'type': 'text', 'text': f'CANDIDATE {k + 1}'}, {'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/jpeg', 'data': E.thumb(m['data'], 1100)}}]
+    verdict = E.call('You are a strict picture editor. Rejecting everything is a normal, respectable outcome.', content, 'atmosphere-pick', tool=PICK_TOOL, max_tokens=1500)
+    k = verdict.get('choice') or 0; report = {'made': len(good), 'kept': k, 'why': verdict.get('why'), 'faults': verdict.get('faults')}
+    return ({'id': 'atmos', 'gen': True, 'alt': '', **good[k - 1]} if 1 <= k <= len(good) else None), report
+
+
 VARIANTS = [('a', 'VARIANT A — the page you believe is right for this client.'),
             ('b', 'VARIANT B — a different reading of the same client: a different type system and a different scheme from the obvious choice, a different opening scene if the material allows, and the story told in another order. It must still be true to the brand.'),
             ('c', 'VARIANT C — the boldest honest version: the fewest scenes that carry the argument, the largest type, one accent used once or twice. A different type system again.')]
@@ -88,13 +124,21 @@ def main():
     os.makedirs(out, exist_ok=True); t0 = time.time()
     ev, imgs = E.evidence(src); images = {i['id']: i for i in imgs}; allowed = {l['url'].rstrip('/') for l in ev['links']} | {str(ev.get('url') or '').rstrip('/')}
     material = [{'type': 'text', 'text': 'THE STUDIO\'S SCENES, TYPE SYSTEMS AND SCHEMES:\n' + json.dumps(S.catalogue(), ensure_ascii=False, indent=1)}, {'type': 'text', 'text': 'THE EVIDENCE (the client\'s existing site):\n' + json.dumps(ev, ensure_ascii=False, indent=1)}]
-    for i in imgs[:12]:
-        try: material += [{'type': 'text', 'text': f'PICTURE {i["id"]} ({i.get("w")}×{i.get("h")})' + (' — GENERATED atmosphere, not the product' if i.get('gen') else (' — a crop of ' + i['crop_of'] if i.get('crop_of') else ' — screenshot of the real product' if i.get('shot') else ''))}, {'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/jpeg', 'data': E.thumb(i['data'])}}]
+    kind = (E.J(src, 'direction.json') or {}).get('kind') or (E.J(src, 'brief.json') or {}).get('kind') or 'software'
+    shot_is = ' — screenshot of the real product' if kind == 'software' else ' — a SCREENSHOT OF THE CLIENT\'S OLD WEBSITE: not content, never shown'
+    material.append({'type': 'text', 'text': f'KIND OF BUSINESS (as captured): {kind}'})
+    for i in imgs[:14]:
+        try: material += [{'type': 'text', 'text': f'PICTURE {i["id"]} ({i.get("w")}×{i.get("h")})' + (' — GENERATED atmosphere, not the client\'s own' if i.get('gen') else (' — a crop of ' + i['crop_of'] if i.get('crop_of') else shot_is if i.get('shot') else ' — the client\'s own photograph'))}, {'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/jpeg', 'data': E.thumb(i['data'])}}]
         except Exception: pass
+    made = None
+    if '--atmosphere' in args:
+        accent = next((c.get('c') for c in ((ev.get('brand') or {}).get('colours') or {}).get('buttons') or [] if isinstance(c, dict) and 'a0' not in str(c.get('c'))), None) or 'the brand\'s signature colour'
+        pic, made = atmosphere(ev, accent, out)
+        if pic: images['atmos'] = pic; material += [{'type': 'text', 'text': 'PICTURE atmos — a commissioned abstract ground in the client\'s colours, kept after a strict second look: the scene "open-atmosphere" stands on it (it is placed for you; do not name it in a slot)'}, {'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/jpeg', 'data': E.thumb(pic['data'])}}]
     from concurrent.futures import ThreadPoolExecutor
     with ThreadPoolExecutor(3) as ex: results = list(ex.map(lambda v: one(material, ev, allowed, images, out, v[0], v[1]), VARIANTS[:n]))
     priced = [u['usd'] for u in E.USAGE if u['usd'] is not None]
-    report = {'variants': results, 'usage': E.USAGE, 'usd': round(sum(priced), 3), 'seconds': round(time.time() - t0)}
+    report = {'atmosphere': made, 'variants': results, 'usage': E.USAGE, 'usd': round(sum(priced), 3), 'seconds': round(time.time() - t0)}
     with open(os.path.join(out, 'report.json'), 'w', encoding='utf-8') as f: json.dump(report, f, indent=1, ensure_ascii=False)
     print(json.dumps({'variants': [(r['tag'], r['type'], r['scheme'], r['scenes'], r['clean']) for r in results], 'usd': report['usd'], 'seconds': report['seconds']}, ensure_ascii=False))
 
