@@ -28,6 +28,7 @@ HOW TO CHOOSE
 
 RULES THAT ARE NOT YOURS TO BEND
 - Every fact, number, price, name and claim comes from the evidence, in the client's meaning. Reword for length; never add. An empty slot is better than an invented one.
+- Look at each picture before you use it. A picture that is a document, a notice, a poster of text, a certificate, a map, a logo or a screenshot of a website is NOT a photograph and is never shown, whatever its label says. A still from the client's own film is the client's own picture and may be shown.
 - Every url is one of the links given. Every image id is one given; a generated picture is never shown as the product; a picture is used once.
 - Write in the language of the client's site. Plain and specific. No exclamation marks, no marketing filler.
 - brand.accent and brand.night are the client's OWN signature colour and darkest ground (hex)."""
@@ -139,7 +140,7 @@ def main():
     shot_is = ' — screenshot of the real product' if kind == 'software' else ' — a SCREENSHOT OF THE CLIENT\'S OLD WEBSITE: not content, never shown'
     material.append({'type': 'text', 'text': f'KIND OF BUSINESS (as captured): {kind}'})
     for i in imgs[:14]:
-        try: material += [{'type': 'text', 'text': f'PICTURE {i["id"]} ({i.get("w")}×{i.get("h")})' + (' — GENERATED atmosphere, not the client\'s own' if i.get('gen') else (' — a crop of ' + i['crop_of'] if i.get('crop_of') else shot_is if i.get('shot') else ' — the client\'s own photograph'))}, {'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/jpeg', 'data': E.thumb(i['data'])}}]
+        try: material += [{'type': 'text', 'text': f'PICTURE {i["id"]} ({i.get("w")}×{i.get("h")})' + (' — GENERATED atmosphere, not the client\'s own' if i.get('gen') else (' — a crop of ' + i['crop_of'] if i.get('crop_of') else shot_is if i.get('shot') else (' — a still from the client\'s own film' if i.get('video') else ' — the client\'s own picture (look: is it a photograph?)')))}, {'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/jpeg', 'data': E.thumb(i['data'])}}]
         except Exception: pass
     made = None
     if '--atmosphere' in args:
