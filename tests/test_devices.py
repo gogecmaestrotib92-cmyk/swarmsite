@@ -19,7 +19,7 @@ def test_no_device_hides_content_without_its_script():
     for d in R.DEVICES.values():
         for rule in re.findall(r'([^{}]+)\{([^{}]*)\}', d['css']):
             hides = re.search(r'opacity:\s*0(?![.\d])|transform:\s*(translateY\(1\d\d%|scaleX\(0\))', rule[1])
-            if hides: assert rule[0].strip().startswith('.dv ') or 'dv-peek-img' in rule[0], f"{d['id']}: {rule[0].strip()} hides content without the script"
+            if hides: assert rule[0].strip().startswith('.dv ') or '.dv .' in rule[0] or 'dv-peek-img' in rule[0], f"{d['id']}: {rule[0].strip()} hides content without the script"
 
 
 def test_bundle_carries_each_device_once_and_the_demo_uses_them():

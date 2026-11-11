@@ -175,6 +175,51 @@ const step=()=>{now+=(to-now)*.12;if(Math.abs(to-now)<.5){now=to;run=0;scrollTo(
 addEventListener('wheel',e=>{if(e.ctrlKey||e.defaultPrevented||e.target.closest('[data-native-scroll],textarea,select'))return;e.preventDefault();if(!run){to=now=scrollY}to=Math.max(0,Math.min(R.scrollHeight-innerHeight,to+e.deltaY*(e.deltaMode?32:1)));run||(run=requestAnimationFrame(step))},{passive:false});
 addEventListener('scroll',()=>{if(!run){to=now=scrollY}},{passive:true})}""")
 
+device(id='count-up', name='A number that counts up to its value', kind='data',
+       sees='A large figure runs up from zero to its real value when it comes into view, then stands still.',
+       measured=None, seen='51 mentions in the technique survey (rank 6); timings not measured — ours runs 1.1 s', survey=True,
+       needs='1–4 true numbers that mean something on their own', use='the record, the scale, the price — where a number is the argument', avoid='numbers that are not counts (years, phone numbers, versions); more than four at once',
+       pairs=['rise-stagger', 'figure-bars'], markup='<span class="dv-count" data-to="729">729</span>  (the real value is the text; a prefix or suffix stays outside the span)',
+       css=".dv-count{font-variant-numeric:tabular-nums}",
+       js=r"""if(!calm)each('.dv-count',el=>{const raw=el.textContent.trim(),to=parseFloat((el.dataset.to||raw).replace(/[^0-9.\-]/g,''));if(!isFinite(to))return;const dec=(String(el.dataset.to||raw).split('.')[1]||'').replace(/\D/g,'').length,sep=/,/.test(raw);
+el.setAttribute('aria-label',raw);const fmt=v=>{const t=v.toFixed(dec);return sep?t.replace(/\B(?=(\d{3})+(?!\d))/g,','):t};
+new IntersectionObserver((es,o)=>es.forEach(x=>{if(!x.isIntersecting)return;o.disconnect();const t0=performance.now(),run=t=>{const k=Math.min(1,(t-t0)/1100),e=1-Math.pow(1-k,3);el.textContent=k<1?fmt(to*e):raw;k<1&&requestAnimationFrame(run)};requestAnimationFrame(run)}),{threshold:.6}).observe(el)});""")
+
+device(id='overlay-menu', name='A menu that takes the whole screen', kind='navigation',
+       sees='A small button opens the navigation as a full screen of very large links that arrive one after another.',
+       measured=None, seen='101 mentions in the technique survey (rank 3, inflated: "menu" is also a category name); timings not measured', survey=True,
+       needs='3–7 destinations', use='every page on a phone; on a desk when the bar should stay nearly empty', avoid='more than seven links; putting the only way to the main action inside it',
+       pairs=[], markup='<button class="dv-menu-btn" aria-expanded="false" aria-controls="menu">Menu</button> … <nav class="dv-menu" id="menu" aria-label="Menu"><a href="#…">Link</a>…</nav>',
+       css=""".dv-menu-btn{min-height:44px;padding:0 16px;border-radius:7px;border:0;font:inherit;background:var(--ink);color:var(--paper);cursor:pointer}
+.dv-menu{display:flex;flex-direction:column;gap:.1em;padding:clamp(20px,4vw,48px) 0}.dv-menu a{font-weight:300;font-size:clamp(34px,9vw,92px);line-height:1.08;letter-spacing:-.03em;color:inherit;text-decoration:none}
+.dv .dv-menu{position:fixed;inset:0;z-index:60;background:var(--ink);color:var(--paper);padding:clamp(88px,14vh,140px) clamp(20px,2.8vw,40px) 32px;justify-content:flex-end;overflow:auto;visibility:hidden;opacity:0;transition:opacity .25s ease,visibility 0s .25s}
+.dv .dv-menu.is-open{visibility:visible;opacity:1;transition:opacity .25s ease}.dv .dv-menu a{transform:translateY(24px);opacity:0;transition:transform .45s var(--ease),opacity .3s ease;transition-delay:calc(var(--i,0) * 50ms)}.dv .dv-menu.is-open a{transform:none;opacity:1}
+.dv .dv-menu-btn{position:relative;z-index:61}.dv-menu-lock{overflow:hidden}""",
+       js="""each('.dv-menu-btn',b=>{const m=D.getElementById(b.getAttribute('aria-controls'));if(!m)return;[...m.querySelectorAll('a')].forEach((a,i)=>a.style.setProperty('--i',i));const word=b.textContent;
+const set=o=>{m.classList.toggle('is-open',o);b.setAttribute('aria-expanded',o);R.classList.toggle('dv-menu-lock',o);b.textContent=o?'Close':word;m.querySelectorAll('a').forEach(a=>a.tabIndex=o?0:-1)};set(false);
+b.addEventListener('click',()=>set(!m.classList.contains('is-open')));m.addEventListener('click',e=>e.target.closest('a')&&set(false));addEventListener('keydown',e=>e.key==='Escape'&&m.classList.contains('is-open')&&(set(false),b.focus()))});""")
+
+device(id='slides', name='Pictures that replace each other behind a moving edge', kind='media',
+       sees='One large picture at a time; the next one is uncovered from one side while a counter and two buttons stand beside it.',
+       measured=None, seen='55 mentions in the technique survey (rank 5); timings not measured — ours wipes in 0.7 s', survey=True,
+       needs='3–8 pictures of one proportion, each at least 1200 px wide', use='rooms, dishes, projects — when the pictures are the content', avoid='screenshots with small text; fewer than three pictures; autoplay',
+       pairs=['rise-stagger'], markup='<div class="dv-slides"><div class="dv-slides-view"><img …><img …>…</div><p class="dv-slides-ui"><button data-step="-1" aria-label="Previous">←</button><span class="dv-slides-n"></span><button data-step="1" aria-label="Next">→</button></p></div>',
+       css=""".dv-slides-view{display:grid;gap:12px}.dv-slides-view>*{display:block;width:100%;height:auto;aspect-ratio:var(--ratio,3/2);object-fit:cover}
+.dv .dv-slides-view{gap:0;overflow:hidden}.dv .dv-slides-view>*{grid-area:1/1;clip-path:inset(0 0 0 100%);transition:clip-path .7s var(--ease)}.dv .dv-slides-view>.is-on{clip-path:inset(0);z-index:1}.dv .dv-slides-view>.was-on{clip-path:inset(0);transition:none}
+.dv-slides-ui{display:none;align-items:center;gap:16px;margin:16px 0 0}.dv .dv-slides-ui{display:flex}.dv-slides-ui button{min-width:44px;min-height:44px;border-radius:999px;border:1px solid currentColor;background:none;color:inherit;font:inherit;cursor:pointer}""",
+       js="""each('.dv-slides',s=>{const v=[...s.querySelector('.dv-slides-view').children],n=s.querySelector('.dv-slides-n');if(v.length<2)return;let i=0;
+const go=k=>{v.forEach(x=>x.classList.remove('was-on'));v[i].classList.add('was-on');v[i].classList.remove('is-on');i=(k+v.length)%v.length;v[i].classList.add('is-on');n&&(n.textContent=`${i+1} / ${v.length}`)};v[0].classList.add('is-on');n&&(n.textContent=`1 / ${v.length}`);
+s.querySelectorAll('[data-step]').forEach(b=>b.addEventListener('click',()=>go(i+ +b.dataset.step)));s.tabIndex=0;s.addEventListener('keydown',e=>{e.key==='ArrowRight'&&go(i+1);e.key==='ArrowLeft'&&go(i-1)})});""")
+
+device(id='ground-shift', name='The ground changes colour as a scene arrives', kind='transition',
+       sees='Scrolling into a section, the whole page behind it eases from one colour to another instead of cutting at an edge.',
+       measured=None, seen='named in the survey among section transitions; on the sixteen measured sites grounds are few (one or two on nine of them) — so this is used once, for the one change', survey=True,
+       needs='two grounds from the client\'s palette with enough contrast for the text on each', use='the single change of ground on a page', avoid='more than once or twice; grounds whose text colour would have to change mid-sentence',
+       pairs=['held-index', 'rise-stagger'], markup='<section data-ground="#101421" data-ink="#ffffff">…</section>  (the page sets body{background:var(--paper);color:var(--ink);transition:background-color .6s,color .6s})',
+       css="body{transition:background-color .6s ease,color .6s ease}[data-ground]{background:none!important;color:inherit}",
+       js="""{const base={g:getComputedStyle(D.body).backgroundColor,i:getComputedStyle(D.body).color},zones=[...D.querySelectorAll('[data-ground]')];
+if(zones.length)onScroll(()=>{const mid=innerHeight*.55,z=zones.find(z=>{const r=z.getBoundingClientRect();return r.top<mid&&r.bottom>mid});D.body.style.backgroundColor=z?z.dataset.ground:base.g;D.body.style.color=z?(z.dataset.ink||base.i):base.i})}""")
+
 # What the measured pages have in common as whole pages — the builder's ground rules, each with its evidence.
 RULES = {
     'source': 'sixteen Sites of the Month measured 2026-11-11 with lib/qa/inspect.mjs at 1440; ranges are across sites; bench/runs/_research/harvest/SUMMARY.md',
@@ -213,9 +258,13 @@ def demo(ids=None):
         'stack-cards': '<div class="dv-stack">' + ''.join(f'<article class="dv-card card"><p class="mono">0{k}</p><h2>Step {k}</h2><p>Each card is a complete thought and they are all about as tall.</p></article>' for k in (1, 2, 3, 4)) + '</div>',
         'grow-to-bleed': f'<figure class="dv-grow"><img src="{pic(1600, 800, "3a6ff2")}" alt="" width="1600" height="800"></figure>',
         'depth': f'<figure class="dv-depth" style="--rate:-.14;margin:0;aspect-ratio:21/9;border-radius:15px"><img src="{pic(1600, 900, "2aa66b")}" alt="" width="1600" height="900"></figure>',
+        'overlay-menu': '<button class="dv-menu-btn" aria-expanded="false" aria-controls="menu">Menu</button><nav class="dv-menu" id="menu" aria-label="Menu"><a href="#held-index">The held index</a><a href="#stack-cards">Stacked cards</a><a href="#slides">Slides</a><a href="#end">The end</a></nav>',
+        'count-up': '<p class="big"><span class="dv-count" data-to="729">729</span> picks · <span class="dv-count" data-to="28188">28,188</span> analyses · +<span class="dv-count" data-to="6.28">6.28</span>u</p>',
+        'slides': '<div class="dv-slides" style="--ratio:21/9"><div class="dv-slides-view">' + ''.join(f'<img src="{pic(1600, 700, c)}" alt="" width="1600" height="700">' for c in ('e85d3a', '2aa66b', '7a4de0')) + '</div><p class="dv-slides-ui mono"><button data-step="-1" aria-label="Previous">←</button><span class="dv-slides-n"></span><button data-step="1" aria-label="Next">→</button></p></div>',
+        'ground-shift': '<div data-ground="#101421" data-ink="#ffffff" style="padding:12vh 0"><p class="big">The one change of ground</p><p class="lede">Scrolling in, the page behind this passage eases to night and back.</p></div>',
         'peek': '<ul class="dv-peek list">' + ''.join(f'<li><a href="#end" data-peek="{pic(800, 600, c)}">{t}</a></li>' for t, c in (('First piece of work', 'e85d3a'), ('Second piece of work', '2aa66b'), ('Third piece of work', '7a4de0'), ('Fourth piece of work', '222222'))) + '</ul>',
         'end-mark': '<div class="dv-endmark" style="--chars:7" aria-hidden="true">Library</div>'}
-    order = ['line-rise', 'rise-stagger', 'fact-ticker', 'held-index', 'side-rail', 'stack-cards', 'grow-to-bleed', 'depth', 'peek', 'end-mark']
+    order = ['overlay-menu', 'line-rise', 'rise-stagger', 'fact-ticker', 'count-up', 'held-index', 'side-rail', 'stack-cards', 'grow-to-bleed', 'depth', 'slides', 'ground-shift', 'peek', 'end-mark']
     body = ''.join(f'<section id="{i}"><p class="mono tag">{i}</p>{blocks[i]}</section>' for i in order if i in ids and i in blocks)
     page_css = """*{box-sizing:border-box}body{margin:0;--ink:#101421;--paper:#fff;--accent:#ff488b;font:18px/1.5 'Geist',system-ui,sans-serif;color:var(--ink);background:var(--paper)}
 section{padding:clamp(56px,9vw,140px) clamp(20px,2.8vw,40px)}.big{font-weight:300;font-size:clamp(44px,6vw,104px);line-height:1;letter-spacing:-.03em;margin:0}.huge span{font-weight:300;font-size:clamp(56px,11vw,180px);letter-spacing:-.04em;white-space:nowrap}
