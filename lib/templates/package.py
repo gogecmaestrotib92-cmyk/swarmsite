@@ -37,7 +37,12 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 TOOL = HERE.parent / 'qa' / 'package_compare.mjs'
-UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36'   # the stylesheet a current browser gets: woff2, split by script
+# The stylesheet a current browser gets: woff2, split by script. Google serves Macs other files (unhinted) than every
+# other system (hinted): measured 2026-11-12, all 33 files of one stylesheet differ between a Mac UA and a Linux or
+# Windows one. A Linux or Windows browser draws the two sets at different widths and line heights, so a package built
+# with the Mac set and compared on the Linux worker was 28 px shorter than its preview and refused on every screen.
+# The hinted set is what most visitors' browsers get and draws the same on a Mac (which ignores hinting).
+UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'
 FONT_HOSTS = ('https://fonts.googleapis.com/', 'https://fonts.gstatic.com/')
 README = """%(name)s — your new page
 
@@ -47,8 +52,9 @@ fonts/       the typefaces of the page (open licences; they travel with the page
 data.json    the words, links and pictures the page was made from
 
 The page asks the internet for nothing: everything it shows is in this folder.
-Template: %(slug)s. Made with Swarmsite.
+Made with Swarmsite.
 """
+# the visitor never reads which reference a template was rebuilt from (owner, 2026-11-12): not here, not in a file name
 
 
 class PackageError(Exception):
@@ -75,7 +81,8 @@ def fetch_cached(url, cache=None):
     """the bytes at a Google Fonts address, from the cache or fetched once"""
     if not url.startswith(FONT_HOSTS):
         raise PackageError('not a Google Fonts address: %s' % url[:80])
-    f = Path(cache or font_cache()) / hashlib.sha256(url.encode()).hexdigest()[:32]
+    # the same stylesheet address answers each system with other files: what was kept under another UA is not reused
+    f = Path(cache or font_cache()) / hashlib.sha256((UA + '\n' + url).encode()).hexdigest()[:32]
     if f.is_file() and f.stat().st_size:
         return f.read_bytes()
     try:

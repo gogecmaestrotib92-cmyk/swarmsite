@@ -425,7 +425,7 @@ def s_close(d, c):
         lg = f'<div class="bv"><div class="bt">{one}{one}</div></div>'
     dock = ''
     if figs:
-        dock = '<dl class="dock">' + ''.join(
+        dock = '<dl class="tray">' + ''.join(
             f'<div><dt>{e(x["v"])}</dt>' + (f'<dd>{e(x["l"])}</dd>' if x.get('l') else '') + '</div>' for x in figs[:4]) + '</dl>'
     return f'<section class="end">{lg}{dock}</section>'
 
@@ -642,15 +642,15 @@ h2{font-size:60px;line-height:60px;letter-spacing:-3px;font-weight:700;text-wrap
 .fq[open] i{transform:rotate(45deg)}
 .fa{padding:0 20px 0 40px}
 .fa p{font-size:16px;line-height:25.6px;color:var(--mut)}
-/* closing: the dock bar alone */
+/* closing: the bar of figures alone */
 .end{padding:100px 20px 0;display:flex;flex-direction:column;align-items:center;gap:60px}
 .bv{width:min(100%,1000px);overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 48px,#000 calc(100% - 48px),transparent);mask-image:linear-gradient(90deg,transparent,#000 48px,#000 calc(100% - 48px),transparent)}
 .bt{display:flex;gap:20px;width:max-content;align-items:center;animation:run 40s linear infinite}
 .bt .lg{height:48px;width:auto}
-.dock{display:flex;align-items:stretch;gap:10px;min-height:100px;max-width:min(100%,1120px);padding:10px;border-radius:30px;background:var(--D);color:var(--oD)}
-.dock div{display:flex;flex-direction:column;justify-content:center;min-height:80px;padding:10px 20px;border-radius:20px;background:var(--oD1);box-shadow:inset 0 0 0 1px var(--oD1)}
-.dock dt{font-size:30px;line-height:36px;font-weight:600;white-space:nowrap}
-.dock dd{font-size:12px;line-height:14.4px;color:var(--mutD);max-width:210px}
+.tray{display:flex;align-items:stretch;gap:10px;min-height:100px;max-width:min(100%,1120px);padding:10px;border-radius:30px;background:var(--D);color:var(--oD)}
+.tray div{display:flex;flex-direction:column;justify-content:center;min-height:80px;padding:10px 20px;border-radius:20px;background:var(--oD1);box-shadow:inset 0 0 0 1px var(--oD1)}
+.tray dt{font-size:30px;line-height:36px;font-weight:600;white-space:nowrap}
+.tray dd{font-size:12px;line-height:14.4px;color:var(--mutD);max-width:210px}
 /* foot */
 .ft{position:relative;padding-top:100px;overflow:hidden}
 .fcn{position:relative;z-index:2;display:flex;gap:32px;align-items:flex-start}
@@ -752,10 +752,10 @@ h2{font-size:60px;line-height:60px;letter-spacing:-3px;font-weight:700;text-wrap
  .fl{flex-direction:column}
  .fc{width:100%;flex:none}
  .end{padding-top:80px}
- .dock{display:grid;grid-template-columns:1fr 1fr;width:100%}
- .dock div{padding:14px 16px}
- .dock dt{font-size:26px;line-height:32px}
- .dock dd{max-width:none}
+ .tray{display:grid;grid-template-columns:1fr 1fr;width:100%}
+ .tray div{padding:14px 16px}
+ .tray dt{font-size:26px;line-height:32px}
+ .tray dd{max-width:none}
  .ft .wrap{width:calc(100% - 80px)}
  .fcn{flex-direction:column}
  .fb{flex:none;width:100%}

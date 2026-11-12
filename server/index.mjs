@@ -10,7 +10,8 @@ import { saveCrawlCheckpoint, restoreCrawlCheckpoint } from './crawl_checkpoint.
 import { spawn } from 'node:child_process'; import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
 import { makeUserOf, allowance, mine } from './auth.mjs';
-import { STEPS_T, STEPS_F, enabled as templatesEnabled, runTemplateJob, mayDownload, previewable, imageType, formProblem, UPLOAD } from './templates.mjs';
+import { STEPS_T, STEPS_F, enabled as templatesEnabled, runTemplateJob, mayDownload, previewable, imageType, formProblem, UPLOAD, libraryCount, previewKey } from './templates.mjs';
+import { publicJob, internalSlug, publicOf, downloadName } from './designs.mjs';
 import { makeEditor, mayKeep, editable, opsProblem } from './editor.mjs';
 import { ensurePrivateBucket } from './bucket.mjs'; import { runCleanup } from './cleanup.mjs';
 import { runPublish, runRepackage, editedPackage, editsHash, nameProblem } from './publish.mjs';
@@ -130,7 +131,7 @@ app.get('/jobs/:id', async (req, res) => {
     data.queue = { ahead, capacity, eta_min: Math.max(1, Math.ceil((ahead + 1) / capacity) * JOB_MINUTES) };
   }
   data.notify = { available: !!NOTIFY.key, email: data.options?.notify_email ? true : false }; delete data.options;
-  res.json(data);
+  res.json(publicJob(data));   // a design by its id and name, never by the template it was made with (server/designs.mjs)
 });
 // "Email me the link": a person in a long queue should not have to keep the tab open.
 app.post('/jobs/:id/notify', async (req, res) => {
@@ -206,8 +207,9 @@ app.get('/t/:id/:slug', async (req, res) => {
   if (!/^[0-9a-f-]{36}$/.test(req.params.id)) return res.status(400).end();
   const { data: row, error } = await sb.from('jobs').select('status,result').eq('id', req.params.id).maybeSingle();
   if (error) return res.status(503).send('preview metadata unavailable');
-  if (!previewable(row, req.params.slug)) return res.status(404).send('preview not found');
-  const { data, error: e2 } = await sb.storage.from(BUCKET).download(`${req.params.id}/t/${req.params.slug}.html`);
+  const slug = internalSlug(row, req.params.slug);   // the address names the design's id (v1 …); the slug stays here
+  if (!previewable(row, slug)) return res.status(404).send('preview not found');
+  const { data, error: e2 } = await sb.storage.from(BUCKET).download(previewKey(row, req.params.id, slug));
   if (e2 || !data) return res.status(404).send('preview not found');
   res.set({ 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-frame-options': 'ALLOWALL', 'x-robots-tag': 'noindex' });
   res.send(Buffer.from(await data.arrayBuffer()));
@@ -217,17 +219,17 @@ app.get('/t/:id/:slug/package', async (req, res) => {
   const user = await userOf(req);
   const { data: row, error } = await sb.from('jobs').select('id,url,status,result,user_id').eq('id', req.params.id).maybeSingle();
   if (error) return res.status(503).json({ error: 'unavailable' });
-  if (!row || !previewable(row, req.params.slug)) return res.status(404).json({ error: 'not found' });
-  const gate = mayDownload({ user, job: row, slug: req.params.slug, env: process.env });
+  const slug = internalSlug(row, req.params.slug);
+  if (!row || !previewable(row, slug)) return res.status(404).json({ error: 'not found' });
+  const gate = mayDownload({ user, job: row, slug, env: process.env });
   if (gate.status !== 200) return res.status(gate.status).json(gate.body);
   if (!row.user_id) await sb.from('jobs').update({ user_id: user.id, email: user.email }).eq('id', row.id).is('user_id', null);   // a downloaded page belongs to whoever downloaded it first
   // with kept edits: the verified package of those edits, once one is made (publish, or "download with my edits")
-  const kept = await EDITOR.saved(row); const edited = kept.length ? editedPackage(row.result, req.params.slug, editsHash(kept)) : null;
+  const kept = await EDITOR.saved(row); const edited = kept.length ? editedPackage(row.result, slug, editsHash(kept)) : null;
   if (kept.length && !edited && req.query.as !== 'made') return res.status(409).json({ error: 'Your edits are not in a download yet: prepare it first.', prepare: true });
-  const { data, error: e2 } = await sb.storage.from(PACKAGE_BUCKET).download(edited || `${row.id}/${req.params.slug}.zip`);
+  const { data, error: e2 } = await sb.storage.from(PACKAGE_BUCKET).download(edited || `${row.id}/${slug}.zip`);
   if (e2 || !data) return res.status(404).json({ error: 'package not found' });
-  const host = (() => { try { return new URL(row.url).hostname.replace(/^www\./, '').replace(/[^a-z0-9.-]/gi, '') || 'site'; } catch { return 'site'; } })();
-  res.set({ 'content-type': 'application/zip', 'content-disposition': `attachment; filename="${host}-${req.params.slug}.zip"`, 'cache-control': 'no-store' });
+  res.set({ 'content-type': 'application/zip', 'content-disposition': `attachment; filename="${downloadName(row, slug)}"`, 'cache-control': 'no-store' });
   res.send(Buffer.from(await data.arrayBuffer()));
 });
 app.listen(process.env.PORT || 8080, () => console.log('api on', process.env.PORT || 8080));
@@ -248,22 +250,23 @@ const editRow = async (req, res) => {
   if (!/^[0-9a-f-]{36}$/.test(req.params.id)) { res.status(400).end(); return null; }
   const { data: row, error } = await sb.from('jobs').select('id,url,status,result,user_id').eq('id', req.params.id).maybeSingle();
   if (error) { res.status(503).json({ error: 'unavailable' }); return null; }
-  if (req.params.slug !== undefined && !editable(row, req.params.slug)) { res.status(404).json({ error: 'nothing to edit here' }); return null; }
+  if (req.params.slug !== undefined) req.tslug = internalSlug(row, req.params.slug);   // the design's id → its template, for the server only
+  if (req.params.slug !== undefined && !editable(row, req.tslug)) { res.status(404).json({ error: 'nothing to edit here' }); return null; }
   if (req.params.slug === undefined && !(row && row.status === 'done' && row.result?.templates?.store)) { res.status(404).json({ error: 'nothing to edit here' }); return null; }
   return row; };
 const editFail = (res, e) => res.status(e.status || 500).json({ error: e.status ? e.message : 'the edit could not be made' });
 // the editor's view of one design: the texts, pictures, sections and colours after the edits kept so far (or the ones sent)
 app.post('/t/:id/:slug/describe', async (req, res) => { const row = await editRow(req, res); if (!row) return;
   const ops = req.body?.ops ?? await EDITOR.saved(row); const bad = opsProblem(ops); if (bad) return res.status(400).json({ error: bad });
-  try { res.json({ ...(await EDITOR.describe(row, req.params.slug, ops)), ops, variants: row.result.templates.variants.map(v => v.slug) }); } catch (e) { editFail(res, e); } });
+  try { res.json({ ...(await EDITOR.describe(row, req.tslug, ops)), ops, variants: row.result.templates.variants.map(v => publicOf(row, v.slug)) }); } catch (e) { editFail(res, e); } });
 app.post('/t/:id/:slug/render', async (req, res) => { const row = await editRow(req, res); if (!row) return;
   if (editLimited(clientIp(req), 'r', 600)) return res.status(429).json({ error: 'Too many edits in an hour. Please wait a little.' });
   const ops = req.body?.ops; const bad = opsProblem(ops); if (bad) return res.status(400).json({ error: bad });
-  try { res.set({ 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex' }).send(await EDITOR.render(row, req.params.slug, ops)); } catch (e) { editFail(res, e); } });
+  try { res.set({ 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex' }).send(await EDITOR.render(row, req.tslug, ops)); } catch (e) { editFail(res, e); } });
 app.post('/t/:id/:slug/check', async (req, res) => { const row = await editRow(req, res); if (!row) return;
   if (editLimited(clientIp(req), 'c', 120)) return res.status(429).json({ error: 'Too many checks in an hour. Please wait a little.' });
   const ops = req.body?.ops; const bad = opsProblem(ops); if (bad) return res.status(400).json({ error: bad });
-  try { res.json(await EDITOR.check(row, req.params.slug, ops)); } catch (e) { editFail(res, e); } });
+  try { res.json(await EDITOR.check(row, req.tslug, ops)); } catch (e) { editFail(res, e); } });
 app.post('/t/:id/photos', async (req, res) => { const row = await editRow(req, res); if (!row) return;
   if (editLimited(clientIp(req), 'p', 60)) return res.status(429).json({ error: 'Too many photographs in an hour.' });
   try { res.json(await EDITOR.photo(row, req.body?.file)); } catch (e) { editFail(res, e); } });
@@ -281,19 +284,19 @@ const pubDeps = (row, slug, user, field) => ({ row, slug, user, edits: () => EDI
 const busy = s => s && ['packaging', 'deploying'].includes(s.status) && Date.now() - Date.parse(s.at) < 15 * 60e3;
 const pubGate = async (req, res) => { const row = await editRow(req, res); if (!row) return null; const user = await userOf(req);
   const may = mayKeep({ user, row }); if (may.status !== 200) { res.status(may.status).json(may.body); return null; }
-  const pay = payGate({ env: process.env, row, slug: req.params.slug, user, what: 'download or publish' }); if (pay) { res.status(pay.status).json(pay.body); return null; }   // as for the download
+  const pay = payGate({ env: process.env, row, slug: req.tslug, user, what: 'download or publish' }); if (pay) { res.status(pay.status).json(pay.body); return null; }   // as for the download
   if (may.claim) await sb.from('jobs').update({ user_id: user.id, email: user.email }).eq('id', row.id).is('user_id', null);
   return { row, user }; };
 app.post('/t/:id/:slug/prepare', async (req, res) => { const g = await pubGate(req, res); if (!g) return;
   if (busy(g.row.result?.edited)) return res.status(409).json({ error: 'The download is being prepared.' });
-  const at = new Date().toISOString(); runRepackage(pubDeps(g.row, req.params.slug, g.user, 'edited')).catch(e => console.warn('prepare', g.row.id, String(e.message).slice(0, 160)));
+  const at = new Date().toISOString(); runRepackage(pubDeps(g.row, req.tslug, g.user, 'edited')).catch(e => console.warn('prepare', g.row.id, String(e.message).slice(0, 160)));
   res.status(202).json({ status: 'packaging', at }); });
 app.post('/t/:id/:slug/publish', async (req, res) => {
   if (!process.env.VERCEL_TOKEN) return res.status(503).json({ error: 'Publishing is not switched on yet.' });
   const name = String(req.body?.name || '').trim().toLowerCase(); const bad = nameProblem(name); if (bad) return res.status(400).json({ error: bad });
   const g = await pubGate(req, res); if (!g) return;
   if (busy(g.row.result?.publish)) return res.status(409).json({ error: 'A publish is under way.' });
-  const at = new Date().toISOString(); runPublish({ ...pubDeps(g.row, req.params.slug, g.user, 'publish'), name }).catch(e => console.warn('publish', g.row.id, String(e.message).slice(0, 160)));
+  const at = new Date().toISOString(); runPublish({ ...pubDeps(g.row, req.tslug, g.user, 'publish'), name }).catch(e => console.warn('publish', g.row.id, String(e.message).slice(0, 160)));
   res.status(202).json({ status: 'packaging', name, at }); });
 // ---- payment (server/payments.mjs): Stripe Checkout for one design of one job; the webhook marks it paid in the job record
 let STRIPE = null; const stripe = async () => STRIPE || (STRIPE = await stripeOf(process.env));
@@ -303,10 +306,11 @@ app.post('/pay', async (req, res) => {
   const id = String(req.body?.job || ''), slug = String(req.body?.slug || ''); if (!/^[0-9a-f-]{36}$/.test(id)) return res.status(400).json({ error: 'bad job' });
   const { data: row, error } = await sb.from('jobs').select('id,status,result,user_id').eq('id', id).maybeSingle();
   if (error) return res.status(503).json({ error: 'unavailable' });
-  if (!row || !previewable(row, slug)) return res.status(404).json({ error: 'not found' });
+  const tslug = internalSlug(row, slug);   // what the page sent is the design's id; Stripe is told only that id
+  if (!row || !previewable(row, tslug)) return res.status(404).json({ error: 'not found' });
   if (row.user_id && row.user_id !== user.id) return res.status(403).json({ error: 'These designs belong to another account.' });
-  if (paidBy(row, slug, user)) return res.json({ paid: true });
-  try { res.json(await checkout({ stripe: await stripe(), env: process.env, row, slug, user, from: req.body?.from === 'edit' ? 'edit' : 'app' })); }
+  if (paidBy(row, tslug, user)) return res.json({ paid: true });
+  try { res.json(await checkout({ stripe: await stripe(), env: process.env, row, slug: publicOf(row, tslug), user, from: req.body?.from === 'edit' ? 'edit' : 'app' })); }
   catch (e) { console.warn('pay: checkout could not be made', e.type || '', e.statusCode || ''); res.status(502).json({ error: 'Payment could not be started. Please try again.' }); }
 });
 app.post('/stripe/webhook', express.raw({ type: () => true, limit: '1mb' }), async (req, res) => {
@@ -314,7 +318,8 @@ app.post('/stripe/webhook', express.raw({ type: () => true, limit: '1mb' }), asy
   const r = await webhook({ stripe: await stripe(), env: process.env, raw: req.body, signature: req.headers['stripe-signature'],
     markPaid: async ({ job, slug, user, session }) => {
       const { data: row } = await sb.from('jobs').select('id,result,user_id').eq('id', job).maybeSingle(); if (!row) return;
-      const next = withPaid(row.result, { slug, user, session, at: new Date().toISOString() }); if (!next) return;   // already marked: a repeated event changes nothing
+      const tslug = internalSlug(row, slug); if (!tslug) return;   // the session names the design's id
+      const next = withPaid(row.result, { slug: tslug, user, session, at: new Date().toISOString() }); if (!next) return;   // already marked: a repeated event changes nothing
       await sb.from('jobs').update({ result: next }).eq('id', job);
       if (!row.user_id) await sb.from('jobs').update({ user_id: user }).eq('id', job).is('user_id', null);   // a paid design belongs to whoever paid
     } }).catch(e => { console.warn('stripe webhook failed', String(e.message).slice(0, 120)); return { status: 500, body: { error: 'retry' } }; });
@@ -674,6 +679,8 @@ async function processTemplates(job) {
 // the template path's private bucket and its upkeep: made private on boot (or templates mode is refused, the old engine
 // works on), and visitors' photographs of nobody's old jobs removed once on boot, then every 24 h (counts only in the log)
 async function templatesBoot() {
+  const lib = libraryCount(process.env, ROOT);   // made pictures: a worker without its library offers none, so say so on boot
+  (lib.pictures && !lib.missing ? console.log : console.warn)(`library: ${lib.pictures} pictures${lib.missing ? `, ${lib.missing} missing` : ''}${lib.root ? ' at ' + lib.root : ' (none found: no made pictures)'}`);
   const { ok } = await ensurePrivateBucket(sb.storage, PACKAGE_BUCKET);
   if (!ok) TEMPLATES = false;
   if (!TEMPLATES) return;

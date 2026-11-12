@@ -493,7 +493,7 @@ h1{font-weight:500;font-size:calc(var(--u)*var(--fs));line-height:1.1;letter-spa
 .fbd{display:flex;flex-direction:column;gap:16px;padding:16px}.fbd h3{font-weight:400;font-size:14px;line-height:1.2}.fbd p{font-weight:300;font-size:16px;line-height:24px}.fv{font-weight:500;font-size:28px;line-height:28px}
 .ban{width:min(1090px,100%);margin-top:-32px;padding:4px;border-radius:8px;border:1px solid var(--ln2);background:linear-gradient(var(--gs),var(--gs));box-shadow:0 10px 24px rgba(0,0,0,.12),inset 0 1px 1px var(--hl);-webkit-backdrop-filter:blur(12px) saturate(1.4);backdrop-filter:blur(12px) saturate(1.4)}
 .ban p{padding:16px;text-align:center;font-size:20px;line-height:30px;font-weight:500}.ban a{color:var(--lk);display:inline-block;transition:transform .12s ease,opacity .15s ease}.ban a:hover{opacity:.8}.ban a:active{transform:scale(.97)}
-/* plans on the sky, and the terminal window */
+/* plans on the sky, and the console window */
 .pr{position:relative;display:flex;flex-direction:column;align-items:center;padding:140px 20px 0}.pr.solo{padding-top:0}
 .sky{position:absolute;inset:0 0 0 0;border-radius:16px;overflow:hidden;background:var(--g)}.pr.hasterm .sky{bottom:112px}
 .sky .bd{height:min(100%,max(100vw/var(--sr),760px));object-position:50% 0;-webkit-mask-image:linear-gradient(#000 40%,transparent);mask-image:linear-gradient(#000 40%,transparent)}

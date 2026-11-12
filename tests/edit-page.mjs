@@ -6,6 +6,7 @@ import assert from 'node:assert/strict'; import fs from 'node:fs'; import os fro
 const root = process.cwd(), { chromium } = createRequire(path.join(root, 'package.json'))('playwright');
 const html = fs.readFileSync(path.join(root, 'web/edit.html'), 'utf8'), id = '66666666-6666-4666-8666-666666666666';
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'editpage-')); const data = path.join(tmp, 'd.json'); fs.copyFileSync(path.join(root, 'tests/fixtures/templates/tallyfern.json'), data);
+const TPL = { v1: 'griffin', v2: 'maze' };   // what the server keeps behind each design's id
 const TITLE = JSON.parse(fs.readFileSync(data, 'utf8')).hero.title;
 const edit = (args, ops) => { const o = path.join(tmp, 'o.json'); fs.writeFileSync(o, JSON.stringify(ops || [])); const r = spawnSync(process.env.PYTHON || 'python3', ['lib/templates/edit.py', ...args(o)], { cwd: root, encoding: 'utf8' }); assert.equal(r.status, 0, r.stderr); return r.stdout; };
 const until = async (f, what) => { for (let i = 0; i < 150; i++) { if (f()) return; await new Promise(r => setTimeout(r, 100)); } throw new Error('waited in vain for ' + what); };
@@ -20,15 +21,15 @@ try {
       if (u.hostname === 'app.test' && u.pathname === '/config.js') return r.fulfill({ contentType: 'application/javascript', body: "window.SWARMSITE_API='https://api.test'" });
       if (u.hostname === 'app.test' && u.pathname === '/login') { state.landed = u.search; return r.fulfill({ contentType: 'text/html', body: '<p>login</p>' }); }
       if (r.request().headers()['access-control-request-method']) return r.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'POST, PUT' } });
-      const t = u.pathname.match(/^\/t\/[0-9a-f-]{36}\/([a-z]+)\/(describe|render|check)$/);
-      if (u.hostname === 'api.test' && t) { const [, slug, what] = t, ops = body?.ops ?? [];
-        if (what === 'describe') return json({ ...JSON.parse(edit(o => ['describe', data, '--ops', o, '--slug', slug], ops)), ops: body?.ops ?? [], variants: ['griffin', 'maze'] });
+      const t = u.pathname.match(/^\/t\/[0-9a-f-]{36}\/(v[0-9]+)\/(describe|render|check)$/);
+      if (u.hostname === 'api.test' && t) { const [, pub, what] = t, slug = TPL[pub], ops = body?.ops ?? [];   // the page speaks of v1, v2; the server of templates
+        if (what === 'describe') return json({ ...JSON.parse(edit(o => ['describe', data, '--ops', o, '--slug', slug], ops)), ops: body?.ops ?? [], variants: ['v1', 'v2'] });
         if (what === 'render') { state.renders.push({ slug, ops }); return r.fulfill({ headers: { 'access-control-allow-origin': '*' }, contentType: 'text/html', body: edit(o => ['render', data, slug, '--ops', o, '--base', 'https://storage.example/t/'], ops) }); }
         const bad = ops.some(o => o.op === 'text' && /Unreadable/.test(o.value));
         return json(bad ? { ok: false, failed: ['legible'], unread: [{ text: 'Unreadable line here', ratio: 2.1, at: 'm' }], overlap: 0, sideways: 0 } : { ok: true, failed: [], unread: [], overlap: 0, sideways: 0 }); }
       if (u.hostname === 'api.test' && u.pathname === `/t/${id}/edits` && m === 'PUT') { state.put = body; return json({ error: 'Sign in to keep your edits.', login: true }, 401); }
       return r.abort(); });
-    await page.goto(`https://app.test/edit?job=${id}&slug=griffin`);
+    await page.goto(`https://app.test/edit?job=${id}&slug=v1`);
     const frame = page.frameLocator('#page');
     await frame.locator('h1').waitFor({ timeout: 15000 });
     await page.waitForFunction(() => /Every line reads/.test(document.querySelector('#status').textContent), null, { timeout: 10000 });
@@ -48,10 +49,10 @@ try {
     assert.deepEqual(last.map(o => o.op), ['text', 'hide', 'palette']);
     assert.equal(await page.locator('#fields textarea').evaluateAll(ts => ts.find(t => t.closest('.f').dataset.path === 'hero.title')?.value), 'Closed by six, every evening');
     // another design: every edit kept
-    await page.locator('#designs button', { hasText: 'Studio' }).click();
+    await page.locator('#designs button', { hasText: 'Design 2' }).click();
     await page.waitForFunction(() => document.querySelector('#page').contentDocument?.body?.textContent.includes('Closed by six'), null, { timeout: 10000 });
     assert.equal(state.renders.at(-1).slug, 'maze'); assert.deepEqual(state.renders.at(-1).ops, last);
-    assert.ok(page.url().includes('slug=maze'));
+    assert.ok(page.url().includes('slug=v2'));
     // Undo returns to the state before the last edit
     const n = state.renders.length; await page.locator('#undo').click();
     await until(() => state.renders.length > n, 'the page after Undo');
@@ -63,7 +64,7 @@ try {
     // keeping the edits needs an account: the visitor is sent to sign in, the edits wait for them
     await page.locator('#save').click();
     await page.waitForFunction(() => location.pathname === '/login', null, { timeout: 10000 });
-    assert.ok(state.put && state.put.ops.some(o => o.value === 'Unreadable on purpose')); assert.match(decodeURIComponent(state.landed), /next=\/edit\?job=.*slug=maze/);
+    assert.ok(state.put && state.put.ops.some(o => o.value === 'Unreadable on purpose')); assert.match(decodeURIComponent(state.landed), /next=\/edit\?job=.*slug=v2/);
     await page.close();
   }
   // publishing, signed in: the edits are kept first, then the site; only a state written after this start counts
@@ -74,16 +75,16 @@ try {
       if (u.hostname === 'app.test' && u.pathname === '/edit') return r.fulfill({ contentType: 'text/html', body: html });
       if (u.hostname === 'app.test' && u.pathname === '/config.js') return r.fulfill({ contentType: 'application/javascript', body: "window.SWARMSITE_API='https://api.test'" });
       if (r.request().headers()['access-control-request-method']) return r.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'POST, PUT' } });
-      const t = u.pathname.match(/^\/t\/[0-9a-f-]{36}\/([a-z]+)\/(describe|render|check)$/);
-      if (t) { const [, slug, what] = t, ops = body?.ops ?? [];
-        if (what === 'describe') return json({ ...JSON.parse(edit(o => ['describe', data, '--ops', o, '--slug', slug], ops)), ops: body?.ops ?? [], variants: ['griffin'] });
+      const t = u.pathname.match(/^\/t\/[0-9a-f-]{36}\/(v[0-9]+)\/(describe|render|check)$/);
+      if (t) { const [, pub, what] = t, slug = TPL[pub], ops = body?.ops ?? [];
+        if (what === 'describe') return json({ ...JSON.parse(edit(o => ['describe', data, '--ops', o, '--slug', slug], ops)), ops: body?.ops ?? [], variants: ['v1'] });
         if (what === 'render') return r.fulfill({ headers: { 'access-control-allow-origin': '*' }, contentType: 'text/html', body: edit(o => ['render', data, slug, '--ops', o], ops) });
         return json({ ok: true, failed: [], unread: [], overlap: 0, sideways: 0 }); }
       if (u.pathname === `/t/${id}/edits`) { state.put++; return json({ kept: body.ops.length }); }
-      if (u.pathname === `/t/${id}/griffin/publish`) { state.published = body; return json({ status: 'packaging', name: body.name, at: new Date().toISOString() }, 202); }
-      if (u.pathname === `/jobs/${id}`) { state.polls++; return json({ id, status: 'done', result: { publish: state.polls < 2 ? { status: 'live', slug: 'griffin', name: 'old', url: 'https://old.swarmsite.si', at: t0 } : state.polls < 3 ? { status: 'packaging', slug: 'griffin', at: later() } : { status: 'live', slug: 'griffin', name: 'casa-fern', url: 'https://casa-fern.swarmsite.si', at: later() } } }); }
+      if (u.pathname === `/t/${id}/v1/publish`) { state.published = body; return json({ status: 'packaging', name: body.name, at: new Date().toISOString() }, 202); }
+      if (u.pathname === `/jobs/${id}`) { state.polls++; return json({ id, status: 'done', result: { publish: state.polls < 2 ? { status: 'live', slug: 'v1', name: 'old', url: 'https://old.swarmsite.si', at: t0 } : state.polls < 3 ? { status: 'packaging', slug: 'v1', at: later() } : { status: 'live', slug: 'v1', name: 'casa-fern', url: 'https://casa-fern.swarmsite.si', at: later() } } }); }
       return r.abort(); });
-    await page.goto(`https://app.test/edit?job=${id}&slug=griffin`);
+    await page.goto(`https://app.test/edit?job=${id}&slug=v1`);
     await page.frameLocator('#page').locator('h1').waitFor({ timeout: 15000 });
     const ta = page.locator('#fields .f[data-path="hero.title"] textarea'); await ta.fill('Closed by six'); await ta.blur();
     await page.locator('#siteName').fill('Casa Fern'); await page.locator('#publish').click();

@@ -3,6 +3,7 @@
 // are made → packages uploaded to the private bucket only when they match their preview. And who may download.
 import assert from 'node:assert/strict'; import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path'; import { spawn, spawnSync } from 'node:child_process'; import { fileURLToPath } from 'node:url';
 import { runTemplateJob, mayDownload, previewable, enabled, STEPS_T, STEPS_F, formProblem, imageType } from '../server/templates.mjs';
+import { publicJob, TEMPLATE_SLUGS } from '../server/designs.mjs';
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..'); const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'tjob-'));
 const py = process.env.PYTHON || 'python3';
 // the worker's own `run`, cut down: a child process, its stdout, rejected on a non-zero exit
@@ -60,9 +61,16 @@ try {
   assert.deepEqual(x.steps, STEPS_T.flatMap(([id]) => [`${id}:running`, `${id}:done`]));
   const t = x.result.templates, shown = shownOf(x.result), gv = t.variants.find(v => v.slug === 'griffin');
   assert.equal(x.result.mode, 'templates');
-  assert.equal(gv.url, 'https://api.example/t/22222222-2222-4222-8222-222222222222/griffin'); assert.ok(t.variants.every(v => v.package === 'ready'));
+  // a design is shown by its id and its name (owner, 2026-11-12: never the reference a template was rebuilt from)
+  const gi = t.variants.indexOf(gv);
+  assert.deepEqual(t.variants.map(v => v.id), t.variants.map((_, i) => `v${i + 1}`)); assert.deepEqual(t.variants.map(v => v.name), t.variants.map((_, i) => `Design ${i + 1}`));
+  assert.equal(gv.url, `https://api.example/t/22222222-2222-4222-8222-222222222222/v${gi + 1}`); assert.ok(t.variants.every(v => v.package === 'ready'));
+  const seen = JSON.stringify(publicJob({ id: 'j', url: 'https://www.tallyfern.example/', result: { ...x.result, events: x.events } })).toLowerCase();
+  const leaks = TEMPLATE_SLUGS.filter(s => new RegExp(`(?<![a-z0-9])${s}(?![a-z0-9])`).test(seen));
+  assert.deepEqual(leaks, [], 'the job as the web app reads it names no template');
   assert.ok(t.rejected.some(r => r.slug === 'maze' && /screens_min/.test(r.why)), 'every other template, with its reason');
-  assert.ok(x.pub.has('22222222-2222-4222-8222-222222222222/t/griffin.html') && x.pub.get('22222222-2222-4222-8222-222222222222/t/griffin.html').type === 'text/html');
+  assert.ok(x.pub.has(`22222222-2222-4222-8222-222222222222/t/v${gi + 1}.html`) && x.pub.get(`22222222-2222-4222-8222-222222222222/t/v${gi + 1}.html`).type === 'text/html');
+  assert.ok(![...x.pub.keys()].some(k => TEMPLATE_SLUGS.some(s => k.includes(s))), 'no public file is named after a template');
   assert.ok([...x.pub.keys()].some(k => /\/t\/media\/logo\.svg$/.test(k)), 'the media the pages ask for are published beside them');
   const page = fs.readFileSync(path.join(x.dir, 'templates', 'pub', 'griffin.html'), 'utf8');
   assert.ok(page.includes('https://storage.example/previews/22222222-2222-4222-8222-222222222222/t/media/logo.svg') && !page.includes('../../media/'), 'the preview page asks for its media where they were published');
@@ -77,7 +85,7 @@ try {
   assert.equal(x.saves.length, 1); assert.deepEqual(x.saves[0].variants.map(v => [v.slug, v.package]), shown.map(s => [s, 'pending'])); assert.equal(x.saves[0].packagesBefore, 0, 'the previews are saved before any package is made');
   assert.deepEqual(x.result.budget, { calls: 1, in: 21000, out: 2400, usd: 0.066 }, 'what the visitor cost: the reader, from the job ledger');
   assert.ok(['adapt', 'select', 'render', 'gate'].every(k => typeof t.timings_ms[k] === 'number') && ['capture', 'read', 'choose', 'publish', 'package'].every(k => typeof t.timings_ms.steps[k] === 'number'), 'stage timings in the job record');
-  assert.ok(x.result.beforeUrl && x.events.some(e => e.role === 'QA' && /griffin: every screen passes/.test(e.text)) && x.events.some(e => e.text === '1 picture'));
+  assert.ok(x.result.beforeUrl && x.events.some(e => e.role === 'QA' && e.text === `Design ${gi + 1}: every screen passes`) && !x.events.some(e => /griffin/i.test(e.text)) && x.events.some(e => e.text === '1 picture'));
 
   // 2 · a package that does not match its preview, and one whose making crashes: the preview stays, the download does not
   x = await scenario({ pkg: 'refused' });

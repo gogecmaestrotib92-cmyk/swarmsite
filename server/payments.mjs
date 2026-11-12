@@ -9,16 +9,20 @@
    Where it is kept: in the job record, beside its owner (jobs.user_id): result.paid[<slug>] = {user, session, at}. The
    webhook writes it; writing it twice for the same session changes nothing.
 
+   What reaches Stripe and the visitor names a design by its id (v1 …, server/designs.mjs), never by its template: the
+   metadata, client_reference_id and return addresses carry the id; the server turns it back into the slug.
+
    Stripe events to subscribe the webhook to: checkout.session.completed, checkout.session.async_payment_succeeded. */
 
 export const configured = env => !!(env.STRIPE_SECRET_KEY && env.STRIPE_PRICE_ID);
 export const SLUG = /^[a-z0-9][a-z0-9_-]{0,63}$/;
+import { publicOf } from './designs.mjs';
 export const paidBy = (row, slug, user) => !!user && row?.result?.paid?.[slug]?.user === user.id;
 
 // the gate the download and publish pass after sign-in: free, paid, or 402 with where to pay when payment is on
 export function payGate({ env, row, slug, user, what = 'download' }) {
   if (env.PACKAGES_FREE === '1' || paidBy(row, slug, user)) return null;
-  return { status: 402, body: { error: `Payment is needed to ${what} this page.`, pay: true, ...(configured(env) ? { pay_url: '/pay', job: row?.id, slug } : {}) } };
+  return { status: 402, body: { error: `Payment is needed to ${what} this page.`, pay: true, ...(configured(env) ? { pay_url: '/pay', job: row?.id, slug: publicOf(row, slug) } : {}) } };
 }
 
 // the official client, loaded only when the deployment has a key (the package is in server/package.json)
@@ -28,6 +32,7 @@ export async function stripeOf(env, load = () => import('stripe')) {
   return new S(env.STRIPE_SECRET_KEY);
 }
 
+// checkout, returnUrls and webhook speak of a design by its id (`slug` here is that id, as the pages call it)
 // where Checkout sends the visitor back: the page they paid from, on the site's own origin
 export function returnUrls(env, row, slug, from) {
   const web = String(env.PUBLIC_APP || 'https://swarmsite.si').replace(/\/$/, '');
