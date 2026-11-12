@@ -156,7 +156,7 @@ def restaurant():
 
 
 # ───────────────────────── nothing is invented
-OWN = {'h', 'home', 'src', 'logo', 'img', 'poster', 'ground', 'ink', 'accent', 'extra', 'lang', 'kind', 'count', 'w', 'h', 'small', 'logo_wordmark'}
+OWN = {'h', 'home', 'src', 'logo', 'img', 'poster', 'ground', 'ink', 'accent', 'extra', 'lang', 'kind', 'niche', 'count', 'w', 'h', 'small', 'logo_wordmark'}   # niche: a classifier, never shown
 
 
 def invented(d, seed):

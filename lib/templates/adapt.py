@@ -654,6 +654,11 @@ def adapt(seed):
         gaps.append('lang: the page states none' + ('; taken from the reader' if lang else '; "en" stands in'))
     d['lang'] = lang.group(0) if lang else 'en'
     d['kind'] = kind
+    # what kind of business, in the reader's words: chooses the family of made pictures (lib/templates/pictures.py); never shown on a page
+    sub = norm(fs.get('subtype') or (fs.get('business_understanding') or {}).get('offer') or fs.get('what'))[:200]
+    if sub:
+        d['niche'] = sub
+        (rules if fs.get('subtype') else gaps).append('niche: the reader\'s ' + ('subtype' if fs.get('subtype') else 'account of what the business offers (it gave no subtype)') + '; used only to choose made pictures, never shown')
     gaps.append('character: not derivable (a judgement of the page\'s temper; the reader\'s `tone` is another vocabulary)')
 
     # logo: only a file the page itself marks as the brand's

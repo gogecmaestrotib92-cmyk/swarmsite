@@ -166,3 +166,47 @@ Render time: 0.2–0.3 ms per client (`build.py`).
   was read by legible.mjs at every screen at both widths with no failing line, and looked at over the plans, the
   figures backdrop and the tab card at 390 and 1440.
 - `shots.mjs`: sportbot d 9571 / m 9018, automateed d 8167 / m 6979 — sideways 0, distorted 0, one h1, errors [].
+
+## Stress pass of 2026-11-12 (CONTRACT.md "A template holds for clients it has not seen")
+What the engine's gate found, and what was changed:
+- **Sideways scroll with 3 and 5 plans.** The plan grid was `repeat(n, 1fr)` with n capped at 3: a `1fr` track cannot go
+  under its content's own width, and the card (name + button beside a fixed 260 px picture panel) needs ~560. Now the
+  tracks are `minmax(0,1fr)` and the row is laid out by count: 1 plan → one card, 670 wide (the reference's card width);
+  2 or 4 → two across, the reference's card (4 = two rows); 3, 5 and more → three across, wrapping, and the card
+  stacks — picture panel with the price on top (220 high, full card width), 46 px name, line and button under it —
+  because 433 px cannot hold name and panel side by side. Names and prices may break anywhere rather than push the card;
+  a button never exceeds its card. At 390 always one per row. Panels take at most two calm hues, in turn.
+- **Figure labels 3.9:1 on another palette.** The glass card adds 14% (22% under the pointer) of the text colour to the
+  ground under it, and the ground had been solved for the text without the card. Now the ground is solved for the card:
+  with no backdrop picture the plain ground is taken away from its text colour until text reads ≥ 4.6:1 on the card at
+  rest and under the pointer; with a picture the veil is raised until the same holds at ≥ 5.5:1 on the picture's mean
+  (and 7:1 without the card). Computed in render.py from the palette, no value is tied to a client.
+- **Never at rest.** Three things ran whatever was on screen: the word rows (CSS `infinite`), the link card's rise
+  (a scroll-timeline animation, which the browser reports as running from the top of the page until the card has
+  passed), and the opening film (it kept playing through the second, pictureless scene of the pin and below). Now: the
+  rows have no animation while the band is off screen (`.band.idle`, IntersectionObserver); the rise is set from the
+  scroll handler and only while the card is near the viewport; every film pauses when off screen and the opening film
+  also while its scene is hidden; the tab clock's line is removed when the tab card leaves the view. Measured per
+  900 px screen on sportbot at 1440 (`document.getAnimations()` running / films playing, 1.2 s after arriving):
+  before — `up` on screens 0–2, `mq`×4 only where the band is, film playing on screens 0 and 1; after — nothing on any
+  screen except the tab line while the tab card is in view, the word rows while the band is in view, and the film on
+  the first screen.
+- **Found by the variants, not by the gate's report** (both on the scratch palettes only):
+  (a) *band heading unreadable while the band's ground fades in* (phone, 1.9–2.4:1 on a warm light and a deep blue
+  palette): the band's text is set for the accent, but the accent ground was still at ~23% when the first line came on
+  screen. The ground is now whole before the first line is on screen (it fades over the band's own top padding, at most
+  20% of the viewport, instead of always 20%).
+  (b) *a mid-tone accent carries neither text colour* (#c8502b: 3.8:1 with ink and with ground — statement text on
+  the band, price line on the marked plan's plain panel): `colours()` now takes such an accent away from its text
+  colour until the text reads 4.6:1. Neither test client's accent is touched by this (mint 14:1, orange 6.5:1).
+- **Variants run** (scratch copies of both clients' data, `tools/shots.mjs` + `tools/legible.mjs`, 1440 and 390):
+  1, 3, 5 plans · 2, 9 features · 1, 6 steps · 12-word h1 · 40-character button label (bar, opening, plans, close) ·
+  no faq · no pictures at all (media emptied, no made pictures) — for sportbot and automateed; plus sportbot's data
+  with a warm light palette (#f4ead9 / #2b1d12 / #c8502b) and a deep blue one (#0a1633 / #e8eefc / #4f8cff), each with
+  and without made pictures. 26 pages. Results are in the hand-back; every page: sideways 0, distorted 0, one h1,
+  errors [], legible ok.
+- Seen in the variants and left: a 40-character primary button no longer fits beside the secondary in the opening's
+  400 px copy column at 1440, so it drops to a second row and the opening grows past one screen (the pin is then
+  released and the two scenes follow one another — nothing is cut); at 390 it wraps to three lines inside its half of
+  the row. Six steps set the tab words at 30 px on two lines each. The "scroll on" chevron pill sits over the lower
+  left tile of the opening at 1440×900 (also on the real sportbot page; not changed).

@@ -10,10 +10,13 @@ import { saveCrawlCheckpoint, restoreCrawlCheckpoint } from './crawl_checkpoint.
 import { spawn } from 'node:child_process'; import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
 import { makeUserOf, allowance, mine } from './auth.mjs';
+import { STEPS_T, enabled as templatesEnabled, runTemplateJob, mayDownload, previewable } from './templates.mjs';
 import { AsyncLocalStorage } from 'node:async_hooks';
 const HERE = path.dirname(fileURLToPath(import.meta.url)); const ROOT = path.resolve(HERE, '..');
 const sb = createClient(process.env.SUPABASE_URL || 'https://placeholder.supabase.co', process.env.SUPABASE_SERVICE_KEY || 'placeholder', { auth: { persistSession: false } });
 const BUCKET = 'previews'; const OUT = path.join(ROOT, 'out');
+// the template path (server/templates.mjs): off unless TEMPLATES_MODE=1; packages live in a bucket that is NOT public
+const TEMPLATES = templatesEnabled(process.env); const PACKAGE_BUCKET = process.env.PACKAGE_BUCKET || 'packages';
 const WORKER_ID = crypto.randomUUID();
 const STEPS = [
   ['capture', 'Reading your landing page: text, photos, logo, colours'],
@@ -44,7 +47,7 @@ function rateLimited(ip) {
 const AUTH = { require: process.env.REQUIRE_LOGIN === '1', free: Math.max(0, Number(process.env.FREE_PREVIEWS_PER_USER || 3)) };
 const userOf = makeUserOf(sb);
 const usedBy = async userId => { const { count } = await sb.from('jobs').select('id', { count: 'exact', head: true }).eq('user_id', userId).neq('status', 'failed'); return count || 0; };
-app.get('/config', (_, res) => res.json({ auth: { require: AUTH.require, free: AUTH.free } }));
+app.get('/config', (_, res) => res.json({ auth: { require: AUTH.require, free: AUTH.free }, templates: TEMPLATES }));
 app.get('/me', async (req, res) => { const user = await userOf(req); if (!user) return res.status(401).json({ error: 'sign in' }); res.json({ id: user.id, email: user.email, previews: allowance({ used: await usedBy(user.id), free: AUTH.free }) }); });
 app.get('/me/jobs', async (req, res) => {
   const user = await userOf(req); if (!user) return res.status(401).json({ error: 'sign in' });
@@ -66,21 +69,26 @@ app.post('/jobs', async (req, res) => {
   try { new URL(url); } catch { return res.status(400).json({ error: 'bad url' }); }
   if (/localhost|127\.|10\.|192\.168\.|\.internal/i.test(url)) return res.status(400).json({ error: 'not allowed' });
   const user = await userOf(req);
-  if (AUTH.require && !user) return res.status(401).json({ error: 'Sign in to start a preview.', login: true });
-  if (user) { const a = allowance({ used: await usedBy(user.id), free: AUTH.free }); if (AUTH.require && !a.allowed) return res.status(402).json({ error: `Your ${a.free} free preview${a.free === 1 ? ' is' : 's are'} used.`, previews: a }); }
+  // the template path: three previews before sign-up and payment (owner, 2026-11-12); only its download needs an account
+  // options.mode is the brief's SEO choice (seo-safe | free); which engine builds the page is options.engine
+  const mode = req.body?.options?.engine === 'templates' ? 'templates' : '';
+  if (mode && !TEMPLATES) return res.status(400).json({ error: 'templates mode is off' });
+  if (!mode && AUTH.require && !user) return res.status(401).json({ error: 'Sign in to start a preview.', login: true });
+  if (!mode && user) { const a = allowance({ used: await usedBy(user.id), free: AUTH.free }); if (AUTH.require && !a.allowed) return res.status(402).json({ error: `Your ${a.free} free preview${a.free === 1 ? ' is' : 's are'} used.`, previews: a }); }
   const ip = clientIp(req);
   if (!user && rateLimited(ip)) return res.status(429).json({ error: 'You have started several previews recently. Please wait an hour before starting another.' });
   // the same site already queued or running → hand back that job instead of paying twice
   const key = canonicalUrl(url);
-  const { data: live } = await sb.from('jobs').select('id,url,status,created_at').in('status', ['queued', 'running']).order('created_at', { ascending: false }).limit(200);
-  const same = (live || []).find(j => canonicalUrl(j.url) === key);
+  const { data: live } = await sb.from('jobs').select('id,url,status,created_at,options').in('status', ['queued', 'running']).order('created_at', { ascending: false }).limit(200);
+  const same = (live || []).find(j => canonicalUrl(j.url) === key && (j.options?.engine === 'templates' ? 'templates' : '') === mode);
   if (same) return res.json({ id: same.id, reused: true });
   if ((live || []).length >= RATE.maxQueue) return res.status(503).json({ error: `The studio is full right now (${live.length} sites in the queue). Please try again in a few minutes.` });
   const since = new Date(Date.now() - 86400e3).toISOString();
   const { count } = await sb.from('jobs').select('id', { count: 'exact', head: true }).gte('created_at', since);
   if ((count || 0) >= RATE.perDay) return res.status(503).json({ error: 'Today\'s preview budget is used up. Please come back tomorrow.' });
   const options = { ...(req.body?.options || {}) }; const email = String(options.notify_email || '').trim().toLowerCase(); if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'bad email' }); if (email) options.notify_email = email; else delete options.notify_email;
-  const { data, error } = await sb.from('jobs').insert({ url, options, steps: STEPS.map(([id, label]) => ({ id, label, status: 'pending' })), ...(user ? { user_id: user.id, email: user.email } : {}) }).select('id').single();
+  if (mode) options.engine = mode; else delete options.engine;
+  const { data, error } = await sb.from('jobs').insert({ url, options, steps: (mode ? STEPS_T : STEPS).map(([id, label]) => ({ id, label, status: 'pending' })), ...(user ? { user_id: user.id, email: user.email } : {}) }).select('id').single();
   if (error) return res.status(500).json({ error: error.message });
   res.json({ id: data.id });
 });
@@ -165,6 +173,32 @@ app.get('/p/:id', async (req, res) => {
   // These are temporary design previews, not the customer's published site.
   // Keep noindex at the HTTP layer so downloaded HTML remains publishable.
   res.set({ 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-frame-options': 'ALLOWALL', 'x-robots-tag': 'noindex' });
+  res.send(Buffer.from(await data.arrayBuffer()));
+});
+// ---- the template path: a variant's preview page (open: no account), and its package (account + the payment hook) ----
+app.get('/t/:id/:slug', async (req, res) => {
+  if (!/^[0-9a-f-]{36}$/.test(req.params.id)) return res.status(400).end();
+  const { data: row, error } = await sb.from('jobs').select('status,result').eq('id', req.params.id).maybeSingle();
+  if (error) return res.status(503).send('preview metadata unavailable');
+  if (!previewable(row, req.params.slug)) return res.status(404).send('preview not found');
+  const { data, error: e2 } = await sb.storage.from(BUCKET).download(`${req.params.id}/t/${req.params.slug}.html`);
+  if (e2 || !data) return res.status(404).send('preview not found');
+  res.set({ 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-frame-options': 'ALLOWALL', 'x-robots-tag': 'noindex' });
+  res.send(Buffer.from(await data.arrayBuffer()));
+});
+app.get('/t/:id/:slug/package', async (req, res) => {
+  if (!/^[0-9a-f-]{36}$/.test(req.params.id)) return res.status(400).end();
+  const user = await userOf(req);
+  const { data: row, error } = await sb.from('jobs').select('id,url,status,result,user_id').eq('id', req.params.id).maybeSingle();
+  if (error) return res.status(503).json({ error: 'unavailable' });
+  if (!row || !previewable(row, req.params.slug)) return res.status(404).json({ error: 'not found' });
+  const gate = mayDownload({ user, job: row, slug: req.params.slug, env: process.env });
+  if (gate.status !== 200) return res.status(gate.status).json(gate.body);
+  if (!row.user_id) await sb.from('jobs').update({ user_id: user.id, email: user.email }).eq('id', row.id).is('user_id', null);   // a downloaded page belongs to whoever downloaded it first
+  const { data, error: e2 } = await sb.storage.from(PACKAGE_BUCKET).download(`${row.id}/${req.params.slug}.zip`);
+  if (e2 || !data) return res.status(404).json({ error: 'package not found' });
+  const host = (() => { try { return new URL(row.url).hostname.replace(/^www\./, '').replace(/[^a-z0-9.-]/gi, ''); } catch { return 'site'; } })();
+  res.set({ 'content-type': 'application/zip', 'content-disposition': `attachment; filename="${host}-${req.params.slug}.zip"`, 'cache-control': 'no-store' });
   res.send(Buffer.from(await data.arrayBuffer()));
 });
 app.listen(process.env.PORT || 8080, () => console.log('api on', process.env.PORT || 8080));
@@ -349,6 +383,7 @@ async function runClaimed(job) {
   }
 }
 async function process_(job) {
+  if (job.options?.engine === 'templates') return processTemplates(job);
   const slug = slugOf(job.url);
   fs.mkdirSync(OUT, { recursive: true });
   const jobRoot = fs.mkdtempSync(path.join(OUT, `job-${job.id}-`));
@@ -495,5 +530,25 @@ async function loop() {
       else await new Promise(r => setTimeout(r, 2500));
     } catch (e) { console.error('loop', e.message); await new Promise(r => setTimeout(r, 5000)); }
   }
+}
+// the template path's job (server/templates.mjs); kept outside the stretch from runClaimed to loop that the worker tests cut out
+async function processTemplates(job) {
+  const slug = slugOf(job.url);
+  fs.mkdirSync(OUT, { recursive: true });
+  const jobRoot = fs.mkdtempSync(path.join(OUT, `job-${job.id}-`)); job._jobRoot = jobRoot;
+  const dir = path.join(jobRoot, slug); job._dir = dir; CURRENT_JOB_DIR = dir;
+  job._result = { ...(job.result || {}) };
+  const result = await runTemplateJob({ job, dir, jobRoot, run, upload, self: SELF, chrome: process.env.CHROME_PATH || '',
+    uploadPrivate: async (local, key, type) => { const { error } = await sb.storage.from(PACKAGE_BUCKET).upload(key, fs.readFileSync(local), { contentType: type, upsert: true }); if (error) throw error; },
+    publicBase: key => sb.storage.from(BUCKET).getPublicUrl(key).data.publicUrl,
+    setStep: (id, status, note) => setStep(job, id, status, note),
+    emit: evs => emit(job, evs),
+    save: async r => { await drainEvents(job); job._result = { ...r, events: job._result?.events || [], eventsOffset: job._result?.eventsOffset || 0 }; await updateWithRetry(job, { result: job._result }); } });
+  await drainEvents(job);
+  const final = { ...result, events: job._result?.events || [], eventsOffset: job._result?.eventsOffset || 0 };
+  job._artifactsUploaded = true;
+  await updateWithRetry(job, { status: 'done', step: 'done', result: final, slug, lease_owner: null, lease_until: null });
+  job._terminalPersisted = true;
+  try { const { data: fresh } = await sb.from('jobs').select('options').eq('id', job.id).maybeSingle(); job.options = fresh?.options || job.options; await notifyDone(job, final.templates?.variants?.[0]?.url || ''); } catch (e) { console.warn('notify', job.id, e.message); }
 }
 if (process.env.SUPABASE_URL) { for (let i = 0; i < WORKER_CONCURRENCY; i++) loop(); console.log('worker', WORKER_ID, 'slots', WORKER_CONCURRENCY); } else console.warn('no SUPABASE_URL: worker idle');
