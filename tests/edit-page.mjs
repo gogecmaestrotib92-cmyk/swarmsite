@@ -66,5 +66,32 @@ try {
     assert.ok(state.put && state.put.ops.some(o => o.value === 'Unreadable on purpose')); assert.match(decodeURIComponent(state.landed), /next=\/edit\?job=.*slug=maze/);
     await page.close();
   }
-  console.log('Edit page 1440/390: text edited where it stands, a section hidden, a colour, another design keeping every edit, Undo, an unreadable line named, keeping asks for an account');
+  // publishing, signed in: the edits are kept first, then the site; only a state written after this start counts
+  { const state = { put: 0, published: null, polls: 0 }; const t0 = new Date(Date.now() - 60e3).toISOString(), later = () => new Date(Date.now() + 1000).toISOString();
+    const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    await page.route('**/*', async r => { const u = new URL(r.request().url()), m = r.request().method(), body = m === 'GET' ? null : JSON.parse(r.request().postData() || 'null');
+      const json = (o, status = 200) => r.fulfill({ status, headers: { 'access-control-allow-origin': '*' }, contentType: 'application/json', body: JSON.stringify(o) });
+      if (u.hostname === 'app.test' && u.pathname === '/edit') return r.fulfill({ contentType: 'text/html', body: html });
+      if (u.hostname === 'app.test' && u.pathname === '/config.js') return r.fulfill({ contentType: 'application/javascript', body: "window.SWARMSITE_API='https://api.test'" });
+      if (r.request().headers()['access-control-request-method']) return r.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'POST, PUT' } });
+      const t = u.pathname.match(/^\/t\/[0-9a-f-]{36}\/([a-z]+)\/(describe|render|check)$/);
+      if (t) { const [, slug, what] = t, ops = body?.ops ?? [];
+        if (what === 'describe') return json({ ...JSON.parse(edit(o => ['describe', data, '--ops', o, '--slug', slug], ops)), ops: body?.ops ?? [], variants: ['griffin'] });
+        if (what === 'render') return r.fulfill({ headers: { 'access-control-allow-origin': '*' }, contentType: 'text/html', body: edit(o => ['render', data, slug, '--ops', o], ops) });
+        return json({ ok: true, failed: [], unread: [], overlap: 0, sideways: 0 }); }
+      if (u.pathname === `/t/${id}/edits`) { state.put++; return json({ kept: body.ops.length }); }
+      if (u.pathname === `/t/${id}/griffin/publish`) { state.published = body; return json({ status: 'packaging', name: body.name, at: new Date().toISOString() }, 202); }
+      if (u.pathname === `/jobs/${id}`) { state.polls++; return json({ id, status: 'done', result: { publish: state.polls < 2 ? { status: 'live', slug: 'griffin', name: 'old', url: 'https://old.swarmsite.si', at: t0 } : state.polls < 3 ? { status: 'packaging', slug: 'griffin', at: later() } : { status: 'live', slug: 'griffin', name: 'casa-fern', url: 'https://casa-fern.swarmsite.si', at: later() } } }); }
+      return r.abort(); });
+    await page.goto(`https://app.test/edit?job=${id}&slug=griffin`);
+    await page.frameLocator('#page').locator('h1').waitFor({ timeout: 15000 });
+    const ta = page.locator('#fields .f[data-path="hero.title"] textarea'); await ta.fill('Closed by six'); await ta.blur();
+    await page.locator('#siteName').fill('Casa Fern'); await page.locator('#publish').click();
+    assert.match(await page.locator('#pubStatus').textContent(), /3 to 40 small letters/); assert.equal(state.published, null, 'a bad name is not sent');
+    await page.locator('#siteName').fill('casa-fern'); await page.locator('#publish').click();
+    await page.locator('#siteLink:not([hidden])').waitFor({ timeout: 20000 });
+    assert.equal(await page.locator('#siteLink').getAttribute('href'), 'https://casa-fern.swarmsite.si', 'the old site of an earlier publish is not taken for this one');
+    assert.deepEqual(state.published, { name: 'casa-fern' }); assert.equal(state.put, 1, 'the edits were kept before publishing');
+    await page.close(); }
+  console.log('Edit page 1440/390: text edited where it stands, a section hidden, a colour, another design keeping every edit, Undo, an unreadable line named, keeping asks for an account; publish keeps the edits first and shows the new address');
 } finally { await browser.close(); fs.rmSync(tmp, { recursive: true, force: true }); }

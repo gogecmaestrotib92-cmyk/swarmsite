@@ -100,3 +100,26 @@ def test_the_command_line_renders_describes_and_measures(tmp_path):
     assert json.loads(run('measure', str(tmp_path / 'p.png')).stdout) == {'w': 640, 'h': 480}
     (tmp_path / 'x.png').write_text('<svg/>')
     assert json.loads(run('measure', str(tmp_path / 'x.png')).stdout) == {}
+
+
+def test_the_edited_page_is_packaged_whole_and_compared_with_itself_before_anything_is_handed_out(tmp_path):
+    """the package publish and the download hand out: the edited render, its pictures and fonts, opened offline beside
+    the edited page and compared screen by screen (Chrome; fonts from Google Fonts, cached)"""
+    import base64
+    c = lambda k, dd: struct.pack('>I', len(dd)) + k + dd + struct.pack('>I', zlib.crc32(k + dd) & 0xffffffff)
+    pic = b'\x89PNG\r\n\x1a\n' + c(b'IHDR', struct.pack('>IIBBBBB', 120, 80, 8, 2, 0, 0, 0)) + c(b'IDAT', zlib.compress((b'\x00' + bytes((60, 90, 120)) * 120) * 80)) + c(b'IEND', b'')
+    ops = [{'op': 'text', 'path': 'hero.title', 'value': 'Closed by six, every evening'}, {'op': 'hide', 'block': 'faq'}]
+    d, _ = E.apply(D, ops, 'griffin')
+    media = tmp_path / 'media-root'
+    for rel in R.media_used('griffin', d):
+        (media / rel).parent.mkdir(parents=True, exist_ok=True)
+        (media / rel).write_bytes(b'<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><rect width="40" height="40" fill="#3c5a78"/></svg>' if rel.endswith('.svg') else pic)
+    r = E.package(D, 'griffin', ops, str(media), str(tmp_path / 'g.zip'), verify=True)
+    assert r['ok'], r['why']
+    files = E.zip_files(tmp_path / 'g.zip')
+    names = {f['file'] for f in files}
+    assert 'index.html' in names and any(f.startswith('fonts/') for f in names) and set(R.media_used('griffin', d)) <= names
+    page = base64.b64decode(next(f['data'] for f in files if f['file'] == 'index.html')).decode()
+    assert 'Closed by six, every evening' in page, 'the package is the edited page'
+    missing = E.package(D, 'griffin', ops, str(tmp_path / 'nowhere'), str(tmp_path / 'h.zip'), verify=False)
+    assert not missing['ok'] and 'could not be had' in missing['why'][0], 'a picture that cannot be had refuses the package'

@@ -13,6 +13,7 @@ import { makeUserOf, allowance, mine } from './auth.mjs';
 import { STEPS_T, STEPS_F, enabled as templatesEnabled, runTemplateJob, mayDownload, previewable, imageType, formProblem, UPLOAD } from './templates.mjs';
 import { makeEditor, mayKeep, editable, opsProblem } from './editor.mjs';
 import { ensurePrivateBucket } from './bucket.mjs'; import { runCleanup } from './cleanup.mjs';
+import { runPublish, runRepackage, editedPackage, editsHash, nameProblem } from './publish.mjs';
 import { AsyncLocalStorage } from 'node:async_hooks';
 const HERE = path.dirname(fileURLToPath(import.meta.url)); const ROOT = path.resolve(HERE, '..');
 const sb = createClient(process.env.SUPABASE_URL || 'https://placeholder.supabase.co', process.env.SUPABASE_SERVICE_KEY || 'placeholder', { auth: { persistSession: false } });
@@ -219,7 +220,10 @@ app.get('/t/:id/:slug/package', async (req, res) => {
   const gate = mayDownload({ user, job: row, slug: req.params.slug, env: process.env });
   if (gate.status !== 200) return res.status(gate.status).json(gate.body);
   if (!row.user_id) await sb.from('jobs').update({ user_id: user.id, email: user.email }).eq('id', row.id).is('user_id', null);   // a downloaded page belongs to whoever downloaded it first
-  const { data, error: e2 } = await sb.storage.from(PACKAGE_BUCKET).download(`${row.id}/${req.params.slug}.zip`);
+  // with kept edits: the verified package of those edits, once one is made (publish, or "download with my edits")
+  const kept = await EDITOR.saved(row); const edited = kept.length ? editedPackage(row.result, req.params.slug, editsHash(kept)) : null;
+  if (kept.length && !edited && req.query.as !== 'made') return res.status(409).json({ error: 'Your edits are not in a download yet: prepare it first.', prepare: true });
+  const { data, error: e2 } = await sb.storage.from(PACKAGE_BUCKET).download(edited || `${row.id}/${req.params.slug}.zip`);
   if (e2 || !data) return res.status(404).json({ error: 'package not found' });
   const host = (() => { try { return new URL(row.url).hostname.replace(/^www\./, '').replace(/[^a-z0-9.-]/gi, '') || 'site'; } catch { return 'site'; } })();
   res.set({ 'content-type': 'application/zip', 'content-disposition': `attachment; filename="${host}-${req.params.slug}.zip"`, 'cache-control': 'no-store' });
@@ -267,6 +271,30 @@ app.put('/t/:id/edits', async (req, res) => { const row = await editRow(req, res
   const ops = req.body?.ops; const bad = opsProblem(ops); if (bad) return res.status(400).json({ error: bad });
   if (may.claim) await sb.from('jobs').update({ user_id: user.id, email: user.email }).eq('id', row.id).is('user_id', null);
   try { res.json(await EDITOR.save(row, ops)); } catch (e) { editFail(res, e); } });
+// ---- publish on <name>.swarmsite.si, and the download with the edits (server/publish.mjs): both from the one verified package
+const keepState = (id, field) => async state => { const { data } = await sb.from('jobs').select('result').eq('id', id).maybeSingle(); await sb.from('jobs').update({ result: { ...(data?.result || {}), [field]: state } }).eq('id', id); };
+const pubDeps = (row, slug, user, field) => ({ row, slug, user, edits: () => EDITOR.saved(row), env: process.env, fetch, tmp: () => { fs.mkdirSync(OUT, { recursive: true }); return OUT; },
+  readPrivate: async key => { const { data, error } = await sb.storage.from(PACKAGE_BUCKET).download(key); return error || !data ? null : Buffer.from(await data.arrayBuffer()); },
+  writePrivate: async (key, buf, type) => { const { error } = await sb.storage.from(PACKAGE_BUCKET).upload(key, buf, { contentType: type, upsert: true }); if (error) throw error; },
+  publicBase: key => sb.storage.from(BUCKET).getPublicUrl(key).data.publicUrl, python: args => child('python3', args, 600000), save: keepState(row.id, field) });
+const busy = s => s && ['packaging', 'deploying'].includes(s.status) && Date.now() - Date.parse(s.at) < 15 * 60e3;
+const pubGate = async (req, res) => { const row = await editRow(req, res); if (!row) return null; const user = await userOf(req);
+  const may = mayKeep({ user, row }); if (may.status !== 200) { res.status(may.status).json(may.body); return null; }
+  if (process.env.PACKAGES_FREE !== '1') { res.status(402).json({ error: 'Payment is needed to download or publish this page.', pay: true }); return null; }   // the payment hook, as for the download
+  if (may.claim) await sb.from('jobs').update({ user_id: user.id, email: user.email }).eq('id', row.id).is('user_id', null);
+  return { row, user }; };
+app.post('/t/:id/:slug/prepare', async (req, res) => { const g = await pubGate(req, res); if (!g) return;
+  if (busy(g.row.result?.edited)) return res.status(409).json({ error: 'The download is being prepared.' });
+  const at = new Date().toISOString(); runRepackage(pubDeps(g.row, req.params.slug, g.user, 'edited')).catch(e => console.warn('prepare', g.row.id, String(e.message).slice(0, 160)));
+  res.status(202).json({ status: 'packaging', at }); });
+app.post('/t/:id/:slug/publish', async (req, res) => {
+  if (!process.env.VERCEL_TOKEN) return res.status(503).json({ error: 'Publishing is not switched on yet.' });
+  const name = String(req.body?.name || '').trim().toLowerCase(); const bad = nameProblem(name); if (bad) return res.status(400).json({ error: bad });
+  const g = await pubGate(req, res); if (!g) return;
+  if (busy(g.row.result?.publish)) return res.status(409).json({ error: 'A publish is under way.' });
+  const at = new Date().toISOString(); runPublish({ ...pubDeps(g.row, req.params.slug, g.user, 'publish'), name }).catch(e => console.warn('publish', g.row.id, String(e.message).slice(0, 160)));
+  res.status(202).json({ status: 'packaging', name, at }); });
+
 // ---------- worker ----------
 const JOB_CTX = new AsyncLocalStorage(); // the job a child process belongs to, per async chain: several jobs run at once in one worker
 let CURRENT_JOB_DIR = ''; // fallback for code paths outside a job context (tests slice process_ without the loop)
