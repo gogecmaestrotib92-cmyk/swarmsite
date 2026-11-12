@@ -18,7 +18,9 @@ Among those, the three are taken so that they differ in approach where the libra
 
 What a needs.json may say (the vocabulary this file reads — a need it cannot read keeps the template out, with the
 reason, rather than being waved through):
-  niche: [..]                    free words; read by the telling words in NICHES below
+  niche: [..]                    one of the fixed words of needs.schema.json (software, app, restaurant, hotel, clinic,
+                                 law, service, shop, school, person, corporate, nonprofit) — then exactly that — or
+                                 free words, read by the telling words in NICHES below
   photos_min, photos_large_min   photographs in media.photos; large = at least 1600 px wide
   screens_min, phones_ok         product screens in media.screens (+ media.phones when phones_ok)
   step_pictures_min              steps.items that carry a picture
@@ -75,12 +77,17 @@ NICHES = (
     ('shop', r'\bshop\b|store|catalogue|e-?commerce'),
 )
 SOFTWARE = ('app', 'saas', 'software')
-PLACE_KINDS = {'restaurant', 'cafe', 'bar', 'hotel', 'venue', 'shop', 'place'}
+PLACE_KINDS = {'restaurant', 'cafe', 'bar', 'hotel', 'venue', 'place'}
+# the fixed words of lib/templates/needs.schema.json (and of the data's `kind`): a niche written as one of them is
+# that niche and nothing else — a template for restaurants is not offered to a hotel
+FIXED = ('software', 'app', 'restaurant', 'hotel', 'clinic', 'law', 'service', 'shop', 'school', 'person', 'corporate', 'nonprofit')
 
 
 def niche_tags(words):
-    """the niches a line of free words names"""
-    w = str(words or '').lower()
+    """the niches a niche entry names: itself when it is one of the fixed words, else the telling words of free text"""
+    w = str(words or '').lower().strip()
+    if w in FIXED:
+        return [w]
     return [n for n, rx in NICHES if re.search(rx, w)]
 
 
@@ -99,10 +106,16 @@ def client(d):
     """what the client is and has: niches (most telling first) and its own usable pictures"""
     p = _pics(d)
     kind = str(d.get('kind') or '').lower()
-    if _has(d.get('place')) or kind in PLACE_KINDS:
+    if kind in ('restaurant', 'cafe', 'bar'):
+        niche = ['restaurant', 'place']
+    elif kind == 'hotel':
+        niche = ['hotel', 'place']
+    elif kind in ('software', 'app') or (kind not in FIXED and set(niche_tags(kind)) & set(SOFTWARE)):
+        niche = ['app', 'software', 'saas'] if p['phones'] else ['software', 'saas', 'app']
+    elif kind in FIXED:                                               # clinic, law, service, shop, school, person, corporate, nonprofit
+        niche = [kind]
+    elif _has(d.get('place')) or kind in PLACE_KINDS:
         niche = ['place']
-    elif kind == 'software' or niche_tags(kind) and set(niche_tags(kind)) & set(SOFTWARE):
-        niche = ['app', 'software', 'saas'] if p['phones'] else ['saas', 'software', 'app']
     else:
         niche = [n for n in niche_tags(kind) if n not in SOFTWARE]
     usable = [x for k in ('screens', 'phones', 'photos') for x in p[k] if not (_n(x.get('w')) and _n(x.get('h')) and min(_n(x['w']), _n(x['h'])) < 200)] + p['video']
@@ -142,8 +155,13 @@ def _has(v):
 
 ALIASES = {'made': 'media.made', 'video': 'media.video', 'screens': 'media.screens', 'phones': 'media.phones', 'photos': 'media.photos',
            'menu': 'place.menu', 'spaces': 'place.spaces', 'hours': 'place.hours', 'booking': 'place.booking', 'events': 'place.events', 'address': 'place.address',
-           'phone': 'place.phone', 'email': 'place.email', 'social': 'place.social', 'takeaway': 'place.takeaway', 'cuisine': 'place.cuisine', 'since': 'place.since'}
-BLOCKS = {'brand', 'nav', 'signin', 'cta', 'hero', 'trust', 'figures', 'statement', 'steps', 'features', 'media', 'plans', 'faq', 'quotes', 'logos', 'links', 'close', 'foot', 'place'}
+           'phone': 'place.phone', 'email': 'place.email', 'social': 'place.social', 'takeaway': 'place.takeaway', 'cuisine': 'place.cuisine', 'since': 'place.since',
+           'price_range': 'place.price_range', 'notices': 'place.notices'}
+BLOCKS = {'brand', 'nav', 'signin', 'cta', 'hero', 'trust', 'figures', 'statement', 'steps', 'features', 'media', 'plans', 'faq', 'quotes', 'logos', 'links', 'close', 'foot', 'place',
+          'team', 'catalogue', 'locations', 'credentials', 'contact', 'projects'}
+# the names of the strict form (needs.schema.json) that are a part of every item of a block
+STRICT = {'steps.img': 'steps.items[].img', 'steps.k': 'steps.items[].k', 'steps.cta': 'steps.items[].cta', 'features.d': 'features.items[].d', 'links.d': 'links[].d', 'figures.l': 'figures[].l',
+          'plans.rows': 'plans.items[].rows', 'spaces.img': 'place.spaces[].img', 'menu.items': 'place.menu.sections[].items', 'team.img': 'team.items[].img', 'catalogue.img': 'catalogue.groups[].items[].img'}
 
 
 def _either(text):
@@ -182,6 +200,7 @@ def need_met(need, d, pics, promised=()):
     if not m:
         return False, False, 'a need this step cannot read: %r' % text[:80]
     path, rest = m.group(1), m.group(2)
+    path = STRICT.get(path, path)
     head = re.sub(r'\[\d*\]$', '', path.split('.')[0])
     if head in ALIASES:
         path = ALIASES[head] + path[len(head):]
@@ -191,6 +210,11 @@ def need_met(need, d, pics, promised=()):
         return False, False, 'a need this step cannot read: %r' % text[:80]
     vals = _get(d, path)
     ok = bool(vals) and all(_has(v) for v in vals)
+    if path == 'place.menu.sections[].items':                       # a menu with dishes: one section that lists them is enough
+        ok = any(_has(v) for v in vals)
+    if path == 'team.items[].img' and not vals:                      # people may stand in groups instead of one list
+        vals = _get(d, 'team.groups[].items[].img')
+        ok = bool(vals) and all(_has(v) for v in vals)
     if not ok and path.startswith('media.made') and 'made' in promised:
         return True, True, ''
     # words in brackets: how many items, and what each must carry
