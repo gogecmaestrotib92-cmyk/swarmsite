@@ -1,0 +1,71 @@
+{
+ "niche": [
+  "law",
+  "person",
+  "service",
+  "clinic"
+ ],
+ "photos_min": 0,
+ "photos_large_min": 0,
+ "screens_min": 0,
+ "phones_ok": false,
+ "needs": [],
+ "needs_any": [
+  [
+   "hero.title",
+   "brand.name"
+  ],
+  [
+   "features",
+   "steps"
+  ],
+  [
+   "address",
+   "phone",
+   "email"
+  ]
+ ],
+ "drops": [
+  "trust",
+  "logos",
+  "signin",
+  "links.d",
+  "since",
+  "cuisine",
+  "price_range",
+  "takeaway",
+  "menu",
+  "spaces",
+  "events",
+  "notices",
+  "projects",
+  "foot.text"
+ ],
+ "holds_without_pictures": true,
+ "motif": "photos",
+ "notes": [
+  "Type-led: text stands on a photograph only on the first screen (over a veil in the page's own dark) and on portrait tiles (same veil); every slot may be empty.",
+  "The accent appears only when something is pointed at (links, rows) and as the base of the tile tints, as on the reference; it is lightened toward the ink until it reads 4.6:1 on the room.",
+  "Tenor Sans has one weight and figures with more contrast than its letters (a crossed 7); prices and telephone numbers are set in it.",
+  "A long brand name is set smaller (from 27 letters) and may take two lines on a phone.",
+  "needs (as written): address, phone or email",
+  "drops (as written): trust (the same claims stand in credentials and figures on both test clients)",
+  "drops (as written): media.screens, media.phones, media.video, media.made",
+  "drops (as written): team.items[].text when the team is three or more (tiles and list show name, role, phone, e-mail)",
+  "drops (as written): steps.items[].img and .shape (the photographs enter the page's slots by role and size instead), steps.items[].cta.t (the row itself is the link)",
+  "drops (as written): links[].d (the links stand as the ruled side list, titles only)",
+  "drops (as written): quotes[].title",
+  "drops (as written): catalogue.groups[].img, catalogue.groups[].items[].img",
+  "drops (as written): contact.routes[] beyond title, link and note",
+  "drops (as written): foot.text when place or locations give the address",
+  "drops (as written): photographs beyond the slots above (never looped): on person1 toprope, salbit, book and powder-as-a-visible-picture; on law1 none",
+  "motif (as written): none made — the client's own photographs only, all shown without colour as the reference's are; media.made is never read",
+  "page_ground: always dark: the darker of palette.ground / palette.ink becomes the room, the lighter the ink (the reference is a dark page; see NOTES.md, 'Colour'). A client who must stay on a white page should not be offered this template.",
+  "best_with: 1 to 3 wide photographs from 1300 px (ratio 1.2 or wider) for the slideshow; 1 upright photograph from 600 px wide, or any from 760 px high, beside the firm's own words; 2 more from 720 x 360 for the dim pictures over the services and the people; 1 from 1000 x 600 behind the contact block; square portraits from 362 px (shown 320 square, whole)",
+  "photos_by_role: {\"slideshow\": \"0-3, width >= 1300, ratio >= 1.2, not small, not a badge or product; a team member's own wide portrait may stand here with name and role beside it\", \"column beside the statement\": \"0-1, upright and width >= 600, else height >= 760 and width >= 600; not small, not portrait/product\", \"dim picture over the people\": \"0-1, >= 720 x 360, role people | room | workshop first\", \"dim picture over the services\": \"0-1, >= 720 x 360, role work | action | room | workshop | detail first\", \"behind the contact block (at a tenth)\": \"0-1, >= 1000 x 600, role exterior | room | landscape first\", \"portrait tiles\": \"0-n, the person's own picture from 362 px wide; a person without one is set in the ruled type list\", \"one or two people\": \"the person's portrait as the column beside their text, from 600 px wide, never wider than its own pixels, whole\", \"credential badges\": \"0-n, the client's own files, at most 150 x 84\"}",
+  "picture_share_case: our page is 4.8 (law1) and 3.5 (person1) times the reference's home page, so the share is compared over the sections on both (first screen, index, foot): 80 / 6 against the reference's 80 / 6 / 0 per screen. The reference's one wide picture (the slideshow) is in place. Rule (3) of the contract (a picture band every two screens of list) is NOT applied: law1 has no unused photograph large enough; person1's remaining ones are under 1100 px.",
+  "shows: [\"nav, cta (as the last word of the nav)\", \"hero: title (h1), text, primary, secondary, note; kicker as the small line over the statement; text2 in the contact block\", \"features: names as the index list; name + sentence as tinted tiles; title and text as that section's label and sentence\", \"steps: title, each item's title and text as the large ruled rows (linked when the step has a cta), steps.text under them\", \"statement beside a full-height photograph; links as the ruled side list; figures as a ruled list under the text\", \"catalogue: title, text, note; per group its title (linked), text and ruled rows — name, note, text, rows, price, prices[], state\", \"plans: title, text, note; per plan name, line, rows, price, per, cta — in the same rows\", \"faq: questions as rows that open, answers in the body face\", \"team: title, text; items or groups; portrait tiles with name and role, phone and e-mail under each; the rest as a ruled three-column list; one or two people as text beside their portrait with their own text\", \"quotes: q, name, role\", \"close: title, text, cta; place.booking; contact.form\", \"place: address, phone (+note), email, hours, social; contact: phone, email, routes; locations: name, address, phone, email, hours, note, link\", \"credentials: t, text, year, link, badge\", \"foot: links, legal, text\"]",
+  "measured: {\"law1 (12 photographs: 1 of 2000 px, 1 strip of 1128 x 376, 10 square portraits; 3 badges; 35 people; 3 offices; priced catalogue)\": \"slideshow of one (no fading), no picture beside the statement (none upright or tall enough), the strip dim over the people, 10 portrait tiles + 25 people in type, 3 badges. shots.mjs clean at 1440 and 390; legible.mjs ok; see NOTES.md for the lines\", \"person1 (9 photographs: 2 wide from 1568, 1 upright 1568 x 2091, 2 of about 1050, 4 small)\": \"slideshow of two, the upright beside the statement, one dim over the services, one at a tenth behind the contact block, his portrait (944 x 814, small) whole beside his text at 798 x 688. shots.mjs clean; legible.mjs ok\", \"law1 with every picture removed (scratch copy)\": \"renders clean at 1440, 1024 and 390, one h1, legible.mjs ok (854 readings). The first screen becomes a dark panel 1328 wide holding the sentence and the links (no empty 810 px room); all 35 people stand in the type list. Looked at: reads as a page of type\", \"variants of law1 (scratch copies): 1, 3, 5 plans; 2 and 9 features; 1 and 6 steps; a 12-word h1; a 40-character button label; with and without faq; a 42-letter brand name; a wide portrait in the slideshow (caption); only brand.name\": \"no sideways scroll, nothing outside the window, one h1, no script errors at 1440, 1024 and 390; legible.mjs ok on those run (see NOTES.md)\", \"sportbot (software, dark; scratch)\": \"renders clean at the three widths; plans and faq shown in the rows; its screens and phones are not shown (drops) — this template is not for software\", \"clinic1, hotel1, local1, shop1, school1\": \"not built\"}",
+  "needs_any added by hand at import from the free words: \"address, phone or email\""
+ ]
+}

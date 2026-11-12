@@ -1,0 +1,535 @@
+{
+ "_note": "A made-up client for tests. The name, the words, the numbers, the people and the addresses are invented; no real business is described.",
+ "brand": {
+  "name": "Tischlerei Wendholm",
+  "logo": null,
+  "home": "https://tischlerei-wendholm.example/"
+ },
+ "lang": "de",
+ "kind": "service",
+ "character": "warm",
+ "palette": {
+  "note": "invented",
+  "ground": "#f4efe6",
+  "ink": "#2a2420",
+  "accent": "#9c4a1a",
+  "extra": [
+   "#d8c9b0",
+   "#3d4a3a",
+   "#151210"
+  ]
+ },
+ "nav": [
+  {
+   "t": "Leistungen",
+   "h": "https://tischlerei-wendholm.example/leistungen/"
+  },
+  {
+   "t": "Projekte",
+   "h": "https://tischlerei-wendholm.example/projekte/"
+  },
+  {
+   "t": "Werkstatt",
+   "h": "https://tischlerei-wendholm.example/werkstatt/"
+  },
+  {
+   "t": "Ablauf",
+   "h": "https://tischlerei-wendholm.example/ablauf/"
+  },
+  {
+   "t": "Kontakt",
+   "h": "https://tischlerei-wendholm.example/kontakt/"
+  }
+ ],
+ "cta": {
+  "t": "Beratung anfragen",
+  "h": "https://tischlerei-wendholm.example/kontakt/"
+ },
+ "hero": {
+  "kicker": "Tischlerei in dritter Generation",
+  "title": "Möbel und Innenausbau aus Massivholz, nach Maß gebaut",
+  "text": "Küchen, Treppen, Schränke und Fenster für Häuser im Umkreis von fünfzig Kilometern, geplant und gefertigt in unserer Werkstatt am Kastanienweg.",
+  "text2": "Aufmaß und Entwurf vor Ort, Montage durch die eigenen Leute.",
+  "primary": {
+   "t": "Beratung anfragen",
+   "h": "https://tischlerei-wendholm.example/kontakt/"
+  },
+  "secondary": {
+   "t": "Projekte ansehen",
+   "h": "https://tischlerei-wendholm.example/projekte/"
+  },
+  "note": "Telefon 030 23125 417, werktags ab 7 Uhr"
+ },
+ "trust": [
+  "Seit 1958",
+  "Eigene Werkstatt",
+  "Heimische Hölzer",
+  "Montage mit eigenem Team"
+ ],
+ "figures": [
+  {
+   "v": "1958",
+   "l": "gegründet am Kastanienweg"
+  },
+  {
+   "v": "9",
+   "l": "Tischlerinnen und Tischler"
+  },
+  {
+   "v": "120",
+   "l": "Aufträge im Jahr"
+  },
+  {
+   "v": "50 km",
+   "l": "Umkreis, in dem wir montieren"
+  }
+ ],
+ "statement": {
+  "title": "Was wir bauen, reparieren wir auch",
+  "text": "Wir verwenden Holz aus Wäldern der Region, verleimen massiv und ölen statt zu lackieren. Ein Möbel von uns lässt sich nach zwanzig Jahren abschleifen und sieht aus wie neu."
+ },
+ "steps": {
+  "title": "So entsteht Ihr Möbel",
+  "text": "Vom ersten Gespräch bis zur Montage in vier Schritten.",
+  "items": [
+   {
+    "k": "1",
+    "title": "Aufmaß vor Ort",
+    "text": "Wir kommen vorbei, messen und hören zu.",
+    "img": "media/wendholm/aufmass.jpg"
+   },
+   {
+    "k": "2",
+    "title": "Entwurf und Angebot",
+    "text": "Zeichnung, Holzmuster und ein fester Preis.",
+    "img": "media/wendholm/holzlager.jpg"
+   },
+   {
+    "k": "3",
+    "title": "Fertigung in der Werkstatt",
+    "text": "Gebaut von Hand und Maschine, Stück für Stück.",
+    "img": "media/wendholm/hobel.jpg"
+   },
+   {
+    "k": "4",
+    "title": "Montage",
+    "text": "Unser Team baut ein, räumt auf und nimmt den Abfall mit.",
+    "img": "media/wendholm/montage.jpg"
+   }
+  ]
+ },
+ "features": {
+  "title": "Leistungen",
+  "text": "",
+  "items": [
+   {
+    "t": "Küchen",
+    "d": "Massivholzküchen mit Arbeitsplatten aus Holz oder Stein."
+   },
+   {
+    "t": "Treppen",
+    "d": "Gerade, gewendelt oder freitragend."
+   },
+   {
+    "t": "Einbauschränke",
+    "d": "Für Nischen, Dachschrägen und Flure."
+   },
+   {
+    "t": "Fenster und Türen",
+    "d": "Neu gebaut oder restauriert, auch denkmalgerecht."
+   },
+   {
+    "t": "Möbel",
+    "d": "Tische, Regale, Betten und Kommoden."
+   },
+   {
+    "t": "Reparatur",
+    "d": "Abschleifen, neu ölen, Beschläge tauschen."
+   }
+  ]
+ },
+ "media": {
+  "screens": [],
+  "phones": [],
+  "video": null,
+  "photos": [
+   {
+    "src": "media/wendholm/werkstatt.jpg",
+    "w": 2400,
+    "h": 1600,
+    "alt": "Die Werkstatt: Hobelbänke unter einem Sheddach",
+    "role": "workshop"
+   },
+   {
+    "src": "media/wendholm/kueche.jpg",
+    "w": 2400,
+    "h": 1350,
+    "alt": "Eine Küche aus geölter Eiche mit Griffleisten",
+    "role": "work"
+   },
+   {
+    "src": "media/wendholm/treppe.jpg",
+    "w": 1600,
+    "h": 2000,
+    "alt": "Eine gewendelte Treppe aus Esche",
+    "role": "work"
+   },
+   {
+    "src": "media/wendholm/schrank.jpg",
+    "w": 1600,
+    "h": 2000,
+    "alt": "Ein Einbauschrank unter der Dachschräge",
+    "role": "work"
+   },
+   {
+    "src": "media/wendholm/tisch.jpg",
+    "w": 2000,
+    "h": 1333,
+    "alt": "Ein Esstisch aus Nussbaum mit sechs Stühlen",
+    "role": "work"
+   },
+   {
+    "src": "media/wendholm/fenster.jpg",
+    "w": 1400,
+    "h": 1750,
+    "alt": "Ein restauriertes Kastenfenster",
+    "role": "work"
+   },
+   {
+    "src": "media/wendholm/detail-zinken.jpg",
+    "w": 1400,
+    "h": 1400,
+    "alt": "Schwalbenschwanzzinken an einer Schublade",
+    "role": "detail"
+   },
+   {
+    "src": "media/wendholm/hobel.jpg",
+    "w": 1600,
+    "h": 1067,
+    "alt": "Ein Tischler beim Abrichten einer Bohle",
+    "role": "action"
+   },
+   {
+    "src": "media/wendholm/holzlager.jpg",
+    "w": 2000,
+    "h": 1333,
+    "alt": "Das Holzlager mit gestapelten Bohlen",
+    "role": "workshop"
+   },
+   {
+    "src": "media/wendholm/aufmass.jpg",
+    "w": 1600,
+    "h": 1067,
+    "alt": "Aufmaß in einem Altbau",
+    "role": "action"
+   },
+   {
+    "src": "media/wendholm/montage.jpg",
+    "w": 1600,
+    "h": 1067,
+    "alt": "Montage einer Küche beim Kunden",
+    "role": "action"
+   },
+   {
+    "src": "media/wendholm/bad.jpg",
+    "w": 1600,
+    "h": 2000,
+    "alt": "Ein Waschtisch aus geölter Lärche",
+    "role": "work"
+   },
+   {
+    "src": "media/wendholm/hof.jpg",
+    "w": 2400,
+    "h": 1200,
+    "alt": "Der Hof der Tischlerei am Kastanienweg",
+    "role": "exterior"
+   },
+   {
+    "src": "media/wendholm/regal.jpg",
+    "w": 1400,
+    "h": 1750,
+    "alt": "Ein Bücherregal über die ganze Wand",
+    "role": "work"
+   },
+   {
+    "src": "media/wendholm/team-1.jpg",
+    "w": 1024,
+    "h": 1280,
+    "alt": "Jonas Wendholm",
+    "role": "portrait"
+   },
+   {
+    "src": "media/wendholm/team-2.jpg",
+    "w": 1024,
+    "h": 1280,
+    "alt": "Ilka Wendholm",
+    "role": "portrait"
+   },
+   {
+    "src": "media/wendholm/team-3.jpg",
+    "w": 1024,
+    "h": 1280,
+    "alt": "Ferhat Böldt",
+    "role": "portrait"
+   }
+  ]
+ },
+ "projects": [
+  {
+   "title": "Küche in einem Bauernhaus",
+   "text": "Eiche geölt, Arbeitsplatte aus Muschelkalk.",
+   "h": "https://tischlerei-wendholm.example/projekte/bauernhaus/",
+   "photos": [
+    "media/wendholm/kueche.jpg",
+    "media/wendholm/detail-zinken.jpg"
+   ]
+  },
+  {
+   "title": "Wendeltreppe im Stadthaus",
+   "text": "Esche, 14 Stufen, ohne sichtbare Schrauben.",
+   "h": "https://tischlerei-wendholm.example/projekte/stadthaus/",
+   "photos": [
+    "media/wendholm/treppe.jpg"
+   ]
+  },
+  {
+   "title": "Schrank unter dem Dach",
+   "text": "Kiefer weiß geölt, sieben Türen.",
+   "h": "https://tischlerei-wendholm.example/projekte/dachschrank/",
+   "photos": [
+    "media/wendholm/schrank.jpg"
+   ]
+  },
+  {
+   "title": "Esstisch aus Nussbaum",
+   "text": "Zwei Meter vierzig, ausziehbar.",
+   "h": "https://tischlerei-wendholm.example/projekte/esstisch/",
+   "photos": [
+    "media/wendholm/tisch.jpg"
+   ]
+  },
+  {
+   "title": "Kastenfenster im Altbau",
+   "text": "Zwölf Fenster, restauriert und neu verglast.",
+   "h": "https://tischlerei-wendholm.example/projekte/kastenfenster/",
+   "photos": [
+    "media/wendholm/fenster.jpg"
+   ]
+  },
+  {
+   "title": "Bad aus Lärche",
+   "text": "Waschtisch und Spiegelschrank.",
+   "h": "https://tischlerei-wendholm.example/projekte/bad/",
+   "photos": [
+    "media/wendholm/bad.jpg",
+    "media/wendholm/regal.jpg"
+   ]
+  }
+ ],
+ "team": {
+  "title": "Die Werkstatt",
+  "text": "Neun Leute, zwei davon in der Ausbildung.",
+  "items": [
+   {
+    "name": "Jonas Wendholm",
+    "role": "Tischlermeister",
+    "text": "Führt die Werkstatt in dritter Generation.",
+    "img": "media/wendholm/team-1.jpg"
+   },
+   {
+    "name": "Ilka Wendholm",
+    "role": "Planung und Entwurf",
+    "text": "Zeichnet jedes Möbel, bevor es gebaut wird.",
+    "img": "media/wendholm/team-2.jpg"
+   },
+   {
+    "name": "Ferhat Böldt",
+    "role": "Montageleiter",
+    "text": "Baut seit fünfzehn Jahren bei unseren Kunden ein.",
+    "img": "media/wendholm/team-3.jpg"
+   }
+  ]
+ },
+ "catalogue": {
+  "title": "Preise",
+  "text": "Richtwerte inklusive Montage; jedes Angebot ist ein Festpreis.",
+  "note": "Alle Preise inklusive Mehrwertsteuer.",
+  "groups": [
+   {
+    "t": "Innenausbau",
+    "h": "https://tischlerei-wendholm.example/leistungen/",
+    "items": [
+     {
+      "name": "Massivholzküche",
+      "price": "14.500 €",
+      "from": true
+     },
+     {
+      "name": "Holztreppe, gerade",
+      "price": "6.800 €",
+      "from": true
+     },
+     {
+      "name": "Einbauschrank je laufender Meter",
+      "price": "1.250 €",
+      "from": true
+     },
+     {
+      "name": "Kastenfenster restaurieren",
+      "price": "690 €",
+      "from": true,
+      "note": "je Fenster"
+     },
+     {
+      "name": "Aufmaß und Entwurf",
+      "price": "180 €",
+      "note": "wird bei Auftrag angerechnet"
+     }
+    ]
+   }
+  ]
+ },
+ "plans": {
+  "title": "",
+  "items": []
+ },
+ "faq": {
+  "title": "Häufige Fragen",
+  "items": [
+   {
+    "q": "Wie lange dauert eine Küche?",
+    "a": "Vom Aufmaß bis zur Montage meist zehn bis vierzehn Wochen."
+   },
+   {
+    "q": "Arbeiten Sie auch außerhalb von Uhlenried?",
+    "a": "Ja, im Umkreis von etwa fünfzig Kilometern."
+   },
+   {
+    "q": "Kann ich das Holz selbst aussuchen?",
+    "a": "Gern, in unserem Holzlager, Bohle für Bohle."
+   },
+   {
+    "q": "Reparieren Sie auch Möbel anderer Hersteller?",
+    "a": "Massivholzmöbel ja, furnierte Platten nur nach Ansicht."
+   }
+  ]
+ },
+ "quotes": [
+  {
+   "q": "Die Treppe ist das Schönste im ganzen Haus.",
+   "name": "Familie Roswitz",
+   "role": "Stadthaus"
+  },
+  {
+   "q": "Pünktlich, sauber und genau so, wie gezeichnet.",
+   "name": "Marlene Ost",
+   "role": "Küche"
+  },
+  {
+   "q": "Unsere alten Fenster sind wieder dicht und bleiben im Haus.",
+   "name": "H. Trebbin",
+   "role": "Kastenfenster"
+  }
+ ],
+ "logos": [],
+ "links": [
+  {
+   "t": "Projekte",
+   "d": "Küchen, Treppen und Schränke aus den letzten Jahren",
+   "h": "https://tischlerei-wendholm.example/projekte/"
+  },
+  {
+   "t": "Werkstatt",
+   "d": "Maschinen, Holzlager und Ausbildung",
+   "h": "https://tischlerei-wendholm.example/werkstatt/"
+  },
+  {
+   "t": "Ablauf",
+   "d": "Vom Aufmaß bis zur Montage",
+   "h": "https://tischlerei-wendholm.example/ablauf/"
+  },
+  {
+   "t": "Kontakt",
+   "d": "Anfahrt und Öffnungszeiten",
+   "h": "https://tischlerei-wendholm.example/kontakt/"
+  }
+ ],
+ "close": {
+  "title": "Erzählen Sie uns von Ihrem Raum",
+  "text": "Wir melden uns innerhalb von zwei Werktagen und vereinbaren einen Termin vor Ort.",
+  "cta": {
+   "t": "Beratung anfragen",
+   "h": "https://tischlerei-wendholm.example/kontakt/"
+  }
+ },
+ "foot": {
+  "text": "Tischlerei Wendholm · Kastanienweg 12 · 37999 Uhlenried · 030 23125 417 · werkstatt@tischlerei-wendholm.example",
+  "legal": "Tischlerei Wendholm 2026",
+  "links": [
+   {
+    "t": "Impressum",
+    "h": "https://tischlerei-wendholm.example/impressum/"
+   },
+   {
+    "t": "Datenschutz",
+    "h": "https://tischlerei-wendholm.example/datenschutz/"
+   }
+  ]
+ },
+ "place": {
+  "address": {
+   "street": "Kastanienweg 12",
+   "postcode": "37999",
+   "city": "Uhlenried",
+   "country": "Deutschland"
+  },
+  "phone": {
+   "t": "030 23125 417",
+   "h": "tel:+493023125417",
+   "note": "werktags ab 7 Uhr"
+  },
+  "email": "werkstatt@tischlerei-wendholm.example",
+  "hours": [
+   {
+    "days": "Montag bis Donnerstag",
+    "open": "7:00",
+    "close": "16:30"
+   },
+   {
+    "days": "Freitag",
+    "open": "7:00",
+    "close": "13:00"
+   }
+  ],
+  "since": "1958",
+  "social": [
+   {
+    "t": "Instagram",
+    "h": "https://social.example/wendholm"
+   }
+  ],
+  "spaces": [],
+  "events": []
+ },
+ "contact": {
+  "phone": {
+   "t": "030 23125 417",
+   "h": "tel:+493023125417"
+  },
+  "email": "werkstatt@tischlerei-wendholm.example",
+  "form": {
+   "h": "https://tischlerei-wendholm.example/kontakt/#anfrage",
+   "t": "Anfrage senden"
+  }
+ },
+ "credentials": [
+  {
+   "t": "Meisterbetrieb",
+   "text": "Eingetragen in der Handwerksrolle."
+  },
+  {
+   "t": "Ausbildungsbetrieb",
+   "text": "Zwei Auszubildende im Jahr."
+  }
+ ]
+}

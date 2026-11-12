@@ -1,0 +1,59 @@
+{
+ "niche": [
+  "service",
+  "hotel",
+  "school",
+  "clinic",
+  "shop"
+ ],
+ "photos_min": 3,
+ "photos_large_min": 1,
+ "screens_min": 0,
+ "phones_ok": false,
+ "needs": [
+  "hero.title",
+  "statement",
+  "close.title"
+ ],
+ "needs_any": [
+  [
+   "steps.img",
+   "spaces"
+  ],
+  [
+   "catalogue",
+   "faq",
+   "plans",
+   "team"
+  ]
+ ],
+ "drops": [
+  "steps.k",
+  "spaces"
+ ],
+ "holds_without_pictures": true,
+ "motif": "photos",
+ "notes": [
+  "A client with one large landscape and a picture per step gets the page as measured; with fewer the opening is a plain dark band.",
+  "The moving headline over the quotes is the brand name (the data has no heading for quotes); without quotes and credentials the section is not made.",
+  "Titles from one word to twelve hold: the size steps from 187.5 px down so each half sits in one, two or three lines.",
+  "The reference's small fixed button at the lower left is not carried over: it covered text that passed under it (caught by tools/legible.mjs on three variants).",
+  "Control words (Menu, Close) come from a small list by language; no alt is shown as text.",
+  "needs (as written): steps.items with a picture each (the large cards), or place.spaces",
+  "needs (as written): one of: catalogue, faq, plans, team (the page's lower half)",
+  "drops (as written): steps.items[].k when the item has a title; team.groups[].t (people are shown in one run)",
+  "drops (as written): features.title / features.text and the items when a catalogue carries the same names (local1: the same ten)",
+  "drops (as written): a catalogue item's text when a step already shows the same words, and its picture when a step already shows it (local1: Kitchens, Staircases become plain rows)",
+  "drops (as written): place.spaces when they repeat the steps (hotel1: the same three)",
+  "drops (as written): links[].d; signin when hero.secondary exists; the outline button in the bar when there are more than five links",
+  "drops (as written): credentials[].img; logos without src; place.since, cuisine, price_range, takeaway",
+  "drops (as written): media.screens, media.phones, media.made",
+  "drops (as written): photographs beyond the slots (local1: 6 of 20, among them the directors' group picture; hotel1: 6 of 13 - room pictures the client's data has no words for)",
+  "drops (as written): on phones: the photograph of the dark half and the labels over quarter cards (as the reference)",
+  "motif (as written): the client's own photographs (media.made is never read)",
+  "photos_by_role: {\"opening\": \"1 landscape, 1600x800 or more (1200x700 accepted), not small; role exterior / landscape / work / room / workshop preferred; never portrait, people, product, dish; not a picture a step, person, project or catalogue item names. Shown full width x 100svh under a veil of 0.66-0.74, so sharpness matters little. A film (media.video) takes the slot instead when there is one\", \"large cards\": \"one per step (steps.items[].img), shown 635x397 for two or four steps, 413x258 for three, five or six; 1000 wide is enough\", \"tiles\": \"one per project (projects[].photos) or per catalogue item with img; shown 274-650 x 233; 700 wide is enough\", \"half\": \"1 picture of 720x698 or more, any proportion (it is cropped to cover), role workshop / room / detail / action preferred; never portrait, people, product. Not shown on phones, as the reference\", \"people\": \"one per person (team.items[].img), any size from 400 wide; shown at card width in its own proportion held between 4:5 and 3:2\", \"band\": \"1 landscape of 1440x600 or more, only taken when the page has a question list of 8 or more or two long lists in a row\", \"closing\": \"1 picture of 400x400 or more, any proportion, role detail / workshop / dish / product preferred; never portrait or people; shown 200x278\"}",
+  "measured: {\"reference\": \"coverage 30 % (per 900px screen 100,41,26,40,0,5,0,0), 1 screen with a wide picture, height 6356\", \"local1\": \"20 photographs (7 of 1900+ wide, 13 of 1000-1200): 14 used - opening, 3 large cards, 5 tiles, half, 3 people, closing. Coverage 28 % (100,8,43,46,18,29,2,5,0,0), height 8139 = 1.28x the reference, so the overall share is compared: 2 points under. shots clean at 1440 and 390; legible ok\", \"hotel1\": \"13 photographs (4 of 2100 wide, 6 of 1500, 3 of 1000-1200): 7 used - opening, 3 large cards, half, band before the 13 questions, closing. Coverage 30 % (100,14,41,13,7,64,3,2,0), height 7439 = 1.17x, overall share compared: level (23 % before the band was added). shots clean; legible ok\", \"local1 with every picture removed\": \"renders, no errors, one h1, no empty frame, no sideways scroll at 1440 and 390; legible ok (465 readings). Opening on the band colour, cards and tiles as ruled type, the dark half becomes a full band with heading left and text right\", \"hotel1 with every picture removed\": \"same; legible ok (325 readings)\", \"picture share case\": \"both pages are under 1.5x the reference's height, so rule (2) of the revised picture-share rule applies as an overall comparison; the reference's two wide pictures (opening, half of the band) are both present in order\"}",
+  "shows: [\"hero: title in two halves, text + text2, primary, secondary, note (phone as link), kicker (label over the first section)\", \"figures (label + value on the dark row) or trust (values on the dark row; a dotted line under the lead when figures took the row)\", \"steps: title, text, items (picture, title, text, cta); place.spaces in their place when there are no steps\", \"projects (picture, title, text, link); catalogue items with a picture of their own (picture, price · state, name, text, link)\", \"statement (dark half + photograph)\", \"catalogue: title, text, groups (title, text), items as ruled rows - name, price, from, state, text, note, prices[], rows[], link; note\", \"features.items as rows when they are not the catalogue's names; place.events (when, what, price, where, cta); place.menu (sections, items, lists)\", \"team: title, text, items or groups flattened (portrait, role, name, text, phone, email, link); a person without a portrait in type\", \"plans: title, text, name, line, price, per, rows, cta, marked (the dark card; as a pill only when it is a word), note\", \"quotes (title, q, name, role); credentials (t + year as chips, text + link as small print)\", \"logos with src; faq (title, q, a); close (title as moving headline, text, cta, phone)\", \"foot: brand, foot.text, phone + note, email, contact.routes, nav + links as large links, address, hours, social, booking / contact.form / cta, locations[], place.notices, legal, foot.links\"]",
+  "needs_any added by hand at import from the free words: \"steps.items with a picture each, or place.spaces; one of: catalogue, faq, plans, team\""
+ ]
+}
