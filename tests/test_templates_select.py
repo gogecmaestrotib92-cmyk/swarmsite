@@ -117,12 +117,12 @@ def test_a_client_without_usable_pictures_gets_only_templates_that_hold_without_
 def test_a_place_gets_place_templates_and_its_own_needs_are_read(tmp_path):
     lib = library(tmp_path,
                   inn=need('restaurants, hotels: places with a door', photos_min=5, needs=['menu', 'hours']),
-                  lodge=need('hospitality-travel', photos_large_min=3),                             # the restaurant has no photograph 1600 wide
+                  lodge=need('hospitality-travel', photos_large_min=3),                             # the restaurant has two photographs 1400 wide
                   rooms=need('a place', photos_min=1, needs=['spaces', 'booking']),
                   product=need('software product'))
     r = S.select(PLACE, root=lib)
-    assert r['niche'] == ['place'] and [c['slug'] for c in r['chosen']] == ['inn', 'rooms']
-    assert 'photos_large_min 3, the client has 0' in why(PLACE, lib, 'lodge') and 'niche' in why(PLACE, lib, 'product')
+    assert r['niche'] == ['restaurant', 'place'] and [c['slug'] for c in r['chosen']] == ['inn', 'rooms']
+    assert 'photos_large_min 3, the client has 2' in why(PLACE, lib, 'lodge') and 'niche' in why(PLACE, lib, 'product')
     no_photos = {**PLACE, 'media': {'photos': []}}
     assert chosen(no_photos, lib) == [] and 'photos_min 5, the client has 0' in why(no_photos, lib, 'inn')
     closed = {**PLACE, 'place': {**PLACE['place'], 'hours': [], 'menu': {'h': 'https://x.example/carta', 'sections': [], 'lists': []}}}
@@ -177,8 +177,8 @@ def test_niches_named_in_free_words_are_read_by_their_telling_words():
     assert T('restaurants, drinks, products sold directly')[0] == 'place' and T('hospitality-travel') == ['place'] and T('lodges, trips, places to stay')[0] == 'place'
     assert T('zeppelin tours') == [] and T(None) == []
     C = lambda **d: S.client(d)['niche']
-    assert C(kind='software', media={'phones': [{'src': 'a.jpg'}]})[0] == 'app' and C(kind='software')[0] == 'saas'
-    assert C(kind='restaurant') == ['place'] and C(kind='software', place={'hours': []}) == ['saas', 'software', 'app'] and C(kind='hotel') == ['place'] and C(kind='') == [] and C() == []
+    assert C(kind='software', media={'phones': [{'src': 'a.jpg'}]})[0] == 'app' and C(kind='software')[0] == 'software'
+    assert C(kind='restaurant') == ['restaurant', 'place'] and C(kind='software', place={'hours': []}) == ['software', 'saas', 'app'] and C(kind='hotel') == ['hotel', 'place'] and C(kind='venue') == ['venue', 'place'] and C(kind='') == [] and C() == []
     assert C(kind='', place={'address': {'city': 'Leganés'}}) == ['place']
 
 
