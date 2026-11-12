@@ -12,12 +12,13 @@ import crypto from 'node:crypto';
 import { makeUserOf, allowance, mine } from './auth.mjs';
 import { STEPS_T, STEPS_F, enabled as templatesEnabled, runTemplateJob, mayDownload, previewable, imageType, formProblem, UPLOAD } from './templates.mjs';
 import { makeEditor, mayKeep, editable, opsProblem } from './editor.mjs';
+import { ensurePrivateBucket } from './bucket.mjs'; import { runCleanup } from './cleanup.mjs';
 import { AsyncLocalStorage } from 'node:async_hooks';
 const HERE = path.dirname(fileURLToPath(import.meta.url)); const ROOT = path.resolve(HERE, '..');
 const sb = createClient(process.env.SUPABASE_URL || 'https://placeholder.supabase.co', process.env.SUPABASE_SERVICE_KEY || 'placeholder', { auth: { persistSession: false } });
 const BUCKET = 'previews'; const OUT = path.join(ROOT, 'out');
 // the template path (server/templates.mjs): off unless TEMPLATES_MODE=1; packages live in a bucket that is NOT public
-const TEMPLATES = templatesEnabled(process.env); const PACKAGE_BUCKET = process.env.PACKAGE_BUCKET || 'packages';
+let TEMPLATES = templatesEnabled(process.env); const PACKAGE_BUCKET = process.env.PACKAGE_BUCKET || 'packages';
 const WORKER_ID = crypto.randomUUID();
 const STEPS = [
   ['capture', 'Reading your landing page: text, photos, logo, colours'],
@@ -266,7 +267,6 @@ app.put('/t/:id/edits', async (req, res) => { const row = await editRow(req, res
   const ops = req.body?.ops; const bad = opsProblem(ops); if (bad) return res.status(400).json({ error: bad });
   if (may.claim) await sb.from('jobs').update({ user_id: user.id, email: user.email }).eq('id', row.id).is('user_id', null);
   try { res.json(await EDITOR.save(row, ops)); } catch (e) { editFail(res, e); } });
-
 // ---------- worker ----------
 const JOB_CTX = new AsyncLocalStorage(); // the job a child process belongs to, per async chain: several jobs run at once in one worker
 let CURRENT_JOB_DIR = ''; // fallback for code paths outside a job context (tests slice process_ without the loop)
@@ -597,6 +597,7 @@ async function loop() {
 }
 // the template path's job (server/templates.mjs); kept outside the stretch from runClaimed to loop that the worker tests cut out
 async function processTemplates(job) {
+  if (!TEMPLATES) throw new Error('templates mode is off on this worker (see the boot log: its private bucket)');
   const slug = slugOf(job.url);
   fs.mkdirSync(OUT, { recursive: true });
   const jobRoot = fs.mkdtempSync(path.join(OUT, `job-${job.id}-`)); job._jobRoot = jobRoot;
@@ -616,4 +617,18 @@ async function processTemplates(job) {
   job._terminalPersisted = true;
   try { const { data: fresh } = await sb.from('jobs').select('options').eq('id', job.id).maybeSingle(); job.options = fresh?.options || job.options; await notifyDone(job, final.templates?.variants?.[0]?.url || ''); } catch (e) { console.warn('notify', job.id, e.message); }
 }
-if (process.env.SUPABASE_URL) { for (let i = 0; i < WORKER_CONCURRENCY; i++) loop(); console.log('worker', WORKER_ID, 'slots', WORKER_CONCURRENCY); } else console.warn('no SUPABASE_URL: worker idle');
+// the template path's private bucket and its upkeep: made private on boot (or templates mode is refused, the old engine
+// works on), and visitors' photographs of nobody's old jobs removed once on boot, then every 24 h (counts only in the log)
+async function templatesBoot() {
+  const { ok } = await ensurePrivateBucket(sb.storage, PACKAGE_BUCKET);
+  if (!ok) TEMPLATES = false;
+  if (!TEMPLATES) return;
+  const clean = () => runCleanup({
+    listUploads: async () => { const out = []; for (let off = 0; off < 100000; off += 1000) { const { data, error } = await sb.storage.from(PACKAGE_BUCKET).list('uploads', { limit: 1000, offset: off }); if (error) throw error; out.push(...(data || []).map(o => ({ name: o.name, created_at: o.created_at }))); if (!data || data.length < 1000) break; } return out; },
+    jobs: async since => { const { data, error } = await sb.from('jobs').select('id,created_at,user_id,options').gte('created_at', since).filter('options->>engine', 'eq', 'templates').limit(20000); if (error) throw error; return data || []; },
+    editsOf: async id => { const { data } = await sb.storage.from(PACKAGE_BUCKET).download(`${id}/edits.json`); if (!data) return null; try { return JSON.parse(Buffer.from(await data.arrayBuffer()).toString()).ops || null; } catch { return null; } },
+    remove: async names => { const { error } = await sb.storage.from(PACKAGE_BUCKET).remove(names.map(n => `uploads/${n}`)); if (error) throw error; },
+    now: () => Date.now(), log: t => console.log(t) }).catch(e => console.warn('cleanup failed:', String(e.message).slice(0, 160)));
+  clean(); setInterval(clean, 86400e3);
+}
+if (process.env.SUPABASE_URL) { (TEMPLATES ? templatesBoot() : Promise.resolve()).catch(e => { TEMPLATES = false; console.warn('templates mode refused:', e.message); }).finally(() => { for (let i = 0; i < WORKER_CONCURRENCY; i++) loop(); console.log('worker', WORKER_ID, 'slots', WORKER_CONCURRENCY, 'templates', TEMPLATES); }); } else console.warn('no SUPABASE_URL: worker idle');
