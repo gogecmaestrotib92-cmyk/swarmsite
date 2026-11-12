@@ -1,0 +1,55 @@
+{
+ "niche": [
+  "hotel",
+  "restaurant",
+  "venue"
+ ],
+ "photos_min": 6,
+ "photos_large_min": 0,
+ "screens_min": 0,
+ "phones_ok": false,
+ "needs": [
+  "hero.title",
+  "close.title"
+ ],
+ "needs_any": [
+  [
+   "statement",
+   "hero.text"
+  ],
+  [
+   "spaces",
+   "steps"
+  ]
+ ],
+ "drops": [
+  "trust",
+  "figures",
+  "quotes",
+  "faq",
+  "plans",
+  "cuisine",
+  "price_range",
+  "since",
+  "takeaway",
+  "events",
+  "links.d",
+  "features"
+ ],
+ "holds_without_pictures": false,
+ "motif": "photos",
+ "notes": [
+  "photos_large_min 0: balamo has nothing 1600 wide and passes; what the backdrops need is 1240x720, enlarged up to 1.18x at 1440. On screens wider than 1440 they are enlarged further.",
+  "Each photograph is used once; the row of squares stops at 8 and takes dishes evenly through the client's own order.",
+  "A dish is never a backdrop; a small picture is never a backdrop and never wider than its pixels.",
+  "No alt is shown as text. Visible words come from copy blocks only; control names (menu, close, previous, next) are aria-labels.",
+  "A client's logo file is shown as it is at 130 px, fixed at the right; with an opaque ground it sits as a square over the pictures (balamo).",
+  "drops (as written): place.takeaway (only as far as nav carries it)",
+  "drops (as written): place.events beyond the first",
+  "drops (as written): photographs beyond the slots (butarque 39 of 52, balamo 8 of 20)",
+  "motif (as written): the client's own photographs (media.made is never read)",
+  "photos_by_role: {\"backdrops\": \"3-4 of role room / exterior / bar / people / other, not small, not dish, each at least 1240 wide and 720 high (enlarged at most 1.3x at 1440): first screen 1440x850, clean band, closing band 1440x675, and an event band 1440x900 when the client has an event\", \"squares\": \"2-8 with the short side at least 470 px (dishes first; small pictures qualify)\", \"menu\": \"0-1 dish, not small, at least 945 wide (only when the menu has sections or lists)\", \"wide\": \"0-1 room / exterior / bar, not small, at least 730 wide, beyond the backdrops\", \"spaces\": \"each place.spaces[].img is its own card picture; any size (a small one sets the whole row to its width and proportion)\"}",
+  "measured_on: {\"reference\": \"coverage 62 %, 5 screens with a wide picture\", \"butarque\": \"52 photographs (4 large place pictures, 1 large dish, 45 small dish squares, 2 small space pictures): 13 used — first screen, clean band, closing band, 8 squares, menu picture, 3 space cards; coverage 57 %; no wide picture (its fourth large place picture belongs to a space)\", \"balamo\": \"20 photographs, none 1600 wide (largest 1437x810; five not small): 12 used — first screen, clean band, event band, closing band, 8 squares; coverage 66 %; no wide picture, no menu section (menu has only a link), no spaces (three word cards)\", \"balamo with 6 of its photographs (3 rooms 1242 wide, 1 other 1437 wide, 2 small dishes)\": \"coverage 64 %, every band filled\", \"balamo with 4 (2 rooms, 2 small dishes)\": \"coverage 46 %: event and closing bands fall back to text rows — not a page to offer\", \"no photographs (balamo's earlier data)\": \"coverage 2 %: holds, but it is a typographic page\"}",
+  "shows: [\"place.hours (first in the bar, all in the foot)\", \"place.booking / cta (bar, closing band)\", \"place.phone, email, address\", \"place.menu sections, dishes with prices, lists, counts\", \"place.spaces\", \"place.events[0]\", \"place.social\", \"place.notices\", \"statement\", \"steps.title/text\", \"close\", \"nav, links (menu, foot)\", \"foot.legal, foot.links\"]"
+ ]
+}

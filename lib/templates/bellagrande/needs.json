@@ -1,0 +1,45 @@
+{
+ "niche": [
+  "hotel",
+  "restaurant"
+ ],
+ "photos_min": 7,
+ "photos_large_min": 0,
+ "screens_min": 0,
+ "phones_ok": false,
+ "needs": [
+  "spaces",
+  "menu"
+ ],
+ "drops": [
+  "hero.kicker",
+  "figures",
+  "quotes",
+  "logos",
+  "features.d",
+  "cuisine",
+  "price_range",
+  "since",
+  "team",
+  "credentials",
+  "locations",
+  "projects",
+  "video"
+ ],
+ "holds_without_pictures": true,
+ "motif": "photos",
+ "notes": [
+  "drops (as written): links[].d except the menu link's",
+  "drops (as written): contact.form",
+  "drops (as written): photographs beyond the slots (butarque: 33 of 52 unused, balamo: 12 of 20)",
+  "motif (as written): the client's own photographs (no made pictures for places)",
+  "backdrops_min: 3",
+  "backdrop_size: a backdrop is a photograph not flagged small, at least 1152 x 720 (enlarged at most 1.25 to cover 1440 x 900); balamo's five are 1242-1437 wide and hold, so the contract's >=1600 threshold is not what this template needs",
+  "tiles_min: 4",
+  "tile_size: at least 360 x 480 after an upright 3:4 crop; small photographs qualify (butarque's 600 x 600 dishes do, 826 x 400 and 564 x 376 do not)",
+  "needs_note: one of place.spaces / steps.items (cards) and place.menu (index rows, priced cards) carries the middle of the page; with neither, the page is the hero, two headline blocks and the footer",
+  "holds_without_pictures_note: measured on balamo and butarque with media.photos emptied (probe/nophotos.py): nothing breaks, readability gate ok, the hero becomes the accent field with the name, both teasers become headline blocks, cards are words only. It is then a plain type page, 4745 px against 7034 with photographs; offer it after type-led templates",
+  "shows: [\"plans (cards)\", \"faq (ruled rows)\", \"catalogue (cards with priced rows)\", \"place.events (content module)\", \"place.hours\", \"place.notices\"]",
+  "measured_on: {\"butarque\": {\"photos\": 52, \"used\": 19, \"picture_share_1440\": 52}, \"balamo\": {\"photos\": 20, \"used\": 8, \"picture_share_1440\": 53}, \"reference\": {\"picture_share_1440\": 77}}"
+ ]
+}

@@ -1,0 +1,60 @@
+{
+ "niche": [
+  "person",
+  "service",
+  "school"
+ ],
+ "photos_min": 1,
+ "photos_large_min": 1,
+ "screens_min": 0,
+ "phones_ok": false,
+ "needs": [
+  "brand.name",
+  "hero.title",
+  "statement"
+ ],
+ "needs_any": [
+  [
+   "catalogue",
+   "plans"
+  ]
+ ],
+ "drops": [
+  "figures",
+  "trust",
+  "statement.title",
+  "links.d",
+  "brand.logo",
+  "signin",
+  "menu",
+  "spaces",
+  "events",
+  "notices",
+  "since",
+  "cuisine",
+  "price_range",
+  "takeaway"
+ ],
+ "holds_without_pictures": true,
+ "motif": "photos",
+ "notes": [
+  "Each photograph is used once. No alt is shown as text. Function words on the page: 'from' before a price marked from:true on an English page; control names are aria-labels.",
+  "The only words laid on a photograph are those of the first screen; its veil is set for a pure white picture (0.66 under the 14 px words, 0.5 under the giant figure, 0.72 more at the foot).",
+  "An accent that carries neither black nor white at 4.5:1 is deepened for the buttons; as 50 px type on the light ground it is deepened until 3.1:1.",
+  "needs (as written): one wide photograph for the first screen (>= 1400 wide, 1.3:1 or wider, not a portrait)",
+  "needs (as written): steps with their own pictures, or one person in team with a portrait",
+  "drops (as written): figures beyond the third",
+  "drops (as written): trust beyond the third",
+  "drops (as written): statement.title when it is a label rather than a sentence (kept as a hidden heading)",
+  "drops (as written): catalogue item and group pictures (the same pictures stand in the sequence)",
+  "drops (as written): project photographs beyond the first free one",
+  "drops (as written): team.groups[].t",
+  "drops (as written): media.screens, media.phones, media.made",
+  "drops (as written): photographs beyond the slots (person1: none; local1: 1 of 20, the group picture of the directors)",
+  "motif (as written): the client's own photographs (media.made is never read)",
+  "picture_share_case: our page is at most 1.5 times the reference's height (person1 12025, local1 10899 against 11671), so the overall share is compared directly: reference 19 %, person1 17 %, local1 23 %; 2 screens with a wide picture in all three (first screen, the growing band)",
+  "photos_by_role: {\"first_screen\": \"1 — not small, >= 1400 wide, ratio >= 1.3, role not portrait / people / product / detail; the first such picture in the data's order that no step, person or project has named (a step's own picture is taken only when its role is landscape; that step then stands in type). Shown full window, in grey under a dark veil.\", \"band\": \"0-1 — the second picture by the same rule (or media.video). Shown full window in colour, no words on it. Without it the page has one wide picture where the reference has two.\", \"sequence\": \"0-n — each step's own img and the portrait of a single person; any size from about 320 wide (shown 302x362, cropped upright; 332 square on a phone)\", \"project_cards\": \"0-n — a project's first photograph that nothing else has named, from 420 wide (416x312)\", \"people_cards\": \"0-n — portraits when team has two or more people (416x312)\", \"ring\": \"0 or 3-8 — pictures nothing else has taken, shorter side >= 270, not portrait / people; small pictures are welcome here (shown 270 square, 236 on a phone)\", \"credential badges\": \"0-n — the client's own files, shown 96 high\"}",
+  "measured_on: {\"reference\": \"coverage 19 %, 2 screens with a wide picture (per screen 100, 6, 0, 3, 17, 18, 28, 4, 0, 16, 44, 12, 0)\", \"person1\": \"9 photographs, all 9 used once each: first screen (bionassay.jpg, a landscape that the Consulting step names: that step stands in type), band (hero.jpg), the portrait and 3 step pictures in the sequence, 3 in the ring (toprope, salbit, book); plus the credential badge. Coverage 17 %, 2 wide. shots.mjs clean at 1440 and 390; legible.mjs ok (428 line readings).\", \"local1\": \"20 photographs, 19 used once each: first screen (staircase-curved.jpg), band (staircase-down.jpg), 3 step pictures, 5 project cards, 3 people cards, 6 in the ring; not used: directors.jpg (role people). Coverage 23 %, 2 wide. shots.mjs clean; legible.mjs ok (351 line readings).\", \"without photographs (scratch copies of both)\": \"see NOTES.md, 'Variants'\"}",
+  "shows: [\"brand.name (wordmark, foot)\", \"nav (full-screen menu, foot)\", \"cta.t (heading of the contact card)\", \"hero: title, text, note, primary, secondary, kicker; text2 under the statement\", \"figures (first 3; the first also as the giant figure when it is 4 characters or fewer)\", \"trust (first 3, right column of the first screen)\", \"statement (title when it is a sentence, text)\", \"credentials (t, text, year, badge, link)\", \"logos (wall of marks; not exercised by either test client)\", \"steps: title, text, every item (title, text, cta, img)\", \"team: one person as the first slide of the sequence (name, role, text, phone, email, portrait); several as cards\", \"projects (title, text, link, first free photograph)\", \"catalogue: title, text, note; every group (t, text, h); every item (name, note, text, rows, price, from, prices[], state, h)\", \"plans (name, line, rows, price, per, cta, marked, note)\", \"features (title, text, items t/d) unless every feature only repeats a catalogue name\", \"faq (q, a)\", \"quotes (q, name, role), one at a time\", \"close\", \"media.video or the band photograph\", \"contact (phone, email, routes, form), place (phone, email, address, hours, social, booking), locations\", \"links not already in nav, foot.links, foot.legal, foot.text\"]"
+ ]
+}

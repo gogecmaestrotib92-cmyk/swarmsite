@@ -1,0 +1,30 @@
+{
+ "niche": [
+  "software",
+  "app"
+ ],
+ "photos_min": 0,
+ "photos_large_min": 0,
+ "screens_min": 1,
+ "phones_ok": true,
+ "needs": [
+  "steps",
+  "steps.img",
+  "features",
+  "statement"
+ ],
+ "min": {
+  "steps": 2,
+  "features": 3,
+  "pictures": 6
+ },
+ "holds_without_pictures": false,
+ "motif": "sky",
+ "notes": [
+  "One picture family: media.made.sky, five times in different crops - behind the opening, under the steps' picture, in the lower left of the sideways run, round the plan cards and between the closing button and the foot. A dark page skips a light-toned sky. land, blur, sheet and field are not used.",
+  "links[] carry the sideways panels (one screen each); without links the run starts at the wheel. figures, plans, faq, close and a film are optional.",
+  "The page holds the scroll in three places at 1024 and wider (opening 1800 px, steps 250 + 420 a step + 120, sideways run 1.6 px a px + 330 a feature + 260); a client with many features lengthens the last one.",
+  "A place (restaurant, hotel, shop) is not a fit.",
+  "measured: {\"sportbot\": \"4 screens, 4 phones, 1 film, 3 steps, 4 links, 7 features, 4 figures, 2 plans, 4 questions: every section renders; 13 936 px at 1440 (was 29 233); shots.mjs clean and legible.mjs ok at 1440 and 390\", \"automateed\": \"3 screens, 7 upright book pictures, 3 links, 5 features, 2 plans, no questions, no film: every section but the questions renders; 11 603 px at 1440 (was 25 228); shots.mjs clean and legible.mjs ok\", \"both with media.made = {}\": \"render without errors, no sky element (checked as markup only, not looked at): the page stands on its plain ground\", \"no client pictures at all\": \"not measured on a test client; by construction the statement stands alone, the steps hold an empty place, panels are text only and the wheel has no tiles - not a page to offer\"}"
+ ]
+}

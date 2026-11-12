@@ -1,0 +1,27 @@
+{
+ "niche": [
+  "software",
+  "app"
+ ],
+ "photos_min": 0,
+ "photos_large_min": 0,
+ "screens_min": 1,
+ "phones_ok": true,
+ "needs": [
+  "hero",
+  "steps",
+  "steps.img",
+  "features"
+ ],
+ "drops": [],
+ "holds_without_pictures": false,
+ "motif": "sky",
+ "notes": [
+  "Written 2026-11-12 from NOTES.md and renders: the step panel (section 3) puts each step's own picture on its picture side, the features show and the statement take the client's film and screens whole. Without step pictures the slider shows wide empty panels (sportbot data, client media removed, made pictures kept, looked at at 1440): not a page to offer, so holds_without_pictures is false and steps.img is needed.",
+  "screens_min 1: the statement shows media.screens[0] whole; the features show takes the film and the screens not used there.",
+  "motif: made.sky carries the opening strip, the step panels' picture side (another crop) and the features backdrop; made.field the figure cards. Without made pictures every slot is the plain ground.",
+  "drops: none of the blocks it reads is left out when present; trust is shown as words only when there are no logos (logos take the row), and screens beyond those the features show and statement take are not used.",
+  "Optional and left out whole when missing: statement, figures, plans, faq, links, close, trust/logos.",
+  "Not for places."
+ ]
+}

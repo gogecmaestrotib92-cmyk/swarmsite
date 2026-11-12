@@ -347,6 +347,18 @@ def fits(n, c, d, promised=()):
     return why, pending, met
 
 
+def lead(n, c, rank):
+    """how squarely a template is made for this client, by the FIRST niche of its needs.json (the one it was made
+    for; the later ones are where it also holds): 0 — its first niche is the client's niche; 1 — its first niche is
+    of the client's kind all the same (another of the client's niches, or another kind of place for a place); 2 — the
+    client's niche is only listed later. A clinic page that also holds for a hotel comes after a hotel page."""
+    first = set(niche_tags((n.get('niche') or [''])[0]))
+    if c['niche'][rank] in first:
+        return 0
+    kin = set(c['niche']) | (PLACE_KINDS if 'place' in c['niche'] else set())
+    return 1 if first & kin else 2
+
+
 def select(d, limit=3, promised=(), root=None):
     R = _registry()
     c = client(d)
@@ -362,7 +374,7 @@ def select(d, limit=3, promised=(), root=None):
             continue
         tags = [x for words in n['niche'] for x in niche_tags(words)]
         rank = min(c['niche'].index(x) for x in tags if x in c['niche'])
-        ok.append({'slug': t['slug'], 'approach': approach(n), 'pending': pending, '_key': (rank, -met, t['slug']),
+        ok.append({'slug': t['slug'], 'approach': approach(n), 'pending': pending, '_key': (rank, lead(n, c, rank), -met, t['slug']),
                    'why': 'niche %s; %d need(s) met%s' % (c['niche'][rank], met, '; waits for ' + ', '.join(pending) if pending else '')})
     ok.sort(key=lambda x: x['_key'])
     chosen, seen = [], set()

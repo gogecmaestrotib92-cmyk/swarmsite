@@ -1,0 +1,45 @@
+{
+ "niche": [
+  "restaurant",
+  "venue"
+ ],
+ "photos_min": 15,
+ "photos_large_min": 1,
+ "screens_min": 0,
+ "phones_ok": false,
+ "needs": [
+  "address",
+  "statement.title",
+  "nav"
+ ],
+ "needs_any": [
+  [
+   "menu",
+   "cuisine"
+  ]
+ ],
+ "drops": [
+  "figures",
+  "quotes",
+  "logos",
+  "features",
+  "trust",
+  "hero.note",
+  "statement.text",
+  "price_range",
+  "links",
+  "plans"
+ ],
+ "holds_without_pictures": false,
+ "motif": "photos",
+ "notes": [
+  "15 is every slot filled at its least: 1 opening + 1 band + 3 column pictures + 4 strip + 6 pile. Below 15 the pile goes first (under 6 to spare), then the strip (under 4). photos_large_min is 0 because balamo, with nothing 1600 px wide, fills the opening and the band; what is needed instead is the two sizes listed under needs. Dish squares of 600 px fill every card, strip and pile frame without enlarging. A menu with sections whose pages carry dish pictures (photo.page = section.h) adds one picture per section; priced dishes take a picture when its file name matches the dish's address. The reference's wheel of cut-outs, the cut-out cup and the falling 3D bagels are not part of this build: cut-outs are not needed and would not be used.",
+  "needs (as written): place.spaces or steps.items (3, each with a picture or a link to a page that has one)",
+  "needs (as written): one photograph of the room or outside, not small, at least 1152 x 720 (the opening)",
+  "drops (as written): trust (unless there is neither menu nor cuisine)",
+  "drops (as written): links beyond the first three rows",
+  "drops (as written): plans (the reference, a bagel shop's home page, has no tiers or subscriptions; its priced things are its menu, which is shown)",
+  "motif (as written): the client's own photographs (no made pictures: places)",
+  "measured: {\"butarque (52 photographs: 4 large, 45 dish squares 600x600)\": \"37 pictures placed, each once: opening 1, band 1, rooms 3, menu sections 4, priced dishes 5, strip 8, pile 15. shots.mjs clean at 1440 and 390; legible.mjs ok (267 line readings); picture share 39 % (coverage.mjs) against the reference's 49 % by the same tool, 42 % when the reference's cut-outs are counted only where they are seen (ref/coverage-clipped.mjs)\", \"balamo (20 photographs, none 1600 wide, 15 small)\": \"20 pictures placed, each once: opening 1 (1242x1152, enlarged 1.16x under the veil), band 1 (1437 wide), rooms 3 (found through the page each room links to), strip 8, pile 7. shots.mjs clean; legible.mjs ok (204); picture share 36 %. No menu block (the data has only a link to the menu)\", \"butarque with 5 photographs (the earlier data, rendered and looked at)\": \"opening, band and three room pictures; no strip, no pile, no menu pictures; picture share 25 %; holds but is a green page below the third screen\", \"balamo with no photographs (the earlier data, rendered and looked at)\": \"no errors, every line legible, but gradient and type from top to bottom; picture share 1 %; not a page to offer\"}"
+ ]
+}

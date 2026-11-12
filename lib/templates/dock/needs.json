@@ -1,0 +1,28 @@
+{
+ "niche": [
+  "app",
+  "software"
+ ],
+ "photos_min": 0,
+ "photos_large_min": 0,
+ "screens_min": 3,
+ "phones_ok": true,
+ "needs": [
+  "features",
+  "steps",
+  "steps.img",
+  "statement",
+  "figures",
+  "plans",
+  "made.land"
+ ],
+ "min": {
+  "pictures": 8
+ },
+ "holds_without_pictures": false,
+ "motif": "land",
+ "notes": [
+  "screens_min 3: the glass frame, the film slot (or a film) and the statement stage each take one landscape screen whole. The wall shows every picture once, so fewer than about eight leaves it thin. made.land gives the opening scene (page tone), the statement stage and the foot landscape; without it those are plain grounds.",
+  "measured: {\"sportbot\": \"4 screens, 4 phones, 1 film (8 wall tiles): every section renders; shots.mjs clean at 1440 and 390; legible.mjs ok (453 line readings); picture share 32 % against the reference's 34 %\", \"automateed\": \"3 screens, 7 upright covers (10 wall tiles), no film, no questions: holds; FAQ left out; legible.mjs ok (260); picture share 37 %\", \"sportbot with no media and no made pictures (rendered and looked at, 1440 and 390)\": \"no errors, one h1; but the glass frame is gone from the opening, the cards are text only, and the pinned wall is three empty screens before the closing text - not a page to offer\"}"
+ ]
+}

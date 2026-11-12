@@ -1,0 +1,58 @@
+{
+ "niche": [
+  "school",
+  "law",
+  "clinic",
+  "service"
+ ],
+ "photos_min": 0,
+ "photos_large_min": 0,
+ "screens_min": 0,
+ "phones_ok": false,
+ "needs": [
+  "hero",
+  "close"
+ ],
+ "needs_any": [
+  [
+   "catalogue",
+   "features"
+  ]
+ ],
+ "drops": [
+  "hero.text2",
+  "foot.text",
+  "logos",
+  "screens",
+  "phones",
+  "video",
+  "menu",
+  "cuisine",
+  "price_range",
+  "takeaway",
+  "since",
+  "projects",
+  "spaces.img",
+  "steps.img"
+ ],
+ "holds_without_pictures": true,
+ "motif": "photos",
+ "notes": [
+  "Colour: the reference's four deep colours become the palette's colours that read 4.5:1 on the ground (accent, extras, ink). A client with one such colour (law1: only the navy ink) gets every card, tile and rule in that one colour; its light accent (yellow) becomes the ground of the price band, the quote band and the first tile, with dark words.",
+  "Not for restaurants (no menu) and not for software (no screens).",
+  "A client with fewer than about 8 priced rows and few people gives a page of some 6 000 px, close to the reference; school1's is 15 000.",
+  "needs (as written): place.address or locations, and contact — they are the foot",
+  "drops (as written): hero.text2 when longer than 60 characters (school1: a 220-character second paragraph)",
+  "drops (as written): foot.text when the client has place.address or locations (the same facts stand in the foot columns)",
+  "drops (as written): media.video (the reference opens on a film; the template shows a still photograph)",
+  "drops (as written): media.made",
+  "drops (as written): place.spaces[].img and steps[].img as such (a step's picture is used only if it is at least 900 wide; rooms come from the strip, chosen by role)",
+  "drops (as written): team group titles (people of all groups stand in one list)",
+  "drops (as written): photographs beyond the slots: of school1's 18, 10 are shown (3 wide, 1 group, 6 rooms in the strip) and the other 8 small ones are not; of law1's 12, all 12 (plus its 3 award pictures)",
+  "drops (as written): place.notices[].img",
+  "motif (as written): the client's own photographs (no made pictures)",
+  "photos_by_role: {\"for the full build\": \"3 landscape photographs at least 1600 wide, not portraits (opening, colour band, closing band, in that order) · 1 landscape `people` photograph 1000–1599 wide (stands across the people section) · 3 to 6 further landscape photographs, small ones are fine from 240 wide (the strip of six; `room` first) · one portrait per person (any size from 320 wide; shown at the first portrait's proportion, between square and 1:1.6)\", \"least that still reads as the reference\": \"1 landscape photograph at least 1600 wide (the opening)\", \"with none\": \"the opening is a flat band in the ink colour, the two bands are flat colour, people are set in type, the strip is left out\"}",
+  "shows: [\"hero.kicker, title, text; hero.primary and secondary (the outlined pair under the opening); hero.note and a short hero.text2 (the notice band)\", \"statement\", \"features (title, text, items; a card links only when the item has `h`)\", \"catalogue: title, text, every group (t, text, h) and every item (name, h, note, price or prices[], text, rows[], state), note\", \"steps (title, text; items: k, title, text, cta) and place.events (when, what, where, price, cta) as filled tiles\", \"quotes (all of them) — or figures when there are no quotes; figures stand under the statement when there are both\", \"links (t, d, h)\", \"team: every person (name, role, text, phone, email, h, portrait if any), items and groups\", \"place.spaces (title, text)\", \"plans (title, text, items: name, price, per, line, rows, cta, marked; note)\", \"faq (title, q, a)\", \"credentials (t, text, year, h, img)\", \"close (title, text, cta)\", \"foot: brand.name + trust; place.address, phone, email, hours — or every `locations` entry with its address, phone, email, hours, note; contact.form and routes; place.social; foot.legal, foot.links; place.notices (text)\", \"nav, cta, signin, contact.phone/email (small row above the header)\"]",
+  "measured: {\"school1\": \"18 photographs (4 large, 14 small 450×338), no portraits, 46 courses in 8 groups: all 46 rows shown, 38 with a price, 25 with a second line of further prices; 11 people in type under the 1200-wide group photograph; shots clean at 1440 (14 962 high) and 390 (21 100); legible ok (1115 line readings); picture share 14 % against the reference's 44 % — FAILS the 5-point rule (the table alone is 4 000 px without a picture)\", \"law1\": \"12 photographs (1 large, 1 panorama 1128 wide, 10 square portraits), no logo: wordmark in type; 12 priced rows in 4 groups; 10 people on the track, 25 in type; 3 quotes in a flat yellow band, figures under the statement; three offices as three foot columns; closing band flat; shots clean (12 495 / 20 675); legible ok (998); picture share 12 % — FAILS the 5-point rule\", \"school1 and law1 with every picture removed (photographs, portraits, step pictures, credential pictures, logo)\": \"rendered, shots clean at 1440 and 390, legible ok (1104 and 1103 readings); first screen and two lower screens of school1 looked at 1440: a type page with ruled rows and flat colour bands, nothing empty. The 390 build of these two renders was not looked at\", \"other clients (sportbot, automateed, clinic1, hotel1, shop1, local1, person1, balamo, butarque)\": \"render without error with exactly one h1; sportbot shows plans and faq; sportbot at 1440/390 through shots.mjs clean; none of them looked at beyond sportbot's first screen\"}"
+ ]
+}

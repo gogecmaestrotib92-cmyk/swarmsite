@@ -1,0 +1,52 @@
+{
+ "niche": [
+  "school",
+  "clinic",
+  "service"
+ ],
+ "photos_min": 0,
+ "photos_large_min": 0,
+ "screens_min": 0,
+ "phones_ok": false,
+ "needs": [
+  "hero.title",
+  "hero.text",
+  "links"
+ ],
+ "needs_any": [
+  [
+   "statement",
+   "steps"
+  ]
+ ],
+ "min": {
+  "links": 3
+ },
+ "drops": [
+  "quotes",
+  "screens",
+  "phones",
+  "since",
+  "price_range",
+  "events",
+  "projects",
+  "features",
+  "links.d"
+ ],
+ "holds_without_pictures": true,
+ "motif": "photos",
+ "notes": [
+  "needs (as written): address, phone or email (contact block)",
+  "drops (as written): quotes beyond the second",
+  "drops (as written): steps.title and steps.text (the reference has no section title above its banners)",
+  "drops (as written): features when every item is also a catalogue item (shown once, in the catalogue)",
+  "drops (as written): links[].d on a further card that has no picture is kept; links beyond the 3 cards go to the further cards (none dropped)",
+  "motif (as written): none (not software: the client's own photographs only); the reference's identity is flat colour blocks, built from the client's palette",
+  "best_with: 1 photograph at least 1440x820 that is people, exterior or room (the opening); 3 more of at least 480x350 for the three cards (else 403x320, else no card pictures); a step's own picture of at least 738x500 to make a banner; 1 more of at least 1382 wide for the statement and 847x540 for the enrolment band",
+  "minimum_by_role: {\"opening\": \"1 people/exterior/room, >=1200x684\", \"cards\": \"3 any role but portrait, >=403x320 (small allowed)\", \"banners\": \"steps/spaces with their own picture >=738x500\", \"portraits\": \"team items only, own portrait\"}",
+  "picture_share_case: our page (folded) is longer than 1.5x the reference (school1 2.3x, clinic1 1.8x): share compared on the sections that exist on both (catalogue, team list, faq, plans, features left out); every wide picture of the reference is in place",
+  "measured: {\"school1 (18 photographs: 4 large, 14 small 450x338; no portraits)\": \"12 shown, each once; catalogue folded (8 groups, 46 items); height 14147 at 1440 (2.3x ref), 26491 at 390; shots clean; legible ok (876 lines); picture share 28 on the shared sections vs 45 (fails: its large photographs are all used, the rest are small); 1 banner (team), 6 cards\", \"clinic1 (22 photographs: 11 banners 2000x690, 10 portraits 400, 1 small)\": \"22 shown, each once; catalogue folded (2 groups, 15 items); height 10745 at 1440 (1.8x), 17046 at 390; shots clean; legible ok (367 lines); picture share 45 on the shared sections vs 45; 3 banners, 10 portraits\", \"both with media emptied\": \"render clean; a type page in colour blocks\", \"27 data variants\": \"no sideways scroll, no overlap, one h1, no errors at 1440 and 390, with groups closed and with every group open\"}",
+  "photos_large_min_for_picture_share: 4 large (>=1440 wide) beyond the steps' own pictures: opening, statement, a banner, the enrolment band; a client with only small photographs renders well but falls far under the reference's picture share",
+  "folds: catalogue with more than 12 items and team with more than 12 people become facts rows (name, first three, price range or count) that open in place as native <details>; nothing dropped"
+ ]
+}

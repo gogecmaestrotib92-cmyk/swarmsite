@@ -1,0 +1,78 @@
+{
+ "niche": [
+  "clinic",
+  "service",
+  "law",
+  "person"
+ ],
+ "photos_min": 3,
+ "photos_large_min": 1,
+ "screens_min": 0,
+ "phones_ok": false,
+ "needs": [
+  "brand.name",
+  "hero.title",
+  "steps"
+ ],
+ "needs_any": [
+  [
+   "hero.text",
+   "hero.kicker"
+  ],
+  [
+   "catalogue",
+   "features"
+  ],
+  [
+   "place",
+   "contact"
+  ]
+ ],
+ "min": {
+  "steps": 1
+ },
+ "max": {
+  "steps": 6
+ },
+ "drops": [
+  "brand.logo",
+  "hero.note",
+  "features",
+  "links",
+  "menu",
+  "spaces",
+  "events",
+  "notices",
+  "since",
+  "cuisine",
+  "price_range",
+  "takeaway",
+  "screens",
+  "phones",
+  "photos"
+ ],
+ "holds_without_pictures": true,
+ "motif": "photos",
+ "notes": [
+  "Everything is set in capitals in one monospaced face, as the reference: long German service descriptions read slower than in a text face.",
+  "The header's name and menu stand on ink chips and the first picture carries a 66 % ink scrim under the h1 — both departures from the reference for the readability gate.",
+  "A client whose large photographs are all under 690 px high gets no first picture, band or list half (they are left out, not enlarged past 1.3x).",
+  "drops (as written): palette.accent and palette.extra (the reference is two-tone: ground and ink only)",
+  "drops (as written): brand.logo (the name is set as a wordmark)",
+  "drops (as written): hero.primary / hero.secondary as buttons on the first screen (the reference has none there; the cta is the last nav row, the band's button and the closing button)",
+  "drops (as written): hero.note (the phone comes from place/contact)",
+  "drops (as written): features (whole, when a catalogue exists)",
+  "drops (as written): features.items without a description in the band",
+  "drops (as written): catalogue.items[].img and catalogue.groups[].img",
+  "drops (as written): team.groups[].t",
+  "drops (as written): projects[].photos beyond the first unused",
+  "drops (as written): media.photos beyond the slots",
+  "drops (as written): small photographs other than portraits",
+  "motif (as written): the client's own photographs (media.made is never read)",
+  "photos_by_role: {\"first screen (held, pulled into focus)\": \"1 photograph, not small, not a portrait, at least 1108x690 (1440x900 cover, enlarged at most 1.3x); role room, exterior, work, landscape, workshop first; 1600+ wide and 900+ high stays sharp\", \"three cards\": \"steps.items[].img for each card, any landscape or upright of 420+ wide (shown 416x521, cropped upright)\", \"band backdrop\": \"1 of at least 1108x690 (under an 80 % veil); role detail, workshop, room first — only when the client has a statement\", \"wide picture\": \"1 of at least 1040 wide, shown in its own proportion between 1.5:1 and 2.9:1 — or media.video\", \"list half\": \"1 of at least 600x690 (672x900, held beside the services list); role detail, room, work first\", \"people\": \"team items' own portraits only, 300+ wide (400x400 small portraits are enough); a person without one is type only\", \"projects\": \"the first unused photograph of each project, 416+ wide\"}",
+  "uses_when_present: [\"nav\", \"signin\", \"cta\", \"hero.kicker\", \"hero.text\", \"hero.text2\", \"steps.title\", \"steps.text\", \"steps.items[].k/title/text/img/cta\", \"statement\", \"features (in the band only without a catalogue; as the opening list only without a catalogue)\", \"media.video\", \"figures\", \"trust\", \"logos\", \"catalogue (title, text, note, groups[].t/text, items name/text/price/prices[]/rows[]/note/state/h)\", \"plans (title, text, name, price, per, line, rows, cta, marked, note)\", \"team (title, text, items or groups; name, role, text, img, h, phone, email)\", \"projects (title, text, h, first unused photo)\", \"faq\", \"credentials (t, text, year, h)\", \"quotes (q, name, role)\", \"close (title, text, cta)\", \"contact (phone, email, form, routes)\", \"place.address\", \"place.phone (+note)\", \"place.email\", \"place.hours\", \"place.booking (as cta when there is none)\", \"place.social\", \"locations\", \"foot.text\", \"foot.legal\", \"foot.links\"]",
+  "holds_without_pictures_note: Measured on scratch copies of clinic1 and local1 with media.photos emptied: shots clean at 1440 and 390, legible ok. The first screen becomes an ink screen with the h1 and the ruler (no hold), the band an ink band, the cards, people and projects type only, the wide picture and the list half absent. It stays a ruled typographic page and nothing is empty — but the reference lives on three large photographs; offer it without them only when no picture-led template fits.",
+  "picture_share_case: 2 — our page is 1.24x (clinic1) and 1.36x (local1) the reference's height, under 1.5x, so the overall share is compared: reference 33 %, clinic1 31 %, local1 31 %; the reference's three wide pictures (first screen, band, film) are present in the same order",
+  "measured_on: {\"reference\": \"picture share 33 %, per screen [100,0,10,21,22,72,92,21,0,0,0], 3 screens with a wide picture\", \"clinic1\": \"22 photographs (11 banners of 2000x690 / 1680x580, 11 small): 17 used once each — first screen, 3 cards, band, wide, list half, 10 portraits; 4 banners and the small street sign unused. Share 31 %, 3 wide; legible ok (413 line readings); shots clean at 1440 and 390. The 690-high banners are enlarged 1.3x in the three 900-high slots\", \"local1\": \"20 photographs: 15 used once each — first screen, 3 cards, band, wide, list half, 3 people, 5 projects; 5 unused; share 31 %, 3 wide; legible ok (481); shots clean\", \"variants (scratch copies, shots at 1440 and 390 + legible)\": \"1, 3, 5 plans + faq; 2 and 9 features (no catalogue); 1 and 6 steps; 12-word h1; 40-character button; no photographs (clinic1, local1); first five large photographs; local1 + credentials, second location, figures, prices: all without sideways scroll, errors [] and one h1 at both widths; legible ok on all but two, nopic-local1 and plans1, which each print one FAIL at 1440 for a line partly under the fixed header chip at one scroll step (gate artefact, see NOTES.md)\"}"
+ ]
+}

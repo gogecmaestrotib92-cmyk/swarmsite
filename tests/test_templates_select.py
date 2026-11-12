@@ -130,6 +130,26 @@ def test_a_place_gets_place_templates_and_its_own_needs_are_read(tmp_path):
     assert chosen(PRODUCT, lib) == ['product']
 
 
+def test_a_template_made_for_the_clients_niche_comes_before_one_that_only_also_holds_for_it(tmp_path):
+    """The first niche of a needs.json is what the template was made for; the later ones are where it also holds.
+    Among equal fits: made for the client's niche, then made for a kin of it (another kind of place for a place),
+    then one that lists the niche only later — whatever the names, and however many needs each one meets."""
+    hotel = {**PLACE, 'kind': 'hotel'}
+    lib = library(tmp_path,
+                  aclinic=need(['clinic', 'hotel', 'service'], needs=['hours', 'menu', 'since']),   # meets more needs, sorts first by name
+                  bschool=need(['school', 'law', 'hotel'], needs=['hours', 'menu']),
+                  rooms=need(['hotel', 'restaurant'], motif='sky'),
+                  tables=need(['restaurant', 'hotel', 'venue'], motif='sheet'))
+    assert chosen(hotel, lib) == ['rooms', 'tables', 'aclinic']
+    assert chosen(hotel, lib, limit=4) == ['rooms', 'tables', 'aclinic', 'bschool']
+    assert chosen(PLACE, lib) == ['tables', 'rooms'], 'for a restaurant the restaurant page leads and the hotel page is its kin'
+    assert [S.select(hotel, root=lib, limit=4) == S.select(hotel, root=lib, limit=4) for _ in range(3)] == [True] * 3
+    # a client of one fixed niche: a page made for law before a clinic page that also lists law
+    law = {**PLACE, 'kind': 'law'}
+    lib2 = library(tmp_path / 'law', aclinic=need(['clinic', 'law'], needs=['hours', 'menu']), firm=need(['law', 'clinic']))
+    assert chosen(law, lib2) == ['firm', 'aclinic']
+
+
 def test_needs_are_read_strictly_and_an_unreadable_one_keeps_the_template_out(tmp_path):
     P = S.client(PRODUCT)['pics']
     met = lambda n, d=PRODUCT, promised=(): S.need_met(n, d, S.client(d)['pics'], promised)

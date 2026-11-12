@@ -1,0 +1,55 @@
+{
+ "niche": [
+  "restaurant",
+  "hotel",
+  "venue"
+ ],
+ "photos_min": 8,
+ "photos_large_min": 0,
+ "screens_min": 0,
+ "phones_ok": false,
+ "needs": [
+  "brand.name",
+  "hero.text"
+ ],
+ "drops": [
+  "figures",
+  "trust",
+  "features.text",
+  "links",
+  "quotes",
+  "logos",
+  "close",
+  "hero.text2",
+  "hero.note",
+  "hero.secondary",
+  "hero.kicker",
+  "hero.title",
+  "steps.text",
+  "steps.k",
+  "foot.text",
+  "since",
+  "cuisine",
+  "price_range",
+  "spaces.img",
+  "screens",
+  "phones",
+  "video",
+  "signin"
+ ],
+ "holds_without_pictures": true,
+ "motif": "photos",
+ "notes": [
+  "drops (as written): hero.secondary (unless it points at the menu)",
+  "drops (as written): hero.kicker (when hero.title does not contain the name and so takes the second line)",
+  "drops (as written): hero.title (when it contains the name: the name is the h1 and the kicker takes the second line)",
+  "drops (as written): foot.text (when place.address is present)",
+  "drops (as written): place.spaces[].img (the rooms are rows of text; their photographs may be chosen for the strip by size and role)",
+  "motif (as written): the client's own photographs (no made pictures)",
+  "photos_note: Measured on butarque (52) and balamo (20) and on scratch copies with 5 and 0. For the page as the reference has it: 3 photographs that are not `small` and at least 680x700 px, one of them at least 950x912 (the half beside the text, bled to the page edge; the other two are the opening), at least 4 more of at least 480 px high (the strip; it takes up to 8), and 1 landscape of at least 1200 px wide (the closing band, needed for the share of picture). Nothing has to be 1600 wide: the widest slot is 1392 px at 1440 and a narrower picture is shown at its own width (balamo: 1242). With no photograph that fills the half the rows take its place and a band stands above the text.",
+  "uses_when_present: [\"place.menu\", \"place.hours\", \"place.booking\", \"place.address\", \"place.phone\", \"place.email\", \"place.takeaway\", \"place.events\", \"place.spaces\", \"place.notices\", \"place.social\", \"statement\", \"steps\", \"plans\", \"faq\", \"nav\", \"cta\", \"brand.logo\", \"foot.links\", \"foot.legal\"]",
+  "holds_without_pictures_note: Type-led: with no photographs the opening is the name and the second line side by side, then the header, the band with its sentence, the text columns and the foot. All gates pass (scratch copies of both clients). It is a plain page, not a rich one.",
+  "share: {\"case\": \"overall share compared (our pages are under 1.5x the reference height)\", \"reference\": [57, 58], \"butarque\": [62, 55], \"balamo\": [55, 57], \"note\": \"the reference has no full-width picture on its home page; its half beside the text is in place; one closing band is ours\"}",
+  "variants_tried: probe/var-*.html, results in probe/final.txt"
+ ]
+}

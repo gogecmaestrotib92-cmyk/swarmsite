@@ -1,0 +1,46 @@
+{
+ "niche": [
+  "restaurant",
+  "hotel",
+  "venue"
+ ],
+ "photos_min": 11,
+ "photos_large_min": 2,
+ "screens_min": 0,
+ "phones_ok": false,
+ "needs": [
+  "statement",
+  "close"
+ ],
+ "needs_any": [
+  [
+   "spaces",
+   "steps"
+  ]
+ ],
+ "drops": [
+  "trust",
+  "figures",
+  "links.d",
+  "cuisine",
+  "price_range",
+  "faq",
+  "takeaway",
+  "features.d",
+  "plans"
+ ],
+ "holds_without_pictures": false,
+ "motif": "photos",
+ "notes": [
+  "drops (as written): menu counts where noted",
+  "drops (as written): faq: no FAQ part is built in this template yet (both test clients have an empty faq, so nothing was dropped on them; a client with questions would lose them)",
+  "drops (as written): quotes after the first",
+  "drops (as written): plans (the reference's home page has no tiers or subscriptions; a place's priced things are its menu, which is shown as word cards)",
+  "motif (as written): the client's own photographs: the place (backdrops, cards) and its dishes (strip, small tiles)",
+  "photos_by_role: [{\"slot\": \"opening backdrop\", \"n\": 1, \"role\": \"exterior | room | bar\", \"size\": \">= 1600 wide and >= 900 high (stops at its own pixels below that: balamo's 1242x1152 leaves 99 px dark bars each side at 1440)\"}, {\"slot\": \"closing cover\", \"n\": 1, \"role\": \"room | exterior | bar | people, wide\", \"size\": \">= 1440 wide, >= 700 high\"}, {\"slot\": \"pair after the heading\", \"n\": 2, \"role\": \"any, not small\", \"size\": \">= 700 x 840 and >= 580 x 735\"}, {\"slot\": \"room cards\", \"n\": \"1 per room (3 on both test clients)\", \"role\": \"room | exterior\", \"size\": \">= 460 x 560; a smaller one shrinks the whole row to its pixels (butarque: 418 x 315)\", \"link\": \"place.spaces[].img, or photos[].page == the room's link\"}, {\"slot\": \"moving strip\", \"n\": \"4-8\", \"role\": \"dish first, then any\", \"size\": \">= 464 wide (600 x 600 dish squares fit)\"}]",
+  "photos_optional: [{\"slot\": \"menu-section picture cards\", \"n\": \"1 per section\", \"role\": \"dish\", \"size\": \">= 460 x 560 at three across, >= 340 x 413 at four\", \"link\": \"photos[].page == section link\"}, {\"slot\": \"six round the centred block\", \"n\": \"4-6\", \"size\": \">= 180 x 200\"}, {\"slot\": \"event pictures\", \"n\": 2, \"size\": \">= 340 x 500 and >= 340 x 340\", \"needs\": \"place.events\"}, {\"slot\": \"gallery\", \"n\": \"2-6\", \"role\": \"wide, not dish, not small\", \"size\": \">= 1280 x 720\"}]",
+  "uses_if_present: [\"place.menu\", \"place.events\", \"quotes[0]\", \"hero.text2\", \"place.hours\", \"place.notices\"]",
+  "without_pictures: renders and passes every check (type on the ground, deep slab first screen and close), but it is no longer this reference; not to be offered",
+  "measured: {\"butarque\": {\"photos_in_data\": 52, \"photos_shown\": 25, \"picture_share\": 57, \"meets_large_min\": true}, \"balamo\": {\"photos_in_data\": 20, \"photos_shown\": 20, \"picture_share\": 53, \"meets_large_min\": false, \"note\": \"nothing >= 1600 wide: opening is 1242 wide inside a 1440 screen; no gallery (one wide large picture left)\"}, \"reference_picture_share\": 56}"
+ ]
+}
