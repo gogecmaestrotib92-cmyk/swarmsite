@@ -15,6 +15,7 @@
    Everything the worker needs is passed in (`deps`), so the flow is tested without a database, a bucket or a model. */
 import fs from 'node:fs'; import path from 'node:path';
 import { payGate } from './payments.mjs';
+import { publicId, designName, scrub } from './designs.mjs';
 
 export const STEPS_T = [
   ['capture', 'Reading your site: text, photos, logo, colours'],
@@ -109,17 +110,22 @@ export async function runTemplateJob(deps) {
   const built = await step('choose', async () => {
     const r = lastJson(await run('python3', ['lib/templates/job.py', 'build', dir, '--out', tdir, '--base', base, ...extra], { timeoutMs: 300000 }));
     if (!r || !Array.isArray(r.chosen) || !Array.isArray(r.shown)) throw new Error('templates build did not report');
-    await deps.emit(r.chosen.map(c => ({ role: 'QA', text: `${c.slug}: ${c.ok ? 'every screen passes' : 'not shown — ' + (c.failed || []).join(', ')}` })));
+    // in the visitor's words: a design by its number among those shown, never by the template it was made with
+    const shownNo = r.shown.filter(s => SLUG.test(s));
+    await deps.emit(r.chosen.map(c => { const n = shownNo.indexOf(c.slug); return { role: 'QA', text: n >= 0 && c.ok ? `${designName(n)}: every screen passes` : `A design was not shown — ${scrub((c.failed || []).join(', '))}` }; }));
     return r;
   });
   const variants = await step('publish', async () => {
     const shown = built.shown.filter(s => SLUG.test(s));
     for (const rel of walk(path.join(tdir, 'media'))) await deps.upload(path.join(tdir, 'media', rel), `${job.id}/t/media/${rel.split(path.sep).join('/')}`, TYPE[path.extname(rel).toLowerCase()] || 'application/octet-stream');
     const out = [];
-    for (const slug of shown) {
-      await deps.upload(path.join(tdir, 'pub', `${slug}.html`), `${job.id}/t/${slug}.html`, 'text/html');
+    // a design's address, its preview file and everything a visitor sees name it by its id (v1 …) and its name (Design 1 …);
+    // `slug` (the template) stays in the job for the server (server/designs.mjs, owner's rule of 2026-11-12)
+    for (const [i, slug] of shown.entries()) {
+      const id = publicId({}, i);
+      await deps.upload(path.join(tdir, 'pub', `${slug}.html`), `${job.id}/t/${id}.html`, 'text/html');
       const c = built.chosen.find(x => x.slug === slug) || {};
-      out.push({ slug, approach: c.approach || '', why: c.why || '', url: `${deps.self}/t/${job.id}/${slug}`, package: 'pending', ...(c.made ? { made: c.made } : {}) });
+      out.push({ slug, id, name: designName(i), approach: c.approach || '', why: c.why || '', url: `${deps.self}/t/${job.id}/${id}`, package: 'pending', ...(c.made ? { made: c.made } : {}) });
     }
     // the job's data store: the client's data, and each variant's own (with its family of made pictures), in the private
     // bucket. The "site from nothing" form will write the same data.json, and the editor will keep its edits as a patch
@@ -161,10 +167,13 @@ export function mayDownload({ user, job, slug, env }) {
   const v = (job?.result?.templates?.variants || []).find(x => x.slug === slug);
   if (!v) return { status: 404, body: { error: 'not found' } };
   if (v.package === 'pending') return { status: 409, body: { error: 'The download is still being prepared.', pending: true } };
-  if (v.package !== 'ready') return { status: 409, body: { error: 'This design cannot be downloaded: its package did not match the preview.', why: v.package_why || [] } };
+  if (v.package !== 'ready') return { status: 409, body: { error: 'This design cannot be downloaded: its package did not match the preview.', why: (v.package_why || []).map(scrub) } };
   const pay = payGate({ env, row: job, slug, user });   // free for testing, paid by this account, or 402 with where to pay
   return pay || { status: 200 };
 }
+
+// the preview file of a design in the public bucket: by its id since ids exist, by the template before
+export const previewKey = (row, id, slug) => { const vs = row?.result?.templates?.variants || []; const v = vs.find(x => x.slug === slug); return `${id}/t/${v && v.id ? v.id : slug}.html`; };
 
 // which preview page of a job may be served
 export function previewable(row, slug) {

@@ -71,7 +71,7 @@ try {
   // 6 · the server: off without a token, the payment hook, an account, the download asks for the edited package
   const src = fs.readFileSync(path.join(root, 'server/index.mjs'), 'utf8');
   assert.ok(/if \(!process\.env\.VERCEL_TOKEN\) return res\.status\(503\)/.test(src), 'publishing is off until the owner sets the token');
-  assert.ok(/const g = await pubGate\(req, res\)/.test(src) && /mayKeep\(\{ user, row \}\); if \(may\.status !== 200\)/.test(src) && /const pay = payGate\(\{ env: process\.env, row, slug: req\.params\.slug, user, what: 'download or publish' \}\); if \(pay\)/.test(src), 'an account, then the payment gate (tests/payments.mjs)');
-  assert.ok(/editedPackage\(row\.result, req\.params\.slug, editsHash\(kept\)\)/.test(src) && /prepare: true/.test(src), 'with kept edits, the download is their verified package, or it asks to prepare one');
+  assert.ok(/const g = await pubGate\(req, res\)/.test(src) && /mayKeep\(\{ user, row \}\); if \(may\.status !== 200\)/.test(src) && /const pay = payGate\(\{ env: process\.env, row, slug: req\.tslug, user, what: 'download or publish' \}\); if \(pay\)/.test(src), 'an account, then the payment gate (tests/payments.mjs)');
+  assert.ok(/editedPackage\(row\.result, slug, editsHash\(kept\)\)/.test(src) && /prepare: true/.test(src), 'with kept edits, the download is their verified package, or it asks to prepare one');
   console.log('Publish: name rules, a verified package kept and deployed file for file, the alias, refused and failed states, the download with the edits, the server\'s gates');
 } finally { fs.rmSync(tmp, { recursive: true, force: true }); }

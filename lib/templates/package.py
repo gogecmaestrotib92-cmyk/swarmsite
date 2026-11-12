@@ -52,8 +52,9 @@ fonts/       the typefaces of the page (open licences; they travel with the page
 data.json    the words, links and pictures the page was made from
 
 The page asks the internet for nothing: everything it shows is in this folder.
-Template: %(slug)s. Made with Swarmsite.
+Made with Swarmsite.
 """
+# the visitor never reads which reference a template was rebuilt from (owner, 2026-11-12): not here, not in a file name
 
 
 class PackageError(Exception):

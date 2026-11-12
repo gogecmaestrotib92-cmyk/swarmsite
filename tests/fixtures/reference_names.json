@@ -1,0 +1,194 @@
+{
+ "_": "Owner's rule (2026-11-12): a visitor never sees the name of a reference site a template was rebuilt from. Per template: its slug and the words of its reference's name and domain. Read by tests/test_templates_no_reference_names.py and tests/design-names.mjs; never served.",
+ "acme": [
+  "acme",
+  "acmecups",
+  "acme cups"
+ ],
+ "altufanulu": [
+  "altufanulu",
+  "altu fan ulu"
+ ],
+ "bellagrande": [
+  "bellagrande",
+  "bella grande",
+  "hotelbellagrande"
+ ],
+ "bokman": [
+  "bokman"
+ ],
+ "brecon": [
+  "brecon",
+  "thebrecon"
+ ],
+ "bronxarts": [
+  "bronxarts",
+  "bronx arts"
+ ],
+ "butter": [
+  "butter",
+  "butter.video"
+ ],
+ "cerebrium": [
+  "cerebrium"
+ ],
+ "chambres": [
+  "chambres",
+  "chambresdamis",
+  "chambres d'amis"
+ ],
+ "chisel": [
+  "chisel",
+  "chiselindustries",
+  "chisel industries"
+ ],
+ "clicky": [
+  "clicky",
+  "heyclicky"
+ ],
+ "coutumes": [
+  "coutumes"
+ ],
+ "dawnsaunders": [
+  "dawnsaunders",
+  "dawn saunders"
+ ],
+ "ddsks": [
+  "ddsks",
+  "scenekunstskole",
+  "den danske"
+ ],
+ "deepbook": [
+  "deepbook"
+ ],
+ "dock": [
+  "dock",
+  "dock.cool",
+  "cooldock"
+ ],
+ "fluently": [
+  "fluently",
+  "getfluently"
+ ],
+ "fryreglet": [
+  "fryreglet"
+ ],
+ "glossar": [
+  "glossar"
+ ],
+ "granola": [
+  "granola"
+ ],
+ "griffin": [
+  "griffin"
+ ],
+ "iip": [
+  "iip",
+  "illinoisinnocenceproject",
+  "illinois innocence"
+ ],
+ "innerflow": [
+  "innerflow"
+ ],
+ "linearity": [
+  "linearity"
+ ],
+ "lineofsight": [
+  "lineofsight",
+  "line of sight"
+ ],
+ "maze": [
+  "maze",
+  "maze.co"
+ ],
+ "mindmarket": [
+  "mindmarket"
+ ],
+ "newground": [
+  "newground",
+  "newgroundcoffee",
+  "new ground"
+ ],
+ "nickho": [
+  "nickho",
+  "nickho-motorsports"
+ ],
+ "odyssee": [
+  "odyssee",
+  "odysseeclinic"
+ ],
+ "omp": [
+  "omp",
+  "omp.dentist"
+ ],
+ "pcnw": [
+  "pcnw"
+ ],
+ "ptw": [
+  "ptw",
+  "ptwlaw"
+ ],
+ "rechroma": [
+  "rechroma"
+ ],
+ "recycle": [
+  "recycle",
+  "re-cycle"
+ ],
+ "roxie": [
+  "roxie",
+  "roxienafousi",
+  "nafousi"
+ ],
+ "runningcharity": [
+  "runningcharity",
+  "running charity",
+  "therunningcharity"
+ ],
+ "schulhaus": [
+  "schulhaus"
+ ],
+ "serus": [
+  "serus"
+ ],
+ "sunbeam": [
+  "sunbeam",
+  "sunbeambagels"
+ ],
+ "supaste": [
+  "supaste"
+ ],
+ "tengile": [
+  "tengile",
+  "tengilemalamala",
+  "malamala"
+ ],
+ "terminal": [
+  "terminal",
+  "terminal-industries",
+  "terminal industries"
+ ],
+ "whitedesert": [
+  "whitedesert",
+  "white desert",
+  "white-desert"
+ ],
+ "wilsonharle": [
+  "wilsonharle",
+  "wilson harle"
+ ],
+ "woodwrights": [
+  "woodwrights"
+ ],
+ "writer": [
+  "writer",
+  "writer.com"
+ ],
+ "xnrgy": [
+  "xnrgy"
+ ],
+ "_more": [
+  "wispr",
+  "wisprflow"
+ ]
+}

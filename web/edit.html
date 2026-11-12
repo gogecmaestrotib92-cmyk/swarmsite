@@ -79,8 +79,8 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
    server's lib/templates/edit.py) and the readability gate runs on it; a line that no longer reads is named here
    with what to change. Trying costs nothing and needs no account; keeping the edits does. No model. */
 const API=(window.SWARMSITE_API||'').replace(/\/$/,''); const $=s=>document.querySelector(s); const qs=new URLSearchParams(location.search);
-const ID=qs.get('job')||'', NAMES={griffin:'Ledger',maze:'Studio'}; let SLUG=qs.get('slug')||'';
-const nameOf=s=>NAMES[s]||s.charAt(0).toUpperCase()+s.slice(1);
+const ID=qs.get('job')||''; let SLUG=qs.get('slug')||'';   /* SLUG is the design's id (v1 …), never a template's name */
+const nameOf=s=>/^v[1-9][0-9]?$/.test(s)?'Design '+s.slice(1):'This design';
 /* the parts of a page in plain words (the data's own names stay underneath) */
 const PART={brand:'Name',hero:'Top of the page',nav:'Menu',signin:'Sign-in link',cta:'Top button',trust:'Trust line',figures:'Numbers',statement:'Statement',steps:'Steps',features:'Features',plans:'Prices',faq:'Questions',quotes:'Quotes',logos:'Customer logos',links:'Links',close:'Closing',foot:'Footer',place:'The place',team:'Team',catalogue:'What you offer',locations:'Locations',contact:'Contact',projects:'Projects',credentials:'Credentials'};
 const partOf=b=>PART[b]||b;
@@ -166,7 +166,7 @@ async function start(path,body,field,done){ $('#prepare').disabled=$('#publish')
   finally{ $('#prepare').disabled=$('#publish').disabled=false; } }
 $('#prepare').onclick=()=>start(`/t/${ID}/${SLUG}/prepare`,{},'edited',s=>{ if(s.status!=='ready'){ pubSay('The package did not match your page, so it is not offered: '+(s.why||[]).join('; '),'bad'); return; }
   pubSay('Your download is ready.','ok'); const a=$('#getZip'); a.hidden=false; a.onclick=async()=>{ const r=await send(`/t/${ID}/${SLUG}/package`,{}); if(!r.ok){ pubSay((await r.json().catch(()=>({}))).error||'The download is not available.','bad'); return; }
-    const u=URL.createObjectURL(await r.blob()), l=document.createElement('a'); l.href=u; l.download=`${SLUG}.zip`; document.body.appendChild(l); l.click(); l.remove(); setTimeout(()=>URL.revokeObjectURL(u),4000); }; });
+    const u=URL.createObjectURL(await r.blob()), l=document.createElement('a'); l.href=u; l.download=`${nameOf(SLUG).toLowerCase().replace(/[^a-z0-9]+/g,'-')}.zip`; document.body.appendChild(l); l.click(); l.remove(); setTimeout(()=>URL.revokeObjectURL(u),4000); }; });
 $('#publish').onclick=()=>{ const name=$('#siteName').value.trim().toLowerCase(); if(!/^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])$/.test(name)||name.includes('--')){ pubSay('A name is 3 to 40 small letters, digits and single dashes.','bad'); $('#siteName').focus(); return; }
   start(`/t/${ID}/${SLUG}/publish`,{name},'publish',s=>{ if(s.status==='live'){ pubSay('Your site is online.','ok'); const a=$('#siteLink'); a.href=s.url; a.textContent=s.url.replace('https://',''); a.hidden=false; }
     else pubSay((s.status==='refused'?'Not published: ':'Publishing failed: ')+(s.why||[]).join('; '),'bad'); }); };

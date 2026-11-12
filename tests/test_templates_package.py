@@ -87,7 +87,7 @@ def test_the_zip_holds_the_page_its_media_its_fonts_and_asks_for_nothing_outside
     assert not any('cyr.woff2' in u for u in asked), 'no Cyrillic on the page: its face is not fetched and not packed'
     assert P.outside(page) == [], 'nothing left that a browser would fetch from outside'
     assert 'href="https://' in page, 'the client\'s own links stay links'
-    assert data == {k: v for k, v in client.items() if not k.startswith('_')} and client['brand']['name'] in readme and slug in readme
+    assert data == {k: v for k, v in client.items() if not k.startswith('_')} and client['brand']['name'] in readme and slug not in readme
     # the same input gives the same zip
     again = P.build(slug, client, tmp_path / 'src', tmp_path / 'out' / 'again.zip', fetch=fonts([]))
     assert Path(again['zip']).read_bytes() == Path(rep['zip']).read_bytes()

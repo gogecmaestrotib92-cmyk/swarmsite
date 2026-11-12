@@ -15,7 +15,7 @@ assert.deepEqual(payGate({ env: {}, row: row(), slug: 'griffin', user: me }), { 
 assert.deepEqual(mayDownload({ user: me, job: row(), slug: 'griffin', env: {} }), { status: 402, body: { error: 'Payment is needed to download this page.', pay: true } });
 assert.equal(await stripeOf({}), null, 'no key: the Stripe package is not even loaded');
 // with keys: the 402 says where to pay
-assert.deepEqual(payGate({ env: ENV, row: row(), slug: 'griffin', user: me, what: 'download or publish' }).body, { error: 'Payment is needed to download or publish this page.', pay: true, pay_url: '/pay', job: ID, slug: 'griffin' });
+assert.deepEqual(payGate({ env: ENV, row: row(), slug: 'griffin', user: me, what: 'download or publish' }).body, { error: 'Payment is needed to download or publish this page.', pay: true, pay_url: '/pay', job: ID, slug: 'v1' }, 'the 402 names the design by its id, never its template');
 assert.equal(payGate({ env: { ...ENV, PACKAGES_FREE: '1' }, row: row(), slug: 'griffin', user: me }), null, 'PACKAGES_FREE=1 still lets everything through');
 
 // 2 · the client, loaded only with a key
@@ -26,10 +26,11 @@ assert.ok(S && made === 'sk_test_stub');
 const sessions = [];
 const stub = { checkout: { sessions: { create: async p => { sessions.push(p); return { id: 'cs_test_1', url: 'https://checkout.stripe.com/c/pay/cs_test_1' }; } } },
   webhooks: { constructEvent: (raw, sig, secret) => { if (sig !== 'good' || secret !== 'whsec_stub') throw new Error('No signatures found'); return JSON.parse(Buffer.isBuffer(raw) ? raw.toString() : raw); } } };
-assert.deepEqual(await checkout({ stripe: stub, env: ENV, row: row(), slug: 'griffin', user: me, from: 'edit' }), { url: 'https://checkout.stripe.com/c/pay/cs_test_1', id: 'cs_test_1' });
-assert.deepEqual(sessions[0], { mode: 'payment', line_items: [{ price: 'price_stub', quantity: 1 }], client_reference_id: `${ID}:griffin`, customer_email: 'visitor@example.com',
-  metadata: { job: ID, slug: 'griffin', user: 'u1' }, success_url: `https://swarmsite.si/edit?job=${ID}&slug=griffin&paid=griffin`, cancel_url: `https://swarmsite.si/edit?job=${ID}&slug=griffin&paid=0` });
-assert.equal(returnUrls(ENV, row(), 'griffin', 'app').success_url, `https://swarmsite.si/app?job=${ID}&paid=griffin`);
+// the server hands checkout the design's id (v1), so Stripe, the receipt and the return address never name the template
+assert.deepEqual(await checkout({ stripe: stub, env: ENV, row: row(), slug: 'v1', user: me, from: 'edit' }), { url: 'https://checkout.stripe.com/c/pay/cs_test_1', id: 'cs_test_1' });
+assert.deepEqual(sessions[0], { mode: 'payment', line_items: [{ price: 'price_stub', quantity: 1 }], client_reference_id: `${ID}:v1`, customer_email: 'visitor@example.com',
+  metadata: { job: ID, slug: 'v1', user: 'u1' }, success_url: `https://swarmsite.si/edit?job=${ID}&slug=v1&paid=v1`, cancel_url: `https://swarmsite.si/edit?job=${ID}&slug=v1&paid=0` });
+assert.equal(returnUrls(ENV, row(), 'v1', 'app').success_url, `https://swarmsite.si/app?job=${ID}&paid=v1`);
 
 // 4 · the webhook: signature, paid sessions only, metadata that matches, idempotent
 const event = (o, type = 'checkout.session.completed') => Buffer.from(JSON.stringify({ type, data: { object: { id: 'cs_test_1', payment_status: 'paid', client_reference_id: `${ID}:griffin`, metadata: { job: ID, slug: 'griffin', user: 'u1' }, ...o } } }));
@@ -58,7 +59,8 @@ assert.equal(payGate({ env: ENV, row: paid, slug: 'griffin', user: me, what: 'do
 const src = fs.readFileSync(path.join(root, 'server/index.mjs'), 'utf8');
 assert.ok(/req\.path === '\/stripe\/webhook' \? next\(\) : json\(req, res, next\)/.test(src) && /app\.post\('\/stripe\/webhook', express\.raw\(/.test(src), 'the webhook gets its raw body');
 assert.ok(/if \(!payConfigured\(process\.env\)\) return res\.status\(503\)/.test(src) && /if \(!process\.env\.STRIPE_SECRET_KEY \|\| !process\.env\.STRIPE_WEBHOOK_SECRET\) return res\.status\(503\)/.test(src), 'off without keys');
-assert.ok(/const pay = payGate\(\{ env: process\.env, row, slug: req\.params\.slug, user, what: 'download or publish' \}\)/.test(src), 'publish passes the same gate');
+assert.ok(/const pay = payGate\(\{ env: process\.env, row, slug: req\.tslug, user, what: 'download or publish' \}\)/.test(src), 'publish passes the same gate');
+assert.ok(/checkout\(\{ stripe: await stripe\(\), env: process\.env, row, slug: publicOf\(row, tslug\)/.test(src) && /const tslug = internalSlug\(row, slug\); if \(!tslug\) return;/.test(src), 'Stripe is told the design\'s id; the webhook turns it back');
 assert.ok(!/console\.(log|warn)\([^)]*(STRIPE_SECRET_KEY|STRIPE_WEBHOOK_SECRET|signature|email)/.test(src), 'no key, signature or email in a log line');
 assert.ok(JSON.parse(fs.readFileSync(path.join(root, 'server/package.json'), 'utf8')).dependencies.stripe, 'the official package, installed by the server\'s build');
 
@@ -73,8 +75,8 @@ try {
       if (u.hostname === 'app.test' && u.pathname === '/app') return r.fulfill({ contentType: 'text/html', body: html });
       if (u.pathname === '/config.js') return r.fulfill({ contentType: 'application/javascript', body: "window.SWARMSITE_API='https://api.test'" });
       if (u.pathname === '/js/swarm2.js') return r.fulfill({ contentType: 'application/javascript', body: 'window.Swarm2={mount:()=>({stop(){},phase(){},push(){},setPage(){}})}' });
-      if (u.pathname === `/jobs/${ID}`) return json({ id: ID, url: 'https://x.example', status: 'done', created_at: new Date().toISOString(), steps: [], result: { templates: { variants: [{ slug: 'griffin', approach: '', url: `https://api.test/t/${ID}/griffin`, package: 'ready' }], store: { data: 'x' } } } });
-      if (u.pathname === `/t/${ID}/griffin/package`) return json(withPay ? { error: 'Payment is needed to download this page.', pay: true, pay_url: '/pay', job: ID, slug: 'griffin' } : { error: 'Payment is needed to download this page.', pay: true }, 402);
+      if (u.pathname === `/jobs/${ID}`) return json({ id: ID, url: 'https://x.example', status: 'done', created_at: new Date().toISOString(), steps: [], result: { templates: { variants: [{ slug: 'v1', id: 'v1', name: 'Design 1', approach: '', url: `https://api.test/t/${ID}/v1`, package: 'ready' }], store: true } } });
+      if (u.pathname === `/t/${ID}/v1/package`) return json(withPay ? { error: 'Payment is needed to download this page.', pay: true, pay_url: '/pay', job: ID, slug: 'v1' } : { error: 'Payment is needed to download this page.', pay: true }, 402);
       if (u.pathname === '/pay' && m === 'POST') { state.pay = JSON.parse(r.request().postData()); return json({ url: 'https://checkout.stripe.test/c/pay/cs_test_1', id: 'cs_test_1' }); }
       if (u.hostname === 'checkout.stripe.test') { state.checkout = true; return r.fulfill({ contentType: 'text/html', body: '<p>checkout</p>' }); }
       if (u.pathname.startsWith(`/t/${ID}/`)) return r.fulfill({ contentType: 'text/html', body: '<h1>page</h1>' });
@@ -85,7 +87,7 @@ try {
     if (withPay) {
       await page.locator('#payGo:not([hidden])').waitFor({ timeout: 8000 }); assert.ok(await page.locator('#download').isHidden());
       await page.locator('#payGo').click(); await page.waitForFunction(() => location.hostname === 'checkout.stripe.test', null, { timeout: 8000 });
-      assert.deepEqual(state.pay, { job: ID, slug: 'griffin', from: 'app' }); assert.ok(state.checkout);
+      assert.deepEqual(state.pay, { job: ID, slug: 'v1', from: 'app' }); assert.ok(state.checkout);
     } else {
       await page.waitForFunction(() => /Payment comes before the download/.test(document.querySelector('#chooseNote').textContent), null, { timeout: 8000 });
       assert.ok(await page.locator('#payGo').isHidden(), 'no keys: no pay button, as before');

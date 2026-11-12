@@ -264,8 +264,8 @@ $('#notifyGo').onclick=async()=>{ const email=$('#notifyEmail').value.trim(); if
    download does — and payment, once it exists (the server answers 402 with pay: true until then). */
 let CFG=null; const config=async()=>{ if(CFG) return CFG; try{ CFG=await (await fetch(API+'/config')).json(); }catch{ CFG={}; } return CFG; };
 let picked='', chooserFor='';
-const NAMES_T={griffin:'Ledger',maze:'Studio'};   /* a design's name is the template's; the shown name is a plain word for it */
-const nameOf=slug=>NAMES_T[slug]||slug.charAt(0).toUpperCase()+slug.slice(1);
+/* a design is shown by the name the server gives it ("Design 1"); `slug` in the job is its id (v1), never a template's */
+const nameOf=id=>{ const vs=lastJob?.result?.templates?.variants||[]; const i=vs.findIndex(v=>v.slug===id); return i<0?'This design':(vs[i].name||`Design ${i+1}`); };
 function fitShots(){ document.querySelectorAll('.card .shot').forEach(sh=>{ const f=sh.querySelector('iframe'); if(f) f.style.transform=`scale(${sh.clientWidth/1440})`; }); }
 addEventListener('resize',fitShots);
 function openFull(v){ const f=$('#full'); $('#fullFrame').src=v.url; $('#fullName').textContent=nameOf(v.slug); f.dataset.slug=v.slug; f.classList.add('on'); $('#fullClose').focus(); }
@@ -287,7 +287,7 @@ $('#download').onclick=async()=>{ const id=lastJob?.id, slug=picked; if(!id||!sl
     if(r.status===401){ location.href='/login?next='+encodeURIComponent(location.pathname+location.search); return; }
     if(r.status===402){ const j=await r.json().catch(()=>({})); if(j.pay_url){ offerPay(id,slug); return; } say(slug,'Payment comes before the download — it is not open yet. Your designs stay here.'); return; }
     if(!r.ok){ const j=await r.json().catch(()=>({})); say(slug,j.error||'The download is not available.'); return; }
-    const blob=await r.blob(), a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=((lastJob.url||'site').replace(/^https?:\/\/(www\.)?/,'').replace(/[^a-z0-9.-]+/gi,'-').replace(/-+$/,''))+'-'+slug+'.zip'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000); say(slug,'Downloaded. Unzip it and open index.html — or put the folder on any web host.'); }
+    const blob=await r.blob(), a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=((lastJob.url||'site').replace(/^https?:\/\/(www\.)?/,'').replace(/[^a-z0-9.-]+/gi,'-').replace(/-+$/,''))+'-'+nameOf(slug).toLowerCase().replace(/[^a-z0-9]+/g,'-')+'.zip'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000); say(slug,'Downloaded. Unzip it and open index.html — or put the folder on any web host.'); }
   catch{ say(slug,'The download did not go through. Check your connection and try again.'); }
   finally{ renderDownload(); } };
 /* payment: Stripe Checkout for the chosen design, offered only where the server says payment is on (a 402 with pay_url) */
@@ -316,7 +316,7 @@ function showChooser(job){ lastJob=job;
   if(fromForm){ $('#chooseSub').textContent='Three designs made from what you told us and your photographs, each checked on a desk screen and a phone. Open one to see it whole.';
     const ul=$('#chooseLeftList'); if(ul.children.length!==left.length){ ul.replaceChildren(); for(const g of left.slice(0,30)){ const li=document.createElement('li'); li.textContent=String(g).slice(0,200); ul.appendChild(li); } } }
   if(!vs.length){ $('#chooseH').textContent=fromForm?'No design fits what you told us yet':'No design fits this site yet'; $('#chooseSub').textContent=fromForm?'Every design of the library needs something — product screens, photographs, a few steps or features — that the form did not have.':'Every design of the library needs something from a site — product screens, photographs, a few steps or features — that we could not read from yours.';
-    $('#chooseNoneP').textContent='What each design was missing:'; const ul=$('#chooseWhy'); ul.replaceChildren(); for(const r of (t.rejected||[]).slice(0,8)){ const li=document.createElement('li'); li.textContent=`${nameOf(r.slug)}: ${String(r.why||'').slice(0,160)}`; ul.appendChild(li);} }
+    $('#chooseNoneP').textContent='What each design was missing:'; const ul=$('#chooseWhy'); ul.replaceChildren(); for(const r of (t.rejected||[]).slice(0,8)){ const li=document.createElement('li'); li.textContent=`${r.name||'A design'}: ${String(r.why||'').slice(0,160)}`; ul.appendChild(li);} }
   if(picked&&!vs.some(v=>v.slug===picked)) picked=''; renderDownload(); }
 
 function showDraft(job){ const d=job.result.draft; if(!d || d.round===draftShown) return; draftShown=d.round;
