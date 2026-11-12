@@ -1,0 +1,48 @@
+{
+  "niche": [
+    "software sold to companies",
+    "fintech / platform / API"
+  ],
+  "photos_min": 0,
+  "photos_large_min": 0,
+  "screens_min": 0,
+  "phones_ok": true,
+  "needs": [
+    "hero",
+    "steps",
+    "features",
+    "figures (their signs feed the opening band; without two signs the band is left out)"
+  ],
+  "holds_without_pictures": true,
+  "motif": "land",
+  "drops": [
+    "figures[].v and figures[].l (no figures section: only two signs out of the values are drawn in the opening band)",
+    "features.text",
+    "close.text",
+    "hero.kicker (page title only)",
+    "media.phones beyond the ones the steps point at; media.photos not used by a step when the client has quotes (the picture row then takes the quotes)",
+    "media.video when the client has no faq (the film stands only beside the questions)",
+    "media.screens when the client has no features (they stand only beside the feature list)"
+  ],
+  "shows": [
+    "plans (title, text, name, price, per, line, rows, cta, note)",
+    "faq (title, q, a)",
+    "trust",
+    "statement",
+    "links with their descriptions",
+    "foot"
+  ],
+  "measured": {
+    "sportbot": "4 screens, 4 phones, 1 film, no photos: every section but the picture row; legible ok (426 line readings); shots clean at 1440 and 390; picture share 29 % against the reference's 15 %",
+    "automateed": "3 screens, 7 upright covers, no film, no faq: questions section absent, picture row shows the four covers the steps do not use; legible ok (230); shots clean; picture share 26 %",
+    "sportbot with all media removed (no screens, phones, film, step pictures, made pictures) — rendered and looked at, 1440": "no errors, one h1, no empty frame anywhere: a ruled page of type. The opening band, grid, plans, questions, link cards read as on the full page. Weak part: the held walk keeps its right half blank for three steps (about 2 250 px of scroll with text on the left only), and the feature list and the questions stand alone in the left column. Holds, but it is the plainest page this template makes",
+    "sportbot with only the made pictures removed — rendered and looked at, 1440": "the feature section stands on one flat palette field (extra[0], green) and the questions on another (extra[1], brown) with the screen / film on it; readable, no error; two different coloured slabs on a dark page instead of one landscape series"
+  },
+  "notes": [
+    "No client photograph is needed: the two backdrops are media.made.land[2] and land[5]; without them plain palette fields.",
+    "Each step wants its own picture (phone, book cover or screen) — it is the only thing in the right half of the walk.",
+    "One landscape screen or more for the feature list; a film for the questions (else the backdrop shows bare at the right).",
+    "The 390 build of the two no-picture renders was run through shots.mjs (clean) but not looked at.",
+    "Not for places: nothing here shows menu, hours, address or rooms."
+  ]
+}
