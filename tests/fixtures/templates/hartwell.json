@@ -1,0 +1,158 @@
+{
+ "_note": "A made-up client for tests. The name, the words, the prices, the people and the addresses are invented; no real shop is described.",
+ "brand": {"name": "Hartwell Tea Merchants", "logo": null, "home": "https://hartwelltea.example/"},
+ "lang": "en",
+ "kind": "shop",
+ "character": "natural, unhurried, careful",
+ "palette": {"note": "invented", "ground": "#faf7f1", "ink": "#2a211b", "accent": "#7b3f2a", "extra": ["#c9a66b", "#e9e1d3", "#1a1310"]},
+ "nav": [
+  {"t": "Black tea", "h": "https://hartwelltea.example/black/"},
+  {"t": "Green tea", "h": "https://hartwelltea.example/green/"},
+  {"t": "Teaware", "h": "https://hartwelltea.example/teaware/"},
+  {"t": "The shop", "h": "https://hartwelltea.example/shop/"},
+  {"t": "Contact", "h": "https://hartwelltea.example/contact/"}
+ ],
+ "signin": {"t": "Account", "h": "https://hartwelltea.example/account/"},
+ "cta": {"t": "Shop tea", "h": "https://hartwelltea.example/all/"},
+ "hero": {
+  "kicker": "Free delivery on orders over £40",
+  "title": "Loose-leaf tea, weighed by hand on Corbel Street",
+  "text": "Forty teas from small gardens, blended and packed in our shop in Wenmouth since 1998.",
+  "text2": "Come in and taste before you buy: there is always a pot on the counter.",
+  "primary": {"t": "Shop tea", "h": "https://hartwelltea.example/all/"},
+  "secondary": {"t": "Visit the shop", "h": "https://hartwelltea.example/shop/"},
+  "note": "Orders before 2 pm leave the same day"
+ },
+ "trust": ["Free delivery over £40", "Packed the day you order", "Tasting in the shop", "Plastic-free tins and pouches"],
+ "figures": [
+  {"v": "1998", "l": "the year the shop opened"},
+  {"v": "40", "l": "teas on the shelves"},
+  {"v": "12", "l": "gardens we buy from directly"}
+ ],
+ "statement": {
+  "title": "A tea shop, not a warehouse",
+  "text": "Every order is weighed and packed at the same counter where we serve the shop, by the same two people."
+ },
+ "steps": {
+  "title": "From the garden to the tin",
+  "text": "",
+  "items": [
+   {"k": "Buying", "title": "We taste every lot", "text": "Samples come from each garden every season; we buy only what we would drink.", "img": "media/hartwell/tasting.jpg"},
+   {"k": "Blending", "title": "Blended in the back room", "text": "Our house blends are mixed by hand in small batches.", "img": "media/hartwell/blending.jpg"},
+   {"k": "Packing", "title": "Weighed to order", "text": "Tins and pouches filled when you order, never before.", "img": "media/hartwell/packing.jpg"}
+  ]
+ },
+ "features": {"title": "", "text": "", "items": []},
+ "catalogue": {
+  "title": "The shelves",
+  "text": "Our most-loved teas and the things to brew them in.",
+  "note": "Prices include VAT. 100 g makes about 40 cups.",
+  "groups": [
+   {"t": "Black tea", "h": "https://hartwelltea.example/black/", "items": [
+     {"name": "Corbel Street Breakfast", "price": "£7.50", "note": "100 g", "text": "Our house blend: malty, strong, good with milk.", "img": "media/hartwell/breakfast.jpg", "h": "https://hartwelltea.example/tea/breakfast/"},
+     {"name": "High Garden Darjeeling", "price": "£11.00", "note": "100 g", "text": "Second flush, light and muscatel.", "img": "media/hartwell/darjeeling.jpg", "h": "https://hartwelltea.example/tea/darjeeling/"},
+     {"name": "Smoked Lapsang", "price": "£8.50", "note": "100 g", "img": "media/hartwell/lapsang.jpg", "h": "https://hartwelltea.example/tea/lapsang/"},
+     {"name": "Earl Grey with cornflower", "price": "£7.90", "note": "100 g", "img": "media/hartwell/earlgrey.jpg", "h": "https://hartwelltea.example/tea/earl-grey/", "state": "Back in May"}
+   ]},
+   {"t": "Green tea", "h": "https://hartwelltea.example/green/", "items": [
+     {"name": "Spring Sencha", "price": "£12.00", "note": "100 g", "img": "media/hartwell/sencha.jpg", "h": "https://hartwelltea.example/tea/sencha/"},
+     {"name": "Jasmine Pearls", "price": "£14.50", "note": "100 g", "img": "media/hartwell/jasmine.jpg", "h": "https://hartwelltea.example/tea/jasmine/"},
+     {"name": "Roasted Hojicha", "price": "£9.00", "note": "100 g", "img": "media/hartwell/hojicha.jpg", "h": "https://hartwelltea.example/tea/hojicha/"}
+   ]},
+   {"t": "Teaware", "h": "https://hartwelltea.example/teaware/", "items": [
+     {"name": "Stoneware teapot", "price": "£34.00", "text": "Holds four cups; made for us by a potter in the next valley.", "img": "media/hartwell/teapot.jpg", "h": "https://hartwelltea.example/ware/teapot/"},
+     {"name": "Steel caddy", "prices": [{"label": "100 g", "price": "£9.00"}, {"label": "250 g", "price": "£12.00"}], "img": "media/hartwell/caddy.jpg", "h": "https://hartwelltea.example/ware/caddy/"},
+     {"name": "Brewing basket", "price": "£6.50", "img": "media/hartwell/basket.jpg", "h": "https://hartwelltea.example/ware/basket/"}
+   ]}
+  ]
+ },
+ "plans": {
+  "title": "The tea post",
+  "text": "A new tea through the letterbox every month.",
+  "note": "Free delivery; skip or stop any month.",
+  "items": [
+   {"name": "One tea", "price": "£9", "per": "a month", "rows": ["50 g of one tea", "Brewing notes"], "cta": {"t": "Start the tea post", "h": "https://hartwelltea.example/post/one/"}},
+   {"name": "Two teas", "price": "£16", "per": "a month", "rows": ["50 g each of two teas", "Brewing notes", "First pick of new lots"], "cta": {"t": "Start the tea post", "h": "https://hartwelltea.example/post/two/"}, "marked": true}
+  ]
+ },
+ "team": {
+  "items": [
+   {"name": "Nell Hartwell", "role": "Owner and taster", "img": "media/hartwell/nell.jpg"},
+   {"name": "Isaac Marr", "role": "Blending and packing", "img": "media/hartwell/isaac.jpg"}
+  ]
+ },
+ "media": {
+  "screens": [],
+  "phones": [],
+  "video": null,
+  "photos": [
+   {"src": "media/hartwell/counter.jpg", "w": 1600, "h": 1600, "alt": "The shop counter with tins stacked to the ceiling", "role": "room"},
+   {"src": "media/hartwell/pour.jpg", "w": 1600, "h": 1800, "alt": "Tea poured from a stoneware pot", "role": "detail"},
+   {"src": "media/hartwell/shelves-wide.jpg", "w": 2400, "h": 1200, "alt": "A wall of numbered tea tins", "role": "room"},
+   {"src": "media/hartwell/shopfront.jpg", "w": 1800, "h": 1200, "alt": "The green shopfront on Corbel Street", "role": "exterior"},
+   {"src": "media/hartwell/tasting.jpg", "w": 1400, "h": 1050, "alt": "Cups of tea lined up for tasting", "role": "work"},
+   {"src": "media/hartwell/blending.jpg", "w": 1400, "h": 1050, "alt": "Leaves mixed by hand in a steel bowl", "role": "workshop"},
+   {"src": "media/hartwell/packing.jpg", "w": 1400, "h": 1050, "alt": "A pouch on the scales", "role": "work"},
+   {"src": "media/hartwell/breakfast.jpg", "w": 900, "h": 1125, "alt": "A tin of Corbel Street Breakfast", "role": "product"},
+   {"src": "media/hartwell/darjeeling.jpg", "w": 900, "h": 1125, "alt": "Darjeeling leaves in a pouch", "role": "product"},
+   {"src": "media/hartwell/lapsang.jpg", "w": 900, "h": 1125, "alt": "Smoked lapsang in a tin", "role": "product"},
+   {"src": "media/hartwell/earlgrey.jpg", "w": 900, "h": 1125, "alt": "Earl Grey with blue cornflowers", "role": "product"},
+   {"src": "media/hartwell/sencha.jpg", "w": 900, "h": 1125, "alt": "Bright green sencha needles", "role": "product"},
+   {"src": "media/hartwell/jasmine.jpg", "w": 900, "h": 1125, "alt": "Rolled jasmine pearls", "role": "product"},
+   {"src": "media/hartwell/hojicha.jpg", "w": 900, "h": 1125, "alt": "Brown roasted hojicha leaves", "role": "product"},
+   {"src": "media/hartwell/teapot.jpg", "w": 900, "h": 1125, "alt": "A grey stoneware teapot", "role": "product"},
+   {"src": "media/hartwell/caddy.jpg", "w": 900, "h": 1125, "alt": "A brushed steel caddy", "role": "product"},
+   {"src": "media/hartwell/basket.jpg", "w": 900, "h": 1125, "alt": "A mesh brewing basket", "role": "product"},
+   {"src": "media/hartwell/nell.jpg", "w": 640, "h": 800, "alt": "Nell Hartwell", "role": "portrait"},
+   {"src": "media/hartwell/isaac.jpg", "w": 640, "h": 800, "alt": "Isaac Marr", "role": "portrait"}
+  ]
+ },
+ "faq": {
+  "title": "Orders and delivery",
+  "items": [
+   {"q": "How fast do you deliver?", "a": "Orders before 2 pm leave the same day; most arrive the next working day."},
+   {"q": "Can I return tea?", "a": "Unopened tins and pouches within 30 days."},
+   {"q": "Do you sell wholesale?", "a": "Yes, to cafés and shops; write to us for the trade list."}
+  ]
+ },
+ "quotes": [
+  {"q": "The breakfast blend is the only tea my father will drink.", "name": "Clare", "role": "customer since 2004"},
+  {"q": "Packed beautifully and here the next morning.", "name": "Dev", "role": "online order"}
+ ],
+ "logos": [],
+ "links": [
+  {"t": "All teas", "d": "", "h": "https://hartwelltea.example/all/"},
+  {"t": "Gift boxes", "d": "", "h": "https://hartwelltea.example/gifts/"},
+  {"t": "Trade", "d": "", "h": "https://hartwelltea.example/trade/"},
+  {"t": "Delivery", "d": "", "h": "https://hartwelltea.example/delivery/"},
+  {"t": "Contact", "d": "", "h": "https://hartwelltea.example/contact/"}
+ ],
+ "close": {
+  "title": "Taste before you choose",
+  "text": "Come to Corbel Street, or order a sample set of five teas.",
+  "cta": {"t": "Order a sample set", "h": "https://hartwelltea.example/samples/"}
+ },
+ "foot": {
+  "text": "Hartwell Tea Merchants · Corbel Street 9 · Wenmouth WM3 1CS · 01632 962 118 · shop@hartwelltea.example",
+  "legal": "© 2026 Hartwell Tea Merchants",
+  "links": [
+   {"t": "Delivery and returns", "h": "https://hartwelltea.example/delivery/"},
+   {"t": "Privacy", "h": "https://hartwelltea.example/privacy/"},
+   {"t": "Terms", "h": "https://hartwelltea.example/terms/"},
+   {"t": "Contact", "h": "https://hartwelltea.example/contact/"}
+  ]
+ },
+ "place": {
+  "address": {"street": "Corbel Street 9", "postcode": "WM3 1CS", "city": "Wenmouth", "region": "Wenmoor"},
+  "phone": {"t": "01632 962 118", "h": "tel:+441632962118", "note": "during shop hours"},
+  "email": "shop@hartwelltea.example",
+  "hours": [
+   {"days": "Tuesday to Saturday", "open": "9:30", "close": "17:30"},
+   {"days": "Sunday", "open": "11:00", "close": "16:00"}
+  ],
+  "since": "1998",
+  "social": [{"t": "Instagram", "h": "https://social.example/hartwelltea"}],
+  "spaces": [],
+  "events": []
+ }
+}
