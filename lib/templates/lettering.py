@@ -21,13 +21,13 @@ def words(path, timeout=20):
     if not exe:
         return None
     try:
-        r = subprocess.run([exe, str(path), 'stdout', '--psm', '11', 'tsv'], capture_output=True, text=True, timeout=timeout)
+        r = subprocess.run([exe, str(path), 'stdout', '--psm', '11', 'tsv'], capture_output=True, timeout=timeout)
     except (OSError, subprocess.SubprocessError):
         return None
     if r.returncode != 0:
-        return None
+        return []                                                   # a file OCR cannot open is read as carrying no words
     out = []
-    for line in r.stdout.splitlines()[1:]:
+    for line in r.stdout.decode('utf-8', 'replace').splitlines()[1:]:
         col = line.split('\t')
         if len(col) < 12:
             continue

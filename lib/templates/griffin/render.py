@@ -308,10 +308,16 @@ def s_faq(d, field, pic=None, over=''):
         pane = ('<div class="pane"><video class="vid" src="%s"%s%s muted loop playsinline preload="metadata" aria-label="%s"></video></div>') % (
             e(m(v['src'])), ' poster="%s"' % e(m(v['poster'])) if v.get('poster') else '',
             ' width="%s" height="%s"' % (e(v['w']), e(v['h'])) if v.get('w') and v.get('h') else '', e(v.get('alt', '')))
+    else:
+        # no film: the product's last screen stands beside the answers (the accordion above opens on the first)
+        screens = [x for x in md.get('screens') or [] if x.get('src')]
+        if screens:
+            pane = '<div class="pane"><div class="scr"><figure class="sc on">%s</figure></div></div>' % img(screens[-1])
     dl = ''.join('<div><dt>%s</dt><dd>%s</dd></div>' % (e(x['q']), e(x.get('a', ''))) for x in items)
     acts = pill(h.get('primary'), '', True) + pill(h.get('secondary'), 'ghost')
-    return '<section class="faq rule"><div class="in two%s<div class="col">%s<dl>%s</dl>%s</div>%s</div></section>' % (
-        _field('pairs-backdrop', field, pic, over, pane),
+    # nothing to stand beside them: the answers run in two columns across the section, not down one half of it
+    return '<section class="faq rule%s"><div class="in two%s<div class="col">%s<dl>%s</dl>%s</div>%s</div></section>' % (
+        '' if pane else ' flow', _field('pairs-backdrop', field, pic, over, pane),
         '<h2 class="h2">%s</h2>' % e(f['title']) if f.get('title') else '', dl, '<div class="acts">%s</div>' % acts if acts else '', pane)
 
 
@@ -429,6 +435,8 @@ h1{font:300 72px/1 var(--serif);letter-spacing:-.02em;font-variation-settings:"o
 .rows{width:100%;margin-top:12px}.rows li{position:relative;display:grid;grid-template-columns:52px 1fr;gap:24px;align-items:center;padding:16px 0;font:400 20px/26px var(--sans)}.rows li+li::before{content:"";position:absolute;top:0;left:76px;right:0;border-top:1px dashed var(--line)}
 .rows i{width:52px;height:52px;display:grid;place-items:center;border:1px solid var(--dim);border-radius:4px;color:var(--soft);font-style:normal}.pl .pill{margin-top:24px}.pnote{margin-top:40px;max-width:44em;color:var(--mute)}
 /* picture row: each picture whole at its own proportion, on the reference's card columns */
+.faq.flow .two{grid-template-columns:1fr}.faq.flow dl{display:block;columns:2;column-gap:56px}.faq.flow dl>div{break-inside:avoid;margin-bottom:24px}
+@media (max-width:900px){.faq.flow dl{columns:1}}
 .cards{display:grid;grid-template-columns:repeat(var(--k),1fr);gap:40px;align-items:start}.cards[style*="--k:4"]{gap:16px}
 .cards.run{display:flex;overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:thin;scrollbar-color:var(--dim) transparent;margin:0 -40px;padding:0 40px 16px}.cards.run li{flex:0 0 calc((100% - (var(--k) - 1)*16px)/var(--k));scroll-snap-align:start}
 .cards li{min-width:0}.cards img{width:100%;border-radius:2px}.ct{font:300 24px/32px var(--sans);margin-top:16px}.by{margin-top:28px;color:var(--mute)}

@@ -182,6 +182,8 @@ def invented(d, seed):
                 walk(x, path)
         elif isinstance(v, str) and v.strip():
             where = '.'.join(path)
+            if where == 'plans.note':                                               # offers that are not cards: each the page's own name and its own price
+                return out.extend((where, p) for p in v.split(' · ') if not (said.says(p.rsplit(' ', 1)[0]) and said.says(p.rsplit(' ', 1)[-1])))
             if where == 'place.social.t' or where == 'place.phone.t' and said.says(re.sub(r'\D', '', v)):
                 return
             if where in ('place.cuisine', 'place.price_range'):                     # the page's structured data, as the reader quotes it
@@ -281,6 +283,15 @@ def test_a_product_gets_its_own_screens_its_price_cards_and_its_large_figures():
     assert st['rows'] == ['Up to 200 receipts a month', 'Export to CSV'] and st['line'] == 'For one stall' and not st.get('marked')
     assert row['rows'] == ['Unlimited receipts', 'Five people'] and row['marked'] is True, 'a row the page does not print is left out'
     assert {'v': '12', 'l': 'hours saved each month'} in d['figures'] and not any(f['v'] == '99' for f in d['figures'])
+    # steps the page numbers itself (1 2 3 beside a heading and a sentence, not sub-headings): read from the capture's cards
+    bare = product()
+    bare['inventory']['copy']['headings'] = [h for h in bare['inventory']['copy']['headings'] if h['text'] not in ('Photograph', 'Sort', 'Close')]
+    run = [{'k': '01', 'title': 'Photograph', 'text': 'Snap each receipt as you get it.'}, {'k': '02', 'title': 'Sort', 'text': 'Tallyfern files it under stock, rent or pay.'},
+           {'k': '03', 'title': 'Close', 'text': 'Read the month on one page and send it to your accountant.'}]
+    assert 'steps' not in A.adapt(copy.deepcopy(bare))
+    bare['cards'] = {'steps': [{'title': 'A heading nobody set', 'items': run[:2] + [{'k': '3', 'title': 'Close', 'text': 'A sentence the page never printed.'}]}, {'title': 'How it works', 'items': run}]}
+    got = A.adapt(copy.deepcopy(bare))
+    assert got['steps']['title'] == 'How it works' and [(i['k'], i['title'], i['text']) for i in got['steps']['items']] == [(x['k'], x['title'], x['text']) for x in run] and invented(got, bare) == []
     # fewer phones than steps: no step gets a picture (all or none), and the gap says so
     seed['product']['phones'] = seed['product']['phones'][:2]
     seed['product']['screens'] = seed['product']['screens'][:2]

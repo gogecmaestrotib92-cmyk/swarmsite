@@ -108,7 +108,7 @@ export async function runTemplateJob(deps) {
   });
   const tdir = path.join(dir, 'templates'); const base = deps.publicBase(`${job.id}/t/`);
   const built = await step('choose', async () => {
-    const r = lastJson(await run('python3', ['lib/templates/job.py', 'build', dir, '--out', tdir, '--base', base, ...extra], { timeoutMs: 300000 }));
+    const r = lastJson(await run('python3', ['lib/templates/job.py', 'build', dir, '--out', tdir, '--base', base, ...extra], { timeoutMs: 600000 }));
     if (!r || !Array.isArray(r.chosen) || !Array.isArray(r.shown)) throw new Error('templates build did not report');
     // in the visitor's words: a design by its number among those shown, never by the template it was made with
     const shownNo = r.shown.filter(s => SLUG.test(s));

@@ -39,7 +39,7 @@ def test_a_job_folder_becomes_gated_variants_with_their_media(tmp_path, monkeypa
     out = tmp_path / 'templates'
     r = JOB.build(capture(tmp_path), out, base='https://store.example/j/t/')
     assert 'griffin' in r['shown'] and len(r['shown']) <= 3 and [c['slug'] for c in r['chosen']] == r['shown'] and seen == [[s + '.html' for s in r['shown']]] * len(r['shown'])  # one gate call for all, logged once a page
-    assert r['niche'][0] == 'software' and any(x['slug'] == 'maze' for x in r['rejected']) and r['media'] == {'written': 2, 'missing': [], 'library': 0}
+    assert r['niche'][0] == 'software' and any(x['slug'] == 'maze' for x in r['rejected']) and r['media'] == {'written': 3, 'missing': [], 'library': 0}   # the logo, the photograph, and the framed part of the page that stands as a screen
     assert set(r['timings_ms']) == {'adapt', 'media', 'select', 'render', 'gate'}
     data = json.loads((out / 'data.json').read_text())
     assert data['brand']['name'] == 'Tallyfern' and not any(k.startswith('_') for k in data)

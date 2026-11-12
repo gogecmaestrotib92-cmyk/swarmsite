@@ -1,7 +1,7 @@
 """job.py — the template path of a job, after capture and the reader: adapt → select → render three → gate; and,
 for a variant the visitor may download, the package.
 
-    python3 lib/templates/job.py build <job dir> --out <dir> [--base URL] [--limit 3] [--spare 3] [--library DIR]
+    python3 lib/templates/job.py build <job dir> --out <dir> [--base URL] [--limit 3] [--spare 6] [--library DIR]
         --spare     how many more fitting templates may stand in for designs the gate refuses (tried in order, a few at a time)
         --library   a folder holding media/library (else $SWARMSITE_LIBRARY, else the repo's); none → no made pictures
         --form F --photos DIR   a site from nothing: the visitor's form (JSON, lib/templates/form.py) and their uploads,
@@ -119,7 +119,7 @@ def from_form(form, photos, out):
     return d, notes, written, missing
 
 
-def build(job_dir, out, base='', limit=3, gate_kw=None, library=None, form=None, photos=None, spare=3):
+def build(job_dir, out, base='', limit=3, gate_kw=None, library=None, form=None, photos=None, spare=6):
     """job_dir: a capture with the reader's factsheet — or, with `form`, the visitor's form (a dict) and `photos`, the
     folder of their uploads: the same data, the same choice, the same gate"""
     A, R, S, G = _mod('adapt'), _mod('registry'), _mod('select'), _mod('gate')
@@ -224,7 +224,7 @@ if __name__ == '__main__':
     opt = lambda k, dflt=None: a[a.index(k) + 1] if k in a else dflt
     if a[:1] == ['build'] and len(a) >= 2:
         form = json.loads(Path(opt('--form')).read_text(encoding='utf-8')) if opt('--form') else None
-        print(json.dumps(build(a[1], opt('--out') or str(Path(a[1]) / 'templates'), opt('--base', ''), int(opt('--limit', 3)), library=opt('--library'), spare=int(opt('--spare', 3)),
+        print(json.dumps(build(a[1], opt('--out') or str(Path(a[1]) / 'templates'), opt('--base', ''), int(opt('--limit', 3)), library=opt('--library'), spare=int(opt('--spare', 6)),
                                form=form, photos=opt('--photos')), ensure_ascii=False))
     elif a[:1] == ['package'] and len(a) >= 4:
         r = package(a[1], a[2], a[3], verify='--verify' in a)

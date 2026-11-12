@@ -29,7 +29,9 @@ HERE = Path(__file__).resolve().parent
 # ───────────────────────── words the rules look for (labels a site puts on the same thing in several languages)
 SIGNIN_RX = re.compile(r'^(?:log ?in|sign ?in|login|iniciar sesi[oó]n|acceder|entrar|anmelden|connexion|se connecter|accedi|prijava|prijavi se|my account|mi cuenta)$', re.I)
 SIGNUP_RX = re.compile(r'(?:^|[/.?=_-])(?:register|sign[-_]?up|signup|join|get[-_]?started|start|trial|create[-_]?account)(?:$|[/.?=&_-])', re.I)
-READY_RX = re.compile(r'^(?:ready to|start|get started|begin|try|create your|join)\b', re.I)
+FEATURES_RX = re.compile(r'\b(?:features?|includes?|included|everything|what you get|toolkit|capabilit\w+|funciones|caracter[ií]sticas|incluye|funktionen|fonctionnalit\w+)\b', re.I)
+PERIOD_RX =re.compile(r'month|year|week|/\s?(?:mo|yr|wk)\b|mes\b|año|monat|jahr|mois|\ban\b|mjesec|mesec|godi', re.I)
+READY_RX =re.compile(r'^(?:ready to|start|get started|begin|try|create your|join)\b', re.I)
 CTA_RX = re.compile(r'\b(?:start|get|try|sign ?up|register|create|book|reserv\w*|run|demo|buy|download|join|subscribe|order|empez\w*|prueba|crear|comenzar|pedir|see tonight|scan)\b', re.I)
 LEGAL_RX = re.compile(r'\b(?:terms|privacy|legal|cookies?|imprint|impressum|datenschutz|aviso legal|pol[ií]tica|condiciones|mentions l[ée]gales|uslovi|privatnost)\b', re.I)
 SKIP_RX = re.compile(r'^(?:skip to|ir al contenido|saltar al|zum inhalt|aller au contenu)', re.I)
@@ -589,6 +591,8 @@ def _pictures(images, d, media, gaps, is_place, product=None, rules=None):
             continue
         if im.get('plain'):                                          # the capture's own reading: a notice, a diagram, a blank page — not a photograph
             continue
+        if max(w, h) <= 600 and abs(w - h) <= .08 * max(w, h) and isinstance(im.get('flat'), (int, float)) and im['flat'] >= .7:
+            continue                                                 # small, square and mostly two flat tones: a crest, a badge, an app icon — a mark, not a photograph
         stem = _stem(im.get('src') or im.get('id'))
         pic = {'src': 'media/%s.%s' % (slug(im.get('id')) or 'img', _ext(im['data'])), 'w': w, 'h': h, 'alt': norm(im.get('alt'))[:200]}
         if max(w, h) < 1000:
@@ -673,9 +677,19 @@ def _step_pictures(d, rules, gaps):
     md = d.get('media') or {}
     phones, screens = [x for x in md.get('phones') or [] if x.get('page')], [x for x in md.get('screens') or [] if x.get('page')]
     pool = [(x, 'phone') for x in phones] if len(phones) >= len(items) else [(x, 'screen') for x in screens]
+    if items and len(pool) < len(items):
+        # no page of the product to show beside each step: the client's own pictures stand there, in the page's order —
+        # what the product makes (a cover, a page) as a book, an upright picture as a portrait
+        own = [x for x in md.get('photos') or [] if x.get('src') and not x.get('small')] or [x for x in md.get('photos') or [] if x.get('src')]
+        if len(own) >= len(items):
+            shape = lambda x: ('book' if re.search(r'\b(?:cover|e?book|libro|buch|livre)\b', x.get('alt') or '', re.I) else 'portrait') if (x.get('h') or 0) > (x.get('w') or 0) else 'photo'
+            for it, x in zip(items, own):
+                it['img'], it['shape'] = x['src'], shape(x)
+            rules.append('steps.items[].img: the product\'s own pages gave no screen for each step; the client\'s own pictures stand beside the steps in the page\'s order')
+            return
     if not items or len(pool) < len(items):
         if items:
-            gaps.append('steps.items[].img: not set — the product\'s own pages gave %d screen(s) for %d step(s); a step is shown with its page\'s screen or not at all' % (len(pool), len(items)))
+            gaps.append('steps.items[].img: not set — the product\'s own pages gave %d screen(s) and the page %d picture(s) for %d step(s); a step is shown with a picture or not at all' % (len(pool), len(md.get('photos') or []), len(items)))
         return
     used, by_link = set(), 0
     for it in items:
@@ -914,7 +928,19 @@ def adapt(seed):
                 left = [it['name'] for it in plans if not it.get('rows')]
                 plans = [it for it in plans if it.get('rows')]
                 rules.append('plans.items: the plans the page sets as cards (%d); offers it only names in passing (%s) are not cards and are left out' % (carded, ', '.join(left)[:120]))
+            # a row of price cards holds three: with more, the plans paid by the period stand as cards when there are two or
+            # three of them (else the first three in the page's order), and every other offer is named with its price in the note
+            aside = []
+            if len(plans) > 3:
+                timed = [it for it in plans if PERIOD_RX.search(it.get('per') or '')]
+                keep = timed if 2 <= len(timed) <= 3 else plans[:3]
+                aside = [it for it in plans if not any(it is k for k in keep)]
+                plans = keep
+                rules.append('plans.items: the page prints %d offers; %s stand as cards, the others (%s) are named with their price in plans.note' % (
+                    len(keep) + len(aside), 'those paid by the period' if keep is timed else 'the first three in its order', ', '.join(it['name'] for it in aside)[:120]))
             d['plans'] = {'title': corpus.recase(psec['title']), 'text': _body(psec, amounts), 'items': plans}
+            if aside:
+                d['plans']['note'] = ' · '.join('%s %s' % (it['name'], it['price']) for it in aside)
             if carded:
                 rules.append('plans.items[].rows, .line, .marked: read from the page\'s own price cards (capture cards.json): each card\'s list, its first short paragraph, and the one card set on a ground of its own')
             else:
@@ -941,6 +967,9 @@ def adapt(seed):
         if len(cards) >= 3:
             d['links'] = cards
             rules.append('links: headings of the page that are links themselves, each with the link\'s own label')
+    if len(d.get("links") or []) > 6:                                # a row of link cards holds six; a longer run is the page's index, and the first six stand for it
+        rules.append("links: the page has %d such cards; the first six in its order are kept" % len(d["links"]))
+        d["links"] = d["links"][:6]
     if 'links' not in d:
         d['links'] = []
         gaps.append('links: none — no section of the page is a row of headed cards that each lead to a page')
@@ -954,8 +983,20 @@ def adapt(seed):
             d['steps'] = {'title': corpus.recase(st['title']), 'text': _body(st), 'items': items}
             rules.append('steps: the first section with two to five sub-headings, each over its own sentence, whose heading speaks of how / steps / ways, else the first with three or four')
     if 'steps' not in d:
-        gaps.append('steps: none — no section of the page is a short run of sub-headed parts')
-    for f in sorted([s for s in free() if len(s['kids']) >= 3], key=lambda s: -len(s['kids'])):
+        # the page numbers its steps itself (1, 2, 3 beside a heading and a sentence each — capture cards.json): taken as numbered
+        for run in (seed.get('cards') or {}).get('steps') or []:
+            items = [{'k': norm(x.get('k')), 'title': norm(x.get('title')), 'text': lead(norm(x.get('text')), 260)} for x in run.get('items') or []]
+            if 3 <= len(items) <= 6 and all(i['title'] and i['text'] and corpus.says(i['title']) and corpus.says(i['text'].rstrip('.…')) for i in items):
+                for i in items:
+                    i['title'] = corpus.recase(i['title'])
+                title = norm(run.get('title'))
+                d['steps'] = {'title': corpus.recase(title) if title and corpus.says(title) else '', 'text': '', 'items': items}
+                rules.append('steps: a run the page numbers itself (%s … %s), each number beside its own heading and sentence, under the last heading before it' % (items[0]['k'], items[-1]['k']))
+                break
+    if 'steps' not in d:
+        gaps.append('steps: none — no section of the page is a short run of sub-headed parts, and it numbers no run of steps')
+    # features: a section that says it lists what the product holds comes before the one that merely has the most parts
+    for f in sorted([s for s in free() if len(s['kids']) >= 3], key=lambda s: (0 if FEATURES_RX.search(s['title']) else 1, -len(s['kids']))):
         items = [{'t': i['title'], 'd': i['text']} for i in _items(f, corpus, 220)]
         if len(items) >= 3 and sum(1 for i in items if i['d']) * 3 >= len(items) * 2:
             f['used'] = 'features'
