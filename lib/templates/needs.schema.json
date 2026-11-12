@@ -2,42 +2,233 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "swarmsite/templates/needs",
   "title": "What a template needs from a client — the strict form",
-  "description": "One needs.json per template. Only these keys, only these words. `niche` names the businesses the template is for, in the words of the data's `kind`. `needs` names what the client's data must hold for the template to be offered; `drops` names what the template does not show even when the client has it. Both take names from one fixed list: a block of the data (steps, plans, team …) or a named part of one (hero.text2, steps.img = every step has its picture). Everything that is a remark, a measurement or a condition these keys cannot say goes into `notes`, which no program reads. scripts/normalise_needs.py turns a free-worded needs.json into this form and lists what it could not carry over.",
+  "description": "One needs.json per template. Only these keys, only these words. `niche` names the businesses the template is for, in the words of the data's `kind`. `needs` names what the client's data must hold for the template to be offered; `drops` names what the template does not show even when the client has it. Both take names from one fixed list: a block of the data (steps, plans, team …) or a named part of one (hero.text2, steps.img = every step has its picture). `needs_any` says \"one of\", `min` and `max` say how many. Everything that is a remark, a measurement or a condition these keys cannot say goes into `notes`, which no program reads. scripts/normalise_needs.py turns a free-worded needs.json into this form and lists what it could not carry over.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["niche", "photos_min", "photos_large_min", "screens_min", "phones_ok", "needs", "holds_without_pictures", "motif"],
+  "required": [
+    "niche",
+    "photos_min",
+    "photos_large_min",
+    "screens_min",
+    "phones_ok",
+    "needs",
+    "holds_without_pictures",
+    "motif"
+  ],
   "definitions": {
     "name": {
       "enum": [
-        "brand", "brand.name", "brand.logo", "nav", "signin", "cta",
-        "hero", "hero.title", "hero.kicker", "hero.text", "hero.text2", "hero.note", "hero.secondary",
-        "trust", "figures", "figures.l", "statement", "statement.title", "statement.text",
-        "steps", "steps.text", "steps.k", "steps.img", "steps.cta",
-        "features", "features.text", "features.d",
-        "plans", "plans.rows", "plans.note", "faq", "quotes", "logos",
-        "links", "links.d", "close", "close.title", "close.text", "foot", "foot.text",
-        "screens", "phones", "photos", "video",
-        "made.land", "made.blur", "made.sky", "made.sheet", "made.field",
-        "place", "address", "phone", "email", "hours", "booking", "since", "cuisine", "price_range", "takeaway", "social",
-        "menu", "menu.items", "spaces", "spaces.img", "events", "notices",
-        "team", "team.img", "catalogue", "catalogue.img", "locations", "credentials", "contact", "projects"
+        "brand",
+        "brand.name",
+        "brand.logo",
+        "nav",
+        "signin",
+        "cta",
+        "hero",
+        "hero.title",
+        "hero.kicker",
+        "hero.text",
+        "hero.text2",
+        "hero.note",
+        "hero.secondary",
+        "trust",
+        "figures",
+        "figures.l",
+        "statement",
+        "statement.title",
+        "statement.text",
+        "steps",
+        "steps.text",
+        "steps.k",
+        "steps.img",
+        "steps.cta",
+        "features",
+        "features.text",
+        "features.d",
+        "plans",
+        "plans.rows",
+        "plans.note",
+        "faq",
+        "quotes",
+        "logos",
+        "links",
+        "links.d",
+        "close",
+        "close.title",
+        "close.text",
+        "foot",
+        "foot.text",
+        "screens",
+        "phones",
+        "photos",
+        "video",
+        "made.land",
+        "made.blur",
+        "made.sky",
+        "made.sheet",
+        "made.field",
+        "place",
+        "address",
+        "phone",
+        "email",
+        "hours",
+        "booking",
+        "since",
+        "cuisine",
+        "price_range",
+        "takeaway",
+        "social",
+        "menu",
+        "menu.items",
+        "spaces",
+        "spaces.img",
+        "events",
+        "notices",
+        "team",
+        "team.img",
+        "catalogue",
+        "catalogue.img",
+        "locations",
+        "credentials",
+        "contact",
+        "projects"
       ]
+    },
+    "counted": {
+      "enum": [
+        "steps",
+        "steps.img",
+        "features",
+        "plans",
+        "faq",
+        "figures",
+        "links",
+        "trust",
+        "quotes",
+        "logos",
+        "screens",
+        "phones",
+        "photos",
+        "photos.large",
+        "pictures",
+        "upright",
+        "spaces",
+        "menu",
+        "team",
+        "catalogue",
+        "projects",
+        "locations",
+        "credentials"
+      ],
+      "description": "what can be counted: the items of a block; steps.img = steps that carry a picture; photos.large = photographs at least 1400 px wide; pictures = screens + phones + photographs; upright = of those, the ones taller than wide; menu = its sections; catalogue = its items in all groups"
     }
   },
   "properties": {
     "niche": {
       "type": "array",
       "minItems": 1,
-      "items": {"enum": ["software", "app", "restaurant", "hotel", "clinic", "law", "service", "shop", "school", "person", "corporate", "nonprofit"]}
+      "items": {
+        "enum": [
+          "software",
+          "app",
+          "restaurant",
+          "hotel",
+          "clinic",
+          "law",
+          "service",
+          "shop",
+          "school",
+          "person",
+          "corporate",
+          "nonprofit",
+          "venue"
+        ]
+      },
+      "description": "every kind of business the template is for (several are usual). A template is offered only to a client whose kind is in this list: one for restaurants is not offered to a hotel unless it lists hotel. `venue` is a place with a door that is neither restaurant nor hotel."
     },
-    "photos_min": {"type": "integer", "minimum": 0, "description": "photographs in media.photos"},
-    "photos_large_min": {"type": "integer", "minimum": 0, "description": "of them at least 1600 px wide"},
-    "screens_min": {"type": "integer", "minimum": 0, "description": "product screens in media.screens (and media.phones when phones_ok)"},
-    "phones_ok": {"type": "boolean"},
-    "needs": {"type": "array", "items": {"$ref": "#/definitions/name"}},
-    "drops": {"type": "array", "items": {"$ref": "#/definitions/name"}},
-    "holds_without_pictures": {"type": "boolean"},
-    "motif": {"enum": ["land", "sky", "sheet", "blur", "field", "photos", "none"], "description": "the one picture family of the page: a kind of made picture, the client's own photographs, or none"},
-    "notes": {"type": "array", "items": {"type": "string"}}
+    "photos_min": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "photographs in media.photos"
+    },
+    "photos_large_min": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "of them at least 1400 px wide"
+    },
+    "screens_min": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "product screens in media.screens (and media.phones when phones_ok)"
+    },
+    "phones_ok": {
+      "type": "boolean"
+    },
+    "needs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/name"
+      }
+    },
+    "needs_any": {
+      "type": "array",
+      "description": "one of: each inner list is met when the data holds at least one of its names (\"menu or spaces\")",
+      "items": {
+        "type": "array",
+        "minItems": 2,
+        "items": {
+          "$ref": "#/definitions/name"
+        }
+      }
+    },
+    "min": {
+      "type": "object",
+      "description": "at least n: {\"steps\": 3, \"pictures\": 8}",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 1
+      },
+      "propertyNames": {
+        "$ref": "#/definitions/counted"
+      }
+    },
+    "max": {
+      "type": "object",
+      "description": "at most n: {\"steps\": 8}",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 1
+      },
+      "propertyNames": {
+        "$ref": "#/definitions/counted"
+      }
+    },
+    "drops": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/name"
+      }
+    },
+    "holds_without_pictures": {
+      "type": "boolean"
+    },
+    "motif": {
+      "enum": [
+        "land",
+        "sky",
+        "sheet",
+        "blur",
+        "field",
+        "photos",
+        "none"
+      ],
+      "description": "the one picture family of the page: a kind of made picture, the client's own photographs, or none"
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
   }
 }

@@ -5,7 +5,8 @@ The needs.json files beside the templates were written by many hands in free wor
 signs up to", "steps (2-8 items with a picture each)", "menu or spaces"). lib/templates/needs.schema.json is the
 strict form: fixed keys, niches from one list, needs and drops from one list of names. This reads a free file and
 writes the strict one — and lists, for each file, what it could NOT carry over, because the strict form has no way to
-say it (an "either/or", a count of items, a picture of a given size) or because the words are not known. Nothing is
+say it (a condition, a size it has no word for) or because the words are not known. An "either/or" becomes `needs_any`,
+a count becomes `min` / `max`, a number of photographs at least 1400 px wide becomes `photos_large_min`. Nothing is
 guessed into a need: what cannot be mapped goes into `notes`, word for word, and into the list.
 
     normalise(free: dict) -> (strict: dict, lost: [str])
@@ -29,6 +30,7 @@ NICHE_WORDS = (
     ('software', r'software|saas|platform|\bapi\b|\btools?\b|fintech|analytics|desktop|web product|\bai\b'),
     ('restaurant', r'restaurant|\bbar\b|caf[eé]|bakery|bistro|food|drink|wine'),
     ('hotel', r'hotel|guest ?house|b&b|lodge|hostel|rooms'),
+    ('venue', r'venue|a place with a door'),
     ('clinic', r'clinic|dentist|doctor|medical|health practice'),
     ('law', r'\blaw\b|lawyer|solicitor|legal'),
     ('service', r'service|agency|practice|\bfirm\b|studio|joiner|builder|craft'),
@@ -84,36 +86,83 @@ def _outside(text, sep):
     return [p for p in parts + [text[start:].strip()] if p]
 
 
+COUNTED = SCHEMA['definitions']['counted']['enum']
+NUM = {'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6}
+
+
+def _bounds(words):
+    """(at least, at most) said in the words after a name: "(3 or more …)", "(2-8 items …)", "(3 or 4, each …)", "(3+ items …)",
+    "(at least 4: …)", "(3, each with …)"; (None, None) when no number is said"""
+    w = words.lower()
+    m = re.search(r'(\d+)\s*[-–]\s*(\d+)', w) or re.search(r'\b(\d+) or (\d+)\b', w)
+    if m:
+        return int(m.group(1)), int(m.group(2))
+    m = re.search(r'(\d+)\s*\+|(\d+) or more|at least (\d+)|\((\d+)[,)]', w)
+    if m:
+        return int(next(g for g in m.groups() if g)), None
+    return None, None
+
+
 def need_of(entry):
-    """(names, lost) for one free entry of `needs`: the fixed names it certainly asks for, and what of it the strict
-    form cannot say"""
+    """What one free entry of `needs` asks for, in the strict form:
+    {'names': [...], 'any': [[...]], 'min': {...}, 'max': {...}, 'large': n, 'lost': [...]}"""
     text = str(entry or '').strip()
-    lost = []
+    out = {'names': [], 'any': [], 'min': {}, 'max': {}, 'large': 0, 'lost': []}
     if not text:
-        return [], []
-    if re.match(r'^(?:\d+|one|two|three|at least \d+)\b', text, re.I) or not re.match(r'^[`a-z_]', text):
-        return [], ['a count or size of pictures the strict keys cannot say: %r' % text]
-    ways = _outside(text, r'\s+or\s+|/(?=[a-z])')
-    if len(ways) > 1:
-        got = {tuple(need_of(w)[0]) for w in ways}
-        return [], ['either/or — the strict form has no way to say "one of": %r' % text]
-    names = []
+        return out
+    m = re.match(r'^(?:at least )?(\d+|one|two|three|four|five|six)\b(?: or more)?\s+(.*)$', text, re.I)
+    if m:                                                            # a count of pictures
+        n, what = NUM.get(m.group(1).lower()) or int(m.group(1)), m.group(2).lower()
+        wide = re.search(r'at least (\d{3,4})\s*(?:px|x)', what)
+        if re.match(r'^upright\b', what):
+            out['min']['upright'] = n
+        elif re.match(r'^(?:product )?pictures?\b', what) and 'in all' in what:
+            out['min']['pictures'] = n
+        elif re.match(r'^(?:landscape |wide )?photographs?\b', what) and wide and int(wide.group(1)) >= 1400:
+            out['large'] = n
+            if int(wide.group(1)) > 1400:
+                out['lost'].append('a width above 1400 px (%s) — kept as a large photograph, at least 1400: %r' % (wide.group(1), text))
+        else:
+            out['lost'].append('a count or size of pictures the strict keys cannot say: %r' % text)
+        return out
+    if not re.match(r'^[`a-z_]', text):
+        out['lost'].append('not a name of the fixed list: %r' % text)
+        return out
+    ways = _outside(text, r'\s+or\s+')
+    if len(ways) > 1:                                                # one of: every way must be one plain name
+        group = []
+        for w in ways:
+            sub = need_of(w)
+            if len(sub['names']) != 1 or sub['any'] or sub['min'] or sub['max'] or sub['lost']:
+                out['lost'].append('an either/or whose ways are not each one plain name: %r' % text)
+                return out
+            group.append(sub['names'][0])
+        out['any'].append(group)
+        return out
     for part in _outside(text, r'\s+and\s+|,\s+and\s+'):
         m = re.match(r'^`?([a-z_]+(?:\[\d*\])?(?:\.[a-z_0-9]+(?:\[\d*\])?)*)`?\s*(.*)$', part)
         nm = name_of(m.group(1)) if m else None
         if not nm:
-            return [], ['not a name of the fixed list: %r' % text]
+            return {**out, 'names': [], 'lost': ['not a name of the fixed list: %r' % text]}
         rest = m.group(2).strip()
-        names.append(nm)
-        if re.search(r'picture|\bimg\b|portrait', rest) and re.search(r'each|own|with a picture|with img|with portraits', rest) and nm in ('steps', 'spaces', 'team', 'catalogue'):
-            names.append(nm + '.img')
+        out['names'].append(nm)
+        pictured = re.search(r'picture|\bimg\b|portrait', rest) and re.search(r'each|own|with a picture|with img|with portraits', rest) and nm in ('steps', 'spaces', 'team', 'catalogue')
+        if pictured:
+            out['names'].append(nm + '.img')
         if re.search(r'\bwith k\b', rest) and nm == 'steps':
-            names.append('steps.k')
-        if re.search(r'\d+\s*[-–+]|\d+ or more|at least \d+|\(\d+[,)]|\b\d+ or \d+\b', rest):
-            lost.append('a count of items the strict keys cannot say: %r' % part)
-        elif rest and not rest.startswith(('(', '—', '-', ':')) and not re.search(r'picture|img|portrait|with k', rest):
-            lost.append('a condition in free words: %r' % part)
-    return list(dict.fromkeys(names)), lost
+            out['names'].append('steps.k')
+        lo, hi = _bounds(rest)
+        counted = 'steps' if nm == 'steps.img' else nm
+        if lo is not None and counted in COUNTED:
+            out['min'][counted] = lo
+            if hi is not None:
+                out['max'][counted] = hi
+        elif lo is not None:
+            out['lost'].append('a count of something the strict form does not count: %r' % part)
+        elif rest and not rest.startswith(('(', '—', '-', ':')) and not pictured and not re.search(r'with k', rest):
+            out['lost'].append('a condition in free words: %r' % part)
+    out['names'] = list(dict.fromkeys(out['names']))
+    return out
 
 
 def normalise(free):
@@ -133,17 +182,29 @@ def normalise(free):
         if k in free and out[k] != v:
             lost.append('%s is not a count: %r' % (k, v))
     out['phones_ok'] = bool(free.get('phones_ok'))
-    needs = []
+    needs, any_of, at_least, at_most = [], [], {}, {}
     for e in free.get('needs') or []:
-        names, gone = need_of(e)
-        needs += names
-        lost += ['needs: ' + g for g in gone]
-        if gone:
+        got = need_of(e)
+        needs += got['names']
+        any_of += [g for g in got['any'] if g not in any_of]
+        for k, v in got['min'].items():
+            at_least[k] = max(at_least.get(k, 0), v)
+        for k, v in got['max'].items():
+            at_most[k] = min(at_most.get(k, v), v)
+        out['photos_large_min'] = max(out['photos_large_min'], got['large'])
+        lost += ['needs: ' + g for g in got['lost']]
+        if got['lost']:
             notes.append('needs (as written): %s' % e)
-    if isinstance(free.get('step_pictures_min'), int) and free['step_pictures_min'] > 0:
-        needs += ['steps', 'steps.img']
-        lost.append('needs: step_pictures_min %d — kept as steps.img, the count is lost' % free['step_pictures_min'])
+    if isinstance(free.get('step_pictures_min'), int) and free['step_pictures_min'] > 0:   # a stray key of one file: steps that carry a picture
+        at_least['steps.img'] = max(at_least.get('steps.img', 0), free['step_pictures_min'])
     out['needs'] = list(dict.fromkeys(needs))
+    if any_of:
+        out['needs_any'] = any_of
+    if at_least:
+        out['min'] = at_least
+    if at_most:
+        out['max'] = at_most
+    out['photos_min'] = max(out['photos_min'], out['photos_large_min'])
     drops = []
     raw = free.get('drops')
     for e in (raw if isinstance(raw, list) else [raw] if raw else []):
@@ -169,11 +230,11 @@ def normalise(free):
     out['motif'] = motif
     v = free.get('notes')
     notes = ([str(x) for x in v] if isinstance(v, list) else [str(v)] if v else []) + notes
-    extra = [k for k in free if k not in KEYS and k != 'step_pictures_min']
+    extra = [k for k in free if k not in KEYS]
     for k in extra:                                                  # measurements and remarks under other keys: kept, as notes
         x = free[k]
         notes.append('%s: %s' % (k, x if isinstance(x, str) else json.dumps(x, ensure_ascii=False)))
-    counting = [k for k in extra if k.endswith('_min')]
+    counting = [k for k in extra if k.endswith('_min') and k != 'step_pictures_min']
     lost += ['a count the strict keys do not have: %s = %r' % (k, free[k]) for k in counting]
     if notes:
         out['notes'] = notes
@@ -199,9 +260,23 @@ def validate(strict):
                 bad.append('%s: not a list' % k)
                 continue
             allowed = NICHES if k == 'niche' else NAMES if k in ('needs', 'drops') else None
+            if k == 'needs_any':
+                continue
             bad += ['%s: %r is not one of the fixed words' % (k, x) for x in v if (allowed is not None and x not in allowed) or (allowed is None and not isinstance(x, str))]
             if len(v) < s.get('minItems', 0):
                 bad.append('%s: empty' % k)
+    for g in strict.get('needs_any') or [] if isinstance(strict.get('needs_any'), list) else []:
+        if not isinstance(g, list) or len(g) < 2 or any(x not in NAMES for x in g):
+            bad.append('needs_any: %r is not two or more of the fixed words' % (g,))
+    for k in ('min', 'max'):
+        v = strict.get(k)
+        if v is None:
+            continue
+        if not isinstance(v, dict):
+            bad.append('%s: not a table of counts' % k)
+            continue
+        bad += ['%s: %r cannot be counted' % (k, n) for n in v if n not in COUNTED]
+        bad += ['%s: %s is not a count' % (k, n) for n, x in v.items() if not (isinstance(x, int) and not isinstance(x, bool) and x >= 1)]
     return bad
 
 

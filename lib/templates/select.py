@@ -21,7 +21,10 @@ reason, rather than being waved through):
   niche: [..]                    one of the fixed words of needs.schema.json (software, app, restaurant, hotel, clinic,
                                  law, service, shop, school, person, corporate, nonprofit) — then exactly that — or
                                  free words, read by the telling words in NICHES below
-  photos_min, photos_large_min   photographs in media.photos; large = at least 1600 px wide
+  photos_min, photos_large_min   photographs in media.photos; large = at least 1400 px wide
+  needs_any: [[a, b], …]         one of: each inner list is met by any one of its names
+  min / max: {name: n}           how many: steps, steps.img, features, plans, faq, figures, links, photos, photos.large,
+                                 screens, phones, pictures (all three), upright, spaces, menu, team, catalogue, projects …
   screens_min, phones_ok         product screens in media.screens (+ media.phones when phones_ok)
   step_pictures_min              steps.items that carry a picture
   holds_without_pictures, motif, approach (optional: names the approach outright)
@@ -40,7 +43,7 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-LARGE = 1600
+LARGE = 1400                                                    # a large photograph: at least this wide (owner, 2026-11-12)
 
 if __name__ == 'select':
     # Reached by the bare name: lib/render/render_bp.py puts lib/templates first on sys.path (for recipes.py), and from
@@ -80,7 +83,7 @@ SOFTWARE = ('app', 'saas', 'software')
 PLACE_KINDS = {'restaurant', 'cafe', 'bar', 'hotel', 'venue', 'place'}
 # the fixed words of lib/templates/needs.schema.json (and of the data's `kind`): a niche written as one of them is
 # that niche and nothing else — a template for restaurants is not offered to a hotel
-FIXED = ('software', 'app', 'restaurant', 'hotel', 'clinic', 'law', 'service', 'shop', 'school', 'person', 'corporate', 'nonprofit')
+FIXED = ('software', 'app', 'restaurant', 'hotel', 'clinic', 'law', 'service', 'shop', 'school', 'person', 'corporate', 'nonprofit', 'venue')
 
 
 def niche_tags(words):
@@ -108,8 +111,8 @@ def client(d):
     kind = str(d.get('kind') or '').lower()
     if kind in ('restaurant', 'cafe', 'bar'):
         niche = ['restaurant', 'place']
-    elif kind == 'hotel':
-        niche = ['hotel', 'place']
+    elif kind in ('hotel', 'venue'):
+        niche = [kind, 'place']
     elif kind in ('software', 'app') or (kind not in FIXED and set(niche_tags(kind)) & set(SOFTWARE)):
         niche = ['app', 'software', 'saas'] if p['phones'] else ['software', 'saas', 'app']
     elif kind in FIXED:                                               # clinic, law, service, shop, school, person, corporate, nonprofit
@@ -256,6 +259,35 @@ def approach(n):
     return '%s · %s' % (n.get('motif') or 'no motif', lead)
 
 
+def count(name, d, pics):
+    """how many of a countable thing the data holds; None for a name that cannot be counted"""
+    name = str(name)
+    every = pics['screens'] + pics['phones'] + pics['photos']
+    if name == 'pictures':
+        return len(every)
+    if name == 'upright':
+        return len([x for x in every if _n(x.get('w')) and _n(x.get('h')) > _n(x.get('w'))])
+    if name == 'photos.large':
+        return len([x for x in pics['photos'] if _n(x.get('w')) >= LARGE])
+    if name in ('screens', 'phones', 'photos'):
+        return len(pics[name])
+    if name == 'steps.img':
+        return len([v for v in _get(d, 'steps.items[].img') if v])
+    if name == 'menu':
+        return len([v for v in _get(d, 'place.menu.sections[]') if v])
+    if name == 'catalogue':
+        return len([v for v in _get(d, 'catalogue.groups[].items[]') if v])
+    if name == 'team':
+        return len([v for v in _get(d, 'team.items[]') + _get(d, 'team.groups[].items[]') if v])
+    if name in ('steps', 'features', 'plans', 'faq'):
+        return len([v for v in _get(d, name + '.items[]') if v])
+    if name == 'spaces':
+        return len([v for v in _get(d, 'place.spaces[]') if v])
+    if name in ('figures', 'links', 'trust', 'quotes', 'logos', 'projects', 'locations', 'credentials'):
+        return len([v for v in _get(d, name + '[]') if v])
+    return None
+
+
 def fits(n, c, d, promised=()):
     """(reasons it cannot be offered, pending, needs met) for one template's needs against one client"""
     why, pending, met = [], [], 0
@@ -288,6 +320,30 @@ def fits(n, c, d, promised=()):
             met += 1
             if pend:
                 pending.append(str(need))
+    for group in n.get('needs_any') or []:                           # one of
+        if not isinstance(group, list) or not group:
+            why.append('a need this step cannot read: needs_any %r' % (group,))
+            continue
+        got = [need_met(x, d, p, promised) for x in group]
+        if any(g[2] for g in got):
+            why.append('a need this step cannot read: needs_any %s' % ' or '.join(map(str, group))[:70])
+        elif not any(g[0] for g in got):
+            why.append('needs one of %s' % ', '.join(map(str, group))[:70])
+        else:
+            met += 1
+            if not any(g[0] and not g[1] for g in got):
+                pending.append(' or '.join(map(str, group)))
+    for key, short in (('min', lambda have, want: have < want), ('max', lambda have, want: have > want)):
+        limits = n.get(key) or {}
+        if not isinstance(limits, dict):
+            why.append('a need this step cannot read: %s' % key)
+            continue
+        for name, want in limits.items():
+            have = count(name, d, p)
+            if have is None or not isinstance(want, int) or isinstance(want, bool):
+                why.append('a need this step cannot read: %s %s = %r' % (key, name, want))
+            elif short(have, want):
+                why.append('%s %s %d, the client has %d' % ('at least' if key == 'min' else 'at most', name, want, have))
     return why, pending, met
 
 
