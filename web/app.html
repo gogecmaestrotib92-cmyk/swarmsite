@@ -119,7 +119,7 @@ a{color:inherit;text-decoration:none}
 .card .shot{position:relative;aspect-ratio:1440/900;overflow:hidden;background:#ecebe7}
 .card .shot iframe{position:absolute;left:0;top:0;width:1440px;height:900px;border:0;transform-origin:0 0;pointer-events:none;background:#fff}
 .card .meta{display:flex;flex-direction:column;gap:4px;padding:14px 16px 4px}.card .name{font:600 16px var(--sans)}.card .how{font:13px var(--sans);color:var(--muted)}
-.card .acts{display:flex;gap:8px;flex-wrap:wrap;padding:10px 16px 16px;margin-top:auto}.card .acts .pill{min-height:44px}
+.card .acts{display:flex;gap:8px;flex-wrap:wrap;padding:10px 16px 16px;margin-top:auto}.card .acts .pill{min-height:44px}.card .acts .pill[hidden]{display:none}
 .choose-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 24px;border-top:1px solid var(--line);background:#fff;position:sticky;bottom:0;margin-top:auto}
 .choose-foot[hidden],.choose-none[hidden]{display:none}.choose-foot .pill:disabled{opacity:.45;cursor:default;transform:none}.choose-note{color:var(--muted);font-size:14px;margin:0}
 .choose-none{padding:12px 24px 28px;max-width:900px;margin:0 auto;width:100%}.choose-none li{margin:4px 0;color:var(--muted)}
@@ -298,9 +298,10 @@ function showChooser(job){ lastJob=job; const t=job.result.templates, vs=t.varia
       const shot=document.createElement('div'); shot.className='shot'; const f=document.createElement('iframe'); f.src=v.url; f.title=nameOf(v.slug)+' — preview'; f.loading='lazy'; f.tabIndex=-1; f.setAttribute('aria-hidden','true'); shot.appendChild(f);
       const meta=document.createElement('div'); meta.className='meta'; const nm=document.createElement('span'); nm.className='name'; nm.textContent=nameOf(v.slug); const how=document.createElement('span'); how.className='how'; how.textContent=String(v.approach||'').replace(/\s*·\s*/g,' · '); meta.append(nm,how);
       const acts=document.createElement('div'); acts.className='acts'; const open=document.createElement('button'); open.className='pill open'; open.textContent='Open full screen ↗'; open.onclick=()=>openFull(v);
-      const pb=document.createElement('button'); pb.className='pill ink pickb'; pb.setAttribute('aria-pressed','false'); pb.textContent='Choose this one'; pb.onclick=()=>pick(v.slug); acts.append(open,pb);
+      const pb=document.createElement('button'); pb.className='pill ink pickb'; pb.setAttribute('aria-pressed','false'); pb.textContent='Choose this one'; pb.onclick=()=>pick(v.slug); const ed=document.createElement('a'); ed.className='pill editb'; ed.href=`/edit?job=${encodeURIComponent(job.id)}&slug=${encodeURIComponent(v.slug)}`; ed.textContent='Edit'; acts.append(open,pb,ed);
       card.append(shot,meta,acts); cards.appendChild(card); }
     requestAnimationFrame(fitShots); }
+  document.querySelectorAll('.card .editb').forEach(a=>{ a.hidden=job.status!=='done'||!t.store; });   /* the editor works on the data the finished job kept */
   const none=$('#chooseNone'); none.hidden=vs.length>0; $('.choose-foot').hidden=!vs.length;
   const fromForm=job.result.source==='form', left=t.left_out||[]; $('#chooseLeft').hidden=!(fromForm&&left.length); $('#chooseStart').hidden=fromForm;
   if(fromForm){ $('#chooseSub').textContent='Three designs made from what you told us and your photographs, each checked on a desk screen and a phone. Open one to see it whole.';

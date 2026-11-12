@@ -12,6 +12,33 @@ The research folder is not in git. It is looked for at --from, then $SWARMSITE_T
 `bench/runs/_research/templates` of this checkout, then of the main checkout when this is a worktree.
 
 A template without needs.json is imported but is NOT offered to clients until it has one (selection reads needs.json).
+
+RECIPE — importing one research template (one agent, one template, one branch and PR; several can run side by side)
+  0. Start from a fresh worktree of origin/main (or the template stack until it is merged). Never write in the research
+     folder: what a template lacks is reported back to whoever owns the research copy, not fixed there.
+  1. Read <research>/<slug>/NOTES.md and needs.json. The template is ready only if NOTES says it was looked at, at 1440
+     and 390, on at least two clients.
+  2. python3 scripts/import_template.py <slug>            (--force replaces a copy already in lib/templates/<slug>)
+     It copies render.py, NOTES.md and needs.json, unchanged, and runs `audit` on every fixture client:
+       - render(d) is a pure function: none of registry._FORBIDDEN imported (network, files, processes, clock, chance),
+         the data it is given unchanged, two renders of the same data byte for byte the same;
+       - each client renders to a whole page with exactly one h1, no 'None' / 'undefined', under 50 ms;
+       - every media path of the data can be re-based (registry.rebase);
+       - needs.json, when present, is a JSON object.
+     A refused import changes nothing; with --force the old copy is kept until the new one has passed.
+  3. needs.json in the strict form: python3 scripts/normalise_needs.py lib/templates/<slug>/needs.json
+     It must name `niche` with the fixed words of lib/templates/needs.schema.json (software, app, restaurant, hotel,
+     clinic, law, service, shop, school, person, corporate, nonprofit, venue). Without that, the template is never
+     offered. List what the script says it could not carry over in the PR.
+  4. The gate on its own fixtures: python3 -m pytest tests/test_templates_registry.py tests/test_templates_select.py -q
+  5. The stress run: python3 lib/templates/stress.py <slug> --client tests/fixtures/templates/<client>.json --out DIR --json
+     for each fixture client of its niche (tallyfern / quillmoor for software, casaolmo for a restaurant; add a made-up
+     one for a niche that has none, never a real client's data). Every variant (plans 1/3/5, features 2/9, steps 1/6,
+     a 12-word h1, a 40-character button, no faq, no photographs) must pass the gate (lib/qa/template_gate.mjs:
+     sideways, errors, distorted, h1, legible, overlap). Paste the table into the PR. A variant that fails is a defect
+     of the template: report it, do not patch render.py in the library.
+  6. npm test and scripts/livetest.sh 80, then the PR: the template, its stress table, what normalise_needs lost.
+     Never merge or deploy.
 """
 import json
 import shutil
