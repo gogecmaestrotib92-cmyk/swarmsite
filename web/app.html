@@ -181,7 +181,8 @@ a{color:inherit;text-decoration:none}
 <div class="choose" id="choose" aria-labelledby="chooseH">
   <div class="choose-head"><div><h2 id="chooseH">Choose a design</h2><p id="chooseSub">Three designs made from your site, each checked on a desk screen and a phone. Open one to see it whole.</p></div><span class="lab" id="chooseMeta"></span></div>
   <div class="cards" id="cards"></div>
-  <div class="choose-none" id="chooseNone" hidden><p id="chooseNoneP"></p><ul id="chooseWhy"></ul></div>
+  <div class="choose-none" id="chooseNone" hidden><p id="chooseNoneP"></p><ul id="chooseWhy"></ul><p id="chooseStart" style="margin-top:14px">Or <a href="/start" style="text-decoration:underline">tell us about your business</a>: three designs from what you write and your own photographs.</p></div>
+  <details class="choose-none" id="chooseLeft" hidden><summary>What the page leaves out, because the form did not say it</summary><ul id="chooseLeftList"></ul></details>
   <div class="choose-foot"><p class="choose-note" id="chooseNote" role="status">Pick the one you like.</p><button class="pill ink" id="download" disabled>Download the page <span aria-hidden="true">↓</span></button></div>
 </div>
 <div class="full" id="full" role="dialog" aria-modal="true" aria-label="Design, full screen">
@@ -301,7 +302,10 @@ function showChooser(job){ lastJob=job; const t=job.result.templates, vs=t.varia
       card.append(shot,meta,acts); cards.appendChild(card); }
     requestAnimationFrame(fitShots); }
   const none=$('#chooseNone'); none.hidden=vs.length>0; $('.choose-foot').hidden=!vs.length;
-  if(!vs.length){ $('#chooseH').textContent='No design fits this site yet'; $('#chooseSub').textContent='Every design of the library needs something from a site — product screens, photographs, a few steps or features — that we could not read from yours.';
+  const fromForm=job.result.source==='form', left=t.left_out||[]; $('#chooseLeft').hidden=!(fromForm&&left.length); $('#chooseStart').hidden=fromForm;
+  if(fromForm){ $('#chooseSub').textContent='Three designs made from what you told us and your photographs, each checked on a desk screen and a phone. Open one to see it whole.';
+    const ul=$('#chooseLeftList'); if(ul.children.length!==left.length){ ul.replaceChildren(); for(const g of left.slice(0,30)){ const li=document.createElement('li'); li.textContent=String(g).slice(0,200); ul.appendChild(li); } } }
+  if(!vs.length){ $('#chooseH').textContent=fromForm?'No design fits what you told us yet':'No design fits this site yet'; $('#chooseSub').textContent=fromForm?'Every design of the library needs something — product screens, photographs, a few steps or features — that the form did not have.':'Every design of the library needs something from a site — product screens, photographs, a few steps or features — that we could not read from yours.';
     $('#chooseNoneP').textContent='What each design was missing:'; const ul=$('#chooseWhy'); ul.replaceChildren(); for(const r of (t.rejected||[]).slice(0,8)){ const li=document.createElement('li'); li.textContent=`${nameOf(r.slug)}: ${String(r.why||'').slice(0,160)}`; ul.appendChild(li);} }
   if(picked&&!vs.some(v=>v.slug===picked)) picked=''; renderDownload(); }
 

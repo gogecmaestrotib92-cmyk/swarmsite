@@ -2,7 +2,7 @@
 // adapt, select, render, gate (real: lib/templates/job.py, Chrome) → the variants published and saved before the packages
 // are made → packages uploaded to the private bucket only when they match their preview. And who may download.
 import assert from 'node:assert/strict'; import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path'; import { spawn, spawnSync } from 'node:child_process'; import { fileURLToPath } from 'node:url';
-import { runTemplateJob, mayDownload, previewable, enabled, STEPS_T } from '../server/templates.mjs';
+import { runTemplateJob, mayDownload, previewable, enabled, STEPS_T, STEPS_F, formProblem, imageType } from '../server/templates.mjs';
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..'); const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'tjob-'));
 const py = process.env.PYTHON || 'python3';
 // the worker's own `run`, cut down: a child process, its stdout, rejected on a non-zero exit
@@ -12,9 +12,9 @@ try {
   assert.equal(enabled({}), false, 'off unless the deployment says so'); assert.equal(enabled({ TEMPLATES_MODE: '1' }), true);
   assert.deepEqual(STEPS_T.map(s => s[0]), ['capture', 'read', 'choose', 'publish', 'package']);
 
-  async function scenario({ capture = 'product', pkg = 'real-stub' } = {}) {
-    const jobRoot = fs.mkdtempSync(path.join(tmp, 'job-')), dir = path.join(jobRoot, 'site'), log = [], steps = [], events = [], saves = [], pub = new Map(), priv = new Map();
-    const job = { id: '22222222-2222-4222-8222-222222222222', url: 'https://www.tallyfern.example/', options: { engine: 'templates', mode: 'seo-safe' }, result: {} };
+  async function scenario({ capture = 'product', pkg = 'real-stub', form = null } = {}) {
+    const jobRoot = fs.mkdtempSync(path.join(tmp, 'job-')), dir = path.join(jobRoot, 'site'), log = [], steps = [], events = [], saves = [], pub = new Map(), priv = new Map(), fetched = [];
+    const job = { id: '22222222-2222-4222-8222-222222222222', url: form ? 'form:tallyfern-1a2b3c4d' : 'https://www.tallyfern.example/', options: { engine: 'templates', mode: 'seo-safe', ...(form ? { source: 'form', form } : {}) }, result: {} };
     const run = async (cmd, args, opts = {}) => { log.push(args[0] === '-c' ? 'reader' : args[0] + (args[1] === 'build' || args[1] === 'package' ? ' ' + args[1] : ''));
       if (args[0] === 'lib/pipeline/capture.mjs') { const r = spawnSync(py, ['tests/fixtures/templates/capture.py', dir, capture], { cwd: root, encoding: 'utf8' }); assert.equal(r.status, 0, r.stderr); fs.writeFileSync(path.join(dir, 'before-hero.jpg'), 'jpg'); opts.onLine?.('{"event":{"role":"Photos","text":"1 picture"}}'); return ''; }
       if (args[0] === '-c') { fs.writeFileSync(path.join(dir, 'budget.json'), JSON.stringify({ calls: 1, in: 21000, out: 2400, usd: 0.066 })); return '{"what":"A ledger for market stalls","n":3}'; }
@@ -27,15 +27,31 @@ try {
     const deps = { job, dir, jobRoot, run, self: 'https://api.example', chrome: '',
       upload: async (local, key, type) => { assert.ok(fs.existsSync(local), local); pub.set(key, { type, bytes: fs.statSync(local).size }); return 'https://storage.example/previews/' + key; },
       uploadPrivate: async (local, key, type) => { priv.set(key, { type }); },
+      fetchUpload: async (file, local) => { fetched.push(file); fs.copyFileSync(path.join(root, 'web/favicon.png'), local); },
       publicBase: key => 'https://storage.example/previews/' + key,
       setStep: async (id, status) => { steps.push(`${id}:${status}`); }, emit: async evs => { events.push(...evs); },
       save: async r => { saves.push(JSON.parse(JSON.stringify({ variants: r.templates?.variants, packagesBefore: [...priv.keys()].filter(k => k.endsWith('.zip')).length }))); } };
     const result = await runTemplateJob(deps);
-    return { result, log, steps, events, saves, pub, priv, dir };
+    return { result, log, steps, events, saves, pub, priv, dir, fetched };
   }
 
+  // 0 · a site from nothing: the visitor's form and photographs in place of capture and reader — no paid call
+  const UP = '0b1e2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d.png';
+  const form = { name: 'Tallyfern', sentence: 'A ledger for market stalls that balances itself at closing time', kind: 'software', offers: [{ name: 'Counts the till' }, { name: 'Closes the day' }],
+    steps: [{ title: 'Connect the card reader' }, { title: 'Close the day' }], figures: [{ v: '1 200', l: 'stalls use it' }, { v: '4 min', l: 'to close a day' }], photos: [{ file: UP, role: 'screen' }], contact: { phone: '12' } };
+  assert.equal(formProblem(form), ''); assert.ok(formProblem({ ...form, name: ' ' }) && formProblem({ ...form, photos: [{ file: '../x.png' }] }) && formProblem({ ...form, logo: { file: 'http://x/y.png' } }) && formProblem(null));
+  assert.deepEqual(STEPS_F.map(s => s[0]), ['form', 'choose', 'publish', 'package']);
+  assert.equal(imageType(fs.readFileSync(path.join(root, 'web/favicon.png'))), 'png'); assert.equal(imageType(Buffer.from('<svg onload=alert(1)>')), ''); assert.equal(imageType(Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0, 0, 0, 0, 0])), 'jpg');
+  let x = await scenario({ form });
+  assert.deepEqual(x.log, ['lib/templates/job.py build', 'lib/templates/job.py package'], 'no capture and no reader: a form job makes no paid call');
+  assert.deepEqual(x.steps, STEPS_F.flatMap(([id]) => [`${id}:running`, `${id}:done`])); assert.deepEqual(x.fetched, [UP]);
+  assert.equal(x.result.source, 'form'); assert.deepEqual(x.result.templates.variants.map(v => v.slug), ['griffin']); assert.equal(x.result.budget, null, 'nothing priced');
+  assert.ok(x.result.templates.left_out.some(g => /contact\.phone/.test(g)), 'what the form left out is in the job, for the visitor');
+  assert.ok([...x.pub.keys()].some(k => /\/t\/media\/upload\/photo-1\.png$/.test(k)), 'their photograph is published beside the preview');
+  assert.ok([...x.priv.keys()].includes('22222222-2222-4222-8222-222222222222/data.json'), 'the form\'s data is kept in the same store as a captured site\'s');
+
   // 1 · a site a template fits
-  let x = await scenario();
+  x = await scenario();
   assert.deepEqual(x.log, ['lib/pipeline/capture.mjs', 'reader', 'lib/templates/job.py build', 'lib/templates/job.py package'], 'one reader call, one build, one package for the one variant shown');
   assert.deepEqual(x.steps, STEPS_T.flatMap(([id]) => [`${id}:running`, `${id}:done`]));
   const t = x.result.templates;
@@ -81,5 +97,7 @@ try {
   assert.ok(/if \(mode && !TEMPLATES\) return res\.status\(400\)/.test(src) && /if \(!mode && AUTH\.require && !user\)/.test(src), 'templates mode: refused when off; no sign-in asked to start one');
   assert.ok(/app\.get\('\/t\/:id\/:slug', async/.test(src) && /app\.get\('\/t\/:id\/:slug\/package'/.test(src) && /mayDownload\(\{ user, job: row/.test(src) && /from\(PACKAGE_BUCKET\)\.download/.test(src));
   assert.ok(/if \(job\.options\?\.engine === 'templates'\) return processTemplates\(job\)/.test(src) && /canonicalUrl\(j\.url\) === key && \(j\.options\?\.engine === 'templates'/.test(src), 'the same site in the other mode is not handed back as this one');
+  assert.ok(/app\.post\('\/uploads', express\.raw\(/.test(src) && /const ext = imageType\(/.test(src) && /from\(PACKAGE_BUCKET\)\.upload\(`uploads\/\$\{file\}`/.test(src), 'uploads: the file\'s own bytes say what it is; kept in the private bucket');
+  assert.ok(/const fromForm = mode && req\.body\?\.options\?\.source === 'form'/.test(src) && /formProblem\(req\.body\?\.form\)/.test(src) && /fromForm \? STEPS_F : mode \? STEPS_T : STEPS/.test(src), 'a form job: only on the template path, its form checked, its own steps');
   console.log('Templates job: one reader call, three-variant build gated in Chrome, previews saved before packages, packages private and only when they match, a site nothing fits, and who may download');
 } finally { fs.rmSync(tmp, { recursive: true, force: true }); }

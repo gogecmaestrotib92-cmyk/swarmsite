@@ -5,6 +5,9 @@
    adapt → select → render three → gate) → publish (the variants that passed the gate, as preview pages) → package
    (lib/templates/job.py package: zip + offline comparison with the preview; uploaded to a private bucket).
 
+   A site from nothing (options.source = 'form'): form (the visitor's own words and photographs; lib/templates/form.py)
+   in place of capture and read — the same choose, publish and package after it, and no paid call.
+
    The variants are written into the job's result as soon as they are published, so the chooser shows them while the
    packages are still being made. A preview needs no account (owner, 2026-11-12: previews before sign-up and payment);
    only a package does — sign-in, then `mayDownload` (the payment hook: not built, see below).
@@ -20,6 +23,35 @@ export const STEPS_T = [
   ['package', 'Preparing the downloads'],
 ];
 
+// a site from nothing (BRIEF-engine.md step 8): the visitor's form in place of capture and reader — no paid call at all
+export const STEPS_F = [
+  ['form', 'Reading what you told us and your photographs'],
+  ['choose', 'Choosing three designs and checking every screen'],
+  ['publish', 'Publishing the three previews'],
+  ['package', 'Preparing the downloads'],
+];
+export const UPLOAD = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(jpg|png|webp)$/;
+// what an uploaded file is, from its first bytes (never from what the browser says it is)
+export function imageType(buf) {
+  if (!buf || buf.length < 12) return '';
+  if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return 'jpg';
+  if (buf.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return 'png';
+  if (buf.subarray(0, 4).toString('latin1') === 'RIFF' && buf.subarray(8, 12).toString('latin1') === 'WEBP') return 'webp';
+  return '';
+}
+// the form a job may carry: the name is needed, everything else is optional; files only as uploads of this server
+export function formProblem(form) {
+  if (!form || typeof form !== 'object' || Array.isArray(form)) return 'the form is missing';
+  if (!String(form.name || '').trim()) return 'the name of the business is needed';
+  if (JSON.stringify(form).length > 200000) return 'the form is too long';
+  const photos = form.photos ?? [];
+  if (!Array.isArray(photos) || photos.length > 24) return 'at most 24 photographs';
+  for (const p of photos) if (!p || !UPLOAD.test(String(p.file || ''))) return 'a photograph was not uploaded here';
+  if (form.logo && !UPLOAD.test(String(form.logo.file || ''))) return 'the logo was not uploaded here';
+  return '';
+}
+export const formFiles = form => [...(form.photos || []).map(p => p.file), ...(form.logo?.file ? [form.logo.file] : [])].filter(f => UPLOAD.test(String(f)));
+
 export const enabled = env => env.TEMPLATES_MODE === '1';
 export const SLUG = /^[a-z0-9][a-z0-9_-]{0,63}$/;
 const READER = 'import sys; sys.path.insert(0, "lib/swarm"); import agents, json; f = agents.reader(sys.argv[1]); assert f, "reader did not produce a factsheet"; print(json.dumps({"what": f.get("what", ""), "n": len(f.get("facts", []))}))';
@@ -28,25 +60,36 @@ const walk = (dir, base = dir) => fs.existsSync(dir) ? fs.readdirSync(dir, { wit
 const TYPE = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.avif': 'image/avif', '.mp4': 'video/mp4', '.webm': 'video/webm' };
 
 /* deps: { job, dir, jobRoot, run, upload(local, key, type) → public url, uploadPrivate(local, key, type), publicBase(key) → url,
-           self, setStep(id, status, note), emit(events), save(result), chrome, readerTimeoutMs } */
+           self, setStep(id, status, note), emit(events), save(result), chrome, readerTimeoutMs,
+           fetchUpload(file, local) — a form job's uploaded photograph, from the private bucket } */
 export async function runTemplateJob(deps) {
   const { job, dir, jobRoot, run } = deps; const t0 = Date.now(); const timings = {};
   const result = { ...(job.result || {}), mode: 'templates' };
   const step = async (id, fn) => { await deps.setStep(id, 'running'); const s = Date.now(); const r = await fn(); timings[id] = Date.now() - s; await deps.setStep(id, 'done', `${Math.round(timings[id] / 1000)}s`); return r; };
 
-  await step('capture', async () => {
+  const fromForm = job.options?.source === 'form';
+  const extra = [];
+  if (fromForm) await step('form', async () => {   // the form and the photographs, written where the build reads them
+    const form = job.options.form || {}; const photos = path.join(dir, 'uploads');
+    fs.mkdirSync(photos, { recursive: true });
+    for (const f of formFiles(form)) await deps.fetchUpload(f, path.join(photos, f));
+    fs.writeFileSync(path.join(dir, 'form.json'), JSON.stringify(form));
+    extra.push('--form', path.join(dir, 'form.json'), '--photos', photos);
+    await deps.emit([{ role: 'Reader', text: `${formFiles(form).length} photograph${formFiles(form).length === 1 ? '' : 's'} from you` }]);
+  });
+  else await step('capture', async () => {
     try {
       await run('node', ['lib/pipeline/capture.mjs', job.url, '--out', jobRoot, ...(deps.chrome ? ['--chrome', deps.chrome] : [])], { timeoutMs: 420000, onLine: line => { const item = lastJson(line); if (item?.event) deps.emit([item.event]); } });
     } catch (e) { const bp = path.join(dir, 'blocked.json'); if (fs.existsSync(bp)) throw new Error(JSON.parse(fs.readFileSync(bp, 'utf8')).reason + ' Try the www/non-www address, or a page that is not behind the check.'); throw e; }
     if (fs.existsSync(path.join(dir, 'before-hero.jpg'))) result.beforeUrl = await deps.upload(path.join(dir, 'before-hero.jpg'), `${job.id}/before.jpg`, 'image/jpeg');
   });
-  await step('read', async () => {
+  if (!fromForm) await step('read', async () => {
     const f = lastJson(await run('python3', ['-c', READER, dir], { timeoutMs: deps.readerTimeoutMs || 180000 })) || {};
     await deps.emit([{ role: 'Reader', text: String(f.what || '').slice(0, 120) }, { role: 'Reader', text: `${Number(f.n) || 0} source facts` }]);
   });
   const tdir = path.join(dir, 'templates'); const base = deps.publicBase(`${job.id}/t/`);
   const built = await step('choose', async () => {
-    const r = lastJson(await run('python3', ['lib/templates/job.py', 'build', dir, '--out', tdir, '--base', base], { timeoutMs: 300000 }));
+    const r = lastJson(await run('python3', ['lib/templates/job.py', 'build', dir, '--out', tdir, '--base', base, ...extra], { timeoutMs: 300000 }));
     if (!r || !Array.isArray(r.chosen) || !Array.isArray(r.shown)) throw new Error('templates build did not report');
     await deps.emit(r.chosen.map(c => ({ role: 'QA', text: `${c.slug}: ${c.ok ? 'every screen passes' : 'not shown — ' + (c.failed || []).join(', ')}` })));
     return r;
@@ -68,6 +111,10 @@ export async function runTemplateJob(deps) {
     for (const slug of shown) { const f = path.join(tdir, `${slug}.data.json`); if (fs.existsSync(f)) { store.variants[slug] = `${job.id}/${slug}.data.json`; await deps.uploadPrivate(f, store.variants[slug], 'application/json'); } }
     result.templates = { variants: out, niche: built.niche, pictures: built.pictures, not_shown: built.chosen.filter(c => !shown.includes(c.slug)).map(c => ({ slug: c.slug, failed: c.failed })),
       rejected: (built.rejected || []).slice(0, 60), media: built.media, group: built.group || null, store, timings_ms: { ...built.timings_ms } };
+    if (fromForm) {   // what the form left out, in the visitor's terms: an empty field is a section left out, said so
+      result.source = 'form';
+      try { result.templates.left_out = (JSON.parse(fs.readFileSync(path.join(tdir, 'adapter.json'), 'utf8')).gaps || []).slice(0, 30); } catch { result.templates.left_out = []; }
+    }
     await deps.save(result);   // the chooser can show them now
     return out;
   });
