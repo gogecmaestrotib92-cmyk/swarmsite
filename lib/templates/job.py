@@ -3,6 +3,8 @@ for a variant the visitor may download, the package.
 
     python3 lib/templates/job.py build <job dir> --out <dir> [--base URL] [--limit 3] [--library DIR]
         --library   a folder holding media/library (else $SWARMSITE_LIBRARY, else the repo's); none → no made pictures
+        --form F --photos DIR   a site from nothing: the visitor's form (JSON, lib/templates/form.py) and their uploads,
+                    in place of a capture (<job dir> is then only where the job lives)
         <job dir>   capture's files (inventory, assets, images, geometry …) and the reader's factsheet.json
         --out       written there:
                       data.json         the client's data (adapter output, private keys removed)
@@ -97,21 +99,46 @@ def _drop(d, paths):
     return out
 
 
-def build(job_dir, out, base='', limit=3, gate_kw=None, library=None):
+def from_form(form, photos, out):
+    """a site from nothing: the visitor's form and uploaded photographs as the contract data, the photographs written
+    beside it; -> (data, notes, written, missing)"""
+    d, notes = _mod('form').from_form(form, photos)
+    written, missing = [], []
+    for rel, name in notes['media'].items():
+        f = Path(photos) / name
+        if rel.startswith('media/') and '..' not in Path(rel).parts and f.is_file():
+            (Path(out) / rel).parent.mkdir(parents=True, exist_ok=True)
+            (Path(out) / rel).write_bytes(f.read_bytes())
+            written.append(rel)
+        else:
+            missing.append(rel)
+    return d, notes, written, missing
+
+
+def build(job_dir, out, base='', limit=3, gate_kw=None, library=None, form=None, photos=None):
+    """job_dir: a capture with the reader's factsheet — or, with `form`, the visitor's form (a dict) and `photos`, the
+    folder of their uploads: the same data, the same choice, the same gate"""
     A, R, S, G = _mod('adapt'), _mod('registry'), _mod('select'), _mod('gate')
     out = Path(out)
     (out / 'pub').mkdir(parents=True, exist_ok=True)
     t = {}
     t0 = time.perf_counter()
-    seed = A.load_seed(job_dir)
-    d = A.adapt(seed)
-    t['adapt'] = round((time.perf_counter() - t0) * 1000)
-    t0 = time.perf_counter()
-    written, missing = write_media(seed, d, out)
-    d = _drop(d, missing)
+    if form is not None:
+        d, notes, written, missing = from_form(form, photos, out)
+        d = _drop(d, missing)
+        t['adapt'] = round((time.perf_counter() - t0) * 1000)
+        notes = {'source': 'form', 'gaps': notes['gaps'], 'rules': notes['rules']}
+    else:
+        seed = A.load_seed(job_dir)
+        d = A.adapt(seed)
+        t['adapt'] = round((time.perf_counter() - t0) * 1000)
+        t0 = time.perf_counter()
+        written, missing = write_media(seed, d, out)
+        d = _drop(d, missing)
+        notes = d.get('_adapter', {})
     data = {k: v for k, v in d.items() if not k.startswith('_')}
     (out / 'data.json').write_text(json.dumps(data, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
-    (out / 'adapter.json').write_text(json.dumps({**d.get('_adapter', {}), 'media_missing': missing}, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
+    (out / 'adapter.json').write_text(json.dumps({**notes, 'media_missing': missing}, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
     t['media'] = round((time.perf_counter() - t0) * 1000)
     t0 = time.perf_counter()
     # made pictures: three families of the prepared library, in the order the client's niche gives (owner, 2026-11-12);
@@ -178,7 +205,9 @@ if __name__ == '__main__':
     a = sys.argv[1:]
     opt = lambda k, dflt=None: a[a.index(k) + 1] if k in a else dflt
     if a[:1] == ['build'] and len(a) >= 2:
-        print(json.dumps(build(a[1], opt('--out') or str(Path(a[1]) / 'templates'), opt('--base', ''), int(opt('--limit', 3)), library=opt('--library')), ensure_ascii=False))
+        form = json.loads(Path(opt('--form')).read_text(encoding='utf-8')) if opt('--form') else None
+        print(json.dumps(build(a[1], opt('--out') or str(Path(a[1]) / 'templates'), opt('--base', ''), int(opt('--limit', 3)), library=opt('--library'),
+                               form=form, photos=opt('--photos')), ensure_ascii=False))
     elif a[:1] == ['package'] and len(a) >= 4:
         r = package(a[1], a[2], a[3], verify='--verify' in a)
         print(json.dumps(r, ensure_ascii=False))   # exit 0 either way: the verdict is `ok`, an exit code is for a crash

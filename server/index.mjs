@@ -10,7 +10,7 @@ import { saveCrawlCheckpoint, restoreCrawlCheckpoint } from './crawl_checkpoint.
 import { spawn } from 'node:child_process'; import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
 import { makeUserOf, allowance, mine } from './auth.mjs';
-import { STEPS_T, enabled as templatesEnabled, runTemplateJob, mayDownload, previewable } from './templates.mjs';
+import { STEPS_T, STEPS_F, enabled as templatesEnabled, runTemplateJob, mayDownload, previewable, imageType, formProblem, UPLOAD } from './templates.mjs';
 import { AsyncLocalStorage } from 'node:async_hooks';
 const HERE = path.dirname(fileURLToPath(import.meta.url)); const ROOT = path.resolve(HERE, '..');
 const sb = createClient(process.env.SUPABASE_URL || 'https://placeholder.supabase.co', process.env.SUPABASE_SERVICE_KEY || 'placeholder', { auth: { persistSession: false } });
@@ -64,15 +64,36 @@ app.post('/jobs/:id/claim', async (req, res) => {
   res.json({ claimed: (data || []).length === 1 });
 });
 const canonicalUrl = url => { try { const u = new URL(url); u.hash = ''; u.hostname = u.hostname.toLowerCase().replace(/^www\./, ''); u.pathname = u.pathname.replace(/\/+$/, '') || '/'; return u.origin.replace(/^https?:\/\/www\./, m => m) + u.pathname + u.search; } catch { return url; } };
+// A site from nothing: a photograph the visitor uploads, one per request, before the form's job is started. The body is
+// the file itself; what it is is read from its bytes. Kept in the private bucket; only a job of this server reads it.
+const uploadHits = new Map();
+app.post('/uploads', express.raw({ type: () => true, limit: '8mb' }), async (req, res) => {
+  if (!TEMPLATES) return res.status(400).json({ error: 'templates mode is off' });
+  const ip = clientIp(req), now = Date.now(), hits = (uploadHits.get(ip) || []).filter(t => now - t < 3600e3);
+  if (hits.length >= 60) return res.status(429).json({ error: 'Too many photographs in an hour. Please wait a little.' });
+  hits.push(now); uploadHits.set(ip, hits); if (uploadHits.size > 5000) uploadHits.clear();
+  const ext = imageType(Buffer.isBuffer(req.body) ? req.body : null);
+  if (!ext) return res.status(400).json({ error: 'Only JPEG, PNG or WebP photographs.' });
+  const file = `${crypto.randomUUID()}.${ext}`;
+  const { error } = await sb.storage.from(PACKAGE_BUCKET).upload(`uploads/${file}`, req.body, { contentType: ext === 'jpg' ? 'image/jpeg' : `image/${ext}` });
+  if (error) return res.status(500).json({ error: 'The photograph could not be kept.' });
+  res.json({ file });
+});
 app.post('/jobs', async (req, res) => {
-  let url = String(req.body?.url || '').trim(); if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
-  try { new URL(url); } catch { return res.status(400).json({ error: 'bad url' }); }
-  if (/localhost|127\.|10\.|192\.168\.|\.internal/i.test(url)) return res.status(400).json({ error: 'not allowed' });
-  const user = await userOf(req);
   // the template path: three previews before sign-up and payment (owner, 2026-11-12); only its download needs an account
   // options.mode is the brief's SEO choice (seo-safe | free); which engine builds the page is options.engine
   const mode = req.body?.options?.engine === 'templates' ? 'templates' : '';
   if (mode && !TEMPLATES) return res.status(400).json({ error: 'templates mode is off' });
+  // a site from nothing: the form stands in for the site; its job has no address to read, so it is named after the business
+  const fromForm = mode && req.body?.options?.source === 'form';
+  if (fromForm) { const bad = formProblem(req.body?.form); if (bad) return res.status(400).json({ error: bad }); }
+  let url = fromForm ? `form:${String(req.body.form.name).toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'site'}-${crypto.randomUUID().slice(0, 8)}` : String(req.body?.url || '').trim();
+  if (!fromForm) {
+    if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+    try { new URL(url); } catch { return res.status(400).json({ error: 'bad url' }); }
+    if (/localhost|127\.|10\.|192\.168\.|\.internal/i.test(url)) return res.status(400).json({ error: 'not allowed' });
+  }
+  const user = await userOf(req);
   if (!mode && AUTH.require && !user) return res.status(401).json({ error: 'Sign in to start a preview.', login: true });
   if (!mode && user) { const a = allowance({ used: await usedBy(user.id), free: AUTH.free }); if (AUTH.require && !a.allowed) return res.status(402).json({ error: `Your ${a.free} free preview${a.free === 1 ? ' is' : 's are'} used.`, previews: a }); }
   const ip = clientIp(req);
@@ -88,7 +109,8 @@ app.post('/jobs', async (req, res) => {
   if ((count || 0) >= RATE.perDay) return res.status(503).json({ error: 'Today\'s preview budget is used up. Please come back tomorrow.' });
   const options = { ...(req.body?.options || {}) }; const email = String(options.notify_email || '').trim().toLowerCase(); if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'bad email' }); if (email) options.notify_email = email; else delete options.notify_email;
   if (mode) options.engine = mode; else delete options.engine;
-  const { data, error } = await sb.from('jobs').insert({ url, options, steps: (mode ? STEPS_T : STEPS).map(([id, label]) => ({ id, label, status: 'pending' })), ...(user ? { user_id: user.id, email: user.email } : {}) }).select('id').single();
+  if (fromForm) { options.source = 'form'; options.form = req.body.form; } else { delete options.source; delete options.form; }
+  const { data, error } = await sb.from('jobs').insert({ url, options, steps: (fromForm ? STEPS_F : mode ? STEPS_T : STEPS).map(([id, label]) => ({ id, label, status: 'pending' })), ...(user ? { user_id: user.id, email: user.email } : {}) }).select('id').single();
   if (error) return res.status(500).json({ error: error.message });
   res.json({ id: data.id });
 });
@@ -540,6 +562,7 @@ async function processTemplates(job) {
   job._result = { ...(job.result || {}) };
   const result = await runTemplateJob({ job, dir, jobRoot, run, upload, self: SELF, chrome: process.env.CHROME_PATH || '',
     uploadPrivate: async (local, key, type) => { const { error } = await sb.storage.from(PACKAGE_BUCKET).upload(key, fs.readFileSync(local), { contentType: type, upsert: true }); if (error) throw error; },
+    fetchUpload: async (file, local) => { if (!UPLOAD.test(file)) throw new Error('not an upload'); const { data, error } = await sb.storage.from(PACKAGE_BUCKET).download(`uploads/${file}`); if (error || !data) throw new Error(`photograph ${file} is gone`); fs.writeFileSync(local, Buffer.from(await data.arrayBuffer())); },
     publicBase: key => sb.storage.from(BUCKET).getPublicUrl(key).data.publicUrl,
     setStep: (id, status, note) => setStep(job, id, status, note),
     emit: evs => emit(job, evs),
