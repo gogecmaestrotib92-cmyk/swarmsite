@@ -18,9 +18,17 @@ try {
     squeezed: page(sound + '<section><img src="' + PIC + '" style="width:300px;height:300px;max-width:none" alt=""><img src="' + PIC + '" style="width:300px;height:300px;object-fit:cover" alt=""></section>'),
     twoh1: page(sound + '<section><h1>A second first heading</h1></section>'),
     phone: page(sound + '<section><p style="min-width:560px">A block that is fine on a desk and too wide for a phone.</p></section>'),
+    // what the reading must NOT fail: text on a path, a strip moved by script, the faded edges of a masked strip, a closed answer, a page that moves when it loads
+    moving: page(sound
+      + '<section><svg viewBox="0 0 600 160" width="600" height="160" style="max-width:100%;height:auto"><path id="arc" d="M20 140 Q300 -40 580 140" fill="none"/><text font-size="22" fill="#111"><textPath href="#arc">Words set along a curve are read letter by letter</textPath></text></svg></section>'
+      + '<section style="overflow:hidden;padding:0"><div id="run" style="display:flex;gap:40px;white-space:nowrap;padding:20px 0;will-change:transform">' + '<span>Stalls keep their books here</span>'.repeat(12) + '</div></section>'
+      + '<section style="overflow:hidden;padding:0;background:#111"><div style="display:flex;gap:40px;white-space:nowrap;padding:20px 0;color:#f5f5f5;-webkit-mask-image:linear-gradient(90deg,transparent,#000 14%,#000 86%,transparent);mask-image:linear-gradient(90deg,transparent,#000 14%,#000 86%,transparent)">' + '<span>No card to begin</span>'.repeat(14) + '</div></section>'
+      + '<section><details><summary>Is the answer hidden?</summary><p style="color:#fdfdfd">Yes, until it is opened: white on white, and not on screen.</p></details></section>'
+      + '<script>let x=0;const el=document.getElementById("run");(function go(){x-=1.2;el.style.transform="translateX("+(x%400)+"px)";requestAnimationFrame(go)})()</script>',
+      'h1{animation:rise 1.1s cubic-bezier(.16,1,.3,1) both}@keyframes rise{from{opacity:0;transform:translateY(110px)}to{opacity:1;transform:none}}'),
   };
   const files = Object.entries(pages).map(([n, html]) => { const f = path.join(dir, n + '.html'); fs.writeFileSync(f, html); return f; });
-  const r = spawnSync('node', [path.join(root, 'lib/qa/template_gate.mjs'), ...files, '--settle', '400', '--pause', '150'], { encoding: 'utf8', timeout: 170000 });
+  const r = spawnSync('node', [path.join(root, 'lib/qa/template_gate.mjs'), ...files], { encoding: 'utf8', timeout: 170000 });
   assert.ok(r.status === 1, 'one page fails → exit 1; got ' + r.status + ' ' + (r.stderr || '').slice(0, 300));
   if (process.env.GATE_DEBUG) console.log(r.stdout);
   const out = Object.fromEntries(r.stdout.trim().split('\n').map(l => JSON.parse(l)).map(x => [path.basename(x.page, '.html'), x]));
@@ -28,6 +36,10 @@ try {
 
   assert.ok(out.sound.ok && out.sound.failed.length === 0 && out.sound.line_readings > 6, 'a sound page passes, and its lines were read: ' + JSON.stringify(out.sound.checks));
   assert.deepEqual(out.sound.widths, ['1440x900', '390x844']);
+  assert.ok(out.sound.timing.d.screens >= 1 && out.sound.timing.m.screens >= 1 && out.sound.ms < 9000, 'a still page is not kept waiting: ' + out.sound.ms + ' ms');
+  assert.deepEqual(r.stdout.trim().split('\n').map(l => path.basename(JSON.parse(l).page, '.html')), Object.keys(pages), 'pages are gated side by side and answered in the order given');
+  assert.ok(out.moving.ok, 'text on a path, a strip moved by script, the faded edge of a masked strip, a closed answer and a heading that rises on load are read without a false FAIL: ' + JSON.stringify(out.moving.checks));
+  assert.ok(out.moving.line_readings > out.sound.line_readings, 'and they were read, not skipped');
   assert.ok(!JSON.stringify(out.sound).includes('closed answer'), 'a closed answer is not judged');
 
   assert.deepEqual(out.sideways.failed, ['sideways']);
@@ -53,5 +65,5 @@ try {
   const g = JSON.parse(gone.stdout.trim().split('\n').pop());
   assert.ok(gone.status === 1 && g.ok === false, 'a missing page is not ok');
   assert.equal(spawnSync('node', [path.join(root, 'lib/qa/template_gate.mjs')], { encoding: 'utf8' }).status, 2, 'no page given: usage, exit 2');
-  console.log('The template gate passes a sound page and names sideways scroll, unreadable lines, overlap, script errors, squeezed pictures and a second h1');
+  console.log('The template gate passes a sound page (and one that moves) and names sideways scroll, unreadable lines, overlap, script errors, squeezed pictures and a second h1');
 } finally { fs.rmSync(dir, { recursive: true, force: true }); }
