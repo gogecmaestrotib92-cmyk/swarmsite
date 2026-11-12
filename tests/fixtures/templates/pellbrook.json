@@ -1,0 +1,616 @@
+{
+ "_note": "A made-up client for tests. The name, the words, the numbers, the people and the addresses are invented; no real business is described.",
+ "brand": {
+  "name": "Pellbrook Lowe",
+  "logo": null,
+  "home": "https://pellbrook-lowe.example/"
+ },
+ "lang": "en",
+ "kind": "law",
+ "character": "formal",
+ "palette": {
+  "note": "invented",
+  "ground": "#ffffff",
+  "ink": "#14213d",
+  "accent": "#8c2f39",
+  "extra": [
+   "#e9e4da",
+   "#0b1324"
+  ]
+ },
+ "nav": [
+  {
+   "t": "For you",
+   "h": "https://pellbrook-lowe.example/you/"
+  },
+  {
+   "t": "For business",
+   "h": "https://pellbrook-lowe.example/business/"
+  },
+  {
+   "t": "Our people",
+   "h": "https://pellbrook-lowe.example/people/"
+  },
+  {
+   "t": "Fees",
+   "h": "https://pellbrook-lowe.example/fees/"
+  },
+  {
+   "t": "Offices",
+   "h": "https://pellbrook-lowe.example/offices/"
+  },
+  {
+   "t": "Contact",
+   "h": "https://pellbrook-lowe.example/contact/"
+  }
+ ],
+ "cta": {
+  "t": "Arrange a first meeting",
+  "h": "https://pellbrook-lowe.example/contact/"
+ },
+ "hero": {
+  "kicker": "Solicitors in Wexcombe since 1962",
+  "title": "Plain advice for the decisions that matter most",
+  "text": "Wills, homes, families and work: eight people in three offices who answer the phone and tell you what it will cost before they start.",
+  "text2": "Fixed fees wherever the work allows.",
+  "primary": {
+   "t": "Arrange a first meeting",
+   "h": "https://pellbrook-lowe.example/contact/"
+  },
+  "secondary": {
+   "t": "See our fees",
+   "h": "https://pellbrook-lowe.example/fees/"
+  },
+  "note": "A first half hour is free"
+ },
+ "trust": [
+  "Founded 1962",
+  "Fixed fees published",
+  "Three offices",
+  "Home visits for wills",
+  "Regulated solicitors"
+ ],
+ "figures": [
+  {
+   "v": "1962",
+   "l": "advising families since"
+  },
+  {
+   "v": "3",
+   "l": "offices in the valley"
+  },
+  {
+   "v": "1,400",
+   "l": "wills kept safe in our strongroom"
+  },
+  {
+   "v": "30 min",
+   "l": "first meeting at no charge"
+  }
+ ],
+ "statement": {
+  "title": "You will always know who has your file",
+  "text": "One solicitor takes your matter from the first meeting to the last letter, and you have their direct line. We write in plain English and we send the bill we quoted."
+ },
+ "steps": {
+  "title": "How we work",
+  "text": "The same three steps, whatever the matter.",
+  "items": [
+   {
+    "k": "1",
+    "title": "A first half hour",
+    "text": "In person, by phone or by video, and at no charge."
+   },
+   {
+    "k": "2",
+    "title": "A quote in writing",
+    "text": "What we will do, who will do it and what it will cost."
+   },
+   {
+    "k": "3",
+    "title": "One person throughout",
+    "text": "Your solicitor keeps you told at every stage, without being chased."
+   }
+  ]
+ },
+ "features": {
+  "title": "What we do",
+  "text": "For people and for the businesses they run.",
+  "items": [
+   {
+    "t": "Wills and estates",
+    "d": "Wills, trusts and dealing with an estate after a death."
+   },
+   {
+    "t": "Buying and selling homes",
+    "d": "Freehold and leasehold, remortgages and transfers."
+   },
+   {
+    "t": "Family",
+    "d": "Separation, divorce, children and money."
+   },
+   {
+    "t": "Employment",
+    "d": "Settlement agreements, contracts and disputes."
+   },
+   {
+    "t": "Powers of attorney",
+    "d": "Lasting powers and deputyship."
+   },
+   {
+    "t": "Disputes",
+    "d": "Neighbours, boundaries, landlords and tenants."
+   },
+   {
+    "t": "Business property",
+    "d": "Commercial leases and the sale of a small business."
+   }
+  ]
+ },
+ "media": {
+  "screens": [],
+  "phones": [],
+  "video": null,
+  "photos": [
+   {
+    "src": "media/pellbrook/office.jpg",
+    "w": 2400,
+    "h": 1600,
+    "alt": "The office on Tanner's Row: a stone front with tall windows",
+    "role": "exterior"
+   },
+   {
+    "src": "media/pellbrook/meeting.jpg",
+    "w": 2000,
+    "h": 1333,
+    "alt": "The ground-floor meeting room with a round table",
+    "role": "room"
+   },
+   {
+    "src": "media/pellbrook/library.jpg",
+    "w": 1600,
+    "h": 1067,
+    "alt": "Shelves of law reports in the first-floor library",
+    "role": "room"
+   },
+   {
+    "src": "media/pellbrook/partners.jpg",
+    "w": 2000,
+    "h": 1334,
+    "alt": "Three partners talking in the hall",
+    "role": "people"
+   },
+   {
+    "src": "media/pellbrook/desk.jpg",
+    "w": 1400,
+    "h": 1400,
+    "alt": "A deed and a fountain pen on a leather desk",
+    "role": "detail"
+   },
+   {
+    "src": "media/pellbrook/street.jpg",
+    "w": 2400,
+    "h": 1200,
+    "alt": "Tanner's Row in the morning",
+    "role": "landscape"
+   },
+   {
+    "src": "media/pellbrook/p-1.jpg",
+    "w": 1024,
+    "h": 1024,
+    "alt": "Agnes Pellbrook",
+    "role": "portrait"
+   },
+   {
+    "src": "media/pellbrook/p-2.jpg",
+    "w": 1024,
+    "h": 1024,
+    "alt": "Daniel Lowe",
+    "role": "portrait"
+   },
+   {
+    "src": "media/pellbrook/p-3.jpg",
+    "w": 1024,
+    "h": 1024,
+    "alt": "Shirin Varga",
+    "role": "portrait"
+   },
+   {
+    "src": "media/pellbrook/p-4.jpg",
+    "w": 1024,
+    "h": 1024,
+    "alt": "Callum Ostrowe",
+    "role": "portrait"
+   },
+   {
+    "src": "media/pellbrook/p-5.jpg",
+    "w": 1024,
+    "h": 1024,
+    "alt": "Beatrix Moone",
+    "role": "portrait"
+   },
+   {
+    "src": "media/pellbrook/p-6.jpg",
+    "w": 1024,
+    "h": 1024,
+    "alt": "Henrik Dace",
+    "role": "portrait"
+   },
+   {
+    "src": "media/pellbrook/p-7.jpg",
+    "w": 1024,
+    "h": 1024,
+    "alt": "Laila Quence",
+    "role": "portrait"
+   },
+   {
+    "src": "media/pellbrook/p-8.jpg",
+    "w": 1024,
+    "h": 1024,
+    "alt": "Morwen Ashby",
+    "role": "portrait"
+   }
+  ]
+ },
+ "team": {
+  "title": "Our people",
+  "text": "Eight people, three partners, one strongroom.",
+  "items": [
+   {
+    "name": "Agnes Pellbrook",
+    "role": "Senior partner",
+    "text": "Wills, trusts and estates for thirty years.",
+    "img": "media/pellbrook/p-1.jpg",
+    "h": "https://pellbrook-lowe.example/people/#p1",
+    "email": "agnes@pellbrook-lowe.example",
+    "phone": "01632 960 710"
+   },
+   {
+    "name": "Daniel Lowe",
+    "role": "Partner",
+    "text": "Buying and selling homes; leases and boundaries.",
+    "img": "media/pellbrook/p-2.jpg",
+    "h": "https://pellbrook-lowe.example/people/#p2",
+    "email": "daniel@pellbrook-lowe.example",
+    "phone": "01632 960 711"
+   },
+   {
+    "name": "Shirin Varga",
+    "role": "Partner",
+    "text": "Family law: separation, children and finances.",
+    "img": "media/pellbrook/p-3.jpg",
+    "h": "https://pellbrook-lowe.example/people/#p3",
+    "email": "shirin@pellbrook-lowe.example",
+    "phone": "01632 960 712"
+   },
+   {
+    "name": "Callum Ostrowe",
+    "role": "Associate",
+    "text": "Employment, for staff and for small employers.",
+    "img": "media/pellbrook/p-4.jpg",
+    "h": "https://pellbrook-lowe.example/people/#p4",
+    "email": "callum@pellbrook-lowe.example",
+    "phone": "01632 960 713"
+   },
+   {
+    "name": "Beatrix Moone",
+    "role": "Associate",
+    "text": "Lasting powers of attorney and the Court of Protection.",
+    "img": "media/pellbrook/p-5.jpg",
+    "h": "https://pellbrook-lowe.example/people/#p5",
+    "email": "beatrix@pellbrook-lowe.example",
+    "phone": "01632 960 714"
+   },
+   {
+    "name": "Henrik Dace",
+    "role": "Solicitor",
+    "text": "Disputes between neighbours, landlords and tenants.",
+    "img": "media/pellbrook/p-6.jpg",
+    "h": "https://pellbrook-lowe.example/people/#p6",
+    "email": "henrik@pellbrook-lowe.example",
+    "phone": "01632 960 715"
+   },
+   {
+    "name": "Laila Quence",
+    "role": "Trainee solicitor",
+    "text": "In her second seat, with the property team.",
+    "img": "media/pellbrook/p-7.jpg",
+    "h": "https://pellbrook-lowe.example/people/#p7",
+    "email": "laila@pellbrook-lowe.example",
+    "phone": "01632 960 716"
+   },
+   {
+    "name": "Morwen Ashby",
+    "role": "Office manager",
+    "text": "The diary, the files and the first call.",
+    "img": "media/pellbrook/p-8.jpg",
+    "h": "https://pellbrook-lowe.example/people/#p8",
+    "email": "morwen@pellbrook-lowe.example",
+    "phone": "01632 960 717"
+   }
+  ]
+ },
+ "catalogue": {
+  "title": "Fixed fees",
+  "text": "Fees for 2026, before VAT. Disbursements are listed in your quote.",
+  "note": "Every quote is in writing before work starts.",
+  "groups": [
+   {
+    "t": "Wills",
+    "h": "https://pellbrook-lowe.example/fees/#wills",
+    "items": [
+     {
+      "name": "Single will",
+      "price": "£240"
+     },
+     {
+      "name": "Mirror wills for a couple",
+      "price": "£380"
+     },
+     {
+      "name": "Will with a trust",
+      "price": "£650",
+      "from": true
+     }
+    ]
+   },
+   {
+    "t": "Homes",
+    "h": "https://pellbrook-lowe.example/fees/#homes",
+    "items": [
+     {
+      "name": "Sale of a freehold house",
+      "price": "£950",
+      "from": true
+     },
+     {
+      "name": "Purchase of a freehold house",
+      "price": "£1,150",
+      "from": true
+     },
+     {
+      "name": "Remortgage",
+      "price": "£480"
+     }
+    ]
+   },
+   {
+    "t": "Attorney",
+    "h": "https://pellbrook-lowe.example/fees/#attorney",
+    "items": [
+     {
+      "name": "One lasting power of attorney",
+      "price": "£420"
+     },
+     {
+      "name": "Both kinds, health and property",
+      "price": "£690"
+     }
+    ]
+   },
+   {
+    "t": "Employment",
+    "h": "https://pellbrook-lowe.example/fees/#employment",
+    "items": [
+     {
+      "name": "Settlement agreement advice",
+      "price": "£500",
+      "note": "often paid by the employer"
+     }
+    ]
+   }
+  ]
+ },
+ "plans": {
+  "title": "",
+  "items": []
+ },
+ "faq": {
+  "title": "Questions people ask",
+  "items": [
+   {
+    "q": "Is the first meeting really free?",
+    "a": "Yes: thirty minutes to understand what you need and to tell you what it will cost."
+   },
+   {
+    "q": "Can you come to my home?",
+    "a": "For wills and powers of attorney, anywhere in the valley, at no extra charge."
+   },
+   {
+    "q": "Do you offer legal aid?",
+    "a": "Not ourselves; we will tell you who does and help you with the forms."
+   }
+  ]
+ },
+ "quotes": [
+  {
+   "q": "They told us the fee on day one and it never changed.",
+   "name": "J. and R. Mallory",
+   "role": "bought their first house"
+  },
+  {
+   "q": "Kind, clear and quick at the hardest time of our lives.",
+   "name": "Anwen D.",
+   "role": "estate of her father"
+  },
+  {
+   "q": "One phone call and I knew where I stood.",
+   "name": "Tomas K.",
+   "role": "settlement agreement"
+  }
+ ],
+ "logos": [],
+ "links": [
+  {
+   "t": "For you",
+   "d": "Wills, homes, family and work",
+   "h": "https://pellbrook-lowe.example/you/"
+  },
+  {
+   "t": "For business",
+   "d": "Leases, staff and selling up",
+   "h": "https://pellbrook-lowe.example/business/"
+  },
+  {
+   "t": "Fees",
+   "d": "Fixed fees, published",
+   "h": "https://pellbrook-lowe.example/fees/"
+  },
+  {
+   "t": "Offices",
+   "d": "Wexcombe, Harlow Cross and Mere End",
+   "h": "https://pellbrook-lowe.example/offices/"
+  }
+ ],
+ "close": {
+  "title": "Talk to a solicitor this week",
+  "text": "Thirty minutes, no charge, and a written quote if you want us to act.",
+  "cta": {
+   "t": "Arrange a first meeting",
+   "h": "https://pellbrook-lowe.example/contact/"
+  }
+ },
+ "foot": {
+  "text": "Pellbrook Lowe Solicitors · 3 Tanner's Row, Wexcombe WX2 9LP · 01632 960 700 · office@pellbrook-lowe.example",
+  "legal": "Pellbrook Lowe is an invented firm for tests.",
+  "links": [
+   {
+    "t": "Privacy",
+    "h": "https://pellbrook-lowe.example/privacy/"
+   },
+   {
+    "t": "Complaints",
+    "h": "https://pellbrook-lowe.example/complaints/"
+   },
+   {
+    "t": "Terms of business",
+    "h": "https://pellbrook-lowe.example/terms/"
+   }
+  ]
+ },
+ "place": {
+  "address": {
+   "street": "3 Tanner's Row",
+   "postcode": "WX2 9LP",
+   "city": "Wexcombe",
+   "country": "United Kingdom"
+  },
+  "phone": {
+   "t": "01632 960 700",
+   "h": "tel:+441632960700",
+   "note": "weekdays"
+  },
+  "email": "office@pellbrook-lowe.example",
+  "hours": [
+   {
+    "days": "Monday to Friday",
+    "open": "9am",
+    "close": "5.30pm"
+   }
+  ],
+  "booking": {
+   "t": "Arrange a first meeting",
+   "h": "https://pellbrook-lowe.example/contact/"
+  },
+  "since": "1962",
+  "social": [
+   {
+    "t": "LinkedIn",
+    "h": "https://social.example/pellbrook-lowe"
+   }
+  ],
+  "spaces": [],
+  "events": []
+ },
+ "locations": [
+  {
+   "name": "Wexcombe",
+   "address": {
+    "street": "3 Tanner's Row",
+    "postcode": "WX2 9LP",
+    "city": "Wexcombe"
+   },
+   "phone": "01632 960 700",
+   "email": "office@pellbrook-lowe.example",
+   "hours": [
+    {
+     "days": "Monday to Friday",
+     "open": "9am",
+     "close": "5.30pm"
+    }
+   ],
+   "note": "Head office, with parking",
+   "h": "https://pellbrook-lowe.example/offices/wexcombe/"
+  },
+  {
+   "name": "Harlow Cross",
+   "address": {
+    "street": "11 Market Steps",
+    "postcode": "WX7 1DE",
+    "city": "Harlow Cross"
+   },
+   "phone": "01632 960 750",
+   "email": "cross@pellbrook-lowe.example",
+   "hours": [
+    {
+     "days": "Tuesday and Thursday",
+     "open": "9am",
+     "close": "5pm"
+    }
+   ],
+   "note": "By appointment",
+   "h": "https://pellbrook-lowe.example/offices/harlow-cross/"
+  },
+  {
+   "name": "Mere End",
+   "address": {
+    "street": "2 Chapel Yard",
+    "postcode": "WX9 4RA",
+    "city": "Mere End"
+   },
+   "phone": "01632 960 780",
+   "email": "mere@pellbrook-lowe.example",
+   "hours": [
+    {
+     "days": "Wednesday",
+     "open": "10am",
+     "close": "4pm"
+    }
+   ],
+   "note": "Above the post office",
+   "h": "https://pellbrook-lowe.example/offices/mere-end/"
+  }
+ ],
+ "credentials": [
+  {
+   "t": "Regulated solicitors",
+   "text": "Every solicitor holds a current practising certificate.",
+   "year": "2026"
+  },
+  {
+   "t": "Accredited conveyancing",
+   "text": "Our property team works to an accredited standard."
+  },
+  {
+   "t": "Members of a will-writing panel",
+   "text": "Wills drafted and stored to the panel's rules."
+  }
+ ],
+ "contact": {
+  "phone": {
+   "t": "01632 960 700",
+   "h": "tel:+441632960700"
+  },
+  "email": "office@pellbrook-lowe.example",
+  "form": {
+   "h": "https://pellbrook-lowe.example/contact/#form",
+   "t": "Send an enquiry"
+  },
+  "routes": [
+   {
+    "t": "New enquiries",
+    "note": "we reply within one working day"
+   }
+  ]
+ }
+}

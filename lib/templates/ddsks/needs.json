@@ -1,0 +1,46 @@
+{
+ "niche": [
+  "school"
+ ],
+ "photos_min": 6,
+ "photos_large_min": 2,
+ "screens_min": 0,
+ "phones_ok": false,
+ "needs": [
+  "hero",
+  "steps",
+  "steps.img",
+  "close"
+ ],
+ "drops": [
+  "trust",
+  "hero.kicker",
+  "logos",
+  "video",
+  "screens",
+  "phones",
+  "menu",
+  "events",
+  "notices",
+  "locations",
+  "projects"
+ ],
+ "holds_without_pictures": true,
+ "motif": "photos",
+ "notes": [
+  "Offer it to a client with at least two wide landscape photographs and a picture per step; with one (person1) it still stands but falls 36 points under the reference's picture share.",
+  "A dark palette works (sportbot data rendered as a check: legible ok) — the relations are kept: page ground, ink, one dark for bands and menu.",
+  "needs (as written): 2 landscape photographs at least 1440 px wide that no step, space or person already uses (opening, closing band); 4 fill all four bands (opening, closing, statement, links)",
+  "drops (as written): trust (the same facts stand in credentials and figures on both test clients; the reference has no strip for them)",
+  "drops (as written): hero.kicker (page title only)",
+  "drops (as written): logos, media.video, media.screens, media.phones (the reference has no slot for them)",
+  "drops (as written): place.menu, place.events, place.notices, locations, projects (no part built for them)",
+  "drops (as written): photographs left over: school1 students-2017, school-group, tango, sala-profesores; person1 toprope, salbit, book — no slot that belongs to them",
+  "drops (as written): brand.logo in the header (the name is set in type there; the logo file stands in the foot)",
+  "motif (as written): the client's own photographs (no made pictures)",
+  "also_tested_on: [\"person\"]",
+  "photographs_by_role_and_size: {\"bands (opening, close, statement, links — in that order of priority)\": \"landscape (w/h >= 1.2), not `small`, not role portrait/product, widest first; full-bleed. Under 1440 px wide they are enlarged (team.jpg 1200 -> 1440 on school1's links band, under an 80 % veil).\", \"steps\": \"the picture each step names; shown 5 columns wide (469 px at 1440) or 4 columns for the second of every four; a `small` picture never wider than its own pixels (450 px on school1); hidden at 500 px and below, as in the reference\", \"spaces\": \"the picture each space names, 4 columns (371 px); then up to four further role room/bar/exterior/workshop/detail pictures without words to fill the grid to six\", \"people\": \"only team[].img, 176x220 beside the name; nobody without a portrait gets a frame\", \"credentials\": \"only credentials[].img, 88 px wide\"}",
+  "shows: [\"catalogue (title, text, groups with text and link, items with name, price, note, prices[], text, rows[], state, link; note) — in the reference's drawers, closed as the reference's are\", \"plans (title, text, name, price, per, line, rows, cta, marked, note) and faq (title, q, a) — built from the three-column cards and the drawers; not present in either test client, rendered with sportbot's data as a check\", \"team (items or groups; name, role, text, email, phone, portrait if any)\", \"credentials (t, year, text, link, badge)\", \"place: address, phone, email, hours, booking, social (foot); spaces\", \"contact: phone, email, form, routes (foot and closing band)\", \"features, figures, statement, quotes, links with descriptions, nav, cta, foot\"]",
+  "measured: {\"school1\": \"18 photographs, 14 of them small: 14 used (4 bands, 4 steps, 2 spaces, 4 rooms). shots clean at 1440 and 390; legible ok; picture share 36 % against the reference's 53 % (per screen 89,16,31,87,11,0,48,5,0,2,89,64,0; 4 screens with a wide picture against the reference's 2). The page is 11 111 px against the reference's 4 124: 46 courses, 11 people and 6 credentials are type.\", \"person1\": \"9 photographs: 6 used (1 band, 4 steps, 1 portrait). Only one photograph is free for a band, so statement, links and close stand on the dark ground. shots clean; legible ok; picture share 17 %. His opening photograph has the words 'You are here' in the picture itself.\", \"school1 with media.photos emptied — rendered, shots clean at 1440 and 390, legible ok, looked at 1440\": \"a type page: the opening is the reference's inner-page opening (130 px heading on the page ground), teasers are staggered text, bands stand on the dark ground. Readable and ordered; plain.\", \"person1 with media.photos emptied\": \"shots clean at 1440 and 390; not looked at, legible not run\"}"
+ ]
+}

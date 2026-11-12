@@ -1,0 +1,596 @@
+{
+ "_note": "A made-up client for tests. The name, the words, the numbers, the people and the addresses are invented; no real business is described.",
+ "brand": {
+  "name": "Jezikovna šola Svetlinka",
+  "logo": null,
+  "home": "https://svetlinka.example/"
+ },
+ "lang": "sl",
+ "kind": "school",
+ "character": "friendly",
+ "palette": {
+  "note": "invented",
+  "ground": "#fffdf7",
+  "ink": "#1d1b33",
+  "accent": "#e2553b",
+  "extra": [
+   "#f5c84c",
+   "#3a7ca5",
+   "#7bb662",
+   "#141226"
+  ]
+ },
+ "nav": [
+  {
+   "t": "Tečaji",
+   "h": "https://svetlinka.example/tecaji/"
+  },
+  {
+   "t": "Cene",
+   "h": "https://svetlinka.example/cene/"
+  },
+  {
+   "t": "Učitelji",
+   "h": "https://svetlinka.example/ucitelji/"
+  },
+  {
+   "t": "Izpiti",
+   "h": "https://svetlinka.example/izpiti/"
+  },
+  {
+   "t": "Kontakt",
+   "h": "https://svetlinka.example/kontakt/"
+  }
+ ],
+ "cta": {
+  "t": "Prijava na tečaj",
+  "h": "https://svetlinka.example/prijava/"
+ },
+ "hero": {
+  "kicker": "Jezikovna šola od leta 2004",
+  "title": "Jezik se naučiš, ko ga govoriš vsak teden",
+  "text": "Angleščina, nemščina, italijanščina in španščina v skupinah do osem ljudi, za otroke od šestega leta in za odrasle zvečer.",
+  "text2": "Brezplačen uvrstitveni test in prva ura na poskus.",
+  "primary": {
+   "t": "Prijava na tečaj",
+   "h": "https://svetlinka.example/prijava/"
+  },
+  "secondary": {
+   "t": "Poglej urnik",
+   "h": "https://svetlinka.example/urnik/"
+  },
+  "note": "Pokličite 01 600 21 43 med 9. in 19. uro"
+ },
+ "trust": [
+  "Od leta 2004",
+  "Skupine do 8",
+  "Uvrstitveni test brezplačno",
+  "Priprava na mednarodne izpite",
+  "Tečaji tudi na spletu",
+  "Poletna šola"
+ ],
+ "figures": [
+  {
+   "v": "2004",
+   "l": "leto, ko smo odprli vrata"
+  },
+  {
+   "v": "8",
+   "l": "udeležencev največ v skupini"
+  },
+  {
+   "v": "4",
+   "l": "jeziki"
+  },
+  {
+   "v": "93 %",
+   "l": "uspešnih na izpitih lani"
+  }
+ ],
+ "statement": {
+  "title": "Manj slovnice na tabli, več pogovora za mizo",
+  "text": "Vsaka ura ima svoj pogovor: o vremenu, o službi, o počitnicah. Slovnico razložimo takrat, ko jo potrebujete, in vadimo jo, dokler ne steče."
+ },
+ "steps": {
+  "title": "Kako začnete",
+  "text": "Od prvega klica do prve ure v enem tednu.",
+  "items": [
+   {
+    "k": "1",
+    "title": "Uvrstitveni test",
+    "text": "Dvajset minut, na spletu ali pri nas, brezplačno.",
+    "img": "media/svetlinka/tabla.jpg"
+   },
+   {
+    "k": "2",
+    "title": "Pogovor z učiteljem",
+    "text": "Povejte, zakaj se učite, in skupaj izberemo skupino.",
+    "img": "media/svetlinka/odrasli.jpg"
+   },
+   {
+    "k": "3",
+    "title": "Prva ura na poskus",
+    "text": "Če vam skupina ne ustreza, poiščemo drugo.",
+    "img": "media/svetlinka/otroci.jpg"
+   },
+   {
+    "k": "4",
+    "title": "Potrdilo ob koncu",
+    "text": "Z opisom ravni, ki ste jo dosegli.",
+    "img": "media/svetlinka/izpit.jpg"
+   }
+  ]
+ },
+ "features": {
+  "title": "Zakaj pri nas",
+  "text": "",
+  "items": [
+   {
+    "t": "Majhne skupine",
+    "d": "Največ osem, zato pride vsak na vrsto."
+   },
+   {
+    "t": "Stalni učitelji",
+    "d": "Ista oseba vas vodi skozi celo leto."
+   },
+   {
+    "t": "Ure po službi",
+    "d": "Večerni termini od 17. do 21. ure."
+   },
+   {
+    "t": "Otroški program",
+    "d": "Igre, pesmi in zgodbe od šestega leta."
+   },
+   {
+    "t": "Priprava na izpite",
+    "d": "Ustni in pisni del, s poskusnim izpitom."
+   },
+   {
+    "t": "Na spletu ali v učilnici",
+    "d": "Isti tečaj, vi izberete, kje."
+   },
+   {
+    "t": "Poletna šola",
+    "d": "Dva tedna v juliju, vsak dan dopoldne."
+   }
+  ]
+ },
+ "media": {
+  "screens": [],
+  "phones": [],
+  "video": null,
+  "photos": [
+   {
+    "src": "media/svetlinka/ucilnica.jpg",
+    "w": 2400,
+    "h": 1600,
+    "alt": "Svetla učilnica z okroglo mizo za osem",
+    "role": "room"
+   },
+   {
+    "src": "media/svetlinka/stavba.jpg",
+    "w": 2400,
+    "h": 1350,
+    "alt": "Šola na Ulici Zelenega gaja",
+    "role": "exterior"
+   },
+   {
+    "src": "media/svetlinka/dvorisce.jpg",
+    "w": 2000,
+    "h": 1333,
+    "alt": "Dvorišče z lipo, kjer so odmori",
+    "role": "exterior"
+   },
+   {
+    "src": "media/svetlinka/otroci.jpg",
+    "w": 1600,
+    "h": 1067,
+    "alt": "Otroci pri igri z besednimi karticami",
+    "role": "people"
+   },
+   {
+    "src": "media/svetlinka/odrasli.jpg",
+    "w": 1600,
+    "h": 1067,
+    "alt": "Večerni tečaj za odrasle",
+    "role": "people"
+   },
+   {
+    "src": "media/svetlinka/knjige.jpg",
+    "w": 1400,
+    "h": 1400,
+    "alt": "Učbeniki in slovarji na polici",
+    "role": "detail"
+   },
+   {
+    "src": "media/svetlinka/izpit.jpg",
+    "w": 1600,
+    "h": 1067,
+    "alt": "Ustni del izpita v mali sobi",
+    "role": "action"
+   },
+   {
+    "src": "media/svetlinka/knjiznica.jpg",
+    "w": 1600,
+    "h": 2000,
+    "alt": "Kotiček za branje v knjižnici",
+    "role": "room"
+   },
+   {
+    "src": "media/svetlinka/tabla.jpg",
+    "w": 1400,
+    "h": 933,
+    "alt": "Tabla s sklanjatvami po pouku",
+    "role": "detail"
+   },
+   {
+    "src": "media/svetlinka/poletje.jpg",
+    "w": 2000,
+    "h": 1333,
+    "alt": "Poletna šola na prostem",
+    "role": "people"
+   },
+   {
+    "src": "media/svetlinka/u-1.jpg",
+    "w": 1024,
+    "h": 1280,
+    "alt": "Nika Brezar",
+    "role": "portrait"
+   },
+   {
+    "src": "media/svetlinka/u-2.jpg",
+    "w": 1024,
+    "h": 1280,
+    "alt": "Matej Kovinar",
+    "role": "portrait"
+   },
+   {
+    "src": "media/svetlinka/u-3.jpg",
+    "w": 1024,
+    "h": 1280,
+    "alt": "Ana Lužnik",
+    "role": "portrait"
+   },
+   {
+    "src": "media/svetlinka/u-4.jpg",
+    "w": 1024,
+    "h": 1280,
+    "alt": "Tilen Rožič",
+    "role": "portrait"
+   },
+   {
+    "src": "media/svetlinka/u-5.jpg",
+    "w": 1024,
+    "h": 1280,
+    "alt": "Eva Podlesnik",
+    "role": "portrait"
+   },
+   {
+    "src": "media/svetlinka/u-6.jpg",
+    "w": 1024,
+    "h": 1280,
+    "alt": "Jure Vrhovec",
+    "role": "portrait"
+   }
+  ]
+ },
+ "team": {
+  "title": "Učitelji",
+  "text": "Šest stalnih učiteljev z dolgoletnimi izkušnjami.",
+  "items": [
+   {
+    "name": "Nika Brezar",
+    "role": "vodja šole, angleščina",
+    "img": "media/svetlinka/u-1.jpg"
+   },
+   {
+    "name": "Matej Kovinar",
+    "role": "nemščina",
+    "img": "media/svetlinka/u-2.jpg"
+   },
+   {
+    "name": "Ana Lužnik",
+    "role": "italijanščina",
+    "img": "media/svetlinka/u-3.jpg"
+   },
+   {
+    "name": "Tilen Rožič",
+    "role": "angleščina za otroke",
+    "img": "media/svetlinka/u-4.jpg"
+   },
+   {
+    "name": "Eva Podlesnik",
+    "role": "španščina",
+    "img": "media/svetlinka/u-5.jpg"
+   },
+   {
+    "name": "Jure Vrhovec",
+    "role": "priprava na izpite",
+    "img": "media/svetlinka/u-6.jpg"
+   }
+  ]
+ },
+ "catalogue": {
+  "title": "Tečaji",
+  "text": "Cene za šolsko leto 2026/27, z vključenim gradivom.",
+  "note": "Plačilo tudi v treh obrokih.",
+  "groups": [
+   {
+    "t": "Angleščina",
+    "h": "https://svetlinka.example/tecaji/anglescina/",
+    "items": [
+     {
+      "name": "Splošni tečaj, 60 ur",
+      "price": "390 €"
+     },
+     {
+      "name": "Poslovna angleščina, 40 ur",
+      "price": "340 €"
+     },
+     {
+      "name": "Za otroke, 30 ur",
+      "price": "210 €"
+     }
+    ]
+   },
+   {
+    "t": "Nemščina",
+    "h": "https://svetlinka.example/tecaji/nemscina/",
+    "items": [
+     {
+      "name": "Splošni tečaj, 60 ur",
+      "price": "390 €"
+     },
+     {
+      "name": "Priprava na izpit, 30 ur",
+      "price": "280 €"
+     }
+    ]
+   },
+   {
+    "t": "Italijanščina in španščina",
+    "h": "https://svetlinka.example/tecaji/romanski/",
+    "items": [
+     {
+      "name": "Začetni tečaj, 40 ur",
+      "price": "290 €"
+     },
+     {
+      "name": "Konverzacija, 20 ur",
+      "price": "160 €"
+     }
+    ]
+   }
+  ]
+ },
+ "plans": {
+  "title": "Načini učenja",
+  "text": "Ista cena za uro, različno število ur na teden.",
+  "items": [
+   {
+    "name": "Skupina",
+    "price": "6,50 €",
+    "per": "na šolsko uro",
+    "line": "Do osem ljudi, dvakrat na teden.",
+    "rows": [
+     "60 ur v letu",
+     "Gradivo vključeno",
+     "Potrdilo o ravni"
+    ],
+    "cta": {
+     "t": "Prijava",
+     "h": "https://svetlinka.example/prijava/?nacin=skupina"
+    }
+   },
+   {
+    "name": "Mala skupina",
+    "price": "11 €",
+    "per": "na šolsko uro",
+    "line": "Dva do štirje, termin po dogovoru.",
+    "rows": [
+     "40 ur v letu",
+     "Gradivo vključeno",
+     "Potrdilo o ravni"
+    ],
+    "cta": {
+     "t": "Prijava",
+     "h": "https://svetlinka.example/prijava/?nacin=mala"
+    }
+   },
+   {
+    "name": "Individualno",
+    "price": "28 €",
+    "per": "na šolsko uro",
+    "line": "Samo vi in učitelj, v učilnici ali na spletu.",
+    "rows": [
+     "Število ur po želji",
+     "Program po meri"
+    ],
+    "cta": {
+     "t": "Prijava",
+     "h": "https://svetlinka.example/prijava/?nacin=individualno"
+    }
+   }
+  ],
+  "note": "Cene vključujejo DDV."
+ },
+ "faq": {
+  "title": "Pogosta vprašanja",
+  "items": [
+   {
+    "q": "Kdaj se začnejo tečaji?",
+    "a": "Jesenski v prvem tednu oktobra, spomladanski sredi februarja."
+   },
+   {
+    "q": "Kaj, če zamudim uro?",
+    "a": "Posnetek in gradivo dobite po e-pošti, manjkajočo snov pa nadoknadite v drugi skupini."
+   },
+   {
+    "q": "Ali izdate račun za podjetje?",
+    "a": "Da, z vsemi podatki za vaše podjetje."
+   },
+   {
+    "q": "Imate popust za družine?",
+    "a": "Drugi član družine plača deset odstotkov manj."
+   },
+   {
+    "q": "Kje parkiram?",
+    "a": "Za šolo je brezplačno parkirišče z dvanajstimi mesti."
+   }
+  ]
+ },
+ "quotes": [
+  {
+   "q": "Po enem letu sem na sestanku prvič govorila brez listka.",
+   "name": "Petra M.",
+   "role": "poslovna angleščina"
+  },
+  {
+   "q": "Sin se veseli vsake ure, kar pri jezikih ni samoumevno.",
+   "name": "Gregor K.",
+   "role": "oče učenca"
+  },
+  {
+   "q": "Izpit sem opravil v prvem poskusu.",
+   "name": "Luka R.",
+   "role": "nemščina"
+  }
+ ],
+ "logos": [],
+ "links": [
+  {
+   "t": "Tečaji za odrasle",
+   "d": "Zvečer, dvakrat na teden",
+   "h": "https://svetlinka.example/tecaji/odrasli/"
+  },
+  {
+   "t": "Tečaji za otroke",
+   "d": "Od šestega leta naprej",
+   "h": "https://svetlinka.example/tecaji/otroci/"
+  },
+  {
+   "t": "Izpiti",
+   "d": "Priprava in poskusni izpit",
+   "h": "https://svetlinka.example/izpiti/"
+  },
+  {
+   "t": "Poletna šola",
+   "d": "Dva tedna v juliju",
+   "h": "https://svetlinka.example/poletna-sola/"
+  },
+  {
+   "t": "Za podjetja",
+   "d": "Tečaji v vaših prostorih",
+   "h": "https://svetlinka.example/podjetja/"
+  }
+ ],
+ "close": {
+  "title": "Prva ura je na poskus",
+  "text": "Naredite uvrstitveni test in pridite pogledat, kako poteka pouk.",
+  "cta": {
+   "t": "Prijava na tečaj",
+   "h": "https://svetlinka.example/prijava/"
+  }
+ },
+ "foot": {
+  "text": "Jezikovna šola Svetlinka · Ulica Zelenega gaja 17 · 4999 Svetlin · 01 600 21 43 · info@svetlinka.example",
+  "legal": "Jezikovna šola Svetlinka 2026",
+  "links": [
+   {
+    "t": "Zasebnost",
+    "h": "https://svetlinka.example/zasebnost/"
+   },
+   {
+    "t": "Splošni pogoji",
+    "h": "https://svetlinka.example/pogoji/"
+   }
+  ]
+ },
+ "place": {
+  "address": {
+   "street": "Ulica Zelenega gaja 17",
+   "postcode": "4999",
+   "city": "Svetlin",
+   "country": "Slovenija"
+  },
+  "phone": {
+   "t": "01 600 21 43",
+   "h": "tel:+38616002143",
+   "note": "med 9. in 19. uro"
+  },
+  "email": "info@svetlinka.example",
+  "hours": [
+   {
+    "days": "Ponedeljek–četrtek",
+    "open": "9.00",
+    "close": "21.00"
+   },
+   {
+    "days": "Petek",
+    "open": "9.00",
+    "close": "15.00"
+   }
+  ],
+  "booking": {
+   "t": "Prijava na tečaj",
+   "h": "https://svetlinka.example/prijava/"
+  },
+  "since": "2004",
+  "social": [
+   {
+    "t": "Instagram",
+    "h": "https://social.example/svetlinka"
+   },
+   {
+    "t": "Facebook",
+    "h": "https://social.example/svetlinka-fb"
+   }
+  ],
+  "spaces": [
+   {
+    "title": "Učilnice",
+    "text": "Štiri svetle učilnice z okroglimi mizami.",
+    "img": "media/svetlinka/ucilnica.jpg"
+   },
+   {
+    "title": "Knjižnica",
+    "text": "Knjige in filmi v štirih jezikih za izposojo.",
+    "img": "media/svetlinka/knjiznica.jpg"
+   }
+  ],
+  "events": []
+ },
+ "contact": {
+  "phone": {
+   "t": "01 600 21 43",
+   "h": "tel:+38616002143"
+  },
+  "email": "info@svetlinka.example",
+  "form": {
+   "h": "https://svetlinka.example/kontakt/#obrazec",
+   "t": "Pošljite vprašanje"
+  },
+  "routes": [
+   {
+    "t": "Prijave",
+    "note": "na spletu ali po telefonu"
+   },
+   {
+    "t": "Podjetja",
+    "h": "mailto:podjetja@svetlinka.example"
+   }
+  ]
+ },
+ "credentials": [
+  {
+   "t": "Izvajalec javno veljavnih programov",
+   "text": "Za angleščino in nemščino.",
+   "year": "2012"
+  },
+  {
+   "t": "Izpitni center",
+   "text": "Mednarodni izpiti iz nemščine na naši šoli.",
+   "year": "2018"
+  }
+ ]
+}

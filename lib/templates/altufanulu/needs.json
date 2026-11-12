@@ -1,0 +1,66 @@
+{
+ "niche": [
+  "law",
+  "clinic",
+  "service",
+  "hotel"
+ ],
+ "photos_min": 6,
+ "photos_large_min": 2,
+ "screens_min": 0,
+ "phones_ok": false,
+ "needs": [
+  "hero.title",
+  "steps",
+  "steps.img",
+  "features",
+  "close"
+ ],
+ "needs_any": [
+  [
+   "address",
+   "phone"
+  ]
+ ],
+ "drops": [
+  "trust",
+  "logos",
+  "signin",
+  "hero.kicker",
+  "hero.text2",
+  "links.d",
+  "since",
+  "cuisine",
+  "price_range",
+  "takeaway",
+  "menu",
+  "spaces",
+  "events",
+  "notices",
+  "projects"
+ ],
+ "holds_without_pictures": true,
+ "motif": "photos",
+ "notes": [
+  "The reference's own pictures are stock; nothing of them is used.",
+  "Photographs that carry text are darkened (80 % brightness, near-black veil 40-88 %); a bright room becomes a grey one. That is the reference's look and what keeps every line readable.",
+  "A step's 2.9:1 banner is cropped to its middle third in an upright card (clinic1).",
+  "The client's accent is used once: the filled button of the closing band (and of a marked plan). The reference has no accent colour.",
+  "The band colour is the client's ink taken down until white reads on it (law1: its navy as given; clinic1: #363636 becomes #303030).",
+  "law1's group photograph is 1128 wide and is shown 1440 wide (1.28x its pixels) as the band over the team.",
+  "A long catalogue with long texts makes a long page (clinic1: 3000 px of services at 1440, 5100 at 390).",
+  "drops (as written): steps[].k, steps[].shape",
+  "drops (as written): catalogue.groups[].h, catalogue.groups[].img, catalogue items' img",
+  "drops (as written): team[].h",
+  "drops (as written): credentials[].year (and t/text of a credential that has a badge picture: they are its alt text only)",
+  "drops (as written): media.screens, media.phones, media.video, media.made",
+  "drops (as written): small photographs, and photographs beyond the slots (never looped)",
+  "drops (as written): brand.logo in the header (the name is set in type there; the logo stands in the foot)",
+  "motif (as written): none made — the client's own photographs, all shown black-and-white under a near-black veil where text stands on them",
+  "holds_without_pictures_note: It renders clean and legible with none (law1 and clinic1 with every picture removed: no sideways scroll, one h1, legible ok), but it is then a type page on a deep-coloured first screen and no longer this reference, whose whole character is dark photographs. Offer it only to a client that meets photos_by_role; with fewer, prefer a type-led template.",
+  "photos_by_role: {\"first screen\": \"1; role room | people | work | workshop | action | exterior | landscape; not small; width >= 1400 (1920 to stay sharp), height >= 600 (>= 820 fills a 900 window; a shallower one shortens the first screen to 1.1x its height), ratio >= 1.2\", \"cards\": \"one per step (3 or 4): the step's own img or any non-portrait photograph >= 450x560 (906x1270 to stay sharp); all steps or none\", \"statement half\": \"0-1; room | work | workshop | action | people | detail | landscape | exterior; >= 1000x600\", \"door half\": \"0-1; exterior | landscape; >= 1000x600\", \"closing band\": \"0-1; exterior | landscape | room | detail | work | people; width >= 1400, ratio >= 1.3\", \"people band\": \"0-1; role people; width >= 1100, ratio >= 1.6\", \"band in a long list\": \"0-1; detail | product | work | room; width >= 1400, ratio >= 1.8\", \"portraits\": \"0-n; the person's own; from 300 px (upright card from 640 high, square below); a person without one is set in type\", \"credential badges\": \"0-n; the client's own files, shown 100 wide\"}",
+  "shows: [\"nav (7 in the row, all in the menu), cta\", \"hero (title, text, primary, secondary, note)\", \"steps (title, text, items: title, text, cta, img)\", \"statement (title, text) and figures (v, l)\", \"features (title, text, items: t, d, h)\", \"catalogue (title, text, note; groups: t, text; items: name, price, prices[], note, text, rows, state, h)\", \"plans (title, text, note; items: name, price, per, line, rows, cta, marked)\", \"faq (title, q, a)\", \"team (title, text; items or groups; name, role, text, phone, email, portrait)\", \"quotes (q, title, name, role)\", \"place (address, phone with note, email, hours, booking, social), locations (name, address, phone, email, hours, note, h), contact (phone, email, form, routes)\", \"close (title, text, cta)\", \"credentials (badge pictures; t and text for those without a picture; h)\", \"links (foot columns), foot (text, legal, links), brand (name, logo in the foot, home)\"]",
+  "picture_share: {\"reference\": \"51 overall at 1440; per 900px screen 100, 71, 43, 2, 53, 64, 0; height 5848\", \"clinic1\": \"43 overall; per screen 84, 71, 33, 0, 0, 33, 24, 78, 45, 87, 11; height 9745 = 1.67x the reference, so case (2) of the rule applies: compared over the sections both have — see measured\", \"law1\": \"20 overall; per screen 100, 0, 0, 0, 0, 16, 92, 63, 17, 0 ...; height 12752 = 2.2x the reference. FALLS SHORT: of the reference's wide pictures only the first screen is present. law1 has two photographs that are not portraits; the cards, the statement half, the door half and the closing band stay without a picture\", \"wide pictures of the reference, in order\": \"first screen (clinic1 yes, law1 yes) · three cards (clinic1 yes, law1 no) · numbers picture (clinic1 yes as a half, law1 no) · 'sectors' picture (clinic1 yes as the door half, law1 no) · closing band (clinic1 yes, law1 no)\"}",
+  "measured: {\"law1 (12 photographs: 2 that are not portraits, 10 portraits; 3 badges; 35 people; 3 offices; priced catalogue)\": \"shots.mjs clean at 1440 and 390 (height 12752 / 16093, no sideways scroll, 0 distorted, one h1, errors []); legible.mjs ok (907 line readings). Shows 1 first-screen photograph, the group photograph as a band, 10 portrait cards, 3 badges; values as a ruled grid, numbers band, closing band and contact block without pictures. Picture share 20 against the reference's 51; over the shared sections only (scratch copy without catalogue, team, quotes) 17 against 51 — does not meet the rule\", \"clinic1 (22 photographs: 11 banners 2000x690 / 1680x580, 1 small, 10 portraits 400x400; logo)\": \"shots.mjs clean (height 9745 / 10747, 0 distorted, one h1, errors []); legible.mjs ok (547 line readings). Shows 7 banners (first screen, 3 cards, statement half, band in the list, door half, closing band — 8 with the band), 10 portraits, the logo in the foot. Picture share 43 overall; over the shared sections (scratch copy without catalogue and team, height 5804) 48 against 51 — within 5 points; every wide picture of the reference is present in order\", \"pictures removed (scratch copies law-nopics, clinic-nopics)\": \"no sideways scroll, no element past the right edge, one h1 at 1440 and 390; legible ok (953 / 575 readings). First screen is the deep colour with the heading; steps become the ruled values grid; people in type rows\", \"variants of law1 (scratch): 1, 3, 5 plans (sportbot's plans); 2 and 9 features; 1 and 6 steps; clinic1 with 1 and 6 steps (picture cards); a 13-word h1; 40-character button labels; faq added\": \"each: no sideways scroll, nothing past the right edge, no text wider than its box at 1440 and 390; legible ok on plans1, plans5, features9, steps6, clinic 6 steps, long h1, long buttons, faq. With 40-character labels the header row no longer fits and goes into the menu (script); 5 plans stand 3 + 2\", \"sportbot (dark page, scratch)\": \"renders clean at 1440 and 390, legible ok (321 readings); its product screens are not used (never cropped into cards) — steps show as the values grid, plans and faq are shown. Not a client for this template\", \"only brand.name (scratch)\": \"renders: header, first screen with the name as h1, foot\", \"hotel1, local1, shop1, school1, person1, automateed, butarque, balamo\": \"render() returns without error; not opened\"}"
+ ]
+}

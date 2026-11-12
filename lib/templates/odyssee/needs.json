@@ -1,0 +1,79 @@
+{
+ "niche": [
+  "clinic",
+  "hotel",
+  "service",
+  "person"
+ ],
+ "photos_min": 11,
+ "photos_large_min": 2,
+ "screens_min": 0,
+ "phones_ok": false,
+ "needs": [
+  "hero.title",
+  "hero.text",
+  "steps",
+  "steps.img",
+  "statement.text",
+  "close.title"
+ ],
+ "needs_any": [
+  [
+   "catalogue",
+   "links"
+  ]
+ ],
+ "min": {
+  "steps": 3
+ },
+ "max": {
+  "steps": 4
+ },
+ "drops": [
+  "figures",
+  "logos",
+  "signin",
+  "trust",
+  "quotes",
+  "links.d",
+  "features",
+  "spaces",
+  "booking",
+  "since",
+  "cuisine",
+  "price_range",
+  "takeaway",
+  "menu",
+  "events",
+  "notices",
+  "projects",
+  "video",
+  "screens",
+  "phones",
+  "foot.text"
+ ],
+ "holds_without_pictures": false,
+ "motif": "photos",
+ "notes": [
+  "photos_min 11 = 8 backdrops + 3 step pictures; below 8 backdrops the page still holds but falls more than 5 points under the reference.",
+  "photos_large_min 2: the two first screens. Measured: clinic1 has 11 at 1680-2000 wide, hotel1 has 4 at 2100 wide.",
+  "Tile pictures are not matched to their labels (a link carries no picture): hotel1's 'Location' tile stands on the bathroom photograph. A client whose links have pictures of their own would need a data field for it.",
+  "No alt is shown as text; band words come from steps.items[].k, only when each is 14 characters or shorter.",
+  "plans render in the row part (untested: neither test client has plans).",
+  "needs (as written): catalogue.groups with links or 2 links",
+  "drops (as written): trust beyond six",
+  "drops (as written): quotes beyond four",
+  "drops (as written): features.items when a catalogue exists (clinic1: the same 15 services)",
+  "drops (as written): place.spaces (hotel1: the same three as steps.items)",
+  "drops (as written): place.booking when cta is set",
+  "drops (as written): credentials[].img",
+  "drops (as written): catalogue item and group pictures",
+  "drops (as written): foot.text when place.address is set",
+  "drops (as written): palette.extra",
+  "motif (as written): the client's own photographs (media.made is never read)",
+  "photos_by_role: {\"backdrops\": \"8 not small, at least 1200 wide and 560 high, role room / exterior / bar / people / work / workshop / landscape / action / other first, detail / dish / product after them: first screen, second screen (given only from 7), band, two edge-to-edge tiles (a pair or none), tall picture, list picture, closing band (a detail first when there is one), two small tiles (a pair or none, from 9)\", \"first screens\": \"2 of them at least 1600 wide; a photograph is enlarged at most 1.3x at 1440 (a 690-high banner gives an 897-high screen instead of 100vh and stands still; one 1180 high moves with the scroll)\", \"steps\": \"one per steps.items[].img, any size from 470 wide (shown 466x350 with three items, 350x263 with four)\", \"small\": \"0-2 small or narrow pictures (under 1200 wide, or small): the 225-wide picture beside the opening statement, the 233-wide one in the tall-picture part\", \"portraits\": \"team portraits as the client has them, from 342 wide; a person without one is set in type\"}",
+  "measured_on: {\"reference\": \"coverage 58 %, 4 screens with a wide picture, page 9066 high\", \"clinic1\": \"22 photographs (11 banners 2000x690 or 1680x580, 1 small 800x490, 10 portraits 400x400): all 22 used, each once. coverage 53 %, 4 screens with a wide picture, page 11763 high. legible ok, shots clean\", \"hotel1\": \"13 photographs (4 at 2100x1182, 7 at 1200-1500 wide, 1200x624, 1000x562): all 13 used, each once. coverage 51 % (7 below the reference, 2 beyond the allowance): tariff, 13 questions, 2 reviews and 2 awards add about 1600 px of words and there is no photograph left for them. legible ok, shots clean\", \"the reference's own sections only (scratch data without catalogue, faq, quotes, credentials, team)\": \"clinic1 58 %, hotel1 59 %\", \"clinic1 with 6 / 5 / 4 large photographs (steps and portraits kept)\": \"49 % / 46 % / 45 %; from 6 down the second screen, list picture and closing band are missing\", \"clinic1 with 3 large photographs and nothing else\": \"26 %: first screen, band, tall picture only — not a page to offer\", \"no photographs (scratch copies of both clients)\": \"0 %: renders without error at 1440 and 390, legible ok, one h1; first screen is the row of words on the ground, tiles are 429-high plain grounds, people in type. A typographic page, not this template\"}",
+  "shows: [\"nav, cta, hero.title (h1), hero.text, hero.text2, hero.note, hero.primary, hero.secondary, hero.kicker\", \"steps (title, text, items with k, title, text, cta, img)\", \"statement\", \"catalogue (groups, items, price, prices, rows, note, state, text) — or features.items when there is no catalogue\", \"trust (first six)\", \"team (items or groups; portrait, name, role, text, phone, email)\", \"close (title, text, cta)\", \"links\", \"plans\", \"faq\", \"quotes (first four)\", \"credentials (t, year, text, h)\", \"locations\", \"place.address, phone, phone.note, email, hours, social\", \"contact.phone, email, form, routes\", \"foot.legal, foot.links\", \"brand.logo (header), brand.name\"]",
+  "needs_any added by hand at import from the free words: \"catalogue.groups with links or 2 links\""
+ ]
+}

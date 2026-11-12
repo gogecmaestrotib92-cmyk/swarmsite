@@ -1,0 +1,558 @@
+{
+ "_note": "A made-up client for tests. The name, the words, the numbers, the people and the addresses are invented; no real business is described.",
+ "brand": {
+  "name": "Fernhollow Physiotherapy",
+  "logo": null,
+  "home": "https://fernhollow.example/"
+ },
+ "lang": "en",
+ "kind": "clinic",
+ "character": "calm",
+ "palette": {
+  "note": "invented",
+  "ground": "#f6f3ee",
+  "ink": "#1f2a2e",
+  "accent": "#2f6f62",
+  "extra": [
+   "#d9e4df",
+   "#a35f3b",
+   "#12302b"
+  ]
+ },
+ "nav": [
+  {
+   "t": "Treatments",
+   "h": "https://fernhollow.example/treatments/"
+  },
+  {
+   "t": "Our team",
+   "h": "https://fernhollow.example/team/"
+  },
+  {
+   "t": "Prices",
+   "h": "https://fernhollow.example/prices/"
+  },
+  {
+   "t": "Pilates",
+   "h": "https://fernhollow.example/pilates/"
+  },
+  {
+   "t": "Find us",
+   "h": "https://fernhollow.example/contact/"
+  }
+ ],
+ "cta": {
+  "t": "Book an appointment",
+  "h": "https://fernhollow.example/book/"
+ },
+ "hero": {
+  "kicker": "Physiotherapy in Ashwick since 2009",
+  "title": "Move without the ache you have learned to live with",
+  "text": "Assessment, hands-on treatment and a plan you can follow at home, from six physiotherapists in one house on Quarry Lane.",
+  "text2": "Same-week appointments, early mornings and Saturdays.",
+  "primary": {
+   "t": "Book an appointment",
+   "h": "https://fernhollow.example/book/"
+  },
+  "secondary": {
+   "t": "See treatments and prices",
+   "h": "https://fernhollow.example/prices/"
+  },
+  "note": "Call 01632 960 418 from 7.30am"
+ },
+ "trust": [
+  "Six physiotherapists",
+  "Same-week appointments",
+  "Most insurers accepted",
+  "Free parking at the back",
+  "Step-free rooms"
+ ],
+ "figures": [
+  {
+   "v": "2009",
+   "l": "treating Ashwick since"
+  },
+  {
+   "v": "6",
+   "l": "physiotherapists in one house"
+  },
+  {
+   "v": "48 h",
+   "l": "usual wait for a first visit"
+  },
+  {
+   "v": "4",
+   "l": "people at most in a Pilates class"
+  }
+ ],
+ "statement": {
+  "title": "We treat the person, then the knee",
+  "text": "A first visit is forty-five minutes: we listen first, look at how you move, and only then decide what to do. You leave with a written plan and the name of the person who will see you next time."
+ },
+ "steps": {
+  "title": "How a first visit goes",
+  "text": "Four steps, the first three in one hour.",
+  "items": [
+   {
+    "k": "01",
+    "title": "Tell us what hurts",
+    "text": "When it started, what makes it worse and what you want to get back to.",
+    "img": "media/fernhollow/reception.jpg"
+   },
+   {
+    "k": "02",
+    "title": "We look at how you move",
+    "text": "Walking, bending, lifting: a careful examination, never a rush.",
+    "img": "media/fernhollow/hands.jpg"
+   },
+   {
+    "k": "03",
+    "title": "Treatment the same day",
+    "text": "Hands-on work and the first exercises, shown and tried in the room.",
+    "img": "media/fernhollow/treatment.jpg"
+   },
+   {
+    "k": "04",
+    "title": "A plan you can keep",
+    "text": "Written down, with short videos, and checked at your next visit.",
+    "img": "media/fernhollow/stairs.jpg"
+   }
+  ]
+ },
+ "features": {
+  "title": "What we treat",
+  "text": "If it is not on the list, ask: we will tell you honestly whether we can help.",
+  "items": [
+   {
+    "t": "Back and neck pain",
+    "d": "From a stiff morning to a disc that will not settle."
+   },
+   {
+    "t": "Sports injuries",
+    "d": "Sprains, strains and the return to play."
+   },
+   {
+    "t": "After surgery",
+    "d": "Knee and hip replacements, ligament repairs, shoulders."
+   },
+   {
+    "t": "Headaches and jaw pain",
+    "d": "When the neck is part of the story."
+   },
+   {
+    "t": "Pregnancy and after birth",
+    "d": "Pelvic pain, the pelvic floor and getting strong again."
+   },
+   {
+    "t": "Balance and falls",
+    "d": "Steadier on stairs, at home and outside."
+   },
+   {
+    "t": "Running injuries",
+    "d": "Shins, Achilles and knees, with a look at how you run."
+   },
+   {
+    "t": "Work and posture",
+    "d": "Desk set-up, lifting at work, a plan your employer can read."
+   }
+  ]
+ },
+ "media": {
+  "screens": [],
+  "phones": [],
+  "video": null,
+  "photos": [
+   {
+    "src": "media/fernhollow/reception.jpg",
+    "w": 2400,
+    "h": 1600,
+    "alt": "The reception: a long oak counter under a skylight",
+    "role": "room"
+   },
+   {
+    "src": "media/fernhollow/treatment.jpg",
+    "w": 2000,
+    "h": 1333,
+    "alt": "A treatment room with a couch by the window",
+    "role": "room"
+   },
+   {
+    "src": "media/fernhollow/gym.jpg",
+    "w": 2400,
+    "h": 1350,
+    "alt": "The rehabilitation gym with bars and a rack of weights",
+    "role": "room"
+   },
+   {
+    "src": "media/fernhollow/front.jpg",
+    "w": 1800,
+    "h": 1200,
+    "alt": "The clinic from Quarry Lane: a brick house with a green door",
+    "role": "exterior"
+   },
+   {
+    "src": "media/fernhollow/hands.jpg",
+    "w": 1600,
+    "h": 1067,
+    "alt": "A physiotherapist testing the movement of a knee",
+    "role": "people"
+   },
+   {
+    "src": "media/fernhollow/class.jpg",
+    "w": 2000,
+    "h": 1333,
+    "alt": "Four people on reformers in the Pilates studio",
+    "role": "people"
+   },
+   {
+    "src": "media/fernhollow/garden.jpg",
+    "w": 1600,
+    "h": 2000,
+    "alt": "The garden path to the studio at the back",
+    "role": "exterior"
+   },
+   {
+    "src": "media/fernhollow/bands.jpg",
+    "w": 1200,
+    "h": 1200,
+    "alt": "Resistance bands hung on pegs by colour",
+    "role": "detail"
+   },
+   {
+    "src": "media/fernhollow/stairs.jpg",
+    "w": 1400,
+    "h": 933,
+    "alt": "Practising stairs on the training step",
+    "role": "action"
+   },
+   {
+    "src": "media/fernhollow/desk.jpg",
+    "w": 1400,
+    "h": 1750,
+    "alt": "Notes and a model of a spine on the desk",
+    "role": "detail"
+   },
+   {
+    "src": "media/fernhollow/team-1.jpg",
+    "w": 1024,
+    "h": 1280,
+    "alt": "Maren Holt",
+    "role": "portrait"
+   },
+   {
+    "src": "media/fernhollow/team-2.jpg",
+    "w": 1024,
+    "h": 1280,
+    "alt": "Idris Calloway",
+    "role": "portrait"
+   },
+   {
+    "src": "media/fernhollow/team-3.jpg",
+    "w": 1024,
+    "h": 1280,
+    "alt": "Tova Lindqvist",
+    "role": "portrait"
+   },
+   {
+    "src": "media/fernhollow/team-4.jpg",
+    "w": 1024,
+    "h": 1280,
+    "alt": "Rahel Amsel",
+    "role": "portrait"
+   },
+   {
+    "src": "media/fernhollow/team-5.jpg",
+    "w": 1024,
+    "h": 1280,
+    "alt": "Owen Pradell",
+    "role": "portrait"
+   },
+   {
+    "src": "media/fernhollow/team-6.jpg",
+    "w": 1024,
+    "h": 1280,
+    "alt": "Junie Farrow",
+    "role": "portrait"
+   }
+  ]
+ },
+ "team": {
+  "title": "The people you will see",
+  "text": "Every physiotherapist here is registered and keeps up with training every year.",
+  "items": [
+   {
+    "name": "Maren Holt",
+    "role": "Lead physiotherapist",
+    "text": "Knees, hips and getting back to running after surgery.",
+    "img": "media/fernhollow/team-1.jpg",
+    "h": "https://fernhollow.example/team/#p1"
+   },
+   {
+    "name": "Idris Calloway",
+    "role": "Physiotherapist",
+    "text": "Shoulders, necks and the aches of desk work.",
+    "img": "media/fernhollow/team-2.jpg",
+    "h": "https://fernhollow.example/team/#p2"
+   },
+   {
+    "name": "Tova Lindqvist",
+    "role": "Sports physiotherapist",
+    "text": "Ankles, hamstrings and the weekend league.",
+    "img": "media/fernhollow/team-3.jpg",
+    "h": "https://fernhollow.example/team/#p3"
+   },
+   {
+    "name": "Rahel Amsel",
+    "role": "Women's health physiotherapist",
+    "text": "Pregnancy, the months after birth and the pelvic floor.",
+    "img": "media/fernhollow/team-4.jpg",
+    "h": "https://fernhollow.example/team/#p4"
+   },
+   {
+    "name": "Owen Pradell",
+    "role": "Clinical Pilates instructor",
+    "text": "Small classes on the reformer, four to a room.",
+    "img": "media/fernhollow/team-5.jpg",
+    "h": "https://fernhollow.example/team/#p5"
+   },
+   {
+    "name": "Junie Farrow",
+    "role": "Practice manager",
+    "text": "Bookings, insurers and the kettle.",
+    "img": "media/fernhollow/team-6.jpg",
+    "h": "https://fernhollow.example/team/#p6"
+   }
+  ]
+ },
+ "catalogue": {
+  "title": "Treatments and prices",
+  "text": "Prices for 2026. Insured patients pay nothing on the day where the insurer allows it.",
+  "note": "Cancel up to 24 hours before at no cost.",
+  "groups": [
+   {
+    "t": "Physiotherapy",
+    "h": "https://fernhollow.example/prices/#physio",
+    "items": [
+     {
+      "name": "First assessment and treatment",
+      "price": "£68",
+      "note": "45 minutes"
+     },
+     {
+      "name": "Follow-up treatment",
+      "price": "£55",
+      "note": "30 minutes"
+     },
+     {
+      "name": "Long follow-up",
+      "price": "£72",
+      "note": "45 minutes"
+     },
+     {
+      "name": "Home visit within Ashwick",
+      "price": "£95",
+      "from": true,
+      "note": "45 minutes"
+     }
+    ]
+   },
+   {
+    "t": "Classes and extras",
+    "h": "https://fernhollow.example/prices/#classes",
+    "items": [
+     {
+      "name": "Clinical Pilates, one class",
+      "price": "£22",
+      "note": "55 minutes, four at most"
+     },
+     {
+      "name": "Six classes",
+      "price": "£120",
+      "note": "valid for ten weeks"
+     },
+     {
+      "name": "Running assessment",
+      "price": "£85",
+      "note": "filmed, with a written report"
+     },
+     {
+      "name": "Workstation assessment",
+      "price": "£60",
+      "note": "at your office or by video"
+     }
+    ]
+   }
+  ]
+ },
+ "plans": {
+  "title": "",
+  "items": []
+ },
+ "faq": {
+  "title": "Before you come",
+  "items": [
+   {
+    "q": "Do I need a referral from my doctor?",
+    "a": "No. You can book directly; some insurers ask for one, and we will tell you if yours does."
+   },
+   {
+    "q": "What should I wear?",
+    "a": "Something loose you can move in. Shorts for a knee or hip, a vest top for a shoulder."
+   },
+   {
+    "q": "How many visits will I need?",
+    "a": "Most people need three to five. We will give you an honest estimate at the first visit."
+   },
+   {
+    "q": "Is there parking?",
+    "a": "Six free spaces at the back of the house, reached from Mill Close."
+   }
+  ]
+ },
+ "quotes": [
+  {
+   "q": "Three visits and I was back on my bike. They explained everything as they went.",
+   "name": "Ellis T.",
+   "role": "patient, knee"
+  },
+  {
+   "q": "The first place that looked at how I sit at work, not just at my neck.",
+   "name": "Priya N.",
+   "role": "patient, neck"
+  },
+  {
+   "q": "Calm rooms, kind people and a plan I actually kept.",
+   "name": "Gordon W.",
+   "role": "patient, after a hip replacement"
+  }
+ ],
+ "logos": [],
+ "links": [
+  {
+   "t": "Treatments",
+   "d": "What we treat and how",
+   "h": "https://fernhollow.example/treatments/"
+  },
+  {
+   "t": "Clinical Pilates",
+   "d": "Small classes on the reformer",
+   "h": "https://fernhollow.example/pilates/"
+  },
+  {
+   "t": "Our team",
+   "d": "Six physiotherapists and the practice manager",
+   "h": "https://fernhollow.example/team/"
+  },
+  {
+   "t": "Insurers",
+   "d": "Which ones we work with",
+   "h": "https://fernhollow.example/insurers/"
+  },
+  {
+   "t": "Find us",
+   "d": "Quarry Lane, with parking at the back",
+   "h": "https://fernhollow.example/contact/"
+  }
+ ],
+ "close": {
+  "title": "Start with one visit",
+  "text": "Forty-five minutes, a clear answer and a plan. Most weeks we can see you within two days.",
+  "cta": {
+   "t": "Book an appointment",
+   "h": "https://fernhollow.example/book/"
+  }
+ },
+ "foot": {
+  "text": "Fernhollow Physiotherapy · 14 Quarry Lane, Ashwick AW4 7QT · 01632 960 418 · hello@fernhollow.example",
+  "legal": "Fernhollow Physiotherapy 2026",
+  "links": [
+   {
+    "t": "Privacy",
+    "h": "https://fernhollow.example/privacy/"
+   },
+   {
+    "t": "Cancellations",
+    "h": "https://fernhollow.example/cancellations/"
+   }
+  ]
+ },
+ "place": {
+  "address": {
+   "street": "14 Quarry Lane",
+   "postcode": "AW4 7QT",
+   "city": "Ashwick",
+   "country": "United Kingdom"
+  },
+  "phone": {
+   "t": "01632 960 418",
+   "h": "tel:+441632960418",
+   "note": "from 7.30am"
+  },
+  "email": "hello@fernhollow.example",
+  "hours": [
+   {
+    "days": "Monday to Thursday",
+    "open": "7.30am",
+    "close": "8pm"
+   },
+   {
+    "days": "Friday",
+    "open": "7.30am",
+    "close": "6pm"
+   },
+   {
+    "days": "Saturday",
+    "open": "8am",
+    "close": "1pm"
+   }
+  ],
+  "booking": {
+   "t": "Book an appointment",
+   "h": "https://fernhollow.example/book/"
+  },
+  "since": "2009",
+  "social": [
+   {
+    "t": "Instagram",
+    "h": "https://social.example/fernhollow"
+   }
+  ],
+  "spaces": [],
+  "events": []
+ },
+ "contact": {
+  "phone": {
+   "t": "01632 960 418",
+   "h": "tel:+441632960418"
+  },
+  "email": "hello@fernhollow.example",
+  "form": {
+   "h": "https://fernhollow.example/contact/#form",
+   "t": "Send us a message"
+  },
+  "routes": [
+   {
+    "t": "New patients",
+    "note": "book online or call"
+   },
+   {
+    "t": "Insurers and employers",
+    "h": "mailto:accounts@fernhollow.example"
+   }
+  ]
+ },
+ "credentials": [
+  {
+   "t": "Registered physiotherapists",
+   "text": "Every clinician holds a current registration."
+  },
+  {
+   "t": "Insurer recognised",
+   "text": "Recognised by most private health insurers."
+  },
+  {
+   "t": "Step-free building",
+   "text": "Ground-floor rooms and an accessible toilet."
+  }
+ ]
+}
