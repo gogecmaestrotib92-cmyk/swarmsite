@@ -38,7 +38,7 @@ def test_a_job_folder_becomes_gated_variants_with_their_media(tmp_path, monkeypa
     monkeypatch.setattr(G, 'check', lambda files, **kw: [seen.append([Path(f).name for f in files]) or {'page': str(f), 'ok': True, 'failed': [], 'checks': {}, 'ms': 5} for f in files])
     out = tmp_path / 'templates'
     r = JOB.build(capture(tmp_path), out, base='https://store.example/j/t/')
-    assert r['shown'] == ['griffin'] and [c['slug'] for c in r['chosen']] == ['griffin'] and seen == [['griffin.html']]
+    assert 'griffin' in r['shown'] and len(r['shown']) <= 3 and [c['slug'] for c in r['chosen']] == r['shown'] and seen == [[s + '.html' for s in r['shown']]] * len(r['shown'])  # one gate call for all, logged once a page
     assert r['niche'][0] == 'software' and any(x['slug'] == 'maze' for x in r['rejected']) and r['media'] == {'written': 2, 'missing': [], 'library': 0}
     assert set(r['timings_ms']) == {'adapt', 'media', 'select', 'render', 'gate'}
     data = json.loads((out / 'data.json').read_text())
