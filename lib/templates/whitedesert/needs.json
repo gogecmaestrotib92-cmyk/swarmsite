@@ -1,0 +1,50 @@
+{
+ "niche": [
+  "restaurant",
+  "hotel",
+  "venue"
+ ],
+ "photos_min": 6,
+ "photos_large_min": 3,
+ "screens_min": 0,
+ "phones_ok": false,
+ "needs": [
+  "statement.title"
+ ],
+ "needs_any": [
+  [
+   "spaces",
+   "steps"
+  ],
+  [
+   "address",
+   "hours"
+  ]
+ ],
+ "drops": [
+  "trust",
+  "figures",
+  "links.d",
+  "cuisine",
+  "price_range",
+  "faq",
+  "features",
+  "close.text",
+  "plans"
+ ],
+ "holds_without_pictures": false,
+ "motif": "photos",
+ "notes": [
+  "drops (as written): menu counts where noted",
+  "drops (as written): faq: no FAQ part is built in this template yet (both test clients have an empty faq, so nothing was dropped on them; a client with questions would lose them)",
+  "drops (as written): place.phone.note",
+  "drops (as written): quotes after the second",
+  "motif (as written): the client's own photographs of the place (opening, banner, close, rooms); dishes only inside the strip's cards",
+  "photos_by_role: [{\"slot\": \"opening (held two screens)\", \"n\": 1, \"role\": \"exterior | room | bar\", \"size\": \">= 1920 wide, >= 1080 high for a full screen; never enlarged (balamo's 1242 x 1152 stands 1242 wide in the dark screen)\"}, {\"slot\": \"tall banner\", \"n\": 1, \"role\": \"not dish; upright or near square\", \"size\": \">= 1440 wide, >= 1350 high\"}, {\"slot\": \"closing band\", \"n\": 1, \"role\": \"not dish; wide (w >= 1.2 h)\", \"size\": \">= 1440 wide, >= 800 high\"}, {\"slot\": \"room cards\", \"n\": \"1 per room (3 on both test clients)\", \"role\": \"room | exterior\", \"size\": \">= 680 x 500 for the reference's card; the row takes the narrowest picture's width (butarque 418, balamo 570)\", \"link\": \"place.spaces[].img, or photos[].page == the room's link\"}]",
+  "photos_optional: [{\"slot\": \"strip cards\", \"n\": \"1 per menu section / event\", \"role\": \"dish\", \"size\": \">= 600 x 600 (strip is as high as the lowest picture, at most 765)\", \"link\": \"photos[].page == section link, or a dish photograph whose description begins with the section's first listed dish\"}, {\"slot\": \"rooms' opening backdrop\", \"n\": 1, \"role\": \"not dish; wide\", \"size\": \">= 1440 x 900\", \"note\": \"neither test client had one left; the held screen is the dark ground\"}]",
+  "uses_if_present: [\"place.events\", \"place.menu\", \"place.since\", \"quotes\", \"place.notices\", \"place.takeaway\", \"place.social\"]",
+  "without_pictures: renders and passes every check, but it is a black/white type page; the reference is led by photographs; not to be offered",
+  "measured: {\"butarque\": {\"photos_in_data\": 52, \"photos_shown\": 11, \"picture_share\": 27}, \"balamo\": {\"photos_in_data\": 20, \"photos_shown\": 6, \"picture_share\": 23}, \"reference_picture_share\": 36, \"note\": \"coverage.mjs reads held (sticky) screens as 0 on both pages: ours second opening screen is in fact the picture (+ about 6 points); the reference's held rooms section is full-bleed pictures where ours is cards on a plain ground. Ours is below the reference by more than 5 points with both clients; one more wide place photograph (rooms' opening) would be the next step.\"}",
+  "drops plans: added at import (2026-11-12): render.py never reads plans; the research needs.json does not say so"
+ ]
+}

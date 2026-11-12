@@ -1,0 +1,184 @@
+{
+ "_note": "A made-up client for tests. The name, the words, the prices, the town and the street are invented; no real business is described. The telephone number is from a range kept for fiction.",
+ "brand": {
+  "name": "The Larchwick",
+  "logo": null,
+  "home": "https://larchwick.example/"
+ },
+ "lang": "en",
+ "kind": "hotel",
+ "character": "calm",
+ "palette": {
+  "note": "invented",
+  "ground": "#f6f2ea",
+  "ink": "#1f2a24",
+  "accent": "#3f5e4a",
+  "extra": [
+   "#c9a66b",
+   "#8b6f4e",
+   "#e8e1d3",
+   "#121614"
+  ]
+ },
+ "nav": [
+  {"t": "Rooms", "h": "https://larchwick.example/rooms/"},
+  {"t": "Dining", "h": "https://larchwick.example/dining/"},
+  {"t": "The garden", "h": "https://larchwick.example/garden/"},
+  {"t": "Gatherings", "h": "https://larchwick.example/gatherings/"},
+  {"t": "Find us", "h": "https://larchwick.example/find-us/"}
+ ],
+ "cta": {"t": "Book a room", "h": "https://larchwick.example/book/"},
+ "hero": {
+  "kicker": "Since 1931",
+  "title": "Twelve quiet rooms above the Pell valley",
+  "text": "A stone house of twelve bedrooms, a dining room that cooks from its own garden, and a fire lit from October.",
+  "text2": "On Ottery Rise, at the top of Pellbrook.",
+  "primary": {"t": "Book a room", "h": "https://larchwick.example/book/"},
+  "secondary": {"t": "See the rooms", "h": "https://larchwick.example/rooms/"},
+  "note": "Reception is open from 7am to 11pm"
+ },
+ "trust": ["Since 1931", "Twelve bedrooms", "Kitchen garden", "Dogs welcome"],
+ "figures": [
+  {"v": "12", "l": "bedrooms, no two alike"},
+  {"v": "1931", "l": "the year the house took its first guests"},
+  {"v": "3", "l": "acres of garden and orchard"}
+ ],
+ "statement": {
+  "title": "a house to arrive at slowly",
+  "text": "We keep the house the way it was built to be kept: thick walls, deep windows, and nobody in a hurry. Breakfast is served until eleven."
+ },
+ "steps": {
+  "title": "Rooms for every kind of stay",
+  "text": "Garden rooms on the ground floor, valley rooms above, and two suites under the roof.",
+  "items": [
+   {"k": "Garden", "title": "The garden rooms", "text": "French windows onto the lawn and a step down to the orchard.", "img": "media/larchwick/room-garden.jpg"},
+   {"k": "Valley", "title": "The valley rooms", "text": "Deep sills, a writing desk and the whole valley in the window.", "img": "media/larchwick/room-valley.jpg"},
+   {"k": "Suite", "title": "The roof suites", "text": "Beams overhead, a bath under the skylight and a sitting room of their own.", "img": "media/larchwick/room-suite.jpg"},
+   {"k": "Snug", "title": "The snug rooms", "text": "Small, warm and kind to the budget, at the back of the house.", "img": "media/larchwick/room-snug.jpg"}
+  ]
+ },
+ "features": {
+  "title": "In the house",
+  "text": "",
+  "items": [
+   {"t": "Kitchen garden", "d": "Vegetables and herbs for the dining room"},
+   {"t": "Library", "d": "A fire, two sofas and the house's books"},
+   {"t": "Drying room", "d": "For boots and coats after the valley walk"},
+   {"t": "Dogs", "d": "Welcome in the garden rooms"}
+  ]
+ },
+ "media": {
+  "screens": [],
+  "phones": [],
+  "video": null,
+  "photos": [
+   {"src": "media/larchwick/house.jpg", "w": 2000, "h": 1333, "alt": "The stone house from the lawn at dusk", "role": "exterior"},
+   {"src": "media/larchwick/room-garden.jpg", "w": 1800, "h": 1200, "alt": "A garden room with French windows open to the lawn", "role": "room"},
+   {"src": "media/larchwick/room-valley.jpg", "w": 1800, "h": 1200, "alt": "A valley room with a writing desk under the window", "role": "room"},
+   {"src": "media/larchwick/room-suite.jpg", "w": 1800, "h": 1200, "alt": "A roof suite with a bath under the skylight", "role": "room"},
+   {"src": "media/larchwick/room-snug.jpg", "w": 1600, "h": 1067, "alt": "A small room with a wool blanket on the bed", "role": "room"},
+   {"src": "media/larchwick/library.jpg", "w": 1800, "h": 1200, "alt": "The library with its fire lit", "role": "room"},
+   {"src": "media/larchwick/dining.jpg", "w": 1800, "h": 1200, "alt": "The dining room laid for dinner", "role": "room"},
+   {"src": "media/larchwick/bar.jpg", "w": 1400, "h": 1867, "alt": "The bar with its row of bottles and a brass lamp", "role": "bar"},
+   {"src": "media/larchwick/stair.jpg", "w": 1200, "h": 1600, "alt": "The oak stair and its long window", "role": "room"},
+   {"src": "media/larchwick/garden.jpg", "w": 2000, "h": 1125, "alt": "The kitchen garden in early summer", "role": "exterior"},
+   {"src": "media/larchwick/breakfast.jpg", "w": 1200, "h": 1200, "alt": "Breakfast: eggs, toast and garden tomatoes", "role": "dish"},
+   {"src": "media/larchwick/supper.jpg", "w": 1200, "h": 1200, "alt": "Lamb with garden beans", "role": "dish"},
+   {"src": "media/larchwick/tart.jpg", "w": 1200, "h": 1200, "alt": "An orchard apple tart", "role": "dish"},
+   {"src": "media/larchwick/guests.jpg", "w": 1600, "h": 1067, "alt": "Guests at the long table in the garden", "role": "people"}
+  ]
+ },
+ "faq": {
+  "title": "Before you come",
+  "items": [
+   {"q": "When can we arrive?", "a": "Rooms are ready from 3pm; we will keep your bags from the morning."},
+   {"q": "Is there parking?", "a": "Yes, behind the house, at no charge."},
+   {"q": "Can we bring the dog?", "a": "In the garden rooms, yes, with a bed and a bowl waiting."}
+  ]
+ },
+ "quotes": [],
+ "logos": [],
+ "links": [
+  {"t": "Rooms", "d": "Twelve bedrooms on three floors", "h": "https://larchwick.example/rooms/"},
+  {"t": "Dining", "d": "Dinner from the garden, Wednesday to Sunday", "h": "https://larchwick.example/dining/"},
+  {"t": "Gatherings", "d": "The whole house for weddings and families", "h": "https://larchwick.example/gatherings/"},
+  {"t": "Find us", "d": "Two miles from Pellbrook station", "h": "https://larchwick.example/find-us/"}
+ ],
+ "close": {
+  "title": "Stay a night, or a week",
+  "text": "Book directly with the house and breakfast is on us.",
+  "cta": {"t": "Book a room", "h": "https://larchwick.example/book/"}
+ },
+ "foot": {
+  "text": "The Larchwick. 7 Ottery Rise, Pellbrook PB4 7QX · 01632 960 418 · stay@larchwick.example",
+  "legal": "The Larchwick 2026",
+  "links": [
+   {"t": "Terms", "h": "https://larchwick.example/terms/"},
+   {"t": "Privacy", "h": "https://larchwick.example/privacy/"}
+  ]
+ },
+ "place": {
+  "address": {"street": "7 Ottery Rise", "postcode": "PB4 7QX", "city": "Pellbrook", "region": "Pell Vale"},
+  "phone": {"t": "01632 960 418", "h": "tel:+441632960418", "note": "7am to 11pm"},
+  "email": "stay@larchwick.example",
+  "hours": [
+   {"days": "Reception, every day", "open": "7am", "close": "11pm"},
+   {"days": "Dinner, Wednesday to Sunday", "open": "6.30pm", "close": "9pm"},
+   {"days": "Breakfast, every day", "open": "7.30am", "close": "11am"}
+  ],
+  "booking": {"t": "Book a room", "h": "https://larchwick.example/book/"},
+  "since": "1931",
+  "cuisine": ["Seasonal", "From the garden"],
+  "price_range": "£££",
+  "social": [
+   {"t": "Instagram", "h": "https://instagram.example/larchwick"}
+  ],
+  "menu": {
+   "h": "https://larchwick.example/dining/",
+   "sections": [
+    {
+     "t": "To start",
+     "count": 3,
+     "h": "https://larchwick.example/dining/#start",
+     "items": [
+      {"name": "Garden soup with brown bread", "price": "£8"},
+      {"name": "Smoked trout, pickled cucumber", "price": "£11"},
+      {"name": "Beetroot, curd and toasted seeds", "price": "£9"}
+     ]
+    },
+    {
+     "t": "Mains",
+     "count": 3,
+     "h": "https://larchwick.example/dining/#mains",
+     "items": [
+      {"name": "Lamb with garden beans", "price": "£26"},
+      {"name": "Hake, mussels and leeks", "price": "£24"},
+      {"name": "Mushroom pie, mash and greens", "price": "£19"}
+     ]
+    },
+    {
+     "t": "Puddings",
+     "count": 2,
+     "h": "https://larchwick.example/dining/#puddings",
+     "items": [
+      {"name": "Orchard apple tart", "price": "£8"},
+      {"name": "Burnt cream with shortbread", "price": "£8"}
+     ]
+    }
+   ],
+   "lists": [
+    {"t": "Wine list", "count": 34, "h": "https://larchwick.example/dining/wine/"},
+    {"t": "Breakfast", "count": 9, "h": "https://larchwick.example/dining/breakfast/"}
+   ]
+  },
+  "spaces": [
+   {"title": "The garden rooms", "text": "French windows onto the lawn and a step down to the orchard.", "img": "media/larchwick/room-garden.jpg"},
+   {"title": "The valley rooms", "text": "Deep sills, a writing desk and the whole valley in the window.", "img": "media/larchwick/room-valley.jpg"},
+   {"title": "The roof suites", "text": "Beams overhead, a bath under the skylight and a sitting room of their own.", "img": "media/larchwick/room-suite.jpg"},
+   {"title": "The snug rooms", "text": "Small, warm and kind to the budget, at the back of the house.", "img": "media/larchwick/room-snug.jpg"}
+  ],
+  "events": [
+   {"when": "Every first Friday", "what": "Supper at the long table in the garden", "price": "£45", "where": "The kitchen garden", "cta": {"t": "Reserve a seat", "h": "https://larchwick.example/gatherings/supper/"}}
+  ]
+ }
+}
