@@ -1,0 +1,31 @@
+{
+ "niche": [
+  "app",
+  "software"
+ ],
+ "photos_min": 0,
+ "photos_large_min": 0,
+ "screens_min": 1,
+ "phones_ok": true,
+ "needs": [
+  "steps",
+  "steps.img",
+  "steps.k",
+  "statement"
+ ],
+ "needs_any": [
+  [
+   "features",
+   "figures"
+  ]
+ ],
+ "holds_without_pictures": false,
+ "motif": "land",
+ "notes": [
+  "One picture family: media.made.land. land[1] is the wallpaper of every feature row (three crops of it) and, at 42 %, the band behind the notes window; land[5] (else land[0]) is the backdrop of the plans. A dark page skips a light-toned land picture. sky, blur, sheet and field are not used.",
+  "screens_min 1: the opening's large frame takes the film, else the first lying screen; the five small windows take whatever screens, phones and photos are left and are simply fewer when there are fewer.",
+  "plans, faq, close, figures, a film and trust lines are optional; each is left out whole when missing.",
+  "A place (restaurant, hotel, shop) is not a fit: nothing here shows menu, hours, address or rooms, and it relies on made pictures, which places do not get.",
+  "measured: {\"sportbot\": \"4 screens, 4 phones, 1 film, 3 steps with pictures, 7 features, 4 figures, 2 plans, 4 questions: every section renders; shots.mjs clean and legible.mjs ok at 1440 and 390\", \"automateed\": \"3 screens, 7 upright book pictures, no film, no questions, 2 plans: every section but the questions renders; shots.mjs clean and legible.mjs ok\", \"both with media.made = {}\": \"render without errors (checked as markup only, not looked at): rows on the plain sheet colour, no notes band, plans on the plain ground\", \"no client pictures at all\": \"not measured on a test client; by construction the opening has no frame and no small windows and every row is text only - the desktop idiom is gone, so not a page to offer\"}"
+ ]
+}

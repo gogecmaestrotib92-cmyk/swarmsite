@@ -1,0 +1,41 @@
+{
+ "niche": [
+  "app",
+  "software"
+ ],
+ "photos_min": 0,
+ "photos_large_min": 0,
+ "screens_min": 3,
+ "phones_ok": true,
+ "needs": [
+  "steps",
+  "features",
+  "figures"
+ ],
+ "drops": [
+  "hero.kicker",
+  "hero.text2",
+  "steps.text",
+  "steps.cta",
+  "features.text",
+  "statement.text",
+  "photos",
+  "phones"
+ ],
+ "holds_without_pictures": false,
+ "motif": "land",
+ "notes": [
+  "screens_min 3 counts product pictures of any shape (screens, phones or upright photos): one a step is what the held walk shows; with fewer the walk is words only and the page is not one to offer.",
+  "features: at least 3 for the tiles; 4 or more further ones (7 in all) before the sideways card row is held as on the reference.",
+  "figures: at least 1 whose value is a single number, for the turned band; quotes would fill its running rows but neither test client has any, so that path is written and not exercised.",
+  "media.made.land is needed for the opening and closing backdrops, the walk's field, the tile panes and the cards; without it every slot falls to the plain ground and the page loses the picture share the reference has — not measured on a client without made pictures.",
+  "plans and faq are optional: each is shown when present (plans as tiles before the questions, questions as disclosure rows before the close) and left out whole when absent.",
+  "drops (as written): hero.kicker (page title only)",
+  "drops (as written): steps.title",
+  "drops (as written): figures[4..]",
+  "drops (as written): media.photos beyond the step pictures and one upright picture for the tall tile",
+  "drops (as written): media.phones beyond the step pictures and one for the opening",
+  "measured_on: {\"sportbot\": \"holds: 3 step pictures (phones), 1 further phone for the opening, 2 screens and the film for the tiles, 7 features (3 tiles + 4 cards), 4 figures, 2 plans with 5 rows each, 4 questions.\", \"automateed\": \"holds: 3 step pictures (book covers), 3 screens (opening + 2 tiles), 1 upright photo for the tall tile, 5 features (3 tiles + 2 cards, so the card row is not held), 4 figures, 2 plans without rows (short tiles), no questions (section left out).\"}",
+  "shows: [\"hero.title\", \"hero.text\", \"hero.note\", \"hero.primary\", \"hero.secondary\", \"trust|logos\", \"steps.items\", \"features\", \"figures[0..3]\", \"quotes\", \"statement.title\", \"plans\", \"faq\", \"close.title\", \"close.text\", \"close.cta\", \"nav\", \"links\", \"signin\", \"cta\", \"foot\"]"
+ ]
+}
