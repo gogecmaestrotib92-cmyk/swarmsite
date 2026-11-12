@@ -1,0 +1,175 @@
+{
+ "_note": "A made-up client for tests. The name, the words, the numbers, the people and the addresses are invented; no real organisation is described.",
+ "brand": {"name": "Linden Row Larder", "logo": null, "home": "https://lindenrow.example/"},
+ "lang": "en",
+ "kind": "nonprofit",
+ "character": "warm, volunteer-run, plain-spoken",
+ "palette": {"note": "invented", "ground": "#fffdf8", "ink": "#22302a", "accent": "#2f7a4f", "extra": ["#f2c14e", "#e8efe9", "#13201a"]},
+ "nav": [
+  {"t": "Get help", "h": "https://lindenrow.example/help/"},
+  {"t": "Give food", "h": "https://lindenrow.example/give-food/"},
+  {"t": "Volunteer", "h": "https://lindenrow.example/volunteer/"},
+  {"t": "About us", "h": "https://lindenrow.example/about/"},
+  {"t": "Contact", "h": "https://lindenrow.example/contact/"}
+ ],
+ "cta": {"t": "Donate", "h": "https://lindenrow.example/donate/"},
+ "hero": {
+  "kicker": "A community food larder in Callowford",
+  "title": "Nobody on our streets should go to bed hungry",
+  "text": "We hand out food, toiletries and a hot drink to anyone who needs them, three days a week, no questions asked.",
+  "text2": "Linden Row Larder is run by neighbours, for neighbours. Everything on our shelves was given by someone living nearby.",
+  "primary": {"t": "Donate", "h": "https://lindenrow.example/donate/"},
+  "secondary": {"t": "Get help", "h": "https://lindenrow.example/help/"},
+  "note": "No referral needed. Just come to the hall."
+ },
+ "trust": ["Run by volunteers since 2011", "Every gift stays in Callowford", "Open three days a week", "No referral needed"],
+ "figures": [
+  {"v": "2011", "l": "the year the first shelf went up"},
+  {"v": "140", "l": "volunteers on the rota"},
+  {"v": "9,300", "l": "food parcels handed out last year"},
+  {"v": "3", "l": "days a week the doors are open"}
+ ],
+ "statement": {
+  "title": "Food first, and a friendly face",
+  "text": "Most people who come to us need food for a week. Many also need someone to talk to about rent, bills or work, and we know who can help."
+ },
+ "steps": {
+  "title": "How to get help",
+  "text": "There is no form to fill in before you come.",
+  "items": [
+   {"k": "Step 1", "title": "Come to the hall", "text": "Tuesday, Thursday or Saturday morning, at St Aldo's Hall on Linden Row.", "img": "media/lindenrow/hall.jpg"},
+   {"k": "Step 2", "title": "Have a cup of tea", "text": "A volunteer sits with you and asks what you need this week.", "img": "media/lindenrow/tea.jpg"},
+   {"k": "Step 3", "title": "Take a parcel home", "text": "Food for three days for everyone in your home, and toiletries if you need them.", "img": "media/lindenrow/parcel.jpg"}
+  ]
+ },
+ "features": {
+  "title": "What else we do",
+  "text": "",
+  "items": [
+   {"t": "Advice table", "d": "A money adviser comes every Thursday."},
+   {"t": "Baby bank", "d": "Nappies, wipes and formula on request."},
+   {"t": "School holiday lunches", "d": "Packed lunches for children in every holiday."},
+   {"t": "Home delivery", "d": "For people who cannot come to the hall."}
+  ]
+ },
+ "catalogue": {
+  "title": "Ways to help",
+  "text": "Food, time or money: each keeps the shelves full.",
+  "note": "We are a registered charity; gifts of money can be made with tax relief.",
+  "groups": [
+   {"t": "Give food", "text": "Bring it to the hall on an open morning or to a collection box.", "h": "https://lindenrow.example/give-food/",
+    "items": [
+     {"name": "Tinned meat and fish", "note": "most needed"},
+     {"name": "UHT milk", "note": "most needed"},
+     {"name": "Tinned vegetables"},
+     {"name": "Tea and coffee"},
+     {"name": "Toiletries", "text": "Toothpaste, soap, shampoo and sanitary products."}
+    ]},
+   {"t": "Give time", "text": "Two hours a week makes a difference.", "h": "https://lindenrow.example/volunteer/",
+    "items": [
+     {"name": "Morning shift at the hall", "text": "Sorting, packing and welcoming.", "img": "media/lindenrow/shift.jpg"},
+     {"name": "Van driver", "text": "Collecting from supermarkets and delivering to homes.", "img": "media/lindenrow/van.jpg"},
+     {"name": "Warehouse sorting", "text": "Checking dates and filling shelves.", "img": "media/lindenrow/shelves.jpg"}
+    ]},
+   {"t": "Give money", "text": "Money buys what nobody gives: fresh milk, bread and nappies.", "h": "https://lindenrow.example/donate/",
+    "items": [
+     {"name": "Breakfast for a week", "price": "£10"},
+     {"name": "A family parcel", "price": "£25"},
+     {"name": "A month of home deliveries", "price": "£60"}
+    ]}
+  ]
+ },
+ "plans": {
+  "title": "Give every month",
+  "text": "A monthly gift lets us plan what to buy.",
+  "note": "Cancel at any time.",
+  "items": [
+   {"name": "Friend", "price": "£5", "per": "a month", "line": "Milk for a family for a month.", "cta": {"t": "Give £5 a month", "h": "https://lindenrow.example/donate/monthly/5/"}},
+   {"name": "Neighbour", "price": "£12", "per": "a month", "line": "A family parcel every two months.", "cta": {"t": "Give £12 a month", "h": "https://lindenrow.example/donate/monthly/12/"}, "marked": true}
+  ]
+ },
+ "team": {
+  "title": "Who runs the larder",
+  "text": "Two part-time staff and a committee of volunteers.",
+  "items": [
+   {"name": "Joan Farrier", "role": "Coordinator", "text": "Keeps the rota and the shelves.", "img": "media/lindenrow/joan.jpg", "email": "joan@lindenrow.example"},
+   {"name": "Kwame Asante", "role": "Warehouse lead", "text": "Runs the van and the store room.", "img": "media/lindenrow/kwame.jpg"},
+   {"name": "Elif Durmaz", "role": "Chair of trustees", "text": "Volunteer since the first morning.", "img": "media/lindenrow/elif.jpg"}
+  ]
+ },
+ "locations": [
+  {"name": "St Aldo's Hall", "address": {"street": "Linden Row 3", "postcode": "CW2 7LR", "city": "Callowford"}, "phone": "01632 961 220",
+   "hours": [{"days": "Tuesday", "open": "10:00", "close": "13:00"}, {"days": "Thursday", "open": "10:00", "close": "13:00"}, {"days": "Saturday", "open": "9:30", "close": "12:00"}],
+   "note": "Step-free entrance from the car park.", "h": "https://lindenrow.example/hall/"},
+  {"name": "The store room", "address": {"street": "Quarry Yard 8", "postcode": "CW2 4QY", "city": "Callowford"},
+   "hours": [{"days": "Monday to Friday", "open": "9:00", "close": "15:00"}],
+   "note": "Donations of food only; no parcels handed out here."}
+ ],
+ "credentials": [
+  {"t": "Registered charity", "text": "Run by a board of volunteer trustees."},
+  {"t": "Food hygiene rating 5", "text": "Inspected by the district council.", "year": "2025"}
+ ],
+ "contact": {
+  "phone": {"t": "01632 961 220", "h": "tel:+441632961220", "note": "answered on open mornings"},
+  "email": "hello@lindenrow.example",
+  "form": {"h": "https://lindenrow.example/contact/", "t": "Write to us"},
+  "routes": [
+   {"t": "I need help", "h": "https://lindenrow.example/help/"},
+   {"t": "I want to volunteer", "h": "https://lindenrow.example/volunteer/"},
+   {"t": "My company wants to give", "h": "mailto:partners@lindenrow.example"}
+  ]
+ },
+ "media": {
+  "screens": [],
+  "phones": [],
+  "video": null,
+  "photos": [
+   {"src": "media/lindenrow/street.jpg", "w": 2400, "h": 1400, "alt": "Linden Row on a Saturday morning, a queue outside the hall", "role": "exterior"},
+   {"src": "media/lindenrow/hall.jpg", "w": 1800, "h": 1200, "alt": "Inside the hall: tables of food and volunteers in green aprons", "role": "room"},
+   {"src": "media/lindenrow/shelves.jpg", "w": 1600, "h": 1067, "alt": "Shelves of tins sorted by date", "role": "workshop"},
+   {"src": "media/lindenrow/tea.jpg", "w": 1200, "h": 1500, "alt": "Two cups of tea on a table", "role": "detail"},
+   {"src": "media/lindenrow/parcel.jpg", "w": 1400, "h": 1400, "alt": "A packed food parcel in a cardboard box", "role": "product"},
+   {"src": "media/lindenrow/shift.jpg", "w": 1600, "h": 1067, "alt": "Volunteers packing parcels", "role": "people"},
+   {"src": "media/lindenrow/van.jpg", "w": 1600, "h": 1067, "alt": "The larder's white van loaded with crates", "role": "work"},
+   {"src": "media/lindenrow/allotment.jpg", "w": 2400, "h": 1200, "alt": "The allotment that grows vegetables for the larder", "role": "landscape"},
+   {"src": "media/lindenrow/joan.jpg", "w": 640, "h": 800, "alt": "Joan Farrier", "role": "portrait"},
+   {"src": "media/lindenrow/kwame.jpg", "w": 640, "h": 800, "alt": "Kwame Asante", "role": "portrait"},
+   {"src": "media/lindenrow/elif.jpg", "w": 640, "h": 800, "alt": "Elif Durmaz", "role": "portrait"}
+  ]
+ },
+ "faq": {
+  "title": "Questions we are asked",
+  "items": [
+   {"q": "Do I need a referral?", "a": "No. Anyone who needs food can come on an open morning."},
+   {"q": "Can I bring fresh food?", "a": "We can take fresh fruit and vegetables on open mornings only, as we have no cold store."},
+   {"q": "How often can I come?", "a": "Every week, for as long as you need us."},
+   {"q": "Is my information shared?", "a": "We write down only your first name and how many people live with you, and we share it with nobody."}
+  ]
+ },
+ "quotes": [
+  {"q": "I came in for tins and left with a plan for my rent arrears.", "name": "A visitor", "role": "Callowford"},
+  {"q": "Saturday mornings at the hall are the best two hours of my week.", "name": "A volunteer", "role": "on the rota since 2019"}
+ ],
+ "logos": [],
+ "links": [
+  {"t": "Get help", "d": "When and where to come", "h": "https://lindenrow.example/help/"},
+  {"t": "Give food", "d": "What we need most this month", "h": "https://lindenrow.example/give-food/"},
+  {"t": "Volunteer", "d": "Join the rota", "h": "https://lindenrow.example/volunteer/"},
+  {"t": "Our year in numbers", "d": "The annual report", "h": "https://lindenrow.example/report/"},
+  {"t": "Contact", "d": "", "h": "https://lindenrow.example/contact/"}
+ ],
+ "close": {
+  "title": "Keep the shelves full",
+  "text": "Ten pounds buys breakfast for a family for a week.",
+  "cta": {"t": "Donate", "h": "https://lindenrow.example/donate/"}
+ },
+ "foot": {
+  "text": "Linden Row Larder · St Aldo's Hall, Linden Row 3, Callowford CW2 7LR · hello@lindenrow.example",
+  "legal": "© 2026 Linden Row Larder, a registered charity",
+  "links": [
+   {"t": "Privacy", "h": "https://lindenrow.example/privacy/"},
+   {"t": "Safeguarding", "h": "https://lindenrow.example/safeguarding/"},
+   {"t": "Contact", "h": "https://lindenrow.example/contact/"}
+  ]
+ }
+}

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Swarmsite — edit your page</title><meta name="robots" content="noindex">
+<link rel="preload" href="/fonts/instrument-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+@font-face{font-family:'Instrument Sans';font-weight:400;font-display:swap;src:url(/fonts/instrument-sans-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:'Instrument Sans';font-weight:500;font-display:swap;src:url(/fonts/instrument-sans-latin-500-normal.woff2) format('woff2')}
+@font-face{font-family:'JetBrains Mono';font-weight:400;font-display:swap;src:url(/fonts/jetbrains-mono-latin-400-normal.woff2) format('woff2')}
+:root{--paper:#F5F5F4;--ink:#111;--muted:#6B6B68;--line:rgba(17,17,17,.14);--bad:#a3261b;--ok:#1f6b3a;--sans:'Instrument Sans',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column}
+a{color:inherit}
+.bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--line);background:#fff}
+.bar .sp{flex:1}
+.lab{font:12px var(--mono);color:var(--muted)}
+.pill{display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:999px;padding:8px 14px;font:500 14px var(--sans);border:1px solid var(--line);background:#fff;min-height:40px;cursor:pointer;color:var(--ink)}
+.pill.ink{background:var(--ink);color:#fff;border-color:var(--ink)}.pill.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}.pill:disabled{opacity:.45;cursor:default}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.main{flex:1;display:grid;grid-template-columns:380px minmax(0,1fr);min-height:0}
+.panel{overflow:auto;border-right:1px solid var(--line);background:#fff;padding:14px 16px 40px;display:grid;gap:18px;align-content:start}
+.panel h2{font:500 12px var(--mono);color:var(--muted);text-transform:lowercase;margin-bottom:8px}
+.panel section{display:grid;gap:8px}
+.f{display:grid;gap:4px}.f span{font-size:12.5px;color:var(--muted)}
+.f textarea{font:400 15px var(--sans);border:1px solid var(--line);border-radius:10px;padding:8px 10px;resize:vertical;min-height:40px;width:100%}
+.f.hit textarea{border-color:var(--ink);box-shadow:0 0 0 2px rgba(17,17,17,.15)}
+.blocks{display:flex;flex-wrap:wrap;gap:6px}.blocks label{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:999px;padding:6px 11px;font-size:13.5px;cursor:pointer;min-height:36px}
+.slot{display:grid;grid-template-columns:72px minmax(0,1fr);gap:10px;align-items:center;padding:6px;border-radius:12px}.slot.hit{background:#f1efe9}
+.slot img{width:72px;height:54px;object-fit:cover;border-radius:8px;background:#ecebe7}.slot select{width:100%;min-height:40px;border:1px solid var(--line);border-radius:10px;padding:6px 8px;font:14px var(--sans);background:#fff}
+.sw{display:flex;flex-wrap:wrap;gap:8px}.sw button{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);cursor:pointer;position:relative}
+.sw button i{position:absolute;right:6px;bottom:6px;width:12px;height:12px;border-radius:50%}
+.view{position:relative;min-width:0;min-height:0;display:flex;flex-direction:column;background:#e9e8e4}
+.view .seg{display:flex;gap:6px;padding:8px 12px;justify-content:center}
+.stage{flex:1;display:flex;justify-content:center;min-height:0;padding:0 12px 12px}
+.stage iframe{width:100%;height:100%;border:0;background:#fff;border-radius:10px}.stage.phone iframe{width:390px;max-width:100%}
+.status{font-size:14px;color:var(--muted);max-width:60ch}.status.bad{color:var(--bad)}.status.ok{color:var(--ok)}
+.unread{display:grid;gap:6px;font-size:13.5px}.unread li{list-style:none;border-left:3px solid var(--bad);padding:4px 8px;background:#fbf3f2}
+.busy{position:absolute;top:56px;right:24px;font:12px var(--mono);color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px 10px}.busy[hidden]{display:none}
+@media(max-width:900px){.view .seg{display:none}.main{grid-template-columns:minmax(0,1fr);grid-template-rows:62vh auto}.panel{border-right:0;border-top:1px solid var(--line);grid-row:2;overflow:visible}.view{grid-row:1}body{display:block}.main{display:grid}}
+</style>
+</head>
+<body>
+<div class="bar">
+  <a class="pill" id="back" href="/app">← Designs</a>
+  <span class="lab">Design</span><div id="designs" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+  <span class="sp"></span>
+  <button class="pill" id="undo" disabled>Undo</button>
+  <button class="pill ink" id="save" disabled>Keep my edits</button>
+</div>
+<div class="main">
+  <aside class="panel" id="panel" aria-label="Edit the page">
+    <p class="status" id="status" role="status" aria-live="polite">Click a text on the page to rewrite it, or a picture to choose another.</p>
+    <ul class="unread" id="unread" hidden></ul>
+    <section><h2>download and publish</h2>
+      <p class="lab">Both are this design with your edits, checked against the page before anything is handed out. Both need an account; payment comes before either.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="pill ink" id="payGo" hidden>Pay for this design</button><button class="pill" id="prepare">Prepare my download</button><button class="pill" id="getZip" hidden>Download ↓</button></div>
+      <div class="f"><span>Your address</span><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><input id="siteName" maxlength="40" autocomplete="off" spellcheck="false" placeholder="your-name" style="font:15px var(--sans);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-height:40px;width:12ch;flex:1;min-width:8ch"><span class="lab">.swarmsite.si</span></div></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button class="pill ink" id="publish">Publish</button><a id="siteLink" hidden target="_blank" rel="noopener" style="text-decoration:underline"></a></div>
+      <p class="status" id="pubStatus" role="status" aria-live="polite"></p>
+    </section>
+    <section><h2>colours</h2><div class="sw" id="palettes"></div></section>
+    <section><h2>sections</h2><div class="blocks" id="blocks"></div><p class="lab" id="moveNote"></p></section>
+    <section><h2>pictures</h2><div id="slots" style="display:grid;gap:4px"></div><label class="pill" style="justify-self:start">Upload a photograph<input type="file" id="upload" accept="image/png,image/jpeg,image/webp" style="position:absolute;width:1px;height:1px;opacity:0"></label></section>
+    <section><h2>texts</h2><div id="fields" style="display:grid;gap:10px"></div></section>
+  </aside>
+  <div class="view">
+    <div class="seg"><button class="pill on" data-w="desk">Desktop</button><button class="pill" data-w="phone">Phone</button></div>
+    <span class="busy" id="busy" hidden>updating…</span>
+    <div class="stage" id="stage"><iframe id="page" title="Your page, as it will look"></iframe></div>
+  </div>
+</div>
+<script src="/config.js"></script>
+<script src="/js/auth.js" defer></script>
+<script>
+/* The editor (BRIEF-engine.md step 9). Every edit is an operation on the page's data, never on the design, so the
+   same edits stand when another of the three designs is chosen. After each edit the page is rendered again (the
+   server's lib/templates/edit.py) and the readability gate runs on it; a line that no longer reads is named here
+   with what to change. Trying costs nothing and needs no account; keeping the edits does. No model. */
+const API=(window.SWARMSITE_API||'').replace(/\/$/,''); const $=s=>document.querySelector(s); const qs=new URLSearchParams(location.search);
+const ID=qs.get('job')||'', NAMES={griffin:'Ledger',maze:'Studio'}; let SLUG=qs.get('slug')||'';
+const nameOf=s=>NAMES[s]||s.charAt(0).toUpperCase()+s.slice(1);
+/* the parts of a page in plain words (the data's own names stay underneath) */
+const PART={brand:'Name',hero:'Top of the page',nav:'Menu',signin:'Sign-in link',cta:'Top button',trust:'Trust line',figures:'Numbers',statement:'Statement',steps:'Steps',features:'Features',plans:'Prices',faq:'Questions',quotes:'Quotes',logos:'Customer logos',links:'Links',close:'Closing',foot:'Footer',place:'The place',team:'Team',catalogue:'What you offer',locations:'Locations',contact:'Contact',projects:'Projects',credentials:'Credentials'};
+const partOf=b=>PART[b]||b;
+const WORD={title:'heading',text:'text',t:'',d:'description',q:'question',a:'answer',l:'label',v:'number',k:'',name:'name',price:'price',note:'note',items:'',kicker:'small line above',primary:'button',secondary:'second button',groups:'',sections:'',menu:'menu'};
+const labelOf=p=>{ const [b,...r]=p.split('.'); return [partOf(b),...r.map(x=>/^\d+$/.test(x)?'#'+(+x+1):(x in WORD?WORD[x]:x)).filter(Boolean)].join(' · '); };
+let ops=[], kept='[]', view=null, blocksSeen=[], renderN=0, checkT=0;
+const post=(p,body)=>fetch(API+p,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
+function say(t,cls){ const s=$('#status'); s.textContent=t; s.className='status'+(cls?' '+cls:''); }
+/* the patch, kept short: the last text of a path, the last colour, a section's last word */
+function compact(list){ const out=[], last=new Map(); list.forEach((o,i)=>{ const k=o.op==='text'||o.op==='picture'?o.op+':'+o.path:o.op==='palette'?'palette':o.op==='hide'||o.op==='show'?'block:'+o.block:'#'+i; last.set(k,i); });
+  list.forEach((o,i)=>{ const k=o.op==='text'||o.op==='picture'?o.op+':'+o.path:o.op==='palette'?'palette':o.op==='hide'||o.op==='show'?'block:'+o.block:'#'+i; if(last.get(k)===i) out.push(o); }); return out; }
+const hist=[];   /* each edit's state before it: Undo returns to it exactly */
+function edit(op){ hist.push(ops); ops=compact([...ops,op]); $('#undo').disabled=false; refresh(); }
+$('#undo').onclick=()=>{ if(!hist.length) return; ops=hist.pop(); $('#undo').disabled=!hist.length; refresh(); };
+async function describe(){ const r=await post(`/t/${ID}/${SLUG}/describe`,{ops}); const j=await r.json(); if(!r.ok) throw new Error(j.error||'This page cannot be edited.'); return j; }
+async function refresh(){ const n=++renderN; $('#busy').hidden=false;
+  try{ const [d,html]=await Promise.all([describe(),post(`/t/${ID}/${SLUG}/render`,{ops}).then(async r=>{ if(!r.ok) throw new Error((await r.json().catch(()=>({}))).error||'The page could not be drawn.'); return r.text(); })]);
+    if(n!==renderN) return; view=d; draw(d); show(html); $('#save').disabled=JSON.stringify(ops)===kept;
+    if(d.refused?.length) say(`${d.refused.length} edit${d.refused.length===1?'':'s'} cannot be made on this design: ${d.refused.map(x=>x.why).filter((v,i,a)=>a.indexOf(v)===i).join('; ')}.`,'bad'); else say('Checking that every line still reads…');
+    clearTimeout(checkT); checkT=setTimeout(()=>check(n),900); }
+  catch(e){ if(n===renderN) say(String(e.message||e),'bad'); }
+  finally{ if(n===renderN) $('#busy').hidden=true; } }
+async function check(n){ try{ const r=await post(`/t/${ID}/${SLUG}/check`,{ops}); const j=await r.json(); if(n!==renderN) return; const ul=$('#unread'); ul.replaceChildren();
+  if(!r.ok){ say(j.error||'The check did not run.','bad'); return; }
+  if(j.ok){ ul.hidden=true; if(!view?.refused?.length) say('Every line reads, at desk and phone width.','ok'); return; }
+  for(const u of j.unread||[]){ const li=document.createElement('li'); const f=(view?.fields||[]).find(x=>norm(x.value)===norm(u.text)||norm(u.text).startsWith(norm(x.value).slice(0,40)));
+    li.textContent=`“${u.text}” reads at ${Number(u.ratio).toFixed(1)}:1 ${u.at==='m'?'on a phone':'on a desk'}. Choose another colour, or another picture for ${f?.block?partOf(f.block).toLowerCase():'this section'}, or hide it.`; ul.appendChild(li); }
+  if(j.overlap) { const li=document.createElement('li'); li.textContent='Two lines lie over each other: a text is too long for its place.'; ul.appendChild(li); }
+  if(j.sideways) { const li=document.createElement('li'); li.textContent='The page now scrolls sideways on a phone: a word or a line is too long.'; ul.appendChild(li); }
+  ul.hidden=!ul.children.length; say('Your edit makes part of the page hard to read:','bad'); }
+  catch{ if(n===renderN) say('The check did not run.','bad'); } }
+const norm=s=>String(s||'').replace(/\s+/g,' ').trim().toLowerCase();
+/* the panel */
+function draw(d){
+  const sw=$('#palettes'); sw.replaceChildren(); for(const p of d.palettes||[]){ const b=document.createElement('button'); b.style.background=p.ground; b.title=`${p.name}`; b.setAttribute('aria-label',`Colours: ${p.name}`); const i=document.createElement('i'); i.style.background=p.accent; b.appendChild(i); b.onclick=()=>edit({op:'palette',ground:p.ground,ink:p.ink,accent:p.accent}); sw.appendChild(b); }
+  for(const b of d.blocks||[]) if(!blocksSeen.includes(b)) blocksSeen.push(b);
+  const bl=$('#blocks'); bl.replaceChildren(); for(const b of blocksSeen){ const l=document.createElement('label'); const c=document.createElement('input'); c.type='checkbox'; c.checked=(d.blocks||[]).includes(b); c.onchange=()=>edit({op:c.checked?'show':'hide',block:b}); l.append(c,document.createTextNode(partOf(b))); bl.appendChild(l); }
+  $('#moveNote').textContent=(d.movable||[]).length?'':'This design keeps its own order of sections.';
+  const sl=$('#slots'); sl.replaceChildren(); for(const s of d.slots||[]){ const row=document.createElement('div'); row.className='slot'; row.dataset.path=s.path; const im=document.createElement('img'); im.alt=''; im.src=mediaUrl(s.src);
+    const sel=document.createElement('select'); sel.setAttribute('aria-label','Picture: '+labelOf(s.path)); for(const p of d.pictures||[]){ const o=new Option(p.alt||p.src.split('/').pop(),p.src); o.selected=p.src===s.src; sel.appendChild(o); } sel.onchange=()=>edit({op:'picture',path:s.path,src:sel.value}); row.append(im,sel); sl.appendChild(row); }
+  const fs=$('#fields'); fs.replaceChildren(); for(const f of d.fields||[]){ const w=document.createElement('label'); w.className='f'; w.dataset.path=f.path; const sp=document.createElement('span'); sp.textContent=labelOf(f.path); const t=document.createElement('textarea'); t.rows=Math.min(4,Math.ceil(f.value.length/38)||1); t.value=f.value;
+    t.onchange=()=>{ if(t.value.trim()&&t.value!==f.value) edit({op:'text',path:f.path,value:t.value}); else if(!t.value.trim()){ t.value=f.value; say('An empty text cannot stand on the page: hide its section instead.','bad'); } }; w.append(sp,t); fs.appendChild(w); } }
+function mediaUrl(src){ const f=$('#page'); const d=f.contentDocument; const im=d&&[...d.querySelectorAll('img')].find(i=>(i.getAttribute('src')||'').endsWith(src)); return im?im.src:''; }
+/* the page: a text clicked is edited where it stands; a picture clicked shows its slot */
+function show(html){ const f=$('#page'); const y=f.contentWindow?.scrollY||0; f.onload=()=>{ const d=f.contentDocument; try{ f.contentWindow.scrollTo(0,y); }catch{}
+    d.addEventListener('click',e=>{ const a=e.target.closest('a'); if(a) e.preventDefault(); const im=e.target.closest('img');
+      if(im){ const src=im.getAttribute('src')||''; const s=(view.slots||[]).find(x=>src.endsWith(x.src)); if(s){ hit('#slots .slot',s.path); return; } }
+      let el=e.target; while(el&&el!==d.body){ const t=norm(el.textContent); const fld=(view.fields||[]).find(x=>norm(x.value)===t); if(fld){ inline(el,fld); return; } el=el.parentElement; } },true);
+    document.querySelectorAll('#slots img').forEach((im,i)=>{ const s=view.slots[i]; im.src=mediaUrl(s.src); }); };
+  f.srcdoc=html; }
+function hit(sel,path){ document.querySelectorAll(sel).forEach(x=>x.classList.toggle('hit',x.dataset.path===path)); const x=document.querySelector(`${sel}[data-path="${CSS.escape(path)}"]`); if(x){ x.scrollIntoView({block:'center',behavior:'smooth'}); x.querySelector('select,textarea')?.focus({preventScroll:true}); } }
+function inline(el,fld){ hit('#fields .f',fld.path); el.contentEditable='plaintext-only'; el.focus(); const before=el.textContent;
+  const done=()=>{ el.contentEditable='false'; el.removeEventListener('blur',done); const v=el.textContent.replace(/\s+/g,' ').trim(); if(v&&v!==norm(before)&&v!==fld.value.trim()) edit({op:'text',path:fld.path,value:v}); else if(!v){ el.textContent=before; say('An empty text cannot stand on the page: hide its section instead.','bad'); } };
+  el.addEventListener('blur',done); el.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); el.blur(); } if(e.key==='Escape'){ el.textContent=before; el.blur(); } }); }
+document.querySelectorAll('.seg [data-w]').forEach(b=>b.onclick=()=>{ document.querySelectorAll('.seg [data-w]').forEach(x=>x.classList.toggle('on',x===b)); $('#stage').classList.toggle('phone',b.dataset.w==='phone'); });
+/* a photograph of their own, added while editing */
+$('#upload').onchange=async e=>{ const file=e.target.files[0]; e.target.value=''; if(!file) return; say('Sending the photograph…');
+  try{ const r=await fetch(API+'/uploads',{method:'POST',headers:{'content-type':file.type||'image/jpeg'},body:file}); const j=await r.json(); if(!r.ok) throw new Error(j.error);
+    const p=await post(`/t/${ID}/photos`,{file:j.file}); const op=await p.json(); if(!p.ok) throw new Error(op.error); edit(op); say('Your photograph is among the pictures: choose it for a place on the page.'); }
+  catch(err){ say(String(err.message||'The photograph could not be added.'),'bad'); } };
+/* keep: an account; the first to keep edits on these designs owns them */
+const send=(p,i)=>window.Auth&&Auth.enabled?Auth.api(p,i):fetch(API+p,i);
+const toLogin=()=>{ try{ sessionStorage.setItem('edits:'+ID,JSON.stringify(ops)); }catch{} location.href='/login?next='+encodeURIComponent(location.pathname+location.search); };
+async function keep(){ const r=await send(`/t/${ID}/edits`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({ops})});
+  if(r.status===401){ toLogin(); return null; }
+  const j=await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.error||'The edits could not be kept.'); kept=JSON.stringify(ops); $('#save').disabled=true; return j; }
+$('#save').onclick=async()=>{ const b=$('#save'); b.disabled=true;
+  try{ const j=await keep(); if(j) say(`Kept: ${j.kept} edit${j.kept===1?'':'s'}. They stand on every design you choose.`,'ok'); }
+  catch(e){ say(String(e.message||e),'bad'); b.disabled=false; } };
+/* the download and the site: both the one package of these edits, made and compared with the page before it is handed out */
+/* payment: one design of this job, paid once through Stripe Checkout; back here afterwards */
+function offerPay(){ pubSay('This design is paid for once; then it is yours to download and publish.'); const b=$('#payGo'); b.hidden=false;
+  b.onclick=async()=>{ b.disabled=true; try{ const r=await send('/pay',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({job:ID,slug:SLUG,from:'edit'})}); const j=await r.json().catch(()=>({}));
+    if(r.status===401){ toLogin(); return; } if(j.paid){ b.hidden=true; pubSay('Paid. Prepare your download or publish.','ok'); return; } if(!r.ok||!j.url) throw new Error(j.error||'Payment could not be started.'); location.href=j.url; }
+    catch(e){ pubSay(String(e.message||e),'bad'); b.disabled=false; } }; }
+function pubSay(t,cls){ const s=$('#pubStatus'); s.textContent=t; s.className='status'+(cls?' '+cls:''); }
+async function follow(field,since,done){ for(let i=0;i<200;i++){ await new Promise(r=>setTimeout(r,i?3000:800)); const j=await fetch(API+'/jobs/'+ID).then(r=>r.json()).catch(()=>null); const s=j?.result?.[field];
+  if(!s||s.slug!==SLUG||Date.parse(s.at)<Date.parse(since)) continue;   /* only what this start wrote */ if(['packaging','deploying'].includes(s.status)){ pubSay(s.status==='packaging'?'Making the package and comparing it with your page…':'Putting it online…'); continue; } done(s); return; } pubSay('It is taking long; come back to this page later.','bad'); }
+async function start(path,body,field,done){ $('#prepare').disabled=$('#publish').disabled=true;
+  try{ if(JSON.stringify(ops)!==kept&&!(await keep())) return; const r=await send(path,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body||{})});
+    if(r.status===401){ toLogin(); return; } const j=await r.json().catch(()=>({})); if(r.status===402&&j.pay_url){ offerPay(); return; } if(!r.ok){ pubSay(j.error||'It could not be started.','bad'); return; } await follow(field,j.at,done); }
+  catch(e){ pubSay(String(e.message||e),'bad'); }
+  finally{ $('#prepare').disabled=$('#publish').disabled=false; } }
+$('#prepare').onclick=()=>start(`/t/${ID}/${SLUG}/prepare`,{},'edited',s=>{ if(s.status!=='ready'){ pubSay('The package did not match your page, so it is not offered: '+(s.why||[]).join('; '),'bad'); return; }
+  pubSay('Your download is ready.','ok'); const a=$('#getZip'); a.hidden=false; a.onclick=async()=>{ const r=await send(`/t/${ID}/${SLUG}/package`,{}); if(!r.ok){ pubSay((await r.json().catch(()=>({}))).error||'The download is not available.','bad'); return; }
+    const u=URL.createObjectURL(await r.blob()), l=document.createElement('a'); l.href=u; l.download=`${SLUG}.zip`; document.body.appendChild(l); l.click(); l.remove(); setTimeout(()=>URL.revokeObjectURL(u),4000); }; });
+$('#publish').onclick=()=>{ const name=$('#siteName').value.trim().toLowerCase(); if(!/^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])$/.test(name)||name.includes('--')){ pubSay('A name is 3 to 40 small letters, digits and single dashes.','bad'); $('#siteName').focus(); return; }
+  start(`/t/${ID}/${SLUG}/publish`,{name},'publish',s=>{ if(s.status==='live'){ pubSay('Your site is online.','ok'); const a=$('#siteLink'); a.href=s.url; a.textContent=s.url.replace('https://',''); a.hidden=false; }
+    else pubSay((s.status==='refused'?'Not published: ':'Publishing failed: ')+(s.why||[]).join('; '),'bad'); }); };
+/* switching design keeps every edit */
+function designs(list){ const w=$('#designs'); w.replaceChildren(); for(const s of list){ const b=document.createElement('button'); b.className='pill'+(s===SLUG?' on':''); b.textContent=nameOf(s); b.setAttribute('aria-pressed',String(s===SLUG));
+  b.onclick=()=>{ if(s===SLUG) return; SLUG=s; history.replaceState(null,'',`?job=${ID}&slug=${s}`); designs(list); refresh(); }; w.appendChild(b); } }
+(async()=>{ if(!/^[0-9a-f-]{36}$/.test(ID)||!SLUG){ say('No page to edit here.','bad'); return; } $('#back').href='/app?job='+ID; if(qs.get('paid')===SLUG) pubSay('Payment received. Prepare your download or publish — if it says payment is still needed, give it a moment.','ok'); else if(qs.get('paid')==='0') pubSay('Payment was not completed. Nothing was charged.');
+  try{ const d=await describe(); ops=d.ops||[]; kept=JSON.stringify(ops);
+    try{ const waiting=sessionStorage.getItem('edits:'+ID); if(waiting){ ops=JSON.parse(waiting); sessionStorage.removeItem('edits:'+ID); } }catch{}
+    $('#undo').disabled=true; designs(d.variants||[SLUG]); await refresh(); }
+  catch(e){ say(String(e.message||e),'bad'); } })();
+</script>
+</body>
+</html>

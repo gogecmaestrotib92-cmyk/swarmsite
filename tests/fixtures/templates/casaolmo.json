@@ -1,0 +1,370 @@
+{
+ "_note": "A made-up client for tests. The name, the words, the numbers and the addresses are invented; no real business is described.",
+ "brand": {
+  "name": "Casa Olmo",
+  "logo": null,
+  "home": "https://casaolmo.example/"
+ },
+ "lang": "es",
+ "kind": "restaurant",
+ "character": "warm",
+ "palette": {
+  "note": "invented",
+  "ground": "#ffffff",
+  "ink": "#2b2b2b",
+  "accent": "#b3541e",
+  "extra": [
+   "#f08a24",
+   "#8a5c34",
+   "#0f7c8f",
+   "#101010"
+  ]
+ },
+ "nav": [
+  {
+   "t": "La carta",
+   "h": "https://casaolmo.example/carta/"
+  },
+  {
+   "t": "Los espacios",
+   "h": "https://casaolmo.example/espacios/"
+  },
+  {
+   "t": "Celebraciones",
+   "h": "https://casaolmo.example/celebraciones/"
+  },
+  {
+   "t": "Grupos",
+   "h": "https://casaolmo.example/grupos/"
+  },
+  {
+   "t": "Contacto",
+   "h": "https://casaolmo.example/contacto/"
+  }
+ ],
+ "cta": {
+  "t": "Reservar",
+  "h": "https://casaolmo.example/reservas/"
+ },
+ "hero": {
+  "kicker": "Desde 1987",
+  "title": "Casa Olmo cocina de arroces para todos",
+  "text": "Arroces a la leña con producto de la huerta",
+  "text2": "En el barrio de Ruzafa. Valencia.",
+  "primary": {
+   "t": "Reservar",
+   "h": "https://casaolmo.example/reservas/"
+  },
+  "secondary": {
+   "t": "La carta",
+   "h": "https://casaolmo.example/carta/"
+  },
+  "note": "Teléfono 912 345 678 desde las 13:00h"
+ },
+ "trust": [
+  "Desde 1987",
+  "Patio de verano",
+  "Salón para celebraciones",
+  "La bodega",
+  "También para llevar"
+ ],
+ "figures": [
+  {
+   "v": "1987",
+   "l": "Casa Olmo desde 1987"
+  },
+  {
+   "v": "3",
+   "l": "espacios bajo un mismo techo"
+  },
+  {
+   "v": "42",
+   "l": "La carta"
+  },
+  {
+   "v": "58",
+   "l": "Vinos"
+  }
+ ],
+ "statement": {
+  "title": "el arroz se comparte, como la sobremesa",
+  "text": "También para llevar"
+ },
+ "steps": {
+  "title": "3 espacios bajo un mismo techo",
+  "text": "Patio de verano, salón y bodega",
+  "items": [
+   {
+    "k": "Patio de verano",
+    "title": "El patio",
+    "text": "mesas a la sombra de la parra, para familias y para tardes largas",
+    "img": "media/casaolmo/patio.jpg"
+   },
+   {
+    "k": "Salón",
+    "title": "El salón",
+    "text": "Para comer a la carta y celebrar",
+    "img": "media/casaolmo/salon.jpg"
+   },
+   {
+    "k": "Bodega",
+    "title": "La bodega",
+    "text": "vinos por copas, vermut y picoteo",
+    "img": "media/casaolmo/bodega.jpg"
+   }
+  ]
+ },
+ "features": {
+  "title": "La carta",
+  "text": "",
+  "items": [
+   {
+    "t": "Arroces",
+    "d": "6 platos"
+   },
+   {
+    "t": "A la brasa",
+    "d": "9 platos"
+   },
+   {
+    "t": "De la huerta",
+    "d": "4 platos"
+   },
+   {
+    "t": "De la tierra",
+    "d": "5 platos"
+   },
+   {
+    "t": "Del mar",
+    "d": "8 platos"
+   },
+   {
+    "t": "Pescados",
+    "d": "7 platos"
+   }
+  ]
+ },
+ "media": {
+  "screens": [],
+  "phones": [],
+  "video": null,
+  "photos": [
+   {
+    "src": "media/casaolmo/arroz.jpg",
+    "w": 1187,
+    "h": 796,
+    "alt": "Arroz del señoret",
+    "role": "dish"
+   },
+   {
+    "src": "media/casaolmo/salon.jpg",
+    "w": 1400,
+    "h": 589,
+    "alt": "El salón: manteles blancos y sillas de madera bajo las vigas",
+    "role": "room"
+   },
+   {
+    "src": "media/casaolmo/barra.jpg",
+    "w": 1400,
+    "h": 1867,
+    "alt": "La barra: techo de madera, lámparas de globo y botellas",
+    "role": "bar"
+   },
+   {
+    "src": "media/casaolmo/patio.jpg",
+    "w": 418,
+    "h": 315,
+    "alt": "Patio de verano",
+    "role": "exterior",
+    "small": true
+   },
+   {
+    "src": "media/casaolmo/bodega.jpg",
+    "w": 418,
+    "h": 315,
+    "alt": "La bodega",
+    "role": "room",
+    "small": true
+   }
+  ]
+ },
+ "faq": {
+  "title": "",
+  "items": []
+ },
+ "quotes": [],
+ "logos": [],
+ "links": [
+  {
+   "t": "La carta",
+   "d": "Vermut, arroces, brasa, vinos, cafés",
+   "h": "https://casaolmo.example/carta/"
+  },
+  {
+   "t": "Grupos",
+   "d": "Menús para grupos. Empresas, cumpleaños y amigos",
+   "h": "https://casaolmo.example/grupos/"
+  },
+  {
+   "t": "Celebraciones",
+   "d": "",
+   "h": "https://casaolmo.example/celebraciones/"
+  },
+  {
+   "t": "Los espacios",
+   "d": "",
+   "h": "https://casaolmo.example/espacios/"
+  },
+  {
+   "t": "Contacto",
+   "d": "¿Alguna duda? Escríbenos y te contestamos en el día.",
+   "h": "https://casaolmo.example/contacto/"
+  }
+ ],
+ "close": {
+  "title": "Hecho a fuego lento",
+  "text": "Cocina de arroces a la leña",
+  "cta": {
+   "t": "Reservar",
+   "h": "https://casaolmo.example/reservas/"
+  }
+ },
+ "foot": {
+  "text": "Casa Olmo. Calle del Olmo 4. 46006 Valencia · Teléfono: 912 345 678 · hola@casaolmo.example",
+  "legal": "Casa Olmo 2026 desde 1987",
+  "links": [
+   {
+    "t": "Aviso legal",
+    "h": "https://casaolmo.example/aviso-legal/"
+   },
+   {
+    "t": "Contacto",
+    "h": "https://casaolmo.example/contacto/"
+   }
+  ]
+ },
+ "place": {
+  "address": {
+   "street": "Calle del Olmo 4",
+   "postcode": "46006",
+   "city": "Valencia",
+   "region": "Valencia"
+  },
+  "phone": {
+   "t": "912 345 678",
+   "h": "tel:912345678",
+   "note": "desde las 13:00h"
+  },
+  "email": "hola@casaolmo.example",
+  "hours": [
+   {
+    "days": "De martes a sábado",
+    "open": "13:30h",
+    "close": "16:00h"
+   },
+   {
+    "days": "Domingos",
+    "open": "13:30h",
+    "close": "17:00h"
+   }
+  ],
+  "booking": {
+   "t": "Reservar",
+   "h": "https://casaolmo.example/reservas/"
+  },
+  "since": "1987",
+  "menu": {
+   "h": "https://casaolmo.example/carta/",
+   "sections": [
+    {
+     "t": "Arroces",
+     "count": 6,
+     "h": "https://casaolmo.example/carta/arroces/",
+     "items": []
+    },
+    {
+     "t": "A la brasa",
+     "count": 9,
+     "h": "https://casaolmo.example/carta/a-la-brasa/",
+     "items": []
+    },
+    {
+     "t": "De la huerta",
+     "count": 4,
+     "h": "https://casaolmo.example/carta/de-la-huerta/",
+     "items": []
+    },
+    {
+     "t": "De la tierra",
+     "count": 5,
+     "h": "https://casaolmo.example/carta/de-la-tierra/",
+     "items": []
+    },
+    {
+     "t": "Del mar",
+     "count": 8,
+     "h": "https://casaolmo.example/carta/del-mar/",
+     "items": []
+    },
+    {
+     "t": "Pescados",
+     "count": 7,
+     "h": "https://casaolmo.example/carta/pescados/",
+     "items": []
+    },
+    {
+     "t": "Postres",
+     "items": [
+      {
+       "name": "Tarta de calabaza",
+       "price": "6,50 €",
+       "h": "https://casaolmo.example/carta/postres/tarta-de-calabaza/",
+       "note": "IVA incluido"
+      },
+      {
+       "name": "Naranja con canela",
+       "price": "5,00 €",
+       "h": "https://casaolmo.example/carta/postres/naranja-con-canela/",
+       "note": "IVA incluido"
+      }
+     ]
+    }
+   ],
+   "lists": [
+    {
+     "t": "Vermut y aperitivo",
+     "count": 8,
+     "h": "https://casaolmo.example/carta/vermut/"
+    },
+    {
+     "t": "La carta",
+     "count": 42,
+     "h": "https://casaolmo.example/carta/la-carta/"
+    },
+    {
+     "t": "Vinos",
+     "count": 58,
+     "h": "https://casaolmo.example/carta/vinos/"
+    }
+   ]
+  },
+  "spaces": [
+   {
+    "title": "El patio",
+    "text": "mesas a la sombra de la parra, para familias y para tardes largas",
+    "img": "media/casaolmo/patio.jpg"
+   },
+   {
+    "title": "El salón",
+    "text": "Para comer a la carta y celebrar",
+    "img": "media/casaolmo/salon.jpg"
+   },
+   {
+    "title": "La bodega",
+    "text": "vinos por copas, vermut y picoteo",
+    "img": "media/casaolmo/bodega.jpg"
+   }
+  ],
+  "events": []
+ }
+}

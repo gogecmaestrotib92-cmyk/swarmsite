@@ -10,10 +10,17 @@ import { saveCrawlCheckpoint, restoreCrawlCheckpoint } from './crawl_checkpoint.
 import { spawn } from 'node:child_process'; import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
 import { makeUserOf, allowance, mine } from './auth.mjs';
+import { STEPS_T, STEPS_F, enabled as templatesEnabled, runTemplateJob, mayDownload, previewable, imageType, formProblem, UPLOAD } from './templates.mjs';
+import { makeEditor, mayKeep, editable, opsProblem } from './editor.mjs';
+import { ensurePrivateBucket } from './bucket.mjs'; import { runCleanup } from './cleanup.mjs';
+import { runPublish, runRepackage, editedPackage, editsHash, nameProblem } from './publish.mjs';
+import { payGate, stripeOf, checkout, webhook, withPaid, configured as payConfigured, paidBy } from './payments.mjs';
 import { AsyncLocalStorage } from 'node:async_hooks';
 const HERE = path.dirname(fileURLToPath(import.meta.url)); const ROOT = path.resolve(HERE, '..');
 const sb = createClient(process.env.SUPABASE_URL || 'https://placeholder.supabase.co', process.env.SUPABASE_SERVICE_KEY || 'placeholder', { auth: { persistSession: false } });
 const BUCKET = 'previews'; const OUT = path.join(ROOT, 'out');
+// the template path (server/templates.mjs): off unless TEMPLATES_MODE=1; packages live in a bucket that is NOT public
+let TEMPLATES = templatesEnabled(process.env); const PACKAGE_BUCKET = process.env.PACKAGE_BUCKET || 'packages';
 const WORKER_ID = crypto.randomUUID();
 const STEPS = [
   ['capture', 'Reading your landing page: text, photos, logo, colours'],
@@ -24,7 +31,7 @@ const STEPS = [
   ['upload', 'Publishing the preview'],
 ];
 
-const app = express(); app.use(cors({ origin: process.env.PUBLIC_ORIGIN ? process.env.PUBLIC_ORIGIN.split(',') : true })); app.use(express.json({ limit: '1mb' }));
+const app = express(); app.use(cors({ origin: process.env.PUBLIC_ORIGIN ? process.env.PUBLIC_ORIGIN.split(',') : true })); const json = express.json({ limit: '1mb' }); app.use((req, res, next) => req.path === '/stripe/webhook' ? next() : json(req, res, next));   // the webhook's signature is over its raw body
 app.get('/', (_, res) => res.json({ ok: true, service: 'swarmsite', steps: STEPS.map(s => s[0]) }));
 // ---- abuse and cost limits: a public endpoint that spends our model credit needs all three ----
 // Per-IP guard against one person hammering the queue; the day and queue ceilings are abuse/cost sanity stops,
@@ -44,7 +51,7 @@ function rateLimited(ip) {
 const AUTH = { require: process.env.REQUIRE_LOGIN === '1', free: Math.max(0, Number(process.env.FREE_PREVIEWS_PER_USER || 3)) };
 const userOf = makeUserOf(sb);
 const usedBy = async userId => { const { count } = await sb.from('jobs').select('id', { count: 'exact', head: true }).eq('user_id', userId).neq('status', 'failed'); return count || 0; };
-app.get('/config', (_, res) => res.json({ auth: { require: AUTH.require, free: AUTH.free } }));
+app.get('/config', (_, res) => res.json({ auth: { require: AUTH.require, free: AUTH.free }, templates: TEMPLATES }));
 app.get('/me', async (req, res) => { const user = await userOf(req); if (!user) return res.status(401).json({ error: 'sign in' }); res.json({ id: user.id, email: user.email, previews: allowance({ used: await usedBy(user.id), free: AUTH.free }) }); });
 app.get('/me/jobs', async (req, res) => {
   const user = await userOf(req); if (!user) return res.status(401).json({ error: 'sign in' });
@@ -61,26 +68,53 @@ app.post('/jobs/:id/claim', async (req, res) => {
   res.json({ claimed: (data || []).length === 1 });
 });
 const canonicalUrl = url => { try { const u = new URL(url); u.hash = ''; u.hostname = u.hostname.toLowerCase().replace(/^www\./, ''); u.pathname = u.pathname.replace(/\/+$/, '') || '/'; return u.origin.replace(/^https?:\/\/www\./, m => m) + u.pathname + u.search; } catch { return url; } };
+// A site from nothing: a photograph the visitor uploads, one per request, before the form's job is started. The body is
+// the file itself; what it is is read from its bytes. Kept in the private bucket; only a job of this server reads it.
+const uploadHits = new Map();
+app.post('/uploads', express.raw({ type: () => true, limit: '8mb' }), async (req, res) => {
+  if (!TEMPLATES) return res.status(400).json({ error: 'templates mode is off' });
+  const ip = clientIp(req), now = Date.now(), hits = (uploadHits.get(ip) || []).filter(t => now - t < 3600e3);
+  if (hits.length >= 60) return res.status(429).json({ error: 'Too many photographs in an hour. Please wait a little.' });
+  hits.push(now); uploadHits.set(ip, hits); if (uploadHits.size > 5000) uploadHits.clear();
+  const ext = imageType(Buffer.isBuffer(req.body) ? req.body : null);
+  if (!ext) return res.status(400).json({ error: 'Only JPEG, PNG or WebP photographs.' });
+  const file = `${crypto.randomUUID()}.${ext}`;
+  const { error } = await sb.storage.from(PACKAGE_BUCKET).upload(`uploads/${file}`, req.body, { contentType: ext === 'jpg' ? 'image/jpeg' : `image/${ext}` });
+  if (error) return res.status(500).json({ error: 'The photograph could not be kept.' });
+  res.json({ file });
+});
 app.post('/jobs', async (req, res) => {
-  let url = String(req.body?.url || '').trim(); if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
-  try { new URL(url); } catch { return res.status(400).json({ error: 'bad url' }); }
-  if (/localhost|127\.|10\.|192\.168\.|\.internal/i.test(url)) return res.status(400).json({ error: 'not allowed' });
+  // the template path: three previews before sign-up and payment (owner, 2026-11-12); only its download needs an account
+  // options.mode is the brief's SEO choice (seo-safe | free); which engine builds the page is options.engine
+  const mode = req.body?.options?.engine === 'templates' ? 'templates' : '';
+  if (mode && !TEMPLATES) return res.status(400).json({ error: 'templates mode is off' });
+  // a site from nothing: the form stands in for the site; its job has no address to read, so it is named after the business
+  const fromForm = mode && req.body?.options?.source === 'form';
+  if (fromForm) { const bad = formProblem(req.body?.form); if (bad) return res.status(400).json({ error: bad }); }
+  let url = fromForm ? `form:${String(req.body.form.name).toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'site'}-${crypto.randomUUID().slice(0, 8)}` : String(req.body?.url || '').trim();
+  if (!fromForm) {
+    if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+    try { new URL(url); } catch { return res.status(400).json({ error: 'bad url' }); }
+    if (/localhost|127\.|10\.|192\.168\.|\.internal/i.test(url)) return res.status(400).json({ error: 'not allowed' });
+  }
   const user = await userOf(req);
-  if (AUTH.require && !user) return res.status(401).json({ error: 'Sign in to start a preview.', login: true });
-  if (user) { const a = allowance({ used: await usedBy(user.id), free: AUTH.free }); if (AUTH.require && !a.allowed) return res.status(402).json({ error: `Your ${a.free} free preview${a.free === 1 ? ' is' : 's are'} used.`, previews: a }); }
+  if (!mode && AUTH.require && !user) return res.status(401).json({ error: 'Sign in to start a preview.', login: true });
+  if (!mode && user) { const a = allowance({ used: await usedBy(user.id), free: AUTH.free }); if (AUTH.require && !a.allowed) return res.status(402).json({ error: `Your ${a.free} free preview${a.free === 1 ? ' is' : 's are'} used.`, previews: a }); }
   const ip = clientIp(req);
   if (!user && rateLimited(ip)) return res.status(429).json({ error: 'You have started several previews recently. Please wait an hour before starting another.' });
   // the same site already queued or running → hand back that job instead of paying twice
   const key = canonicalUrl(url);
-  const { data: live } = await sb.from('jobs').select('id,url,status,created_at').in('status', ['queued', 'running']).order('created_at', { ascending: false }).limit(200);
-  const same = (live || []).find(j => canonicalUrl(j.url) === key);
+  const { data: live } = await sb.from('jobs').select('id,url,status,created_at,options').in('status', ['queued', 'running']).order('created_at', { ascending: false }).limit(200);
+  const same = (live || []).find(j => canonicalUrl(j.url) === key && (j.options?.engine === 'templates' ? 'templates' : '') === mode);
   if (same) return res.json({ id: same.id, reused: true });
   if ((live || []).length >= RATE.maxQueue) return res.status(503).json({ error: `The studio is full right now (${live.length} sites in the queue). Please try again in a few minutes.` });
   const since = new Date(Date.now() - 86400e3).toISOString();
   const { count } = await sb.from('jobs').select('id', { count: 'exact', head: true }).gte('created_at', since);
   if ((count || 0) >= RATE.perDay) return res.status(503).json({ error: 'Today\'s preview budget is used up. Please come back tomorrow.' });
   const options = { ...(req.body?.options || {}) }; const email = String(options.notify_email || '').trim().toLowerCase(); if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'bad email' }); if (email) options.notify_email = email; else delete options.notify_email;
-  const { data, error } = await sb.from('jobs').insert({ url, options, steps: STEPS.map(([id, label]) => ({ id, label, status: 'pending' })), ...(user ? { user_id: user.id, email: user.email } : {}) }).select('id').single();
+  if (mode) options.engine = mode; else delete options.engine;
+  if (fromForm) { options.source = 'form'; options.form = req.body.form; } else { delete options.source; delete options.form; }
+  const { data, error } = await sb.from('jobs').insert({ url, options, steps: (fromForm ? STEPS_F : mode ? STEPS_T : STEPS).map(([id, label]) => ({ id, label, status: 'pending' })), ...(user ? { user_id: user.id, email: user.email } : {}) }).select('id').single();
   if (error) return res.status(500).json({ error: error.message });
   res.json({ id: data.id });
 });
@@ -167,7 +201,125 @@ app.get('/p/:id', async (req, res) => {
   res.set({ 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-frame-options': 'ALLOWALL', 'x-robots-tag': 'noindex' });
   res.send(Buffer.from(await data.arrayBuffer()));
 });
+// ---- the template path: a variant's preview page (open: no account), and its package (account + the payment hook) ----
+app.get('/t/:id/:slug', async (req, res) => {
+  if (!/^[0-9a-f-]{36}$/.test(req.params.id)) return res.status(400).end();
+  const { data: row, error } = await sb.from('jobs').select('status,result').eq('id', req.params.id).maybeSingle();
+  if (error) return res.status(503).send('preview metadata unavailable');
+  if (!previewable(row, req.params.slug)) return res.status(404).send('preview not found');
+  const { data, error: e2 } = await sb.storage.from(BUCKET).download(`${req.params.id}/t/${req.params.slug}.html`);
+  if (e2 || !data) return res.status(404).send('preview not found');
+  res.set({ 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-frame-options': 'ALLOWALL', 'x-robots-tag': 'noindex' });
+  res.send(Buffer.from(await data.arrayBuffer()));
+});
+app.get('/t/:id/:slug/package', async (req, res) => {
+  if (!/^[0-9a-f-]{36}$/.test(req.params.id)) return res.status(400).end();
+  const user = await userOf(req);
+  const { data: row, error } = await sb.from('jobs').select('id,url,status,result,user_id').eq('id', req.params.id).maybeSingle();
+  if (error) return res.status(503).json({ error: 'unavailable' });
+  if (!row || !previewable(row, req.params.slug)) return res.status(404).json({ error: 'not found' });
+  const gate = mayDownload({ user, job: row, slug: req.params.slug, env: process.env });
+  if (gate.status !== 200) return res.status(gate.status).json(gate.body);
+  if (!row.user_id) await sb.from('jobs').update({ user_id: user.id, email: user.email }).eq('id', row.id).is('user_id', null);   // a downloaded page belongs to whoever downloaded it first
+  // with kept edits: the verified package of those edits, once one is made (publish, or "download with my edits")
+  const kept = await EDITOR.saved(row); const edited = kept.length ? editedPackage(row.result, req.params.slug, editsHash(kept)) : null;
+  if (kept.length && !edited && req.query.as !== 'made') return res.status(409).json({ error: 'Your edits are not in a download yet: prepare it first.', prepare: true });
+  const { data, error: e2 } = await sb.storage.from(PACKAGE_BUCKET).download(edited || `${row.id}/${req.params.slug}.zip`);
+  if (e2 || !data) return res.status(404).json({ error: 'package not found' });
+  const host = (() => { try { return new URL(row.url).hostname.replace(/^www\./, '').replace(/[^a-z0-9.-]/gi, '') || 'site'; } catch { return 'site'; } })();
+  res.set({ 'content-type': 'application/zip', 'content-disposition': `attachment; filename="${host}-${req.params.slug}.zip"`, 'cache-control': 'no-store' });
+  res.send(Buffer.from(await data.arrayBuffer()));
+});
 app.listen(process.env.PORT || 8080, () => console.log('api on', process.env.PORT || 8080));
+// ---- the editor on the page (server/editor.mjs): try edits openly, keep them with an account. No model.
+const child = (cmd, args, ms) => new Promise((ok, no) => { const p = spawn(cmd, args, { cwd: ROOT, env: process.env }); let out = '', err = ''; const t = setTimeout(() => p.kill('SIGKILL'), ms);
+  p.stdout.on('data', d => { out += d; if (out.length > 8e6) p.kill('SIGKILL'); }); p.stderr.on('data', d => { err += d; }); p.on('close', c => { clearTimeout(t); c === 0 ? ok(out) : no(new Error(`${args[0]} exit ${c}: ${err.slice(-300)}`)); }); });
+const EDITOR = makeEditor({
+  readPrivate: async key => { const { data, error } = await sb.storage.from(PACKAGE_BUCKET).download(key); return error || !data ? null : Buffer.from(await data.arrayBuffer()); },
+  writePrivate: async (key, buf, type) => { const { error } = await sb.storage.from(PACKAGE_BUCKET).upload(key, buf, { contentType: type, upsert: true }); if (error) throw error; },
+  publishPublic: async (local, key, type) => upload(local, key, type),
+  publicBase: key => sb.storage.from(BUCKET).getPublicUrl(key).data.publicUrl,
+  python: args => child('python3', args, 30000),
+  gate: async file => { const out = await child('node', ['lib/qa/template_gate.mjs', file], 90000).catch(e => String(e.message)); return String(out).trim().split('\n').reverse().map(l => { try { return JSON.parse(l); } catch { return null; } }).find(x => x && x.page) || { ok: false, failed: ['tool'] }; },
+  tmp: () => { fs.mkdirSync(OUT, { recursive: true }); return OUT; } });
+const editHits = new Map();
+const editLimited = (ip, kind, max) => { const k = kind + ip, now = Date.now(), h = (editHits.get(k) || []).filter(t => now - t < 3600e3); if (h.length >= max) return true; h.push(now); editHits.set(k, h); if (editHits.size > 10000) editHits.clear(); return false; };
+const editRow = async (req, res) => {
+  if (!/^[0-9a-f-]{36}$/.test(req.params.id)) { res.status(400).end(); return null; }
+  const { data: row, error } = await sb.from('jobs').select('id,url,status,result,user_id').eq('id', req.params.id).maybeSingle();
+  if (error) { res.status(503).json({ error: 'unavailable' }); return null; }
+  if (req.params.slug !== undefined && !editable(row, req.params.slug)) { res.status(404).json({ error: 'nothing to edit here' }); return null; }
+  if (req.params.slug === undefined && !(row && row.status === 'done' && row.result?.templates?.store)) { res.status(404).json({ error: 'nothing to edit here' }); return null; }
+  return row; };
+const editFail = (res, e) => res.status(e.status || 500).json({ error: e.status ? e.message : 'the edit could not be made' });
+// the editor's view of one design: the texts, pictures, sections and colours after the edits kept so far (or the ones sent)
+app.post('/t/:id/:slug/describe', async (req, res) => { const row = await editRow(req, res); if (!row) return;
+  const ops = req.body?.ops ?? await EDITOR.saved(row); const bad = opsProblem(ops); if (bad) return res.status(400).json({ error: bad });
+  try { res.json({ ...(await EDITOR.describe(row, req.params.slug, ops)), ops, variants: row.result.templates.variants.map(v => v.slug) }); } catch (e) { editFail(res, e); } });
+app.post('/t/:id/:slug/render', async (req, res) => { const row = await editRow(req, res); if (!row) return;
+  if (editLimited(clientIp(req), 'r', 600)) return res.status(429).json({ error: 'Too many edits in an hour. Please wait a little.' });
+  const ops = req.body?.ops; const bad = opsProblem(ops); if (bad) return res.status(400).json({ error: bad });
+  try { res.set({ 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex' }).send(await EDITOR.render(row, req.params.slug, ops)); } catch (e) { editFail(res, e); } });
+app.post('/t/:id/:slug/check', async (req, res) => { const row = await editRow(req, res); if (!row) return;
+  if (editLimited(clientIp(req), 'c', 120)) return res.status(429).json({ error: 'Too many checks in an hour. Please wait a little.' });
+  const ops = req.body?.ops; const bad = opsProblem(ops); if (bad) return res.status(400).json({ error: bad });
+  try { res.json(await EDITOR.check(row, req.params.slug, ops)); } catch (e) { editFail(res, e); } });
+app.post('/t/:id/photos', async (req, res) => { const row = await editRow(req, res); if (!row) return;
+  if (editLimited(clientIp(req), 'p', 60)) return res.status(429).json({ error: 'Too many photographs in an hour.' });
+  try { res.json(await EDITOR.photo(row, req.body?.file)); } catch (e) { editFail(res, e); } });
+app.put('/t/:id/edits', async (req, res) => { const row = await editRow(req, res); if (!row) return;
+  const user = await userOf(req); const may = mayKeep({ user, row }); if (may.status !== 200) return res.status(may.status).json(may.body);
+  const ops = req.body?.ops; const bad = opsProblem(ops); if (bad) return res.status(400).json({ error: bad });
+  if (may.claim) await sb.from('jobs').update({ user_id: user.id, email: user.email }).eq('id', row.id).is('user_id', null);
+  try { res.json(await EDITOR.save(row, ops)); } catch (e) { editFail(res, e); } });
+// ---- publish on <name>.swarmsite.si, and the download with the edits (server/publish.mjs): both from the one verified package
+const keepState = (id, field) => async state => { const { data } = await sb.from('jobs').select('result').eq('id', id).maybeSingle(); await sb.from('jobs').update({ result: { ...(data?.result || {}), [field]: state } }).eq('id', id); };
+const pubDeps = (row, slug, user, field) => ({ row, slug, user, edits: () => EDITOR.saved(row), env: process.env, fetch, tmp: () => { fs.mkdirSync(OUT, { recursive: true }); return OUT; },
+  readPrivate: async key => { const { data, error } = await sb.storage.from(PACKAGE_BUCKET).download(key); return error || !data ? null : Buffer.from(await data.arrayBuffer()); },
+  writePrivate: async (key, buf, type) => { const { error } = await sb.storage.from(PACKAGE_BUCKET).upload(key, buf, { contentType: type, upsert: true }); if (error) throw error; },
+  publicBase: key => sb.storage.from(BUCKET).getPublicUrl(key).data.publicUrl, python: args => child('python3', args, 600000), save: keepState(row.id, field) });
+const busy = s => s && ['packaging', 'deploying'].includes(s.status) && Date.now() - Date.parse(s.at) < 15 * 60e3;
+const pubGate = async (req, res) => { const row = await editRow(req, res); if (!row) return null; const user = await userOf(req);
+  const may = mayKeep({ user, row }); if (may.status !== 200) { res.status(may.status).json(may.body); return null; }
+  const pay = payGate({ env: process.env, row, slug: req.params.slug, user, what: 'download or publish' }); if (pay) { res.status(pay.status).json(pay.body); return null; }   // as for the download
+  if (may.claim) await sb.from('jobs').update({ user_id: user.id, email: user.email }).eq('id', row.id).is('user_id', null);
+  return { row, user }; };
+app.post('/t/:id/:slug/prepare', async (req, res) => { const g = await pubGate(req, res); if (!g) return;
+  if (busy(g.row.result?.edited)) return res.status(409).json({ error: 'The download is being prepared.' });
+  const at = new Date().toISOString(); runRepackage(pubDeps(g.row, req.params.slug, g.user, 'edited')).catch(e => console.warn('prepare', g.row.id, String(e.message).slice(0, 160)));
+  res.status(202).json({ status: 'packaging', at }); });
+app.post('/t/:id/:slug/publish', async (req, res) => {
+  if (!process.env.VERCEL_TOKEN) return res.status(503).json({ error: 'Publishing is not switched on yet.' });
+  const name = String(req.body?.name || '').trim().toLowerCase(); const bad = nameProblem(name); if (bad) return res.status(400).json({ error: bad });
+  const g = await pubGate(req, res); if (!g) return;
+  if (busy(g.row.result?.publish)) return res.status(409).json({ error: 'A publish is under way.' });
+  const at = new Date().toISOString(); runPublish({ ...pubDeps(g.row, req.params.slug, g.user, 'publish'), name }).catch(e => console.warn('publish', g.row.id, String(e.message).slice(0, 160)));
+  res.status(202).json({ status: 'packaging', name, at }); });
+// ---- payment (server/payments.mjs): Stripe Checkout for one design of one job; the webhook marks it paid in the job record
+let STRIPE = null; const stripe = async () => STRIPE || (STRIPE = await stripeOf(process.env));
+app.post('/pay', async (req, res) => {
+  if (!payConfigured(process.env)) return res.status(503).json({ error: 'Payment is not switched on yet.' });
+  const user = await userOf(req); if (!user) return res.status(401).json({ error: 'Sign in to pay.', login: true });
+  const id = String(req.body?.job || ''), slug = String(req.body?.slug || ''); if (!/^[0-9a-f-]{36}$/.test(id)) return res.status(400).json({ error: 'bad job' });
+  const { data: row, error } = await sb.from('jobs').select('id,status,result,user_id').eq('id', id).maybeSingle();
+  if (error) return res.status(503).json({ error: 'unavailable' });
+  if (!row || !previewable(row, slug)) return res.status(404).json({ error: 'not found' });
+  if (row.user_id && row.user_id !== user.id) return res.status(403).json({ error: 'These designs belong to another account.' });
+  if (paidBy(row, slug, user)) return res.json({ paid: true });
+  try { res.json(await checkout({ stripe: await stripe(), env: process.env, row, slug, user, from: req.body?.from === 'edit' ? 'edit' : 'app' })); }
+  catch (e) { console.warn('pay: checkout could not be made', e.type || '', e.statusCode || ''); res.status(502).json({ error: 'Payment could not be started. Please try again.' }); }
+});
+app.post('/stripe/webhook', express.raw({ type: () => true, limit: '1mb' }), async (req, res) => {
+  if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) return res.status(503).end();
+  const r = await webhook({ stripe: await stripe(), env: process.env, raw: req.body, signature: req.headers['stripe-signature'],
+    markPaid: async ({ job, slug, user, session }) => {
+      const { data: row } = await sb.from('jobs').select('id,result,user_id').eq('id', job).maybeSingle(); if (!row) return;
+      const next = withPaid(row.result, { slug, user, session, at: new Date().toISOString() }); if (!next) return;   // already marked: a repeated event changes nothing
+      await sb.from('jobs').update({ result: next }).eq('id', job);
+      if (!row.user_id) await sb.from('jobs').update({ user_id: user }).eq('id', job).is('user_id', null);   // a paid design belongs to whoever paid
+    } }).catch(e => { console.warn('stripe webhook failed', String(e.message).slice(0, 120)); return { status: 500, body: { error: 'retry' } }; });
+  res.status(r.status).json(r.body);
+});
 
 // ---------- worker ----------
 const JOB_CTX = new AsyncLocalStorage(); // the job a child process belongs to, per async chain: several jobs run at once in one worker
@@ -349,6 +501,7 @@ async function runClaimed(job) {
   }
 }
 async function process_(job) {
+  if (job.options?.engine === 'templates') return processTemplates(job);
   const slug = slugOf(job.url);
   fs.mkdirSync(OUT, { recursive: true });
   const jobRoot = fs.mkdtempSync(path.join(OUT, `job-${job.id}-`));
@@ -496,4 +649,40 @@ async function loop() {
     } catch (e) { console.error('loop', e.message); await new Promise(r => setTimeout(r, 5000)); }
   }
 }
-if (process.env.SUPABASE_URL) { for (let i = 0; i < WORKER_CONCURRENCY; i++) loop(); console.log('worker', WORKER_ID, 'slots', WORKER_CONCURRENCY); } else console.warn('no SUPABASE_URL: worker idle');
+// the template path's job (server/templates.mjs); kept outside the stretch from runClaimed to loop that the worker tests cut out
+async function processTemplates(job) {
+  if (!TEMPLATES) throw new Error('templates mode is off on this worker (see the boot log: its private bucket)');
+  const slug = slugOf(job.url);
+  fs.mkdirSync(OUT, { recursive: true });
+  const jobRoot = fs.mkdtempSync(path.join(OUT, `job-${job.id}-`)); job._jobRoot = jobRoot;
+  const dir = path.join(jobRoot, slug); job._dir = dir; CURRENT_JOB_DIR = dir;
+  job._result = { ...(job.result || {}) };
+  const result = await runTemplateJob({ job, dir, jobRoot, run, upload, self: SELF, chrome: process.env.CHROME_PATH || '',
+    uploadPrivate: async (local, key, type) => { const { error } = await sb.storage.from(PACKAGE_BUCKET).upload(key, fs.readFileSync(local), { contentType: type, upsert: true }); if (error) throw error; },
+    fetchUpload: async (file, local) => { if (!UPLOAD.test(file)) throw new Error('not an upload'); const { data, error } = await sb.storage.from(PACKAGE_BUCKET).download(`uploads/${file}`); if (error || !data) throw new Error(`photograph ${file} is gone`); fs.writeFileSync(local, Buffer.from(await data.arrayBuffer())); },
+    publicBase: key => sb.storage.from(BUCKET).getPublicUrl(key).data.publicUrl,
+    setStep: (id, status, note) => setStep(job, id, status, note),
+    emit: evs => emit(job, evs),
+    save: async r => { await drainEvents(job); job._result = { ...r, events: job._result?.events || [], eventsOffset: job._result?.eventsOffset || 0 }; await updateWithRetry(job, { result: job._result }); } });
+  await drainEvents(job);
+  const final = { ...result, events: job._result?.events || [], eventsOffset: job._result?.eventsOffset || 0 };
+  job._artifactsUploaded = true;
+  await updateWithRetry(job, { status: 'done', step: 'done', result: final, slug, lease_owner: null, lease_until: null });
+  job._terminalPersisted = true;
+  try { const { data: fresh } = await sb.from('jobs').select('options').eq('id', job.id).maybeSingle(); job.options = fresh?.options || job.options; await notifyDone(job, final.templates?.variants?.[0]?.url || ''); } catch (e) { console.warn('notify', job.id, e.message); }
+}
+// the template path's private bucket and its upkeep: made private on boot (or templates mode is refused, the old engine
+// works on), and visitors' photographs of nobody's old jobs removed once on boot, then every 24 h (counts only in the log)
+async function templatesBoot() {
+  const { ok } = await ensurePrivateBucket(sb.storage, PACKAGE_BUCKET);
+  if (!ok) TEMPLATES = false;
+  if (!TEMPLATES) return;
+  const clean = () => runCleanup({
+    listUploads: async () => { const out = []; for (let off = 0; off < 100000; off += 1000) { const { data, error } = await sb.storage.from(PACKAGE_BUCKET).list('uploads', { limit: 1000, offset: off }); if (error) throw error; out.push(...(data || []).map(o => ({ name: o.name, created_at: o.created_at }))); if (!data || data.length < 1000) break; } return out; },
+    jobs: async since => { const { data, error } = await sb.from('jobs').select('id,created_at,user_id,options').gte('created_at', since).filter('options->>engine', 'eq', 'templates').limit(20000); if (error) throw error; return data || []; },
+    editsOf: async id => { const { data } = await sb.storage.from(PACKAGE_BUCKET).download(`${id}/edits.json`); if (!data) return null; try { return JSON.parse(Buffer.from(await data.arrayBuffer()).toString()).ops || null; } catch { return null; } },
+    remove: async names => { const { error } = await sb.storage.from(PACKAGE_BUCKET).remove(names.map(n => `uploads/${n}`)); if (error) throw error; },
+    now: () => Date.now(), log: t => console.log(t) }).catch(e => console.warn('cleanup failed:', String(e.message).slice(0, 160)));
+  clean(); setInterval(clean, 86400e3);
+}
+if (process.env.SUPABASE_URL) { (TEMPLATES ? templatesBoot() : Promise.resolve()).catch(e => { TEMPLATES = false; console.warn('templates mode refused:', e.message); }).finally(() => { for (let i = 0; i < WORKER_CONCURRENCY; i++) loop(); console.log('worker', WORKER_ID, 'slots', WORKER_CONCURRENCY, 'templates', TEMPLATES); }); } else console.warn('no SUPABASE_URL: worker idle');

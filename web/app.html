@@ -106,6 +106,27 @@ a{color:inherit;text-decoration:none}
 .seg button{min-height:44px;padding:8px 16px;font-size:14px;transition:background-color .2s,color .2s}.seg button:not(.on):hover{background:#f1f1ee}.bar .pill{min-height:44px}.pill:focus-visible,.seg button:focus-visible{outline:2px solid #833b46;outline-offset:2px}
 @media(max-width:700px){.work{width:100%;margin-top:64px}.wk-robot{flex-basis:70px;width:70px;height:93.333px;top:-70px}.wk-robot:nth-child(n+4){display:none}.frame .hud{padding:40px 14px 14px}.hud-r{gap:10px}
   @keyframes wk-look{0%,6%,92%,100%{transform:translateY(16px) rotate(0)}16%,30%{transform:translateY(0) rotate(-2deg)}42%,54%{transform:translateY(1px) rotate(-6deg)}66%,76%{transform:translateY(0) rotate(5deg)}86%{transform:translateY(3px) rotate(0)}}}
+
+/* the template path: three designs to choose from (side by side; stacked on a phone), each opens full screen, one is picked and downloaded */
+.choose{position:fixed;inset:var(--result-top-height,83px) 0 0;z-index:11;background:var(--paper);display:none;flex-direction:column;overflow:auto}
+.choose.on{display:flex}
+.choose-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;padding:28px 24px 8px;max-width:1440px;width:100%;margin:0 auto}
+.choose-head h2{font:600 clamp(26px,3vw,40px)/1.05 var(--sans);letter-spacing:-.035em;margin:0}.choose-head p{margin:6px 0 0;color:var(--muted);max-width:60ch}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;padding:20px 24px 28px;max-width:1440px;width:100%;margin:0 auto}
+.cards[data-n="1"]{grid-template-columns:minmax(0,560px)}.cards[data-n="2"]{grid-template-columns:repeat(2,minmax(0,1fr))}
+.card{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:18px;background:#fff;overflow:hidden;min-width:0}
+.card.picked{border-color:var(--ink);box-shadow:0 0 0 2px var(--ink)}
+.card .shot{position:relative;aspect-ratio:1440/900;overflow:hidden;background:#ecebe7}
+.card .shot iframe{position:absolute;left:0;top:0;width:1440px;height:900px;border:0;transform-origin:0 0;pointer-events:none;background:#fff}
+.card .meta{display:flex;flex-direction:column;gap:4px;padding:14px 16px 4px}.card .name{font:600 16px var(--sans)}.card .how{font:13px var(--sans);color:var(--muted)}
+.card .acts{display:flex;gap:8px;flex-wrap:wrap;padding:10px 16px 16px;margin-top:auto}.card .acts .pill{min-height:44px}.card .acts .pill[hidden]{display:none}
+.choose-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 24px;border-top:1px solid var(--line);background:#fff;position:sticky;bottom:0;margin-top:auto}
+.choose-foot[hidden],.choose-none[hidden],.choose-foot .pill[hidden]{display:none}.choose-foot .pill:disabled{opacity:.45;cursor:default;transform:none}.choose-note{color:var(--muted);font-size:14px;margin:0}
+.choose-none{padding:12px 24px 28px;max-width:900px;margin:0 auto;width:100%}.choose-none li{margin:4px 0;color:var(--muted)}
+.full{position:fixed;inset:0;z-index:30;background:rgba(17,17,17,.6);display:none;flex-direction:column}.full.on{display:flex}
+.full-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;background:#fff;flex-wrap:wrap}.full iframe{flex:1;border:0;background:#fff;width:100%}
+.full.is-phone{align-items:center}.full.is-phone iframe{flex:1 0 auto;width:390px;max-width:100%}
+@media(max-width:900px){.cards,.cards[data-n="2"]{grid-template-columns:minmax(0,1fr)}.choose-head{padding:22px 16px 4px}.cards{padding:16px}.choose-foot{padding:12px 16px}}
 @media(prefers-reduced-motion:reduce){.work::before,.work::after,.wk-robot i,.wk-robot .hd3::before,.wk-live,.frame .skel i,.draft-bar::after,.step.running .dot{animation:none!important}.wk-prog i.run::after{animation:none;background:rgba(255,255,255,.55)}.draft-bar::after{background-size:100% 100%;opacity:.5}}
 </style>
 </head>
@@ -155,6 +176,18 @@ a{color:inherit;text-decoration:none}
     <div class="l"><span class="lab" id="meta"></span><div class="seg" id="variants"></div><div class="seg"><button class="on" data-v="desktop">Desktop</button><button data-v="mobile">Phone</button></div></div>
     <div class="l"><details class="coverage" id="coverage" hidden><summary class="pill">Content check</summary><div class="coverage-panel" id="coveragePanel"></div></details><a class="pill" id="openNew" target="_blank" rel="noopener">Open full screen ↗</a><a class="pill ink" href="/#paths">What's next →</a></div>
   </div>
+</div>
+
+<div class="choose" id="choose" aria-labelledby="chooseH">
+  <div class="choose-head"><div><h2 id="chooseH">Choose a design</h2><p id="chooseSub">Three designs made from your site, each checked on a desk screen and a phone. Open one to see it whole.</p></div><span class="lab" id="chooseMeta"></span></div>
+  <div class="cards" id="cards"></div>
+  <div class="choose-none" id="chooseNone" hidden><p id="chooseNoneP"></p><ul id="chooseWhy"></ul><p id="chooseStart" style="margin-top:14px">Or <a href="/start" style="text-decoration:underline">tell us about your business</a>: three designs from what you write and your own photographs.</p></div>
+  <details class="choose-none" id="chooseLeft" hidden><summary>What the page leaves out, because the form did not say it</summary><ul id="chooseLeftList"></ul></details>
+  <div class="choose-foot"><p class="choose-note" id="chooseNote" role="status">Pick the one you like.</p><span style="display:flex;gap:8px;flex-wrap:wrap"><button class="pill ink" id="payGo" hidden>Pay and download</button><button class="pill ink" id="download" disabled>Download the page <span aria-hidden="true">↓</span></button></span></div>
+</div>
+<div class="full" id="full" role="dialog" aria-modal="true" aria-label="Design, full screen">
+  <div class="full-bar"><span class="lab" id="fullName"></span><div class="seg"><button class="on" data-f="desktop">Desktop</button><button data-f="mobile">Phone</button></div><div class="l"><button class="pill ink" id="fullPick">Choose this one</button><button class="pill" id="fullClose">Close</button></div></div>
+  <iframe id="fullFrame" title="The design, full screen"></iframe>
 </div>
 
 <script src="/config.js"></script>
@@ -226,6 +259,66 @@ const CREW=()=>({count:innerWidth<700?7:12,shape:'character',roam:true,busy:3});
 $('#notifyGo').onclick=async()=>{ const email=$('#notifyEmail').value.trim(); if(!email) return; const id=new URLSearchParams(location.search).get('job'); if(!id) return; $('#notifyGo').disabled=true;
   try{ const r=await fetch(`${API}/jobs/${id}/notify`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email})}); if(!r.ok) throw new Error('could not save'); $('#notifyNote').textContent='We’ll email you the link. You can close this tab.'; $('#notifyEmail').disabled=true; notifyDone=true; }
   catch(e){ $('#notifyNote').textContent='Could not save that address — try again.'; $('#notifyGo').disabled=false; } };
+/* The template path (server: options.engine = 'templates', on when /config says so). The three variants arrive in the
+   job's result while their downloads are still being made; they are shown at once. A preview needs no account; the
+   download does — and payment, once it exists (the server answers 402 with pay: true until then). */
+let CFG=null; const config=async()=>{ if(CFG) return CFG; try{ CFG=await (await fetch(API+'/config')).json(); }catch{ CFG={}; } return CFG; };
+let picked='', chooserFor='';
+const NAMES_T={griffin:'Ledger',maze:'Studio'};   /* a design's name is the template's; the shown name is a plain word for it */
+const nameOf=slug=>NAMES_T[slug]||slug.charAt(0).toUpperCase()+slug.slice(1);
+function fitShots(){ document.querySelectorAll('.card .shot').forEach(sh=>{ const f=sh.querySelector('iframe'); if(f) f.style.transform=`scale(${sh.clientWidth/1440})`; }); }
+addEventListener('resize',fitShots);
+function openFull(v){ const f=$('#full'); $('#fullFrame').src=v.url; $('#fullName').textContent=nameOf(v.slug); f.dataset.slug=v.slug; f.classList.add('on'); $('#fullClose').focus(); }
+function closeFull(){ const f=$('#full'); f.classList.remove('on'); $('#fullFrame').src='about:blank'; const c=document.querySelector(`.card[data-slug="${f.dataset.slug}"] .open`); if(c) c.focus(); }
+$('#fullClose').onclick=closeFull; addEventListener('keydown',e=>{ if(e.key==='Escape'&&$('#full').classList.contains('on')) closeFull(); });
+$('#fullPick').onclick=()=>{ pick($('#full').dataset.slug); closeFull(); };
+document.querySelectorAll('.seg button[data-f]').forEach(b=>b.onclick=()=>{ document.querySelectorAll('.seg button[data-f]').forEach(x=>x.classList.toggle('on',x===b)); $('#full').classList.toggle('is-phone',b.dataset.f==='mobile'); });
+function pick(slug){ if(slug!==picked){ said={slug:'',text:''}; $('#payGo').hidden=true; $('#download').hidden=false; } picked=slug;document.querySelectorAll('.card').forEach(c=>{ const on=c.dataset.slug===slug; c.classList.toggle('picked',on); const b=c.querySelector('.pickb'); if(b){ b.setAttribute('aria-pressed',String(on)); b.textContent=on?'Chosen ✓':'Choose this one'; } }); renderDownload(); }
+let lastJob=null;
+function renderDownload(){ const v=(lastJob?.result?.templates?.variants||[]).find(x=>x.slug===picked); const b=$('#download'), n=$('#chooseNote');
+  if(!v){ b.disabled=true; n.textContent='Pick the one you like.'; return; }
+  if(v.package==='pending'){ b.disabled=true; n.textContent=`${nameOf(v.slug)} chosen · its download is being prepared…`; return; }
+  if(v.package!=='ready'){ b.disabled=true; n.textContent=`${nameOf(v.slug)} can be looked at but not downloaded: its file did not match the preview.`; return; }
+  b.disabled=false; n.textContent=said.slug===v.slug&&said.text?said.text:`${nameOf(v.slug)} chosen · the download is the same page, with its pictures and fonts.`; }
+let said={slug:'',text:''};   /* what the last download answered stays until another design is picked (the poll re-renders this line) */
+const say=(slug,text)=>{ said={slug,text}; $('#chooseNote').textContent=text; };
+$('#download').onclick=async()=>{ const id=lastJob?.id, slug=picked; if(!id||!slug) return; const b=$('#download'), n=$('#chooseNote'); b.disabled=true;
+  try{ const send=window.Auth&&Auth.enabled?(p,i)=>Auth.api(p,i):(p,i)=>fetch(API+p,i); const r=await send(`/t/${id}/${slug}/package`,{});
+    if(r.status===401){ location.href='/login?next='+encodeURIComponent(location.pathname+location.search); return; }
+    if(r.status===402){ const j=await r.json().catch(()=>({})); if(j.pay_url){ offerPay(id,slug); return; } say(slug,'Payment comes before the download — it is not open yet. Your designs stay here.'); return; }
+    if(!r.ok){ const j=await r.json().catch(()=>({})); say(slug,j.error||'The download is not available.'); return; }
+    const blob=await r.blob(), a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=((lastJob.url||'site').replace(/^https?:\/\/(www\.)?/,'').replace(/[^a-z0-9.-]+/gi,'-').replace(/-+$/,''))+'-'+slug+'.zip'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000); say(slug,'Downloaded. Unzip it and open index.html — or put the folder on any web host.'); }
+  catch{ say(slug,'The download did not go through. Check your connection and try again.'); }
+  finally{ renderDownload(); } };
+/* payment: Stripe Checkout for the chosen design, offered only where the server says payment is on (a 402 with pay_url) */
+function offerPay(id,slug){ say(slug,'This design is paid for once; then it is yours to download and publish.'); const b=$('#payGo'); b.hidden=false; $('#download').hidden=true;
+  b.onclick=async()=>{ b.disabled=true; try{ const send=window.Auth&&Auth.enabled?(p,i)=>Auth.api(p,i):(p,i)=>fetch(API+p,i);
+    const r=await send('/pay',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({job:id,slug,from:'app'})}); const j=await r.json().catch(()=>({}));
+    if(r.status===401){ location.href='/login?next='+encodeURIComponent(location.pathname+location.search); return; }
+    if(j.paid){ b.hidden=true; $('#download').hidden=false; renderDownload(); return; } if(!r.ok||!j.url) throw new Error(j.error||'Payment could not be started.'); location.href=j.url; }
+    catch(e){ say(slug,String(e.message||e)); b.disabled=false; } }; }
+let paidSeen=false;
+function showChooser(job){ lastJob=job;
+  if(!paidSeen){ const p=new URLSearchParams(location.search).get('paid'); if(p&&p!=='0'&&(job.result?.templates?.variants||[]).some(v=>v.slug===p)){ paidSeen=true; setTimeout(()=>{ pick(p); say(p,'Payment received. Download the page — if it says payment is still needed, give it a moment.'); },0); } } const t=job.result.templates, vs=t.variants||[];
+  $('#stage').hidden=true; $('#result').classList.remove('on'); $('#choose').classList.add('on'); layoutResult();
+  $('#chooseMeta').textContent=job.status==='done'?(job.result.seconds?`${job.result.seconds}s`:''):'still preparing the downloads…';
+  if(chooserFor!==job.id+':'+vs.map(v=>v.slug).join(',')){ chooserFor=job.id+':'+vs.map(v=>v.slug).join(','); const cards=$('#cards'); cards.replaceChildren(); cards.dataset.n=String(vs.length);
+    for(const v of vs){ const card=document.createElement('article'); card.className='card'; card.dataset.slug=v.slug;
+      const shot=document.createElement('div'); shot.className='shot'; const f=document.createElement('iframe'); f.src=v.url; f.title=nameOf(v.slug)+' — preview'; f.loading='lazy'; f.tabIndex=-1; f.setAttribute('aria-hidden','true'); shot.appendChild(f);
+      const meta=document.createElement('div'); meta.className='meta'; const nm=document.createElement('span'); nm.className='name'; nm.textContent=nameOf(v.slug); const how=document.createElement('span'); how.className='how'; how.textContent=String(v.approach||'').replace(/\s*·\s*/g,' · '); meta.append(nm,how);
+      const acts=document.createElement('div'); acts.className='acts'; const open=document.createElement('button'); open.className='pill open'; open.textContent='Open full screen ↗'; open.onclick=()=>openFull(v);
+      const pb=document.createElement('button'); pb.className='pill ink pickb'; pb.setAttribute('aria-pressed','false'); pb.textContent='Choose this one'; pb.onclick=()=>pick(v.slug); const ed=document.createElement('a'); ed.className='pill editb'; ed.href=`/edit?job=${encodeURIComponent(job.id)}&slug=${encodeURIComponent(v.slug)}`; ed.textContent='Edit'; acts.append(open,pb,ed);
+      card.append(shot,meta,acts); cards.appendChild(card); }
+    requestAnimationFrame(fitShots); }
+  document.querySelectorAll('.card .editb').forEach(a=>{ a.hidden=job.status!=='done'||!t.store; });   /* the editor works on the data the finished job kept */
+  const none=$('#chooseNone'); none.hidden=vs.length>0; $('.choose-foot').hidden=!vs.length;
+  const fromForm=job.result.source==='form', left=t.left_out||[]; $('#chooseLeft').hidden=!(fromForm&&left.length); $('#chooseStart').hidden=fromForm;
+  if(fromForm){ $('#chooseSub').textContent='Three designs made from what you told us and your photographs, each checked on a desk screen and a phone. Open one to see it whole.';
+    const ul=$('#chooseLeftList'); if(ul.children.length!==left.length){ ul.replaceChildren(); for(const g of left.slice(0,30)){ const li=document.createElement('li'); li.textContent=String(g).slice(0,200); ul.appendChild(li); } } }
+  if(!vs.length){ $('#chooseH').textContent=fromForm?'No design fits what you told us yet':'No design fits this site yet'; $('#chooseSub').textContent=fromForm?'Every design of the library needs something — product screens, photographs, a few steps or features — that the form did not have.':'Every design of the library needs something from a site — product screens, photographs, a few steps or features — that we could not read from yours.';
+    $('#chooseNoneP').textContent='What each design was missing:'; const ul=$('#chooseWhy'); ul.replaceChildren(); for(const r of (t.rejected||[]).slice(0,8)){ const li=document.createElement('li'); li.textContent=`${nameOf(r.slug)}: ${String(r.why||'').slice(0,160)}`; ul.appendChild(li);} }
+  if(picked&&!vs.some(v=>v.slug===picked)) picked=''; renderDownload(); }
+
 function showDraft(job){ const d=job.result.draft; if(!d || d.round===draftShown) return; draftShown=d.round;
   const u=new URL(`${window.SWARMSITE_API}/p/${job.id}/draft`, location.href); u.searchParams.set('r', String(d.round)); u.searchParams.set('t', String(d.at||Date.now()));
   $('#preview').src=u.href; $('#openNew').href=u.href; $('#meta').textContent='draft · still refining'; $('#variants').replaceChildren(); $('#coverage').hidden=true;
@@ -235,7 +328,8 @@ function showDraft(job){ const d=job.result.draft; if(!d || d.round===draftShown
   if(!draftSw && window.Swarm2) draftSw=Swarm2.mount($('#draftSwarm'),{count:innerWidth<700?5:9,shape:'character',busy:3}); }   /* over a draft the agents come only with something to show: the visitor is reading the page */
 async function poll(id){ try{ const r=await fetch(`${API}/jobs/${id}`); if(!r.ok) throw new Error('job not found'); const job=await r.json(); renderSteps(job);
     if(lost||(waited&&job.status!=='queued')){ lost=false; waited=false; $('#micro').classList.remove('warn'); $('#micro').textContent=MICRO; }   /* what was said about the queue, or a lost connection, is taken back once it is no longer true */
-    if(job.status==='done'){ still(); if(sw) sw.stop(); if(draftSw){ draftSw.stop(); draftSw=null; } $('#draftBar').hidden=true; showResult(job); return; }
+    if(job.result?.templates && ['running','done'].includes(job.status)){ if(job.status==='done'){ still(); if(sw) sw.stop(); } showChooser(job); if(job.status==='done') return; }
+    else if(job.status==='done'){ still(); if(sw) sw.stop(); if(draftSw){ draftSw.stop(); draftSw=null; } $('#draftBar').hidden=true; showResult(job); return; }
     if(job.status==='running' && job.result?.draft) showDraft(job);
     if(job.status==='queued' && job.queue){ waited=true; const q=job.queue; $('#h').textContent=q.ahead?`In the queue · ${q.ahead} ahead`:'In the queue…'; $('#micro').textContent=q.ahead?`${q.capacity>1?q.capacity+' teams of agents are working':'one site at a time'} · your turn in about ${q.eta_min} min · this page remembers the job`:'Starting any second'; }
     if(['queued','running'].includes(job.status) && job.notify?.available && !notifyDone){ $('#notify').hidden=false; if(job.notify.email){ $('#notifyNote').textContent='We’ll email you the link.'; $('#notifyEmail').disabled=true; $('#notifyGo').disabled=true; notifyDone=true; } } if(job.status==='failed'){ still(); if(sw) sw.stop(); if(draftSw){ draftSw.stop(); draftSw=null; } const message=String(job.error||'unknown'); const providerUnavailable=/your credit balance is too low to access the anthropic api/i.test(message) || message==='The AI service is temporarily unavailable. Please try again later.'; $('#err').textContent=providerUnavailable?'The AI service is temporarily unavailable. Please try again later.':'Something broke: '+message+'. Try again or send us the URL.'; $('#h').textContent='That one didn’t go through.'; return; }
@@ -249,7 +343,8 @@ async function launch(url){
   try {
     $('#work').classList.remove('is-still'); startClock(Date.now()); sw=Swarm2.mount($('#frame'),CREW());
     const send=window.Auth&&Auth.enabled?(p,i)=>Auth.api(p,i):(p,i)=>fetch(API+p,i);   /* a signed-in visitor's preview is theirs from the start */
-    const r=await send('/jobs',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url,options:briefData()})});
+    const cfg=await config(); const options={...briefData(),...(cfg.templates?{engine:'templates'}:{})};   /* the template path, where the deployment has it on */
+    const r=await send('/jobs',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url,options})});
     const j=await r.json().catch(()=>({}));
     if(r.status===401&&j.login){ location.href='/login?next='+encodeURIComponent('/app?url='+encodeURIComponent(url)); return; }
     if(r.status===402){ const e=new Error(j.error||'Your free previews are used.'); e.shown=true; throw e; }

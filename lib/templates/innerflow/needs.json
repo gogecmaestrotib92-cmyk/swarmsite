@@ -1,0 +1,58 @@
+{
+ "niche": [
+  "service",
+  "clinic",
+  "school",
+  "person"
+ ],
+ "photos_min": 2,
+ "photos_large_min": 2,
+ "screens_min": 0,
+ "phones_ok": false,
+ "needs": [
+  "hero.title",
+  "catalogue",
+  "steps",
+  "steps.img",
+  "close.title"
+ ],
+ "needs_any": [
+  [
+   "statement",
+   "steps.text"
+  ]
+ ],
+ "drops": [
+  "features",
+  "steps.k",
+  "links.d",
+  "logos",
+  "menu",
+  "spaces",
+  "events",
+  "notices",
+  "since",
+  "cuisine",
+  "price_range",
+  "takeaway"
+ ],
+ "holds_without_pictures": true,
+ "motif": "photos",
+ "notes": [
+  "A client needs two landscape photographs of 1400+ beside those its steps point at; with fewer the opening or the card grid falls back to a plain dark band.",
+  "Prices in an ungrouped catalogue sit in the card body, which shows on hover or focus at desktop width and always on touch screens and phones; grouped catalogues show prices in the card lists and again in the rows.",
+  "No alt is shown as text. Control names (menu, close, previous, next) are aria-labels from a small word list by language.",
+  "The foot's large name is deliberately tone on tone (as the reference's); it is aria-hidden and set with an ink alpha of .26, which tools/legible.mjs does not judge (it skips inks under .3). The name is readable in the bar.",
+  "drops (as written): team.groups[].t (people are shown in one run)",
+  "drops (as written): features.items when a catalogue exists (local1: the same ten names; clinic1: the same fifteen)",
+  "drops (as written): features.title, catalogue.text beyond 150 characters (the short one is the dark part's large statement)",
+  "drops (as written): media.screens, media.phones, media.made",
+  "drops (as written): photographs beyond the slots (local1: 7 of 20, among them the directors' group picture; clinic1: 3 of 22)",
+  "drops (as written): project pictures that are small or already shown elsewhere",
+  "drops (as written): on phones: the opening's two buttons and the bar's phone / call pills (as the reference; they are in the menu and in the next section)",
+  "motif (as written): the client's own photographs (media.made is never read)",
+  "photos_by_role: {\"opening\": \"1 landscape, not small, not portrait/people/product/dish, not used by a step, card, person or project; 1600 wide preferred, 1200 accepted (it is smeared vertically, so sharpness does not matter)\", \"cards backdrop\": \"1 landscape as above, at least 1600 wide (1400 accepted); shown under a veil behind the whole card grid — 1440 x about 400 for two cards, up to 1440 x 1380 for ten\", \"slideshow band\": \"one per step (steps.items[].img), shown 1440 x 800 full bleed; 1600 wide wanted. local1's third is 1200 wide and is enlarged 1.2x at 1440\", \"people\": \"one per person (team.items[].img), any size from 340 px; shown at its own proportion held between 4:5 and 4:3\", \"film slot\": \"a film (media.video), else projects[].photos (each with its title), else up to four unused landscapes 1280 wide or more\", \"card hover\": \"catalogue item/group img, 1200 wide or more and not already a slideshow picture: it replaces the backdrop while its card is under the pointer\"}",
+  "measured: {\"reference\": \"coverage 33 % (per 900px screen 100,0,56,77,26,0,0,16,12), 4 screens with a wide picture; its film is an embedded player the tool does not count\", \"local1\": \"20 photographs (5 of 2000+ wide, 13 of 1000-1900, 2 portraits): 13 used — opening, cards backdrop, 3 slideshow, 3 people, 5 project pictures (a sixth project picture is already the slideshow's); coverage 45 % (100,0,91,100,58,21,0,34,40,0), 6 wide screens; shots clean at 1440 and 390; legible ok (405 readings)\", \"clinic1\": \"22 photographs (11 banners 2000x690 or 1680x580, 10 portraits 400x400 small, 1 small other): 19 used — opening, cards backdrop, 3 slideshow, 10 people, 4 in the film slot; coverage 36 % (100,0,84,53,0,18,27,55,0,0), 4 wide screens; shots clean; legible ok (405 readings)\", \"local1 with every picture removed\": \"renders, no errors, one h1, no empty frame at 1440 and 390; legible ok (395). The opening is the plain dark band, the cards stand on the foot colour, the slideshow band becomes type on the light ground with its arrows and count, people are cards in type. A page of type on two grounds; coverage 0 %\", \"clinic1 with every picture removed\": \"same; legible ok (390)\", \"local1 with sportbot's plans, faq and figures added (probe only)\": \"plans as outlined cards in the dark part, questions as numbered rows, figures in the statement's left half; legible ok (533), no sideways scroll\"}",
+  "shows: [\"catalogue: groups or items as outline cards (name, price / prices / state, note, rows, text up to 380 characters, link); longer texts and the items of grouped catalogues as numbered rows with the text inside\", \"team (items or groups, flattened): portrait, name, role, text, phone, email; a person without a portrait is a card in type\", \"place.address (large in the foot), place.phone + note, email, hours, booking, contact.form, contact.routes, locations[] (rows in the foot); phone and call-to-action in the bar\", \"steps.title/text (intro), steps.items (slideshow: title, text, link, picture)\", \"statement, hero.kicker, hero.text + text2, trust (bullets), quotes (name as label), credentials (year as label), projects (title + pictures), media.video\", \"plans (title, text, name, price, per, line, rows, cta, marked as a tag, note) and faq (title, q, a) — built from the reference's pricing cards and question rows; not exercised by the two test clients, checked with borrowed data\", \"figures (value + label, left half of the statement), nav, links not already in nav or cards, place.social, foot.text, foot.legal, foot.links\"]"
+ ]
+}

@@ -1,0 +1,183 @@
+{
+ "_note": "Owner's decision 2026-11-12: the picture family is chosen by what the client does, not at random. First matching group wins (most keyword hits; ties go to the earlier group). The first preview takes the first family of the group that exists in the library for the client's tone; the second and third previews take the next ones, always three different families. Aurora is not in the library (rejected).",
+ "groups": [
+  {
+   "name": "life",
+   "what": "apps for people: health, fitness, sport, travel, food, outdoors, learning",
+   "words": [
+    "health",
+    "fitness",
+    "sport",
+    "sports",
+    "bet",
+    "match",
+    "travel",
+    "trip",
+    "food",
+    "recipe",
+    "wellness",
+    "outdoor",
+    "coach",
+    "coaching",
+    "learn",
+    "learning",
+    "language",
+    "kids",
+    "family",
+    "habit",
+    "sleep",
+    "running",
+    "meal",
+    "nutrition",
+    "diet",
+    "yoga",
+    "meditation",
+    "pet",
+    "garden",
+    "home",
+    "dating",
+    "event",
+    "events",
+    "outdoor"
+   ],
+   "families": [
+    "nature",
+    "ribbon",
+    "space",
+    "material",
+    "tech"
+   ]
+  },
+  {
+   "name": "creative",
+   "what": "creative tools: design, video, photo, writing, music, publishing, marketing",
+   "words": [
+    "design",
+    "creative",
+    "video",
+    "photo",
+    "image",
+    "writing",
+    "writer",
+    "book",
+    "ebook",
+    "author",
+    "publish",
+    "publishing",
+    "music",
+    "audio",
+    "editor",
+    "content",
+    "marketing",
+    "brand",
+    "story"
+   ],
+   "families": [
+    "ribbon",
+    "material",
+    "nature",
+    "space",
+    "tech"
+   ]
+  },
+  {
+   "name": "serious",
+   "what": "finance, law, insurance, accounting, HR, compliance, enterprise B2B",
+   "words": [
+    "finance",
+    "fintech",
+    "bank",
+    "banking",
+    "payment",
+    "payments",
+    "invoice",
+    "legal",
+    "law",
+    "insurance",
+    "accounting",
+    "tax",
+    "compliance",
+    "enterprise",
+    "b2b",
+    "crm",
+    "hr",
+    "payroll",
+    "procurement",
+    "logistics"
+   ],
+   "families": [
+    "material",
+    "ribbon",
+    "nature",
+    "space",
+    "tech"
+   ]
+  },
+  {
+   "name": "technical",
+   "what": "developer tools, infrastructure, data, AI, security",
+   "words": [
+    "developer",
+    "developers",
+    "api",
+    "sdk",
+    "infrastructure",
+    "infra",
+    "cloud",
+    "gpu",
+    "data",
+    "database",
+    "ai",
+    "ml",
+    "model",
+    "models",
+    "llm",
+    "security",
+    "devops",
+    "analytics",
+    "observability",
+    "code",
+    "automation",
+    "agent",
+    "agents"
+   ],
+   "families": [
+    "tech",
+    "space",
+    "ribbon",
+    "material",
+    "nature"
+   ]
+  }
+ ],
+ "default": [
+  "ribbon",
+  "nature",
+  "space",
+  "tech",
+  "material"
+ ],
+ "corporate": [
+  "material",
+  "nature",
+  "ribbon",
+  "tech",
+  "space"
+ ],
+ "nonprofit": [],
+ "no_made": [
+  "restaurant",
+  "hotel",
+  "shop",
+  "cafe",
+  "bar",
+  "venue",
+  "place",
+  "person",
+  "clinic",
+  "law",
+  "service",
+  "school",
+  "nonprofit"
+ ]
+}

@@ -1,0 +1,292 @@
+{
+ "_note": "A made-up client for tests. The name, the words, the numbers and the addresses are invented; no real business is described.",
+ "brand": {
+  "name": "Quillmoor",
+  "logo": "media/quillmoor/logo.svg",
+  "home": "https://www.quillmoor.example/",
+  "logo_wordmark": true
+ },
+ "lang": "en",
+ "kind": "software",
+ "character": "warm",
+ "palette": {
+  "note": "invented",
+  "ground": "#f5eee1",
+  "ink": "#171a3a",
+  "accent": "#f37b18",
+  "extra": [
+   "#3e4af0",
+   "#171a3a",
+   "#fbf4ea"
+  ]
+ },
+ "nav": [
+  {
+   "t": "The press",
+   "h": "https://www.quillmoor.example/press"
+  },
+  {
+   "t": "Shelf",
+   "h": "https://shelf.quillmoor.example/"
+  }
+ ],
+ "signin": {
+  "t": "Log in",
+  "h": "https://app.quillmoor.example/login"
+ },
+ "cta": {
+  "t": "Open a free workroom",
+  "h": "https://app.quillmoor.example/login"
+ },
+ "hero": {
+  "kicker": "A small press in your browser",
+  "title": "Write, Set and Print Your Own Small Book",
+  "text": "Most writing tools stop at the manuscript.",
+  "text2": "Quillmoor carries a book from the first page to a printed copy on the table, and keeps the files yours.",
+  "primary": {
+   "t": "Open a free workroom",
+   "h": "https://app.quillmoor.example/login"
+  },
+  "secondary": {
+   "t": "The press",
+   "h": "https://www.quillmoor.example/press"
+  },
+  "note": "Set in 40+ typefaces"
+ },
+ "trust": [
+  "Set in 40+ typefaces",
+  "Import from DOCX or plain text",
+  "Paperback and pocket sizes",
+  "A page for every book",
+  "You keep the files",
+  "Printed in a week"
+ ],
+ "figures": [
+  {
+   "v": "90%",
+   "l": "Of the cover price is yours on copies sold from your own page"
+  },
+  {
+   "v": "40+",
+   "l": "Typefaces to set a book in"
+  },
+  {
+   "v": "$640",
+   "l": "What eighty copies at $10 leave after printing, on our sample book"
+  },
+  {
+   "v": "6",
+   "l": "Trim sizes, from pocket to quarto"
+  }
+ ],
+ "statement": {
+  "title": "We began as a typesetter. Now the whole press is yours.",
+  "text": "Write the book, set its pages, draw the cover, order a proof and sell the copies from one room, without passing files between five tools."
+ },
+ "steps": {
+  "title": "How a Small Book Is Made at Quillmoor",
+  "text": "The whole way from outline to bound copy, in one workroom.",
+  "items": [
+   {
+    "k": "Write",
+    "title": "What is the book about?",
+    "text": "Begin with a sentence or paste a manuscript. Chapters and contents are kept in order as you go.",
+    "cta": {
+     "t": "Start",
+     "h": "https://app.quillmoor.example/login"
+    },
+    "img": "media/quillmoor/img8.jpg",
+    "shape": "book"
+   },
+   {
+    "k": "Set",
+    "title": "Set the Pages in One Pass",
+    "text": "Choose a face, a size and a margin. Read the proof on screen before a single copy is printed.",
+    "cta": {
+     "t": "Log in",
+     "h": "https://app.quillmoor.example/login"
+    },
+    "img": "media/quillmoor/img10.jpg",
+    "shape": "book"
+   },
+   {
+    "k": "Print",
+    "title": "Hold the First Copy",
+    "text": "Order one proof, check it by daylight, then print as many as the launch needs.",
+    "cta": {
+     "t": "Shelf",
+     "h": "https://shelf.quillmoor.example/"
+    },
+    "img": "media/quillmoor/img5.jpg",
+    "shape": "book"
+   }
+  ]
+ },
+ "features": {
+  "title": "What is in the workroom?",
+  "text": "Everything between an idea and a parcel of books: writing, setting, a cover, a proof, a page to sell from.",
+  "items": [
+   {
+    "t": "A page for the book",
+    "d": "Answer a few questions, choose a look, and read the page before it goes out."
+   },
+   {
+    "t": "A cover table",
+    "d": "Front, spine and back drawn to the trim size you chose."
+   },
+   {
+    "t": "Faces and sizes",
+    "d": "Forty typefaces with their italics, all free to print with."
+   },
+   {
+    "t": "Import",
+    "d": "Bring a manuscript from DOCX or plain text."
+   },
+   {
+    "t": "Sell it",
+    "d": "Copies sold from your own page leave you 90% of the cover price."
+   }
+  ]
+ },
+ "media": {
+  "screens": [
+   {
+    "src": "media/quillmoor/img1.jpg",
+    "w": 1080,
+    "h": 603,
+    "alt": "The workroom"
+   },
+   {
+    "src": "media/quillmoor/shot3.jpg",
+    "w": 1152,
+    "h": 615,
+    "alt": "Set your print run"
+   },
+   {
+    "src": "media/quillmoor/shot2.jpg",
+    "w": 896,
+    "h": 244,
+    "alt": "What is the book about?"
+   }
+  ],
+  "phones": [],
+  "video": null,
+  "photos": [
+   {
+    "src": "media/quillmoor/img8.jpg",
+    "w": 800,
+    "h": 1193,
+    "alt": "A Year of Small Gardens — cover",
+    "shape": "book"
+   },
+   {
+    "src": "media/quillmoor/img9.jpg",
+    "w": 800,
+    "h": 1193,
+    "alt": "Title page",
+    "shape": "book"
+   },
+   {
+    "src": "media/quillmoor/img10.jpg",
+    "w": 800,
+    "h": 1193,
+    "alt": "Contents",
+    "shape": "book"
+   },
+   {
+    "src": "media/quillmoor/img11.jpg",
+    "w": 800,
+    "h": 1193,
+    "alt": "Chapter one",
+    "shape": "book"
+   },
+   {
+    "src": "media/quillmoor/img5.jpg",
+    "w": 828,
+    "h": 1242,
+    "alt": "Bread by Hand — cover",
+    "shape": "book"
+   },
+   {
+    "src": "media/quillmoor/img6.jpg",
+    "w": 625,
+    "h": 1000,
+    "alt": "Letters to a Lighthouse — cover",
+    "shape": "book"
+   },
+   {
+    "src": "media/quillmoor/img7.jpg",
+    "w": 828,
+    "h": 1242,
+    "alt": "The Quiet Bicycle — cover",
+    "shape": "book"
+   }
+  ]
+ },
+ "plans": {
+  "title": "The press, for good",
+  "text": "One payment, pages every month.",
+  "items": [
+   {
+    "name": "Bench",
+    "price": "$220",
+    "per": "one payment",
+    "line": "Pages every month.",
+    "rows": [],
+    "cta": {
+     "t": "See the press",
+     "h": "https://www.quillmoor.example/press"
+    }
+   },
+   {
+    "name": "Workshop",
+    "price": "$290",
+    "per": "one payment",
+    "line": "Pages every month. Most chosen.",
+    "marked": true,
+    "rows": [],
+    "cta": {
+     "t": "See the press",
+     "h": "https://www.quillmoor.example/press"
+    }
+   }
+  ],
+  "note": "Foundry $940, one payment. The details of each are on the press page."
+ },
+ "faq": {
+  "title": "",
+  "items": []
+ },
+ "quotes": [],
+ "logos": [],
+ "links": [
+  {
+   "t": "The press",
+   "d": "One payment, pages every month.",
+   "h": "https://www.quillmoor.example/press"
+  },
+  {
+   "t": "Shelf",
+   "d": "Books made at Quillmoor.",
+   "h": "https://shelf.quillmoor.example/"
+  },
+  {
+   "t": "Log in",
+   "d": "Open your workroom.",
+   "h": "https://app.quillmoor.example/login"
+  }
+ ],
+ "close": {
+  "title": "Write, Set and Print Your Own Small Book",
+  "text": "Most writing tools stop at the manuscript.",
+  "cta": {
+   "t": "Open a free workroom",
+   "h": "https://app.quillmoor.example/login"
+  }
+ },
+ "foot": {
+  "text": "",
+  "legal": "© Quillmoor",
+  "links": []
+ }
+}

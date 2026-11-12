@@ -1,0 +1,343 @@
+{
+ "_note": "A made-up client for tests. The name, the words, the numbers and the addresses are invented; no real business is described.",
+ "brand": {
+  "name": "Tallyfern",
+  "logo": "media/tallyfern/logo.svg",
+  "home": "https://www.tallyfern.example/"
+ },
+ "lang": "en",
+ "kind": "software",
+ "character": "energetic",
+ "palette": {
+  "note": "invented",
+  "ground": "#0c0d10",
+  "ink": "#f5f4ef",
+  "accent": "#35e0a1",
+  "extra": [
+   "#114a38",
+   "#7a4a1c",
+   "#7c2222",
+   "#0f4a47",
+   "#7fe3bb"
+  ]
+ },
+ "nav": [
+  {
+   "t": "Ledger",
+   "h": "https://www.tallyfern.example/ledger"
+  },
+  {
+   "t": "Receipts",
+   "h": "https://www.tallyfern.example/receipts"
+  },
+  {
+   "t": "Month",
+   "h": "https://www.tallyfern.example/month"
+  },
+  {
+   "t": "Accountants",
+   "h": "https://www.tallyfern.example/accountants"
+  },
+  {
+   "t": "Pricing",
+   "h": "https://www.tallyfern.example/pricing"
+  }
+ ],
+ "signin": {
+  "t": "Sign in",
+  "h": "https://www.tallyfern.example/login"
+ },
+ "cta": {
+  "t": "Start a ledger",
+  "h": "https://www.tallyfern.example/signup"
+ },
+ "hero": {
+  "kicker": "Bookkeeping for market stalls",
+  "title": "The books of a stall, kept in an evening",
+  "text": "Photograph each receipt and the ledger keeps itself.",
+  "text2": "Stock, rent and pay, sorted as they come. Ten minutes on a Sunday closes the week.",
+  "primary": {
+   "t": "Start a ledger — free",
+   "h": "https://www.tallyfern.example/signup"
+  },
+  "secondary": {
+   "t": "See a sample month",
+   "h": "https://www.tallyfern.example/sample"
+  },
+  "note": "4,210 stalls keep their books here"
+ },
+ "trust": [
+  "No card to begin",
+  "Export to CSV",
+  "One stall or ten",
+  "Free for the first month",
+  "iOS & Android",
+  "Your accountant reads it too"
+ ],
+ "figures": [
+  {
+   "v": "97%",
+   "l": "Receipts read without a correction"
+  },
+  {
+   "v": "+4.2%",
+   "l": "Margin found in the first quarter · 310 stalls"
+  },
+  {
+   "v": "10 min",
+   "l": "A week, closed"
+  },
+  {
+   "v": "4,210–12",
+   "l": "Stalls joined – left, this year"
+  }
+ ],
+ "statement": {
+  "title": "A ledger is a habit, not a chore",
+  "text": "Most stalls lose a morning a month to paper. Keep the receipt in your hand for three seconds longer and the morning is yours again."
+ },
+ "steps": {
+  "title": "Three small things, in order.",
+  "text": "Nothing to learn and nothing to set up. The same three moves every market day.",
+  "items": [
+   {
+    "k": "At the till",
+    "title": "Photograph the receipt",
+    "text": "Snap it as you get it. Handwriting is read too, and what could not be read is marked for you.",
+    "cta": {
+     "t": "Try a receipt",
+     "h": "https://www.tallyfern.example/receipts"
+    },
+    "img": "media/tallyfern/receipts-phone.jpg",
+    "shape": "phone"
+   },
+   {
+    "k": "On the way home",
+    "title": "Let it be sorted",
+    "text": "Stock, rent, pay, fuel. Each line lands under its heading, and you can move any of them with a thumb.",
+    "cta": {
+     "t": "See the ledger",
+     "h": "https://www.tallyfern.example/ledger"
+    },
+    "img": "media/tallyfern/ledger-phone.jpg",
+    "shape": "phone"
+   },
+   {
+    "k": "On Sunday",
+    "title": "Close the week",
+    "text": "Read the week on one page, fix what is marked, and send the month to your accountant with one tap.",
+    "cta": {
+     "t": "Read a sample month",
+     "h": "https://www.tallyfern.example/month"
+    },
+    "img": "media/tallyfern/month-phone.jpg",
+    "shape": "phone"
+   }
+  ]
+ },
+ "features": {
+  "title": "Everything a stall keeps, in one place",
+  "text": "A ledger, not an accounting suite: what came in, what went out, and what the month made.",
+  "items": [
+   {
+    "t": "Receipts, read for you",
+    "d": "Printed or handwritten, in four languages. Each amount is shown beside the picture it came from."
+   },
+   {
+    "t": "Headings that fit a stall",
+    "d": "Stock, rent, pay, fuel, fees. Add your own in a line."
+   },
+   {
+    "t": "The month on one page",
+    "d": "Takings, costs and what is left, with last month beside it."
+   },
+   {
+    "t": "A copy for your accountant",
+    "d": "CSV or PDF, sent from the app. They need no account."
+   },
+   {
+    "t": "Several stalls, one ledger",
+    "d": "Each stall on its own page and all of them added up. On Row."
+   },
+   {
+    "t": "A reminder that does not nag",
+    "d": "One nudge on Sunday evening. Nothing else, ever."
+   },
+   {
+    "t": "Yours to take away",
+    "d": "Export everything at any time, pictures included."
+   }
+  ]
+ },
+ "media": {
+  "screens": [
+   {
+    "src": "media/tallyfern/month-screen.jpg",
+    "w": 1800,
+    "h": 1125,
+    "alt": "The month on one page"
+   },
+   {
+    "src": "media/tallyfern/ledger-screen.jpg",
+    "w": 1700,
+    "h": 1326,
+    "alt": "The ledger: every line beside its receipt"
+   },
+   {
+    "src": "media/tallyfern/receipts-screen.jpg",
+    "w": 1800,
+    "h": 1125,
+    "alt": "This week's receipts"
+   },
+   {
+    "src": "media/tallyfern/stalls-screen.jpg",
+    "w": 1800,
+    "h": 1125,
+    "alt": "All stalls"
+   }
+  ],
+  "phones": [
+   {
+    "src": "media/tallyfern/receipts-phone.jpg",
+    "w": 780,
+    "h": 1616,
+    "alt": "Receipts on the phone"
+   },
+   {
+    "src": "media/tallyfern/ledger-phone.jpg",
+    "w": 780,
+    "h": 1616,
+    "alt": "The ledger on the phone"
+   },
+   {
+    "src": "media/tallyfern/stalls-phone.jpg",
+    "w": 780,
+    "h": 1616,
+    "alt": "All stalls on the phone"
+   },
+   {
+    "src": "media/tallyfern/month-phone.jpg",
+    "w": 780,
+    "h": 1616,
+    "alt": "The month on the phone"
+   }
+  ],
+  "video": {
+   "src": "media/tallyfern/tour.mp4",
+   "poster": "media/tallyfern/tour-poster.jpg",
+   "w": 924,
+   "h": 758,
+   "alt": "A receipt becoming a line of the ledger"
+  },
+  "photos": []
+ },
+ "plans": {
+  "title": "Two plans. No contract, either way.",
+  "text": "One lost morning costs more than a year of Stall. Begin free and move up when a second stall opens.",
+  "items": [
+   {
+    "name": "Stall",
+    "price": "€9",
+    "per": "a month · 30 cents a day",
+    "line": "One stall, kept properly.",
+    "rows": [
+     "Every receipt read as you photograph it",
+     "The month on one page, with last month beside it",
+     "A copy for your accountant, CSV or PDF",
+     "Handwritten receipts, in four languages",
+     "Everything yours to export, at any time"
+    ],
+    "cta": {
+     "t": "Start with Stall",
+     "h": "https://www.tallyfern.example/pricing"
+    }
+   },
+   {
+    "name": "Row",
+    "price": "€29",
+    "per": "a month · 97 cents a day",
+    "line": "Up to ten stalls, and who sold what.",
+    "marked": true,
+    "rows": [
+     "Everything in Stall, for each stall",
+     "All stalls added up on one page",
+     "A helper can photograph; only you see the totals",
+     "Costs shared between stalls, split as you say",
+     "Two years of months, kept side by side"
+    ],
+    "cta": {
+     "t": "Go Row",
+     "h": "https://www.tallyfern.example/pricing"
+    }
+   }
+  ],
+  "note": "The first month is free on either plan and needs no card. Pay by the year and two months are on us."
+ },
+ "faq": {
+  "title": "Asked at the stall.",
+  "items": [
+   {
+    "q": "Is Tallyfern an accounting package?",
+    "a": "No. It keeps the ledger a stall needs and hands a clean copy to whoever does your accounts. It files nothing with anyone."
+   },
+   {
+    "q": "Does it read handwriting?",
+    "a": "Yes, and it marks what it could not read so that you can type the amount in."
+   },
+   {
+    "q": "What does it cost to begin?",
+    "a": "Nothing for the first month, and no card is asked for. After that Stall is €9 a month and Row is €29."
+   },
+   {
+    "q": "Can I take my books with me?",
+    "a": "At any time: every line and every picture, as CSV and a folder of images."
+   }
+  ]
+ },
+ "quotes": [],
+ "logos": [],
+ "links": [
+  {
+   "t": "Pricing",
+   "d": "Stall €9 a month, Row €29. Both cheaper by the year.",
+   "h": "https://www.tallyfern.example/pricing"
+  },
+  {
+   "t": "A sample month",
+   "d": "A fruit stall in November, line by line.",
+   "h": "https://www.tallyfern.example/sample"
+  },
+  {
+   "t": "For accountants",
+   "d": "What you receive, and in which columns.",
+   "h": "https://www.tallyfern.example/accountants"
+  },
+  {
+   "t": "Receipts",
+   "d": "How a picture becomes a line.",
+   "h": "https://www.tallyfern.example/receipts"
+  }
+ ],
+ "close": {
+  "title": "Keep the books tonight.",
+  "text": "Ten minutes, then the market.",
+  "cta": {
+   "t": "Start a ledger — free",
+   "h": "https://www.tallyfern.example/signup"
+  }
+ },
+ "foot": {
+  "text": "Tallyfern keeps records; it is not an accountant and gives no tax advice. Ask yours.",
+  "legal": "© 2026 Tallyfern",
+  "links": [
+   {
+    "t": "Terms",
+    "h": "https://www.tallyfern.example/terms"
+   },
+   {
+    "t": "Privacy",
+    "h": "https://www.tallyfern.example/privacy"
+   }
+  ]
+ }
+}

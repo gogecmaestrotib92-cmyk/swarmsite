@@ -1,0 +1,55 @@
+{
+ "niche": [
+  "person",
+  "service"
+ ],
+ "photos_min": 4,
+ "photos_large_min": 0,
+ "screens_min": 0,
+ "phones_ok": false,
+ "needs": [
+  "brand.name",
+  "hero.title"
+ ],
+ "needs_any": [
+  [
+   "catalogue",
+   "plans"
+  ]
+ ],
+ "drops": [
+  "figures",
+  "video",
+  "screens",
+  "phones",
+  "menu",
+  "spaces",
+  "events",
+  "notices",
+  "since",
+  "cuisine",
+  "price_range",
+  "takeaway",
+  "links.d",
+  "brand.logo",
+  "signin"
+ ],
+ "holds_without_pictures": false,
+ "motif": "photos",
+ "notes": [
+  "Each photograph is used once. The first screen takes a wide picture no section has named; if every wide one is named, it takes the first and that row stands without a picture.",
+  "A small picture is never a backdrop and never wider than its pixels; portraits go only to the people they belong to.",
+  "No alt is shown as text. Control names (menu, close, previous, next) are aria-labels; the one visible function word is 'from' before a price marked from:true.",
+  "No logo file is read: the name is set in type across the first screen and in the header, as the reference's wordmark is.",
+  "needs (as written): one wide photograph for the first screen",
+  "needs (as written): steps.items with their own pictures or team with portraits",
+  "drops (as written): catalogue item and group pictures (the same pictures stand in the rows)",
+  "drops (as written): project photographs beyond the first free one",
+  "drops (as written): team.groups[].t (the people are shown, the group names are not)",
+  "drops (as written): photographs beyond the slots (person1 2 of 9, local1 7 of 20)",
+  "motif (as written): the client's own photographs (media.made is never read)",
+  "photos_by_role: {\"first_screen\": \"1, not small, at least 1400 wide and wider than tall, any role but product / detail (shown 1440x900 at 1440: person1's 1568x900 is enlarged 1.0x, on wider windows more). One that no section names for itself is taken first.\", \"rows\": \"one per steps.items[].img, at least 600 wide (shown on the right 62.5 % of the row, 900x714 at 1440, and never wider than its own pixels: a 770 px picture stands 770 wide)\", \"person\": \"the portrait of a single person in team (any size from about 600 wide; shown at most at its own width)\", \"opening_words\": \"0-1 that no section names, at least 600 wide, not a portrait / people / product / detail picture, beside hero.text\", \"project_cards\": \"one per project, at least 300 wide (cards 218 and 335 wide at 1440)\", \"people_cards\": \"one portrait per person when team has two or more (cards 335 and 451 wide, 16:9)\"}",
+  "measured_on: {\"reference\": \"coverage 36 %, 1 screen with a wide picture (per screen 100, 8, 33, 36, 26, 0)\", \"person1\": \"9 photographs (2 at least 1400 wide; 4 small): 7 used — first screen, opening words (770 px, small), the person, 4 rows; not used: salbit.jpg (376 px), book.jpg (300 px product). Coverage 37 %, 6 screens with a wide picture.\", \"local1\": \"20 photographs (7 at least 1400 wide): 13 used — first screen, opening words, 3 rows, 5 project cards, 3 people cards. Coverage 36 %, 5 screens with a wide picture.\", \"person1 with no photographs\": \"coverage 0 %; every check and the readability gate pass; the rows shrink to their words and the first screen is the pale ground with the line and the name — a typographic page, not this reference. Not a page to offer.\", \"photos_min 4\": \"counted, not rendered: first screen + three rows is the least at which the page still reads as led by photographs\"}",
+  "shows: [\"brand.name\", \"nav + cta (header, phone menu)\", \"hero.title, kicker, text, text2, primary, secondary, note\", \"catalogue: every group with its text and link, every item with price / from / note / text / prices / rows / state / link; catalogue.note\", \"plans (name, price, per, line, rows, cta, note)\", \"statement\", \"team: one person as a row with portrait, role, text, e-mail; several as cards\", \"steps.title, text and every item (k, title, text, cta, img)\", \"projects (title, text, first free photograph, link)\", \"features (title, items t/d) unless they only repeat the catalogue's names\", \"quotes (all)\", \"credentials (t, text, year, badge, link)\", \"faq\", \"trust (as a row of lines) or logos\", \"close\", \"foot.text, foot.legal, foot.links\", \"links (foot)\", \"contact: phone, e-mail, routes, form; place: phone, e-mail, address, hours, booking, social; locations\"]"
+ ]
+}

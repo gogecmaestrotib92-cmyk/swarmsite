@@ -1,0 +1,54 @@
+{
+ "niche": [
+  "restaurant",
+  "hotel",
+  "venue"
+ ],
+ "photos_min": 0,
+ "photos_large_min": 0,
+ "screens_min": 0,
+ "phones_ok": false,
+ "needs": [
+  "links",
+  "statement"
+ ],
+ "needs_any": [
+  [
+   "menu",
+   "spaces"
+  ],
+  [
+   "address",
+   "phone"
+  ]
+ ],
+ "min": {
+  "links": 3
+ },
+ "drops": [
+  "trust",
+  "figures",
+  "features",
+  "quotes",
+  "logos",
+  "screens",
+  "phones",
+  "video",
+  "signin",
+  "price_range",
+  "steps",
+  "links.d"
+ ],
+ "holds_without_pictures": true,
+ "motif": "photos",
+ "notes": [
+  "Type-led: every picture slot has a typeset or empty fallback and no text ever stands on a picture. The whole page is the client's accent colour with one ink, so the accent must be a colour the client accepts edge to edge (a mid-tone accent is lightened or darkened until the ink reads 7:1). A long name is set in two lines. With no photographs offer it only to a client who has real copy (a statement, sentences on the links, a menu or hours): then it holds; with thin copy it is an almost empty coloured page.",
+  "drops (as written): hero.primary and hero.secondary as buttons (booking and menu stand in the bar, the tiles and the contact block)",
+  "drops (as written): place.since outside the stamp",
+  "drops (as written): steps.items (place.spaces is read instead)",
+  "drops (as written): links[].d on a phone when the tile has a picture",
+  "motif (as written): none (places: the client's own photographs only; the page is one flat ground in the client's accent)",
+  "best_with: 2 upright photographs at least 1200 px high (the two frames at the window's edge), 3 or more dishes (any size from 330x440), one photograph per room; `page` on photographs lets a tile and a menu part take the picture that belongs to it",
+  "measured: {\"butarque (52 photographs: 4 large, 48 small)\": \"16 shown, each once: 3 tiles, 2 tall frames, 2 small dishes, 4 menu parts, 3 rooms, 2 closing; shots.mjs clean at 1440 and 390; legible.mjs ok; picture share 39 (reference 44)\", \"balamo (20 photographs: 5 large, 15 small; no spaces, no menu items, no hours)\": \"13 shown, each once; all five tiles carry a picture; shots.mjs clean; legible.mjs ok; picture share 39\", \"balamo with media emptied (probe/v/balamo-nopics)\": \"renders clean, legible ok; a page of type only: the name, five text tiles, two large paragraphs, the logo stamp, links, the event and the telephone large. It reads as a deliberate typographic page but is thin (2364 px at 1440) and the tiles' second row is mostly empty ground\", \"butarque with media emptied (probe/v/butarque-nopics)\": \"renders clean; the menu lists, the three rooms as text columns and the hours carry it; fuller than balamo because it has menu and hours\", \"butarque with the five photographs of the first capture (probe/v/butarque-five)\": \"holds: one tall frame each for house and menu, three rooms; every tile is a text face\", \"sportbot, automateed, hotel1, clinic1, local1, shop1 (probe/v)\": \"render without errors; plans and faq are shown; not looked at beyond sportbot and hotel1\", \"only brand.name (probe/v/empty)\": \"renders without errors\"}"
+ ]
+}

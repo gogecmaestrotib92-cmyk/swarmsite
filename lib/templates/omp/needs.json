@@ -1,0 +1,68 @@
+{
+ "niche": [
+  "clinic",
+  "law",
+  "service",
+  "person",
+  "school"
+ ],
+ "photos_min": 4,
+ "photos_large_min": 4,
+ "screens_min": 0,
+ "phones_ok": false,
+ "needs": [
+  "hero",
+  "statement"
+ ],
+ "needs_any": [
+  [
+   "team",
+   "catalogue",
+   "features"
+  ],
+  [
+   "place",
+   "contact",
+   "locations"
+  ]
+ ],
+ "drops": [
+  "brand.logo",
+  "hero.kicker",
+  "trust",
+  "figures",
+  "links",
+  "logos",
+  "signin",
+  "steps.img",
+  "quotes",
+  "since",
+  "cuisine",
+  "price_range",
+  "takeaway",
+  "menu",
+  "spaces",
+  "events",
+  "notices",
+  "projects"
+ ],
+ "holds_without_pictures": true,
+ "motif": "photos",
+ "notes": [
+  "The half build needs upright or squarish photographs of at least 720×900; a client with only wide pictures gets bands (clinic1), a client with fewer than four large pictures gets fewer picture screens (law1).",
+  "More than about 12 people without portraits make the people section very long.",
+  "A trailing ellipsis is taken off button labels (clinic1's \"Termin buchen …\" is the client's own string; it read as cut).",
+  "drops (as written): brand.logo (the name is set in type, as the reference's is)",
+  "drops (as written): media.screens, media.phones, media.video, media.made",
+  "drops (as written): steps.items[].img (pictures are placed by role, not tied to a step) and steps.items[].title when it has a k",
+  "drops (as written): credentials[].img and credentials[].year (badges are not shown; title and text are)",
+  "drops (as written): quotes beyond the third; quotes[].title",
+  "drops (as written): photographs beyond the four bands and the portraits; any photograph under 1100 px wide or upright; role product",
+  "drops (as written): nav items that do not fit the half-width bar on a wide screen (all of them are in the phone menu)",
+  "motif (as written): the client's own photographs (no made pictures are read)",
+  "photos_by_role: {\"halves (the reference's build; 4 slots: opening, after the statement, beside quote 1, beside quote 2)\": \"upright or squarish photograph, at least 720×900, no wider than 4:3, not small, not a portrait/product; by role: room | people | exterior for the first two, detail | work | room beside the quotes\", \"bands (where no photograph can fill a half; also the slot before the contact rows)\": \"landscape, at least 1100 px wide (1600 px to run edge to edge)\", \"portraits\": \"one per person in team, shown 292 px wide (400 px files are enough); a person without one is listed in type\"}",
+  "shows: [\"hero (title as h1, text, text2, primary, secondary, note)\", \"statement (title as underlined label, text large; what goes beyond ~300 characters opens under a button)\", \"steps (title, text, each item's k and text and cta)\", \"team (title, text, items or groups: name, role, portrait; text, phone, email on a sheet that opens)\", \"features (title, text, t → d) unless every title is already a catalogue item\", \"catalogue (title, text, note; groups with t, text; items with name, price, prices, note, text, rows, state)\", \"plans (title, text, name, price, per, line, rows, cta, note)\", \"faq (title, q → a)\", \"credentials (t, text, h)\", \"close (title, text, cta) with locations (name, address, phone, email, hours, note, h) or place (address, hours, phone and its note, email) and contact (routes, form)\", \"quotes (q, name, role) — three at most\", \"foot (text, legal, links), place.social, place.hours\"]",
+  "measured: {\"clinic1\": \"11 banner photographs 2000×690 / 1680×580, 10 portraits 400×400: no photograph can fill a half (a half would show 28 % of a banner), so four bands (treatment room, waiting area, entrance, flowers) and ten tiles; shots clean at 1440 and 390 (one h1, no sideways scroll, no distortion, errors []); legible ok (342 line readings); picture share 32 % against the reference's 32 %\", \"law1\": \"1 photograph 2000×1334, 1 of 1128×376, 10 portraits of 35 people: no halves (the 3:2 picture forced into a half cuts the second person through — looked at; the 1128×376 row would be enlarged 2.4×), two bands, the second 1128 wide; shots clean; legible ok (756); picture share 12 % against 32 % and two of the reference's four pictures missing — does not meet the picture rule\", \"clinic1 with every picture removed (probe/clinic1-nopics.html, rendered and looked at, 1440; run at 390 without looking)\": \"no error, one h1, 6 274 px: opening is type and the large name, people are ruled rows in two columns, the rest unchanged; legible ok (352). Holds as a type page, plainer\", \"law1 with every picture removed (probe/law1-nopics.html, run, 1440 full page looked at only in passing)\": \"no error, one h1, 11 588 px; legible ok (846)\", \"scratch: clinic1 + two upright 1800×2400 (probe/clinic1-upright.html), looked at 1440 and 390\": \"opening half and the half beside the practice text as the reference has them; no sideways scroll, one h1, no errors; legible ok (335)\", \"scratch: law1 + four upright (probe/law1-upright.html), looked at 1440 and 390 (first screens and quotes)\": \"four halves incl. both quote screens; no sideways scroll, one h1, no errors; legible ok (784)\", \"variants on law1 (probe/variants.py): v1 = 1 plan, 2 features, 1 step, 12-word h1, 40-character button label, no faq · v2 = 3 plans, 9 features, 6 steps, faq · v3 = 5 plans, no photographs\": \"each at 1440 and 390: docW = window, nothing past the right edge, no clipped button/heading, one h1, errors []; legible ok (797 / 917 / 1026)\"}",
+  "picture_share_case: {\"clinic1\": \"page 8395 px against the reference's 8044 (≤ 1.5×): overall share compared — 32 % vs 32 %; the reference's four pictures are all there, in order, as bands\", \"law1\": \"page 12447 px (1.55×): of the reference's four pictures ours has the first two (opening, after the statement); the two beside the quotes are missing because the client has no third and fourth photograph — strict part NOT met; overall 12 %\", \"scratch law1 with four upright photographs\": \"all four halves in the reference's order; 24 % overall on a 14 088 px page; screens that exist on both: [50,0,50,…] against the reference's [50,0,50,…]\", \"scratch clinic1 with two upright photographs\": \"32 %, two halves and two bands\", \"long type sections broken by a band every two screens\": \"not built; clinic1's type runs are under two screens, law1 has no unused photograph\"}"
+ ]
+}

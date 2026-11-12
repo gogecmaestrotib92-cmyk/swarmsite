@@ -1,0 +1,28 @@
+{
+ "niche": [
+  "software",
+  "app",
+  "service"
+ ],
+ "photos_min": 0,
+ "photos_large_min": 0,
+ "screens_min": 1,
+ "phones_ok": true,
+ "needs": [
+  "steps",
+  "figures",
+  "close"
+ ],
+ "holds_without_pictures": true,
+ "motif": "land",
+ "notes": [
+  "screens_min 1: the first screen stands at the foot of the opening; without it the opening is type on the accent field only.",
+  "Each step should bring its own upright picture (phone screen, cover, page); a step without one leaves its side of the row empty.",
+  "figures carry the sticky number cards, the reference's strongest section; without figures that section is left out whole.",
+  "Picture tiles take up to four more client pictures (an upright one first, a film, further screens); with none the block is left out.",
+  "made.land carries the story backdrop (index 1), the band (0) and the tile grounds (4). Without it those are plain grounds and the band is left out.",
+  "A place (restaurant, hotel, shop) is not a fit: nothing here shows menu, hours, address or rooms.",
+  "holds_without_pictures is true by one look at sportbot's data with media emptied; not checked at 390 or on a light palette.",
+  "measured: {\"sportbot\": \"4 screens, 4 phones, 1 film, 3 steps with phone screens, 4 figures, 2 plans, 4 questions: every section but the logo rails; shots.mjs clean at 1440 and 390; legible.mjs ok (515 readings); coverage 23 by the tool, about 34 by viewport (pinned story backdrop), reference 39\", \"automateed\": \"3 screens, no phones, 7 upright photos, no film, no faq, 3 steps with book pages: no questions, no rails; shots.mjs clean; legible.mjs ok (285 readings); coverage 26 by the tool, about 38 by viewport\", \"sportbot without made pictures (out/sportbot-nomade.html)\": \"renders without errors; story on the plain ground, no band, picture tiles on the card colour\", \"sportbot without any picture (out/sportbot-nopics.html)\": \"renders without errors, looked at once at 1440 only: accent opening, story tiles alone in their columns, call, number cards, numbered tiles, plans, questions, foot — a type-and-colour page that holds, but half of each story row is empty\", \"only brand.name and hero.title\": \"renders without errors (not looked at)\"}"
+ ]
+}

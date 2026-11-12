@@ -1,0 +1,40 @@
+{
+ "niche": [
+  "software product",
+  "research / analytics tool",
+  "app with several product screens"
+ ],
+ "photos_min": 0,
+ "photos_large_min": 0,
+ "screens_min": 2,
+ "phones_ok": true,
+ "needs": [
+  "steps",
+  "features",
+  "figures",
+  "plans",
+  "links",
+  "made.land",
+  "made.blur"
+ ],
+ "holds_without_pictures": false,
+ "motif": "land",
+ "measured": {
+  "sportbot": "4 screens, 4 phones, film: opening tiles (phone + screen / film + screen), 3 tabs each with a phone screen, link card with screen 2, 2 plans on calm blurs (green, teal), 4 figures on the water backdrop, 4 questions. Holds.",
+  "automateed": "3 screens, 7 photos (book covers), no film: opening tiles book + screens, 3 tabs with book pictures, 2 plans on cream and navy, 4 figures on the backdrop, no faq. Holds.",
+  "no pictures at all (sportbot data, media emptied, no made)": "opening is the headline with an empty right half, the tab card has an empty right side, the link card stands almost empty, plan panels are plain grounds — not a page to offer",
+  "places (butarque, balamo)": "out/ holds renders from an earlier pass; not looked at in this pass",
+  "variants 2026-11-12": "26 scratch pages (see NOTES 'Stress pass'): no sideways scroll, legible ok on each"
+ },
+ "notes": "Opening tiles need at least two product pictures (one may be portrait); each step (tab) wants its own picture; the link card takes a third screen. Plans and figures are optional sections but carry the page's only made pictures.",
+ "holds_for": {
+  "plans": "1 to 5 (1: one 670 card; 2 and 4: two across; 3 and 5: three across, stacked card)",
+  "features": "2 to 9",
+  "steps": "1 to 6",
+  "h1_words": 12,
+  "button_chars": 40,
+  "faq": "optional",
+  "palette": "any ground/ink/accent — accent and figure ground are solved for their text"
+ },
+ "picture_share_case": "page within 1.5x of the reference's height (9571 vs 9774 at 1440): overall share compared, within 5 points"
+}

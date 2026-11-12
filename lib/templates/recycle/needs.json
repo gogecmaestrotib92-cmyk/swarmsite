@@ -1,0 +1,70 @@
+{
+ "niche": [
+  "nonprofit",
+  "service",
+  "school"
+ ],
+ "photos_min": 3,
+ "photos_large_min": 2,
+ "screens_min": 0,
+ "phones_ok": false,
+ "needs": [
+  "brand.name",
+  "hero.title",
+  "hero.text",
+  "close"
+ ],
+ "needs_any": [
+  [
+   "catalogue",
+   "steps",
+   "features"
+  ],
+  [
+   "contact",
+   "place"
+  ]
+ ],
+ "drops": [
+  "logos",
+  "screens",
+  "phones",
+  "video",
+  "menu",
+  "spaces",
+  "events",
+  "notices",
+  "booking",
+  "since",
+  "cuisine",
+  "price_range",
+  "takeaway",
+  "steps.k",
+  "features",
+  "photos"
+ ],
+ "holds_without_pictures": true,
+ "motif": "photos",
+ "notes": [
+  "drops (as written): media.made",
+  "drops (as written): catalogue.groups[].img and groups[].text",
+  "drops (as written): projects[].photos beyond the first unused",
+  "drops (as written): team.groups[].t",
+  "drops (as written): steps.items[].shape",
+  "drops (as written): steps.items[].k when the steps are photograph tiles",
+  "drops (as written): features (whole) when every feature is only a name that already stands in the catalogue",
+  "drops (as written): links whose address is already linked higher on the page",
+  "drops (as written): contact.phone.note in the foot when the where-and-how section already shows it",
+  "drops (as written): media.photos beyond the slots (charity1: 14 unused, local1: 6)",
+  "drops (as written): a second accent line in the foot's slogan (the brand name is all there is)",
+  "drops (as written): _unplaced (charity1: ways to give, items wanted, statistics table, finances, policies, timeline — the contract has no block for them)",
+  "motif (as written): the client's own photographs (media.made is never read)",
+  "reference: https://re-cycle.org",
+  "photos_by_role: {\"opening\": \"1 landscape of at least 1600 wide (1400 accepted), not people/portrait, not small — shown full-bleed 1440×855 under a veil\", \"statement half\": \"1 of at least 1000×760 (slot 720 wide × the block's height, about 650–750); an upright is taken first, then role workshop/exterior/room/people/landscape\", \"band backdrop\": \"1 of at least 1600 wide, landscape (role landscape/exterior first, then a panorama) — shown at 10 % on the tint\", \"catalogue cards\": \"each item's own img: 600+ wide for a large card (684×360 and taller), 220+ for a row card; an item without one is a card in type\", \"step tiles\": \"steps.items[].img for every step, 440+ wide, none of them already a catalogue picture — otherwise the steps are the numbered cards in type\", \"project tiles\": \"the first unused photograph of each project, 440+ wide\", \"people\": \"team items' own img, 400+ wide (cards 444 wide, picture 370 high); without portraits the people are set in type over one photograph of 1600+ wide (role people first) or over the plain deep ground\", \"where-and-how half\": \"1 of at least 1000×760, role exterior/landscape/room/workshop first\"}",
+  "needs_note: figures (2–4) and statement make the deep section under the opening; without both the page goes from the opening straight to the band.",
+  "uses_when_present: [\"nav\", \"signin\", \"cta\", \"hero.kicker (as the statement's eyebrow)\", \"hero.text2\", \"hero.primary\", \"hero.secondary\", \"hero.note\", \"trust (one bold line in the statement)\", \"figures\", \"statement\", \"close\", \"catalogue (title, text, note, groups[].t/h, items: name, price, note, text, prices[], rows[], state, img, h)\", \"plans (title, text, name, price, per, line, rows, cta, marked, note)\", \"features (title, text, t, d)\", \"quotes (q, name, role)\", \"steps (title, text, k, title, text, cta, img)\", \"projects (title, text, first photo, h)\", \"team (title, text, items or groups: name, role, text, img, phone, email)\", \"faq\", \"locations (name, address, phone, email, hours, note, h)\", \"place.address / phone / email / hours / social\", \"contact.phone (+note), email, form, routes\", \"credentials (t, text, year, h)\", \"links (those not already linked above, with d)\", \"foot.text\", \"foot.legal\", \"foot.links\"]",
+  "holds_without_pictures_note: Measured on scratch copies with media.photos emptied (charity1 + 5 test plans; local1): shots clean at 1440 and 390, legible ok. The opening is the deep ground with the heading (the reference's own sub-page header), the statement and the places run full width, the band is the plain tint, catalogue cards are deep panels in type, people stand in type on the deep ground. It reads as a plain, strongly coloured page of type; the template is chosen for its photographs, so offer it without them only when nothing picture-led qualifies.",
+  "picture_share_case: charity1's page is 1.74× the reference's height → compared by the revised rule (every wide picture of the reference present in the same order: opening, band); the overall share is within one point anyway",
+  "measured_on: {\"reference\": \"picture share 36 %, per screen [96,26,64,10,13,26,0], 2 screens with a wide picture\", \"charity1\": \"29 photographs (25 of 1500+ wide, 5 upright): 15 used once each — opening, statement half, band, 10 catalogue cards, team band, where-and-how half; share 35 %, [100,40,73,46,28,13,0,20,34,44,0,0], 2 wide; shots clean at 1440 (10208 px) and 390; legible ok (501 line readings)\", \"local1\": \"20 photographs (7 of 1900+, none upright): 14 used — opening, statement half, band, 2 catalogue cards, 5 project tiles, 3 people, where-and-how half; share 46 %, [100,54,75,6,17,71,41,19,0], 2 wide; shots clean at 1440 (7434 px) and 390; legible ok (303)\", \"variants\": {\"how\": \"probe/variants.py renders scratch copies into var/ (nothing in data/ is touched); each went through shots.mjs and legible.mjs at 1440 and 390\", \"a — charity1 with 1 plan, 2 features, 1 step, a 12-word h1, a 40-character button label, no faq\": \"no sideways scroll, errors [], one h1 at both widths; legible ok (353). The 40-character label wraps to two lines in the header button; nothing overlaps\", \"b — charity1 with 3 plans, 9 features, 6 steps, a 2-word h1 at 81 px, 2 quotes\": \"clean at both widths; legible ok (597)\", \"c — charity1 with 5 plans and no photographs\": \"clean at both widths; legible ok (584); plans stand 4 + 1 at 1440, one per row at 390\", \"d — local1 with no photographs\": \"clean at both widths; legible ok (218)\", \"e — charity1 on a dark client palette with a light lime accent, 2 plans\": \"clean; legible ok (540); ground and ink are swapped so the page stays a light page with deep sections, the gradient and dark ink on the accent run as on the reference\", \"f — only a brand name and a heading\": \"renders the opening and the foot only; shots clean; legible printed ok with 0 line readings — it read nothing on this one-screen page, so that line is no evidence either way\"}}"
+ ]
+}

@@ -1,3 +1,3 @@
 {"name":"swarmsite-server","private":true,"type":"module","version":"0.1.0",
  "scripts":{"start":"node index.mjs"},
- "dependencies":{"express":"^4.19.2","playwright":"^1.65.0","@supabase/supabase-js":"^2.45.0","cors":"^2.8.5"}}
+ "dependencies":{"express":"^4.19.2","playwright":"^1.65.0","@supabase/supabase-js":"^2.45.0","cors":"^2.8.5","stripe":"^18.0.0"}}

@@ -1,0 +1,20 @@
+{
+ "niche": [
+  "software"
+ ],
+ "photos_min": 0,
+ "photos_large_min": 0,
+ "screens_min": 0,
+ "phones_ok": true,
+ "needs": [
+  "hero",
+  "steps",
+  "features"
+ ],
+ "holds_without_pictures": true,
+ "motif": "land",
+ "notes": [
+  "measured: {\"sportbot\": \"0 photographs, 4 screens, 4 phone screens (used in the step cards): holds; legible ok, shots clean\", \"automateed\": \"0 photographs of its own kind, 8 book covers (used in the step cards), 3 screens (unused): holds; no faq, so the rows section is absent; plan cards without rows are mostly empty\", \"sportbot with every picture and made picture removed (probe/nopic.py)\": \"renders, legible ok, shots clean, but it is then a flat dark page of type: the backdrop made.land[0] is what carries the opening, middle and foot\"}",
+  "note: No client photograph is needed: the one motif is media.made.land[0]. Step cards want one picture each (steps.items[].img, phone, book or screen; else media.screens). plans, faq, figures, links, statement, trust are each optional and left out whole when missing."
+ ]
+}

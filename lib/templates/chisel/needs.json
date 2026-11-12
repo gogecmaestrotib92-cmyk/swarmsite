@@ -1,0 +1,59 @@
+{
+ "niche": [
+  "corporate",
+  "law",
+  "service"
+ ],
+ "photos_min": 1,
+ "photos_large_min": 1,
+ "screens_min": 0,
+ "phones_ok": false,
+ "needs": [
+  "hero"
+ ],
+ "needs_any": [
+  [
+   "catalogue",
+   "features"
+  ]
+ ],
+ "drops": [
+  "trust",
+  "quotes",
+  "logos",
+  "screens",
+  "phones",
+  "video",
+  "hero.note",
+  "cuisine",
+  "price_range",
+  "takeaway",
+  "menu",
+  "spaces",
+  "events",
+  "notices"
+ ],
+ "holds_without_pictures": true,
+ "motif": "photos",
+ "notes": [
+  "Made for a firm with a list of what it does (catalogue) and people; a client with neither gets opening, statement, features, steps, quotes, contact, close.",
+  "The opening's three cells are the first three catalogue groups (else the first three features). A catalogue that is only a price list (law1: four kinds of will) makes them narrower in meaning than the firm is; selection may prefer a client whose catalogue is its services.",
+  "Bright photographs are held under a veil of the palette's dark colour strong enough for 4.5:1 on a white pixel; on the phone the opening picture is therefore faint.",
+  "drops (as written): trust[] when the client has credentials (they stand in the panel only when there are no credentials)",
+  "drops (as written): quotes beyond seven (corp1 has 11: one over the photograph, six in cells, four not shown)",
+  "drops (as written): nav items beyond five in the bar at 1440 (all of them are in the phone menu and the foot)",
+  "drops (as written): media.screens, media.phones, media.video (no place: the reference shows photographs only)",
+  "drops (as written): media.made (not used: the picture family is the client's own photography)",
+  "drops (as written): catalogue item img and group img of the 1st, 4th, 7th group (the build of those sections has no picture; the files stay free for the opening and the bands)",
+  "drops (as written): step pictures after the first usable one; project photographs after the first",
+  "drops (as written): hero.note (its phone number is shown from contact / place)",
+  "drops (as written): place.cuisine, price_range, takeaway, menu, spaces, events, notices (not a template for places)",
+  "drops (as written): photographs left over after the slots are filled (corp1: 12 of 24 unused; law1: firm-group.jpg, 1128 x 376, too small to run edge to edge)",
+  "motif (as written): the client's own photographs (no made pictures)",
+  "photos_large_note: one landscape photograph at least 1600 px wide (not a portrait of a person) carries the opening; three more of that size give the statement band and the quotation band; without any the page is type on the palette's dark ground",
+  "photos_by_role: {\"opening\": \"1 landscape, >= 1600 wide, role workshop / exterior / room / work / action / people preferred\", \"bands\": \"0-2 landscape, >= 1600 wide, any role but portrait (statement band, quotation band)\", \"history band\": \"the first step picture when it is at least 2.2 times as wide as tall and >= 1600 wide\", \"halves\": \"catalogue group pictures (group.img) at least 800 x 800, for the 2nd and 3rd group of every three; one project picture at least 800 x 800\", \"people\": \"one portrait per person in team (any size from about 450 wide; shown 4:5, cropped from the top centre)\"}",
+  "picture_share: {\"reference\": \"25 % of the page, per 900 px screen [100,0,0,30,0,0], one screen with a wide picture\", \"corp1\": \"25 %, per screen [100,4,11,44,39,0,29,24,0,0,53,53,0,57,22,17,20,0,0,0], three screens with a picture at least 60 % wide\", \"law1\": \"18 %, per screen [100,0,0,0,0,0,0,34,76,69,20,0,0,0,0,0,0], one screen with a wide picture; the client has one photograph wide enough to run edge to edge and the opening takes it, so the price sections stay type\", \"case\": \"our page is 3.6 times the reference's height (it carries the catalogue, people, quotations and contact the reference keeps on sub-pages), so rule (2) of the revised picture-share rule applies; rule (1) holds: the reference's one wide picture (the opening) is in place; rule (3): no stretch of type longer than two screens between pictures on corp1 except the last three screens (contact, close, foot), which are three different sections\"}",
+  "shows: [\"hero (kicker, title, text; primary and secondary in the statement section, or under the opening text when there are no cells)\", \"catalogue: every group as a numbered section; item name, text, note, price, prices[], rows[], state, link; catalogue text and note\", \"plans (title, text, name, price, per, line, rows, cta, marked, note)\", \"statement, hero.text2, figures, credentials (title, text, year, link, badge image when it is not a photograph)\", \"features (title, text, every item)\", \"steps (title, text, k, title, text; first usable picture)\", \"quotes: one over a photograph and up to six in cells\", \"team: items or groups; portrait, name, role, text, phone, email, link; people without a portrait in a ruled list\", \"projects (title, text, first photograph, link)\", \"faq (title, q, a)\", \"contact and place: phone with its note, email, address, hours, social, booking, routes; locations (name, address, phone, email, hours, note, link); links with their descriptions\", \"close (title, text, cta) with the phone as second link\", \"foot (text, legal, links), nav, cta\"]",
+  "measured: {\"corp1\": \"24 photographs, 4 catalogue groups (11 items, 7 with plant lists as rows), 5 people (4 portraits), 7 credentials, 11 quotes, 1 project: every section; shots clean at 1440 and 390; legible ok (1245 line readings); 17 248 px at 1440\", \"law1\": \"12 photographs (10 portraits), 4 price groups, 35 people, 3 offices, 5 credentials (3 badges), 3 quotes: no bands, no halves (only one photograph is wide enough and the opening takes it); shots clean; legible ok\", \"corp1 without photographs\": \"rendered, shots clean at 1440 and 390, looked at 1440: the opening is the dark ground with type and the three cells; the sections keep their two columns; the people are a ruled list. Holds as a type page\", \"law1 without photographs\": \"rendered, shots clean at 1440 and 390; first screen looked at\"}"
+ ]
+}
