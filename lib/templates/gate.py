@@ -5,7 +5,7 @@
     render_and_check(d, slugs, outdir, media_base='', root=None) -> [{'slug', 'file', 'ok', 'failed', 'gate'}]
 
 The checks themselves are lib/qa/template_gate.mjs (one browser, every page at 1440 and 390): sideways scroll, script
-errors, distorted media, exactly one h1, every text line readable on what is behind it, no line of text over another.
+errors, distorted media, exactly one h1, every text line readable on what is behind it, no line of text over another, no screen with a large empty region.
 A result is the JSON that tool prints: {page, ok, failed: [...], checks: {name: [findings]}, line_readings, ms}.
 When the tool cannot run (no node, no Chrome, it dies) every page gets ok=False with failed=['tool'] and the reason:
 a page that could not be checked is not a page that passed.
@@ -18,7 +18,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 TOOL = HERE.parent / 'qa' / 'template_gate.mjs'
-CHECKS = ('sideways', 'errors', 'distorted', 'h1', 'legible', 'overlap')
+CHECKS = ('sideways', 'errors', 'distorted', 'h1', 'legible', 'overlap', 'blank')
 
 
 def _registry():

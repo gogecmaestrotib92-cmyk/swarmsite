@@ -26,6 +26,10 @@ try {
     script: page(sound + '<script>nothingOfTheKind()</script>'),
     squeezed: page(sound + '<section><img src="' + PIC + '" style="width:300px;height:300px;max-width:none" alt=""><img src="' + PIC + '" style="width:300px;height:300px;object-fit:cover" alt=""></section>'),
     twoh1: page(sound + '<section><h1>A second first heading</h1></section>'),
+    // a screen of dark ground with the text in one narrow column and nothing beside it: the empty half a picture slot leaves
+    blank: page(sound + '<section style="max-width:none;min-height:1800px;background:#0b0b0d;color:#f5f5f5"><h2>Three ways in</h2><p style="max-width:360px">One match, the whole slate, your own bet.</p><div style="height:1500px;margin-left:50%;background:radial-gradient(#0b0b0d,#0c0c0e)"></div></section><section style="max-width:none"><p>The end.</p></section>'),
+    // the same column beside a picture that has something in it, and beside a drawn panel: not blank
+    full: page(sound + '<section style="max-width:none;display:grid;grid-template-columns:1fr 2fr;gap:24px;background:#0b0b0d;color:#f5f5f5;min-height:900px"><div><h2>Three ways in</h2><p>One match, the whole slate, your own bet.</p></div><img src="' + 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="900">' + Array.from({ length: 30 }, (_, i) => '<rect x="0" y="' + i * 30 + '" width="600" height="15" fill="#' + (i % 2 ? '2af6a0' : '444444') + '"/>').join('') + '</svg>') + '" style="width:100%;height:900px;object-fit:cover" alt=""></section><section style="max-width:none"><p>The end.</p></section>'),
     phone: page(sound + '<section><p style="min-width:560px">A block that is fine on a desk and too wide for a phone.</p></section>'),
     // what the reading must NOT fail: text on a path, a strip moved by script, the faded edges of a masked strip, a closed answer, a page that moves when it loads
     moving: page(sound
@@ -72,11 +76,17 @@ try {
   assert.deepEqual(out.script.failed, ['errors']); assert.ok(/nothingOfTheKind/.test(out.script.checks.errors[0].text));
   assert.deepEqual(out.squeezed.failed, ['distorted']); assert.equal(out.squeezed.checks.distorted.filter(d => d.at === 'd').length, 1, 'a squeezed picture is named once; a cropped one (cover) is not');
   assert.deepEqual(out.twoh1.failed, ['h1']); assert.equal(out.twoh1.checks.h1[0].count, 2);
+  assert.deepEqual(out.blank.failed, ['blank'], 'a screen of bare ground beside one column of text is blank: ' + JSON.stringify(out.blank.checks));
+  assert.ok(out.blank.checks.blank.some(b => b.at === 'd' && b.share >= .35 && b.x >= 600), 'it says where the empty region is and how much of the screen it takes');
+  assert.ok(out.full.ok, 'the same column beside a picture is not blank: ' + JSON.stringify(out.full.checks));
+  const { largestEmpty } = await import(path.join(root, 'lib/qa/template_gate.mjs'));
+  assert.deepEqual(largestEmpty([[0, 1, 1, 0], [0, 1, 1, 1], [1, 1, 1, 1]].map(r => r.map(Boolean))), { a: 6, x: 1, y: 0, w: 2, h: 3 }, 'the largest empty rectangle of a grid');
+  assert.equal(largestEmpty([[0, 0], [0, 0]].map(r => r.map(Boolean))).a, 0);
 
   // a page that is not there: the tool says so and does not call it shown
   const gone = spawnSync('node', [path.join(root, 'lib/qa/template_gate.mjs'), path.join(dir, 'nothing.html')], { encoding: 'utf8', timeout: 60000 });
   const g = JSON.parse(gone.stdout.trim().split('\n').pop());
   assert.ok(gone.status === 1 && g.ok === false, 'a missing page is not ok');
   assert.equal(spawnSync('node', [path.join(root, 'lib/qa/template_gate.mjs')], { encoding: 'utf8' }).status, 2, 'no page given: usage, exit 2');
-  console.log('The template gate passes a sound page (and one that moves) and names sideways scroll, unreadable lines, overlap, script errors, squeezed pictures and a second h1');
+  console.log('The template gate passes a sound page (and one that moves) and names sideways scroll, unreadable lines, overlap, script errors, squeezed pictures, a second h1 and a screen left blank');
 } finally { fs.rmSync(dir, { recursive: true, force: true }); }

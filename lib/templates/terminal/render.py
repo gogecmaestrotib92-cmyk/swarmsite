@@ -251,7 +251,7 @@ def s_calc(d):
     if figs:
         f0, rest = figs[0], figs[1:]
         rows = ''.join('<div class="rr"><dt>%s</dt><dd>%s</dd></div>' % (e(f.get('l', '')), e(f['v'])) for f in rest)
-        right = '<div class="res"><div class="resin"><p class="amt">%s</p>%s%s%s</div></div>' % (
+        right = '<div class="res%s"><div class="resin"><p class="amt">%s</p>%s%s%s</div></div>' % ('' if rest else ' thin',
             e(f0['v']), '<p class="amtl">%s</p>' % e(f0['l']) if f0.get('l') else '', '<dl class="brk">%s</dl>' % rows if rows else '',
             btn(d.get('cta'), 'paper wide big'))
     if not (left or right):
@@ -428,6 +428,7 @@ h1,h2,h3,p,ul,ol,dl,dd,blockquote{margin:0;padding:0}ul,ol{list-style:none}a{col
 .calc .intro{padding-bottom:120px}.cg{display:grid;grid-template-columns:1fr 1fr;gap:40px;padding:56px 70px}.cg.one{grid-template-columns:minmax(0,630px);justify-content:center}
 .lead{font-size:23px;line-height:1.26;letter-spacing:-.01em;margin-bottom:28px}.rows{display:grid;grid-template-columns:1fr 1fr;gap:24px 37px}.rows li{padding:4px 0 12px;border-bottom:1px solid var(--line);font-size:16px;line-height:1.35;letter-spacing:.02em;color:var(--mute);display:flex;align-items:flex-end;min-height:64px}
 .res{background:var(--panel);color:var(--ptx);border-radius:8px;min-height:600px;clip-path:__RES__}.resin{display:flex;flex-direction:column;height:100%;padding:74px 36px 36px 44px}
+.res.thin{min-height:340px}
 .amt{font-size:44px;line-height:1.2;letter-spacing:-.014em}.amtl{font-size:20px;line-height:1.26;letter-spacing:-.015em;color:var(--pmute);margin-top:8px;max-width:440px}
 .brk{margin-top:50px;display:flex;flex-direction:column}.rr{display:flex;justify-content:space-between;align-items:baseline;gap:24px;padding:9px 0}.rr dt{font-size:16px;line-height:1.35;letter-spacing:-.019em;color:var(--pmute)}.rr dd{font-size:22px;line-height:1.46;letter-spacing:-.018em;white-space:nowrap}
 .res .btn{margin-top:auto}.resin .brk+.btn,.resin .amtl+.btn,.resin .amt+.btn{margin-top:auto}.resin>.btn{transform-origin:center}.brk{margin-bottom:36px}.amtl:last-child,.amt:last-child{margin-bottom:0}

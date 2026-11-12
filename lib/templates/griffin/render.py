@@ -208,6 +208,10 @@ def s_walk(d, colours):
         ey = '<p class="ey mono"><i class="mk"></i><span class="no">%02d</span><b>%s</b></p>' % (i + 1, e(x['k'])) if x.get('k') else '<p class="ey mono"><i class="mk"></i><span class="no">%02d</span></p>' % (i + 1)
         arts += '<article class="wp" data-i="%d" style="--c:%s"><div class="wp-t">%s<h3>%s</h3>%s%s</div>%s</article>' % (
             i, colours[i % len(colours)], ey, e(x['title']), '<p class="t20">%s</p>' % e(x['text']) if x.get('text') else '', pill(x.get('cta'), 'ghost'), fig)
+    if not any(x.get('img') for x in items):
+        # no step has a picture: the steps stand side by side under their heading — no held screen, no empty half beside them
+        return ('<section class="walk rule nofig" style="--n:%d"><div class="in walk-l"><div class="wc">%s<div class="wrow">%s</div></div></div></section>') % (
+            min(len(items), 4), intro, arts)
     return ('<section class="walk rule" id="walk" style="--n:%d"><div class="in walk-pin"><div class="walk-l"><div class="rail" aria-hidden="true"></div>'
             '<ol class="wl wl-top mono" aria-hidden="true">%s</ol><div class="wc">%s%s</div><ol class="wl wl-bot mono" aria-hidden="true">%s</ol></div>'
             '<div class="walk-r" aria-hidden="true"><div class="wtrack"></div></div></div></section>') % (len(items), labels, intro, arts, labels)
@@ -390,6 +394,8 @@ h1{font:300 72px/1 var(--serif);letter-spacing:-.02em;font-variation-settings:"o
 .mk{position:absolute;left:-44px;top:3px;width:8px;height:8px;border-radius:50%;background:var(--c);box-shadow:0 0 0 3px var(--bg),0 0 0 4px color-mix(in srgb,var(--c) 60%,transparent),0 0 0 7px var(--bg),0 0 0 8px color-mix(in srgb,var(--c) 30%,transparent),0 0 0 11px var(--bg),0 0 0 11.5px color-mix(in srgb,var(--c) 30%,transparent),0 0 0 14.5px var(--bg)}
 .wi{position:relative;justify-self:center;line-height:0}.wi img{max-height:62vh;width:auto;max-width:min(34vw,100%);border-radius:8px;box-shadow:0 0 0 1px var(--line)}
 .walk-r{display:none}
+.nofig .wrow{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:40px;margin-top:40px}.nofig .wp{display:block;padding:0}.nofig .wp h3{font-size:32px}
+@media (max-width:900px){.nofig .wrow{grid-template-columns:1fr;gap:32px;margin-top:24px}.nofig .wp h3{font-size:24px}}
 /* pinned: the section is one screen held for 380 + 625 a step; labels wait below, pass, and collect above; the pictures ride the scroll */
 .walk.pin{height:calc(100vh + 380px + var(--n)*625px)}.pin .walk-pin{position:sticky;top:0;height:100vh;display:grid;grid-template-columns:1fr 1fr}
 .pin .walk-l{position:relative;height:100vh;padding:80px 40px 40px}.pin .rail{display:block;position:absolute;left:-1px;top:0;bottom:0;width:1px;background:linear-gradient(transparent 0,var(--rc,transparent) min(200px,var(--p,0px)),var(--rc,transparent) max(calc(var(--p,0px) - 200px),min(200px,var(--p,0px))),transparent var(--p,0px)),var(--line)}
