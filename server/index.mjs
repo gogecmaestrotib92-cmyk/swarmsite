@@ -11,6 +11,7 @@ import { spawn } from 'node:child_process'; import fs from 'node:fs'; import pat
 import crypto from 'node:crypto';
 import { makeUserOf, allowance, mine } from './auth.mjs';
 import { STEPS_T, STEPS_F, enabled as templatesEnabled, runTemplateJob, mayDownload, previewable, imageType, formProblem, UPLOAD } from './templates.mjs';
+import { makeEditor, mayKeep, editable, opsProblem } from './editor.mjs';
 import { AsyncLocalStorage } from 'node:async_hooks';
 const HERE = path.dirname(fileURLToPath(import.meta.url)); const ROOT = path.resolve(HERE, '..');
 const sb = createClient(process.env.SUPABASE_URL || 'https://placeholder.supabase.co', process.env.SUPABASE_SERVICE_KEY || 'placeholder', { auth: { persistSession: false } });
@@ -219,11 +220,52 @@ app.get('/t/:id/:slug/package', async (req, res) => {
   if (!row.user_id) await sb.from('jobs').update({ user_id: user.id, email: user.email }).eq('id', row.id).is('user_id', null);   // a downloaded page belongs to whoever downloaded it first
   const { data, error: e2 } = await sb.storage.from(PACKAGE_BUCKET).download(`${row.id}/${req.params.slug}.zip`);
   if (e2 || !data) return res.status(404).json({ error: 'package not found' });
-  const host = (() => { try { return new URL(row.url).hostname.replace(/^www\./, '').replace(/[^a-z0-9.-]/gi, ''); } catch { return 'site'; } })();
+  const host = (() => { try { return new URL(row.url).hostname.replace(/^www\./, '').replace(/[^a-z0-9.-]/gi, '') || 'site'; } catch { return 'site'; } })();
   res.set({ 'content-type': 'application/zip', 'content-disposition': `attachment; filename="${host}-${req.params.slug}.zip"`, 'cache-control': 'no-store' });
   res.send(Buffer.from(await data.arrayBuffer()));
 });
 app.listen(process.env.PORT || 8080, () => console.log('api on', process.env.PORT || 8080));
+// ---- the editor on the page (server/editor.mjs): try edits openly, keep them with an account. No model.
+const child = (cmd, args, ms) => new Promise((ok, no) => { const p = spawn(cmd, args, { cwd: ROOT, env: process.env }); let out = '', err = ''; const t = setTimeout(() => p.kill('SIGKILL'), ms);
+  p.stdout.on('data', d => { out += d; if (out.length > 8e6) p.kill('SIGKILL'); }); p.stderr.on('data', d => { err += d; }); p.on('close', c => { clearTimeout(t); c === 0 ? ok(out) : no(new Error(`${args[0]} exit ${c}: ${err.slice(-300)}`)); }); });
+const EDITOR = makeEditor({
+  readPrivate: async key => { const { data, error } = await sb.storage.from(PACKAGE_BUCKET).download(key); return error || !data ? null : Buffer.from(await data.arrayBuffer()); },
+  writePrivate: async (key, buf, type) => { const { error } = await sb.storage.from(PACKAGE_BUCKET).upload(key, buf, { contentType: type, upsert: true }); if (error) throw error; },
+  publishPublic: async (local, key, type) => upload(local, key, type),
+  publicBase: key => sb.storage.from(BUCKET).getPublicUrl(key).data.publicUrl,
+  python: args => child('python3', args, 30000),
+  gate: async file => { const out = await child('node', ['lib/qa/template_gate.mjs', file], 90000).catch(e => String(e.message)); return String(out).trim().split('\n').reverse().map(l => { try { return JSON.parse(l); } catch { return null; } }).find(x => x && x.page) || { ok: false, failed: ['tool'] }; },
+  tmp: () => { fs.mkdirSync(OUT, { recursive: true }); return OUT; } });
+const editHits = new Map();
+const editLimited = (ip, kind, max) => { const k = kind + ip, now = Date.now(), h = (editHits.get(k) || []).filter(t => now - t < 3600e3); if (h.length >= max) return true; h.push(now); editHits.set(k, h); if (editHits.size > 10000) editHits.clear(); return false; };
+const editRow = async (req, res) => {
+  if (!/^[0-9a-f-]{36}$/.test(req.params.id)) { res.status(400).end(); return null; }
+  const { data: row, error } = await sb.from('jobs').select('id,url,status,result,user_id').eq('id', req.params.id).maybeSingle();
+  if (error) { res.status(503).json({ error: 'unavailable' }); return null; }
+  if (req.params.slug !== undefined && !editable(row, req.params.slug)) { res.status(404).json({ error: 'nothing to edit here' }); return null; }
+  if (req.params.slug === undefined && !(row && row.status === 'done' && row.result?.templates?.store)) { res.status(404).json({ error: 'nothing to edit here' }); return null; }
+  return row; };
+const editFail = (res, e) => res.status(e.status || 500).json({ error: e.status ? e.message : 'the edit could not be made' });
+// the editor's view of one design: the texts, pictures, sections and colours after the edits kept so far (or the ones sent)
+app.post('/t/:id/:slug/describe', async (req, res) => { const row = await editRow(req, res); if (!row) return;
+  const ops = req.body?.ops ?? await EDITOR.saved(row); const bad = opsProblem(ops); if (bad) return res.status(400).json({ error: bad });
+  try { res.json({ ...(await EDITOR.describe(row, req.params.slug, ops)), ops, variants: row.result.templates.variants.map(v => v.slug) }); } catch (e) { editFail(res, e); } });
+app.post('/t/:id/:slug/render', async (req, res) => { const row = await editRow(req, res); if (!row) return;
+  if (editLimited(clientIp(req), 'r', 600)) return res.status(429).json({ error: 'Too many edits in an hour. Please wait a little.' });
+  const ops = req.body?.ops; const bad = opsProblem(ops); if (bad) return res.status(400).json({ error: bad });
+  try { res.set({ 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex' }).send(await EDITOR.render(row, req.params.slug, ops)); } catch (e) { editFail(res, e); } });
+app.post('/t/:id/:slug/check', async (req, res) => { const row = await editRow(req, res); if (!row) return;
+  if (editLimited(clientIp(req), 'c', 120)) return res.status(429).json({ error: 'Too many checks in an hour. Please wait a little.' });
+  const ops = req.body?.ops; const bad = opsProblem(ops); if (bad) return res.status(400).json({ error: bad });
+  try { res.json(await EDITOR.check(row, req.params.slug, ops)); } catch (e) { editFail(res, e); } });
+app.post('/t/:id/photos', async (req, res) => { const row = await editRow(req, res); if (!row) return;
+  if (editLimited(clientIp(req), 'p', 60)) return res.status(429).json({ error: 'Too many photographs in an hour.' });
+  try { res.json(await EDITOR.photo(row, req.body?.file)); } catch (e) { editFail(res, e); } });
+app.put('/t/:id/edits', async (req, res) => { const row = await editRow(req, res); if (!row) return;
+  const user = await userOf(req); const may = mayKeep({ user, row }); if (may.status !== 200) return res.status(may.status).json(may.body);
+  const ops = req.body?.ops; const bad = opsProblem(ops); if (bad) return res.status(400).json({ error: bad });
+  if (may.claim) await sb.from('jobs').update({ user_id: user.id, email: user.email }).eq('id', row.id).is('user_id', null);
+  try { res.json(await EDITOR.save(row, ops)); } catch (e) { editFail(res, e); } });
 
 // ---------- worker ----------
 const JOB_CTX = new AsyncLocalStorage(); // the job a child process belongs to, per async chain: several jobs run at once in one worker
