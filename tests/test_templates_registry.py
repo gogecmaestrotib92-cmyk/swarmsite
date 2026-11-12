@@ -35,7 +35,7 @@ SLUGS = R.slugs()
 
 def test_the_library_holds_the_first_two_templates_and_the_three_fixture_clients():
     assert {'griffin', 'maze'} <= set(SLUGS)
-    assert set(CLIENTS) == {'tallyfern', 'quillmoor', 'casaolmo'}
+    assert {'tallyfern', 'quillmoor', 'casaolmo', 'fernhollow', 'pellbrook', 'wendholm', 'svetlinka'} <= set(CLIENTS)
     assert all('made-up client' in d['_note'] for d in CLIENTS.values())
     for t in R.list_templates():
         assert (ROOT / 'lib' / 'templates' / t['slug'] / 'NOTES.md').is_file(), t['slug']

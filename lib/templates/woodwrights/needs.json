@@ -1,0 +1,72 @@
+{
+ "niche": [
+  "service",
+  "shop"
+ ],
+ "photos_min": 10,
+ "photos_large_min": 1,
+ "screens_min": 0,
+ "phones_ok": false,
+ "needs": [
+  "brand.name",
+  "hero.title",
+  "hero.text",
+  "steps",
+  "steps.img"
+ ],
+ "needs_any": [
+  [
+   "catalogue",
+   "projects"
+  ],
+  [
+   "close",
+   "place",
+   "contact"
+  ]
+ ],
+ "min": {
+  "steps": 2
+ },
+ "max": {
+  "steps": 6
+ },
+ "drops": [
+  "trust",
+  "figures",
+  "logos",
+  "features.d",
+  "features",
+  "steps.k",
+  "menu",
+  "spaces",
+  "events",
+  "since",
+  "cuisine",
+  "price_range",
+  "takeaway",
+  "links.d",
+  "screens",
+  "phones",
+  "photos"
+ ],
+ "holds_without_pictures": true,
+ "motif": "photos",
+ "notes": [
+  "needs (as written): close or place/contact",
+  "drops (as written): features (whole, when a catalogue exists)",
+  "drops (as written): steps.items[].k (when the item has a title)",
+  "drops (as written): catalogue.items[].text / img of an unpriced single-group catalogue (the names list has no room for them; local1's two are the same words and pictures as its steps)",
+  "drops (as written): catalogue.groups[].img",
+  "drops (as written): projects[].photos beyond the first unused",
+  "drops (as written): team.groups[].t",
+  "drops (as written): media.photos beyond the slots (local1: 3 unused, shop1: 4)",
+  "drops (as written): brand.logo over the first picture (a logo file makes the header solid from the start)",
+  "motif (as written): the client's own photographs (media.made is never read)",
+  "photos_by_role: {\"first screen\": \"1 photograph, not small, not portrait/people, at least 1108 wide and 862 high (1440x1121 slot, enlarged at most 1.3x); a landscape of 1600+ wide is taken first\", \"upright beside the opening words\": \"1 of at least 517x698 (672x908 slot); an upright is taken first, then the tallest\", \"backdrop of the told section\": \"1 of at least 1108x595, role workshop/room/exterior/detail first; with only a smaller one the section falls back to the reference's 792x566 print beside the words; with none, words only\", \"band without words\": \"1 of at least 1108 wide (shown in its own proportion, at most 1080 high) — or media.video\", \"sticky upright beside the cards\": \"1 of at least 523x631, role product/work/detail first\", \"numbered points\": \"steps.items[].img for every point (any size; shown 370x238) — the row of pictures is left out unless every point has one\", \"cards\": \"catalogue items' own img / the first unused photo of each project (shown 445x288)\", \"people\": \"team items' own img only (own proportion, clamped between 389:540 and 3:2); a person without one is type only\", \"find us\": \"0-2 of role exterior/room/workshop/bar/detail/landscape, at least 300x415 (389x540 slot); small ones qualify from 389x540\"}",
+  "uses_when_present: [\"hero.kicker (the bar above the header)\", \"hero.text2\", \"hero.primary\", \"hero.secondary\", \"hero.note\", \"nav\", \"signin\", \"cta\", \"statement\", \"steps\", \"catalogue (names list when unpriced; cards and price rows when priced; groups, prices[], rows[], state, note)\", \"features (names list only when there is no catalogue)\", \"projects\", \"media.video\", \"quotes\", \"team (items or groups)\", \"plans\", \"faq\", \"credentials\", \"locations\", \"place.address\", \"place.phone\", \"place.email\", \"place.hours\", \"place.booking\", \"place.social\", \"place.notices\", \"contact.phone\", \"contact.email\", \"contact.routes\", \"contact.form\", \"close\", \"links\", \"foot.text\", \"foot.legal\", \"foot.links\"]",
+  "holds_without_pictures_note: Measured on scratch copies of local1 and shop1 with every photograph removed: shots clean at 1440 and 390, legible ok (398 / 288 line readings), picture share 0. The first screen becomes a tint block 75vh high with the name and the h1; every text section stands; project cards become a list of names. A plain typographic page — it holds, but this template is chosen for its photographs.",
+  "measured_on: {\"reference\": \"picture share 53 %, per screen [100,60,16,40,53,38,84,71,2], 3 screens with a wide picture\", \"local1\": \"20 photographs (6 of 1900+ wide, 13 of 1000-1200, none upright): 17 used once each — first screen, upright, 3 points, told backdrop, 5 project cards, sticky upright, band, 3 people, 1 find-us; share 50 %, 4 screens with a wide picture; legible ok (424); shots clean\", \"shop1\": \"17 photographs (12 of 1700+, 4 small): 13 used — first screen, upright, 3 points, told backdrop, 3 product cards, sticky upright, band, 2 find-us; share 52 %, 4 wide; legible ok (321); shots clean\", \"first five photographs only (scratch)\": \"local1 30 %, shop1 30 %, 1 screen with a wide picture; legible ok both — holds but thin: not a page to offer against a 53 % reference\", \"local1 + sportbot's plans and faq + a test credential and second location (scratch)\": \"all render; legible ok (539); shots clean\"}",
+  "needs_any added by hand at import from the free words: \"close or place/contact\""
+ ]
+}
