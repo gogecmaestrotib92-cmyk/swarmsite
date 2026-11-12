@@ -1,8 +1,7 @@
 """job.py — the template path of a job, after capture and the reader: adapt → select → render three → gate; and,
 for a variant the visitor may download, the package.
 
-    python3 lib/templates/job.py build <job dir> --out <dir> [--base URL] [--limit 3] [--spare 6] [--library DIR]
-        --spare     how many more fitting templates may stand in for designs the gate refuses (tried in order, a few at a time)
+    python3 lib/templates/job.py build <job dir> --out <dir> [--base URL] [--limit 3] [--library DIR]
         --library   a folder holding media/library (else $SWARMSITE_LIBRARY, else the repo's); none → no made pictures
         --form F --photos DIR   a site from nothing: the visitor's form (JSON, lib/templates/form.py) and their uploads,
                     in place of a capture (<job dir> is then only where the job lives)
@@ -12,10 +11,12 @@ for a variant the visitor may download, the package.
                       adapter.json      what the adapter could not fill (gaps) and the rules it applied
                       media/…           every picture the data names, written from the capture
                       <slug>.html       each chosen variant, media beside it — the page the gate judges and the package is made from
-                      <slug>.data.json  a variant's own data when it takes made pictures (three variants, three families)
+                      <slug>.data.json  a variant's own data when it differs from data.json: made pictures (three variants, three
+                                        families), or the soft sections it misses taken out (select.without)
                       media/library/…   the library files the variants show
                       pub/<slug>.html   the same render with its media at --base (the page a preview address serves)
-                      templates.json    {niche, pictures, chosen, shown, rejected, timings_ms}
+                      templates.json    {niche, pictures, chosen, shown, fallback, rejected, media, group, timings_ms}
+                    Three are shown: a chosen variant that fails the gate gives its slot to the next of select's reserve
         prints templates.json as one line
     python3 lib/templates/job.py package <out dir> <slug> <zip> [--verify]
         prints {slug, ok, why, bytes, files, ms} as one line and exits 0; ok=false means the package is refused
@@ -119,10 +120,10 @@ def from_form(form, photos, out):
     return d, notes, written, missing
 
 
-def build(job_dir, out, base='', limit=3, gate_kw=None, library=None, form=None, photos=None, spare=6):
+def build(job_dir, out, base='', limit=3, gate_kw=None, library=None, form=None, photos=None):
     """job_dir: a capture with the reader's factsheet — or, with `form`, the visitor's form (a dict) and `photos`, the
     folder of their uploads: the same data, the same choice, the same gate"""
-    A, R, S, G = _mod('adapt'), _mod('registry'), _mod('select'), _mod('gate')
+    A = _mod('adapt')
     out = Path(out)
     (out / 'pub').mkdir(parents=True, exist_ok=True)
     t = {}
@@ -148,52 +149,82 @@ def build(job_dir, out, base='', limit=3, gate_kw=None, library=None, form=None,
     (out / 'data.json').write_text(json.dumps(data, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
     (out / 'adapter.json').write_text(json.dumps({**notes, 'media_missing': missing}, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
     t['media'] = round((time.perf_counter() - t0) * 1000)
+    res = choose(data, out, base, limit, gate_kw, library, t)
+    res['media'] = {'written': len(written), 'missing': missing, 'library': res.pop('library')}
+    res['timings_ms'] = res.pop('timings_ms')
+    (out / 'templates.json').write_text(json.dumps(res, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
+    return res
+
+
+def choose(data, out, base='', limit=3, gate_kw=None, library=None, t=None):
+    """The client's data (its media already beside `out`) -> the three variants chosen, rendered and gated:
+    {niche, pictures, chosen, shown, fallback, rejected, group, library, timings_ms}"""
+    R, S, G = _mod('registry'), _mod('select'), _mod('gate')
+    out = Path(out)
+    (out / 'pub').mkdir(parents=True, exist_ok=True)
+    t = {} if t is None else t
     t0 = time.perf_counter()
     # made pictures: three families of the prepared library, in the order the client's niche gives (owner, 2026-11-12);
     # none for places, clinics, law, services, shops, schools, people, nonprofits — and none when there is no library
     PI = _mod('pictures')
     lib_root = PI.root_of(library)
     three = PI.pick_three(data, lib_root) if lib_root else []
-    # the fitting templates in their order, `spare` more than are shown: a design the gate refuses is replaced by the next
-    # that fits, so a client is shown `limit` designs whenever that many fit and pass (and none is shown that failed)
-    sel = S.select({**data, 'media': {**(data.get('media') or {}), 'made': three[0]}} if three else data, limit=limit + max(0, spare))
+    sel = S.select({**data, 'media': {**(data.get('media') or {}), 'made': three[0]}} if three else data, limit=limit)
     t['select'] = round((time.perf_counter() - t0) * 1000)
+    families, copied = {}, set()
     t['render'] = t['gate'] = 0
-    families, copied, chosen, free, queue = {}, set(), [], list(three), list(sel['chosen'])
-    while queue and sum(1 for c in chosen if c['ok'] and not c['failed']) < limit:
-        need = limit - sum(1 for c in chosen if c['ok'] and not c['failed'])
-        batch, files, made_of = queue[:need], [], {}
-        queue = queue[need:]
+
+    def render(c, i):
+        """one variant: its made family (by its slot), its soft sections dropped, rendered twice -> the gated file"""
+        made = three[i % len(three)] if three else {}
+        v = {**data, 'media': {**(data.get('media') or {}), 'made': made}} if made else data
+        v = S.without(v, c.get('drops'))                             # what the client has not: the section is left out, never made up
+        for rel in PI.files(made):                                    # the library files this variant shows, beside it like any media
+            if rel not in copied and rel.startswith('media/') and '..' not in Path(rel).parts:
+                (out / rel).parent.mkdir(parents=True, exist_ok=True)
+                (out / rel).write_bytes((lib_root / rel).read_bytes())
+                copied.add(rel)
+        if made:
+            families[c['slug']] = {'family': made.get('family'), 'palette': made.get('palette')}
+        if v is not data:                                             # the package and the editor read the variant's own data
+            (out / (c['slug'] + '.data.json')).write_text(json.dumps(v, ensure_ascii=False) + '\n', encoding='utf-8')
+        f = out / (c['slug'] + '.html')
+        f.write_text(R.render(c['slug'], v, ''), encoding='utf-8')
+        (out / 'pub' / (c['slug'] + '.html')).write_text(R.render(c['slug'], v, base), encoding='utf-8')
+        return f
+
+    def gated(batch):
         t0 = time.perf_counter()
-        for c in batch:
-            made = free.pop(0) if free else {}                        # a family the shown designs do not already use
-            made_of[c['slug']] = made
-            v = {**data, 'media': {**(data.get('media') or {}), 'made': made}} if made else data
-            for rel in PI.files(made):                                # the library files this variant shows, beside it like any media
-                if rel not in copied and rel.startswith('media/') and '..' not in Path(rel).parts:
-                    (out / rel).parent.mkdir(parents=True, exist_ok=True)
-                    (out / rel).write_bytes((lib_root / rel).read_bytes())
-                    copied.add(rel)
-            if made:
-                families[c['slug']] = {'family': made.get('family'), 'palette': made.get('palette')}
-                (out / (c['slug'] + '.data.json')).write_text(json.dumps(v, ensure_ascii=False) + '\n', encoding='utf-8')
-            f = out / (c['slug'] + '.html')
-            f.write_text(R.render(c['slug'], v, ''), encoding='utf-8')
-            (out / 'pub' / (c['slug'] + '.html')).write_text(R.render(c['slug'], v, base), encoding='utf-8')
-            files.append(f)
+        files = [render(c, i) for c, i in batch]
         t['render'] += round((time.perf_counter() - t0) * 1000)
         t0 = time.perf_counter()
         gates = G.check(files, **(gate_kw or {})) if files else []
         t['gate'] += round((time.perf_counter() - t0) * 1000)
-        for c, g in zip(batch, gates):
-            chosen.append({**c, **({'made': families[c['slug']]} if c['slug'] in families else {}), 'ok': g['ok'], 'failed': g['failed'], 'gate': {k: v for k, v in (g.get('checks') or {}).items() if v}, 'gate_ms': g.get('ms'), **({'error': g['error']} if g.get('error') else {})})
-            if not (g['ok'] and not g['failed']) and made_of.get(c['slug']):
-                free.insert(0, made_of[c['slug']])                    # a refused design gives its family back
-    sel['rejected'] = sorted(sel['rejected'] + [{'slug': c['slug'], 'why': 'fits, but %d design(s) before it passed the gate' % limit} for c in queue], key=lambda r: r['slug'])
-    res = {'niche': sel['niche'], 'pictures': sel['pictures'], 'chosen': chosen, 'shown': [c['slug'] for c in chosen if c['ok'] and not c['failed']],
-           'rejected': sel['rejected'], 'media': {'written': len(written), 'missing': missing, 'library': len(copied)}, 'group': PI.niche_group(data)[0], 'timings_ms': t}
-    (out / 'templates.json').write_text(json.dumps(res, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
-    return res
+        return [{**c, **({'made': families[c['slug']]} if c['slug'] in families else {}), 'ok': g['ok'], 'failed': g['failed'], 'gate': {k: v for k, v in (g.get('checks') or {}).items() if v},
+                 'gate_ms': g.get('ms'), **({'error': g['error']} if g.get('error') else {})} for (c, _), g in zip(batch, gates)]
+    # Three are shown (owner's rule): a chosen variant that fails the gate is not shown, and the next of the reserve is
+    # rendered into its slot and gated, until three pass or the reserve is spent. A gate that could not run at all
+    # (failed=['tool']) is not a verdict on the template: nothing is taken from the reserve for it.
+    passed = lambda c: c['ok'] is True and not c['failed']
+    chosen = gated([(c, i) for i, c in enumerate(sel['chosen'])])
+    reserve = list(sel.get('reserve') or [])
+    free = [i for i, c in enumerate(chosen) if not passed(c)]          # slots to fill: a replacement takes its slot's made family
+    nxt, taken = len(chosen), set()
+    while reserve and sum(map(passed, chosen)) < limit and not any(c['failed'] == ['tool'] for c in chosen):
+        batch, reserve = reserve[:limit - sum(map(passed, chosen))], reserve[limit - sum(map(passed, chosen)):]
+        slots = []
+        for _ in batch:
+            slots.append(free.pop(0) if free else nxt)
+            nxt += 0 if slots[-1] < nxt else 1
+        taken.update(c['slug'] for c in batch)
+        new = gated(list(zip(batch, slots)))
+        free += [s for s, c in zip(slots, new) if not passed(c)]
+        chosen += new
+    shown = [c['slug'] for c in chosen if passed(c)][:limit]
+    rejected = [r for r in sel['rejected'] if r['slug'] not in taken]
+    return {'niche': sel['niche'], 'pictures': sel['pictures'], 'chosen': chosen, 'shown': shown,
+            'fallback': any(c.get('fallback') for c in chosen if c['slug'] in shown),
+            'rejected': rejected, 'group': PI.niche_group(data)[0], 'library': len(copied), 'timings_ms': t}
 
 
 def package(out, slug, zip_path, verify=True, workdir=None):
@@ -224,7 +255,7 @@ if __name__ == '__main__':
     opt = lambda k, dflt=None: a[a.index(k) + 1] if k in a else dflt
     if a[:1] == ['build'] and len(a) >= 2:
         form = json.loads(Path(opt('--form')).read_text(encoding='utf-8')) if opt('--form') else None
-        print(json.dumps(build(a[1], opt('--out') or str(Path(a[1]) / 'templates'), opt('--base', ''), int(opt('--limit', 3)), library=opt('--library'), spare=int(opt('--spare', 6)),
+        print(json.dumps(build(a[1], opt('--out') or str(Path(a[1]) / 'templates'), opt('--base', ''), int(opt('--limit', 3)), library=opt('--library'),
                                form=form, photos=opt('--photos')), ensure_ascii=False))
     elif a[:1] == ['package'] and len(a) >= 4:
         r = package(a[1], a[2], a[3], verify='--verify' in a)

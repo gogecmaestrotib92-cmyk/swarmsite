@@ -115,3 +115,11 @@ Widths between 501 and 1000 px were not looked at (the rules for them are the re
 written from its style rules, not from screenshots). Hover states on ours were not photographed. The reference's inner
 pages were measured at 1440 only. The one-file copies were written, not opened. The machine's disk was full during the
 work (about 120 MB free); several captures failed with ENOSPC and were run again — the files listed here were checked after.
+
+## Soft sections absent (2026-11-12, branch never-zero)
+The header turns from white to ink when the opening picture has gone past the middle of its line (40 px from the top),
+not when it is 65 px from the top. A short page (the minimal stress client: the opening, three photographs, the contact
+lines) can end its scroll with the bottom 35-65 px of the opening picture still under the header; the ink line stood on
+the dark picture there (1.47:1 at 1440). With steps, close or features absent the page drops those sections whole and
+holds: `python3 lib/templates/stress.py --sweep ddsks` on svetlinka passes base, no-features, no-close, no-steps,
+no-step-pictures and minimal.

@@ -125,7 +125,8 @@ export async function runTemplateJob(deps) {
       const id = publicId({}, i);
       await deps.upload(path.join(tdir, 'pub', `${slug}.html`), `${job.id}/t/${id}.html`, 'text/html');
       const c = built.chosen.find(x => x.slug === slug) || {};
-      out.push({ slug, id, name: designName(i), approach: c.approach || '', why: c.why || '', url: `${deps.self}/t/${job.id}/${id}`, package: 'pending', ...(c.made ? { made: c.made } : {}) });
+      out.push({ slug, id, name: designName(i), approach: c.approach || '', why: c.why || '', url: `${deps.self}/t/${job.id}/${id}`, package: 'pending', ...(c.made ? { made: c.made } : {}),
+        ...(c.drops?.length ? { drops: c.drops } : {}), ...(c.fallback ? { fallback: true, niche: c.niche } : {}) });
     }
     // the job's data store: the client's data, and each variant's own (with its family of made pictures), in the private
     // bucket. The "site from nothing" form will write the same data.json, and the editor will keep its edits as a patch
@@ -134,6 +135,7 @@ export async function runTemplateJob(deps) {
     await deps.uploadPrivate(path.join(tdir, 'data.json'), store.data, 'application/json');
     for (const slug of shown) { const f = path.join(tdir, `${slug}.data.json`); if (fs.existsSync(f)) { store.variants[slug] = `${job.id}/${slug}.data.json`; await deps.uploadPrivate(f, store.variants[slug], 'application/json'); } }
     result.templates = { variants: out, niche: built.niche, pictures: built.pictures, not_shown: built.chosen.filter(c => !shown.includes(c.slug)).map(c => ({ slug: c.slug, failed: c.failed })),
+      fallback: !!built.fallback,   // true: the client's own niche had fewer than three, a neighbouring niche's filled the rest
       rejected: (built.rejected || []).slice(0, 60), media: built.media, group: built.group || null, store, timings_ms: { ...built.timings_ms } };
     if (fromForm) {   // what the form left out, in the visitor's terms: an empty field is a section left out, said so
       result.source = 'form';

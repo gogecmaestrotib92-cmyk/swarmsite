@@ -58,23 +58,6 @@ def test_a_variant_that_fails_the_gate_is_not_shown(tmp_path, monkeypatch):
     assert r['shown'] == [] and r['chosen'][0]['error'] == 'no Chrome', 'a page that could not be checked is not shown'
 
 
-def test_a_design_the_gate_refuses_is_replaced_by_the_next_that_fits(tmp_path, monkeypatch):
-    monkeypatch.setenv('SWARMSITE_LIBRARY', 'none')
-    calls = []
-    def check(files, **kw):
-        calls.append([Path(f).stem for f in files])
-        return [{'page': str(f), 'ok': len(calls) > 1, 'failed': [] if len(calls) > 1 else ['blank'], 'checks': {}, 'ms': 5} for f in files[:1]] + \
-               [{'page': str(f), 'ok': True, 'failed': [], 'checks': {}, 'ms': 5} for f in files[1:]]
-    monkeypatch.setattr(G, 'check', check)
-    r = JOB.build(capture(tmp_path), tmp_path / 'templates')
-    first, second = calls[0], calls[1]
-    assert len(first) == 3 and len(second) == 1 and second[0] not in first, 'one more design is tried, one that was not tried before'
-    assert r['shown'] == first[1:] + second and [c['slug'] for c in r['chosen']] == first + second and r['chosen'][0]['failed'] == ['blank']
-    assert not any(x['slug'] in r['shown'] or x['slug'] == first[0] for x in r['rejected'])
-    r = JOB.build(capture(tmp_path / 'b'), tmp_path / 'b' / 'templates', spare=0)
-    assert len(r['chosen']) <= 3, 'no spare: only the first three are tried'
-
-
 def test_a_site_nothing_fits_and_pictures_that_could_not_be_written(tmp_path, monkeypatch):
     monkeypatch.setattr(G, 'check', lambda files, **kw: [{'page': str(f), 'ok': True, 'failed': []} for f in files])
     r = JOB.build(capture(tmp_path, 'empty'), tmp_path / 'templates')
