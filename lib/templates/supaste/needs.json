@@ -1,0 +1,28 @@
+{
+ "niche": [
+  "app",
+  "software"
+ ],
+ "photos_min": 0,
+ "photos_large_min": 0,
+ "screens_min": 2,
+ "phones_ok": true,
+ "needs": [
+  "steps",
+  "steps.img",
+  "features",
+  "plans",
+  "made.land"
+ ],
+ "holds_without_pictures": false,
+ "motif": "land",
+ "notes": [
+  "screens_min 2: the first screen is the opening's product panel, each further screen (or the film) is one stage card; with one screen and no film the stack has no stage at all.",
+  "An upright picture not used by a step stands beside the opening's screen; without it the screen stands alone.",
+  "plans: the price card with its segment switch is one of the reference's marks; without plans the section is left out whole.",
+  "made.land carries the opening, every stage, the price band (one lead picture, chosen by the page's tone) and the link cards (its neighbours). made.field carries the tiles.",
+  "links: each is a whole-width card with only a heading and a button — thin when links[].d is missing.",
+  "A place (restaurant, hotel, shop) is not a fit: no menu, hours, address or rooms.",
+  "measured: {\"sportbot\": \"4 screens, 4 phones, 1 film, 3 steps with phone screens, 4 figures, 7 features, 2 plans, 4 questions, 4 links: every section the build has data for; shots.mjs clean at 1440 and 390; legible.mjs ok (503 readings); coverage 44, reference 31\", \"automateed\": \"3 screens, no phones, 7 upright photos, no film, no faq, 3 steps with book covers, 3 links: no questions section; shots.mjs clean; legible.mjs ok (268 readings); coverage 41\", \"sportbot without made pictures (out/sportbot-nomade.html)\": \"renders without errors; opening on the plain ground, stages and tiles on the chip colour, link cards are plain cards with a heading and a button\", \"sportbot without any picture (out/sportbot-nopics.html)\": \"renders without errors, looked at once at 1440: no product panel, no stage cards, tiles with text and an empty half, four near-empty link cards — not a page to offer\", \"only brand.name and hero.title\": \"renders without errors (not looked at)\"}"
+ ]
+}

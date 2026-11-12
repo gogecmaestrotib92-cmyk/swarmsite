@@ -1,0 +1,43 @@
+{
+ "niche": [
+  "app",
+  "software"
+ ],
+ "photos_min": 0,
+ "photos_large_min": 0,
+ "screens_min": 4,
+ "phones_ok": true,
+ "needs": [
+  "statement",
+  "steps",
+  "steps.img"
+ ],
+ "drops": [
+  "hero.kicker",
+  "hero.text2",
+  "hero.secondary",
+  "hero.note",
+  "trust",
+  "links",
+  "quotes",
+  "logos",
+  "steps.text",
+  "steps.k",
+  "steps.cta",
+  "photos",
+  "screens"
+ ],
+ "holds_without_pictures": false,
+ "motif": "none",
+ "notes": [
+  "screens_min 4 = one picture for the statement plate plus one per step with three steps; any shape (screen, phone, book page), shown whole at its own proportion. A tall narrow picture leaves the plate's face empty at its sides.",
+  "figures: up to 4 sit in one row at 1440; a value longer than about 8 characters would crowd its cell.",
+  "faq needs both q and a; the first question is open, the rest open on press (the reference's lamp is lit on an open one).",
+  "Type-led in the sense that no photograph is ever needed, but it is not a page for a client with no product pictures at all.",
+  "drops (as written): steps.title",
+  "drops (as written): media.photos and screens that no step names (beyond the one in the statement plate)",
+  "made_pictures: none used. The reference has no photograph, backdrop or band anywhere: one flat ground and plates. media.made is not read; the only pictures on the page are the client's own product screens, whole, inside the story's plates.",
+  "shows: [\"brand\", \"nav\", \"signin\", \"hero.title\", \"hero.text\", \"hero.primary\", \"statement\", \"steps.items[title,text,img]\", \"media.video (else first screen) in the statement plate\", \"figures\", \"features\", \"plans\", \"faq\", \"close\", \"foot\"]",
+  "measured_on: {\"sportbot\": \"holds: film in the statement plate, 3 phone screens for 3 steps, 4 figures, 7 features, 2 plans, 4 questions. 8663 px at 1440 (was 18046), 10348 px at 390. shots.mjs clean, legible.mjs ok (429 line readings).\", \"automateed\": \"holds: 1 screen in the statement plate, 3 book pages for 3 steps, 4 figures, 5 features, 2 plans (names and prices only), no faq (section left out). 7455 px at 1440 (was 17870), 7611 px at 390. shots.mjs clean, legible.mjs ok (250 line readings).\", \"sportbot with media emptied and no step pictures\": \"renders without errors and legible.mjs prints ok, but each pinned panel is copy in the left 40% with the rest of the screen empty: not a page to offer.\", \"only brand.name and hero.title\": \"renders without errors (opening and foot only).\"}"
+ ]
+}

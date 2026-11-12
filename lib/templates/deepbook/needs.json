@@ -1,0 +1,23 @@
+{
+ "niche": [
+  "software",
+  "corporate"
+ ],
+ "photos_min": 0,
+ "photos_large_min": 0,
+ "screens_min": 2,
+ "phones_ok": false,
+ "needs": [
+  "plans",
+  "figures",
+  "steps",
+  "features",
+  "made.land"
+ ],
+ "holds_without_pictures": false,
+ "motif": "land",
+ "notes": [
+  "Panels are fed by plans (name / line / rows / one button) and need one landscape screen per plan. Opening, banner, wide picture and foot need made.land (0, 5, 2, 1); panels use land 3. Not for places.",
+  "measured: {\"sportbot\": \"2 plans (5 rows each) -> two panels, each with a landscape screen (screens 0 and 1) on the quiet landscape ground; 4 figures; 3 steps as folders; 7 features as fact rows; 4 questions; film in the close. Holds.\", \"automateed\": \"2 plans without rows -> two panels with screens 0 and 1; 4 figures; 3 steps; 5 features; no faq (section left out); close takes its first photo. Holds.\", \"no pictures at all (sportbot data, media emptied, no made)\": \"opening is type on flat dark, banner flat, wide picture and foot band left out — these hold; the two panel frames stand empty (624x349 plain boxes) — not a page to offer\", \"phones\": \"panels take media.screens only (landscape); phone screens are used only in the close. A client with phones and no landscape screens gets panels with the ground alone — not looked at.\"}"
+ ]
+}

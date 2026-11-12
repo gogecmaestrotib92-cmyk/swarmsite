@@ -1,0 +1,27 @@
+{
+ "niche": [
+  "app",
+  "software"
+ ],
+ "photos_min": 0,
+ "photos_large_min": 0,
+ "screens_min": 1,
+ "phones_ok": true,
+ "needs": [
+  "steps",
+  "steps.img",
+  "figures"
+ ],
+ "min": {
+  "steps": 3
+ },
+ "max": {
+  "steps": 4
+ },
+ "holds_without_pictures": false,
+ "motif": "land",
+ "notes": [
+  "Step pictures should be upright (phone screens, covers): a landscape screenshot in the stage's middle column would be at most 38vw wide and small. The showcase takes one landscape screen. Made pictures: land[1] and land[5]; without them both slots fall back to plain grounds.",
+  "measured: {\"sportbot\": \"3 steps with phone screens 780x1616, 4 screens, 4 figures, plans, faq: every section renders; shots.mjs and legible.mjs clean\", \"automateed\": \"3 steps with upright book covers 800x1193 (shown whole, wider than a phone), 3 screens, no phones, no faq: holds; the questions panel is left out\", \"sportbot without any media (probe/v/nopics)\": \"renders without errors, but the pinned stage is a panel with text at both sides and an empty middle, and the showcase is a list of pairs only - not a page to offer\", \"sportbot without figures, plans, faq, statement, trust, nav, links, made pictures (probe/v/thin)\": \"renders without errors; opening, stage, showcase on a plain panel, close, foot\", \"only brand.name and hero.title (probe/v/empty)\": \"renders without errors\"}"
+ ]
+}

@@ -1,0 +1,65 @@
+{
+ "niche": [
+  "law",
+  "clinic",
+  "service",
+  "person"
+ ],
+ "photos_min": 0,
+ "photos_large_min": 0,
+ "screens_min": 0,
+ "phones_ok": false,
+ "needs": [
+  "brand.name",
+  "hero.title",
+  "hero.text"
+ ],
+ "needs_any": [
+  [
+   "features",
+   "catalogue"
+  ],
+  [
+   "address",
+   "phone"
+  ]
+ ],
+ "drops": [
+  "trust",
+  "figures",
+  "logos",
+  "signin",
+  "links.d",
+  "features",
+  "since",
+  "price_range",
+  "cuisine",
+  "menu",
+  "spaces",
+  "events",
+  "projects",
+  "foot.text"
+ ],
+ "holds_without_pictures": true,
+ "motif": "photos",
+ "notes": [
+  "Type-led: no text ever stands on a picture, so every slot may be empty.",
+  "The accent is used as large type (wordmark, hovered service name, the band's telephone). A pale accent is deepened in its own hue until it reads 3.2:1 on the ground (law1's yellow #fdce32 becomes a dark gold).",
+  "A client ground that is white cannot carry the reference's brighter quotation zone; the zone goes 5 % toward the ink instead.",
+  "A long brand name is set smaller so that it stays on one line (clinic1, 30 letters in four words: about 46 px at 1440 and 12 px at 390, computed from the rule, not measured).",
+  "The opening photograph is cropped to the window on a phone (up to half its width is cut).",
+  "drops (as written): media.screens, media.phones, media.video, media.made",
+  "drops (as written): links[].d (the links stand as a column in the foot, titles only)",
+  "drops (as written): catalogue.groups[].h and catalogue.groups[].img when the catalogue is priced",
+  "drops (as written): features when an unpriced catalogue names the same services (the catalogue's groups and items are shown instead)",
+  "drops (as written): quotes[].title",
+  "drops (as written): photographs beyond the four band slots, the steps' own and the portraits (never looped)",
+  "drops (as written): hero.kicker except as the line in the foot",
+  "drops (as written): foot.text when place or contact give phone, email or address",
+  "motif (as written): none (the client's own photographs only; one opens the page, others stand as wide bands over their text)",
+  "best_with: 1 landscape photograph at least 1600 wide and 3:2 or wider for the first screen; 1 wide photograph of the people (from 1000 wide) over the team; 1 of the door or building over the contact block; square or upright portraits from 200 px (shown 89x118); one wide photograph per step when the steps carry pictures",
+  "photos_by_role: {\"hero\": \"1, role people | room | work | workshop | action | exterior, not small, width >= 1000 (>= 1600 to stay sharp at 1354 px), ratio >= 1.2\", \"team band\": \"0-1, role people, width >= 1000\", \"contact band\": \"0-1, role exterior, width >= 1000\", \"statement band\": \"0-1, any role but portrait, width >= 1000\", \"step bands\": \"0-n, the step's own img, not small\", \"portraits\": \"0-n, any size from 180 px; a person without one is set in type\", \"credential badges\": \"0-n, the client's own files, shown 263 px wide\"}",
+  "shows: [\"features (name, sentence on hover / always on touch) or unpriced catalogue (groups, items, item texts)\", \"priced catalogue as a ruled fee list (groups, item name, note, text, rows, price, prices[], state, catalogue note)\", \"plans (name, price, per, line, rows, cta, note) and faq (q, a) in the reference's fee-list and long-text parts\", \"hero (title, text, primary, secondary, note; text2 in the tinted band)\", \"statement\", \"steps (as values list, or one block per step when they carry pictures)\", \"team (items or groups; name, role, text, phone, email, portrait)\", \"quotes\", \"close\", \"locations\", \"place (address, phone, email, hours, booking, social, notices)\", \"contact (phone, email, form, routes)\", \"credentials (with their badges)\", \"links and foot.links, foot.legal\", \"nav, cta\"]",
+  "measured: {\"law1 (12 photographs: 2 large, 10 portraits; 3 badges; 35 people, 3 offices, priced catalogue)\": \"shows 1 opening photograph, 1 band over the team, 10 portraits, 3 badges; 25 people in type only; shots.mjs clean at 1440 and 390 (height 10356 / 13650); legible.mjs ok (912 line readings); picture share 12 against the reference's 16\", \"clinic1 (22 photographs: 11 banners of 2.9:1, 1 small, 10 small portraits; logo)\": \"shows 6 banners (opening, statement, 3 steps, door), 10 portraits, the logo over the contact details; shots.mjs clean (10842 / 10605); legible.mjs ok; picture share 25\", \"law1 with every picture removed (scratch copy)\": \"renders clean at 1440 and 390, one h1; the first screen is the header, the name and the service list; the looked-at 1440 first screen reads as a deliberate page of type. Height 8665\", \"clinic1 with every picture removed (scratch copy)\": \"renders clean; height 6502; the three step blocks become three headed paragraphs with their buttons\", \"sportbot (dark page, plans, faq; scratch)\": \"renders clean at 1440 and 390; plans and faq shown; looked at 1440 full page only\", \"only brand.name (scratch)\": \"renders without errors: header, wordmark, foot\", \"hotel1, local1, shop1, school1, person1, automateed, butarque\": \"render() returns without error; not opened\"}"
+ ]
+}

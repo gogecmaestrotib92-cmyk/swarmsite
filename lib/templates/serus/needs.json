@@ -1,0 +1,25 @@
+{
+ "niche": [
+  "software",
+  "app"
+ ],
+ "photos_min": 0,
+ "photos_large_min": 0,
+ "screens_min": 0,
+ "phones_ok": true,
+ "needs": [
+  "steps",
+  "features",
+  "made.land"
+ ],
+ "min": {
+  "steps.img": 2
+ },
+ "holds_without_pictures": false,
+ "motif": "land",
+ "notes": [
+  "The page is carried by its large picture cards: one per step, each needs its own picture (any shape: screen, phone, book) and a made landscape behind it. Figures, plans, faq, trust lines and close are optional and left out whole when missing. A client that is a place (no made pictures) is not a fit.",
+  "step_pictures_min: 2",
+  "measured: {\"sportbot\": \"3 steps, each with a phone screen (shape phone) on a made landscape; 7 features shared under the cards; 4 figures, 2 plans, 4 questions; page holds\", \"automateed\": \"3 steps, each with a book cover/page (photos, shape book) on a made landscape; 5 features; 4 figures, 2 plans, no questions; page holds\", \"no pictures at all (sportbot data, media emptied, no made)\": \"three empty 1392x870 cards with a heading in the corner — not a page to offer\", \"no made pictures, client pictures kept\": \"rendered without errors (card = plain chip ground with the step picture); not looked at closely\"}"
+ ]
+}

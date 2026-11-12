@@ -1,0 +1,45 @@
+{
+ "niche": [
+  "app",
+  "software"
+ ],
+ "photos_min": 0,
+ "photos_large_min": 0,
+ "screens_min": 2,
+ "phones_ok": true,
+ "needs": [
+  "hero.text2",
+  "steps",
+  "features"
+ ],
+ "min": {
+  "features": 4
+ },
+ "drops": [
+  "hero.kicker",
+  "hero.secondary",
+  "steps.text",
+  "quotes",
+  "screens",
+  "photos"
+ ],
+ "holds_without_pictures": false,
+ "motif": "sky",
+ "notes": [
+  "screens_min 2: story two and the held story each show one product screen whole; with fewer the page loses its middle. A third screen (or a film) stands beside the statement.",
+  "Each step needs its own picture for the opening list to show pictures; without them the list spans the width as text.",
+  "hero.text2 is the statement sentence the tiles stand in; without it that section and the slab are left out.",
+  "media.made.sky carries the opening, the slab, the card pictures, the plan cards, the questions field and the foot; made.blur gives the small tiles. Without sky those slots are plain grounds (not measured on a test client — both have a sky).",
+  "A place (restaurant, hotel, shop) is not a fit: nothing here shows menu, hours, address or rooms.",
+  "holds_without_pictures false: not rendered with a client that has no screens at all; by construction sections 4-6 and 9 would be gone.",
+  "Story one needs an upright phone screen not used by a step; three free upright phones/photos make the gallery. Both are left out whole otherwise.",
+  "Display words come only from copy blocks; no alt is shown as text.",
+  "drops (as written): hero.kicker (title tag only)",
+  "drops (as written): plans.items[].marked",
+  "drops (as written): media.screens beyond the third",
+  "drops (as written): upright photos when fewer than three are free (no gallery)",
+  "drops (as written): photos that are not upright",
+  "measured_on: {\"sportbot\": \"4 screens, 4 phones, 1 film, 7 features: all sections except the gallery; coverage 35 % (reference 35 %)\", \"automateed\": \"3 screens, 0 phones, 7 upright photos, 5 features, no film, no faq: no story one, no questions field; coverage 33 %\"}",
+  "shows: [\"plans\", \"faq\", \"figures\", \"close\", \"statement\", \"steps\", \"features\", \"trust/logos\", \"links (bar panel, foot)\"]"
+ ]
+}
