@@ -14,6 +14,7 @@ import { STEPS_T, STEPS_F, enabled as templatesEnabled, runTemplateJob, mayDownl
 import { makeEditor, mayKeep, editable, opsProblem } from './editor.mjs';
 import { ensurePrivateBucket } from './bucket.mjs'; import { runCleanup } from './cleanup.mjs';
 import { runPublish, runRepackage, editedPackage, editsHash, nameProblem } from './publish.mjs';
+import { payGate, stripeOf, checkout, webhook, withPaid, configured as payConfigured, paidBy } from './payments.mjs';
 import { AsyncLocalStorage } from 'node:async_hooks';
 const HERE = path.dirname(fileURLToPath(import.meta.url)); const ROOT = path.resolve(HERE, '..');
 const sb = createClient(process.env.SUPABASE_URL || 'https://placeholder.supabase.co', process.env.SUPABASE_SERVICE_KEY || 'placeholder', { auth: { persistSession: false } });
@@ -30,7 +31,7 @@ const STEPS = [
   ['upload', 'Publishing the preview'],
 ];
 
-const app = express(); app.use(cors({ origin: process.env.PUBLIC_ORIGIN ? process.env.PUBLIC_ORIGIN.split(',') : true })); app.use(express.json({ limit: '1mb' }));
+const app = express(); app.use(cors({ origin: process.env.PUBLIC_ORIGIN ? process.env.PUBLIC_ORIGIN.split(',') : true })); const json = express.json({ limit: '1mb' }); app.use((req, res, next) => req.path === '/stripe/webhook' ? next() : json(req, res, next));   // the webhook's signature is over its raw body
 app.get('/', (_, res) => res.json({ ok: true, service: 'swarmsite', steps: STEPS.map(s => s[0]) }));
 // ---- abuse and cost limits: a public endpoint that spends our model credit needs all three ----
 // Per-IP guard against one person hammering the queue; the day and queue ceilings are abuse/cost sanity stops,
@@ -280,7 +281,7 @@ const pubDeps = (row, slug, user, field) => ({ row, slug, user, edits: () => EDI
 const busy = s => s && ['packaging', 'deploying'].includes(s.status) && Date.now() - Date.parse(s.at) < 15 * 60e3;
 const pubGate = async (req, res) => { const row = await editRow(req, res); if (!row) return null; const user = await userOf(req);
   const may = mayKeep({ user, row }); if (may.status !== 200) { res.status(may.status).json(may.body); return null; }
-  if (process.env.PACKAGES_FREE !== '1') { res.status(402).json({ error: 'Payment is needed to download or publish this page.', pay: true }); return null; }   // the payment hook, as for the download
+  const pay = payGate({ env: process.env, row, slug: req.params.slug, user, what: 'download or publish' }); if (pay) { res.status(pay.status).json(pay.body); return null; }   // as for the download
   if (may.claim) await sb.from('jobs').update({ user_id: user.id, email: user.email }).eq('id', row.id).is('user_id', null);
   return { row, user }; };
 app.post('/t/:id/:slug/prepare', async (req, res) => { const g = await pubGate(req, res); if (!g) return;
@@ -294,6 +295,31 @@ app.post('/t/:id/:slug/publish', async (req, res) => {
   if (busy(g.row.result?.publish)) return res.status(409).json({ error: 'A publish is under way.' });
   const at = new Date().toISOString(); runPublish({ ...pubDeps(g.row, req.params.slug, g.user, 'publish'), name }).catch(e => console.warn('publish', g.row.id, String(e.message).slice(0, 160)));
   res.status(202).json({ status: 'packaging', name, at }); });
+// ---- payment (server/payments.mjs): Stripe Checkout for one design of one job; the webhook marks it paid in the job record
+let STRIPE = null; const stripe = async () => STRIPE || (STRIPE = await stripeOf(process.env));
+app.post('/pay', async (req, res) => {
+  if (!payConfigured(process.env)) return res.status(503).json({ error: 'Payment is not switched on yet.' });
+  const user = await userOf(req); if (!user) return res.status(401).json({ error: 'Sign in to pay.', login: true });
+  const id = String(req.body?.job || ''), slug = String(req.body?.slug || ''); if (!/^[0-9a-f-]{36}$/.test(id)) return res.status(400).json({ error: 'bad job' });
+  const { data: row, error } = await sb.from('jobs').select('id,status,result,user_id').eq('id', id).maybeSingle();
+  if (error) return res.status(503).json({ error: 'unavailable' });
+  if (!row || !previewable(row, slug)) return res.status(404).json({ error: 'not found' });
+  if (row.user_id && row.user_id !== user.id) return res.status(403).json({ error: 'These designs belong to another account.' });
+  if (paidBy(row, slug, user)) return res.json({ paid: true });
+  try { res.json(await checkout({ stripe: await stripe(), env: process.env, row, slug, user, from: req.body?.from === 'edit' ? 'edit' : 'app' })); }
+  catch (e) { console.warn('pay: checkout could not be made', e.type || '', e.statusCode || ''); res.status(502).json({ error: 'Payment could not be started. Please try again.' }); }
+});
+app.post('/stripe/webhook', express.raw({ type: () => true, limit: '1mb' }), async (req, res) => {
+  if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) return res.status(503).end();
+  const r = await webhook({ stripe: await stripe(), env: process.env, raw: req.body, signature: req.headers['stripe-signature'],
+    markPaid: async ({ job, slug, user, session }) => {
+      const { data: row } = await sb.from('jobs').select('id,result,user_id').eq('id', job).maybeSingle(); if (!row) return;
+      const next = withPaid(row.result, { slug, user, session, at: new Date().toISOString() }); if (!next) return;   // already marked: a repeated event changes nothing
+      await sb.from('jobs').update({ result: next }).eq('id', job);
+      if (!row.user_id) await sb.from('jobs').update({ user_id: user }).eq('id', job).is('user_id', null);   // a paid design belongs to whoever paid
+    } }).catch(e => { console.warn('stripe webhook failed', String(e.message).slice(0, 120)); return { status: 500, body: { error: 'retry' } }; });
+  res.status(r.status).json(r.body);
+});
 
 // ---------- worker ----------
 const JOB_CTX = new AsyncLocalStorage(); // the job a child process belongs to, per async chain: several jobs run at once in one worker

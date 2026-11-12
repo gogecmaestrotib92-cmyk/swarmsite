@@ -121,7 +121,7 @@ a{color:inherit;text-decoration:none}
 .card .meta{display:flex;flex-direction:column;gap:4px;padding:14px 16px 4px}.card .name{font:600 16px var(--sans)}.card .how{font:13px var(--sans);color:var(--muted)}
 .card .acts{display:flex;gap:8px;flex-wrap:wrap;padding:10px 16px 16px;margin-top:auto}.card .acts .pill{min-height:44px}.card .acts .pill[hidden]{display:none}
 .choose-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 24px;border-top:1px solid var(--line);background:#fff;position:sticky;bottom:0;margin-top:auto}
-.choose-foot[hidden],.choose-none[hidden]{display:none}.choose-foot .pill:disabled{opacity:.45;cursor:default;transform:none}.choose-note{color:var(--muted);font-size:14px;margin:0}
+.choose-foot[hidden],.choose-none[hidden],.choose-foot .pill[hidden]{display:none}.choose-foot .pill:disabled{opacity:.45;cursor:default;transform:none}.choose-note{color:var(--muted);font-size:14px;margin:0}
 .choose-none{padding:12px 24px 28px;max-width:900px;margin:0 auto;width:100%}.choose-none li{margin:4px 0;color:var(--muted)}
 .full{position:fixed;inset:0;z-index:30;background:rgba(17,17,17,.6);display:none;flex-direction:column}.full.on{display:flex}
 .full-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;background:#fff;flex-wrap:wrap}.full iframe{flex:1;border:0;background:#fff;width:100%}
@@ -183,7 +183,7 @@ a{color:inherit;text-decoration:none}
   <div class="cards" id="cards"></div>
   <div class="choose-none" id="chooseNone" hidden><p id="chooseNoneP"></p><ul id="chooseWhy"></ul><p id="chooseStart" style="margin-top:14px">Or <a href="/start" style="text-decoration:underline">tell us about your business</a>: three designs from what you write and your own photographs.</p></div>
   <details class="choose-none" id="chooseLeft" hidden><summary>What the page leaves out, because the form did not say it</summary><ul id="chooseLeftList"></ul></details>
-  <div class="choose-foot"><p class="choose-note" id="chooseNote" role="status">Pick the one you like.</p><button class="pill ink" id="download" disabled>Download the page <span aria-hidden="true">↓</span></button></div>
+  <div class="choose-foot"><p class="choose-note" id="chooseNote" role="status">Pick the one you like.</p><span style="display:flex;gap:8px;flex-wrap:wrap"><button class="pill ink" id="payGo" hidden>Pay and download</button><button class="pill ink" id="download" disabled>Download the page <span aria-hidden="true">↓</span></button></span></div>
 </div>
 <div class="full" id="full" role="dialog" aria-modal="true" aria-label="Design, full screen">
   <div class="full-bar"><span class="lab" id="fullName"></span><div class="seg"><button class="on" data-f="desktop">Desktop</button><button data-f="mobile">Phone</button></div><div class="l"><button class="pill ink" id="fullPick">Choose this one</button><button class="pill" id="fullClose">Close</button></div></div>
@@ -273,7 +273,7 @@ function closeFull(){ const f=$('#full'); f.classList.remove('on'); $('#fullFram
 $('#fullClose').onclick=closeFull; addEventListener('keydown',e=>{ if(e.key==='Escape'&&$('#full').classList.contains('on')) closeFull(); });
 $('#fullPick').onclick=()=>{ pick($('#full').dataset.slug); closeFull(); };
 document.querySelectorAll('.seg button[data-f]').forEach(b=>b.onclick=()=>{ document.querySelectorAll('.seg button[data-f]').forEach(x=>x.classList.toggle('on',x===b)); $('#full').classList.toggle('is-phone',b.dataset.f==='mobile'); });
-function pick(slug){ if(slug!==picked) said={slug:'',text:''}; picked=slug;document.querySelectorAll('.card').forEach(c=>{ const on=c.dataset.slug===slug; c.classList.toggle('picked',on); const b=c.querySelector('.pickb'); if(b){ b.setAttribute('aria-pressed',String(on)); b.textContent=on?'Chosen ✓':'Choose this one'; } }); renderDownload(); }
+function pick(slug){ if(slug!==picked){ said={slug:'',text:''}; $('#payGo').hidden=true; $('#download').hidden=false; } picked=slug;document.querySelectorAll('.card').forEach(c=>{ const on=c.dataset.slug===slug; c.classList.toggle('picked',on); const b=c.querySelector('.pickb'); if(b){ b.setAttribute('aria-pressed',String(on)); b.textContent=on?'Chosen ✓':'Choose this one'; } }); renderDownload(); }
 let lastJob=null;
 function renderDownload(){ const v=(lastJob?.result?.templates?.variants||[]).find(x=>x.slug===picked); const b=$('#download'), n=$('#chooseNote');
   if(!v){ b.disabled=true; n.textContent='Pick the one you like.'; return; }
@@ -285,12 +285,21 @@ const say=(slug,text)=>{ said={slug,text}; $('#chooseNote').textContent=text; };
 $('#download').onclick=async()=>{ const id=lastJob?.id, slug=picked; if(!id||!slug) return; const b=$('#download'), n=$('#chooseNote'); b.disabled=true;
   try{ const send=window.Auth&&Auth.enabled?(p,i)=>Auth.api(p,i):(p,i)=>fetch(API+p,i); const r=await send(`/t/${id}/${slug}/package`,{});
     if(r.status===401){ location.href='/login?next='+encodeURIComponent(location.pathname+location.search); return; }
-    if(r.status===402){ say(slug,'Payment comes before the download — it is not open yet. Your designs stay here.'); return; }
+    if(r.status===402){ const j=await r.json().catch(()=>({})); if(j.pay_url){ offerPay(id,slug); return; } say(slug,'Payment comes before the download — it is not open yet. Your designs stay here.'); return; }
     if(!r.ok){ const j=await r.json().catch(()=>({})); say(slug,j.error||'The download is not available.'); return; }
     const blob=await r.blob(), a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=((lastJob.url||'site').replace(/^https?:\/\/(www\.)?/,'').replace(/[^a-z0-9.-]+/gi,'-').replace(/-+$/,''))+'-'+slug+'.zip'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000); say(slug,'Downloaded. Unzip it and open index.html — or put the folder on any web host.'); }
   catch{ say(slug,'The download did not go through. Check your connection and try again.'); }
   finally{ renderDownload(); } };
-function showChooser(job){ lastJob=job; const t=job.result.templates, vs=t.variants||[];
+/* payment: Stripe Checkout for the chosen design, offered only where the server says payment is on (a 402 with pay_url) */
+function offerPay(id,slug){ say(slug,'This design is paid for once; then it is yours to download and publish.'); const b=$('#payGo'); b.hidden=false; $('#download').hidden=true;
+  b.onclick=async()=>{ b.disabled=true; try{ const send=window.Auth&&Auth.enabled?(p,i)=>Auth.api(p,i):(p,i)=>fetch(API+p,i);
+    const r=await send('/pay',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({job:id,slug,from:'app'})}); const j=await r.json().catch(()=>({}));
+    if(r.status===401){ location.href='/login?next='+encodeURIComponent(location.pathname+location.search); return; }
+    if(j.paid){ b.hidden=true; $('#download').hidden=false; renderDownload(); return; } if(!r.ok||!j.url) throw new Error(j.error||'Payment could not be started.'); location.href=j.url; }
+    catch(e){ say(slug,String(e.message||e)); b.disabled=false; } }; }
+let paidSeen=false;
+function showChooser(job){ lastJob=job;
+  if(!paidSeen){ const p=new URLSearchParams(location.search).get('paid'); if(p&&p!=='0'&&(job.result?.templates?.variants||[]).some(v=>v.slug===p)){ paidSeen=true; setTimeout(()=>{ pick(p); say(p,'Payment received. Download the page — if it says payment is still needed, give it a moment.'); },0); } } const t=job.result.templates, vs=t.variants||[];
   $('#stage').hidden=true; $('#result').classList.remove('on'); $('#choose').classList.add('on'); layoutResult();
   $('#chooseMeta').textContent=job.status==='done'?(job.result.seconds?`${job.result.seconds}s`:''):'still preparing the downloads…';
   if(chooserFor!==job.id+':'+vs.map(v=>v.slug).join(',')){ chooserFor=job.id+':'+vs.map(v=>v.slug).join(','); const cards=$('#cards'); cards.replaceChildren(); cards.dataset.n=String(vs.length);

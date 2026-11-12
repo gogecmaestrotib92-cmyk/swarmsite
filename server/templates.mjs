@@ -14,6 +14,7 @@
 
    Everything the worker needs is passed in (`deps`), so the flow is tested without a database, a bucket or a model. */
 import fs from 'node:fs'; import path from 'node:path';
+import { payGate } from './payments.mjs';
 
 export const STEPS_T = [
   ['capture', 'Reading your site: text, photos, logo, colours'],
@@ -144,8 +145,8 @@ export function mayDownload({ user, job, slug, env }) {
   if (!v) return { status: 404, body: { error: 'not found' } };
   if (v.package === 'pending') return { status: 409, body: { error: 'The download is still being prepared.', pending: true } };
   if (v.package !== 'ready') return { status: 409, body: { error: 'This design cannot be downloaded: its package did not match the preview.', why: v.package_why || [] } };
-  if (env.PACKAGES_FREE !== '1') return { status: 402, body: { error: 'Payment is needed to download this page.', pay: true } };
-  return { status: 200 };
+  const pay = payGate({ env, row: job, slug, user });   // free for testing, paid by this account, or 402 with where to pay
+  return pay || { status: 200 };
 }
 
 // which preview page of a job may be served

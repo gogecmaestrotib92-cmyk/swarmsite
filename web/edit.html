@@ -55,7 +55,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
     <ul class="unread" id="unread" hidden></ul>
     <section><h2>download and publish</h2>
       <p class="lab">Both are this design with your edits, checked against the page before anything is handed out. Both need an account; payment comes before either.</p>
-      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="pill" id="prepare">Prepare my download</button><button class="pill" id="getZip" hidden>Download ↓</button></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="pill ink" id="payGo" hidden>Pay for this design</button><button class="pill" id="prepare">Prepare my download</button><button class="pill" id="getZip" hidden>Download ↓</button></div>
       <div class="f"><span>Your address</span><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><input id="siteName" maxlength="40" autocomplete="off" spellcheck="false" placeholder="your-name" style="font:15px var(--sans);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-height:40px;width:12ch;flex:1;min-width:8ch"><span class="lab">.swarmsite.si</span></div></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button class="pill ink" id="publish">Publish</button><a id="siteLink" hidden target="_blank" rel="noopener" style="text-decoration:underline"></a></div>
       <p class="status" id="pubStatus" role="status" aria-live="polite"></p>
@@ -151,12 +151,17 @@ $('#save').onclick=async()=>{ const b=$('#save'); b.disabled=true;
   try{ const j=await keep(); if(j) say(`Kept: ${j.kept} edit${j.kept===1?'':'s'}. They stand on every design you choose.`,'ok'); }
   catch(e){ say(String(e.message||e),'bad'); b.disabled=false; } };
 /* the download and the site: both the one package of these edits, made and compared with the page before it is handed out */
+/* payment: one design of this job, paid once through Stripe Checkout; back here afterwards */
+function offerPay(){ pubSay('This design is paid for once; then it is yours to download and publish.'); const b=$('#payGo'); b.hidden=false;
+  b.onclick=async()=>{ b.disabled=true; try{ const r=await send('/pay',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({job:ID,slug:SLUG,from:'edit'})}); const j=await r.json().catch(()=>({}));
+    if(r.status===401){ toLogin(); return; } if(j.paid){ b.hidden=true; pubSay('Paid. Prepare your download or publish.','ok'); return; } if(!r.ok||!j.url) throw new Error(j.error||'Payment could not be started.'); location.href=j.url; }
+    catch(e){ pubSay(String(e.message||e),'bad'); b.disabled=false; } }; }
 function pubSay(t,cls){ const s=$('#pubStatus'); s.textContent=t; s.className='status'+(cls?' '+cls:''); }
 async function follow(field,since,done){ for(let i=0;i<200;i++){ await new Promise(r=>setTimeout(r,i?3000:800)); const j=await fetch(API+'/jobs/'+ID).then(r=>r.json()).catch(()=>null); const s=j?.result?.[field];
   if(!s||s.slug!==SLUG||Date.parse(s.at)<Date.parse(since)) continue;   /* only what this start wrote */ if(['packaging','deploying'].includes(s.status)){ pubSay(s.status==='packaging'?'Making the package and comparing it with your page…':'Putting it online…'); continue; } done(s); return; } pubSay('It is taking long; come back to this page later.','bad'); }
 async function start(path,body,field,done){ $('#prepare').disabled=$('#publish').disabled=true;
   try{ if(JSON.stringify(ops)!==kept&&!(await keep())) return; const r=await send(path,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body||{})});
-    if(r.status===401){ toLogin(); return; } const j=await r.json().catch(()=>({})); if(!r.ok){ pubSay(j.error||'It could not be started.','bad'); return; } await follow(field,j.at,done); }
+    if(r.status===401){ toLogin(); return; } const j=await r.json().catch(()=>({})); if(r.status===402&&j.pay_url){ offerPay(); return; } if(!r.ok){ pubSay(j.error||'It could not be started.','bad'); return; } await follow(field,j.at,done); }
   catch(e){ pubSay(String(e.message||e),'bad'); }
   finally{ $('#prepare').disabled=$('#publish').disabled=false; } }
 $('#prepare').onclick=()=>start(`/t/${ID}/${SLUG}/prepare`,{},'edited',s=>{ if(s.status!=='ready'){ pubSay('The package did not match your page, so it is not offered: '+(s.why||[]).join('; '),'bad'); return; }
@@ -168,7 +173,7 @@ $('#publish').onclick=()=>{ const name=$('#siteName').value.trim().toLowerCase()
 /* switching design keeps every edit */
 function designs(list){ const w=$('#designs'); w.replaceChildren(); for(const s of list){ const b=document.createElement('button'); b.className='pill'+(s===SLUG?' on':''); b.textContent=nameOf(s); b.setAttribute('aria-pressed',String(s===SLUG));
   b.onclick=()=>{ if(s===SLUG) return; SLUG=s; history.replaceState(null,'',`?job=${ID}&slug=${s}`); designs(list); refresh(); }; w.appendChild(b); } }
-(async()=>{ if(!/^[0-9a-f-]{36}$/.test(ID)||!SLUG){ say('No page to edit here.','bad'); return; } $('#back').href='/app?job='+ID;
+(async()=>{ if(!/^[0-9a-f-]{36}$/.test(ID)||!SLUG){ say('No page to edit here.','bad'); return; } $('#back').href='/app?job='+ID; if(qs.get('paid')===SLUG) pubSay('Payment received. Prepare your download or publish — if it says payment is still needed, give it a moment.','ok'); else if(qs.get('paid')==='0') pubSay('Payment was not completed. Nothing was charged.');
   try{ const d=await describe(); ops=d.ops||[]; kept=JSON.stringify(ops);
     try{ const waiting=sessionStorage.getItem('edits:'+ID); if(waiting){ ops=JSON.parse(waiting); sessionStorage.removeItem('edits:'+ID); } }catch{}
     $('#undo').disabled=true; designs(d.variants||[SLUG]); await refresh(); }
