@@ -33,6 +33,7 @@ def capture(tmp_path, kind='product'):
 
 
 def test_a_job_folder_becomes_gated_variants_with_their_media(tmp_path, monkeypatch):
+    monkeypatch.setenv('SWARMSITE_LIBRARY', 'none')                 # this test is about the job's own media, not made pictures
     seen = []
     monkeypatch.setattr(G, 'check', lambda files, **kw: [seen.append([Path(f).name for f in files]) or {'page': str(f), 'ok': True, 'failed': [], 'checks': {}, 'ms': 5} for f in files])
     out = tmp_path / 'templates'
