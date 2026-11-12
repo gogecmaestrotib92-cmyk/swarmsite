@@ -1,20 +1,32 @@
-"""select.py — for one client's data, the up-to-three templates to show it in.
+"""select.py — for one client's data, the three templates to show it in.
 
     select(d, limit=3, promised=(), root=None) -> {
         'niche': [...],                 what the client is, most telling first
         'pictures': n,                  the client's own usable pictures (screens, phones, photographs, a film)
-        'chosen':   [{'slug', 'approach', 'why', 'pending'}],   in the order to show them
-        'rejected': [{'slug', 'why'}],                          every other template of the library, with the reason
+        'chosen':   [{'slug', 'approach', 'why', 'pending', 'drops', 'missing', 'niche', 'fallback'}],   in the order to show them
+        'reserve':  [the same, in order: what the job takes next when a chosen one fails the gate]
+        'fallback': True when a template of a neighbouring niche had to be taken to fill the three
+        'rejected': [{'slug', 'why'}],                          every template not chosen, with the reason (reserve included)
     }
+    without(d, drops) -> the data with those soft sections taken out (what a variant that misses them is rendered from)
 
 Deterministic: the same data and the same library give the same three, in the same order. No model call.
 
-A template is offered only when
-  · it has a `needs.json` (a template without one has not been measured on the test clients: it is NOT selectable);
-  · one of its niches is the client's;
-  · the client's data meets every need it states — counts of photographs and screens, and each named block;
-  · and, when the client has no usable picture at all, it says `holds_without_pictures`.
-Among those, the three are taken so that they differ in approach where the library allows it.
+Every visitor is shown three designs of their niche (owner's product rule, 2026-11-12). So a need is one of two kinds:
+  · hard — the page cannot exist without it: the hero, a brand name, a place's address or phone, a shop's catalogue,
+    a picture at all when it does not hold without one, and the photographs of a template whose needs.json names
+    `photos` in `hard` (stress.py --sweep found it breaks with fewer, see PHOTOS below);
+  · soft — a section the template drops whole when the client has none of it: SOFT below (features, close, steps and
+    their pictures, plans, links, faq, statement, figures, trust, quotes, logos, product screens, made pictures).
+    A template's needs.json may name in `hard` a soft one its page makes no sense without.
+A template is a candidate when it has a needs.json (a template without one has not been measured: it is NOT
+selectable), one of its niches is the client's and every hard need is met. The three are filled in this order, and
+within each tier so that they differ in approach where the library allows: the candidates that meet every need; then
+those that miss only soft needs — fewest missed first — rendered with those sections dropped (`drops`; nothing is
+made up to fill one); then, only when still fewer than three, the same from the nearest niche group (NEAR), marked
+`fallback`. Fewer photographs than a template was measured with (photos_min, photos_large_min) is a soft miss too,
+ranked by how far short the client is; the gate in job.py decides whether each page is shown.
+lib/templates/stress.py --sweep proves each template holds with each soft section absent.
 
 What a needs.json may say (the vocabulary this file reads — a need it cannot read keeps the template out, with the
 reason, rather than being waved through):
@@ -44,6 +56,23 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 LARGE = 1400                                                    # a large photograph: at least this wide (owner, 2026-11-12)
+# soft: blocks of the data a template drops whole when the client has none of them (the name's first part decides:
+# steps.img, close.title, media.made.land are soft). Everything else a needs.json names is hard.
+SOFT = ('features', 'close', 'steps', 'plans', 'links', 'faq', 'statement', 'figures', 'trust', 'quotes', 'logos', 'screens', 'phones', 'video', 'made')
+# a soft need that is one part of every item: missed, that part is taken off every item and the block stays
+PARTS = {'steps.img': ('steps', 'img'), 'steps.k': ('steps', 'k'), 'steps.cta': ('steps', 'cta'), 'features.d': ('features', 'd'),
+         'links.d': ('links', 'd'), 'figures.l': ('figures', 'l'), 'plans.rows': ('plans', 'rows')}
+# PHOTOS. photos_min and photos_large_min are the counts a template was measured with, not what it cannot hold without
+# (owner's coordinator, 2026-11-12: sunbeam asks for 15 and tengile for 11, and both pass the gate with none). Fewer is a
+# soft miss, ranked by how far short (the share of the stated count missing). A template the sweep finds broken with
+# fewer photographs names `photos` in `hard`; a client with no usable picture at all still gets only templates that
+# say holds_without_pictures.
+# the nearest niche group of each niche: where the three are filled from when the client's own niche has fewer
+# (owner, 2026-11-12; school is not in his list and goes with service and nonprofit, the two it shares templates with)
+NEAR = {'software': ['app'], 'app': ['software'], 'saas': ['software', 'app'],
+        'clinic': ['service', 'law'], 'law': ['service', 'clinic'], 'service': ['clinic', 'law', 'corporate', 'person', 'nonprofit', 'shop', 'school'],
+        'restaurant': ['hotel', 'venue'], 'hotel': ['restaurant', 'venue'], 'venue': ['restaurant', 'hotel'], 'place': ['restaurant', 'hotel', 'venue'],
+        'corporate': ['service'], 'person': ['service'], 'nonprofit': ['service', 'school'], 'shop': ['service'], 'school': ['service', 'nonprofit']}
 
 if __name__ == 'select':
     # Reached by the bare name: lib/render/render_bp.py puts lib/templates first on sys.path (for recipes.py), and from
@@ -103,6 +132,18 @@ def _pics(d):
     m = d.get('media') if isinstance(d.get('media'), dict) else {}
     lst = lambda k: [x for x in m.get(k) or [] if isinstance(x, dict) and x.get('src')]
     return {'screens': lst('screens'), 'phones': lst('phones'), 'photos': lst('photos'), 'video': [m['video']] if isinstance(m.get('video'), dict) and m['video'].get('src') else []}
+
+
+def empty(d):
+    """Why the data holds no page at all, or ''. A page needs a title to open with and one thing more to lay out — a
+    line under the title, a section, a picture or a way to reach the business; a capture that yields less than that is
+    a capture that failed, and it is the one case where no design is shown."""
+    h = d.get('hero') if isinstance(d.get('hero'), dict) else {}
+    if not _has(h.get('title')):
+        return 'no hero title: the page has nothing to open with'
+    more = [h.get('text'), h.get('text2'), h.get('kicker')] + [d.get(k) for k in SOFT if k not in ('screens', 'phones', 'video', 'made')] + \
+           [d.get(k) for k in ('place', 'contact', 'team', 'catalogue', 'projects', 'locations', 'credentials')] + [x for v in _pics(d).values() for x in v]
+    return '' if any(_has(x) for x in more) else 'the capture holds a title and nothing else: nothing to lay out'
 
 
 def client(d):
@@ -240,6 +281,69 @@ def need_met(need, d, pics, promised=()):
     return ok, False, ''
 
 
+def _path(name):
+    m = re.match(r'^([a-z_][a-z_.\[\]0-9]*)', str(name or '').strip())
+    return m.group(1) if m else ''
+
+
+def _root(name):
+    """the block a need, a count or a part names: 'steps.items[].img (…)' → steps, 'media.made.land' → made;
+    '8 or more product pictures' → pictures"""
+    if re.match(r'^\d', str(name or '').strip()):
+        return 'pictures'
+    path = _path(name)
+    parts = [re.sub(r'\[\d*\]$', '', x) for x in STRICT.get(path, path).split('.') if x]
+    if parts[:1] == ['media']:
+        parts = parts[1:]
+    return parts[0] if parts else ''
+
+
+def _strict(name):
+    """the strict name of a part of every item ('steps.items[].img (…)' → 'steps.img'), else the name's root"""
+    path = _path(name)
+    for k, v in STRICT.items():
+        if path in (k, v):
+            return k
+    return _root(name)
+
+
+def is_soft(name, n=None):
+    """Can the template drop its section when this need is missed? Soft by SOFT, unless its needs.json names the
+    need (or its block) in `hard`."""
+    hard = {str(x) for x in (n or {}).get('hard') or []}
+    return _root(name) in SOFT and not ({_root(name), _strict(name), str(name)} & hard)
+
+
+def _drop_of(name):
+    """what is taken out of the data for a missed soft need: a part of every item ('steps.img') or a whole block
+    ('features'); '' for pictures the client does not have (there is nothing to take out)"""
+    st = _strict(name)
+    if st in PARTS:
+        return st
+    r = _root(name)
+    return '' if r in ('screens', 'phones', 'video', 'made') else r
+
+
+def without(d, drops):
+    """The data with the soft sections of `drops` taken out — whole blocks, or one part of every item — the way the
+    adapter leaves a section it could not read: the key is not there. The input is not changed."""
+    import copy
+    if not drops:
+        return d
+    out = copy.deepcopy(d)
+    for name in drops:
+        if name in PARTS:
+            block, key = PARTS[name]
+            v = out.get(block)
+            items = v.get('items') if isinstance(v, dict) else v if isinstance(v, list) else None
+            for it in items or []:
+                if isinstance(it, dict):
+                    it.pop(key, None)
+        elif name in SOFT:
+            out.pop(name, None)
+    return out
+
+
 def approach(n):
     """what kind of page a template is, as far as its needs.json tells: named outright, or its picture motif and
     what carries it — type alone, the product's screens, a picture to each step, the client's photographs."""
@@ -288,63 +392,106 @@ def count(name, d, pics):
     return None
 
 
-def fits(n, c, d, promised=()):
-    """(reasons it cannot be offered, pending, needs met) for one template's needs against one client"""
-    why, pending, met = [], [], 0
+def assess(n, c, d, promised=()):
+    """one template's needs against one client: {'niche': reason or '', 'hard': [reasons], 'soft': [{'why', 'drop'}],
+    'pending': [...], 'met': n}. A need that cannot be read is hard: it keeps the template out, with the reason."""
+    hard, soft, pending, met = [], [], [], 0
+    photos_hard = 'photos' in {str(x) for x in n.get('hard') or []}
+
+    def miss(name, why):
+        if _root(name) == 'photos' and not photos_hard:              # a count of photographs, as photos_min below
+            soft.append({'why': why, 'drop': ''})
+        elif is_soft(name, n):
+            soft.append({'why': why, 'drop': _drop_of(name)})
+        else:
+            hard.append(why)
+    niche = ''
     tags = [t for words in (n.get('niche') or []) for t in niche_tags(words)]
     if not n.get('niche'):
-        why.append('its needs.json names no niche')
+        hard.append('its needs.json names no niche')
     elif not set(tags) & set(c['niche']):
-        why.append('niche: it is for %s; the client is %s' % (', '.join(dict.fromkeys(tags)) or 'a niche this step does not know (%s)' % '; '.join(map(str, n['niche']))[:80], ', '.join(c['niche']) or 'of no known niche'))
+        niche = 'niche: it is for %s; the client is %s' % (', '.join(dict.fromkeys(tags)) or 'a niche this step does not know (%s)' % '; '.join(map(str, n['niche']))[:80], ', '.join(c['niche']) or 'of no known niche')
     p = c['pics']
     counts = {'photos_min': len(p['photos']), 'photos_large_min': len([x for x in p['photos'] if _n(x.get('w')) >= LARGE]),
               'screens_min': len(p['screens']) + (len(p['phones']) if n.get('phones_ok') else 0),
               'step_pictures_min': len([i for i in ((d.get('steps') or {}).get('items') or []) if isinstance(i, dict) and i.get('img')])}
+    as_need = {'photos_min': 'photos', 'photos_large_min': 'photos', 'screens_min': 'screens', 'step_pictures_min': 'steps.img'}
     for k, v in n.items():
         if k.endswith('_min'):
             if k not in counts:
-                why.append('a need this step cannot read: %s' % k)
+                hard.append('a need this step cannot read: %s' % k)
             elif not isinstance(v, int) or isinstance(v, bool):
-                why.append('%s is not a number' % k)
+                hard.append('%s is not a number' % k)
+            elif counts[k] < v and k in ('photos_min', 'photos_large_min'):
+                why = '%s %d, the client has %d' % (k, v, counts[k])
+                if not photos_hard:
+                    soft.append({'why': why, 'drop': '', 'short': (v - counts[k]) / v})   # the template leaves out the slots it cannot fill
+                else:
+                    hard.append(why)
             elif counts[k] < v:
-                why.append('%s %d, the client has %d' % (k, v, counts[k]))
+                miss(as_need[k], '%s %d, the client has %d' % (k, v, counts[k]))
+    if empty(d):                                                     # hard for every template: there is no page to make
+        hard.append(empty(d))
     if c['pictures'] == 0 and not n.get('holds_without_pictures'):
-        why.append('the client has no usable picture and the template does not hold without pictures')
+        hard.append('the client has no usable picture and the template does not hold without pictures')
     for need in n.get('needs') or []:
         ok, pend, problem = need_met(need, d, p, promised)
         if problem:
-            why.append(problem)
+            hard.append(problem)
         elif not ok:
-            why.append('needs %s' % str(need)[:70])
+            miss(need, 'needs %s' % str(need)[:70])
         else:
             met += 1
             if pend:
                 pending.append(str(need))
     for group in n.get('needs_any') or []:                           # one of
         if not isinstance(group, list) or not group:
-            why.append('a need this step cannot read: needs_any %r' % (group,))
+            hard.append('a need this step cannot read: needs_any %r' % (group,))
             continue
         got = [need_met(x, d, p, promised) for x in group]
         if any(g[2] for g in got):
-            why.append('a need this step cannot read: needs_any %s' % ' or '.join(map(str, group))[:70])
+            hard.append('a need this step cannot read: needs_any %s' % ' or '.join(map(str, group))[:70])
         elif not any(g[0] for g in got):
-            why.append('needs one of %s' % ', '.join(map(str, group))[:70])
+            why = 'needs one of %s' % ', '.join(map(str, group))[:70]
+            if any(is_soft(x, n) for x in group):                    # a slot a soft section may fill is a slot the page can drop
+                soft.append({'why': why, 'drop': ''})
+                soft.extend({'why': '', 'drop': _drop_of(x)} for x in group if is_soft(x, n))
+            else:
+                hard.append(why)
         else:
             met += 1
             if not any(g[0] and not g[1] for g in got):
                 pending.append(' or '.join(map(str, group)))
-    for key, short in (('min', lambda have, want: have < want), ('max', lambda have, want: have > want)):
+    for key, beyond in (('min', lambda have, want: have < want), ('max', lambda have, want: have > want)):
         limits = n.get(key) or {}
         if not isinstance(limits, dict):
-            why.append('a need this step cannot read: %s' % key)
+            hard.append('a need this step cannot read: %s' % key)
             continue
         for name, want in limits.items():
             have = count(name, d, p)
             if have is None or not isinstance(want, int) or isinstance(want, bool):
-                why.append('a need this step cannot read: %s %s = %r' % (key, name, want))
-            elif short(have, want):
-                why.append('%s %s %d, the client has %d' % ('at least' if key == 'min' else 'at most', name, want, have))
-    return why, pending, met
+                hard.append('a need this step cannot read: %s %s = %r' % (key, name, want))
+            elif beyond(have, want):
+                miss(name, '%s %s %d, the client has %d' % ('at least' if key == 'min' else 'at most', name, want, have))
+    return {'niche': niche, 'hard': hard, 'soft': soft, 'pending': pending, 'met': met}
+
+
+def fits(n, c, d, promised=()):
+    """(every reason it does not fit as the data stands — niche, hard and soft —, pending, needs met): the strict
+    reading, for a caller that asks whether nothing at all would be dropped"""
+    a = assess(n, c, d, promised)
+    return [x for x in [a['niche']] + a['hard'] + [m['why'] for m in a['soft']] if x], a['pending'], a['met']
+
+
+def _near(niche):
+    """the neighbouring niches of a client's, nearest first, none of its own; a client of no known niche is offered
+    the service templates, the library's most general"""
+    if not niche:
+        return ['service']
+    out = []
+    for x in niche:
+        out += [y for y in NEAR.get(x, []) if y not in niche and y not in out]
+    return out
 
 
 def lead(n, c, rank):
@@ -362,35 +509,50 @@ def lead(n, c, rank):
 def select(d, limit=3, promised=(), root=None):
     R = _registry()
     c = client(d)
-    ok, rejected = [], []
+    near = _near(c['niche'])
+    cands, rejected = [], []
     for t in R.list_templates(root):
         if not t['selectable']:
             rejected.append({'slug': t['slug'], 'why': t['why']})
             continue
         n = t['needs']
-        why, pending, met = fits(n, c, d, promised)
-        if why:
-            rejected.append({'slug': t['slug'], 'why': '; '.join(why)})
-            continue
+        a = assess(n, c, d, promised)
         tags = [x for words in n['niche'] for x in niche_tags(words)]
-        rank = min(c['niche'].index(x) for x in tags if x in c['niche'])
-        ok.append({'slug': t['slug'], 'approach': approach(n), 'pending': pending, '_key': (rank, lead(n, c, rank), -met, t['slug']),
-                   'why': 'niche %s; %d need(s) met%s' % (c['niche'][rank], met, '; waits for ' + ', '.join(pending) if pending else '')})
-    ok.sort(key=lambda x: x['_key'])
-    chosen, seen = [], set()
-    for x in ok:                                                     # first one of each approach, best first
-        if len(chosen) < limit and x['approach'] not in seen:
-            seen.add(x['approach'])
-            chosen.append(x)
-    for x in ok:                                                     # then the best of what is left
-        if len(chosen) < limit and x not in chosen:
-            chosen.append(x)
-    for x in ok:
-        if x not in chosen:
-            rejected.append({'slug': x['slug'], 'why': 'fits, but %d fitting template(s) come before it' % limit})
-    for x in chosen:
+        own = [x for x in tags if x in c['niche']]
+        close = [x for x in tags if x in near]
+        if a['hard'] or not (own or close):
+            rejected.append({'slug': t['slug'], 'why': '; '.join(x for x in [a['niche']] + a['hard'] + [m['why'] for m in a['soft']] if x)})
+            continue
+        fallback = not own
+        rank = min(c['niche'].index(x) for x in own) if own else min(near.index(x) for x in close)
+        niche = c['niche'][rank] if own else near[rank]
+        drops = list(dict.fromkeys(m['drop'] for m in a['soft'] if m['drop']))
+        missing = [m['why'] for m in a['soft'] if m['why']]
+        tier = 2 * fallback + (1 if missing else 0)
+        ld = lead(n, c, rank) if own else 0                          # made for the client's niche before one that also holds
+        why = '%sniche %s; %d need(s) met%s%s' % ("not the client's niche, the nearest: " if fallback else '', niche, a['met'],
+                                              '; shown without what it misses: ' + ', '.join(missing) if missing else '',
+                                              '; waits for ' + ', '.join(a['pending']) if a['pending'] else '')
+        cands.append({'slug': t['slug'], 'approach': approach(n), 'pending': a['pending'], 'drops': drops, 'missing': missing, 'niche': niche,
+                      'fallback': fallback, 'why': why, '_tier': tier, '_key': (tier, rank, ld, len(missing), round(sum(m.get('short', 0) for m in a['soft']), 3), -a['met'], t['slug'])})
+    cands.sort(key=lambda x: x['_key'])
+    order, seen = [], set()
+    for tier in range(4):                                            # tier by tier; within one, one of each approach first
+        here = [x for x in cands if x['_tier'] == tier]
+        firsts = []
+        for x in here:
+            if x['approach'] not in seen:
+                seen.add(x['approach'])
+                firsts.append(x)
+        order += firsts + [x for x in here if x not in firsts]
+    chosen, reserve = order[:limit], order[limit:]
+    for x in chosen + reserve:
         x.pop('_key', None)
-    return {'niche': c['niche'], 'pictures': c['pictures'], 'chosen': chosen, 'rejected': sorted(rejected, key=lambda r: r['slug'])}
+        x.pop('_tier', None)
+    for x in reserve:
+        rejected.append({'slug': x['slug'], 'why': 'fits%s, but %d template(s) come before it' % (' without ' + ', '.join(x['missing']) if x['missing'] else '', limit)})
+    return {'niche': c['niche'], 'pictures': c['pictures'], 'chosen': chosen, 'reserve': reserve, 'fallback': any(x['fallback'] for x in chosen),
+            'rejected': sorted(rejected, key=lambda r: r['slug'])}
 
 
 if __name__ == '__main__':                                          # python3 lib/templates/select.py data.json [--promise-made]

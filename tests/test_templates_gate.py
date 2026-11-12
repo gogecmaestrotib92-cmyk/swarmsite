@@ -38,7 +38,9 @@ PRODUCT, BOOKS, PLACE = (json.loads((FIX / (n + '.json')).read_text(encoding='ut
 def test_the_variants_are_the_ones_the_contract_names_and_the_client_is_left_as_given():
     kept = copy.deepcopy(PRODUCT)
     v = S.variants(PRODUCT)
-    assert PRODUCT == kept and list(v) == list(S.NAMES) and all(x is not None for x in v.values())
+    assert PRODUCT == kept and list(v) == list(S.NAMES) and all(x is not None for k, x in v.items() if k not in ('no-made', 'photos-3'))
+    assert v['no-made'] is None and v['photos-3'] is None, 'no made pictures and no photographs: none to take away'
+    assert [p['src'] for p in S.variants(BOOKS)['photos-3']['media']['photos']] == [p['src'] for p in BOOKS['media']['photos'][:3]]
     count = lambda d, k: len(d[k]['items'])
     assert [count(v['plans-%d' % n], 'plans') for n in (1, 3, 5)] == [1, 3, 5]
     assert [count(v['features-%d' % n], 'features') for n in (2, 9)] == [2, 9] and [count(v['steps-%d' % n], 'steps') for n in (1, 6)] == [1, 6]
@@ -53,6 +55,16 @@ def test_the_variants_are_the_ones_the_contract_names_and_the_client_is_left_as_
     # a product has no photographs to lose: it loses every picture instead, so the variant is never the client as given
     m = v['no-photographs']['media']
     assert m['screens'] == [] and m['phones'] == [] and m['video'] is None and not any('img' in i for i in v['no-photographs']['steps']['items'])
+    # the soft sections absent, each alone, and the least a capture yields
+    assert 'features' not in v['no-features'] and 'close' not in v['no-close'] and 'steps' not in v['no-steps'] and v['no-close']['features'] == PRODUCT['features']
+    assert v['no-step-pictures']['steps']['items'] and not any('img' in i for i in v['no-step-pictures']['steps']['items'])
+    assert v['no-screens']['media']['screens'] == [] and v['no-screens']['media']['phones'] == [] and v['no-screens']['media']['video'] is None
+    mini = v['minimal']
+    assert mini['hero'] == PRODUCT['hero'] and mini['brand'] == PRODUCT['brand'] and not any(k in mini for k in ('steps', 'features', 'plans', 'close', 'statement', 'figures', 'faq', 'links'))
+    assert mini['media']['photos'] == PRODUCT['media']['photos'][:3] and mini['media']['screens'] == []
+    made = S.variants({**PRODUCT, 'media': {**PRODUCT['media'], 'made': {'land': [{'src': 'media/x/land.jpg', 'w': 2400, 'h': 1200, 'tone': 'dark'}]}}})['no-made']
+    assert 'made' not in made['media'] and made['media']['screens'] == PRODUCT['media']['screens']
+    v = {k: x for k, x in v.items() if x is not None}
     for name, d in v.items():
         assert A.validate(d) == [], name
         assert d != PRODUCT, name

@@ -29,7 +29,7 @@ PRODUCT, PLACE = (json.loads((FIX / (n + '.json')).read_text(encoding='utf-8')) 
 
 def test_the_strict_schema_names_the_niches_and_blocks_of_the_contract():
     assert N.NICHES == ['software', 'app', 'restaurant', 'hotel', 'clinic', 'law', 'service', 'shop', 'school', 'person', 'corporate', 'nonprofit', 'venue']
-    assert N.SCHEMA['additionalProperties'] is False and set(N.KEYS) == {'niche', 'photos_min', 'photos_large_min', 'screens_min', 'phones_ok', 'needs', 'needs_any', 'min', 'max', 'drops', 'holds_without_pictures', 'motif', 'notes'}
+    assert N.SCHEMA['additionalProperties'] is False and set(N.KEYS) == {'niche', 'photos_min', 'photos_large_min', 'screens_min', 'phones_ok', 'needs', 'needs_any', 'min', 'max', 'drops', 'hard', 'holds_without_pictures', 'motif', 'notes'}
     assert len(N.NAMES) == len(set(N.NAMES))
     data = set(A.schema()['properties'])
     for name in N.NAMES:                                              # every name leads to a block the data schema knows
@@ -87,6 +87,7 @@ def test_what_is_wrong_in_a_strict_file_is_named():
 def test_the_librarys_own_needs_files_come_through_and_selection_reads_the_strict_form(tmp_path):
     """Whatever needs.json the library holds today normalises to a valid strict file — and a library whose files are
     the strict ones selects as before for the fixture clients, wherever the strict form lost nothing."""
+    same = []
     for t in R.list_templates():
         if t['needs'] is None:
             continue
@@ -96,11 +97,14 @@ def test_the_librarys_own_needs_files_come_through_and_selection_reads_the_stric
         (tmp_path / t['slug'] / 'render.py').write_text("def render(d):\n    return '<!doctype html><html><body><h1>x</h1></body></html>'\n", encoding='utf-8')
         (tmp_path / t['slug'] / 'needs.json').write_text(json.dumps(strict), encoding='utf-8')
         if not [x for x in lost if x.startswith(('needs', 'niche', 'a count'))] and 'made.land' not in json.dumps(t['needs']):
-            for d in (PRODUCT, PLACE):
-                for promised in ((), ('made',)):
-                    a = {c['slug'] for c in S.select(d, promised=promised)['chosen']}
-                    b = {c['slug'] for c in S.select(d, promised=promised, root=tmp_path)['chosen']}
-                    assert (t['slug'] in a) == (t['slug'] in b), (t['slug'], promised)
+            same.append(t['slug'])
+    # a candidate (chosen or in reserve) of the library is one of the strict library, and the other way round
+    offered = lambda d, promised, root=None: {c['slug'] for k in ('chosen', 'reserve') for c in S.select(d, promised=promised, root=root, limit=99)[k]}
+    for d in (PRODUCT, PLACE):
+        for promised in ((), ('made',)):
+            a, b = offered(d, promised), offered(d, promised, tmp_path)
+            for slug in same:
+                assert (slug in a) == (slug in b), (slug, promised)
 
 
 def test_selection_reads_every_strict_name_and_the_fixed_niches(tmp_path):
@@ -123,7 +127,7 @@ def test_selection_reads_every_strict_name_and_the_fixed_niches(tmp_path):
         (tmp_path / slug).mkdir()
         (tmp_path / slug / 'render.py').write_text("def render(d):\n    return '<!doctype html><html><body><h1>x</h1></body></html>'\n", encoding='utf-8')
         (tmp_path / slug / 'needs.json').write_text(json.dumps(need(niche)), encoding='utf-8')
-    pick = lambda d: [c['slug'] for c in S.select(d, root=tmp_path, limit=6)['chosen']]
+    pick = lambda d: [c['slug'] for c in S.select(d, root=tmp_path, limit=6)['chosen'] if not c['fallback']]   # a neighbour's only fills a shortfall, marked
     assert pick(PLACE) == ['forrestaurants', 'forplaces'] and pick({**PLACE, 'kind': 'hotel'}) == ['forhotels', 'forplaces'], 'a template for restaurants is not offered to a hotel'
     assert pick({**PLACE, 'kind': 'venue'}) == ['forplaces'] and S.client({'kind': 'venue'})['niche'] == ['venue', 'place']
     (tmp_path / 'forrestaurants' / 'needs.json').write_text(json.dumps(need(['restaurant', 'hotel', 'venue'])), encoding='utf-8')
@@ -137,6 +141,8 @@ def test_selection_reads_every_strict_name_and_the_fixed_niches(tmp_path):
     assert fit(min={'steps': 4}) == ['at least steps 4, the client has 3'] and fit(max={'photos': 4}) == ['at most photos 4, the client has 5'] and fit(photos_large_min=2) == [] and fit(photos_large_min=3) == ['photos_large_min 3, the client has 2']
     assert fit(min={'weather': 1})[0].startswith('a need this step cannot read') and fit(needs_any=[['menu', 'a calm client']])[0].startswith('a need this step cannot read') and fit(min='three')[0].startswith('a need this step cannot read')
     assert S.count('catalogue', {'catalogue': {'groups': [{'items': [{'name': 'a'}, {'name': 'b'}]}, {'items': [{'name': 'c'}]}]}}, S.client({})['pics']) == 3 and S.count('team', {'team': {'groups': [{'items': [{'name': 'a'}]}]}}, S.client({})['pics']) == 1
-    assert pick({'kind': 'clinic', 'hero': {'title': 'T'}}) == ['forclinics'] and pick({'kind': 'law'}) == ['forclinics'] and pick({'kind': 'school'}) == []
+    page = {'hero': {'title': 'T', 'text': 'One line under it.'}}                       # the least that is a page (select.empty)
+    assert pick({**page, 'kind': 'clinic'}) == ['forclinics'] and pick({**page, 'kind': 'law'}) == ['forclinics'] and pick({**page, 'kind': 'school'}) == []
+    assert pick({'kind': 'clinic', 'hero': {'title': 'T'}}) == [] and 'nothing else' in S.select({'kind': 'clinic', 'hero': {'title': 'T'}}, root=tmp_path)['rejected'][0]['why']
     assert pick(PRODUCT) == ['forapps', 'forsoftware'] and pick({**PRODUCT, 'media': {}}) == ['forsoftware', 'forapps']
     assert S.client({'kind': 'cafe'})['niche'] == ['restaurant', 'place'] and S.client({'kind': 'person'})['niche'] == ['person']

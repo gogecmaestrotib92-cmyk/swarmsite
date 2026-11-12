@@ -1,0 +1,30 @@
+{
+ "_note": "A made-up client for tests, modelled on the shape of a real job that got no designs (2026-11-12): a small software site whose capture yields a hero, a short run of steps without pictures, a statement, two figures and three photographs; no features, no close, no product screens, no plans, no links. The name, the words and the numbers are invented; no real business is described.",
+ "brand": {"name": "Pagewright", "logo": "media/pagewright/logo.svg", "home": "https://www.pagewright.example/", "logo_wordmark": true},
+ "lang": "en",
+ "kind": "software",
+ "character": "calm",
+ "palette": {"note": "invented", "ground": "#f7f5f0", "ink": "#1d2230", "accent": "#1f4fb8", "extra": ["#1d2230", "#e9e4d8"]},
+ "nav": [{"t": "How it works", "h": "https://www.pagewright.example/#how"}, {"t": "Sign in", "h": "https://app.pagewright.example/"}],
+ "signin": {"t": "Sign in", "h": "https://app.pagewright.example/"},
+ "cta": {"t": "Try it free", "h": "https://app.pagewright.example/"},
+ "hero": {"title": "Turn a Plain Document into a Designed One", "text": "Upload a report, a letter or a handout and get it back laid out like a printed page.", "primary": {"t": "Try it free", "h": "https://app.pagewright.example/"}},
+ "trust": [],
+ "figures": [{"v": "3 min", "l": "From upload to a finished layout, on a ten-page report"}, {"v": "12", "l": "Page styles to choose from"}],
+ "statement": {"title": "Your words stay exactly as you wrote them", "text": "Pagewright changes the type, the spacing and the page around your text, never the text itself, so a reviewed document stays the reviewed document."},
+ "steps": {"title": "How it works", "text": "", "items": [
+  {"title": "Upload the document", "text": "Drop in a PDF, a Word file or plain text; nothing needs to be prepared first."},
+  {"title": "Pick a page style", "text": "Choose a look for headings, margins and tables, and see the first page before you commit."},
+  {"title": "Download the result", "text": "Get a print-ready PDF back, with the contents and page numbers set for you."}
+ ]},
+ "media": {"screens": [], "phones": [], "video": null, "photos": [
+  {"src": "media/pagewright/sample-1.jpg", "w": 1600, "h": 1000, "alt": "A report laid out in two columns"},
+  {"src": "media/pagewright/sample-2.jpg", "w": 1600, "h": 1000, "alt": "A letter with a set heading"},
+  {"src": "media/pagewright/sample-3.jpg", "w": 1200, "h": 900, "alt": "A handout with a table"}
+ ]},
+ "faq": {"title": "", "items": []},
+ "quotes": [],
+ "logos": [],
+ "links": [],
+ "foot": {"text": "", "legal": "© Pagewright", "links": [{"t": "Privacy", "h": "https://www.pagewright.example/privacy"}, {"t": "Terms", "h": "https://www.pagewright.example/terms"}]}
+}
