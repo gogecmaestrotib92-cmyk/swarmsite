@@ -18,6 +18,8 @@ try {
     hidden: page(sound + '<section style="position:relative"><p style="margin:0">A quotation that stands where the hidden headings are.</p><h2 style="position:absolute;top:42px;left:24px;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;margin:0">The sea decides the day</h2><h2 style="position:absolute;top:42px;left:24px;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;margin:0;color:#fafafa">A second one, clipped by path</h2></section>'),
     // a fixed bar that covers only a corner of a line at this scroll position: the line is judged where it is free, not against the bar
     corner: page('<div style="position:fixed;top:0;left:0;width:150px;height:30px;background:#111;z-index:5"></div><section style="padding-top:12px"><h1>The books of a stall</h1><p>Photograph each receipt and the ledger keeps itself. Ten minutes on a Sunday closes the week.</p></section>'),
+    // a logo fitted with object-fit:contain keeps its own shape: not distorted
+    contained: page(sound + '<section><img src="' + PIC + '" style="width:120px;height:120px;object-fit:contain" alt=""></section>'),
     script: page(sound + '<script>nothingOfTheKind()</script>'),
     squeezed: page(sound + '<section><img src="' + PIC + '" style="width:300px;height:300px;max-width:none" alt=""><img src="' + PIC + '" style="width:300px;height:300px;object-fit:cover" alt=""></section>'),
     twoh1: page(sound + '<section><h1>A second first heading</h1></section>'),
@@ -59,6 +61,7 @@ try {
   assert.deepEqual(out.overlap.failed.filter(k => k !== 'legible'), ['overlap']);
   assert.ok(out.overlap.checks.overlap.some(o => /first line/.test(o.under) && /Another line/.test(o.upon)), 'which line lies under which');
   assert.ok(out.corner.ok, 'a line whose corner is under a fixed bar is not scored against the bar: ' + JSON.stringify(out.corner.checks));
+  assert.ok(out.contained.ok, 'a picture fitted with object-fit:contain is not distorted: ' + JSON.stringify(out.contained.checks));
   assert.ok(out.hidden.ok, 'a screen-reader-only heading (clip rect or clip-path inset) is not read as a line on screen: ' + JSON.stringify(out.hidden.checks));
   assert.ok(out.covered.ok, 'a card with its own ground over a line is not an overlap: ' + JSON.stringify(out.covered.checks));
 
