@@ -158,7 +158,14 @@ READER_TOOL = {"name": "write_factsheet", "description": "The verified fact shee
         "close": {"type": "object", "description": "the page's last call: its closing heading and sentence, and the label of the button under it", "properties": {"title": {"type": "string"}, "text": {"type": "string"}, "button": {"type": "string"}}},
         "trust": {"type": "array", "items": {"type": "string"}, "description": "short assurances the page sets near its opening (\"No card needed\", \"Free to start\"), verbatim, at most 6"},
         "figures": {"type": "array", "items": {"type": "object", "properties": {"v": {"type": "string", "description": "the number as printed (\"4,210\", \"+3.1%\", \"24h\")"}, "l": {"type": "string", "description": "the words the page sets with it"}}}, "description": "numbers the page shows as figures with a label, at most 6; not prices"},
-        "note": {"type": "string", "description": "one short line the page sets beside its opening (a count, a since-date), verbatim"}}}}}}
+        "note": {"type": "string", "description": "one short line the page sets beside its opening (a count, a since-date), verbatim"},
+        "quotes": {"type": "array", "items": {"type": "object", "properties": {"q": {"type": "string", "description": "the customer's own words, verbatim"}, "name": {"type": "string"}, "role": {"type": "string", "description": "what the page says of them (their company, the service they used), verbatim"}}}, "description": "customers' reviews and testimonials the page prints, at most 6"},
+        "team": {"type": "object", "description": "the people the page presents (partners, doctors, teachers, the owner): each name as printed, with the role and the sentence the page gives them", "properties": {"title": {"type": "string"}, "text": {"type": "string"},
+                 "items": {"type": "array", "items": {"type": "object", "properties": {"name": {"type": "string"}, "role": {"type": "string"}, "text": {"type": "string"}}}}}},
+        "catalogue": {"type": "object", "description": "what can be bought, booked or ordered, as the page lists it (services with fees, rooms, courses, dishes, products): groups of items, each name and price exactly as printed", "properties": {"title": {"type": "string"}, "text": {"type": "string"},
+                      "groups": {"type": "array", "items": {"type": "object", "properties": {"t": {"type": "string", "description": "the group's own heading"}, "text": {"type": "string"},
+                                 "items": {"type": "array", "items": {"type": "object", "properties": {"name": {"type": "string"}, "price": {"type": "string", "description": "as printed, with its currency sign; omitted when the page prints none"}, "text": {"type": "string"}}}}}}}}},
+        "contact": {"type": "object", "description": "how the page says to reach the business, each exactly as printed", "properties": {"phone": {"type": "string"}, "email": {"type": "string"}}}}}}}}
 READER_SYSTEM = "You are the studio's reader. You read a client's website and write the fact sheet the rest of the team works from. Only what the site SAYS, verbatim where it matters. No invention, no marketing gloss. If a number or claim is not on the site, it is not on the sheet. Preserve distinct meaningful homepage offers, capabilities, customer proof, FAQ and important contact facts instead of compressing them into one generic claim. Describe the actual business, audience, core value, credible proof and the best authentic visual evidence in business_understanding; do not mistake a decorative background for the product. Treat animation fragments, navigation labels and repeated decorative text as context, not separate offers. Source subpages are reference material, not pages already recreated by the preview. In `page`, copy the home page's own blocks letter for letter (statement, steps, features, closing call, assurances, figures): they are checked against the page character by character and anything reworded is discarded, so copy — do not write."
 
 def reader(slug_dir):
@@ -187,7 +194,7 @@ def reader(slug_dir):
         if os.path.exists(p) and os.path.getsize(p) < 4_500_000: content += [{"type": "text", "text": "SCREENSHOT " + s}, img_block(p)]
     if analysis: content.append({"type": "text", "text": "BATCHED SOURCE OBSERVATIONS (model interpretation, not independently verified; source URLs and omissions are marked)\n" + json.dumps(analysis, ensure_ascii=False)})
     content.append({"type": "text", "text": "Call write_factsheet."})
-    fs_ = ask(READER_SYSTEM, content, READER_TOOL, max_tokens=10000)
+    fs_ = ask(READER_SYSTEM, content, READER_TOOL, max_tokens=12000)
     if fs_: W(slug_dir, 'factsheet.json', fs_)
     return fs_
 

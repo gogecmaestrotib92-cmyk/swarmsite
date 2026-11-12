@@ -52,7 +52,14 @@ KINDS = (
     ('bar', r'\bbar\b|\bpub\b|cocktail|winery|bodega|brewery'),
     ('hotel', r'hotel|hostel|lodge|guest ?house|b&b|bed and breakfast|resort|\bvilla\b|apartments?\b|hostal|posada|pension'),
     ('venue', r'venue|event space|club\b|gallery|museum|theatre|theater|studio space'),
-    ('shop', r'\bshop\b|\bstore\b|boutique|florist|butcher|market\b|tienda'),
+    ('shop', r'\bshop\b|\bstore\b|boutique|florist|butcher|market\b|tienda|retailer|e-?commerce'),
+    ('clinic', r'clinic|cl[ií]nica|klinik|praxis|dentist\w*|dental|zahn[aä]rzt\w*|\barzt\b|[aä]rzt\w+|doctor|physio\w*|therap\w+|medical|orthop\w+|chiropract\w+|veterinar\w+|\bvet\b|optician|surgery'),
+    ('law', r'solicitors?|law firm|lawyers?|attorneys?|barristers?|legal (?:practice|services|firm)|abogad\w+|kanzlei|rechtsanw\w+|notar\w*|advokat\w*'),
+    ('school', r'school|academy|academia|escuela|college|university|kindergarten|nursery|schule|colegio|language cent(?:re|er)|training cent(?:re|er)|courses'),
+    ('nonprofit', r'charity|charitable|rescue|non-?profit|foundation|\bngo\b|association|community (?:group|organisation|organization)|volunteer\w*'),
+    ('corporate', r'engineer\w*|manufactur\w+|industrial|contractors?|construction|logistics|consultanc\w+|holdings|supplier|fabricat\w+|machin\w+'),
+    ('service', r'woodwork\w*|joiner\w*|carpent\w+|plumb\w+|electrician\w*|cleaning|gardener\w*|landscap\w+|builders?|roof\w+|repairs?|workshop|bespoke|decorat\w+|removals?|locksmith|salon|barber\w*|hairdress\w+|tailor\w*|service'),
+    ('person', r'photographer|author|writer|coach|consultant|speaker|artist|musician|designer|illustrator|freelance\w*|portfolio|trainer|filmmaker|composer|architect'),
 )
 PLACE_KINDS = {'restaurant', 'cafe', 'bar', 'hotel', 'venue', 'shop'}
 ARROWS = '→›↗➜➝⟶'
@@ -378,13 +385,17 @@ def _ext(data_uri, fallback='jpg'):
 
 def kind_of(fs, inv):
     """(kind, where it was read) — the earliest telling word in the reader's sentence, else in the page's own title and description"""
-    for where, text in (('reader: what', fs.get('what')), ('capture: title and description', ' '.join(filter(None, [inv.get('title'), (inv.get('seo') or {}).get('description')])))):
+    for where, text in (('reader: subtype', fs.get('subtype')), ('reader: what', fs.get('what')), ('capture: title and description', ' '.join(filter(None, [inv.get('title'), (inv.get('seo') or {}).get('description')])))):
         t = _low(norm(text))
         m = re.search(r'\bis (?:an?|the)\b', t)
         t = t[m.end():] if m else t
         hits = [(mm.start(), k) for k, rx in KINDS for mm in [re.search(rx, t)] if mm]
         if hits:
-            return min(hits)[1], where
+            first = min(hits)[1]
+            # "a service", "a consultant's tool", "school software": a word for a product anywhere in the line outweighs the loose ones
+            if first in ('service', 'person', 'corporate', 'school', 'nonprofit', 'shop') and any(k == 'software' for _, k in hits):
+                first = 'software'
+            return first, where
     return '', ''
 
 
@@ -728,6 +739,65 @@ def _reader_blocks(d, hero, fs, corpus, actions, secs, rules, gaps):
     if 'note' not in hero and own(page.get('note')) and len(own(page['note'])) <= 60:
         hero['note'] = own(page['note'])
         took.append('hero.note')
+    # reviews: the reader's quotes (sheet and page), each kept only when its words stand on the page
+    if not d.get('quotes'):
+        qs, seen = [], set()
+        for x in list(page.get('quotes') or []) + [{'q': q.get('text'), 'name': q.get('who')} for q in fs.get('quotes') or [] if isinstance(q, dict)]:
+            if not isinstance(x, dict):
+                continue
+            q = own(x.get('q'), 420)
+            if len(q) < 20 or _key(q)[:60] in seen:
+                continue
+            seen.add(_key(q)[:60])
+            name, role = own(x.get('name')), own(x.get('role'))
+            qs.append({'q': q, 'name': name, **({'role': role} if role else {}), 'quote': q, 'by': name})
+        if qs:
+            d['quotes'] = qs[:6]
+            took.append('quotes')
+    # the people the page presents
+    tm = page.get('team') if isinstance(page.get('team'), dict) else {}
+    if 'team' not in d:
+        ppl = [{'name': own(x.get('name')), **({'role': own(x.get('role'))} if own(x.get('role')) else {}), **({'text': own(x.get('text'), 320)} if own(x.get('text')) else {})}
+               for x in tm.get('items') or [] if isinstance(x, dict) and own(x.get('name')) and 1 <= len(own(x.get('name')).split()) <= 6]
+        if ppl:
+            d['team'] = {'title': corpus.recase(own(tm.get('title'))) if own(tm.get('title')) else '', 'text': own(tm.get('text'), 320), 'items': ppl[:12]}
+            took.append('team')
+    # what is sold, with its prices: groups as the page lists them
+    ct = page.get('catalogue') if isinstance(page.get('catalogue'), dict) else {}
+    if 'catalogue' not in d and 'plans' not in d and 'menu' not in (d.get('place') or {}):
+        groups = []
+        for g in ct.get('groups') or []:
+            if not isinstance(g, dict):
+                continue
+            items = []
+            for x in g.get('items') or []:
+                if not isinstance(x, dict) or not own(x.get('name')):
+                    continue
+                it = {'name': own(x['name'])}
+                pr = norm(x.get('price'))
+                if pr and PRICE_RX.search(pr) and corpus.says(PRICE_RX.search(pr).group(0)):
+                    it['price'] = PRICE_RX.search(pr).group(0)
+                if own(x.get('text')):
+                    it['text'] = own(x['text'], 220)
+                items.append(it)
+            if items:
+                groups.append({'t': corpus.recase(own(g.get('t'))) if own(g.get('t')) else '', **({'text': own(g.get('text'), 220)} if own(g.get('text')) else {}), 'items': items[:12]})
+        if groups and sum(len(g['items']) for g in groups) >= 2:
+            d['catalogue'] = {'title': corpus.recase(own(ct.get('title'))) if own(ct.get('title')) else '', 'text': own(ct.get('text'), 320), 'groups': groups[:6]}
+            took.append('catalogue')
+    # how to reach them: a number and an address for letters, each as the page prints it
+    co = page.get('contact') if isinstance(page.get('contact'), dict) else {}
+    if 'contact' not in d and not (d.get('place') or {}).get('phone'):
+        c = {}
+        ph = norm(co.get('phone'))
+        if ph and len(re.sub(r'\D', '', ph)) >= 7 and corpus.says(ph):
+            c['phone'] = {'t': next(corpus.spans(ph)), 'h': 'tel:' + re.sub(r'[^\d+]', '', ph)}
+        em = norm(co.get('email'))
+        if re.fullmatch(r'[\w.+-]+@[\w-]+(?:\.[\w-]+)+', em or '') and corpus.says(em):
+            c['email'] = em.lower()
+        if c:
+            d['contact'] = c
+            took.append('contact')
     if took:
         heads = tuple(k + ':' for k in took) + tuple(k.split('.')[0] + ':' for k in took)
         gaps[:] = [g for g in gaps if not (g.startswith(heads) and (' none' in g[:40] or 'empty' in g[:40] or 'not derivable' in g[:60]))]
@@ -1127,7 +1197,7 @@ def adapt(seed):
         gaps.append('foot.links: none — no terms / privacy link among the links the capture kept (it keeps the first hundred of a page)')
     gaps.append('foot.text: empty — the small print of the foot is not bordered in the capture' + ('' if legal else '; foot.legal: the page prints no © line the capture read'))
 
-    shots = _pictures(images, d, media, gaps, is_place, seed.get('product'), rules)
+    shots = _pictures(images, d, media, gaps, is_place or kind != 'software', seed.get('product') if kind == 'software' else None, rules)   # screens: a product's only
     if not is_place:
         _step_pictures(d, rules, gaps)
     if is_place:
