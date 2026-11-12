@@ -1,0 +1,194 @@
+[
+ {
+  "name": "forest-green",
+  "tone": "dark",
+  "ground": "#0c1710",
+  "deep": "#14301f",
+  "mid": "#2f5a3c",
+  "accent": "#6fbf8a"
+ },
+ {
+  "name": "teal",
+  "tone": "dark",
+  "ground": "#08191b",
+  "deep": "#0e3a3d",
+  "mid": "#1f6f73",
+  "accent": "#4fc4c0"
+ },
+ {
+  "name": "navy",
+  "tone": "dark",
+  "ground": "#0a1226",
+  "deep": "#12224a",
+  "mid": "#2a4580",
+  "accent": "#6f9be8"
+ },
+ {
+  "name": "indigo-violet",
+  "tone": "dark",
+  "ground": "#120f26",
+  "deep": "#241c52",
+  "mid": "#4a3a94",
+  "accent": "#9a86f0"
+ },
+ {
+  "name": "oxblood",
+  "tone": "dark",
+  "ground": "#1c0a0c",
+  "deep": "#3d1216",
+  "mid": "#7a2228",
+  "accent": "#d05a56"
+ },
+ {
+  "name": "rust-brown",
+  "tone": "dark",
+  "ground": "#1a100a",
+  "deep": "#3a2012",
+  "mid": "#84451f",
+  "accent": "#d98444"
+ },
+ {
+  "name": "charcoal-neutral",
+  "tone": "dark",
+  "ground": "#121212",
+  "deep": "#222223",
+  "mid": "#4a4a4c",
+  "accent": "#b9b9b4"
+ },
+ {
+  "name": "olive",
+  "tone": "dark",
+  "ground": "#14150b",
+  "deep": "#2b2d14",
+  "mid": "#5c5f2a",
+  "accent": "#b5b85e"
+ },
+ {
+  "name": "plum",
+  "tone": "dark",
+  "ground": "#190d18",
+  "deep": "#361a33",
+  "mid": "#6e3566",
+  "accent": "#c57fb6"
+ },
+ {
+  "name": "petrol-blue",
+  "tone": "dark",
+  "ground": "#0a171d",
+  "deep": "#11303c",
+  "mid": "#245a6e",
+  "accent": "#5fb0c8"
+ },
+ {
+  "name": "ink-black-with-mint-accent",
+  "tone": "dark",
+  "ground": "#0a0c0b",
+  "deep": "#111614",
+  "mid": "#1f3a30",
+  "accent": "#5ef2b0"
+ },
+ {
+  "name": "espresso-with-amber-accent",
+  "tone": "dark",
+  "ground": "#150e0a",
+  "deep": "#2a1c13",
+  "mid": "#5a3c25",
+  "accent": "#f0a53a"
+ },
+ {
+  "name": "warm-cream",
+  "tone": "light",
+  "ground": "#f6efe2",
+  "deep": "#eadfc8",
+  "mid": "#cdb991",
+  "accent": "#f08a2c"
+ },
+ {
+  "name": "cool-white-blue",
+  "tone": "light",
+  "ground": "#f4f7fb",
+  "deep": "#e2e9f3",
+  "mid": "#a9bcd8",
+  "accent": "#2f6fe4"
+ },
+ {
+  "name": "sand-peach",
+  "tone": "light",
+  "ground": "#f8ebdd",
+  "deep": "#f0d6bf",
+  "mid": "#dba886",
+  "accent": "#e8734a"
+ },
+ {
+  "name": "sage",
+  "tone": "light",
+  "ground": "#eef1e8",
+  "deep": "#dbe2d0",
+  "mid": "#a3b393",
+  "accent": "#5f7f58"
+ },
+ {
+  "name": "blush",
+  "tone": "light",
+  "ground": "#f9ecec",
+  "deep": "#f2d7d8",
+  "mid": "#dda5ab",
+  "accent": "#d6577a"
+ },
+ {
+  "name": "pale-grey-neutral",
+  "tone": "light",
+  "ground": "#f2f2f0",
+  "deep": "#e2e2df",
+  "mid": "#a9a9a5",
+  "accent": "#3c3c3a"
+ },
+ {
+  "name": "butter-yellow",
+  "tone": "light",
+  "ground": "#faf3d4",
+  "deep": "#f3e6a8",
+  "mid": "#dcc566",
+  "accent": "#e2a400"
+ },
+ {
+  "name": "sky-blue",
+  "tone": "light",
+  "ground": "#eaf4fb",
+  "deep": "#d0e6f6",
+  "mid": "#8cbfe6",
+  "accent": "#1f8fe0"
+ },
+ {
+  "name": "stone-with-terracotta",
+  "tone": "light",
+  "ground": "#efebe4",
+  "deep": "#ddd5c8",
+  "mid": "#b3a590",
+  "accent": "#c2603c"
+ },
+ {
+  "name": "linen-with-navy",
+  "tone": "light",
+  "ground": "#f3efe6",
+  "deep": "#e3dccd",
+  "mid": "#8a93a8",
+  "accent": "#1c2f5e"
+ },
+ {
+  "name": "mint-pale",
+  "tone": "light",
+  "ground": "#ecf7f1",
+  "deep": "#d3eee0",
+  "mid": "#93d3b4",
+  "accent": "#22a876"
+ },
+ {
+  "name": "lavender-pale",
+  "tone": "light",
+  "ground": "#f1eefa",
+  "deep": "#e0d9f3",
+  "mid": "#b3a4de",
+  "accent": "#7a5fd0"
+ }
+]

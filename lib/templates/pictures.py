@@ -55,7 +55,9 @@ def _dist(a, b):
 
 
 def root_of(root=None):
-    for c in (root, os.environ.get('SWARMSITE_LIBRARY'), HERE.parent.parent):
+    env = os.environ.get('SWARMSITE_LIBRARY')
+    # SWARMSITE_LIBRARY=none: no library but one given by name (the repo's own copy is not looked for)
+    for c in ((root,) if env == 'none' else (root, env, HERE.parent.parent)):
         if c and (Path(c) / 'media' / 'library' / 'library.json').is_file():
             return Path(c)
     return None
