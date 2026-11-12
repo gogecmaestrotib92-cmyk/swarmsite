@@ -10,7 +10,7 @@ import { saveCrawlCheckpoint, restoreCrawlCheckpoint } from './crawl_checkpoint.
 import { spawn } from 'node:child_process'; import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
 import { makeUserOf, allowance, mine } from './auth.mjs';
-import { STEPS_T, STEPS_F, enabled as templatesEnabled, runTemplateJob, mayDownload, previewable, imageType, formProblem, UPLOAD } from './templates.mjs';
+import { STEPS_T, STEPS_F, enabled as templatesEnabled, runTemplateJob, mayDownload, previewable, imageType, formProblem, UPLOAD, libraryCount } from './templates.mjs';
 import { makeEditor, mayKeep, editable, opsProblem } from './editor.mjs';
 import { ensurePrivateBucket } from './bucket.mjs'; import { runCleanup } from './cleanup.mjs';
 import { runPublish, runRepackage, editedPackage, editsHash, nameProblem } from './publish.mjs';
@@ -674,6 +674,8 @@ async function processTemplates(job) {
 // the template path's private bucket and its upkeep: made private on boot (or templates mode is refused, the old engine
 // works on), and visitors' photographs of nobody's old jobs removed once on boot, then every 24 h (counts only in the log)
 async function templatesBoot() {
+  const lib = libraryCount(process.env, ROOT);   // made pictures: a worker without its library offers none, so say so on boot
+  (lib.pictures && !lib.missing ? console.log : console.warn)(`library: ${lib.pictures} pictures${lib.missing ? `, ${lib.missing} missing` : ''}${lib.root ? ' at ' + lib.root : ' (none found: no made pictures)'}`);
   const { ok } = await ensurePrivateBucket(sb.storage, PACKAGE_BUCKET);
   if (!ok) TEMPLATES = false;
   if (!TEMPLATES) return;
