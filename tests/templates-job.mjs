@@ -42,30 +42,34 @@ try {
   assert.equal(formProblem(form), ''); assert.ok(formProblem({ ...form, name: ' ' }) && formProblem({ ...form, photos: [{ file: '../x.png' }] }) && formProblem({ ...form, logo: { file: 'http://x/y.png' } }) && formProblem(null));
   assert.deepEqual(STEPS_F.map(s => s[0]), ['form', 'choose', 'publish', 'package']);
   assert.equal(imageType(fs.readFileSync(path.join(root, 'web/favicon.png'))), 'png'); assert.equal(imageType(Buffer.from('<svg onload=alert(1)>')), ''); assert.equal(imageType(Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0, 0, 0, 0, 0])), 'jpg');
+  // the library grows: which templates a client is shown is select's answer (tests/test_templates_select.py); here griffin is among them, up to three
+  const shownOf = r => r.templates.variants.map(v => v.slug), packs = r => shownOf(r).map(() => 'lib/templates/job.py package');
   let x = await scenario({ form });
-  assert.deepEqual(x.log, ['lib/templates/job.py build', 'lib/templates/job.py package'], 'no capture and no reader: a form job makes no paid call');
+  assert.ok(shownOf(x.result).includes('griffin') && shownOf(x.result).length <= 3, shownOf(x.result).join());
+  assert.deepEqual(x.log, ['lib/templates/job.py build', ...packs(x.result)], 'no capture and no reader: a form job makes no paid call');
   assert.deepEqual(x.steps, STEPS_F.flatMap(([id]) => [`${id}:running`, `${id}:done`])); assert.deepEqual(x.fetched, [UP]);
-  assert.equal(x.result.source, 'form'); assert.deepEqual(x.result.templates.variants.map(v => v.slug), ['griffin']); assert.equal(x.result.budget, null, 'nothing priced');
+  assert.equal(x.result.source, 'form'); assert.equal(x.result.budget, null, 'nothing priced');
   assert.ok(x.result.templates.left_out.some(g => /contact\.phone/.test(g)), 'what the form left out is in the job, for the visitor');
   assert.ok([...x.pub.keys()].some(k => /\/t\/media\/upload\/photo-1\.png$/.test(k)), 'their photograph is published beside the preview');
   assert.ok([...x.priv.keys()].includes('22222222-2222-4222-8222-222222222222/data.json'), 'the form\'s data is kept in the same store as a captured site\'s');
 
   // 1 · a site a template fits
   x = await scenario();
-  assert.deepEqual(x.log, ['lib/pipeline/capture.mjs', 'reader', 'lib/templates/job.py build', 'lib/templates/job.py package'], 'one reader call, one build, one package for the one variant shown');
+  assert.ok(shownOf(x.result).includes('griffin') && shownOf(x.result).length <= 3, shownOf(x.result).join());
+  assert.deepEqual(x.log, ['lib/pipeline/capture.mjs', 'reader', 'lib/templates/job.py build', ...packs(x.result)], 'one reader call, one build, one package for each variant shown');
   assert.deepEqual(x.steps, STEPS_T.flatMap(([id]) => [`${id}:running`, `${id}:done`]));
-  const t = x.result.templates;
-  assert.equal(x.result.mode, 'templates'); assert.deepEqual(t.variants.map(v => v.slug), ['griffin']);
-  assert.equal(t.variants[0].url, 'https://api.example/t/22222222-2222-4222-8222-222222222222/griffin'); assert.equal(t.variants[0].package, 'ready');
+  const t = x.result.templates, shown = shownOf(x.result), gv = t.variants.find(v => v.slug === 'griffin');
+  assert.equal(x.result.mode, 'templates');
+  assert.equal(gv.url, 'https://api.example/t/22222222-2222-4222-8222-222222222222/griffin'); assert.ok(t.variants.every(v => v.package === 'ready'));
   assert.ok(t.rejected.some(r => r.slug === 'maze' && /screens_min/.test(r.why)), 'every other template, with its reason');
   assert.ok(x.pub.has('22222222-2222-4222-8222-222222222222/t/griffin.html') && x.pub.get('22222222-2222-4222-8222-222222222222/t/griffin.html').type === 'text/html');
   assert.ok([...x.pub.keys()].some(k => /\/t\/media\/logo\.svg$/.test(k)), 'the media the pages ask for are published beside them');
   const page = fs.readFileSync(path.join(x.dir, 'templates', 'pub', 'griffin.html'), 'utf8');
   assert.ok(page.includes('https://storage.example/previews/22222222-2222-4222-8222-222222222222/t/media/logo.svg') && !page.includes('../../media/'), 'the preview page asks for its media where they were published');
-  assert.deepEqual([...x.priv.keys()], ['22222222-2222-4222-8222-222222222222/data.json', '22222222-2222-4222-8222-222222222222/griffin.zip'], 'the data store and the package go to the private bucket, nowhere public');
+  assert.deepEqual([...x.priv.keys()], ['22222222-2222-4222-8222-222222222222/data.json', ...shown.map(s => `22222222-2222-4222-8222-222222222222/${s}.zip`)], 'the data store and the packages go to the private bucket, nowhere public');
   assert.deepEqual(t.store, { data: '22222222-2222-4222-8222-222222222222/data.json', variants: {} }, 'the job names where its data is kept (no library on this machine for this test: no variant data of its own)');
   assert.ok(![...x.pub.keys()].some(k => k.endsWith('.zip')));
-  assert.equal(x.saves.length, 1); assert.deepEqual(x.saves[0].variants.map(v => [v.slug, v.package]), [['griffin', 'pending']]); assert.equal(x.saves[0].packagesBefore, 0, 'the previews are saved before any package is made');
+  assert.equal(x.saves.length, 1); assert.deepEqual(x.saves[0].variants.map(v => [v.slug, v.package]), shown.map(s => [s, 'pending'])); assert.equal(x.saves[0].packagesBefore, 0, 'the previews are saved before any package is made');
   assert.deepEqual(x.result.budget, { calls: 1, in: 21000, out: 2400, usd: 0.066 }, 'what the visitor cost: the reader, from the job ledger');
   assert.ok(['adapt', 'select', 'render', 'gate'].every(k => typeof t.timings_ms[k] === 'number') && ['capture', 'read', 'choose', 'publish', 'package'].every(k => typeof t.timings_ms.steps[k] === 'number'), 'stage timings in the job record');
   assert.ok(x.result.beforeUrl && x.events.some(e => e.role === 'QA' && /griffin: every screen passes/.test(e.text)) && x.events.some(e => e.text === '1 picture'));

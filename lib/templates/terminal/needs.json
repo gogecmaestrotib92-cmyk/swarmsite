@@ -1,0 +1,31 @@
+{
+ "niche": [
+  "software",
+  "corporate"
+ ],
+ "photos_min": 0,
+ "photos_large_min": 0,
+ "screens_min": 0,
+ "phones_ok": true,
+ "needs": [
+  "hero.text",
+  "features",
+  "figures",
+  "statement"
+ ],
+ "min": {
+  "features": 3
+ },
+ "holds_without_pictures": true,
+ "motif": "land",
+ "notes": [
+  "The template shows the product only in two places (a picture per step card, a desktop screen per row card); everything else is statements, figures and lists, so it is a type-led fit for a client with few or no pictures.",
+  "The opening wants three statements (hero.title, hero.text, hero.text2); with only a title it is one pinned screen.",
+  "links[t,d,h] make the row of cards; each takes media.screens[i] when there is one. Without links the row is left out.",
+  "The walk is as long as features.items (seven entries = 4 800 px of scroll at 1440); more than about eight is too long.",
+  "media.phones, media.video, hero.primary/secondary/kicker/note have no slot here.",
+  "media.made.land carries every picture slot; the opening uses dark-toned ones only (its text is light).",
+  "A place (restaurant, hotel, shop) is not a fit.",
+  "measured: {\"sportbot\": \"3 steps with phone screens, 4 desktop screens, 4 figures, 7 features, 4 links, 2 plans, 4 questions: every section with data renders (logo wall and quotation left out - no data); shots.mjs clean and legible.mjs ok at 1440 and 390\", \"automateed\": \"3 steps with book covers, 3 desktop screens, 4 figures, 5 features, 3 links, 2 plans, no questions: holds; questions left out\", \"both without media.made (probe/v/*-nomade)\": \"render without errors; the opening is the statements on the plain dark panel, the walk on the plain deep panel, tiles and row cards on plain grounds - holds as a type-led page, but the opening is three empty dark screens with one line each\", \"both without any client picture, made pictures kept (probe/v/*-nomedia)\": \"render without errors; the three cards lose their tile, the row cards carry the sentence and the button without a screen; opening, walk, figures, plans, close unchanged - holds\"}"
+ ]
+}
