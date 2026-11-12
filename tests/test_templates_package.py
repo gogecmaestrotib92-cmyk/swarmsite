@@ -138,6 +138,27 @@ def test_fonts_are_fetched_once_and_kept(tmp_path, monkeypatch):
     url = 'https://fonts.gstatic.com/s/x/lat.woff2'
     assert P.fetch_cached(url, tmp_path) == b'bytes of a face' and P.fetch_cached(url, tmp_path) == b'bytes of a face'
     assert calls == [url] and len(list(tmp_path.iterdir())) == 1
+    # Google answers a Mac with other font files than every other system; what was kept under another UA is not reused
+    monkeypatch.setattr(P, 'UA', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/126.0')
+    P.fetch_cached(url, tmp_path)
+    assert calls == [url, url] and len(list(tmp_path.iterdir())) == 2
+
+
+LINUX_WORKER_UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36'
+
+
+def test_the_package_carries_the_font_files_the_worker_browser_loads_for_the_preview():
+    """The production worker compares in Linux headless Chromium. A package built with the files Google gives a Mac
+    (unhinted) was drawn 28 px shorter there than the preview (hinted) and refused on every screen (job bc69c9d1,
+    2026-11-12). The package asks with a UA that gets the same files as that browser."""
+    assert 'Macintosh' not in P.UA and 'Mac OS' not in P.UA
+    if not online():
+        pytest.skip('Google Fonts cannot be reached from here')
+    import re
+    css = 'https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400&family=Geist+Mono:wght@400;600&display=swap'
+    files = lambda ua: re.findall(r'url\((https://fonts\.gstatic\.com/[^)]+)\)', urllib.request.urlopen(urllib.request.Request(css, headers={'User-Agent': ua}), timeout=10).read().decode())
+    ours = files(P.UA)
+    assert ours and ours == files(LINUX_WORKER_UA)
 
 
 @pytest.mark.skipif(not HAS_BROWSER, reason='needs node and Chrome (CHROME_PATH)')
