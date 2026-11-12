@@ -12,12 +12,14 @@ import crypto from 'node:crypto';
 import { makeUserOf, allowance, mine } from './auth.mjs';
 import { STEPS_T, STEPS_F, enabled as templatesEnabled, runTemplateJob, mayDownload, previewable, imageType, formProblem, UPLOAD } from './templates.mjs';
 import { makeEditor, mayKeep, editable, opsProblem } from './editor.mjs';
+import { ensurePrivateBucket } from './bucket.mjs'; import { runCleanup } from './cleanup.mjs';
+import { runPublish, runRepackage, editedPackage, editsHash, nameProblem } from './publish.mjs';
 import { AsyncLocalStorage } from 'node:async_hooks';
 const HERE = path.dirname(fileURLToPath(import.meta.url)); const ROOT = path.resolve(HERE, '..');
 const sb = createClient(process.env.SUPABASE_URL || 'https://placeholder.supabase.co', process.env.SUPABASE_SERVICE_KEY || 'placeholder', { auth: { persistSession: false } });
 const BUCKET = 'previews'; const OUT = path.join(ROOT, 'out');
 // the template path (server/templates.mjs): off unless TEMPLATES_MODE=1; packages live in a bucket that is NOT public
-const TEMPLATES = templatesEnabled(process.env); const PACKAGE_BUCKET = process.env.PACKAGE_BUCKET || 'packages';
+let TEMPLATES = templatesEnabled(process.env); const PACKAGE_BUCKET = process.env.PACKAGE_BUCKET || 'packages';
 const WORKER_ID = crypto.randomUUID();
 const STEPS = [
   ['capture', 'Reading your landing page: text, photos, logo, colours'],
@@ -218,7 +220,10 @@ app.get('/t/:id/:slug/package', async (req, res) => {
   const gate = mayDownload({ user, job: row, slug: req.params.slug, env: process.env });
   if (gate.status !== 200) return res.status(gate.status).json(gate.body);
   if (!row.user_id) await sb.from('jobs').update({ user_id: user.id, email: user.email }).eq('id', row.id).is('user_id', null);   // a downloaded page belongs to whoever downloaded it first
-  const { data, error: e2 } = await sb.storage.from(PACKAGE_BUCKET).download(`${row.id}/${req.params.slug}.zip`);
+  // with kept edits: the verified package of those edits, once one is made (publish, or "download with my edits")
+  const kept = await EDITOR.saved(row); const edited = kept.length ? editedPackage(row.result, req.params.slug, editsHash(kept)) : null;
+  if (kept.length && !edited && req.query.as !== 'made') return res.status(409).json({ error: 'Your edits are not in a download yet: prepare it first.', prepare: true });
+  const { data, error: e2 } = await sb.storage.from(PACKAGE_BUCKET).download(edited || `${row.id}/${req.params.slug}.zip`);
   if (e2 || !data) return res.status(404).json({ error: 'package not found' });
   const host = (() => { try { return new URL(row.url).hostname.replace(/^www\./, '').replace(/[^a-z0-9.-]/gi, '') || 'site'; } catch { return 'site'; } })();
   res.set({ 'content-type': 'application/zip', 'content-disposition': `attachment; filename="${host}-${req.params.slug}.zip"`, 'cache-control': 'no-store' });
@@ -266,6 +271,29 @@ app.put('/t/:id/edits', async (req, res) => { const row = await editRow(req, res
   const ops = req.body?.ops; const bad = opsProblem(ops); if (bad) return res.status(400).json({ error: bad });
   if (may.claim) await sb.from('jobs').update({ user_id: user.id, email: user.email }).eq('id', row.id).is('user_id', null);
   try { res.json(await EDITOR.save(row, ops)); } catch (e) { editFail(res, e); } });
+// ---- publish on <name>.swarmsite.si, and the download with the edits (server/publish.mjs): both from the one verified package
+const keepState = (id, field) => async state => { const { data } = await sb.from('jobs').select('result').eq('id', id).maybeSingle(); await sb.from('jobs').update({ result: { ...(data?.result || {}), [field]: state } }).eq('id', id); };
+const pubDeps = (row, slug, user, field) => ({ row, slug, user, edits: () => EDITOR.saved(row), env: process.env, fetch, tmp: () => { fs.mkdirSync(OUT, { recursive: true }); return OUT; },
+  readPrivate: async key => { const { data, error } = await sb.storage.from(PACKAGE_BUCKET).download(key); return error || !data ? null : Buffer.from(await data.arrayBuffer()); },
+  writePrivate: async (key, buf, type) => { const { error } = await sb.storage.from(PACKAGE_BUCKET).upload(key, buf, { contentType: type, upsert: true }); if (error) throw error; },
+  publicBase: key => sb.storage.from(BUCKET).getPublicUrl(key).data.publicUrl, python: args => child('python3', args, 600000), save: keepState(row.id, field) });
+const busy = s => s && ['packaging', 'deploying'].includes(s.status) && Date.now() - Date.parse(s.at) < 15 * 60e3;
+const pubGate = async (req, res) => { const row = await editRow(req, res); if (!row) return null; const user = await userOf(req);
+  const may = mayKeep({ user, row }); if (may.status !== 200) { res.status(may.status).json(may.body); return null; }
+  if (process.env.PACKAGES_FREE !== '1') { res.status(402).json({ error: 'Payment is needed to download or publish this page.', pay: true }); return null; }   // the payment hook, as for the download
+  if (may.claim) await sb.from('jobs').update({ user_id: user.id, email: user.email }).eq('id', row.id).is('user_id', null);
+  return { row, user }; };
+app.post('/t/:id/:slug/prepare', async (req, res) => { const g = await pubGate(req, res); if (!g) return;
+  if (busy(g.row.result?.edited)) return res.status(409).json({ error: 'The download is being prepared.' });
+  const at = new Date().toISOString(); runRepackage(pubDeps(g.row, req.params.slug, g.user, 'edited')).catch(e => console.warn('prepare', g.row.id, String(e.message).slice(0, 160)));
+  res.status(202).json({ status: 'packaging', at }); });
+app.post('/t/:id/:slug/publish', async (req, res) => {
+  if (!process.env.VERCEL_TOKEN) return res.status(503).json({ error: 'Publishing is not switched on yet.' });
+  const name = String(req.body?.name || '').trim().toLowerCase(); const bad = nameProblem(name); if (bad) return res.status(400).json({ error: bad });
+  const g = await pubGate(req, res); if (!g) return;
+  if (busy(g.row.result?.publish)) return res.status(409).json({ error: 'A publish is under way.' });
+  const at = new Date().toISOString(); runPublish({ ...pubDeps(g.row, req.params.slug, g.user, 'publish'), name }).catch(e => console.warn('publish', g.row.id, String(e.message).slice(0, 160)));
+  res.status(202).json({ status: 'packaging', name, at }); });
 
 // ---------- worker ----------
 const JOB_CTX = new AsyncLocalStorage(); // the job a child process belongs to, per async chain: several jobs run at once in one worker
@@ -597,6 +625,7 @@ async function loop() {
 }
 // the template path's job (server/templates.mjs); kept outside the stretch from runClaimed to loop that the worker tests cut out
 async function processTemplates(job) {
+  if (!TEMPLATES) throw new Error('templates mode is off on this worker (see the boot log: its private bucket)');
   const slug = slugOf(job.url);
   fs.mkdirSync(OUT, { recursive: true });
   const jobRoot = fs.mkdtempSync(path.join(OUT, `job-${job.id}-`)); job._jobRoot = jobRoot;
@@ -616,4 +645,18 @@ async function processTemplates(job) {
   job._terminalPersisted = true;
   try { const { data: fresh } = await sb.from('jobs').select('options').eq('id', job.id).maybeSingle(); job.options = fresh?.options || job.options; await notifyDone(job, final.templates?.variants?.[0]?.url || ''); } catch (e) { console.warn('notify', job.id, e.message); }
 }
-if (process.env.SUPABASE_URL) { for (let i = 0; i < WORKER_CONCURRENCY; i++) loop(); console.log('worker', WORKER_ID, 'slots', WORKER_CONCURRENCY); } else console.warn('no SUPABASE_URL: worker idle');
+// the template path's private bucket and its upkeep: made private on boot (or templates mode is refused, the old engine
+// works on), and visitors' photographs of nobody's old jobs removed once on boot, then every 24 h (counts only in the log)
+async function templatesBoot() {
+  const { ok } = await ensurePrivateBucket(sb.storage, PACKAGE_BUCKET);
+  if (!ok) TEMPLATES = false;
+  if (!TEMPLATES) return;
+  const clean = () => runCleanup({
+    listUploads: async () => { const out = []; for (let off = 0; off < 100000; off += 1000) { const { data, error } = await sb.storage.from(PACKAGE_BUCKET).list('uploads', { limit: 1000, offset: off }); if (error) throw error; out.push(...(data || []).map(o => ({ name: o.name, created_at: o.created_at }))); if (!data || data.length < 1000) break; } return out; },
+    jobs: async since => { const { data, error } = await sb.from('jobs').select('id,created_at,user_id,options').gte('created_at', since).filter('options->>engine', 'eq', 'templates').limit(20000); if (error) throw error; return data || []; },
+    editsOf: async id => { const { data } = await sb.storage.from(PACKAGE_BUCKET).download(`${id}/edits.json`); if (!data) return null; try { return JSON.parse(Buffer.from(await data.arrayBuffer()).toString()).ops || null; } catch { return null; } },
+    remove: async names => { const { error } = await sb.storage.from(PACKAGE_BUCKET).remove(names.map(n => `uploads/${n}`)); if (error) throw error; },
+    now: () => Date.now(), log: t => console.log(t) }).catch(e => console.warn('cleanup failed:', String(e.message).slice(0, 160)));
+  clean(); setInterval(clean, 86400e3);
+}
+if (process.env.SUPABASE_URL) { (TEMPLATES ? templatesBoot() : Promise.resolve()).catch(e => { TEMPLATES = false; console.warn('templates mode refused:', e.message); }).finally(() => { for (let i = 0; i < WORKER_CONCURRENCY; i++) loop(); console.log('worker', WORKER_ID, 'slots', WORKER_CONCURRENCY, 'templates', TEMPLATES); }); } else console.warn('no SUPABASE_URL: worker idle');

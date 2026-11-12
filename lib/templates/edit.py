@@ -22,6 +22,9 @@ own data.json when it carries made pictures):
     python3 lib/templates/edit.py apply <data.json> <ops.json> [--slug S]                 → {data, refused}
     python3 lib/templates/edit.py describe <data.json> [--ops F] [--slug S]  → {fields, pictures, slots, blocks, palettes, refused, movable}
     python3 lib/templates/edit.py measure <picture>                         → {w, h} of a JPEG, PNG or WebP
+    python3 lib/templates/edit.py package <data.json> <slug> --ops F --media-from URL|DIR --zip Z [--verify]
+                                    the edited page's package, compared offline with the edited page → {ok, why, bytes}
+    python3 lib/templates/edit.py files <zip>                               → {files: [{file, data (base64)}]}
 """
 import copy
 import importlib.util
@@ -244,6 +247,79 @@ def apply(data, ops, slug=None):
     return d, refused
 
 
+def _package_mod():
+    spec = importlib.util.spec_from_file_location('swarmsite_templates_package', HERE / 'package.py')
+    P = sys.modules.get('swarmsite_templates_package')
+    if P is None:
+        P = importlib.util.module_from_spec(spec)
+        sys.modules['swarmsite_templates_package'] = P
+        spec.loader.exec_module(P)
+    return P
+
+
+def fetch_media(rels, media_from, into):
+    """the pictures the edited page asks for, written under `into` from where the preview's are (an https address, or a
+    folder); -> the ones that could not be had"""
+    import shutil
+    import urllib.request
+    missing = []
+    for rel in rels:
+        if not rel.startswith('media/') or '..' in Path(rel).parts:
+            missing.append(rel)
+            continue
+        to = Path(into) / rel
+        to.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            if re.match(r'^https://', str(media_from)):
+                with urllib.request.urlopen(str(media_from) + rel, timeout=30) as r:
+                    to.write_bytes(r.read(20_000_001)[:20_000_000])
+            elif Path(media_from, rel).is_file():
+                shutil.copyfile(Path(media_from, rel), to)
+            else:
+                missing.append(rel)
+        except OSError:
+            missing.append(rel)
+    return missing
+
+
+def package(data, slug, ops, media_from, zip_path, verify=True):
+    """the package of the edited page: the same render the editor showed, its media and fonts beside it, then opened
+    offline and compared with that page screen by screen. -> {ok, why, bytes, files}"""
+    import tempfile
+    P, R = _package_mod(), _registry()
+    d, refused = apply(data, ops, slug)
+    d = {k: v for k, v in d.items() if k != '_order'}
+    with tempfile.TemporaryDirectory(prefix='edpkg-') as work:
+        missing = fetch_media(R.media_used(slug, d), media_from, work)
+        if missing:
+            return {'ok': False, 'why': ['a picture of the page could not be had: %s' % missing[0]], 'refused': refused}
+        try:
+            rep = P.build(slug, d, work, zip_path)
+        except (P.PackageError, OSError, ValueError) as ex:
+            return {'ok': False, 'why': [str(ex)[:300]], 'refused': refused}
+        res = {'ok': True, 'why': [], 'bytes': rep['bytes'], 'files': len(rep['files']), 'refused': refused}
+        if verify:
+            page = Path(work) / (slug + '.html')
+            page.write_text(R.render(slug, d, ''), encoding='utf-8')
+            with tempfile.TemporaryDirectory(prefix='edcmp-') as cmp:
+                v = P.verify(page, zip_path, cmp)
+            res.update(ok=bool(v.get('ok')), why=v.get('why') or [])
+        return res
+
+
+def zip_files(zip_path):
+    """the files of a package, for an upload that sends them as they are"""
+    import base64
+    import zipfile
+    out = []
+    with zipfile.ZipFile(zip_path) as z:
+        for i in z.infolist():
+            if i.is_dir() or '..' in Path(i.filename).parts or i.filename.startswith('/'):
+                continue
+            out.append({'file': i.filename, 'data': base64.b64encode(z.read(i)).decode('ascii')})
+    return out
+
+
 def describe(d):
     return {'fields': fields(d), 'pictures': pictures(d), 'slots': slots(d), 'blocks': blocks(d), 'palettes': palettes(d)}
 
@@ -263,6 +339,10 @@ if __name__ == '__main__':
     elif a[:1] == ['describe'] and len(a) >= 2:
         data, refused = apply(load(a[1]), load(opt('--ops')) if opt('--ops') else [], opt('--slug'))
         print(json.dumps({**describe(data), 'refused': refused, 'movable': movable(opt('--slug'))}, ensure_ascii=False))
+    elif a[:1] == ['package'] and len(a) >= 3:
+        print(json.dumps(package(load(a[1]), a[2], load(opt('--ops')) if opt('--ops') else [], opt('--media-from', ''), opt('--zip'), verify='--verify' in a), ensure_ascii=False))
+    elif a[:1] == ['files'] and len(a) >= 2:
+        print(json.dumps({'files': zip_files(a[1])}))
     elif a[:1] == ['measure'] and len(a) >= 2:
         spec = importlib.util.spec_from_file_location('swarmsite_templates_form', HERE / 'form.py')
         F = importlib.util.module_from_spec(spec)
