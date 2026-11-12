@@ -1,0 +1,37 @@
+{
+ "niche": [
+  "software",
+  "app"
+ ],
+ "photos_min": 0,
+ "photos_large_min": 0,
+ "screens_min": 1,
+ "phones_ok": true,
+ "needs": [
+  "hero",
+  "statement",
+  "steps",
+  "features",
+  "made.sheet",
+  "made.land"
+ ],
+ "needs_any": [
+  [
+   "screens",
+   "video"
+  ]
+ ],
+ "drops": [],
+ "holds_without_pictures": false,
+ "motif": "sheet",
+ "notes": [
+  "motif: the page carries two kinds, not one — printed sheets (made.sheet 0-2) behind the opening window and the closing card, landscapes (made.land) under the steps, the feature screens and the shelf, plus one blur under the upright picture beside the film. Recorded as it is; not changed in this pass.",
+  "screens_min 1: the opening is built round one product window (a film will do instead). More screens close the runs of feature rows, one each.",
+  "Upright pictures (phones, book covers) not used by a step fill the shelf; step pictures of any shape stand in the squares.",
+  "The 390 build of the two no-picture renders was run through shots.mjs (clean) but not looked at.",
+  "Not for places.",
+  "motif_also: land",
+  "shows: [\"plans (title, text, note, name, price, per, line, rows, cta)\", \"faq (title, q, a)\", \"figures\", \"trust\", \"hero.kicker\", \"hero.note\", \"links with descriptions\", \"close.text\", \"foot\"]",
+  "measured: {\"sportbot\": \"4 screens, 4 phones, 1 film: every block of the data is on the page (checked string by string: 0 not shown); legible ok (569 line readings); shots clean at 1440 and 390; picture share 30 % against the reference's 31 %\", \"automateed\": \"3 screens, 7 upright covers, no film, no faq: 0 strings not shown; questions band absent; legible ok (285); shots clean; picture share 32 %\", \"sportbot with all media removed — rendered and looked at, 1440\": \"before this pass the second screen was drawn up over the opening and its heading and rows printed across the h1 and the text (the -100vh pull assumed the pinned window); fixed here (the pull applies only when there is a window). After the fix: no collision, no error, but the opening and the second screen are each half empty (the right half is where the window stands), the steps have no squares and the feature rows no pictures — not a page to offer\", \"sportbot with only the made pictures removed — rendered and looked at, 1440\": \"every slot falls back to a plain palette colour: accent and green rectangles behind the window, then a brown, a red and a green square under the three steps, brown / red / teal bands under the feature screens. Readable and clean in shots.mjs, but it is a different saturated colour per card — what the owner rejected. Offer only with made pictures\"}"
+ ]
+}
