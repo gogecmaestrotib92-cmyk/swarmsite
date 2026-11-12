@@ -668,6 +668,72 @@ def _plan_cards(plans, cards, corpus):
     return n
 
 
+def _reader_blocks(d, hero, fs, corpus, actions, secs, rules, gaps):
+    """The blocks the adapter's own rules could not cut out of the page (they read headings and sub-headings; many pages
+    are not built that way), taken from the reader's `page` — and only the strings that stand in the capture letter for
+    letter. The reader marks where a block is; the capture says what it says. A string that is not on the page is dropped,
+    an item without its name is dropped, a block left too thin is not used."""
+    page = fs.get('page') if isinstance(fs.get('page'), dict) else {}
+    if not page:
+        return
+
+    def own(x, cap=0):
+        x = norm(x)
+        if not x or not corpus.says(x.rstrip('.…')):
+            return ''
+        got = next(corpus.spans(x), None) or next(corpus.spans(x.rstrip('.…')), '')
+        got = norm(got)
+        return lead(got, cap) if cap and len(got) > cap else got
+
+    took = []
+    st = page.get('statement') if isinstance(page.get('statement'), dict) else {}
+    if 'statement' not in d and own(st.get('title')) and len(own(st.get('text'))) >= 40:
+        d['statement'] = {'title': corpus.recase(own(st['title'])), 'text': own(st['text'], 420)}
+        took.append('statement')
+    sp = page.get('steps') if isinstance(page.get('steps'), dict) else {}
+    if 'steps' not in d:
+        items = [{'title': corpus.recase(own(x.get('title'))), 'text': own(x.get('text'), 260)} for x in sp.get('items') or [] if isinstance(x, dict) and own(x.get('title')) and own(x.get('text'))]
+        if 2 <= len(items) <= 6:
+            d['steps'] = {'title': corpus.recase(own(sp.get('title'))) if own(sp.get('title')) else '', 'text': own(sp.get('text'), 320), 'items': items}
+            took.append('steps')
+    ft = page.get('features') if isinstance(page.get('features'), dict) else {}
+    if 'features' not in d:
+        items = [{'t': corpus.recase(own(x.get('t'))), 'd': own(x.get('d'), 220)} for x in ft.get('items') or [] if isinstance(x, dict) and own(x.get('t')) and len(own(x.get('t'))) <= 80]
+        if len(items) >= 3 and sum(1 for i in items if i['d']) * 3 >= len(items) * 2:
+            d['features'] = {'title': corpus.recase(own(ft.get('title'))) if own(ft.get('title')) else '', 'text': own(ft.get('text'), 320), 'items': items[:9]}
+            took.append('features')
+    cl = page.get('close') if isinstance(page.get('close'), dict) else {}
+    if 'close' not in d and own(cl.get('title')):
+        lab = _key(strip_label(cl.get('button')))
+        act = next((a for a in actions if lab and _key(a['t']) == lab), None)
+        cta = {'t': corpus.recase(act['t']), 'h': act['h']} if act else (dict(d['cta']) if d.get('cta') else dict(hero['primary']) if hero.get('primary') else None)
+        if cta:
+            d['close'] = {'title': corpus.recase(own(cl['title'])), 'text': own(cl.get('text'), 320), 'cta': cta}
+            took.append('close')
+        else:                                                        # no call is known yet: kept until the page's call is found (see the end of adapt)
+            d["_close_wait"] = {"title": corpus.recase(own(cl["title"])), "text": own(cl.get("text"), 320)}
+    if not d.get('trust'):
+        tr = [own(x) for x in page.get('trust') or [] if isinstance(x, str) and own(x) and len(own(x)) <= 60][:6]
+        if len(tr) >= 2:
+            d['trust'] = tr
+            took.append('trust')
+    figs = d.get('figures') or []
+    if len(figs) < 3:
+        for x in page.get('figures') or []:
+            if isinstance(x, dict) and own(x.get('v')) and own(x.get('l')) and len(own(x['l']).split()) <= 12 and not re.search(r'[$€£]', norm(x['v'])) and not any(f['v'] == norm(x['v']) for f in figs):
+                figs.append({'v': norm(x['v']), 'l': own(x['l'])})
+        if len(figs) > len(d.get('figures') or []):
+            d['figures'] = figs[:6]
+            took.append('figures')
+    if 'note' not in hero and own(page.get('note')) and len(own(page['note'])) <= 60:
+        hero['note'] = own(page['note'])
+        took.append('hero.note')
+    if took:
+        heads = tuple(k + ':' for k in took) + tuple(k.split('.')[0] + ':' for k in took)
+        gaps[:] = [g for g in gaps if not (g.startswith(heads) and (' none' in g[:40] or 'empty' in g[:40] or 'not derivable' in g[:60]))]
+        rules.append('from the reader, confirmed letter for letter in the capture (the adapter\'s own rules found none): ' + ', '.join(took))
+
+
 def _step_pictures(d, rules, gaps):
     """each step whose call leads to a page of the product gets that page's phone screen (else its desk screen); the
     rest, in order, the product's page screens not yet given. Only screens of the product's own pages (not framed parts
@@ -1045,6 +1111,8 @@ def adapt(seed):
     if not secs:
         gaps.append('sections: the capture cut the home page into no headed sections (no h1/h2 on it); statement, steps, features, close cannot be read')
 
+    _reader_blocks(d, hero, fs, corpus, actions, secs, rules, gaps)
+
     # ── foot
     legal = re.search(r'(?:©|\(c\)|copyright)\s?[^|·•\n]{2,70}?(?=\s{2}|\s[|·•]|\.\s|$)', norm(copy.get('text')), re.I)
     flinks, seen = [], set()
@@ -1086,6 +1154,10 @@ def adapt(seed):
                 d['cta'] = {'t': corpus.recase(way['t']), 'h': way['h']}
                 hero.setdefault('primary', dict(d['cta']))
                 rules.append('cta: neither the top bar nor the opening has a call; the page\'s first link to signing up on the client\'s own domain stands in, and opens the page too')
+        if 'close' not in d and d.get('cta') and d.get('_close_wait'):
+            d['close'] = {**d['_close_wait'], 'cta': dict(d['cta'])}
+            gaps[:] = [g for g in gaps if not g.startswith('close: none')]
+            rules.append('close: the closing the reader marked (confirmed letter for letter in the capture), with the page\'s call under it')
         if 'close' not in d and d.get('cta'):
             # a late section that asks the reader to begin ("Ready to …?", "Start …") and has no call of its own takes the page's call
             late = [s for s in secs[-4:] if s['level'] == 'H2' and not s['used'] and not s['actions'] and READY_RX.search(s['title'])]
@@ -1098,6 +1170,11 @@ def adapt(seed):
     if 'cta' not in d:
         gaps.append('cta: none — neither the top bar nor the opening has a call the capture read')
 
+    wait = d.pop('_close_wait', None)                                # a place: the closing the reader marked, with the place's own call
+    if wait and 'close' not in d and (d.get('cta') or hero.get('primary')):
+        d['close'] = {**wait, 'cta': dict(d.get('cta') or hero['primary'])}
+        gaps[:] = [g for g in gaps if not g.startswith('close: none')]
+        rules.append('close: the closing the reader marked (confirmed letter for letter in the capture), with the page\'s call under it')
     d['_media'] = media
     d['_adapter'] = {'version': VERSION, 'name_from': name_from, 'gaps': gaps, 'rules': rules, 'candidates': {'shots': shots},
                      'reader_missing': [m for m in fs.get('missing') or [] if isinstance(m, str)]}

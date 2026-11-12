@@ -292,6 +292,18 @@ def test_a_product_gets_its_own_screens_its_price_cards_and_its_large_figures():
     bare['cards'] = {'steps': [{'title': 'A heading nobody set', 'items': run[:2] + [{'k': '3', 'title': 'Close', 'text': 'A sentence the page never printed.'}]}, {'title': 'How it works', 'items': run}]}
     got = A.adapt(copy.deepcopy(bare))
     assert got['steps']['title'] == 'How it works' and [(i['k'], i['title'], i['text']) for i in got['steps']['items']] == [(x['k'], x['title'], x['text']) for x in run] and invented(got, bare) == []
+    # a block the adapter's rules cannot cut out is taken from the reader's `page` — only what stands on the page letter for letter
+    marked = product()
+    marked['inventory']['copy']['headings'] = [h for h in marked['inventory']['copy']['headings'] if h['text'] not in ('Photograph', 'Sort', 'Close')]
+    marked['factsheet']['page'] = {'steps': {'title': 'How it works', 'text': 'Three small things, in order.', 'items': [
+        {'title': 'Photograph', 'text': 'Snap each receipt as you get it.'}, {'title': 'Sort', 'text': 'Tallyfern files it under stock, rent or pay.'},
+        {'title': 'Close', 'text': 'Read the month on one page and send it to your accountant.'}, {'title': 'Relax', 'text': 'A step the reader made up.'}]},
+        'trust': ['Never seen on the page'], 'figures': [{'v': '12', 'l': 'markets the page never names'}], 'note': 'A note of the reader\'s own'}
+    got = A.adapt(copy.deepcopy(marked))
+    assert [i['title'] for i in got['steps']['items']] == ['Photograph', 'Sort', 'Close'] and got['steps']['title'] == 'How it works' and invented(got, marked) == []
+    assert 'note' not in got['hero'] and got['figures'] == [{'v': '4,210', 'l': 'stalls keep their books here'}] and any('from the reader' in r for r in got['_adapter']['rules'])
+    marked['factsheet']['page']['steps']['items'] = [{'title': 'Take a photo', 'text': 'Snap receipts.'}, {'title': 'Sorting', 'text': 'It files them.'}]
+    assert 'steps' not in A.adapt(copy.deepcopy(marked)), 'reworded steps are not on the page: no block'
     # fewer phones than steps: no step gets a picture (all or none), and the gap says so
     seed['product']['phones'] = seed['product']['phones'][:2]
     seed['product']['screens'] = seed['product']['screens'][:2]
