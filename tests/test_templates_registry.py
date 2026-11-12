@@ -1,5 +1,6 @@
-"""The template library: every registered template renders the three fixture clients (a dark product with phone
-screens and a film, a light product with book covers, a restaurant with five photographs) to one whole page with one
+"""The template library: every registered template renders every fixture client (a dark product with phone
+screens and a film, a light product with book covers, a restaurant with five photographs, and one made-up client each
+for a works, a charity, a person and a shop, plus whatever other niches add) to one whole page with one
 h1, nothing reading None/undefined, in under 50 ms, as a pure function — and the media prefix is a parameter whose
 default is the template's own output.
 
@@ -33,9 +34,9 @@ CLIENTS = {p.stem: json.loads(p.read_text(encoding='utf-8')) for p in sorted(FIX
 SLUGS = R.slugs()
 
 
-def test_the_library_holds_the_first_two_templates_and_the_three_fixture_clients():
+def test_the_library_holds_the_first_two_templates_and_the_fixture_clients():
     assert {'griffin', 'maze'} <= set(SLUGS)
-    assert set(CLIENTS) == {'tallyfern', 'quillmoor', 'casaolmo'}
+    assert {'tallyfern', 'quillmoor', 'casaolmo', 'pellworth', 'lindenrow', 'marenoakhurst', 'hartwell'} <= set(CLIENTS)
     assert all('made-up client' in d['_note'] for d in CLIENTS.values())
     for t in R.list_templates():
         assert (ROOT / 'lib' / 'templates' / t['slug'] / 'NOTES.md').is_file(), t['slug']

@@ -197,7 +197,7 @@ def invented(d, seed):
 
 def test_the_schema_holds_the_hand_made_files_and_refuses_a_wrong_shape():
     files = sorted(FIX.glob('*.json'))
-    assert len(files) == 3
+    assert len(files) >= 7                                                        # three of the first stack, four of the firms batch, and any other niche's
     for f in files + (sorted(HAND.glob('*.json')) if HAND else []):               # the made-up clients, and the real ones where they are on the machine
         assert A.validate(json.loads(f.read_text(encoding='utf-8'))) == [], f.name
     assert A.validate({'brand': {'name': 'A'}, 'hero': {'title': 'T'}}) == []
@@ -361,7 +361,9 @@ def test_every_template_renders_what_the_adapter_gives(make):
     for slug in R.slugs():
         assert R.audit(slug, {'adapted': d}) == [], slug
         page = R.render(slug, d, 'https://preview.example/job/')
-        assert d['hero']['title'].split()[0] in page and 'https://preview.example/job/media/img1.jpg' in page or not R.media_used(slug, d)
+        assert d['hero']['title'].split()[0] in page, slug
+        # every file the template takes is served from the job's base (a template of another niche may take only the logo)
+        assert all('https://preview.example/job/' + p in page for p in R.media_used(slug, d)), slug
 
 
 # ───────────────────────── the eight frozen real captures

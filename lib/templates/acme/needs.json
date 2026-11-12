@@ -1,0 +1,49 @@
+{
+ "niche": [
+  "shop",
+  "service",
+  "school"
+ ],
+ "photos_min": 4,
+ "photos_large_min": 3,
+ "screens_min": 0,
+ "phones_ok": false,
+ "needs": [
+  "brand.name",
+  "hero.title",
+  "catalogue"
+ ],
+ "drops": [
+  "logos",
+  "screens",
+  "phones",
+  "menu",
+  "spaces",
+  "events",
+  "since",
+  "cuisine",
+  "price_range",
+  "takeaway",
+  "links.d",
+  "projects",
+  "photos",
+  "brand.logo"
+ ],
+ "holds_without_pictures": true,
+ "motif": "photos",
+ "notes": [
+  "niche (as written): maker with a priced range",
+  "drops (as written): media.made",
+  "drops (as written): catalogue.groups[].img",
+  "drops (as written): catalogue items of the collection group beyond the first 5 in that row (all are in the shop grid below)",
+  "drops (as written): team.groups[].t",
+  "drops (as written): media.photos beyond the slots (shop1: 7 unused, school1: 10 unused, all of them 450x338 or used-up kinds)",
+  "drops (as written): brand.logo (the name is set in type; the logo file becomes the page icon only)",
+  "motif (as written): the client's own photographs (media.made is never read)",
+  "photos_by_role: {\"first screen\": \"1 photograph, not small, at least 1100x690 (shown at 100vw x 100vh, so up to 1.3x); product, then room, work, exterior ... chosen nearest 1.6:1\", \"collection photograph to the page edge\": \"1 upright of at least 425x525 (product first), shown 553 wide x the row's height; with none the third column is left out\", \"photograph under the accent panel\": \"1 of at least 1100x690, room/workshop/bar first; with none, a tinted band carries the panel\", \"closing photograph\": \"media.video, else 1 of at least 1100x590, exterior/room first; with none, a tinted band\", \"card row\": \"catalogue items' own img: at least 2 in one group (any size, shown square, contained); with fewer the row is left out and the products stand in the shop grid\", \"shop grid\": \"catalogue items' own img not already shown; cards without one are type\", \"told rows\": \"steps.items[].img: at least 720 wide runs to the edge at the row's height; smaller ones are shown on the phone only, at their own pixels\", \"band in a long shop\": \"a free photograph of at least 1100x400 after every ~1500 px of catalogue, when one is left\", \"people\": \"team items' own img only; otherwise type\"}",
+  "uses_when_present: [\"hero.kicker\", \"trust (run in the bar)\", \"hero.text\", \"hero.text2\", \"hero.note\", \"hero.primary\", \"hero.secondary\", \"nav\", \"signin\", \"cta\", \"catalogue.title/text/note\", \"catalogue.groups[].t/text/h/items[name,price,from,note,text,prices,rows,img,h,state]\", \"statement\", \"plans\", \"features\", \"close\", \"media.video\", \"steps\", \"team (items or groups)\", \"credentials\", \"faq\", \"quotes\", \"locations\", \"figures\", \"place.address\", \"place.phone\", \"place.email\", \"place.hours\", \"place.booking\", \"place.social\", \"place.notices\", \"contact.phone\", \"contact.email\", \"contact.form\", \"contact.routes\", \"links\", \"foot.text\", \"foot.legal\", \"foot.links\"]",
+  "holds_without_pictures_note: Measured on scratch copies of shop1 and school1 with every photograph removed (media.photos, catalogue and step pictures): shots clean at 1440 and 390, legible ok (485 / 1549 line readings), picture share 0. The first screen becomes a 75vh ground block with the name and the h1; the card row is left out; the shop grid, rows and foot stand as type. It holds as a plain priced list, but this template is chosen for a client whose products have their own pictures.",
+  "picture_share_case: shop1: page 8,420 px, under 1.5x the reference's 10,098, overall share compared: 47 % vs 45 % — passes. school1: page 14,678 px (1.45x), so by the letter the overall share applies: 21 % vs 45 % — under by 24. Over the screens both pages have (without the shop, people and credentials) about 51 % vs 46 %. All four wide pictures of the reference are in place and in order. school1 has no further photograph of 1100x400 or more (14 of its 18 are 450x338), so no band can break its 46 courses.",
+  "measured_on: {\"reference\": \"acmecups.nz, 10,098 px at 1440; picture share 45 %, per screen [100,63,71,33,86,32,8,29,61,18,0,0], 4 screens with a wide picture\", \"shop1\": \"17 photographs (12 of 1700+, 4 small): 10 used once each — first screen, collection upright, accent panel, closing, 3 product cards in the row (+1 small one in a card at its own size), 3 told rows; share 47 %, 5 screens with a wide picture; legible ok (516); shots clean\", \"school1\": \"18 photographs (4 of 1200+, 14 small 450x338): 8 used — first screen (team.jpg 1200 wide at 1440, 1.2x), collection photograph, accent panel, closing, 4 told rows on the phone only; 46 courses in 8 groups, 11 people, 6 credentials; share 21 %; legible ok (1554); shots clean\", \"first five photographs only (scratch)\": \"shop1 31 %, 3 screens with a wide picture; school1 unchanged (its first five include its four large ones) — both legible ok, shots clean\", \"variants (scratch copies of both clients)\": \"1, 3 and 5 plans (sportbot's plans); 2 and 9 features; 1 and 6 steps; a 12-word h1 with 40-character button labels; sportbot's faq added; no faq; no photographs — all 24: no sideways scroll, no distortion, one h1, no script errors, legible ok\"}"
+ ]
+}

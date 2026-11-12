@@ -1,0 +1,197 @@
+{
+ "_note": "A made-up client for tests. The name, the words, the numbers, the people and the addresses are invented; no real business is described.",
+ "brand": {"name": "Pellworth Tooling", "logo": null, "home": "https://pellworth.example/"},
+ "lang": "en",
+ "kind": "corporate",
+ "character": "plain, exact, family-run works",
+ "palette": {"note": "invented", "ground": "#f6f5f2", "ink": "#1d2226", "accent": "#c4461b", "extra": ["#3b4a54", "#d9d4c7", "#0e1113"]},
+ "nav": [
+  {"t": "What we make", "h": "https://pellworth.example/make/"},
+  {"t": "The works", "h": "https://pellworth.example/works/"},
+  {"t": "Projects", "h": "https://pellworth.example/projects/"},
+  {"t": "People", "h": "https://pellworth.example/people/"},
+  {"t": "Careers", "h": "https://pellworth.example/careers/"},
+  {"t": "Contact", "h": "https://pellworth.example/contact/"}
+ ],
+ "cta": {"t": "Ask for a quote", "h": "https://pellworth.example/quote/"},
+ "hero": {
+  "kicker": "Sheet metal and tooling since 1972",
+  "title": "Parts made to the drawing, on time, from one works",
+  "text": "Cutting, folding, welding and finishing under one roof in Ashmere, for runs of one to ten thousand.",
+  "text2": "Three generations of the Pellworth family have run the works on Fenner Lane. We still answer the phone ourselves.",
+  "primary": {"t": "Ask for a quote", "h": "https://pellworth.example/quote/"},
+  "secondary": {"t": "See the works", "h": "https://pellworth.example/works/"},
+  "note": "Drawings by e-mail; an answer within two working days"
+ },
+ "trust": ["Family-run since 1972", "62 people on one site", "Quality system audited every year", "Delivery in our own vans"],
+ "figures": [
+  {"v": "1972", "l": "the year the first press was bought"},
+  {"v": "62", "l": "people in the works and the office"},
+  {"v": "4,800 m²", "l": "of halls on Fenner Lane"},
+  {"v": "98%", "l": "of orders out on the agreed day last year"}
+ ],
+ "statement": {
+  "title": "One works, from the sheet to the boxed part",
+  "text": "We cut, fold, weld, coat and assemble in the same halls, so a part never waits on a lorry between two firms."
+ },
+ "steps": {
+  "title": "Fifty years on Fenner Lane",
+  "text": "How a two-man press shop became a works of four halls.",
+  "items": [
+   {"k": "1972", "title": "The first press", "text": "Arthur Pellworth buys a second-hand press and rents half a barn on Fenner Lane.", "img": "media/pellworth/yard-panorama.jpg"},
+   {"k": "1994", "title": "The first laser", "text": "The barn becomes Hall 1 and the first laser cutter replaces the punch.", "img": "media/pellworth/laser.jpg"},
+   {"k": "2008", "title": "The paint line", "text": "A powder-coating line in Hall 3 brings finishing in house.", "img": "media/pellworth/coating.jpg"},
+   {"k": "2021", "title": "Hall 4", "text": "Assembly and packing move into a new hall with its own loading bay.", "img": "media/pellworth/hall4.jpg"}
+  ]
+ },
+ "features": {
+  "title": "Why buyers stay",
+  "text": "",
+  "items": [
+   {"t": "One contact", "d": "The person who quotes your part follows it to the van."},
+   {"t": "Drawings checked first", "d": "We read every drawing before we quote and ask when something will not fold."},
+   {"t": "Samples in a week", "d": "First-off parts for approval within five working days."},
+   {"t": "Stock held for you", "d": "Call-off orders from parts we keep on our shelves."}
+  ]
+ },
+ "catalogue": {
+  "title": "What we make",
+  "text": "Four departments, one order book.",
+  "note": "Prices are quoted per drawing and per run.",
+  "groups": [
+   {"t": "Cutting", "text": "Laser and plasma cutting of steel, stainless and aluminium up to 25 mm.", "h": "https://pellworth.example/make/cutting/", "img": "media/pellworth/group-cutting.jpg",
+    "items": [
+     {"name": "Laser cutting", "text": "Sheets up to 3 × 1.5 m, steel to 25 mm, stainless to 20 mm."},
+     {"name": "Tube cutting", "text": "Round and square tube up to 150 mm."},
+     {"name": "Plasma cutting", "text": "Thick plate for frames and bases."}
+    ]},
+   {"t": "Folding", "text": "Press brakes from 40 to 320 tonnes with folds up to 4 m long.", "h": "https://pellworth.example/make/folding/", "img": "media/pellworth/group-folding.jpg",
+    "items": [
+     {"name": "Press-brake folding", "text": "Seven brakes, folds up to 4 m."},
+     {"name": "Rolling", "text": "Cones and cylinders from plate."}
+    ]},
+   {"t": "Welding", "text": "MIG, TIG and robot welding by coded welders.", "h": "https://pellworth.example/make/welding/", "img": "media/pellworth/group-welding.jpg",
+    "items": [
+     {"name": "Manual welding", "text": "Twelve coded welders on two shifts."},
+     {"name": "Robot cells", "text": "Two cells for repeat runs."},
+     {"name": "Stud welding", "text": "Threaded studs set to drawing."}
+    ]},
+   {"t": "Finishing and assembly", "text": "Powder coating in any colour of the card, then assembly and packing.", "h": "https://pellworth.example/make/finishing/", "img": "media/pellworth/group-finishing.jpg",
+    "items": [
+     {"name": "Powder coating", "text": "Parts up to 3.5 m long."},
+     {"name": "Assembly", "text": "Fixings, seals and wiring to your list."},
+     {"name": "Packing", "text": "Boxed and labelled to your part numbers."}
+    ]}
+  ]
+ },
+ "plans": {
+  "title": "Three ways to order",
+  "text": "Choose how parts reach you; every way is quoted per drawing.",
+  "note": "Prices are quoted per drawing and per run.",
+  "items": [
+   {"name": "Single run", "price": "Quoted", "per": "per run", "line": "One batch, made and delivered.", "rows": ["First-off part for approval", "Delivery in our vans"]},
+   {"name": "Call-off", "price": "Quoted", "per": "per year", "line": "A yearly order, delivered when you call.", "rows": ["Parts held on our shelves", "Weekly or monthly deliveries", "One price for the year"], "marked": true, "cta": {"t": "Ask about call-off", "h": "https://pellworth.example/quote/call-off/"}}
+  ]
+ },
+ "team": {
+  "title": "The people you will speak to",
+  "text": "Quotes, drawings and deliveries are handled by four people.",
+  "items": [
+   {"name": "Ruth Pellworth", "role": "Managing director", "text": "Runs the works her grandfather started.", "img": "media/pellworth/ruth.jpg", "email": "ruth@pellworth.example"},
+   {"name": "Tomasz Brel", "role": "Works manager", "text": "Plans the halls and the two shifts.", "img": "media/pellworth/tomasz.jpg", "phone": "01632 960 412"},
+   {"name": "Ade Okonjo", "role": "Estimating", "text": "Reads your drawing and writes your quote.", "img": "media/pellworth/ade.jpg", "email": "quotes@pellworth.example"},
+   {"name": "Hanna Lisle", "role": "Quality", "text": "Signs off first-off parts and every audit.", "img": "media/pellworth/hanna.jpg"}
+  ]
+ },
+ "projects": [
+  {"title": "Enclosures for a rail signalling maker", "text": "Twelve hundred coated steel cabinets a year, packed and labelled for the line.", "photos": ["media/pellworth/project-cabinets.jpg"], "h": "https://pellworth.example/projects/cabinets/"},
+  {"title": "Frames for a farm-machinery builder", "text": "Welded frames in three sizes, held in stock and called off weekly.", "photos": ["media/pellworth/project-frames.jpg"], "h": "https://pellworth.example/projects/frames/"}
+ ],
+ "credentials": [
+  {"t": "Quality system", "text": "Audited every year by an outside body.", "year": "2026"},
+  {"t": "Coded welders", "text": "Every welder holds a current code for the work they do."},
+  {"t": "Apprentice employer", "text": "Four apprentices in the halls at any time.", "h": "https://pellworth.example/careers/"}
+ ],
+ "media": {
+  "screens": [],
+  "phones": [],
+  "video": null,
+  "photos": [
+   {"src": "media/pellworth/works-front.jpg", "w": 2400, "h": 1350, "alt": "The front of the works on Fenner Lane at dusk", "role": "exterior"},
+   {"src": "media/pellworth/hall1.jpg", "w": 2200, "h": 1400, "alt": "Hall 1: press brakes in a row under roof lights", "role": "workshop"},
+   {"src": "media/pellworth/yard-panorama.jpg", "w": 2600, "h": 1000, "alt": "The yard and the four halls from the loading bay", "role": "landscape"},
+   {"src": "media/pellworth/laser.jpg", "w": 1800, "h": 1200, "alt": "A laser cutter cutting a steel sheet", "role": "work"},
+   {"src": "media/pellworth/coating.jpg", "w": 1800, "h": 1200, "alt": "Coated parts hanging on the paint line", "role": "workshop"},
+   {"src": "media/pellworth/hall4.jpg", "w": 2000, "h": 1250, "alt": "Hall 4 with its loading bay open", "role": "exterior"},
+   {"src": "media/pellworth/welder.jpg", "w": 1600, "h": 1067, "alt": "A welder at work behind a screen", "role": "action"},
+   {"src": "media/pellworth/detail-fold.jpg", "w": 1400, "h": 1400, "alt": "A folded stainless edge, close up", "role": "detail"},
+   {"src": "media/pellworth/group-cutting.jpg", "w": 1000, "h": 1000, "alt": "Cut blanks stacked on a pallet", "role": "product"},
+   {"src": "media/pellworth/group-folding.jpg", "w": 1000, "h": 1000, "alt": "A press brake mid-fold", "role": "work"},
+   {"src": "media/pellworth/group-welding.jpg", "w": 1000, "h": 1000, "alt": "A robot welding cell", "role": "workshop"},
+   {"src": "media/pellworth/group-finishing.jpg", "w": 1000, "h": 1000, "alt": "Boxed parts ready for the van", "role": "product"},
+   {"src": "media/pellworth/project-cabinets.jpg", "w": 1200, "h": 1200, "alt": "Grey cabinets lined up for dispatch", "role": "product"},
+   {"src": "media/pellworth/project-frames.jpg", "w": 1600, "h": 1067, "alt": "Welded frames on a rack", "role": "work"},
+   {"src": "media/pellworth/ruth.jpg", "w": 640, "h": 800, "alt": "Ruth Pellworth", "role": "portrait"},
+   {"src": "media/pellworth/tomasz.jpg", "w": 640, "h": 800, "alt": "Tomasz Brel", "role": "portrait"},
+   {"src": "media/pellworth/ade.jpg", "w": 640, "h": 800, "alt": "Ade Okonjo", "role": "portrait"},
+   {"src": "media/pellworth/hanna.jpg", "w": 640, "h": 800, "alt": "Hanna Lisle", "role": "portrait"}
+  ]
+ },
+ "faq": {
+  "title": "Before you send a drawing",
+  "items": [
+   {"q": "What is the smallest run you take?", "a": "One part, if the drawing is complete. Most runs are between fifty and two thousand."},
+   {"q": "Which files can you read?", "a": "DXF, STEP and PDF drawings with dimensions."},
+   {"q": "Do you deliver?", "a": "Yes, in our own vans within 120 miles, and by carrier beyond."}
+  ]
+ },
+ "quotes": [
+  {"q": "They rang us about a fold that would have cracked before they cut a single sheet.", "name": "Purchasing lead", "role": "a signalling equipment maker"},
+  {"q": "Our frames arrive on the day, every week, and we have stopped counting them in.", "name": "Operations manager", "role": "a farm-machinery builder"},
+  {"q": "One phone call covers cutting, coating and packing.", "name": "Buyer", "role": "a shop-fitting firm"},
+  {"q": "First-off parts in four days, and they were right.", "name": "Design engineer", "role": "a heating manufacturer"}
+ ],
+ "logos": [],
+ "links": [
+  {"t": "Cutting", "d": "Laser, tube and plasma", "h": "https://pellworth.example/make/cutting/"},
+  {"t": "Folding", "d": "Seven press brakes", "h": "https://pellworth.example/make/folding/"},
+  {"t": "Welding", "d": "Manual and robot", "h": "https://pellworth.example/make/welding/"},
+  {"t": "Finishing", "d": "Coating, assembly, packing", "h": "https://pellworth.example/make/finishing/"},
+  {"t": "Careers", "d": "Apprenticeships and jobs in the halls", "h": "https://pellworth.example/careers/"},
+  {"t": "Contact", "d": "Phone, e-mail and the way to the works", "h": "https://pellworth.example/contact/"}
+ ],
+ "close": {
+  "title": "Send us the drawing",
+  "text": "A quote within two working days, from the person who will follow your part.",
+  "cta": {"t": "Ask for a quote", "h": "https://pellworth.example/quote/"}
+ },
+ "foot": {
+  "text": "Pellworth Tooling Ltd · Fenner Lane 12 · Ashmere AS4 9QT · 01632 960 400 · works@pellworth.example",
+  "legal": "© 2026 Pellworth Tooling Ltd",
+  "links": [
+   {"t": "Privacy", "h": "https://pellworth.example/privacy/"},
+   {"t": "Terms of sale", "h": "https://pellworth.example/terms/"},
+   {"t": "Contact", "h": "https://pellworth.example/contact/"}
+  ]
+ },
+ "place": {
+  "address": {"street": "Fenner Lane 12", "postcode": "AS4 9QT", "city": "Ashmere", "country": "United Kingdom"},
+  "phone": {"t": "01632 960 400", "h": "tel:+441632960400", "note": "Monday to Friday, 7:30 to 17:00"},
+  "email": "works@pellworth.example",
+  "hours": [{"days": "Monday to Friday", "open": "7:30", "close": "17:00"}],
+  "since": "1972",
+  "social": [{"t": "LinkedIn", "h": "https://social.example/pellworth"}],
+  "spaces": [],
+  "events": []
+ },
+ "contact": {
+  "phone": {"t": "01632 960 400", "h": "tel:+441632960400"},
+  "email": "works@pellworth.example",
+  "form": {"h": "https://pellworth.example/quote/", "t": "Send a drawing"},
+  "routes": [
+   {"t": "Quotes", "h": "mailto:quotes@pellworth.example", "note": "drawings and runs"},
+   {"t": "Deliveries", "h": "tel:+441632960415", "note": "the dispatch office"},
+   {"t": "Jobs", "h": "https://pellworth.example/careers/", "note": "apprenticeships and the halls"}
+  ]
+ }
+}

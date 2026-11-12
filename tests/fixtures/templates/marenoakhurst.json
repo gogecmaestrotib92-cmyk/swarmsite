@@ -1,0 +1,142 @@
+{
+ "_note": "A made-up client for tests. The name, the words, the prices, the person and the addresses are invented; no real person is described.",
+ "brand": {"name": "Maren Oakhurst", "logo": null, "home": "https://marenoakhurst.example/"},
+ "lang": "en",
+ "kind": "person",
+ "character": "outdoor, calm, direct",
+ "palette": {"note": "invented", "ground": "#f4f6f6", "ink": "#16232b", "accent": "#1f6f8b", "extra": ["#e9b44c", "#0b1418"]},
+ "nav": [
+  {"t": "Trips", "h": "https://marenoakhurst.example/trips/"},
+  {"t": "Courses", "h": "https://marenoakhurst.example/courses/"},
+  {"t": "About Maren", "h": "https://marenoakhurst.example/about/"},
+  {"t": "Journal", "h": "https://marenoakhurst.example/journal/"},
+  {"t": "Contact", "h": "https://marenoakhurst.example/contact/"}
+ ],
+ "cta": {"t": "Book a day", "h": "https://marenoakhurst.example/book/"},
+ "hero": {
+  "kicker": "Sea-kayak guide and coach",
+  "title": "Paddle the Selby coast with someone who knows its tides",
+  "text": "Day trips, multi-day journeys and coaching for small groups, from first strokes to open crossings.",
+  "text2": "I have guided on this coast for fourteen years. Groups are never larger than six.",
+  "primary": {"t": "Book a day", "h": "https://marenoakhurst.example/book/"},
+  "secondary": {"t": "See the trips", "h": "https://marenoakhurst.example/trips/"},
+  "note": "April to October; winter coaching on request"
+ },
+ "trust": ["Fourteen seasons on this coast", "Groups of six at most", "All kit included"],
+ "figures": [
+  {"v": "14", "l": "seasons guiding on the Selby coast"},
+  {"v": "6", "l": "paddlers at most in a group"},
+  {"v": "320", "l": "days on the water last year"}
+ ],
+ "statement": {
+  "title": "The sea decides the day",
+  "text": "Every trip is planned around the morning's forecast and the tide. If it is not safe to go, we do not go, and you pay nothing."
+ },
+ "steps": {
+  "title": "Four ways onto the water",
+  "text": "Choose by how far you want to go.",
+  "items": [
+   {"title": "Half-day taster", "text": "Sheltered water in Selby Haven, for people who have never paddled.", "img": "media/marenoakhurst/haven.jpg", "cta": {"t": "Book a taster", "h": "https://marenoakhurst.example/book/taster/"}},
+   {"title": "The sea caves", "text": "A full day under the cliffs, landing on a beach for lunch.", "img": "media/marenoakhurst/caves.jpg"},
+   {"title": "Island crossing", "text": "Two days out to Gull Holm and back, camping on the island.", "img": "media/marenoakhurst/island.jpg"},
+   {"title": "Coaching", "text": "One to one or two to one, on the skills you choose.", "img": "media/marenoakhurst/coaching.jpg"}
+  ]
+ },
+ "features": {"title": "", "text": "", "items": []},
+ "catalogue": {
+  "title": "Days and prices",
+  "text": "Prices are per person and include kayak, paddle, buoyancy aid and dry suit.",
+  "note": "Full refund when I cancel for weather; 14 days' notice for your own cancellation.",
+  "groups": [
+   {"t": "Trips", "items": [
+     {"name": "Half-day taster", "price": "£65", "note": "3 hours"},
+     {"name": "Sea caves day", "price": "£120", "note": "6 hours, lunch included"},
+     {"name": "Island crossing", "price": "£340", "note": "2 days, camping kit included"}
+   ]},
+   {"t": "Coaching", "items": [
+     {"name": "One to one", "price": "£220", "note": "a full day"},
+     {"name": "Two to one", "price": "£140", "from": true, "note": "per person, a full day"},
+     {"name": "Rescue skills evening", "price": "£45", "note": "2 hours in the haven"}
+   ]}
+  ]
+ },
+ "plans": {
+  "title": "Coaching blocks",
+  "text": "For paddlers working towards a leader award or their first crossing.",
+  "note": "Blocks are booked as days within one season.",
+  "items": [
+   {"name": "Three days", "price": "£600", "per": "per paddler", "line": "Strokes, rescues and reading the water.", "rows": ["Three coaching days", "Written notes after each day"], "cta": {"t": "Book three days", "h": "https://marenoakhurst.example/book/three/"}},
+   {"name": "Five days", "price": "£950", "per": "per paddler", "line": "Everything in three days, plus a planned journey.", "rows": ["Five coaching days", "A two-day journey you plan", "Written notes after each day"], "cta": {"t": "Book five days", "h": "https://marenoakhurst.example/book/five/"}, "marked": true}
+  ]
+ },
+ "team": {
+  "items": [
+   {"name": "Maren Oakhurst", "role": "Guide and coach", "text": "I grew up in Selby Haven and have paddled every bay of this coast. Before guiding I was a lifeboat crew member for six years.", "img": "media/marenoakhurst/maren.jpg", "email": "maren@marenoakhurst.example", "phone": "07700 900 314"}
+  ]
+ },
+ "credentials": [
+  {"t": "Advanced sea-kayak leader", "text": "Qualified to lead on open coast in moderate conditions.", "year": "2015"},
+  {"t": "Outdoor first aid", "text": "Renewed every three years.", "year": "2025"},
+  {"t": "Fully insured", "text": "Public liability for guiding and coaching."}
+ ],
+ "projects": [
+  {"title": "Round Gull Holm in a day", "text": "A journal of the first full circuit of the island with a group.", "photos": ["media/marenoakhurst/holm-circuit.jpg"], "h": "https://marenoakhurst.example/journal/gull-holm/"}
+ ],
+ "contact": {
+  "phone": {"t": "07700 900 314", "h": "tel:+447700900314", "note": "evenings are best"},
+  "email": "maren@marenoakhurst.example",
+  "form": {"h": "https://marenoakhurst.example/contact/", "t": "Ask about a date"},
+  "routes": [
+   {"t": "Book a day", "h": "https://marenoakhurst.example/book/"},
+   {"t": "Ask about a group", "h": "mailto:maren@marenoakhurst.example"}
+  ]
+ },
+ "media": {
+  "screens": [],
+  "phones": [],
+  "video": null,
+  "photos": [
+   {"src": "media/marenoakhurst/coast.jpg", "w": 2400, "h": 1350, "alt": "Three kayaks along a cliff coast in morning light", "role": "landscape"},
+   {"src": "media/marenoakhurst/crossing.jpg", "w": 2400, "h": 1200, "alt": "Open water between the coast and an island", "role": "landscape"},
+   {"src": "media/marenoakhurst/haven.jpg", "w": 1600, "h": 1067, "alt": "Beginners in the sheltered haven", "role": "action"},
+   {"src": "media/marenoakhurst/caves.jpg", "w": 1600, "h": 1067, "alt": "A kayak at the mouth of a sea cave", "role": "action"},
+   {"src": "media/marenoakhurst/island.jpg", "w": 1600, "h": 1067, "alt": "Tents above a beach on the island", "role": "landscape"},
+   {"src": "media/marenoakhurst/coaching.jpg", "w": 1200, "h": 1500, "alt": "Maren showing a paddle stroke", "role": "people"},
+   {"src": "media/marenoakhurst/holm-circuit.jpg", "w": 1400, "h": 1000, "alt": "The group landing after the circuit", "role": "people"},
+   {"src": "media/marenoakhurst/maren.jpg", "w": 900, "h": 1200, "alt": "Maren Oakhurst on the slipway", "role": "portrait"}
+  ]
+ },
+ "faq": {
+  "title": "Before you book",
+  "items": [
+   {"q": "Do I need to be able to swim?", "a": "You should be comfortable in water; you will wear a buoyancy aid at all times."},
+   {"q": "What should I bring?", "a": "Clothes that can get wet, a warm layer, and lunch for a full day."},
+   {"q": "What happens if the weather is bad?", "a": "I decide on the morning; you choose another date or get your money back."}
+  ]
+ },
+ "quotes": [
+  {"q": "I had never sat in a kayak. By lunch I was paddling into a cave.", "name": "Priya", "role": "half-day taster"},
+  {"q": "Maren read the tide better than any chart we had.", "name": "Tom and Ellie", "role": "island crossing"},
+  {"q": "Patient, clear, and very good company.", "name": "Ros", "role": "one-to-one coaching"}
+ ],
+ "logos": [],
+ "links": [
+  {"t": "Trips", "d": "", "h": "https://marenoakhurst.example/trips/"},
+  {"t": "Courses", "d": "", "h": "https://marenoakhurst.example/courses/"},
+  {"t": "Journal", "d": "", "h": "https://marenoakhurst.example/journal/"},
+  {"t": "Contact", "d": "", "h": "https://marenoakhurst.example/contact/"}
+ ],
+ "close": {
+  "title": "Come out on the water",
+  "text": "Tell me your dates and how much you have paddled, and I will suggest a day.",
+  "cta": {"t": "Book a day", "h": "https://marenoakhurst.example/book/"}
+ },
+ "foot": {
+  "text": "Maren Oakhurst · Sea-kayak guide · The Slipway, Harbour Road, Selby Haven SH1 2HR · maren@marenoakhurst.example",
+  "legal": "© 2026 Maren Oakhurst",
+  "links": [
+   {"t": "Booking terms", "h": "https://marenoakhurst.example/terms/"},
+   {"t": "Privacy", "h": "https://marenoakhurst.example/privacy/"}
+  ]
+ }
+}
