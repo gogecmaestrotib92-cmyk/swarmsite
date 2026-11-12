@@ -1,0 +1,47 @@
+{
+ "niche": [
+  "person",
+  "clinic",
+  "law",
+  "service"
+ ],
+ "photos_min": 1,
+ "photos_large_min": 1,
+ "screens_min": 0,
+ "phones_ok": false,
+ "needs": [
+  "brand.name",
+  "hero.title"
+ ],
+ "drops": [
+  "hero.kicker",
+  "hero.note",
+  "statement.title",
+  "photos",
+  "logos",
+  "video",
+  "screens",
+  "phones"
+ ],
+ "holds_without_pictures": true,
+ "motif": "photos",
+ "notes": [
+  "The reference's first screen depends on a CUT-OUT portrait standing through the giant word. An ordinary photograph cannot do that; here it fills a 2:1-topped arch window that rises to the foot of the word, in front of the reference's half disc. A client who can supply a cut-out (transparent PNG/WebP of the person) would get the reference's build; the contract has no field for it yet (suggest media.photos[].cutout: true).",
+  "Pictures with lettering baked in are never put in the first screen. Rule used: the first screen takes only a portrait/people photograph, never a landscape; and any photograph whose alt names words, a caption, a sign, a logo or a quoted phrase is placed last in every choice. That catches person1 hero.jpg only because its alt says 'the words \"YOU ARE HERE\"'. Capture should record lettering directly (OCR on each picture → media.photos[].lettered: true, or the text it found); the template already honours a `lettered` or `text` key.",
+  "No made pictures are used (client photography only).",
+  "needs (as written): a portrait of the person (team item whose name is the brand, or a single team item with img) or, failing that, a people photograph ≥480 px on its short side — for the arch window",
+  "needs (as written): one wide photograph ≥ 875 px wide for the band (1400 px across at ≤1.6× scale) — else the band is left out",
+  "drops (as written): hero.kicker (page title only)",
+  "drops (as written): hero.note when it repeats a contact line",
+  "drops (as written): statement.title on the disc when a band carries it",
+  "drops (as written): contact.routes that are already in the foot links (shown once, in the foot)",
+  "drops (as written): media.photos beyond the portrait, the band, the closing card and the step pictures (e.g. person1 salbit.jpg, book.jpg; law1 portraits 11–35 have none on disc anyway)",
+  "drops (as written): team portraits beyond ten (people 11+ are listed in type)",
+  "drops (as written): logos (no part for them in the reference)",
+  "drops (as written): media.video, media.screens, media.phones (no part for them)",
+  "motif (as written): the client's own photography (no made pictures); the shapes are the reference's: half discs and 2:1 arches",
+  "shows: [\"hero (title, text, text2 when ≤120 characters, secondary as the band's button)\", \"statement (in the half disc; its title moves to the band when there is a band)\", \"steps (title, text, items as the big-word cards with their pictures and calls)\", \"figures (row above the shelf) and quotes (the shelf)\", \"catalogue (every group, every item, every price form: price, prices[], state, rows[], note)\", \"plans (quiet cards in the ledger, marked one on the accent)\", \"team (one person: name, role, text, contacts beside the credentials; many: the shelf with portraits for up to ten, the rest as two-column rows with phone and email)\", \"credentials (rows with their own badge image), trust\", \"features (question rows, first open), faq (question rows)\", \"close + contact (phone, email, form, routes) + place (address, hours, booking) on the closing card, beside a whole photograph\", \"locations (three-column addresses before the foot)\", \"links, foot.links, place.social, foot.text, foot.legal\"]",
+  "picture_share_case: person1: page 1.33× the reference's height → overall share compared: 22 % against the reference's 24 % (within 5). law1: page 1.58× → compared over the shared sections only (opening, statement, cards, band, voices, pair); its price and team lists stay type because law1 has no unused photograph large enough for a breaking band (the rest are 1024-px portraits, used in the shelf). Every wide picture of the reference (opening portrait, band) is in ours in the same order; the reference's book covers become the step photographs.",
+  "measured: {\"person1\": \"portrait.jpg (944×814, small: held to its own pixels) in the arch; step pictures from the data (aravis, powder, ferrata, bionassay); the band takes hero.jpg — the only free wide photograph left, and the one with 'YOU ARE HERE' baked in: kept out of the first screen by the rule, but it does reach the band (its lettering sits top right, the band's words bottom left); closing card toprope.jpg. shots clean 1440/390, legible ok, coverage 22 % vs 24 %\", \"law1\": \"colleagues.jpg in the arch (no person named as the brand, so the largest people photograph), firm-group.jpg in the band, ten portraits in the team shelf, 25 people in rows, no closing photograph (none left) → the call card stands alone full width. shots clean, legible ok, coverage 7 % (long page, see case)\", \"variants (person1 unless named)\": \"1/3/5 plans, 2/9 features, 1/3/6 steps, 12-word h1, 40-character button, with faq, no photographs, law1 with no photographs, a 30-character name: no sideways scroll, no text past the edge, one h1 at 1440 and 390; legible ok except one transient reading (see NOTES)\"}"
+ ]
+}

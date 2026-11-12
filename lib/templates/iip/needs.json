@@ -1,0 +1,61 @@
+{
+ "niche": [
+  "nonprofit",
+  "person",
+  "service",
+  "school",
+  "clinic",
+  "law"
+ ],
+ "photos_min": 0,
+ "photos_large_min": 0,
+ "screens_min": 0,
+ "phones_ok": false,
+ "needs": [
+  "hero",
+  "close"
+ ],
+ "needs_any": [
+  [
+   "catalogue",
+   "steps",
+   "features"
+  ]
+ ],
+ "drops": [
+  "logos",
+  "screens",
+  "phones",
+  "video",
+  "menu",
+  "spaces",
+  "events",
+  "notices",
+  "social",
+  "since",
+  "cuisine",
+  "price_range",
+  "takeaway",
+  "projects"
+ ],
+ "holds_without_pictures": true,
+ "motif": "photos",
+ "notes": [
+  "Donate / adopt / volunteer buttons are links to the client's own pages; there is no form of any kind in the template.",
+  "The button on a catalogue row carries the item's name as its label because the data has no label for it; the reference's own label is not taken.",
+  "Capture should set media.photos[].lettering: true for any photograph with legible words, numbers or a logo in it (judged from the picture; the alt is a fallback only), optionally with lettering_box [x,y,w,h].",
+  "charity1 at 11 092 px is 2.4× the reference: volunteering roles, injured-animal advice, questions, sites and described links are content the reference keeps on sub-pages.",
+  "drops (as written): media.screens, media.phones, media.video (no place for a product screen or a film)",
+  "drops (as written): media.made (not used: the picture family is the client's own photographs)",
+  "drops (as written): catalogue group img",
+  "drops (as written): catalogue item `from` (the price string and the note are shown as the client wrote them; no word is added)",
+  "drops (as written): team item img when two or more people and fewer than all have one is still shown per person; no drop",
+  "drops (as written): everything under _unplaced (ways to give, items wanted, statistics table, reports, policies, timeline)",
+  "drops (as written): photographs beyond the slots (charity1: 13 of 19 free photographs are not shown, among them the 2000×467 panorama — wider than 2.6:1; the strip is left out because the catalogue has cards)",
+  "motif (as written): the client's own photographs (no made pictures)",
+  "photos_by_role_and_size: {\"to look like the reference\": \"1 picture at least 750 tall and 640 wide for the opening panel (a landscape 1400+ wide fills it), 1 upright or square at least 760 wide for the first picture row, 1 landscape 900+ for the figures band, 2 of any proportion 700+ for the dark panel's stack, 1 of 760+ beside the quotations; catalogue items, steps and people bring their own; 3 landscapes 700+ for the strip only when the catalogue has three pictured items or fewer\", \"roles\": \"any role except portrait and product; a portrait is used only for the person it belongs to (team item img); a picture wider than 2.6:1 is not used; a picture is never shown wider than its own pixels\", \"catalogue\": \"the first three items with their own picture become story rows with a full-height picture half; every further pictured item is a card with its own picture, the first sentence of its text and the rest opening in place; an item without a picture is set in type in a two-column list. No item's picture is dropped\", \"with none\": \"a page of type on the accent panel, the tinted band, the dark panel and the foot — holds, measured on charity1 and person1 with every photograph removed\", \"lettering\": \"a photograph with words in it (data `lettering: true`, else its alt naming words/sign/lettering) is never cropped: it goes only to the first picture row, shown whole at its own proportion\"}",
+  "picture_share: {\"case\": \"our page is 2.4 times the reference home page's height for charity1 (11 092 against 4 631) and 1.8 times for person1, so the share is compared over the sections that exist on both (opening panel and picture rows)\", \"reference_home\": \"46 % overall; per screen 75, 49, 54, 45, 16, 0\", \"reference_inner_pages\": \"advocate 40 %, about 41 %, take-action 26 %\", \"charity1\": \"27 % overall; per screen 46, 42, 27, 36, 47, 44, 44, 19, 28, 0, 0, 0, 0\", \"person1\": \"16 % overall; per screen 47, 40, 35, 0, 0, 2, 23, 0, 0, 0\", \"short_of_the_reference\": \"first screen 46 % (charity1) and 47 % (person1) against 75 %: the reference lays a texture under the whole panel; ours has one photograph over part of it. person1 has no photograph left for its figures band, price lists and dark panel\"}",
+  "shows: [\"hero (kicker, title, text, primary, secondary, note)\", \"trust\", \"statement + hero.text2\", \"team (items or groups; one person with a portrait becomes a picture row)\", \"figures\", \"catalogue (title, text, note; groups with t, text, h; items with name, price, note, state, text, prices[], rows[], img, h)\", \"plans (title, text, name, price, per, line, rows, cta, note) — in the card part\", \"features (title, text, items)\", \"steps (title, text, k, title, text, img, cta)\", \"quotes\", \"contact (phone with note, email, form link, routes)\", \"faq\", \"place (address, phone, email, hours, booking) and locations\", \"credentials (t, text, year, h, img)\", \"links with their descriptions\", \"close\", \"foot (text, legal, links)\", \"nav, cta, signin\"]",
+  "measured: {\"charity1\": \"29 photographs (10 belong to catalogue items: 3 rows, 7 cards): every section present; 6 free photographs placed; 11 092 px at 1440, 14 987 at 390; shots clean; legible ok\", \"person1\": \"9 photographs (4 belong to steps, 1 portrait, 1 product, 3 small; hero.jpg lettered): panel takes toprope.jpg at its own 770 px width, the first row shows hero.jpg whole; 8 134 px at 1440, 11 225 at 390; figures band, price lists, dark panel and quotations are type; no faq; shots clean; legible ok\", \"charity1 without photographs\": \"8 150 px at 1440, picture share 0, no sideways scroll, no empty frame — rendered and looked at at 1440; 390 checked by measurement only\", \"charity1 with three photographs\": \"opening panel, first row and figures band take them; the catalogue is type\", \"variants\": \"1, 3, 5 plans · 2 and 9 features · 1 and 6 steps · 12-word h1 · 40-character button labels · no faq · no photographs · three photographs · a dark palette: no sideways scroll, one h1, no script errors at 1440 and 390 on each; legible results are in NOTES.md\"}"
+ ]
+}

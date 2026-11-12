@@ -361,7 +361,9 @@ def test_every_template_renders_what_the_adapter_gives(make):
     for slug in R.slugs():
         assert R.audit(slug, {'adapted': d}) == [], slug
         page = R.render(slug, d, 'https://preview.example/job/')
-        assert d['hero']['title'].split()[0] in page and 'https://preview.example/job/media/img1.jpg' in page or not R.media_used(slug, d)
+        assert d['hero']['title'].split()[0] in page, slug
+        # every file the template takes is served from the job's base (a template of another niche may take only the logo)
+        assert all('https://preview.example/job/' + p in page for p in R.media_used(slug, d)), slug
 
 
 # ───────────────────────── the eight frozen real captures
