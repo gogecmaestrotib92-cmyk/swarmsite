@@ -197,7 +197,7 @@ def invented(d, seed):
 
 def test_the_schema_holds_the_hand_made_files_and_refuses_a_wrong_shape():
     files = sorted(FIX.glob('*.json'))
-    assert len(files) >= 8 and all('made-up client' in json.loads(f.read_text(encoding='utf-8'))['_note'] for f in files), 'a made-up client for software (2), restaurant, hotel, clinic, law, service and school at least'
+    assert len(files) >= 12 and all('made-up client' in json.loads(f.read_text(encoding='utf-8'))['_note'] for f in files), 'a made-up client for software (2), restaurant, hotel, clinic, law, service, school, works, charity, person and shop at least'
     for f in files + (sorted(HAND.glob('*.json')) if HAND else []):               # the made-up clients, and the real ones where they are on the machine
         assert A.validate(json.loads(f.read_text(encoding='utf-8'))) == [], f.name
     assert A.validate({'brand': {'name': 'A'}, 'hero': {'title': 'T'}}) == []
@@ -361,7 +361,7 @@ def test_every_template_renders_what_the_adapter_gives(make):
     for slug in R.slugs():
         assert R.audit(slug, {'adapted': d}) == [], slug
         page = R.render(slug, d, 'https://preview.example/job/')
-        used = R.media_used(slug, d)                                  # a template need not show every picture; what it shows is re-based
+        used = R.media_used(slug, d)                                  # a template need not show every picture (one of another niche may take only the logo); what it shows is served from the job's base
         assert d['hero']['title'].split()[0] in page and all('https://preview.example/job/' + p in page for p in used), (slug, used)
 
 

@@ -1,0 +1,44 @@
+{
+ "niche": [
+  "nonprofit",
+  "school",
+  "service",
+  "clinic"
+ ],
+ "photos_min": 1,
+ "photos_large_min": 1,
+ "screens_min": 0,
+ "phones_ok": false,
+ "needs": [
+  "hero"
+ ],
+ "needs_any": [
+  [
+   "statement",
+   "figures"
+  ]
+ ],
+ "drops": [
+  "hero.text2",
+  "spaces",
+  "steps.img",
+  "projects"
+ ],
+ "holds_without_pictures": true,
+ "motif": "photos",
+ "notes": [
+  "needs (as written): at least one of steps, catalogue, features, faq — the page is built from the reference's practical parts; with none of them it is an opening, a figures row and a foot",
+  "drops (as written): hero.text2 (school1: 220 characters; charity1: 190)",
+  "drops (as written): place.spaces (school1: 2 spaces, pictures 450 wide), place.menu, place.events, place.notices, place.since, place.cuisine, place.price_range, place.takeaway",
+  "drops (as written): media.screens, media.phones, media.video, media.made",
+  "drops (as written): steps[].img (school1: 4 small pictures 450 wide), credentials[].img, catalogue group img",
+  "drops (as written): team group titles (people of all groups stand in one grid)",
+  "drops (as written): photographs beyond the slots: charity1 shows 14 of 29 (hero, 2 halves, band, 10 catalogue pictures); school1 shows 4 of 18 (its 14 small ones are not used)",
+  "motif (as written): the client's own photographs (no made pictures)",
+  "photos_by_role: {\"for the full build\": \"4 landscape photographs, not portraits: 1 at least 1200 wide (proportion 1:1 to 2.6:1, not `people`, falls back to `people`) for the opening half; 1 at least 1500 wide (1.25:1 to 2.7:1) for the moving-line band; 2 at least 1000 wide (1.2:1 to 2.7:1) for the two image-text halves. Catalogue items carry their own `img` (shown when at least 369 wide, square crop). A further landscape photograph at least 1500 wide breaks a ruled price list after every 14 rows.\", \"least that still reads as the reference\": \"1 landscape photograph at least 1200 wide (the opening half)\", \"with none\": \"the opening is a text column on white, the image-text sections are a centred text column on the grey ground, the band is a flat dark ground under the moving line, catalogue items are type-only cards or ruled rows\"}",
+  "shows: [\"nav, cta, signin (header; on the phone in the drawer)\", \"hero.kicker, title (h1), text, primary (pill), secondary (text link), note\", \"statement (title, text) beside figures (v split into number + suffix, l)\", \"steps.title + text (image-text, picture left) and every step (k as a small accent line when it changes, title numbered, text, cta)\", \"catalogue.title + note (the moving-line band), catalogue.text, every group (t, h, text) and every item (name, h, price with `from`, state, note, prices[], text, rows[], img) — cards when half a group has pictures, ruled rows otherwise; more than 12 items → folded groups; catalogue.note\", \"plans (title, text, items: name, price, per, line, rows, cta, marked; note) in the card part\", \"features.title + text (image-text, picture right) and every item (t, d, h) in the two-up part\", \"quotes (two-up)\", \"faq (title, every q/a; first open)\", \"team (title, text, every person in items and groups: name, role, text, email, phone, h, portrait if any)\", \"links (t, d, h) as shadowed cards\", \"locations (name, address, phone, email, hours, note, h) — or place (address, phone, email, hours, booking); contact (phone + note, email, form, routes); credentials (t, text, year, h) — all in the two-up part\", \"close (title, text, cta)\", \"logos, or trust as a line of words (the supporters strip)\", \"foot: brand name moving line, nav, links, phone/email + social routes and place.social, foot.text, foot.legal, foot.links\"]",
+  "picture_share: {\"case\": \"rule (2): our page is longer than 1.5× the reference (charity1 13 828 px = 2.6×, school1 11 139 px = 2.1×, against 5 317), so the share is compared over the sections both have (header, opening, figures, image-text ×2, band, cards, close, foot)\", \"reference\": \"49 % with its drawn stripe background (an SVG behind the opening), 31 % photographs only\", \"charity1\": \"34 % (whole page 21 %)\", \"school1\": \"35 % (whole page 16 %)\", \"wide pictures\": \"the reference's one photograph band is in place in both; its second 'wide picture' is the drawn stripe graphic behind the opening, which is not carried (owner's rule: no drawn decoration; it is the reference's brand drawing)\"}",
+  "measured: {\"charity1\": \"shots clean at 1440 (13 828) and 390 (17 215), one h1, no distortion, errors []; legible ok (850 line readings)\", \"school1\": \"shots clean at 1440 (11 139) and 390 (12 585), one h1, no distortion, errors []; legible ok (791 line readings)\", \"variants\": \"24 variant pages (1/3/5 plans, 2/9 features, 1/6 steps, 12-word h1, 40-character labels, no faq, no photographs, combined stress incl. a team over 12) clean at 1440 and 390; legible ok on both clients' stress and no-photograph copies; heights at 1440 10 282–15 021\"}",
+  "folding: long copy over 200 characters shows its first sentence, the rest (and a card's rows) opens in place; a catalogue or team of more than 12 shows its groups (name, count, the client's price range when every item has a price in one currency, else the first names), each opening in place; more than 4 steps stand in two columns"
+ ]
+}

@@ -1,0 +1,44 @@
+{
+ "niche": [
+  "shop"
+ ],
+ "photos_min": 5,
+ "photos_large_min": 3,
+ "screens_min": 0,
+ "phones_ok": false,
+ "needs": [
+  "catalogue",
+  "hero.title",
+  "hero.text"
+ ],
+ "drops": [
+  "figures",
+  "logos",
+  "hero.kicker",
+  "hero.note",
+  "features",
+  "foot.text",
+  "links",
+  "quotes",
+  "locations",
+  "steps"
+ ],
+ "holds_without_pictures": false,
+ "motif": "photos",
+ "notes": [
+  "drops (as written): features (when a catalogue is present)",
+  "drops (as written): foot.text (when place/contact carry the same facts)",
+  "drops (as written): links beyond the first 8",
+  "drops (as written): quotes beyond the first 3",
+  "drops (as written): locations beyond the first 2",
+  "drops (as written): brand mark in the foot (the reference shows its own emblem there)",
+  "drops (as written): steps on a software client: screens would be cropped 4:5 in tiles — do not offer to software",
+  "motif (as written): the client's own photographs (no made pictures)",
+  "also_renders: [\"service (tested on local1: holds, but reads as a long page of text rails; picture share 54 %)\"]",
+  "photos_by_role: {\"opening\": \"2 photographs at least 1400 wide and 1200 high, proportion between 3:5 and 16:10, not `small`, not people/portrait (one is enough: the opening then shows a single picture, as the reference does on a phone)\", \"band\": \"1 photograph at least 1600 wide, landscape (or square at least 1600 x 1200); a shopfront with its sign is taken last because the title lies over it\", \"product cards\": \"the catalogue items' own pictures (`catalogue.groups[].items[].img`), any size from 350 px wide, shown 4:5; ordinary product photographs, no cut-outs needed. An item without one is shown in type only\", \"tiles\": \"the pictures named by `steps.items[].img` / `projects[].photos`, at least 700 wide\"}",
+  "uses_if_present: [\"statement\", \"steps\", \"projects\", \"team\", \"quotes\", \"plans\", \"faq\", \"credentials\", \"trust\", \"place\", \"contact\", \"locations\", \"close\", \"links\", \"nav\", \"signin\", \"cta\", \"media.video\"]",
+  "without_pictures_note: measured on scratch copies of shop1 and local1 with media.photos emptied: renders, one h1, no sideways scroll, legible ok; the opening becomes the title on the display colour and the band a flat ink block. Readable, but the build is led by photographs; not a page to offer.",
+  "cut_outs: not needed. The reference's product shots are photographs on a pale textured ground, set 4:5 edge to edge; any ordinary product photograph fills the card.",
+  "measured: {\"date\": \"2026-11-12\", \"reference_picture_share\": 80, \"shop1_picture_share\": 74, \"local1_picture_share\": 54, \"note\": \"the last screen of the reference and of ours reads 100 because the foot carries a grain texture as a background picture; without the foot: reference 76.5, shop1 74, local1 51\"}"
+ ]
+}
