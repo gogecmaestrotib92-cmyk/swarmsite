@@ -35,7 +35,7 @@ SLUGS = R.slugs()
 
 def test_the_library_holds_the_first_two_templates_and_the_three_fixture_clients():
     assert {'griffin', 'maze'} <= set(SLUGS)
-    assert set(CLIENTS) == {'tallyfern', 'quillmoor', 'casaolmo'}
+    assert {'tallyfern', 'quillmoor', 'casaolmo', 'larchwick'} <= set(CLIENTS), 'each niche the library serves has a fixture client'
     assert all('made-up client' in d['_note'] for d in CLIENTS.values())
     for t in R.list_templates():
         assert (ROOT / 'lib' / 'templates' / t['slug'] / 'NOTES.md').is_file(), t['slug']
@@ -57,9 +57,17 @@ def test_one_h1_no_none_and_the_clients_own_words(slug, client):
     assert not re.search(r'(?<![\w-])(None|undefined|NaN)(?![\w-])', seen)
     assert page.lstrip().lower().startswith('<!doctype html') and '</html>' in page
     assert f'lang="{d["lang"]}"' in page
-    h1 = html.unescape(re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', ' ', re.search(r'<h1.*?</h1>', page, re.S).group(0)))).strip()
+    tag = re.search(r'<h1.*?</h1>', page, re.S).group(0)
+    label = re.match(r'<h1\b[^>]*\baria-label="([^"]*)"', tag)          # a heading set letter by letter is read by its label
+    h1 = html.unescape(label.group(1) if label else re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', ' ', tag))).strip()
     words = lambda s: re.findall(r'\w+', s.lower())
-    assert words(h1) == words(d['hero']['title']), 'the first heading is the client\'s own, whole'
+    title, name, kicker = (words(x or '') for x in (d['hero']['title'], d['brand']['name'], d['hero'].get('kicker')))
+    # the first heading is one of the client's own lines, whole: the headline, or — on a page led by its name, as
+    # places are — the name; either may carry the kicker after it. Never a cut or a rewording.
+    assert words(h1) in (title, title + kicker, name, name + kicker), 'the first heading is the client\'s own, whole'
+    if words(h1)[:len(name)] == name and words(h1)[:len(title)] != title:   # led by the name: the headline is still shown, or declared dropped
+        seen_text = re.sub(r'\s+', ' ', html.unescape(re.sub(r'<[^>]+>', ' ', seen)))
+        assert d['hero']['title'] in seen_text or 'hero.title' in ((R.needs(slug) or {}).get('drops') or []), 'the headline is neither shown nor declared dropped'
 
 
 @pytest.mark.parametrize('slug', SLUGS)
@@ -99,8 +107,10 @@ def test_a_section_without_data_is_left_out_and_a_bare_client_still_renders():
         assert R.audit(slug, {'bare': bare, 'empty-lists': {**bare, 'figures': [], 'faq': {'title': '', 'items': []}, 'plans': {'items': []},
                                                              'media': {'screens': [], 'phones': [], 'photos': [], 'video': None}}}) == []
         full, thin = R.render(slug, CLIENTS['tallyfern']), R.render(slug, {k: v for k, v in CLIENTS['tallyfern'].items() if k not in ('plans', 'faq')})
-        for said in ('Go Row', 'Is Tallyfern an accounting package?'):
-            assert said in full and said not in thin, (slug, said)
+        drops = (R.needs(slug) or {}).get('drops') or []
+        for block, said in (('plans', 'Go Row'), ('faq', 'Is Tallyfern an accounting package?')):
+            assert said not in thin, (slug, said)
+            assert (said in full) == (block not in drops), (slug, block, 'shown although its needs.json drops it' if said in full else 'not shown and not declared in drops')
 
 
 def test_slugs_cannot_leave_the_library(tmp_path):

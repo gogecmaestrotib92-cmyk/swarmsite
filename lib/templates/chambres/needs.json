@@ -1,0 +1,48 @@
+{
+ "niche": [
+  "restaurant",
+  "hotel",
+  "venue"
+ ],
+ "photos_min": 7,
+ "photos_large_min": 0,
+ "screens_min": 0,
+ "phones_ok": false,
+ "needs": [
+  "hero.title",
+  "address"
+ ],
+ "needs_any": [
+  [
+   "statement",
+   "hero.text"
+  ]
+ ],
+ "drops": [
+  "figures",
+  "trust",
+  "close.title",
+  "close.text",
+  "quotes",
+  "logos",
+  "brand.logo",
+  "features.d",
+  "cuisine",
+  "price_range",
+  "links.d"
+ ],
+ "holds_without_pictures": false,
+ "motif": "photos",
+ "notes": [
+  "Fewer than 3 large photographs: the left column loses its pictures one by one (step first, pair, then the opening) and the page thins out quickly; with only small photographs the opening has no left picture and the wordmark stands on the bare ground. A brand name whose last word is long makes the whole wordmark small; a one-word name gets a top-left mark only.",
+  "drops (as written): brand.logo (the name is set in type as a split wordmark)",
+  "drops (as written): place.menu counts",
+  "drops (as written): place.spaces[].img unless the picture is large (small room pictures are not shown)",
+  "drops (as written): place.events after the first",
+  "drops (as written): palette.accent (the reference has no accent colour)",
+  "motif (as written): the client's own photographs (no made pictures; places)",
+  "photos_note: photos_large_min follows the contract's definition (>= 1600 wide) and is 0: the widest column is 896 px at 1440. What the template does need is 3 photographs that are not `small` and at least 700 px on the short side (the left column: opening, pair, step) — one of them upright or near square for the opening (it is held one screen high) — and 4 more at least 560 px wide for the right column (dishes do well there). With a menu list it takes 1–2 more dishes beside the list.",
+  "uses_when_present: [\"place.menu\", \"place.events (first one, as the notice over the first screen)\", \"place.hours\", \"place.social\", \"place.notices\", \"steps / place.spaces (as text)\", \"plans\", \"faq\", \"links\"]",
+  "measured: {\"butarque\": \"52 photographs in the data (5 not small, 47 small); 9 shown: barra-2400 and salmon (opening), terraza-mesas-altas and gintonic (pair), postre-ferrero-rocher-gold (right step), salon-1900 (left step), two desserts beside the menu list, postre-el-aguacate (last). Picture share 45 % (reference 46 %). Menu: 14 linked lists and Postres with 5 priced dishes. No event, so no notice. Holds.\", \"balamo\": \"20 photographs in the data (5 not small, 15 small); 7 shown: gran-reserva-pasillo and gran-reserva-reservado (opening), maridaje-copa-2 and sala-principal (pair), salon-jardin-vertical, gran-reserva-barrica, pulpo. Picture share 44 %. No menu data (link only), the Thursday dinner opens as the notice, FEDER notice above the foot. Holds; the wordmark is small (4.4 vw) because its last word, RESTAURANTE, has to fit the right column.\", \"no photographs (balamo data with media.photos emptied, probe/syn-nophoto.html)\": \"renders without error, one h1, no sideways scroll: wordmark, line, two text blocks, notice, foot on a bare ground, 3195 px. Readable, but nothing of the reference is left — not a page to offer.\", \"plans + faq (balamo data with sportbot's plans and questions, probe/syn-plans.html)\": \"plans set as the two-column text block (name, price in italics, rows, link), questions as the reference's accordion. Both render.\"}"
+ ]
+}

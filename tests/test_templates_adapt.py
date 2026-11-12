@@ -197,7 +197,7 @@ def invented(d, seed):
 
 def test_the_schema_holds_the_hand_made_files_and_refuses_a_wrong_shape():
     files = sorted(FIX.glob('*.json'))
-    assert len(files) == 3
+    assert len(files) >= 4, 'a made-up client for software (2), restaurant and hotel at least'
     for f in files + (sorted(HAND.glob('*.json')) if HAND else []):               # the made-up clients, and the real ones where they are on the machine
         assert A.validate(json.loads(f.read_text(encoding='utf-8'))) == [], f.name
     assert A.validate({'brand': {'name': 'A'}, 'hero': {'title': 'T'}}) == []
