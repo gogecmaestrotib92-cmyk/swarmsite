@@ -63,6 +63,9 @@ def colours(p):
         if con(tone, I) >= 4.6:
             break
     onA = best(A, I, G)
+    if con(A, onA) < 4.6:                                        # a mid-tone accent carries neither colour: it is taken away
+        away = '#000000' if lum(onA) > lum(A) else '#ffffff'     # from its text until the text reads 4.6:1 (band, marked price)
+        A = next((x for x in (mix(A, away, t / 20) for t in range(1, 21)) if con(x, onA) >= 4.6), away)
     soft = mix(A, card, .8)
     deep, on_deep = (tone, I) if dark else (I, G)
     hov = mix(I, G, .18)
@@ -377,7 +380,7 @@ def s_plans(d, c):
     if p.get('title'):
         sub = '<p class="lead2">' + e(p.get('text')) + '</p>' if p.get('text') else ''
         band = f'<div class="pband"><div class="pbt"><h2 class="h58">{e(p["title"])}</h2>{sub}</div></div>'
-    blurs = calm(made(d, 'blur'), c, len(items))
+    blurs = calm(made(d, 'blur'), c, min(len(items), 2))    # two hues at most, as on the reference; more plans take them in turn
     cards = ''
     for n, i in enumerate(items):
         bg, on = (c['A'], c['onA']) if i.get('marked') else (c['chip'], c['I'])
@@ -392,26 +395,37 @@ def s_plans(d, c):
         rows = f'<ul class="rows">{rows}</ul>' if rows else ''
         cards += f'''<div class="plan"><div class="ptop"><div class="pl"><div class="pn"><h3 class="h58">{e(i["name"])}</h3>{f"<p>{e(i.get('line'))}</p>" if i.get("line") else ""}</div>{btn(i.get("cta"))}</div>
 <div class="price{pcls}" style="background:{bg};color:{on}{pv}">{img}<strong>{e(i.get("price"))}</strong>{f"<span>{e(i.get('per'))}</span>" if i.get("per") else ""}</div></div>{rows}</div>'''
+    # 1 plan: one card; 2 or 4: the reference's two-across card; 3, 5 and more: three across, wrapping, and the card
+    # stacks (picture panel with the price on top, name and button under it) because 430 px cannot hold both side by side
+    pc = 1 if len(items) == 1 else 2 if len(items) in (2, 4) else 3
     note = f'<p class="pnote">{e(p["note"])}</p>' if p.get('note') else ''
-    return f'''<section class="sec plans"><div class="wrap">{band}<div class="pgrid" style="--n:{min(len(items), 3)}">{cards}</div>{note}</div></section>'''
+    return f'''<section class="sec plans"><div class="wrap">{band}<div class="pgrid{" few" if pc == 3 else ""}{" one" if len(items) == 1 else ""}" style="--n:{pc}">{cards}</div>{note}</div></section>'''
 
 
 def s_figures(d, c):
     fg = [f for f in d.get('figures') or [] if f.get('v')]
     if not fg:
         return ''
+    GL, GH = .14, .22                                             # share of the text colour in a glass card, at rest and under the pointer
+
+    def holds(base, on, want):
+        """does `on` read `want`:1 on a glass card (rest and hover) laid over `base`?"""
+        return min(con(mix(base, on, GL), on), con(mix(base, on, GH), on)) >= want
     cards = ''.join(f'<div class="glass"><strong style="--fs:{step(f["v"], [(5, 90), (8, 72), (999, 46)])}">{e(f["v"])}</strong><p>{e(f.get("l"))}</p></div>' for f in fg)
     land = made(d, 'land')
     cands = [land[i] for i in (2, 0) if i < len(land)]           # water, else the ridge: whichever is darker
     if not cands:
-        return f'''<section class="figs" data-slot="backdrop"><div class="wrap"><div class="gl" style="--n:{len(fg)}">{cards}</div></div></section>'''
+        on = c['on_deep']                                         # plain ground: taken away from its text until the cards hold 4.6:1
+        away = '#000000' if lum(on) > lum(c['deep']) else '#ffffff'
+        deep = next((x for x in (mix(c['deep'], away, t / 20) for t in range(21)) if holds(x, on, 4.6)), away)
+        return f'''<section class="figs" data-slot="backdrop" style="background:{deep};--deep:{deep}"><div class="wrap"><div class="gl" style="--n:{len(fg)}">{cards}</div></div></section>'''
     m = min(cands, key=mean_lum)
     dk, lt = (c['G'], c['I']) if c['dark'] else (c['I'], c['G'])   # the backdrop is always darkened, as the reference's is
     mean = m.get('mean') or dk
     a = .9
     for t in (.6, .65, .7, .75, .8, .85):  # low key: mean at or under ~25% (sRGB) and 7:1 for the text
         x = mix(mean, dk, t)
-        if lum(x) <= .051 and con(x, lt) >= 7:
+        if lum(x) <= .051 and con(x, lt) >= 7 and holds(x, lt, 5.5):
             a = t
             break
     return f'''<section class="figs pic" data-slot="backdrop" style="background:{mix(mean, dk, a)};color:{lt};--ond:{lt};--fv:{rgba(dk, a)}">{bg_pic(m, "backdrop")}<div class="wrap"><div class="gl" style="--n:{len(fg)}">{cards}</div></div></section>'''
@@ -520,7 +534,6 @@ img,video,canvas{display:block;max-width:100%}img,video{height:auto}h1,h2,h3,p,f
 /* link card: chips, a large line, one screen shown whole on the same ground */
 .linkcard{border-radius:16px;padding:40px;overflow:clip}.rise{display:grid;grid-template-columns:minmax(0,560px) minmax(0,640px);justify-content:space-between;gap:40px;align-items:center;min-height:560px}
 .nopic .rise{grid-template-columns:minmax(0,900px)}
-@supports (animation-timeline:view()){.js .rise{animation:up linear both;animation-timeline:view();animation-range:entry 0% entry 25%;--d:40px}}
 .lcol{display:flex;flex-direction:column;justify-content:space-between;gap:48px;align-self:stretch}.chips{display:flex;flex-wrap:wrap;gap:8px}
 .chipb{padding:12px 16px;border-radius:8px;background:var(--g);font-size:14px;line-height:1.05;letter-spacing:.03em;text-transform:uppercase;transition:background-color .5s cubic-bezier(.4,0,.2,1)}.chipb:hover,.chipb[aria-selected=true]{background:var(--chip)}
 .linkcard .panes{margin:0}.linkcard .pane{display:flex;flex-direction:column;gap:24px;justify-content:flex-end;transition-duration:1s}.lt{display:flex;flex-direction:column;gap:24px}.lt .lead2{max-width:480px}
@@ -530,7 +543,7 @@ img,video,canvas{display:block;max-width:100%}img,video{height:auto}h1,h2,h3,p,f
 .say{max-width:1080px;margin-left:40px;margin-bottom:80px}.say .lead2{color:inherit;max-width:640px;margin-top:32px}
 .blur .w{display:inline-block;will-change:filter,opacity}
 .mqs{position:relative;display:flex;flex-direction:column;gap:16px;width:min(1360px,100% - 80px);margin-inline:auto;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
-.mq{display:flex;width:max-content}.mg{display:flex;gap:20px;padding-right:20px;animation:mq 60s linear infinite}.mq.rev .mg{animation-direction:reverse}@keyframes mq{to{transform:translateX(-100%)}}
+.mq{display:flex;width:max-content}.mg{display:flex;gap:20px;padding-right:20px;animation:mq 60s linear infinite}.mq.rev .mg{animation-direction:reverse}.band.idle .mg{animation:none}@keyframes mq{to{transform:translateX(-100%)}}
 .wc{padding:12px;border-radius:8px;background:var(--card);color:var(--i);font-weight:300;font-size:46px;line-height:1.15;letter-spacing:-.015em;white-space:nowrap}
 /* features: a quiet box on the band's fading ground, small tagged cards */
 .feat{background:linear-gradient(var(--a),var(--g) 70%);padding-bottom:80px}.fbox{background:var(--g);border-radius:16px;padding:112px 80px}
@@ -538,7 +551,9 @@ img,video,canvas{display:block;max-width:100%}img,video{height:auto}h1,h2,h3,p,f
 .fg{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}.fc{display:flex;flex-direction:column;align-items:flex-start;gap:16px;padding:16px;border-radius:12px;background:var(--card)}.fc p{font-weight:300;font-size:22px;line-height:1.4;letter-spacing:-.015em}
 /* plans */
 .pband{border-radius:16px;background:var(--soft);padding:54px 40px;margin-bottom:20px}.pbt{max-width:640px;display:flex;flex-direction:column;gap:24px}.pband .lead2{color:var(--i)}
-.pgrid{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:20px}.plan{display:flex;flex-direction:column;gap:40px;padding:20px;border-radius:16px;background:var(--card)}
+.pgrid{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:20px}.pgrid.one{max-width:670px}
+.pgrid.few .ptop{flex-direction:column-reverse;gap:24px}.pgrid.few .pl{padding-top:0;gap:24px}.pgrid.few .price{flex:none;min-height:220px}.pgrid.few .pn .h58{font-size:46px}
+.plan .h58,.pn p,.price strong,.price span{overflow-wrap:anywhere}.plan .btn{max-width:100%}.plan{min-width:0;display:flex;flex-direction:column;gap:40px;padding:20px;border-radius:16px;background:var(--card)}
 .ptop{display:flex;gap:40px;justify-content:space-between}.pl{display:flex;flex-direction:column;justify-content:space-between;gap:29px;align-items:flex-start;padding-top:96px;flex:1}.pn p{margin-top:8px;font-weight:300;font-size:22px;line-height:1.4;letter-spacing:-.015em}
 .price{position:relative;overflow:hidden;flex:0 0 260px;min-height:378px;border-radius:8px;padding:20px;display:flex;flex-direction:column;justify-content:flex-end;gap:8px}
 .bd{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.price.pic::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,var(--pv) 0,var(--pv) 30%,transparent 62%)}.price strong,.price span{position:relative;z-index:1}.price strong{font-weight:300;font-size:58px;line-height:1;letter-spacing:-.055em}.price span{font-size:15px;line-height:1.4}
@@ -570,7 +585,7 @@ img,video,canvas{display:block;max-width:100%}img,video{height:auto}h1,h2,h3,p,f
 .rise{display:flex;flex-direction:column;align-items:stretch;min-height:0;gap:32px}.lcol{gap:40px}.chips{flex-wrap:nowrap;overflow-x:auto;margin-right:-16px;padding-right:16px;scrollbar-width:none}.chipb{white-space:nowrap;padding:11px 16px}
 .band{padding:64px 0}.say{margin:0 16px 48px}.wc{font-size:24px;line-height:1.2;padding:10px 12px}.mqs{gap:8px}.mg{gap:8px;padding-right:8px}
 .feat{padding-bottom:32px}.fbox,.faq .fbox{padding:64px 12px}.fg{grid-template-columns:1fr;gap:12px}.fc{padding:12px}
-.pband{padding:32px 16px}.pgrid{grid-template-columns:1fr}.ptop{flex-direction:column-reverse;gap:24px}.pl{padding-top:0}.price{flex:none;min-height:180px}.price.pic::after{background:linear-gradient(to top,var(--pv) 0,var(--pv) 60%,transparent 100%)}
+.pband{padding:32px 16px}.pgrid,.pgrid.few{grid-template-columns:minmax(0,1fr)}.pgrid.few .pn .h58{font-size:32.77px}.pgrid.few .price{min-height:180px}.ptop{flex-direction:column-reverse;gap:24px}.pl{padding-top:0}.price{flex:none;min-height:180px}.price.pic::after{background:linear-gradient(to top,var(--pv) 0,var(--pv) 60%,transparent 100%)}
 .figs{padding:64px 0}.gl{display:flex;max-width:none;overflow-x:auto;scroll-snap-type:x mandatory;margin-right:-16px;padding-right:16px;scrollbar-width:none}.glass{flex:0 0 280px;min-height:256px;scroll-snap-align:start}.glass strong{font-size:calc(min(var(--fs),58)*1px)}
 .close{padding:120px 0}.btn.big{min-height:56px;font-size:20px;padding:4px 28px}.tr{width:calc(90px*var(--r))}
 .ft{padding:40px 0}.fcols{grid-template-columns:1fr 1fr;gap:32px 16px}.fnote,.fcols:has(.fcol:nth-child(3)) .fnote{grid-column:1/-1;justify-self:start}.word{margin-top:32px}.legal{padding-top:32px}}
@@ -591,7 +606,7 @@ const lines=ws=>{let y=null,l=-1;ws.forEach(w=>{const t=w.offsetTop;if(y===null|
 const h1=$('.scene.a h1');let hw=[];if(h1&&!still){hw=split(h1,'ln');lines(hw)}
 $$('.t1 .tile').forEach((t,i)=>{t.style.setProperty('--o',i);t.style.setProperty('--dir',-1)});$$('.t2 .tile').forEach((t,i)=>{t.style.setProperty('--o',i+2);t.style.setProperty('--dir',1)});
 $$('.tile').forEach(t=>t.addEventListener('animationend',()=>{t.style.animation='none'}));
-$$('video[data-auto]').forEach(v=>{if(!still){v.autoplay=true;v.play().catch(()=>{})}});
+$$('video[data-auto]').forEach(v=>{if(!still&&v.offsetParent){v.autoplay=true;v.play().catch(()=>{})}});
 /* header leaves going down, returns going up */
 let ly=0;const head=()=>{const y=scrollY;if(!still&&!$('.burger[aria-expanded=true]'))top.classList.toggle('away',y>ly&&y>120);ly=y};
 const bg=$('.burger'),menu=$('#menu');if(bg)bg.addEventListener('click',()=>{const o=bg.getAttribute('aria-expanded')!=='true';bg.setAttribute('aria-expanded',o);menu.hidden=!o});
@@ -610,12 +625,13 @@ const paint=force=>{if(!pin||flat||!B)return;const r=pin.getBoundingClientRect()
  const a=cl((Y-60)/160),b=io(cl((Y-90)/300)),c=cl((Y-240)/300),d=cl((Y-500)/240);
  const copy=$('.copy',A);h1&&(h1.style.opacity=1-a,h1.style.transform=`translateY(${-55*a}px)`);copy&&(copy.style.opacity=1-cl((Y-110)/160),copy.style.transform=`translateY(${-50*cl((Y-110)/160)}px)`);
  tiles.forEach(([t,dx,dy],i)=>{const k=cl(b*1.12-i*.03);t.style.transform=k?`translate(${dx*k*.82}px,${dy*k*.82}px) scale(${1-.86*k})`:'';t.style.setProperty('--k',cl(k*3));t.style.opacity=1-cl((k-.82)/.18)});
- A.inert=a>=1;A.style.visibility=Y>420?'hidden':'';draw(c);
+ A.inert=a>=1;A.style.visibility=Y>420?'hidden':'';const av=$('video',A);if(av){if(Y>420){av.paused||av.pause()}else if(av.paused&&av.offsetParent&&av.dataset.auto!==undefined&&r.bottom>0)av.play().catch(()=>{})}draw(c);
  B.style.visibility=d>0?'visible':'hidden';B.style.opacity=d;B.inert=d<.5;$('.bt',B).style.transform=`translateY(${(1-out(d))*200}px)`;more&&(more.style.opacity=1-cl((Y-800)/80));
  if(cur!==tgt){cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>paint())}};
 /* the band */
 const band=$('#band'),bbg=$('.bandbg'),bl=$('.blur');let bw=[];if(bl&&!still){bw=split(bl,'w');}
-const bandPaint=()=>{if(!band||still)return;const r=band.getBoundingClientRect(),vh=innerHeight;if(r.bottom<-200||r.top>vh+200)return;bbg.style.setProperty('--bo',cl((vh*.97-r.top)/(vh*.2)));
+const bpad=band?parseFloat(getComputedStyle(band).paddingTop)||0:0;/* the ground is whole before the first line of the band is on screen: its text is set for the accent, not for the page */
+const bandPaint=()=>{if(!band||still)return;const r=band.getBoundingClientRect(),vh=innerHeight;if(r.bottom<-200||r.top>vh+200)return;bbg.style.setProperty('--bo',cl((vh-r.top)/Math.max(24,Math.min(vh*.2,bpad-8))));
  if(bw.length){const br=bl.getBoundingClientRect();bw.forEach(w=>{const y=br.top+w.offsetTop-bl.offsetTop+(w.offsetParent===bl?bl.offsetTop:0),p=out(cl((vh*.82-y)/(vh*.3)));w.style.opacity=.5+.5*p;w.style.filter=p<1?`blur(${(8*(1-p)).toFixed(2)}px)`:''})}};
 /* tabs: both tab sets; the first runs on a 12s clock with a line that fills */
 const tabset=(root,auto)=>{if(!root)return;const ts=$$('[role=tab]',root),ps=$$('[role=tabpanel]',root),card=root.closest('.card')||root;let i=0,tm=0,seen=false,hold=false;
@@ -623,15 +639,21 @@ const tabset=(root,auto)=>{if(!root)return;const ts=$$('[role=tab]',root),ps=$$(
   ps.forEach((p,k)=>{p.classList.toggle('on',k===i);p.inert=k!==i});const t=ts[i];if(t.dataset.bg){card.style.setProperty('--bg',t.dataset.bg);card.style.setProperty('--on',t.dataset.on);card.style.setProperty('--dim',t.dataset.dim)}if(user)ts[i].focus({preventScroll:true});clock()};
  const clock=()=>{clearTimeout(tm);if(auto&&!still&&seen&&!hold&&ts.length>1)tm=setTimeout(()=>go(i+1),12000)};
  ts.forEach((t,k)=>{t.addEventListener('click',()=>go(k));t.addEventListener('keydown',e=>{if(e.key==='ArrowRight'){e.preventDefault();go(i+1,true)}if(e.key==='ArrowLeft'){e.preventDefault();go(i-1,true)}})});
- if(auto){card.addEventListener('focusin',()=>{hold=true;clearTimeout(tm);$$('b',root).forEach(b=>b.classList.remove('run'))});new IntersectionObserver(es=>{seen=es[0].isIntersecting;if(seen)go(i);else clearTimeout(tm)},{threshold:.3}).observe(card)}};
+ if(auto){card.addEventListener('focusin',()=>{hold=true;clearTimeout(tm);$$('b',root).forEach(b=>b.classList.remove('run'))});new IntersectionObserver(es=>{seen=es[0].isIntersecting;if(seen)go(i);else{clearTimeout(tm);$$('b',root).forEach(b=>b.classList.remove('run'))}},{threshold:.3}).observe(card)}};
 tabset($('.tabcard'),true);tabset($('.linkcard'),false);
 /* close: pictures follow the pointer, each a little later than the one before */
 const cs=$('#close'),tr=$('.trail'),trs=$$('.tr');if(cs&&trs.length&&!still&&matchMedia('(hover:hover)').matches){let mx=0,my=0,on=false,id=0;const ps=trs.map(()=>[0,0]);const off=[[-150,-130],[-70,-170],[10,-120],[80,-60],[-110,-40]];
  const loop=()=>{trs.forEach((t,k)=>{const p=ps[k],f=.2-k*.03;p[0]+=(mx+off[k][0]-p[0])*f;p[1]+=(my+off[k][1]-p[1])*f;t.style.transform=`translate(${p[0]}px,${p[1]}px)`});if(on)id=requestAnimationFrame(loop)};
  cs.addEventListener('pointermove',e=>{const r=cs.getBoundingClientRect();mx=e.clientX-r.left;my=e.clientY-r.top;if(!on){on=true;ps.forEach(p=>{p[0]=mx;p[1]=my});tr.classList.add('on');loop()}});cs.addEventListener('pointerleave',()=>{on=false;tr.classList.remove('on');cancelAnimationFrame(id)})}
-let tick=false;addEventListener('scroll',()=>{if(tick)return;tick=true;requestAnimationFrame(()=>{tick=false;head();paint();bandPaint()})},{passive:true});
+/* nothing runs off screen: the word rows stand still and films pause until they are back in view */
+if(band&&'IntersectionObserver' in window)new IntersectionObserver(es=>band.classList.toggle('idle',!es[0].isIntersecting)).observe(band);
+if('IntersectionObserver' in window){const vo=new IntersectionObserver(es=>es.forEach(x=>{const v=x.target;if(x.isIntersecting){if(!still&&v.dataset.auto!==undefined)v.play().catch(()=>{})}else v.pause()}));$$('video').forEach(v=>vo.observe(v))}
+/* the link card rises 40px and fades in over the first quarter of its entry, tied to the scroll (set from the scroll
+   handler, not a scroll-timeline animation, so nothing is left running while the card is elsewhere) */
+const rs=$('.rise'),rc=rs&&rs.parentElement;const risePaint=()=>{if(!rs||still)return;const r=rc.getBoundingClientRect(),vh=innerHeight;if(r.top>vh+200||r.bottom<-200)return;const k=cl((vh-r.top)/(r.height*.25));rs.style.opacity=k<1?k:'';rs.style.transform=k<1?`translateY(${(40*(1-k)).toFixed(1)}px)`:''};
+let tick=false;addEventListener('scroll',()=>{if(tick)return;tick=true;requestAnimationFrame(()=>{tick=false;head();paint();bandPaint();risePaint()})},{passive:true});
 let rt=0;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{hw.length&&lines(hw);measure();bandPaint()},120)});
-measure();bandPaint();if(D.fonts&&D.fonts.ready)D.fonts.ready.then(()=>{hw.length&&lines(hw);measure();bandPaint()});addEventListener('load',()=>{measure();bandPaint()});
+measure();bandPaint();risePaint();if(D.fonts&&D.fonts.ready)D.fonts.ready.then(()=>{hw.length&&lines(hw);measure();bandPaint()});addEventListener('load',()=>{measure();bandPaint()});
 })();
 '''
 
