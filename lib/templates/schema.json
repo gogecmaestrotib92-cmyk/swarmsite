@@ -309,6 +309,10 @@
       "type": "string",
       "description": "names the business: software | restaurant | hotel | clinic | law | service | shop | school | person | … (needs.json `niche` uses the same words)"
     },
+    "niche": {
+      "type": "string",
+      "description": "what kind of business, in the reader's words (its subtype); chooses the family of made pictures; never shown on a page"
+    },
     "character": {
       "type": "string"
     },

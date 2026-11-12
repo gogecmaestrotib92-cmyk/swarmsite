@@ -58,10 +58,16 @@ export async function runTemplateJob(deps) {
     for (const slug of shown) {
       await deps.upload(path.join(tdir, 'pub', `${slug}.html`), `${job.id}/t/${slug}.html`, 'text/html');
       const c = built.chosen.find(x => x.slug === slug) || {};
-      out.push({ slug, approach: c.approach || '', why: c.why || '', url: `${deps.self}/t/${job.id}/${slug}`, package: 'pending' });
+      out.push({ slug, approach: c.approach || '', why: c.why || '', url: `${deps.self}/t/${job.id}/${slug}`, package: 'pending', ...(c.made ? { made: c.made } : {}) });
     }
+    // the job's data store: the client's data, and each variant's own (with its family of made pictures), in the private
+    // bucket. The "site from nothing" form will write the same data.json, and the editor will keep its edits as a patch
+    // over it, so that a template can be switched keeping every edit (BRIEF-engine.md, steps 8 and 9).
+    const store = { data: `${job.id}/data.json`, variants: {} };
+    await deps.uploadPrivate(path.join(tdir, 'data.json'), store.data, 'application/json');
+    for (const slug of shown) { const f = path.join(tdir, `${slug}.data.json`); if (fs.existsSync(f)) { store.variants[slug] = `${job.id}/${slug}.data.json`; await deps.uploadPrivate(f, store.variants[slug], 'application/json'); } }
     result.templates = { variants: out, niche: built.niche, pictures: built.pictures, not_shown: built.chosen.filter(c => !shown.includes(c.slug)).map(c => ({ slug: c.slug, failed: c.failed })),
-      rejected: (built.rejected || []).slice(0, 60), media: built.media, timings_ms: { ...built.timings_ms } };
+      rejected: (built.rejected || []).slice(0, 60), media: built.media, group: built.group || null, store, timings_ms: { ...built.timings_ms } };
     await deps.save(result);   // the chooser can show them now
     return out;
   });

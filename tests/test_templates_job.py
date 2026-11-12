@@ -38,7 +38,7 @@ def test_a_job_folder_becomes_gated_variants_with_their_media(tmp_path, monkeypa
     out = tmp_path / 'templates'
     r = JOB.build(capture(tmp_path), out, base='https://store.example/j/t/')
     assert r['shown'] == ['griffin'] and [c['slug'] for c in r['chosen']] == ['griffin'] and seen == [['griffin.html']]
-    assert r['niche'][0] == 'software' and any(x['slug'] == 'maze' for x in r['rejected']) and r['media'] == {'written': 2, 'missing': []}
+    assert r['niche'][0] == 'software' and any(x['slug'] == 'maze' for x in r['rejected']) and r['media'] == {'written': 2, 'missing': [], 'library': 0}
     assert set(r['timings_ms']) == {'adapt', 'media', 'select', 'render', 'gate'}
     data = json.loads((out / 'data.json').read_text())
     assert data['brand']['name'] == 'Tallyfern' and not any(k.startswith('_') for k in data)

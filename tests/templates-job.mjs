@@ -29,7 +29,7 @@ try {
       uploadPrivate: async (local, key, type) => { priv.set(key, { type }); },
       publicBase: key => 'https://storage.example/previews/' + key,
       setStep: async (id, status) => { steps.push(`${id}:${status}`); }, emit: async evs => { events.push(...evs); },
-      save: async r => { saves.push(JSON.parse(JSON.stringify({ variants: r.templates?.variants, packagesBefore: priv.size }))); } };
+      save: async r => { saves.push(JSON.parse(JSON.stringify({ variants: r.templates?.variants, packagesBefore: [...priv.keys()].filter(k => k.endsWith('.zip')).length }))); } };
     const result = await runTemplateJob(deps);
     return { result, log, steps, events, saves, pub, priv, dir };
   }
@@ -46,7 +46,8 @@ try {
   assert.ok([...x.pub.keys()].some(k => /\/t\/media\/logo\.svg$/.test(k)), 'the media the pages ask for are published beside them');
   const page = fs.readFileSync(path.join(x.dir, 'templates', 'pub', 'griffin.html'), 'utf8');
   assert.ok(page.includes('https://storage.example/previews/22222222-2222-4222-8222-222222222222/t/media/logo.svg') && !page.includes('../../media/'), 'the preview page asks for its media where they were published');
-  assert.deepEqual([...x.priv.keys()], ['22222222-2222-4222-8222-222222222222/griffin.zip'], 'the package goes to the private bucket, nowhere public');
+  assert.deepEqual([...x.priv.keys()], ['22222222-2222-4222-8222-222222222222/data.json', '22222222-2222-4222-8222-222222222222/griffin.zip'], 'the data store and the package go to the private bucket, nowhere public');
+  assert.deepEqual(t.store, { data: '22222222-2222-4222-8222-222222222222/data.json', variants: {} }, 'the job names where its data is kept (no library on this machine for this test: no variant data of its own)');
   assert.ok(![...x.pub.keys()].some(k => k.endsWith('.zip')));
   assert.equal(x.saves.length, 1); assert.deepEqual(x.saves[0].variants.map(v => [v.slug, v.package]), [['griffin', 'pending']]); assert.equal(x.saves[0].packagesBefore, 0, 'the previews are saved before any package is made');
   assert.deepEqual(x.result.budget, { calls: 1, in: 21000, out: 2400, usd: 0.066 }, 'what the visitor cost: the reader, from the job ledger');
@@ -55,9 +56,9 @@ try {
 
   // 2 · a package that does not match its preview, and one whose making crashes: the preview stays, the download does not
   x = await scenario({ pkg: 'refused' });
-  assert.equal(x.result.templates.variants[0].package, 'refused'); assert.deepEqual(x.result.templates.variants[0].package_why, ['d: 1 of 8 screens differ by more than 0.50 %']); assert.equal(x.priv.size, 0);
+  assert.equal(x.result.templates.variants[0].package, 'refused'); assert.deepEqual(x.result.templates.variants[0].package_why, ['d: 1 of 8 screens differ by more than 0.50 %']); assert.ok(![...x.priv.keys()].some(k => k.endsWith('.zip')));
   x = await scenario({ pkg: 'crash' });
-  assert.equal(x.result.templates.variants[0].package, 'refused'); assert.ok(/could not be made/.test(x.result.templates.variants[0].package_why[0])); assert.equal(x.priv.size, 0);
+  assert.equal(x.result.templates.variants[0].package, 'refused'); assert.ok(/could not be made/.test(x.result.templates.variants[0].package_why[0])); assert.ok(![...x.priv.keys()].some(k => k.endsWith('.zip')));
 
   // 3 · a site no template fits: the job ends with no variant and says why — nothing is shown that was not fit to show
   x = await scenario({ capture: 'empty' });

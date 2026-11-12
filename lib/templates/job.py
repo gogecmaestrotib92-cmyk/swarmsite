@@ -1,13 +1,16 @@
 """job.py — the template path of a job, after capture and the reader: adapt → select → render three → gate; and,
 for a variant the visitor may download, the package.
 
-    python3 lib/templates/job.py build <job dir> --out <dir> [--base URL] [--limit 3]
+    python3 lib/templates/job.py build <job dir> --out <dir> [--base URL] [--limit 3] [--library DIR]
+        --library   a folder holding media/library (else $SWARMSITE_LIBRARY, else the repo's); none → no made pictures
         <job dir>   capture's files (inventory, assets, images, geometry …) and the reader's factsheet.json
         --out       written there:
                       data.json         the client's data (adapter output, private keys removed)
                       adapter.json      what the adapter could not fill (gaps) and the rules it applied
                       media/…           every picture the data names, written from the capture
                       <slug>.html       each chosen variant, media beside it — the page the gate judges and the package is made from
+                      <slug>.data.json  a variant's own data when it takes made pictures (three variants, three families)
+                      media/library/…   the library files the variants show
                       pub/<slug>.html   the same render with its media at --base (the page a preview address serves)
                       templates.json    {niche, pictures, chosen, shown, rejected, timings_ms}
         prints templates.json as one line
@@ -94,7 +97,7 @@ def _drop(d, paths):
     return out
 
 
-def build(job_dir, out, base='', limit=3, gate_kw=None):
+def build(job_dir, out, base='', limit=3, gate_kw=None, library=None):
     A, R, S, G = _mod('adapt'), _mod('registry'), _mod('select'), _mod('gate')
     out = Path(out)
     (out / 'pub').mkdir(parents=True, exist_ok=True)
@@ -111,14 +114,29 @@ def build(job_dir, out, base='', limit=3, gate_kw=None):
     (out / 'adapter.json').write_text(json.dumps({**d.get('_adapter', {}), 'media_missing': missing}, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
     t['media'] = round((time.perf_counter() - t0) * 1000)
     t0 = time.perf_counter()
-    sel = S.select(data, limit=limit)
+    # made pictures: three families of the prepared library, in the order the client's niche gives (owner, 2026-11-12);
+    # none for places, clinics, law, services, shops, schools, people, nonprofits — and none when there is no library
+    PI = _mod('pictures')
+    lib_root = PI.root_of(library)
+    three = PI.pick_three(data, lib_root) if lib_root else []
+    sel = S.select({**data, 'media': {**(data.get('media') or {}), 'made': three[0]}} if three else data, limit=limit)
     t['select'] = round((time.perf_counter() - t0) * 1000)
     t0 = time.perf_counter()
-    files = []
-    for c in sel['chosen']:
+    files, families, copied = [], {}, set()
+    for i, c in enumerate(sel['chosen']):
+        made = three[i % len(three)] if three else {}
+        v = {**data, 'media': {**(data.get('media') or {}), 'made': made}} if made else data
+        for rel in PI.files(made):                                    # the library files this variant shows, beside it like any media
+            if rel not in copied and rel.startswith('media/') and '..' not in Path(rel).parts:
+                (out / rel).parent.mkdir(parents=True, exist_ok=True)
+                (out / rel).write_bytes((lib_root / rel).read_bytes())
+                copied.add(rel)
+        if made:
+            families[c['slug']] = {'family': made.get('family'), 'palette': made.get('palette')}
+            (out / (c['slug'] + '.data.json')).write_text(json.dumps(v, ensure_ascii=False) + '\n', encoding='utf-8')
         f = out / (c['slug'] + '.html')
-        f.write_text(R.render(c['slug'], data, ''), encoding='utf-8')
-        (out / 'pub' / (c['slug'] + '.html')).write_text(R.render(c['slug'], data, base), encoding='utf-8')
+        f.write_text(R.render(c['slug'], v, ''), encoding='utf-8')
+        (out / 'pub' / (c['slug'] + '.html')).write_text(R.render(c['slug'], v, base), encoding='utf-8')
         files.append(f)
     t['render'] = round((time.perf_counter() - t0) * 1000)
     t0 = time.perf_counter()
@@ -126,9 +144,9 @@ def build(job_dir, out, base='', limit=3, gate_kw=None):
     t['gate'] = round((time.perf_counter() - t0) * 1000)
     chosen = []
     for c, g in zip(sel['chosen'], gates):
-        chosen.append({**c, 'ok': g['ok'], 'failed': g['failed'], 'gate': {k: v for k, v in (g.get('checks') or {}).items() if v}, 'gate_ms': g.get('ms'), **({'error': g['error']} if g.get('error') else {})})
+        chosen.append({**c, **({'made': families[c['slug']]} if c['slug'] in families else {}), 'ok': g['ok'], 'failed': g['failed'], 'gate': {k: v for k, v in (g.get('checks') or {}).items() if v}, 'gate_ms': g.get('ms'), **({'error': g['error']} if g.get('error') else {})})
     res = {'niche': sel['niche'], 'pictures': sel['pictures'], 'chosen': chosen, 'shown': [c['slug'] for c in chosen if c['ok'] and not c['failed']],
-           'rejected': sel['rejected'], 'media': {'written': len(written), 'missing': missing}, 'timings_ms': t}
+           'rejected': sel['rejected'], 'media': {'written': len(written), 'missing': missing, 'library': len(copied)}, 'group': PI.niche_group(data)[0], 'timings_ms': t}
     (out / 'templates.json').write_text(json.dumps(res, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
     return res
 
@@ -138,7 +156,8 @@ def package(out, slug, zip_path, verify=True, workdir=None):
     out = Path(out)
     t0 = time.perf_counter()
     try:
-        data = json.loads((out / 'data.json').read_text(encoding='utf-8'))
+        own = out / (slug + '.data.json')                             # a variant with made pictures has its own data
+        data = json.loads((own if own.is_file() else out / 'data.json').read_text(encoding='utf-8'))
         shown = json.loads((out / 'templates.json').read_text(encoding='utf-8')).get('shown') or []
         if slug not in shown:
             raise P.PackageError('%s is not a variant this job shows' % slug)
@@ -159,7 +178,7 @@ if __name__ == '__main__':
     a = sys.argv[1:]
     opt = lambda k, dflt=None: a[a.index(k) + 1] if k in a else dflt
     if a[:1] == ['build'] and len(a) >= 2:
-        print(json.dumps(build(a[1], opt('--out') or str(Path(a[1]) / 'templates'), opt('--base', ''), int(opt('--limit', 3))), ensure_ascii=False))
+        print(json.dumps(build(a[1], opt('--out') or str(Path(a[1]) / 'templates'), opt('--base', ''), int(opt('--limit', 3)), library=opt('--library')), ensure_ascii=False))
     elif a[:1] == ['package'] and len(a) >= 4:
         r = package(a[1], a[2], a[3], verify='--verify' in a)
         print(json.dumps(r, ensure_ascii=False))   # exit 0 either way: the verdict is `ok`, an exit code is for a crash
