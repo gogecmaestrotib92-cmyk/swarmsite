@@ -107,11 +107,20 @@ def test_the_palette_is_the_nearest_of_the_same_tone_and_the_slots_are_the_contr
 
 
 def test_without_a_library_there_are_no_made_pictures(tmp_path, monkeypatch):
-    monkeypatch.delenv('SWARMSITE_LIBRARY', raising=False)
+    monkeypatch.setenv('SWARMSITE_LIBRARY', 'none')
     assert PI.library(tmp_path) == (None, None) or PI.root_of(tmp_path) is None
     (tmp_path / 'media' / 'library').mkdir(parents=True)
     (tmp_path / 'media' / 'library' / 'library.json').write_text('not json')
     assert PI.library(tmp_path) == (None, None) and PI.pick_three(client(), tmp_path / 'nowhere') == [] or PI.root_of(tmp_path / 'nowhere') is not None
+    assert PI.root_of() is None and PI.library() == (None, None), "SWARMSITE_LIBRARY=none switches the repo's library off"
+
+
+def test_the_library_in_the_repo_is_whole():
+    rows, pals = PI.library(ROOT)
+    assert rows and pals, 'media/library is in the repo, so a worker needs no setting to find it'
+    missing = [r['src'] for r in rows if not (ROOT / r['src']).is_file()]
+    assert missing == [], 'every picture the index names is on disk'
+    assert {r['family'] for r in rows} >= {'nature', 'space', 'ribbon', 'tech', 'material'} and 'aurora' not in {r['family'] for r in rows}
 
 
 def test_the_job_gives_three_variants_three_families_and_carries_their_files(tmp_path, lib, monkeypatch):

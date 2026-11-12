@@ -62,8 +62,11 @@ try {
   assert.ok([...x.pub.keys()].some(k => /\/t\/media\/logo\.svg$/.test(k)), 'the media the pages ask for are published beside them');
   const page = fs.readFileSync(path.join(x.dir, 'templates', 'pub', 'griffin.html'), 'utf8');
   assert.ok(page.includes('https://storage.example/previews/22222222-2222-4222-8222-222222222222/t/media/logo.svg') && !page.includes('../../media/'), 'the preview page asks for its media where they were published');
-  assert.deepEqual([...x.priv.keys()], ['22222222-2222-4222-8222-222222222222/data.json', '22222222-2222-4222-8222-222222222222/griffin.zip'], 'the data store and the package go to the private bucket, nowhere public');
-  assert.deepEqual(t.store, { data: '22222222-2222-4222-8222-222222222222/data.json', variants: {} }, 'the job names where its data is kept (no library on this machine for this test: no variant data of its own)');
+  // with the repo's picture library the variant takes made pictures, so its own data (griffin.data.json) is stored too
+  assert.deepEqual([...x.priv.keys()].sort(), ['22222222-2222-4222-8222-222222222222/data.json', '22222222-2222-4222-8222-222222222222/griffin.data.json', '22222222-2222-4222-8222-222222222222/griffin.zip'], 'the data store and the package go to the private bucket, nowhere public');
+  assert.ok([...x.pub.keys()].some(k => /\/t\/media\/library\//.test(k)), 'the library pictures a preview shows are published beside it');
+  assert.ok(![...x.pub.keys()].some(k => /data\.json$|\.zip$/.test(k)), 'no data store or package is public');
+  assert.deepEqual(t.store, { data: '22222222-2222-4222-8222-222222222222/data.json', variants: { griffin: '22222222-2222-4222-8222-222222222222/griffin.data.json' } }, 'the job names where its data is kept, each variant with made pictures its own');
   assert.ok(![...x.pub.keys()].some(k => k.endsWith('.zip')));
   assert.equal(x.saves.length, 1); assert.deepEqual(x.saves[0].variants.map(v => [v.slug, v.package]), [['griffin', 'pending']]); assert.equal(x.saves[0].packagesBefore, 0, 'the previews are saved before any package is made');
   assert.deepEqual(x.result.budget, { calls: 1, in: 21000, out: 2400, usd: 0.066 }, 'what the visitor cost: the reader, from the job ledger');
