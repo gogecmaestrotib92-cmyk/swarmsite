@@ -118,7 +118,7 @@
       if (near.length) { const p = c.at = near[Math.floor(rnd(0, near.length))], r = this.toLocal(p);
         await c.moveTo(r.x + rnd(10, Math.max(12, Math.min(r.w - 30, 220))), r.y + rnd(6, Math.max(8, Math.min(r.h - 10, 90))), { dur: rnd(800, 1500) }); if (!this.alive) return;
         const k = this.mk(c, 's2-peek', this.toLocal(p)); requestAnimationFrame(() => k.classList.add('on')); c.el.classList.add('look'); await sleep(rnd(900, 1700)); c.el.classList.remove('look'); this.fade(k); c.at = null; return; }
-      const h = this.home(c); await c.moveTo(h.x + rnd(-30, 30), h.y + rnd(-24, 60), { dur: rnd(1100, 1900) }); if (!this.alive) return; await sleep(rnd(700, 1600));
+      const h = this.home(c); await c.moveTo(h.x + rnd(-40, 40), h.y + rnd(-24, 70), { dur: rnd(1100, 1900) }); if (!this.alive) return; await sleep(rnd(300, 900));   // a short rest: a page with nothing to report yet must still look at work
     }
     /* ── one gesture per role, on the real rect, with the real text ── */
     async real(c, ev) {
