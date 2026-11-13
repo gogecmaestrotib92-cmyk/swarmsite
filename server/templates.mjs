@@ -63,6 +63,31 @@ export function extrasProblem(o) {
   if (o?.goal && String(o.goal).length > 80) return 'what visitors should do: at most 80 characters';
   return '';
 }
+// what the capture measured on the page (geometry.json: places in the page's own 1440-wide pixels), as events the
+// working screen draws where they happened: the agents frame a section, read the headline, lift a picture. Only what
+// was measured; a place without all four numbers is left out, and so is anything the capture did not find.
+export function pageEvents(dir) {
+  const J = f => { try { return JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')); } catch { return null; } };
+  const g = J('geometry.json') || {}, inv = J('inventory.json') || {}, ev = [];
+  const R = r => r && ['x', 'y', 'w', 'h'].every(k => Number.isFinite(r[k])) && r.w > 8 && r.h > 8 ? { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.w), h: Math.round(r.h) } : null;
+  const say = (role, text, rect) => { const r = R(rect); if (r) ev.push({ role, text: String(text).replace(/\s+/g, ' ').slice(0, 90), rect: r }); };
+  const q = t => `“${String(t || '').replace(/\s+/g, ' ').trim().slice(0, 40)}”`;
+  if (g.nav) say('Reader', `Menu · ${Number(g.nav.links) || 0} links`, g.nav.rect);
+  if (g.logo) say('Type', 'Logo found', g.logo);
+  if (g.h1) say('Reader', `Headline · ${q(g.h1.text)}`, g.h1.rect);
+  const secs = (g.sections || []).filter(x => R(x.rect)).slice(0, 8), imgs = (g.images || []).filter(x => R(x.rect)).slice(0, 6), heads = (g.headings || []).filter(x => R(x.rect) && x.text).slice(0, 5), ctas = (g.ctas || []).filter(x => R(x.rect) && x.text).slice(0, 3);
+  for (let i = 0; i < Math.max(secs.length, imgs.length, heads.length, ctas.length); i++) {   // down the page together, not one kind after another
+    if (secs[i]) say('Layout', `Section ${i + 1} · ${Number(secs[i].words) || 0} words`, secs[i].rect);
+    if (heads[i]) say('Copy', `Heading · ${q(heads[i].text)}`, heads[i].rect);
+    if (imgs[i]) say('Photos', `Picture ${i + 1} · ${Number(imgs[i].w) || 0}×${Number(imgs[i].h) || 0}`, imgs[i].rect);
+    if (ctas[i]) say('Copy', `Button · ${q(ctas[i].text)}`, ctas[i].rect);
+  }
+  const cc = inv.colors, cols = [...new Set((Array.isArray(cc) ? cc : [...(cc?.bg || []), ...(cc?.buttons || [])]).map(c => typeof c === 'string' ? c : c?.c).filter(c => /^#[0-9a-f]{3,8}$/i.test(String(c))))].slice(0, 4);
+  if (cols.length) ev.push({ role: 'Colour', text: `Colours · ${cols.join(' ')}` });
+  const fonts = (inv.typography?.families || inv.typography?.fonts || []).map(f => typeof f === 'string' ? f : f?.family || f?.name).filter(Boolean).slice(0, 2);
+  if (fonts.length) ev.push({ role: 'Type', text: `Typefaces · ${fonts.join(', ')}`.slice(0, 90) });
+  return { events: ev, pageHeight: Number.isFinite(g.pageHeight) ? Math.max(900, Math.min(7000, Math.round(g.pageHeight))) : 0 };
+}
 export const formFiles = form => [...(form.photos || []).map(p => p.file), ...(form.logo?.file ? [form.logo.file] : [])].filter(f => UPLOAD.test(String(f)));
 
 export const enabled = env => env.TEMPLATES_MODE === '1';
@@ -112,6 +137,12 @@ export async function runTemplateJob(deps) {
       await run('node', ['lib/pipeline/capture.mjs', job.url, '--out', jobRoot, ...(deps.chrome ? ['--chrome', deps.chrome] : [])], { timeoutMs: 420000, onLine: line => { const item = lastJson(line); if (item?.event) deps.emit([item.event]); } });
     } catch (e) { const bp = path.join(dir, 'blocked.json'); if (fs.existsSync(bp)) throw new Error(JSON.parse(fs.readFileSync(bp, 'utf8')).reason + ' Try the www/non-www address, or a page that is not behind the check.'); throw e; }
     if (fs.existsSync(path.join(dir, 'before-hero.jpg'))) result.beforeUrl = await deps.upload(path.join(dir, 'before-hero.jpg'), `${job.id}/before.jpg`, 'image/jpeg');
+    // the whole page and where each thing stands on it: the working screen shows the agents going down the real page
+    try { const pe = pageEvents(dir);
+      if (fs.existsSync(path.join(dir, 'before-full.jpg')) && pe.pageHeight) { result.beforeFullUrl = await deps.upload(path.join(dir, 'before-full.jpg'), `${job.id}/before-full.jpg`, 'image/jpeg'); result.pageHeight = pe.pageHeight; }
+      const seen = result.beforeFullUrl ? pe.events : pe.events.filter(e => !e.rect || e.rect.y + Math.min(e.rect.h, 200) <= 900);   // with only the first screen kept, only what stands on it
+      if (seen.length) await deps.emit(seen);
+    } catch { /* the pictures of the work are never worth the job */ }
     // "I built a first version of my app": their screenshots, fetched like a form's photographs, kept in their order
     const shots = (job.options?.screens || []).filter(f => UPLOAD.test(String(f))).slice(0, 6);
     if (shots.length) { const sd = path.join(dir, 'screens'); fs.mkdirSync(sd, { recursive: true });

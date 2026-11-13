@@ -23,6 +23,7 @@ if(st&&!still&&st.querySelector('.vis')){
   var KEY=[[0,151],[.157,185],[.27,204],[.38,217],[.49,222],[.61,218],[.72,206],[.83,187],[.945,85],[1,0]];
   var key=function(t){for(var i=1;i<KEY.length;i++)if(t<=KEY[i][0]){var a=KEY[i-1],b=KEY[i];return lerp(a[1],b[1],(t-a[0])/(b[0]-a[0]))}return 0};
   var setup=function(){on=mq.matches;st.classList.toggle('pinned',on);
+    var lv=document.getElementById('live'),host=on?vis.querySelector('.lay.base'):st.querySelector('.vin');if(lv&&host&&lv.parentNode!==host)host.appendChild(lv);   /* the agents' page stands in whichever picture is the one shown */
     if(!on){st.style.removeProperty('--P');track.style.transform='';if(kc){kc.style.width='';kc.style.marginRight='';kc.style.opacity=''}return}
     vh=innerHeight;ch=Math.min(468,vh-160);travel=vh+432;a1=kc?600:0;a4=travel+70;P=a0+a1+a2+a3+a4+n*per;
     st.style.setProperty('--P',P+'px');st.style.setProperty('--travel',travel+'px');st.style.setProperty('--ch',ch+'px');
@@ -39,6 +40,7 @@ if(st&&!still&&st.querySelector('.vis')){
     var X=lerp(x,fx,e2),W=lerp(w2,400,e2),H=lerp(h2,ch,e2),Y=pS<1?lerp(yy,fy+o0,e2):fy+key(tt)+(o0-151)*(1-tt)*(1-tt);
     vis.style.transform='translate3d('+X+'px,'+Y+'px,0)';vis.style.width=W+'px';vis.style.height=H+'px';vis.style.borderRadius=lerp(40,16,e2)+'px';
     if(vlab)vlab.style.opacity=cl(1-pS*3,0,1);
+    var lv2=document.getElementById('live');if(lv2){var q=pS>.02;if(q!==lv2.classList.contains('quiet')){lv2.classList.toggle('quiet',q);if(window.__agents)window.__agents.pause(q)}}   /* the agents leave as the picture becomes the small card */
     var t0=a0+a1+a2+a3+a4,i=y>=t0-150?cl(Math.floor((y-t0)/per),0,n-1):-1;
     if(i!==act){act=i;tbs.forEach(function(b,k){b.classList.toggle('on',k===i);b.setAttribute('aria-current',k===i?'true':'false')});
       arts.forEach(function(a,k){a.classList.toggle('on',k===i)});lays.forEach(function(l,k){l.classList.toggle('on',k===i||(i<0&&false))})}
@@ -51,6 +53,15 @@ if(st&&!still&&st.querySelector('.vis')){
   tbs.forEach(function(b,k){b.addEventListener('click',function(){if(!on)return;var top=st.getBoundingClientRect().top+scrollY;scrollTo({top:top+a0+a1+a2+a3+a4+k*per+20,behavior:'smooth'})})});
   setup();addEventListener('load',setup);
 }
+/* ours — the agents at work on a made-up client's page: the product's own script, fed the places capture measured on that
+   page, one after another and round again. They rest while the stage is off screen. */
+var live=document.getElementById('live');
+if(live&&window.Swarm2&&!still){var pg=live.querySelector('.lpage'),evs=null,ek=0,sw2=null,shown=true;
+  var feed=function(){if(sw2&&evs&&shown&&!sw2.paused&&sw2.queue.length<3){sw2.push([evs[ek%evs.length]]);ek++}setTimeout(feed,1300)};
+  var begin=function(){sw2=window.__agents=Swarm2.mount(live,{count:innerWidth<700?4:6,roam:true,busy:2});sw2.setPage(pg,pg.naturalHeight*1440/pg.naturalWidth);
+    if('IntersectionObserver' in window)new IntersectionObserver(function(en){shown=en[0].isIntersecting;sw2.pause(!shown||live.classList.contains('quiet'))}).observe(live);
+    fetch('/visuals/ui-page.json').then(function(r){return r.json()}).then(function(d){evs=d.events;sw2.know(evs);feed()}).catch(function(){})};
+  if(pg.complete&&pg.naturalWidth)begin();else pg.addEventListener('load',begin)}
 /* quotes: cards travel left to right on a rising curve through the middle of a pinned screen (measured: 1.18px per px of scroll,
    y = 450 - 329*tanh(1.5*(x-720)/1100) at 900 high, about 700 between cards) */
 var qs=document.querySelector('.qs'),lgm=document.querySelector('.lgm');

@@ -90,6 +90,11 @@ try {
   assert.ok(['adapt', 'select', 'render', 'gate'].every(k => typeof t.timings_ms[k] === 'number') && ['capture', 'read', 'choose', 'publish', 'package'].every(k => typeof t.timings_ms.steps[k] === 'number'), 'stage timings in the job record');
   assert.ok(x.result.beforeUrl && x.events.some(e => e.role === 'QA' && e.text === `Design ${gi + 1}: every screen passes`) && !x.events.some(e => /griffin/i.test(e.text)) && x.events.some(e => e.text === '1 picture'));
 
+  // 1a · what the capture measured on the page reaches the working screen with its place, so the agents act where it stands
+  assert.ok(x.events.some(e => e.role === 'Reader' && e.text === 'Menu · 6 links' && e.rect && e.rect.w === 1440 && e.rect.h === 72), 'the menu, with its place: ' + JSON.stringify(x.events.filter(e => e.rect)));
+  assert.ok(x.events.filter(e => e.rect).every(e => ['x', 'y', 'w', 'h'].every(k => Number.isFinite(e.rect[k]))) && !x.events.some(e => /^Button/.test(e.text)), 'a place without all four numbers is left out (the fixture’s buttons have only y)');
+  { const pe = (await import('../server/templates.mjs')).pageEvents(path.join(tmp, 'nothing-here')); assert.deepEqual(pe, { events: [], pageHeight: 0 }, 'no capture files: no events, and no error'); }
+
   // 1b · every design has a cover: its first screen photographed at rest, published by its id, in the job the chooser reads
   assert.ok(t.variants.every(v => v.cover === `https://storage.example/previews/${J}/t/${v.id}-cover.jpg` && x.pub.get(`${J}/t/${v.id}-cover.jpg`)?.type === 'image/jpeg' && x.pub.get(`${J}/t/${v.id}-cover.jpg`).bytes > 5000), JSON.stringify(t.variants.map(v => v.cover)));
   assert.ok(x.saves[0].variants.every(v => v.cover), 'the covers are in the job when the chooser first shows it');

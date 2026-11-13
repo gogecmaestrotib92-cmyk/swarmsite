@@ -55,3 +55,16 @@ def test_it_never_names_a_reference():
         src = read('web', f).lower()
         hit = [n for n in names if re.search(r'(?<![a-z0-9])%s(?![a-z0-9])' % re.escape(n), src)]
         assert not hit, f'{f} names {hit}'
+
+
+def test_the_agents_on_the_stage_act_on_measured_places_of_a_made_up_page():
+    """the landing's scene is the product's own agents (web/js/swarm2.js) fed the places measured on the made-up client's
+    page — nothing about a real client, every place inside the picture it is drawn on"""
+    import json
+    assert '/js/swarm2.js' in HTML and 'id="live"' in HTML and 'made-up client' in WORDS
+    d = json.loads(read('web', 'visuals', 'ui-page.json'))
+    w, h = map(int, re.search(r'ui-page\.webp" width="(\d+)" height="(\d+)"', HTML).groups())
+    assert abs(d['pageHeight'] - h * 1440 / w) < 8, 'the picture is the page the places were measured on'
+    placed = [e for e in d['events'] if e.get('rect')]
+    assert len(placed) >= 10 and all(0 <= e['rect']['x'] and e['rect']['x'] + e['rect']['w'] <= 1440 and e['rect']['y'] + min(e['rect']['h'], 420) <= d['pageHeight'] for e in placed)
+    assert {e['role'] for e in d['events']} <= {'Reader', 'Layout', 'Copy', 'Photos', 'Type', 'Colour'}

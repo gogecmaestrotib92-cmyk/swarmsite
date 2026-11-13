@@ -21,7 +21,7 @@ a{color:inherit;text-decoration:none}
 .url{font-family:var(--mono);font-size:13px;color:var(--muted)}
 .frame{width:min(1100px,94vw);aspect-ratio:16/9;background:var(--panel);border-radius:22px;overflow:hidden;position:relative;box-shadow:0 40px 100px rgba(17,17,17,.18)}
 .frame img{width:100%;height:auto;display:block;opacity:.0;transition:opacity .8s;will-change:transform}
-.frame img.in{opacity:.55}
+.frame img.in{opacity:1}
 .frame .skel{position:absolute;inset:0;background:linear-gradient(100deg,#1a1a1a 20%,#222 40%,#1a1a1a 60%);background-size:200% 100%;animation:sh 1.6s linear infinite}
 @keyframes sh{to{background-position:-200% 0}}
 .frame .hud{z-index:6;position:absolute;left:0;right:0;bottom:0;padding:18px 22px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.75));color:#fff;display:flex;justify-content:space-between;align-items:end;gap:16px;text-align:left}
@@ -202,7 +202,7 @@ a{color:inherit;text-decoration:none}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js" defer></script>
 <script src="/js/auth.js" defer></script>
 <script src="/js/header.js" defer></script>
-<script src="/js/swarm2.js?v=agent9"></script>
+<script src="/js/swarm2.js"></script>
 <script>
 const API = window.SWARMSITE_API; const qs = new URLSearchParams(location.search);
 const $ = s => document.querySelector(s);
@@ -263,7 +263,7 @@ addEventListener('DOMContentLoaded',()=>{ if(!window.Auth||!Auth.enabled) return
    ignored, which is why the phone view never changed anything; the stage now carries the state and the frame is sized by it. */
 document.querySelectorAll('.seg button[data-v]').forEach(b=>b.onclick=()=>{ document.querySelectorAll('.seg button[data-v]').forEach(x=>x.classList.toggle('on',x===b)); document.querySelector('.preview-stage').classList.toggle('is-phone',b.dataset.v==='mobile'); });
 let draftShown=-1, notifyDone=false, draftSw=null, lost=false, waited=false; let MICRO=$('#micro').textContent;
-const CREW=()=>({count:innerWidth<700?7:12,shape:'character',roam:true,busy:3});   /* a dozen agents, on the page from the first second and never idle while the job runs */
+const CREW=()=>({count:innerWidth<700?5:8,roam:true,busy:3});   /* the agents, each with one job, on the page from the first second: they act where the job reports something and go back over those places in between */
 $('#notifyGo').onclick=async()=>{ const email=$('#notifyEmail').value.trim(); if(!email) return; const id=new URLSearchParams(location.search).get('job'); if(!id) return; $('#notifyGo').disabled=true;
   try{ const r=await fetch(`${API}/jobs/${id}/notify`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email})}); if(!r.ok) throw new Error('could not save'); $('#notifyNote').textContent='We’ll email you the link. You can close this tab.'; $('#notifyEmail').disabled=true; notifyDone=true; }
   catch(e){ $('#notifyNote').textContent='Could not save that address — try again.'; $('#notifyGo').disabled=false; } };
@@ -345,7 +345,7 @@ function showDraft(job){ const d=job.result.draft; if(!d || d.round===draftShown
   $('#draftText').textContent=d.round===0?'Instant first version — your page in our template. The agents are now designing it properly':d.round===1?'The agents’ first design is up — they are still polishing it':'Updated — a better round just landed'; $('#draftRound').textContent=d.round===0?'v0':`round ${d.round}`;
   $('#draftBar').hidden=false; $('#stage').hidden=true; $('#result').classList.add('on'); layoutResult();
   // the same crew keeps working over the draft until the final page lands
-  if(!draftSw && window.Swarm2) draftSw=Swarm2.mount($('#draftSwarm'),{count:innerWidth<700?5:9,shape:'character',busy:3}); }   /* over a draft the agents come only with something to show: the visitor is reading the page */
+  if(!draftSw && window.Swarm2) draftSw=Swarm2.mount($('#draftSwarm'),{count:innerWidth<700?4:8,busy:3}); }   /* over a draft the agents come only with something to show: the visitor is reading the page */
 async function poll(id){ try{ const r=await fetch(`${API}/jobs/${id}`); if(!r.ok) throw new Error('job not found'); const job=await r.json(); renderSteps(job);
     if(lost||(waited&&job.status!=='queued')){ lost=false; waited=false; $('#micro').classList.remove('warn'); $('#micro').textContent=MICRO; }   /* what was said about the queue, or a lost connection, is taken back once it is no longer true */
     if(job.result?.templates && ['running','done'].includes(job.status)){ if(job.status==='done'){ still(); if(sw) sw.stop(); } showChooser(job); if(job.status==='done') return; }
