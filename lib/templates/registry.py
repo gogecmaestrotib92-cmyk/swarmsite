@@ -128,14 +128,27 @@ def rebase(page, d, media_base):
     return rx.sub(sub, page), list(used)
 
 
+def _page(slug, d, root=None):
+    """the template's page with what the template has no place for added under its sections (more.py): the client's
+    leftover sections in their own words, and the photographs the page did not ask for"""
+    page = load(slug, root).render(d)
+    if not isinstance(page, str):
+        raise TemplateError('template %r returned %s, not a page' % (slug, type(page).__name__))
+    key = 'swarmsite_templates_more'
+    if key not in sys.modules:
+        spec = importlib.util.spec_from_file_location(key, HERE / 'more.py')
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules[key] = mod
+        spec.loader.exec_module(mod)
+    return sys.modules[key].add(d, page)
+
+
 def render(slug, d, media_base=None, root=None):
     """One page from one template and one client's data. Pure: the same input gives the same bytes; `d` is not changed
     by the call as far as this function is concerned (the template gets the caller's dict — templates only read it)."""
     if not isinstance(d, dict):
         raise TemplateError('data must be a dict')
-    page = load(slug, root).render(d)
-    if not isinstance(page, str):
-        raise TemplateError('template %r returned %s, not a page' % (slug, type(page).__name__))
+    page = _page(slug, d, root)
     if media_base is None or media_base == DEFAULT_MEDIA_BASE:
         return page
     return rebase(page, d, media_base)[0]
@@ -143,7 +156,7 @@ def render(slug, d, media_base=None, root=None):
 
 def media_used(slug, d, root=None):
     """The data's media paths the rendered page asks for — what a package has to carry, and nothing else."""
-    return rebase(load(slug, root).render(d), d, '')[1]
+    return rebase(_page(slug, d, root), d, '')[1]
 
 
 # ───────────────────────── what every template must hold before it is in the library (tests and the import script)

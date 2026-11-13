@@ -74,8 +74,8 @@ def test_one_h1_no_none_and_the_clients_own_words(slug, client):
 @pytest.mark.parametrize('slug', SLUGS)
 def test_the_media_prefix_is_a_parameter_and_the_default_is_the_templates_own_page(slug):
     for name, d in CLIENTS.items():
-        own = R.load(slug).render(copy.deepcopy(d))
-        assert R.render(slug, d) == own and R.render(slug, d, '../../') == own
+        own = R._page(slug, copy.deepcopy(d))                      # the template's page with what it has no place for under its sections (more.py)
+        assert R.render(slug, d) == own and R.render(slug, d, '../../') == own and own.startswith(R.load(slug).render(copy.deepcopy(d))[:2000])
         paths = R.media_paths(d)
         used = R.media_used(slug, d)
         assert set(used) <= set(paths)
