@@ -495,3 +495,38 @@ def test_against_the_hand_made_files_the_facts_agree():
         mine, h = adapted('automateed')[1], hand['automateed']
         assert mine['brand'] == {**h['brand'], 'logo': 'media/logo.svg'} and mine['hero']['title'] == h['hero']['title'] and mine['nav'] == h['nav'] and mine['signin'] == h['signin']
         assert {p['name'] for p in h['plans']['items']} <= {p['name'] for p in mine['plans']['items']}
+
+
+def test_a_label_is_not_a_headline_and_one_statement_is_one_heading():
+    """a page with no h1 whose first heading is a section's label ("Latest News"): the name is the headline, not the
+    label; and a statement whose title is the headline again is not a second section — its text joins the opening"""
+    say = 'With your help the animals that come to us are fed, treated and found a home that will keep them.'
+    text = 'Latest News ' + say + ' Animals for adoption Cats Rabbits'
+    inv = {'url': 'https://fernhollow.example/', 'title': 'Fernhollow Rescue', 'copy': {'text': text, 'headings': [{'text': 'Latest News'}, {'text': 'Animals for adoption'}]}}
+    d = A.adapt({'inventory': inv})
+    assert A.validate(d) == [] and d['hero']['title'] == 'Fernhollow Rescue', 'a two-word heading is a label: the name stands in'
+    assert any('first heading is a label' in g for g in d['_adapter']['gaps'])
+    d = A.adapt({'inventory': inv, 'factsheet': {'best_sentence': say, 'page': {'statement': {'title': 'Latest News', 'text': say}}}})
+    assert d['hero']['title'] == 'Fernhollow Rescue' and d['hero']['text'] == say and 'statement' not in d, 'under the name, the sentence the reader singled out; not said twice'
+    inv3 = {**inv, 'copy': {'text': text, 'headings': [{'text': 'A home for every animal'}, {'text': 'Latest News'}]}}
+    assert A.adapt({'inventory': inv3})['hero']['title'] == 'A home for every animal', 'a first heading of three words or more stands in'
+    # the headline said again as the statement's title: one heading, the text with the opening
+    inv1 = {**inv, 'copy': {'h1': 'Latest News', 'text': text, 'headings': [{'text': 'Latest News'}]}}
+    d = A.adapt({'inventory': inv1, 'factsheet': {'page': {'statement': {'title': 'Latest News', 'text': say}}}})
+    assert A.validate(d) == [] and 'statement' not in d and d['hero']['title'] == 'Latest News' and say in (d['hero'].get('text'), d['hero'].get('text2'))
+    assert any(r.startswith('statement: left out') for r in d['_adapter']['rules'])
+    # any other block headed by the headline keeps its content and loses the heading
+    seed = product()
+    d0 = A.adapt(copy.deepcopy(seed))
+    blk = next(k for k, b in d0.items() if k not in ('hero', 'brand', 'statement') and isinstance(b, dict) and b.get('title'))
+    seed['inventory']['copy']['h1'] = d0[blk]['title']
+    d1 = A.adapt(seed)
+    assert A.validate(d1) == [] and 'title' not in d1[blk] and {k: v for k, v in d0[blk].items() if k != 'title'} == d1[blk] and any(r.startswith(blk + '.title: left out') for r in d1['_adapter']['rules'])
+    # the short line beside the opening that is one of the page's figures is said once, as the figure
+    fig = 'Latest News 35,411 people like this. ' + say
+    d = A.adapt({'inventory': {**inv1, 'copy': {'h1': 'A home for every animal', 'text': fig, 'headings': []}}, 'factsheet': {'page': {'note': '35,411 people like this', 'figures': [{'v': '35,411', 'l': 'people like this'}]}}})
+    assert (not d.get('figures')) or 'note' not in d['hero'], 'a figure is not also the note'
+    assert d.get('figures') and d['figures'][0]['v'] == '35,411', 'the reader\'s figure is kept (else this case tests nothing)'
+    # a statement with a heading of its own stays
+    d = A.adapt({'inventory': {**inv1, 'copy': {'h1': 'A home for every animal', 'text': 'A home for every animal ' + text, 'headings': []}}, 'factsheet': {'page': {'statement': {'title': 'Latest News', 'text': say}}}})
+    assert d.get('statement', {}).get('title') == 'Latest News'

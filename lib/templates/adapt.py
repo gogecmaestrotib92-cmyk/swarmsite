@@ -948,9 +948,15 @@ def adapt(seed):
         if len(best) > 1 and corpus.says(best[1]):
             hero['text'] = next(corpus.spans(best[1]))
     else:
-        first = next((norm(h.get('text')) for h in copy.get('headings') or [] if norm(h.get('text')) and len(norm(h.get('text')).split()) <= 12), '')
+        # a heading of one or two words is the label of a section ("Latest news", "Our services"), not what the client
+        # says of itself: set as the page's headline it opens the page on a label (owner's review, 2026-11-13)
+        first = next((norm(h.get('text')) for h in copy.get('headings') or [] if norm(h.get('text'))), '')
+        first = first if 3 <= len(first.split()) <= 12 else ''        # only the page's first heading can stand in: a later one heads a section
         hero['title'] = corpus.recase(first) if first else name
-        (rules if first else gaps).append('hero.title: the page has no h1; ' + ('its first heading stands in' if first else 'the brand name stands in'))
+        whole = norm(fs.get('best_sentence'))
+        if not first and whole and corpus.says(whole):                # under the name, the sentence the reader singled out (too long for a headline), word for word
+            hero['text'] = next(corpus.spans(whole))
+        (rules if first else gaps).append('hero.title: the page has no h1; ' + ('its first heading stands in' if first else 'the brand name stands in (the page\'s first heading is a label or a paragraph, not a headline)'))
     if hero_sec:
         pre = before(hero_sec['text'], hero_sec['title']) or ''
         if pre and len(pre) <= 48 and len(pre.split()) <= 6:
@@ -1248,6 +1254,28 @@ def adapt(seed):
     d['_media'] = media
     d['_adapter'] = {'version': VERSION, 'name_from': name_from, 'gaps': gaps, 'rules': rules, 'candidates': {'shots': shots},
                      'reader_missing': [m for m in fs.get('missing') or [] if isinstance(m, str)]}
+    # one statement is one heading: a section whose title is the headline again is not a second section — its text
+    # joins the opening where the opening has none, and the section is left out (a page that says "Latest News" as its
+    # headline, as its statement and in every band a template repeats a title in; owner's review, 2026-11-13)
+    st = d.get('statement')
+    if isinstance(st, dict) and _key(st.get('text')) and _key(st.get('text')) in (_key(d['hero'].get('text')), _key(d['hero'].get('text2'))):
+        del d['statement']                                           # the opening already says it
+        rules.append('statement: left out — its text is the opening\'s')
+    elif isinstance(st, dict) and _key(st.get('title')) and _key(st.get('title')) == _key(d['hero'].get('title')):
+        if st.get('text') and _key(st['text']) not in (_key(d['hero'].get('text')), _key(d['hero'].get('text2'))):
+            slot = 'text' if not d['hero'].get('text') else 'text2' if not d['hero'].get('text2') else ''
+            if slot:
+                d['hero'][slot] = st['text']
+        del d['statement']
+        rules.append('statement: left out — its heading is the headline again; its text stands with the opening')
+    figs = {_key('%s %s' % (f.get('v') or '', f.get('l') or '')) for f in d.get('figures') or [] if isinstance(f, dict)}
+    if d['hero'].get('note') and _key(d['hero']['note']) in figs:    # the short line beside the opening is one of the page's figures: said once, as the figure
+        del d['hero']['note']
+        rules.append('hero.note: left out — it is one of the figures')
+    for k, b in d.items():                                           # and no other block is headed by the headline: it keeps its content, without the heading
+        if k not in ('hero', 'brand', 'statement') and not k.startswith('_') and isinstance(b, dict) and _key(b.get('title')) and _key(b.get('title')) == _key(d['hero'].get('title')):
+            del b['title']
+            rules.append('%s.title: left out — it is the headline again' % k)
     return d
 
 
