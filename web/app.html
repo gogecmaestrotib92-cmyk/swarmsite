@@ -3,16 +3,15 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Swarmsite — rebuilding your site</title><meta name="robots" content="noindex">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Shrikhand&display=swap" rel="stylesheet">
-<link rel="preload" href="/fonts/instrument-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;1,400&amp;family=Figtree:wght@400;500;600;700&amp;family=Shrikhand&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/site.css">
 <link rel="stylesheet" href="/header.css">
 <style>
-@font-face{font-family:'Instrument Sans';font-weight:400;font-display:swap;src:url(/fonts/instrument-sans-latin-400-normal.woff2) format('woff2')}
-@font-face{font-family:'Instrument Sans';font-weight:500;font-display:swap;src:url(/fonts/instrument-sans-latin-500-normal.woff2) format('woff2')}
 @font-face{font-family:'JetBrains Mono';font-weight:400;font-display:swap;src:url(/fonts/jetbrains-mono-latin-400-normal.woff2) format('woff2')}
-:root{--paper:#F5F5F4;--ink:#111;--muted:#6B6B68;--line:rgba(17,17,17,.12);--panel:#141414;--sans:'Instrument Sans',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace}
+/* tokens, type, buttons and fields: /css/site.css (the shared layer). What follows is this page's own. */
+:root{--line:rgba(20,20,20,.12);--panel:#141414;--mono:'JetBrains Mono',ui-monospace,monospace}
 *{box-sizing:border-box;margin:0;padding:0}html,body{height:100%}
-body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+body{line-height:1.5}
 a{color:inherit;text-decoration:none}
 .lab{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
 .pill{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:9px 16px;font-weight:500;font-size:14px;border:1px solid var(--line);background:#fff;min-height:40px;cursor:pointer;transition:transform .35s cubic-bezier(.2,.8,.2,1)}
@@ -48,7 +47,7 @@ a{color:inherit;text-decoration:none}
 @keyframes pulse{50%{transform:scale(.6);opacity:.4}}
 .micro{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}
 /* result */
-.result{position:fixed;inset:var(--result-top-height,83px) 0 0;z-index:10;background:var(--paper);display:none;flex-direction:column}
+.result{position:fixed;inset:var(--result-top-height,83px) 0 0;z-index:10;background:var(--ground);display:none;flex-direction:column}
 .result.on{display:flex}
 .draft-bar{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--line);background:#fff;font:500 14px var(--sans);color:#111}.draft-bar[hidden]{display:none}.draft-bar .lab{margin-left:auto}.draft-dots{display:inline-flex;gap:4px}.draft-dots i{width:7px;height:7px;border-radius:50%;background:#7C3AED;animation:draftpulse 1.2s ease-in-out infinite}.draft-dots i:nth-child(2){background:#E63946;animation-delay:.2s}.draft-dots i:nth-child(3){background:#0EA5E9;animation-delay:.4s}@keyframes draftpulse{0%,100%{opacity:.35;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
 
@@ -108,7 +107,7 @@ a{color:inherit;text-decoration:none}
   @keyframes wk-look{0%,6%,92%,100%{transform:translateY(16px) rotate(0)}16%,30%{transform:translateY(0) rotate(-2deg)}42%,54%{transform:translateY(1px) rotate(-6deg)}66%,76%{transform:translateY(0) rotate(5deg)}86%{transform:translateY(3px) rotate(0)}}}
 
 /* the template path: three designs to choose from (side by side; stacked on a phone), each opens full screen, one is picked and downloaded */
-.choose{position:fixed;inset:var(--result-top-height,83px) 0 0;z-index:11;background:var(--paper);display:none;flex-direction:column;overflow:auto}
+.choose{position:fixed;inset:var(--result-top-height,83px) 0 0;z-index:11;background:var(--ground);display:none;flex-direction:column;overflow:auto}
 .choose.on{display:flex}
 .choose-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;padding:28px 24px 8px;max-width:1440px;width:100%;margin:0 auto}
 .choose-head h2{font:600 clamp(26px,3vw,40px)/1.05 var(--sans);letter-spacing:-.035em;margin:0}.choose-head p{margin:6px 0 0;color:var(--muted);max-width:60ch}
@@ -128,6 +127,52 @@ a{color:inherit;text-decoration:none}
 .full.is-phone{align-items:center}.full.is-phone iframe{flex:1 0 auto;width:390px;max-width:100%}
 @media(max-width:900px){.cards,.cards[data-n="2"]{grid-template-columns:minmax(0,1fr)}.choose-head{padding:22px 16px 4px}.cards{padding:16px}.choose-foot{padding:12px 16px}}
 @media(prefers-reduced-motion:reduce){.work::before,.work::after,.wk-robot i,.wk-robot .hd3::before,.wk-live,.frame .skel i,.draft-bar::after,.step.running .dot{animation:none!important}.wk-prog i.run::after{animation:none;background:rgba(255,255,255,.55)}.draft-bar::after{background-size:100% 100%;opacity:.5}}
+/* ── the shared layer's look (site.css: the library template's measured build) on this page ── */
+.lab{font:500 14px/1.3 var(--sans);color:var(--muted)}
+.pill{min-height:44px;padding:10px 18px;border-radius:8px;border:2px solid var(--ink);background:transparent;font:600 15px/1 var(--sans);color:var(--ink);transition:transform .2s}
+.pill:hover{transform:scale(.98)}.pill.ink{background:var(--accent);color:var(--on-accent);border-color:var(--on-accent)}
+.stage{gap:24px}.h{font:400 56px/.95 var(--serif);letter-spacing:-.03em;max-width:20ch}.frame .skel i{background:linear-gradient(100deg,#4a1d26 20%,#5c2a34 40%,#4a1d26 60%);background-size:200% 100%}.url{font:500 14px var(--sans)}
+.stage:has(.brief:not(.hide)) .h,.stage:has(.shots:not([hidden])) .h{font-size:75px;line-height:1}
+.brief{background:var(--card);border:0;border-radius:32px;padding:16px;gap:0;box-shadow:none}.brief>*{background:var(--paper)}
+.brief>.option-group,.brief>.brief-more,.brief>.brief-action{padding:24px 28px}.brief>:first-child{border-radius:16px 16px 0 0}.brief>:last-child{border-radius:0 0 16px 16px}
+.brief-action{border-top:2px solid var(--card)!important}.brief-action .pill.ink{min-height:52px}
+.chip{border:2px solid var(--card);background:var(--paper);font-weight:600}.chip:has(input:checked){background:var(--ground);border-color:var(--ink)}.chip input{accent-color:var(--ink)}
+.work::before,.work::after{display:none}.frame{border-radius:16px;box-shadow:none;background:var(--deep)}.frame .skel{background:var(--deep)}
+.steps{background:var(--card);border:0;border-radius:32px;padding:16px;gap:4px}.step{background:var(--paper);border:0;border-radius:12px}.step:first-child{border-radius:12px}
+.step.done .dot{background:var(--ink)}.notify-row{border:2px solid var(--ink);box-shadow:none;background:var(--paper)}.notify .pill{background:var(--accent);color:var(--ink);border-color:var(--ink)}
+.steps:empty{display:none}.stage:has(.shots:not([hidden])) :is(.steps,.log,.micro,.notify){display:none}
+.again{display:flex;gap:12px;justify-content:center}.again[hidden]{display:none}
+/* screenshots of an app, before it starts — one panel: card tone, a paper sheet on it */
+.shots{width:min(760px,100%)}.shots[hidden]{display:none}.shots .sheet{display:grid;gap:20px;text-align:left}
+.drop{position:relative;display:grid;justify-items:center;gap:8px;padding:36px 20px;border:2px dashed var(--line2);border-radius:16px;text-align:center;cursor:pointer;transition:border-color .2s,background-color .2s}
+.drop:hover,.drop:focus-within{border-color:var(--ink);background:var(--ground)}.drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}.thumbs:empty{display:none}
+.thumb{position:relative;display:grid;place-items:center;aspect-ratio:4/3;padding:8px;background:var(--card);border-radius:12px}.thumb img{max-width:100%;max-height:100%;width:auto;height:auto;border-radius:4px}
+.thumb.up img{opacity:.45}.thumb .x{position:absolute;top:6px;right:6px;width:32px;height:32px;border-radius:50%;background:var(--ink);color:var(--ground);font-size:18px;line-height:32px}
+.thumb .st{position:absolute;left:8px;bottom:8px;padding:2px 8px;border-radius:999px;background:var(--ground);font-size:12px}
+.shots-act{display:flex;gap:16px;align-items:center;flex-wrap:wrap}.shots-act .link{background:none;border:0;cursor:pointer}
+/* the chooser — the reference's plan cards: card tone, r32; the cover on it r16; serif names; the accent slab to choose */
+.choose{background:var(--ground)}.choose-head{display:grid;justify-items:center;justify-content:center;text-align:center;gap:12px;padding:56px 24px 16px}
+.choose-head h2{font:400 75px/1 var(--serif);letter-spacing:-.03em}.choose-head p{margin:0 auto;font-size:20px;line-height:1.3;color:var(--ink);max-width:640px;text-wrap:balance}
+.choose-meta{display:inline-flex;align-items:center;gap:10px;min-height:36px;padding:6px 14px;border-radius:999px;background:var(--card);font-size:14px;color:var(--ink)}.choose-meta:empty{display:none}
+.choose-meta i{width:8px;height:8px;border-radius:50%;background:var(--deep);animation:ch-live 1.4s ease-in-out infinite}.choose-meta.done i{animation:none;background:var(--ink)}@keyframes ch-live{50%{opacity:.25}}
+.cards{gap:16px;padding:32px 24px 40px}
+.card{border:2px solid transparent;border-radius:32px;background:var(--card);padding:16px;gap:0;transition:border-color .3s}.card.picked{border-color:var(--ink);box-shadow:none}
+.card .shot{border-radius:16px;background:var(--paper)}.card .shot img.cover{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top;opacity:0;transition:opacity .5s}
+.card .shot iframe{opacity:0;transition:opacity .5s}.card .shot.ready img.cover,.card .shot.ready iframe{opacity:1}
+.card .wait{position:absolute;inset:0;display:grid;align-content:center;justify-items:center;gap:14px;padding:24px;text-align:center;transition:opacity .4s}.card .shot.ready .wait{opacity:0;pointer-events:none}
+.card .wait .bars{display:grid;gap:8px;width:62%}.card .wait .bars i{height:10px;border-radius:6px;background:linear-gradient(90deg,var(--card) 20%,#ece9e3 40%,var(--card) 60%);background-size:200% 100%;animation:sh 1.6s linear infinite}
+.card .wait .bars i:nth-child(1){height:22px;width:80%;justify-self:center}.card .wait .bars i:nth-child(2){height:22px;width:60%;justify-self:center}.card .wait .bars i:nth-child(3){width:70%;justify-self:center}
+.card .wait span{font-size:14px;color:var(--muted)}
+.card .meta{flex-direction:row;align-items:baseline;justify-content:space-between;padding:20px 8px 4px}.card .name{font:400 32px/.95 var(--serif);letter-spacing:-.03em}
+.card .acts{padding:16px 8px 8px;gap:8px}.card .acts .pill{flex:1 1 auto;justify-content:center}
+.choose-foot{background:var(--ground);border-top:2px solid var(--card);padding:16px 24px}.choose-note{color:var(--ink);font-size:16px}
+.choose-foot .pill{min-height:52px;padding-inline:24px}
+.full-bar{background:var(--ground);border-bottom:2px solid var(--card);padding:12px 16px}
+.seg{border:2px solid var(--card);border-radius:22px;background:var(--card);padding:2px;gap:2px;flex-wrap:wrap;max-width:100%}.seg button{border-radius:999px;background:transparent;font-weight:600}.seg button.on{background:var(--ground);color:var(--ink);box-shadow:inset 0 0 0 2px var(--ink)}
+.seg.studio button.on{border-color:var(--ink)}
+@media(max-width:991px){.h,.stage:has(.brief:not(.hide)) .h,.stage:has(.shots:not([hidden])) .h{font-size:44px}.choose-head h2{font-size:44px}.choose-head p{font-size:18px}.choose-head{padding:32px 20px 8px}.card{border-radius:24px;padding:10px}.cards{padding:20px 16px 28px}}
+@media(prefers-reduced-motion:reduce){.choose-meta i,.card .wait .bars i{animation:none!important}}
 </style>
 </head>
 <body>
@@ -137,7 +182,7 @@ a{color:inherit;text-decoration:none}
   <span class="lab" id="urlLab"></span>
   <h1 class="h" id="h">Reading your site…</h1>
   <p class="brief-caption">Choose what to keep. Your agents will shape the rest.</p>
-  <form class="brief" id="brief" onsubmit="return false">
+  <form class="brief hide" id="brief" onsubmit="return false">
     <fieldset class="option-group"><legend>Does this page already rank on Google?</legend><div class="row">
       <label class="chip"><input type="radio" name="mode" value="seo-safe" checked><span>Yes — keep my SEO</span></label>
       <label class="chip"><input type="radio" name="mode" value="free"><span>No — redesign freely</span></label>
@@ -160,6 +205,12 @@ a{color:inherit;text-decoration:none}
     </details>
     <div class="brief-action"><button class="pill ink" id="go">Start my preview <span aria-hidden="true">↗</span></button><p>Your current website stays unchanged.</p></div>
   </form>
+  <form class="shots panel" id="shots" hidden onsubmit="return false"><div class="sheet">
+    <label class="drop" for="shotFiles"><input type="file" id="shotFiles" accept="image/png,image/jpeg,image/webp" multiple><span class="h-s">Add up to six screenshots</span><span class="small">PNG, JPEG or WebP, each under 8 MB. Your screens are shown whole, never cropped.</span></label>
+    <ul class="thumbs" id="thumbs" aria-label="Your screenshots"></ul>
+    <div class="shots-act"><button class="btn" id="shotsGo" type="submit">Create my designs</button><button class="link" id="shotsSkip" type="button">Start without screenshots</button></div>
+    <p class="small" id="shotsNote" role="status"></p>
+  </div></form>
   <div class="work" id="work"><div class="wk-crew" aria-hidden="true"><span class="wk-robot" style="--sheet:url('/agents/peek-blue.webp');--delay:0s"><i class="g1"></i><i class="g2"></i><i class="hd3"></i></span><span class="wk-robot" style="--sheet:url('/agents/peek-rose.webp');--delay:-1.3s"><i class="g1"></i><i class="g2"></i><i class="hd3"></i></span><span class="wk-robot" style="--sheet:url('/agents/peek-ivory.webp');--delay:-2.6s"><i class="g1"></i><i class="g2"></i><i class="hd3"></i></span><span class="wk-robot" style="--sheet:url('/agents/peek-sage.webp');--delay:-0.7s"><i class="g1"></i><i class="g2"></i><i class="hd3"></i></span><span class="wk-robot" style="--sheet:url('/agents/peek-rose.webp');--delay:-3.1s"><i class="g1"></i><i class="g2"></i><i class="hd3"></i></span><span class="wk-robot" style="--sheet:url('/agents/peek-blue.webp');--delay:-1.9s"><i class="g1"></i><i class="g2"></i><i class="hd3"></i></span></div>
   <div class="frame" id="frame"><div class="skel" id="skel"><i class="sk-nav"></i><i class="sk-h"></i><i class="sk-h sk-h2"></i><i class="sk-p"></i><i class="sk-btn"></i><i class="sk-img"></i></div><img id="before" alt=""><div class="hud"><div class="wk-prog" id="prog" role="progressbar" aria-label="Steps finished" aria-valuemin="0" aria-valuemax="6" aria-valuenow="0"></div><div class="hud-row"><span class="hud-l"><i class="wk-live" aria-hidden="true"></i><span class="lab" id="hudL" role="status">agents waking up</span></span><span class="lab hud-r"><span id="clock" aria-label="Time so far">00:00</span><span id="hudR">0 / 6</span></span></div></div></div></div>
   <div class="log" id="log"></div>
@@ -167,6 +218,7 @@ a{color:inherit;text-decoration:none}
   <div class="micro"><span class="lab" id="micro">First version in under a minute · stay or come back, this page remembers the job</span></div>
   <form class="notify" id="notify" hidden onsubmit="return false"><label for="notifyEmail">Email me the link when it’s ready</label><div class="notify-row"><input id="notifyEmail" type="email" placeholder="you@company.com" autocomplete="email"><button class="pill" id="notifyGo">Notify me</button></div><span class="lab" id="notifyNote"></span></form>
   <p class="err" id="err" role="alert"></p>
+  <div class="again" id="again" hidden><button class="btn" id="againGo" type="button">Try again</button><a class="pill" href="/">Back to the front page</a></div>
 </section>
 
 <div class="result" id="result">
@@ -179,11 +231,11 @@ a{color:inherit;text-decoration:none}
 </div>
 
 <div class="choose" id="choose" aria-labelledby="chooseH">
-  <div class="choose-head"><div><h2 id="chooseH">Choose a design</h2><p id="chooseSub">Three designs made from your site, each checked on a desk screen and a phone. Open one to see it whole.</p></div><span class="lab" id="chooseMeta"></span></div>
+  <div class="choose-head"><p class="tag">Your designs</p><h2 id="chooseH">Choose <em>a design</em></h2><p id="chooseSub">Three designs made from your site, each checked on a desk screen and a phone. Open one to see it whole.</p><span class="choose-meta" id="chooseMeta" role="status"></span></div>
   <div class="cards" id="cards"></div>
   <div class="choose-none" id="chooseNone" hidden><p id="chooseNoneP"></p><ul id="chooseWhy"></ul><p id="chooseStart" style="margin-top:14px">Or <a href="/start" style="text-decoration:underline">tell us about your business</a>: three designs from what you write and your own photographs.</p></div>
   <details class="choose-none" id="chooseLeft" hidden><summary>What the page leaves out, because the form did not say it</summary><ul id="chooseLeftList"></ul></details>
-  <div class="choose-foot"><p class="choose-note" id="chooseNote" role="status">Pick the one you like.</p><span style="display:flex;gap:8px;flex-wrap:wrap"><button class="pill ink" id="payGo" hidden>Pay and download</button><button class="pill ink" id="download" disabled>Download the page <span aria-hidden="true">↓</span></button></span></div>
+  <div class="choose-foot"><p class="choose-note" id="chooseNote" role="status">Pick the one you like.</p><span style="display:flex;gap:8px;flex-wrap:wrap"><a class="pill" id="editGo" hidden>Edit and publish</a><button class="pill ink" id="payGo" hidden>Pay and download</button><button class="pill ink" id="download" disabled>Download the page <span aria-hidden="true">↓</span></button></span></div>
 </div>
 <div class="full" id="full" role="dialog" aria-modal="true" aria-label="Design, full screen">
   <div class="full-bar"><span class="lab" id="fullName"></span><div class="seg"><button class="on" data-f="desktop">Desktop</button><button data-f="mobile">Phone</button></div><div class="l"><button class="pill ink" id="fullPick">Choose this one</button><button class="pill" id="fullClose">Close</button></div></div>
@@ -254,7 +306,7 @@ addEventListener('DOMContentLoaded',()=>{ if(!window.Auth||!Auth.enabled) return
 /* Desktop / Phone: bound once, so it works on a draft too. The preview is a flex item that grows — a width set on it was
    ignored, which is why the phone view never changed anything; the stage now carries the state and the frame is sized by it. */
 document.querySelectorAll('.seg button[data-v]').forEach(b=>b.onclick=()=>{ document.querySelectorAll('.seg button[data-v]').forEach(x=>x.classList.toggle('on',x===b)); document.querySelector('.preview-stage').classList.toggle('is-phone',b.dataset.v==='mobile'); });
-let draftShown=-1, notifyDone=false, draftSw=null, lost=false, waited=false; const MICRO=$('#micro').textContent;
+let draftShown=-1, notifyDone=false, draftSw=null, lost=false, waited=false; let MICRO=$('#micro').textContent;
 const CREW=()=>({count:innerWidth<700?7:12,shape:'character',roam:true,busy:3});   /* a dozen agents, on the page from the first second and never idle while the job runs */
 $('#notifyGo').onclick=async()=>{ const email=$('#notifyEmail').value.trim(); if(!email) return; const id=new URLSearchParams(location.search).get('job'); if(!id) return; $('#notifyGo').disabled=true;
   try{ const r=await fetch(`${API}/jobs/${id}/notify`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email})}); if(!r.ok) throw new Error('could not save'); $('#notifyNote').textContent='We’ll email you the link. You can close this tab.'; $('#notifyEmail').disabled=true; notifyDone=true; }
@@ -266,6 +318,8 @@ let CFG=null; const config=async()=>{ if(CFG) return CFG; try{ CFG=await (await 
 let picked='', chooserFor='';
 /* a design is shown by the name the server gives it ("Design 1"); `slug` in the job is its id (v1), never a template's */
 const nameOf=id=>{ const vs=lastJob?.result?.templates?.variants||[]; const i=vs.findIndex(v=>v.slug===id); return i<0?'This design':(vs[i].name||`Design ${i+1}`); };
+function waiting(text){ const w=document.createElement('div'); w.className='wait'; const bars=document.createElement('div'); bars.className='bars'; bars.setAttribute('aria-hidden','true'); bars.append(...[0,1,2,3].map(()=>document.createElement('i'))); const t=document.createElement('span'); t.textContent=text; w.append(bars,t); return w; }
+function live(shot,v){ const f=document.createElement('iframe'); f.src=v.url; f.title=nameOf(v.slug)+' — preview'; f.loading='lazy'; f.tabIndex=-1; f.setAttribute('aria-hidden','true'); f.addEventListener('load',()=>setTimeout(()=>shot.classList.add('ready'),2500),{once:true}); shot.appendChild(f); const t=shot.querySelector('.wait span'); if(t) t.textContent='Drawing the first screen…'; requestAnimationFrame(fitShots); }   /* the live page is held back until it has loaded and its opening has played */
 function fitShots(){ document.querySelectorAll('.card .shot').forEach(sh=>{ const f=sh.querySelector('iframe'); if(f) f.style.transform=`scale(${sh.clientWidth/1440})`; }); }
 addEventListener('resize',fitShots);
 function openFull(v){ const f=$('#full'); $('#fullFrame').src=v.url; $('#fullName').textContent=nameOf(v.slug); f.dataset.slug=v.slug; f.classList.add('on'); $('#fullClose').focus(); }
@@ -275,7 +329,7 @@ $('#fullPick').onclick=()=>{ pick($('#full').dataset.slug); closeFull(); };
 document.querySelectorAll('.seg button[data-f]').forEach(b=>b.onclick=()=>{ document.querySelectorAll('.seg button[data-f]').forEach(x=>x.classList.toggle('on',x===b)); $('#full').classList.toggle('is-phone',b.dataset.f==='mobile'); });
 function pick(slug){ if(slug!==picked){ said={slug:'',text:''}; $('#payGo').hidden=true; $('#download').hidden=false; } picked=slug;document.querySelectorAll('.card').forEach(c=>{ const on=c.dataset.slug===slug; c.classList.toggle('picked',on); const b=c.querySelector('.pickb'); if(b){ b.setAttribute('aria-pressed',String(on)); b.textContent=on?'Chosen ✓':'Choose this one'; } }); renderDownload(); }
 let lastJob=null;
-function renderDownload(){ const v=(lastJob?.result?.templates?.variants||[]).find(x=>x.slug===picked); const b=$('#download'), n=$('#chooseNote');
+function renderDownload(){ const v=(lastJob?.result?.templates?.variants||[]).find(x=>x.slug===picked); const b=$('#download'), n=$('#chooseNote'); const ed=$('#editGo'); ed.hidden=!(v&&lastJob?.status==='done'&&lastJob?.result?.templates?.store); if(v) ed.href=`/edit?job=${encodeURIComponent(lastJob.id)}&slug=${encodeURIComponent(v.slug)}`;
   if(!v){ b.disabled=true; n.textContent='Pick the one you like.'; return; }
   if(v.package==='pending'){ b.disabled=true; n.textContent=`${nameOf(v.slug)} chosen · its download is being prepared…`; return; }
   if(v.package!=='ready'){ b.disabled=true; n.textContent=`${nameOf(v.slug)} can be looked at but not downloaded: its file did not match the preview.`; return; }
@@ -301,11 +355,13 @@ let paidSeen=false;
 function showChooser(job){ lastJob=job;
   if(!paidSeen){ const p=new URLSearchParams(location.search).get('paid'); if(p&&p!=='0'&&(job.result?.templates?.variants||[]).some(v=>v.slug===p)){ paidSeen=true; setTimeout(()=>{ pick(p); say(p,'Payment received. Download the page — if it says payment is still needed, give it a moment.'); },0); } } const t=job.result.templates, vs=t.variants||[];
   $('#stage').hidden=true; $('#result').classList.remove('on'); $('#choose').classList.add('on'); layoutResult();
-  $('#chooseMeta').textContent=job.status==='done'?(job.result.seconds?`${job.result.seconds}s`:''):'still preparing the downloads…';
-  if(chooserFor!==job.id+':'+vs.map(v=>v.slug).join(',')){ chooserFor=job.id+':'+vs.map(v=>v.slug).join(','); const cards=$('#cards'); cards.replaceChildren(); cards.dataset.n=String(vs.length);
+  { const m=$('#chooseMeta'), left=vs.filter(v=>v.package==='pending').length; m.classList.toggle('done',job.status==='done'); m.replaceChildren(document.createElement('i'),document.createTextNode(job.status==='done'?(vs.length?`Ready · ${vs.length} design${vs.length===1?'':'s'} · checked on a desk screen and a phone`:'Finished'):`Preparing the downloads · ${vs.length-left} of ${vs.length} ready`)); }
+  const key=job.id+':'+vs.map(v=>v.slug+(v.cover?'+':'')).join(','); if(chooserFor!==key){ chooserFor=key; const cards=$('#cards'); cards.replaceChildren(); cards.dataset.n=String(vs.length);
     for(const v of vs){ const card=document.createElement('article'); card.className='card'; card.dataset.slug=v.slug;
-      const shot=document.createElement('div'); shot.className='shot'; const f=document.createElement('iframe'); f.src=v.url; f.title=nameOf(v.slug)+' — preview'; f.loading='lazy'; f.tabIndex=-1; f.setAttribute('aria-hidden','true'); shot.appendChild(f);
-      const meta=document.createElement('div'); meta.className='meta'; const nm=document.createElement('span'); nm.className='name'; nm.textContent=nameOf(v.slug); const how=document.createElement('span'); how.className='how'; how.textContent=String(v.approach||'').replace(/\s*·\s*/g,' · '); meta.append(nm,how);
+      const shot=document.createElement('div'); shot.className='shot'; shot.appendChild(waiting(v.cover?'Bringing in the cover…':'Drawing the first screen…'));   /* a card shows its design only once it is whole: a still cover taken by the worker at rest, else the live page after it has settled */
+      if(v.cover){ const im=document.createElement('img'); im.className='cover'; im.alt=nameOf(v.slug)+': its first screen'; im.decoding='async'; im.onload=()=>shot.classList.add('ready'); im.onerror=()=>{ im.remove(); live(shot,v); }; im.src=v.cover; shot.appendChild(im); }
+      else live(shot,v);
+      const meta=document.createElement('div'); meta.className='meta'; const nm=document.createElement('span'); nm.className='name'; nm.textContent=nameOf(v.slug); meta.append(nm);   /* nothing internal under the name (owner, 2026-11-12) */
       const acts=document.createElement('div'); acts.className='acts'; const open=document.createElement('button'); open.className='pill open'; open.textContent='Open full screen ↗'; open.onclick=()=>openFull(v);
       const pb=document.createElement('button'); pb.className='pill ink pickb'; pb.setAttribute('aria-pressed','false'); pb.textContent='Choose this one'; pb.onclick=()=>pick(v.slug); const ed=document.createElement('a'); ed.className='pill editb'; ed.href=`/edit?job=${encodeURIComponent(job.id)}&slug=${encodeURIComponent(v.slug)}`; ed.textContent='Edit'; acts.append(open,pb,ed);
       card.append(shot,meta,acts); cards.appendChild(card); }
@@ -337,13 +393,13 @@ async function poll(id){ try{ const r=await fetch(`${API}/jobs/${id}`); if(!r.ok
   setTimeout(()=>poll(id), 3000); }
 if(innerWidth>700){const m=document.getElementById('briefMore'); if(m) m.open=true;}
 function briefData(){ const f=$('#brief'); const d={keepFont:f.keepFont.checked,keepColours:f.keepColours.checked,keepLogo:f.keepLogo.checked,mode:(f.querySelector('[name=mode]:checked')||{}).value||'seo-safe',kind:(f.querySelector('[name=kind]:checked')||{}).value||'',keep:f.keep.value.trim(),goal:f.goal.value.trim()}; return d; }
-async function launch(url){
+async function launch(url,extra){
   const button=$('#go'); if(button.disabled) return; button.disabled=true; $('#err').textContent='';
   $('#brief').classList.add('hide'); $('#h').textContent='Reading your site…';
   try {
     $('#work').classList.remove('is-still'); startClock(Date.now()); sw=Swarm2.mount($('#frame'),CREW());
     const send=window.Auth&&Auth.enabled?(p,i)=>Auth.api(p,i):(p,i)=>fetch(API+p,i);   /* a signed-in visitor's preview is theirs from the start */
-    const cfg=await config(); const options={...briefData(),...(cfg.templates?{engine:'templates'}:{})};   /* the template path, where the deployment has it on */
+    const cfg=await config(); const options=cfg.templates?{engine:'templates',...(extra||{})}:briefData();   /* the template path, where the deployment has it on: no brief; what the visitor gave beside the address */
     const r=await send('/jobs',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url,options})});
     const j=await r.json().catch(()=>({}));
     if(r.status===401&&j.login){ location.href='/login?next='+encodeURIComponent('/app?url='+encodeURIComponent(url)); return; }
@@ -351,18 +407,32 @@ async function launch(url){
     if(!r.ok || !j.id) throw new Error('Could not start preview');
     history.replaceState(null,'',`/app?url=${encodeURIComponent(url)}&job=${j.id}`); poll(j.id);
   } catch(e) {
-    if(sw){sw.stop();sw=null} if(draftSw){draftSw.stop();draftSw=null} clearInterval(ticking); ticking=null; t0=0; document.title=TITLE; $('#brief').classList.remove('hide'); $('#h').textContent='Set the direction.';
+    if(sw){sw.stop();sw=null} if(draftSw){draftSw.stop();draftSw=null} clearInterval(ticking); ticking=null; t0=0; document.title=TITLE; if(CFG&&CFG.templates){ $('#h').textContent='That did not start.'; $('#again').hidden=false; $('#againGo').onclick=()=>{ $('#again').hidden=true; launch(url,extra); }; } else { $('#brief').classList.remove('hide'); $('#h').textContent='Set the direction.'; }
     $('#err').textContent=e&&e.shown?e.message:'We couldn’t start your preview. Check your connection and try again.';
     setTimeout(()=>{button.disabled=false},750);
   }
 }
 async function start(){ let id=qs.get('job'); const url=qs.get('url'); $('#urlLab').textContent=url?('https://'+url.replace(/^https?:\/\//,'')):'';
-  if(id){ $('#brief').classList.add('hide'); sw=Swarm2.mount($('#frame'),CREW()); poll(id); return; }
+  if(id){ $('#brief').classList.add('hide'); sw=Swarm2.mount($('#frame'),CREW()); poll(id); config().then(c=>{ if(c.templates){ MICRO='Stay or come back: this page remembers the job'; if(!lost) $('#micro').textContent=MICRO; } }); return; }
   if(!url){ /* nothing to work on: a signed-in visitor starts one among their projects, anyone else on the front page.
        The account script is deferred, so the answer is only known once the document is parsed. */
     const leave=async()=>{ const signed=window.Auth&&Auth.enabled&&await Auth.session(); location.replace(signed?'/dashboard#new':'/#top'); };
     if(document.readyState==='loading') addEventListener('DOMContentLoaded',leave); else leave(); return; }
-  $('#h').textContent='Set the direction.'; $('#brief').querySelector('[name=kind][value=""]').checked=true; $('#go').onclick=()=>launch(url); }
+  const cfg=await config();
+  if(cfg.templates){ MICRO='Stay or come back: this page remembers the job'; $('#micro').textContent=MICRO; const extra={}; const niche=qs.get('niche'), goal=(qs.get('goal')||'').trim().slice(0,80); if(niche) extra.niche=niche; if(goal) extra.goal=goal;
+    if(qs.get('with')==='screens') return shotsStep(url,extra);   /* "I built a first version of my app": its screenshots first */
+    return launch(url,extra); }   /* "I have a site": the designs start at once */
+  $('#brief').classList.remove('hide'); $('#h').textContent='Set the direction.'; $('#brief').querySelector('[name=kind][value=""]').checked=true; $('#go').onclick=()=>launch(url); }
+/* up to six screenshots, each uploaded as it is chosen (POST /uploads, the form's own route); the job carries their names */
+function shotsStep(url,extra){ const shots=[]; const list=$('#thumbs'), note=$('#shotsNote'), go=$('#shotsGo'); $('#shots').hidden=false; $('#work').hidden=true; $('#h').textContent='Add screenshots of your app';
+  const busy=()=>shots.some(s=>!s.file&&!s.failed); const paint=()=>{ go.disabled=busy(); note.textContent=busy()?'Uploading…':shots.filter(s=>s.file).length?`${shots.filter(s=>s.file).length} of 6 added`:''; };
+  $('#shotFiles').onchange=e=>{ for(const f of [...e.target.files]){ if(shots.length>=6){ note.textContent='Six is the most a design shows.'; break; } const s={f}; shots.push(s);
+      const li=document.createElement('li'); li.className='thumb up'; const im=document.createElement('img'); im.alt='Screenshot '+shots.length; im.src=URL.createObjectURL(f); const st=document.createElement('span'); st.className='st'; st.textContent='Uploading'; const x=document.createElement('button'); x.type='button'; x.className='x'; x.textContent='×'; x.setAttribute('aria-label','Remove '+im.alt);
+      x.onclick=()=>{ shots.splice(shots.indexOf(s),1); li.remove(); paint(); }; li.append(im,st,x); list.appendChild(li); paint();
+      fetch(API+'/uploads',{method:'POST',headers:{'content-type':'application/octet-stream'},body:f}).then(r=>r.json().then(j=>{ if(!r.ok||!j.file) throw new Error(j.error||'not kept'); s.file=j.file; li.classList.remove('up'); st.remove(); }))
+        .catch(err=>{ s.failed=true; st.textContent=String(err.message||'Could not upload'); }).finally(paint); } e.target.value=''; };
+  const begin=files=>{ $('#shots').hidden=true; $('#work').hidden=false; launch(url,{...extra,...(files.length?{screens:files}:{})}); };
+  go.onclick=()=>{ if(!busy()) begin(shots.filter(s=>s.file).map(s=>s.file)); }; $('#shotsSkip').onclick=()=>begin([]); paint(); }
 start();
 </script>
 </body></html>

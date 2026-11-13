@@ -52,6 +52,17 @@ export function formProblem(form) {
   if (form.logo && !UPLOAD.test(String(form.logo.file || ''))) return 'the logo was not uploaded here';
   return '';
 }
+// what a visitor may add beside an address (web/app.html): up to six screenshots of their product (uploads of this
+// server), the kind of business (one of the template niches) and what visitors should do (the button's words)
+export const KINDS = ['software', 'app', 'restaurant', 'hotel', 'clinic', 'law', 'service', 'shop', 'school', 'person', 'corporate', 'nonprofit', 'venue'];
+export function extrasProblem(o) {
+  const s = o?.screens ?? [];
+  if (!Array.isArray(s) || s.length > 6) return 'at most 6 screenshots';
+  for (const f of s) if (!UPLOAD.test(String(f || ''))) return 'a screenshot was not uploaded here';
+  if (o?.niche && !KINDS.includes(String(o.niche))) return 'unknown kind of business';
+  if (o?.goal && String(o.goal).length > 80) return 'what visitors should do: at most 80 characters';
+  return '';
+}
 export const formFiles = form => [...(form.photos || []).map(p => p.file), ...(form.logo?.file ? [form.logo.file] : [])].filter(f => UPLOAD.test(String(f)));
 
 export const enabled = env => env.TEMPLATES_MODE === '1';
@@ -101,6 +112,13 @@ export async function runTemplateJob(deps) {
       await run('node', ['lib/pipeline/capture.mjs', job.url, '--out', jobRoot, ...(deps.chrome ? ['--chrome', deps.chrome] : [])], { timeoutMs: 420000, onLine: line => { const item = lastJson(line); if (item?.event) deps.emit([item.event]); } });
     } catch (e) { const bp = path.join(dir, 'blocked.json'); if (fs.existsSync(bp)) throw new Error(JSON.parse(fs.readFileSync(bp, 'utf8')).reason + ' Try the www/non-www address, or a page that is not behind the check.'); throw e; }
     if (fs.existsSync(path.join(dir, 'before-hero.jpg'))) result.beforeUrl = await deps.upload(path.join(dir, 'before-hero.jpg'), `${job.id}/before.jpg`, 'image/jpeg');
+    // "I built a first version of my app": their screenshots, fetched like a form's photographs, kept in their order
+    const shots = (job.options?.screens || []).filter(f => UPLOAD.test(String(f))).slice(0, 6);
+    if (shots.length) { const sd = path.join(dir, 'screens'); fs.mkdirSync(sd, { recursive: true });
+      for (const [i, f] of shots.entries()) await deps.fetchUpload(f, path.join(sd, `${String(i + 1).padStart(2, '0')}-${f}`));
+      extra.push('--screens', sd); await deps.emit([{ role: 'Reader', text: `${shots.length} screenshot${shots.length === 1 ? '' : 's'} from you` }]); }
+    if (KINDS.includes(String(job.options?.niche || ''))) extra.push('--kind', String(job.options.niche));
+    const goal = String(job.options?.goal || '').replace(/\s+/g, ' ').trim().slice(0, 40); if (goal) extra.push('--goal', goal);
   });
   if (!fromForm) await step('read', async () => {
     const f = lastJson(await run('python3', ['-c', READER, dir], { timeoutMs: deps.readerTimeoutMs || 180000 })) || {};
@@ -128,6 +146,12 @@ export async function runTemplateJob(deps) {
       out.push({ slug, id, name: designName(i), approach: c.approach || '', why: c.why || '', url: `${deps.self}/t/${job.id}/${id}`, package: 'pending', ...(c.made ? { made: c.made } : {}),
         ...(c.drops?.length ? { drops: c.drops } : {}), ...(c.fallback ? { fallback: true, niche: c.niche } : {}) });
     }
+    // each design's cover: its first screen photographed at rest (lib/templates/covers.mjs), so the chooser never shows a
+    // page caught half-drawn. A cover that could not be taken leaves that card to its live preview — never the job.
+    if (shown.length) try {
+      const cd = path.join(tdir, 'covers'), r = lastJson(await run('node', ['lib/templates/covers.mjs', cd, ...shown.map(s => path.join(tdir, `${s}.html`))], { timeoutMs: 120000 })) || {};
+      for (const v of out) { const f = r.covers?.[v.slug]; if (f && fs.existsSync(path.join(cd, f))) v.cover = await deps.upload(path.join(cd, f), `${job.id}/t/${v.id}-cover.jpg`, 'image/jpeg'); }
+    } catch (e) { await deps.emit([{ role: 'QA', text: 'The covers could not be photographed; the previews are shown live' }]); }
     // the job's data store: the client's data, and each variant's own (with its family of made pictures), in the private
     // bucket. The "site from nothing" form will write the same data.json, and the editor will keep its edits as a patch
     // over it, so that a template can be switched keeping every edit (BRIEF-engine.md, steps 8 and 9).

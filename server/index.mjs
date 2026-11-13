@@ -10,7 +10,7 @@ import { saveCrawlCheckpoint, restoreCrawlCheckpoint } from './crawl_checkpoint.
 import { spawn } from 'node:child_process'; import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
 import { makeUserOf, allowance, mine } from './auth.mjs';
-import { STEPS_T, STEPS_F, enabled as templatesEnabled, runTemplateJob, mayDownload, previewable, imageType, formProblem, UPLOAD, libraryCount, previewKey } from './templates.mjs';
+import { STEPS_T, STEPS_F, enabled as templatesEnabled, runTemplateJob, mayDownload, previewable, imageType, formProblem, extrasProblem, UPLOAD, libraryCount, previewKey } from './templates.mjs';
 import { publicJob, internalSlug, publicOf, downloadName } from './designs.mjs';
 import { makeEditor, mayKeep, editable, opsProblem } from './editor.mjs';
 import { ensurePrivateBucket } from './bucket.mjs'; import { runCleanup } from './cleanup.mjs';
@@ -92,6 +92,7 @@ app.post('/jobs', async (req, res) => {
   // a site from nothing: the form stands in for the site; its job has no address to read, so it is named after the business
   const fromForm = mode && req.body?.options?.source === 'form';
   if (fromForm) { const bad = formProblem(req.body?.form); if (bad) return res.status(400).json({ error: bad }); }
+  else if (mode) { const bad = extrasProblem(req.body?.options); if (bad) return res.status(400).json({ error: bad }); }   // screenshots, kind, goal beside an address
   let url = fromForm ? `form:${String(req.body.form.name).toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'site'}-${crypto.randomUUID().slice(0, 8)}` : String(req.body?.url || '').trim();
   if (!fromForm) {
     if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
@@ -115,6 +116,7 @@ app.post('/jobs', async (req, res) => {
   const options = { ...(req.body?.options || {}) }; const email = String(options.notify_email || '').trim().toLowerCase(); if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'bad email' }); if (email) options.notify_email = email; else delete options.notify_email;
   if (mode) options.engine = mode; else delete options.engine;
   if (fromForm) { options.source = 'form'; options.form = req.body.form; } else { delete options.source; delete options.form; }
+  if (!mode || fromForm) { delete options.screens; delete options.niche; }
   const { data, error } = await sb.from('jobs').insert({ url, options, steps: (fromForm ? STEPS_F : mode ? STEPS_T : STEPS).map(([id, label]) => ({ id, label, status: 'pending' })), ...(user ? { user_id: user.id, email: user.email } : {}) }).select('id').single();
   if (error) return res.status(500).json({ error: error.message });
   res.json({ id: data.id });
