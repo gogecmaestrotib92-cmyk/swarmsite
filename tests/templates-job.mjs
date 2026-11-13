@@ -2,7 +2,7 @@
 // adapt, select, render, gate (real: lib/templates/job.py, Chrome) → the variants published and saved before the packages
 // are made → packages uploaded to the private bucket only when they match their preview. And who may download.
 import assert from 'node:assert/strict'; import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path'; import { spawn, spawnSync } from 'node:child_process'; import { fileURLToPath } from 'node:url';
-import { runTemplateJob, mayDownload, previewable, enabled, STEPS_T, STEPS_F, formProblem, imageType } from '../server/templates.mjs';
+import { runTemplateJob, mayDownload, previewable, enabled, STEPS_T, STEPS_F, formProblem, extrasProblem, imageType } from '../server/templates.mjs';
 import { publicJob, TEMPLATE_SLUGS } from '../server/designs.mjs';
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..'); const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'tjob-'));
 const py = process.env.PYTHON || 'python3';
@@ -13,10 +13,13 @@ try {
   assert.equal(enabled({}), false, 'off unless the deployment says so'); assert.equal(enabled({ TEMPLATES_MODE: '1' }), true);
   assert.deepEqual(STEPS_T.map(s => s[0]), ['capture', 'read', 'choose', 'publish', 'package']);
 
-  async function scenario({ capture = 'product', pkg = 'real-stub', form = null } = {}) {
-    const jobRoot = fs.mkdtempSync(path.join(tmp, 'job-')), dir = path.join(jobRoot, 'site'), log = [], steps = [], events = [], saves = [], pub = new Map(), priv = new Map(), fetched = [];
-    const job = { id: '22222222-2222-4222-8222-222222222222', url: form ? 'form:tallyfern-1a2b3c4d' : 'https://www.tallyfern.example/', options: { engine: 'templates', mode: 'seo-safe', ...(form ? { source: 'form', form } : {}) }, result: {} };
-    const run = async (cmd, args, opts = {}) => { log.push(args[0] === '-c' ? 'reader' : args[0] + (args[1] === 'build' || args[1] === 'package' ? ' ' + args[1] : ''));
+  async function scenario({ capture = 'product', pkg = 'real-stub', form = null, extras = {}, covers = 'real' } = {}) {
+    const jobRoot = fs.mkdtempSync(path.join(tmp, 'job-')), dir = path.join(jobRoot, 'site'), log = [], steps = [], events = [], saves = [], pub = new Map(), priv = new Map(), fetched = [], built = [];
+    const job = { id: '22222222-2222-4222-8222-222222222222', url: form ? 'form:tallyfern-1a2b3c4d' : 'https://www.tallyfern.example/', options: { engine: 'templates', mode: 'seo-safe', ...extras, ...(form ? { source: 'form', form } : {}) }, result: {} };
+    const run = async (cmd, args, opts = {}) => {
+      if (args[0] === 'lib/templates/covers.mjs') { if (covers === 'crash') throw new Error('node covers exit 2'); return real(cmd, args); }   // the covers: real Chrome, as the gate is
+      if (args[1] === 'build') built.push(args.slice(2));
+      log.push(args[0] === '-c' ? 'reader' : args[0] + (args[1] === 'build' || args[1] === 'package' ? ' ' + args[1] : ''));
       if (args[0] === 'lib/pipeline/capture.mjs') { const r = spawnSync(py, ['tests/fixtures/templates/capture.py', dir, capture], { cwd: root, encoding: 'utf8' }); assert.equal(r.status, 0, r.stderr); fs.writeFileSync(path.join(dir, 'before-hero.jpg'), 'jpg'); opts.onLine?.('{"event":{"role":"Photos","text":"1 picture"}}'); return ''; }
       if (args[0] === '-c') { fs.writeFileSync(path.join(dir, 'budget.json'), JSON.stringify({ calls: 1, in: 21000, out: 2400, usd: 0.066 })); return '{"what":"A ledger for market stalls","n":3}'; }
       if (args[1] === 'build') return real(cmd, args, { dir });
@@ -28,12 +31,12 @@ try {
     const deps = { job, dir, jobRoot, run, self: 'https://api.example', chrome: '',
       upload: async (local, key, type) => { assert.ok(fs.existsSync(local), local); pub.set(key, { type, bytes: fs.statSync(local).size }); return 'https://storage.example/previews/' + key; },
       uploadPrivate: async (local, key, type) => { priv.set(key, { type }); },
-      fetchUpload: async (file, local) => { fetched.push(file); fs.copyFileSync(path.join(root, 'web/favicon.png'), local); },
+      fetchUpload: async (file, local) => { fetched.push(file); fs.copyFileSync(path.join(root, file.startsWith('1b1e') ? 'web/logo/swarmsite-mark.png' : 'web/favicon.png'), local); },   // a screenshot must be 200 px or more
       publicBase: key => 'https://storage.example/previews/' + key,
       setStep: async (id, status) => { steps.push(`${id}:${status}`); }, emit: async evs => { events.push(...evs); },
       save: async r => { saves.push(JSON.parse(JSON.stringify({ variants: r.templates?.variants, packagesBefore: [...priv.keys()].filter(k => k.endsWith('.zip')).length }))); } };
     const result = await runTemplateJob(deps);
-    return { result, log, steps, events, saves, pub, priv, dir, fetched };
+    return { result, log, steps, events, saves, pub, priv, dir, fetched, built };
   }
 
   // 0 · a site from nothing: the visitor's form and photographs in place of capture and reader — no paid call
@@ -86,6 +89,28 @@ try {
   assert.deepEqual(x.result.budget, { calls: 1, in: 21000, out: 2400, usd: 0.066 }, 'what the visitor cost: the reader, from the job ledger');
   assert.ok(['adapt', 'select', 'render', 'gate'].every(k => typeof t.timings_ms[k] === 'number') && ['capture', 'read', 'choose', 'publish', 'package'].every(k => typeof t.timings_ms.steps[k] === 'number'), 'stage timings in the job record');
   assert.ok(x.result.beforeUrl && x.events.some(e => e.role === 'QA' && e.text === `Design ${gi + 1}: every screen passes`) && !x.events.some(e => /griffin/i.test(e.text)) && x.events.some(e => e.text === '1 picture'));
+
+  // 1a · what the capture measured on the page reaches the working screen with its place, so the agents act where it stands
+  assert.ok(x.events.some(e => e.role === 'Reader' && e.text === 'Menu · 6 links' && e.rect && e.rect.w === 1440 && e.rect.h === 72), 'the menu, with its place: ' + JSON.stringify(x.events.filter(e => e.rect)));
+  assert.ok(x.events.filter(e => e.rect).every(e => ['x', 'y', 'w', 'h'].every(k => Number.isFinite(e.rect[k]))) && !x.events.some(e => /^Button/.test(e.text)), 'a place without all four numbers is left out (the fixture’s buttons have only y)');
+  { const pe = (await import('../server/templates.mjs')).pageEvents(path.join(tmp, 'nothing-here')); assert.deepEqual(pe, { events: [], pageHeight: 0 }, 'no capture files: no events, and no error'); }
+
+  // 1b · every design has a cover: its first screen photographed at rest, published by its id, in the job the chooser reads
+  assert.ok(t.variants.every(v => v.cover === `https://storage.example/previews/${J}/t/${v.id}-cover.jpg` && x.pub.get(`${J}/t/${v.id}-cover.jpg`)?.type === 'image/jpeg' && x.pub.get(`${J}/t/${v.id}-cover.jpg`).bytes > 5000), JSON.stringify(t.variants.map(v => v.cover)));
+  assert.ok(x.saves[0].variants.every(v => v.cover), 'the covers are in the job when the chooser first shows it');
+  assert.ok(JSON.stringify(publicJob({ id: 'j', url: 'https://x.example/', result: x.result })).includes('-cover.jpg'), 'the public job carries the covers');
+  x = await scenario({ covers: 'crash' });
+  assert.ok(x.result.templates.variants.length && x.result.templates.variants.every(v => !v.cover && v.package === 'ready'), 'no cover: the card shows its live preview, the job goes on');
+
+  // 1c · "I built a first version of my app": the visitor's screenshots, kind and goal beside the address go to the build
+  const SHOT = '1b1e2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d.png';
+  assert.equal(extrasProblem({ screens: [SHOT], niche: 'software', goal: 'Start a trial' }), '');
+  assert.ok(extrasProblem({ screens: Array(7).fill(SHOT) }) && extrasProblem({ screens: ['../x.png'] }) && extrasProblem({ niche: 'casino' }) && extrasProblem({ goal: 'x'.repeat(81) }));
+  x = await scenario({ extras: { screens: [SHOT], niche: 'software', goal: 'Start a free trial' } });
+  assert.deepEqual(x.fetched, [SHOT], 'the screenshot is fetched from the private bucket like a form photograph');
+  const args = x.built[0]; assert.ok(args.includes('--screens') && args[args.indexOf('--kind') + 1] === 'software' && args[args.indexOf('--goal') + 1] === 'Start a free trial', JSON.stringify(args));
+  assert.ok([...x.pub.keys()].some(k => /\/t\/media\/upload\/screen-1\.png$/.test(k)), 'their screenshot is published beside the previews');
+  assert.ok(x.events.some(e => e.text === '1 screenshot from you'));
 
   // 2 · a package that does not match its preview, and one whose making crashes: the preview stays, the download does not
   x = await scenario({ pkg: 'refused' });

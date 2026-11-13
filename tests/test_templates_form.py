@@ -125,3 +125,24 @@ def test_the_job_builds_three_previews_from_a_form_as_from_a_capture(tmp_path, u
     notes = json.loads((out / 'adapter.json').read_text())
     assert notes['source'] == 'form' and any('photo 2' in g for g in notes['gaps'])
     assert 'media/upload/photo-1.webp' in (out / 'griffin.html').read_text() and 'Tallyfern' in (out / 'griffin.html').read_text()
+
+
+def test_screenshots_kind_and_goal_beside_an_address_are_the_visitors_own(tmp_path, up):
+    """'I built a first version of my app': the visitor's screenshots go ahead of whatever the capture found — a tall one
+    is a phone — the kind they name is the client's kind, and their words for the button replace the button's text only
+    where the site has a button with an address. Nothing else is written."""
+    (up / 'tall.png').write_bytes(png(390, 844))
+    (up / 'tiny.png').write_bytes(png(120, 80))
+    d = {'brand': {'name': 'Tallyfern'}, 'kind': 'service', 'cta': {'t': 'Sign up', 'h': 'https://x.example/up'}, 'hero': {'title': 'T', 'primary': {'t': 'Sign up', 'h': 'https://x.example/up'}},
+         'media': {'screens': [{'src': 'media/img-1.png', 'w': 1200, 'h': 800}]}}
+    out, notes = JOB.visitor(d, tmp_path / 'out', [up / 'c.webp', up / 'tall.png', up / 'tiny.png', up / 'evil.png'], 'software', '  Start   a free trial ')
+    assert [x['src'] for x in out['media']['screens']] == ['media/upload/screen-1.webp', 'media/img-1.png']
+    assert out['media']['phones'] == [{'src': 'media/upload/screen-2.png', 'w': 390, 'h': 844, 'alt': 'Tallyfern, screen 2'}]
+    assert (tmp_path / 'out' / 'media' / 'upload' / 'screen-1.webp').read_bytes() == (up / 'c.webp').read_bytes()
+    assert not (tmp_path / 'out' / 'media' / 'upload' / 'screen-3.png').exists(), 'a picture under 200 px is not a screen'
+    assert out['kind'] == 'software' and out['cta']['t'] == 'Start a free trial' and out['hero']['primary']['t'] == 'Start a free trial'
+    assert sum('screenshot' in n for n in notes) == 3 and d['kind'] == 'service', 'the data given is not changed in place'
+    same, _ = JOB.visitor(d, tmp_path / 'o2', [], 'not-a-kind', '')
+    assert same == d, 'an unknown kind and no goal change nothing'
+    bare, said = JOB.visitor({'brand': {'name': 'X'}}, tmp_path / 'o3', [], '', 'Book a table')
+    assert 'cta' not in bare and any('no button' in n for n in said), 'no button with an address: the goal is noted, never invented into one'

@@ -1,0 +1,250 @@
+{
+"note": "What lib/pipeline/capture.mjs measures on a page, read by server/templates.mjs pageEvents() from the made-up client Tallyfern (tests/fixtures/templates), for the landing: the agents act on these places.",
+"pageHeight": 4002,
+"events": [
+{
+"role": "Reader",
+"text": "Menu · 5 links",
+"rect": {
+"x": 0,
+"y": 0,
+"w": 1440,
+"h": 64
+}
+},
+{
+"role": "Type",
+"text": "Logo found",
+"rect": {
+"x": 60,
+"y": 20,
+"w": 113,
+"h": 24
+}
+},
+{
+"role": "Reader",
+"text": "Headline · “The books of a stall, kept in an evening”",
+"rect": {
+"x": 60,
+"y": 190,
+"w": 828,
+"h": 144
+}
+},
+{
+"role": "Layout",
+"text": "Section 1 · 30 words",
+"rect": {
+"x": 0,
+"y": 64,
+"w": 1440,
+"h": 708
+}
+},
+{
+"role": "Copy",
+"text": "Heading · “How it works”",
+"rect": {
+"x": 60,
+"y": 917,
+"w": 620,
+"h": 44
+}
+},
+{
+"role": "Photos",
+"text": "Picture 1 · 1344×752",
+"rect": {
+"x": 20,
+"y": 1255,
+"w": 1400,
+"h": 518
+}
+},
+{
+"role": "Copy",
+"text": "Button · “START A LEDGER”",
+"rect": {
+"x": 1241,
+"y": 16,
+"w": 139,
+"h": 32
+}
+},
+{
+"role": "Layout",
+"text": "Section 2 · 44 words",
+"rect": {
+"x": 0,
+"y": 836,
+"w": 1440,
+"h": 418
+}
+},
+{
+"role": "Copy",
+"text": "Heading · “Photograph”",
+"rect": {
+"x": 60,
+"y": 1067,
+"w": 413,
+"h": 35
+}
+},
+{
+"role": "Photos",
+"text": "Picture 2 · 1200×700",
+"rect": {
+"x": 768,
+"y": 1336,
+"w": 612,
+"h": 357
+}
+},
+{
+"role": "Copy",
+"text": "Button · “START A LEDGER”",
+"rect": {
+"x": 60,
+"y": 438,
+"w": 169,
+"h": 40
+}
+},
+{
+"role": "Layout",
+"text": "Section 3 · 28 words",
+"rect": {
+"x": 0,
+"y": 1254,
+"w": 1440,
+"h": 519
+}
+},
+{
+"role": "Copy",
+"text": "Heading · “Sort”",
+"rect": {
+"x": 513,
+"y": 1067,
+"w": 413,
+"h": 35
+}
+},
+{
+"role": "Photos",
+"text": "Picture 3 · 1344×752",
+"rect": {
+"x": 60,
+"y": 2321,
+"w": 413,
+"h": 231
+}
+},
+{
+"role": "Copy",
+"text": "Button · “SEE A SAMPLE MONTH”",
+"rect": {
+"x": 245,
+"y": 438,
+"w": 183,
+"h": 40
+}
+},
+{
+"role": "Layout",
+"text": "Section 4 · 17 words",
+"rect": {
+"x": 0,
+"y": 1773,
+"w": 1440,
+"h": 467
+}
+},
+{
+"role": "Copy",
+"text": "Heading · “Close”",
+"rect": {
+"x": 967,
+"y": 1067,
+"w": 413,
+"h": 35
+}
+},
+{
+"role": "Photos",
+"text": "Picture 4 · 1344×752",
+"rect": {
+"x": 20,
+"y": 2633,
+"w": 1400,
+"h": 437
+}
+},
+{
+"role": "Layout",
+"text": "Section 5 · 1 words",
+"rect": {
+"x": 0,
+"y": 2240,
+"w": 1440,
+"h": 392
+}
+},
+{
+"role": "Copy",
+"text": "Heading · “What you get”",
+"rect": {
+"x": 60,
+"y": 1335,
+"w": 612,
+"h": 44
+}
+},
+{
+"role": "Photos",
+"text": "Picture 5 · 1200×700",
+"rect": {
+"x": 768,
+"y": 2673,
+"w": 612,
+"h": 357
+}
+},
+{
+"role": "Layout",
+"text": "Section 6 · 21 words",
+"rect": {
+"x": 0,
+"y": 2632,
+"w": 1440,
+"h": 438
+}
+},
+{
+"role": "Layout",
+"text": "Section 7 · 25 words",
+"rect": {
+"x": 0,
+"y": 3070,
+"w": 1440,
+"h": 341
+}
+},
+{
+"role": "Layout",
+"text": "Section 8 · 7 words",
+"rect": {
+"x": 0,
+"y": 3411,
+"w": 1440,
+"h": 357
+}
+},
+{
+"role": "Colour",
+"text": "Colours · #fbf7ee #1d2a22 #d2552b"
+}
+]
+}

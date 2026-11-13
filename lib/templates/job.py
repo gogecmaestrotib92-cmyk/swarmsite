@@ -5,6 +5,9 @@ for a variant the visitor may download, the package.
         --library   a folder holding media/library (else $SWARMSITE_LIBRARY, else the repo's); none → no made pictures
         --form F --photos DIR   a site from nothing: the visitor's form (JSON, lib/templates/form.py) and their uploads,
                     in place of a capture (<job dir> is then only where the job lives)
+        --screens DIR  the visitor's own screenshots of their product (at most 6), ahead of the captured pictures
+        --kind K       the kind of business the visitor named (one of needs.schema.json's niches)
+        --goal TEXT    what visitors should do, in the visitor's words: the text of the one button
         <job dir>   capture's files (inventory, assets, images, geometry …) and the reader's factsheet.json
         --out       written there:
                       data.json         the client's data (adapter output, private keys removed)
@@ -27,6 +30,7 @@ font files (Google Fonts) and nothing at all for the rest. A variant that fails 
 import base64
 import importlib.util
 import json
+import re
 import sys
 import time
 from pathlib import Path
@@ -120,9 +124,56 @@ def from_form(form, photos, out):
     return d, notes, written, missing
 
 
-def build(job_dir, out, base='', limit=3, gate_kw=None, library=None, form=None, photos=None):
+SCREENS = 6          # "I built a first version of my app": at most this many screenshots of it
+
+
+def visitor(d, out, screens=(), kind='', goal=''):
+    """what the visitor said beside the address (web/app.html): their own screenshots, ahead of whatever the capture found
+    (a tall one is a phone, the rest are screens); the kind of business when they named one of the fixed niches; and their
+    words for the one button. Nothing is added that they did not give. -> (data, notes)"""
+    F = _mod('form')
+    notes = []
+    mine = {'screens': [], 'phones': []}
+    name = str((d.get('brand') or {}).get('name') or '').strip()
+    for i, f in enumerate(list(screens)[:SCREENS]):
+        p = Path(f)
+        ext = p.suffix.lower()
+        wh = F.size(p.read_bytes()[:65536]) if ext in F.IMAGE and p.is_file() else None
+        if not wh or min(wh) < 200:
+            notes.append('screenshot %d: not a picture that could be read, or under 200 px' % (i + 1))
+            continue
+        rel = 'media/upload/screen-%d%s' % (i + 1, '.jpg' if ext == '.jpeg' else ext)
+        (Path(out) / rel).parent.mkdir(parents=True, exist_ok=True)
+        (Path(out) / rel).write_bytes(p.read_bytes())
+        w, h = int(wh[0]), int(wh[1])
+        mine['phones' if h / w >= 1.4 else 'screens'].append({'src': rel, 'w': w, 'h': h, 'alt': ('%s, screen %d' % (name, i + 1)) if name else 'Screen %d' % (i + 1)})
+    if mine['screens'] or mine['phones']:
+        m = dict(d.get('media') or {})
+        for k in ('screens', 'phones'):
+            m[k] = mine[k] + [x for x in m.get(k) or [] if isinstance(x, dict)]
+        d = {**d, 'media': m}
+        notes.append('screenshots from the visitor: %d screens, %d phones, ahead of the captured ones' % (len(mine['screens']), len(mine['phones'])))
+    k = str(kind or '').strip().lower()
+    if k in F.KINDS:
+        d = {**d, 'kind': k}
+        notes.append('kind: %s, as the visitor said' % k)
+    g = re.sub(r'\s+', ' ', str(goal or '')).strip()[:40]
+    if g:
+        cta = d.get('cta') or (d.get('hero') or {}).get('primary')
+        if isinstance(cta, dict) and cta.get('h'):
+            d = {**d, 'cta': {**cta, 't': g}}
+            if isinstance((d.get('hero') or {}).get('primary'), dict):
+                d['hero'] = {**d['hero'], 'primary': {**d['hero']['primary'], 't': g}}
+            notes.append('the button says what the visitor asked visitors to do')
+        else:
+            notes.append('what visitors should do: the site has no button with an address to carry it')
+    return d, notes
+
+
+def build(job_dir, out, base='', limit=3, gate_kw=None, library=None, form=None, photos=None, screens=(), kind='', goal=''):
     """job_dir: a capture with the reader's factsheet — or, with `form`, the visitor's form (a dict) and `photos`, the
-    folder of their uploads: the same data, the same choice, the same gate"""
+    folder of their uploads: the same data, the same choice, the same gate. screens/kind/goal: what the visitor added
+    beside an address (visitor())"""
     A = _mod('adapt')
     out = Path(out)
     (out / 'pub').mkdir(parents=True, exist_ok=True)
@@ -145,6 +196,9 @@ def build(job_dir, out, base='', limit=3, gate_kw=None, library=None, form=None,
         if read:
             notes.setdefault('rules', []).append('media.photos[].lettering: OCR read words in %d photograph(s): %s' % (
                 len(read), '; '.join('%s: %s' % (k.rsplit('/', 1)[-1], ' '.join(v[:5])) for k, v in read.items())[:300]))
+        if screens or kind or goal:
+            d, said = visitor(d, out, screens, kind, goal)
+            notes = {**notes, 'visitor': said}
     data = {k: v for k, v in d.items() if not k.startswith('_')}
     (out / 'data.json').write_text(json.dumps(data, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
     (out / 'adapter.json').write_text(json.dumps({**notes, 'media_missing': missing}, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
@@ -268,7 +322,9 @@ if __name__ == '__main__':
     if a[:1] == ['build'] and len(a) >= 2:
         form = json.loads(Path(opt('--form')).read_text(encoding='utf-8')) if opt('--form') else None
         print(json.dumps(build(a[1], opt('--out') or str(Path(a[1]) / 'templates'), opt('--base', ''), int(opt('--limit', 3)), library=opt('--library'),
-                               form=form, photos=opt('--photos')), ensure_ascii=False))
+                               form=form, photos=opt('--photos'),
+                               screens=sorted(str(p) for p in Path(opt('--screens')).iterdir()) if opt('--screens') else (),
+                               kind=opt('--kind', ''), goal=opt('--goal', '')), ensure_ascii=False))
     elif a[:1] == ['package'] and len(a) >= 4:
         r = package(a[1], a[2], a[3], verify='--verify' in a)
         print(json.dumps(r, ensure_ascii=False))   # exit 0 either way: the verdict is `ok`, an exit code is for a crash

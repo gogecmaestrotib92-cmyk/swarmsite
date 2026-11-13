@@ -9,7 +9,7 @@
     const group = document.querySelector('.nav .grp:last-of-type'); if (!group) return;
     if (!window.SWARMSITE_SUPABASE) await load('/config.js');
     const cfg = window.SWARMSITE_SUPABASE || {}; if (!cfg.url || !cfg.anon) return;   // no accounts on this deployment: no link
-    const menu = document.querySelector('.dv-menu'), cta = group.querySelector('.pill');
+    const menu = document.querySelector('.dv-menu, #menu nav'), cta = group.querySelector('.pill');
     const style = document.createElement('style'); style.textContent = '.nav .grp a{white-space:nowrap}' + (menu ? '@media(max-width:820px){.nav .grp a.nav-acct{display:none}}'   /* a page with a full-screen menu carries the link there on a phone */
       : '@media(max-width:480px){.nav .grp:has(.nav-acct) a[href="#faq"]{display:none}.nav .grp a:not(.brand){padding-inline:11px}}');   /* one without: the bar gives up its least needed link so the rest stays on one line */ document.head.appendChild(style);
     const inBar = document.createElement('a'); inBar.className = 'nav-acct'; inBar.id = 'account'; group.insertBefore(inBar, cta || null);

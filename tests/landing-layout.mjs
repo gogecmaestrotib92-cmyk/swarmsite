@@ -36,7 +36,7 @@ const open = async (width, motion, height = 900) => { const ctx = await b.newCon
 for (const [width, motion] of [[1440, 'no-preference'], [390, 'no-preference'], [1440, 'reduce'], [390, 'reduce']]) {
   const { p, errors, ctx } = await open(width, motion, width < 600 ? 844 : 900); await p.goto(url); await p.waitForTimeout(width > 900 && motion !== 'reduce' ? 5500 : 800);   // the crew has finished
   const H = await p.evaluate(() => document.documentElement.scrollHeight); for (let y = 0; y <= H; y += 500) { await p.evaluate(y => scrollTo(0, y), y); await p.waitForTimeout(60); } await p.waitForTimeout(3200);   // the window has shown both of its states
-  const hidden = await p.evaluate(() => [...document.querySelectorAll('h1,h2,h3,p,li,a,button,summary,input,img')].filter(e => { const r = e.getBoundingClientRect(); if (r.width < 2 || e.closest('.dv-menu:not(.is-open), .case-pane:not(.is-on), details:not([open]) > :not(summary)')) return false;
+  const hidden = await p.evaluate(() => [...document.querySelectorAll('h1,h2,h3,p,li,a,button,summary,input,img')].filter(e => { const r = e.getBoundingClientRect(); if (r.width < 2 || e.closest('.dv-menu:not(.is-open), .case-pane:not(.is-on), details:not([open]) > :not(summary), .pinned .st:not(.on) .tx, .pinned .vin, .pinned .kc, .pinned .vis, [hidden]')) return false;
     let seen = 1; for (let n = e; n && n !== document.body; n = n.parentElement) { const c = getComputedStyle(n); if (c.visibility === 'hidden') return true; seen *= parseFloat(c.opacity); } return seen < .05; }).map(e => (e.textContent || e.alt || e.tagName).trim().slice(0, 30))
     .concat([...document.querySelectorAll('.dv-ln > span')].filter(s => !/^(none|matrix\(1, 0, 0, 1, 0, 0\))$/.test(getComputedStyle(s).transform)).map(s => 'still behind its mask: ' + s.textContent.trim().slice(0, 24))));   // a line that never rose is hidden by its mask, not by opacity
   check(errors.length === 0, `${width}/${motion}: errors ${JSON.stringify(errors)}`); check(hidden.length === 0, `${width}/${motion}: left hidden ${JSON.stringify(hidden)}`);
@@ -56,26 +56,29 @@ for (const width of [390, 1440, 1920]) { const { p, ctx } = await open(width, 'r
     return out; });
   check(spills.length === 0, `${width}: ${JSON.stringify(spills.slice(0, 4))}`); await ctx.close(); }
 
-// 5. What the page offers answers. Skipped for the landing before this test, which had none of it.
-if (/id="dv-js"/.test(fs.readFileSync(path.join(web, 'index.html'), 'utf8'))) {
-  { const { p, ctx } = await open(1440, 'no-preference'); await p.goto(url); await p.waitForTimeout(5500); await p.mouse.move(720, 500); await p.mouse.wheel(0, 240); await p.waitForTimeout(120);   // the page is still gliding
-    await p.click('.nav a[href="#faq"]'); await p.waitForTimeout(2600); const top = Math.round(await p.evaluate(() => document.querySelector('#faq').getBoundingClientRect().top));
-    check(top > 20 && top < 200, `a link pressed while the page glides does not travel to its section (the section stands ${top} px from the top)`);
-    await p.evaluate(() => { scrollTo(0, 0); document.getElementById('url2').focus(); }); await p.waitForTimeout(500);
-    check(await p.evaluate(() => scrollY + innerHeight >= document.documentElement.scrollHeight - 2), 'focus in the closing field leaves it under the page');
-    await p.fill('#url', 'https://example.com/'); await Promise.all([p.waitForURL(/\/app\?url=example\.com%2F$/, { timeout: 4000 }).catch(() => {}), p.press('#url', 'Enter')]); check(/\/app\?url=example\.com%2F$/.test(p.url()), 'the field does not lead to the app: ' + p.url()); await ctx.close(); }
-  { const { p, ctx } = await open(390, 'no-preference', 844); await p.goto(url); await p.waitForTimeout(600);
-    const small = await p.evaluate(() => [...document.querySelectorAll('a,button,summary,input')].filter(e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== 'hidden' && !e.closest('.dv-menu:not(.is-open)') && Math.min(r.width, r.height) < 24; }).map(e => e.textContent.trim().slice(0, 24)));
-    check(small.length === 0, 'targets under 24 px on a phone (WCAG 2.5.8): ' + JSON.stringify(small));
-    await p.click('.dv-menu-btn'); await p.waitForTimeout(700); check(await p.locator('.dv-menu a').first().isVisible(), 'the phone menu does not open');
-    await p.keyboard.press('Escape'); await p.waitForTimeout(400); check(await p.getAttribute('.dv-menu-btn', 'aria-expanded') === 'false', 'Escape does not close the phone menu');
-    await p.click('.dv-menu-btn'); await p.waitForTimeout(500); await p.click('.nav a.pill'); await p.waitForTimeout(700);   // the bar stays above the open menu: its action must not leave the visitor behind it
-    check(await p.getAttribute('.dv-menu-btn', 'aria-expanded') === 'false' && await p.evaluate(() => document.activeElement.id) === 'url', '"Try it free" pressed over the open menu leaves the menu open or does not end in the field');
-    if (await p.getAttribute('.dv-menu-btn', 'aria-expanded') !== 'true') await p.click('.dv-menu-btn'); await p.waitForTimeout(400); await p.setViewportSize({ width: 1000, height: 800 }); await p.waitForTimeout(400);   // a tablet turned on its side with the menu open
-    check(!(await p.evaluate(() => document.documentElement.classList.contains('dv-menu-lock'))), 'a menu left open when the screen widens keeps the page locked'); await ctx.close(); }
-}
+// 5. What the page offers answers: a link in the bar travels to its section; every link to #top ends in the address field; the field
+//    leads to the app (with the way in the visitor chose); on a phone every target is big enough, and the menu opens, closes on Escape
+//    and closes when one of its links is pressed. (Rewritten 2026-11-12 for the landing on the library template; the curtain foot is gone.)
+{ const { p, ctx } = await open(1440, 'no-preference'); await p.goto(url); await p.waitForTimeout(1200);
+  await p.click('.nvl a[href="#faq"]'); await p.waitForTimeout(1600); const top = Math.round(await p.evaluate(() => document.querySelector('#faq').getBoundingClientRect().top));
+  check(top > 20 && top < 200, `the FAQ link does not travel to its section (the section stands ${top} px from the top)`);
+  await p.evaluate(() => scrollTo(0, document.documentElement.scrollHeight)); await p.waitForTimeout(400); await p.click('.fi a[href="#site"]').catch(() => {}); await p.waitForTimeout(900);
+  check(await p.evaluate(() => document.activeElement.id) === 'url', '"Paste your address" does not end in the address field');
+  await p.fill('#url', 'https://example.com/'); await Promise.all([p.waitForURL(/\/app\?url=example\.com%2F$/, { timeout: 4000 }).catch(() => {}), p.press('#url', 'Enter')]); check(/\/app\?url=example\.com%2F$/.test(p.url()), 'the field does not lead to the app: ' + p.url());
+  await p.goto(url); await p.waitForTimeout(600); await p.click('.ways [data-way="app"]'); await p.fill('#url', 'example.com'); await Promise.all([p.waitForURL(/with=screens/, { timeout: 4000 }).catch(() => {}), p.press('#url', 'Enter')]);
+  check(/\/app\?url=example\.com&with=screens$/.test(p.url()), '"I built a first version of my app" does not lead to the screenshots: ' + p.url());
+  await p.goto(url); await p.waitForTimeout(600); await p.click('.ways [data-way="none"]');
+  check(await p.locator('#url').isHidden() && await p.locator('.alt a[href="/start"]').isVisible(), '"I don’t have a site" does not offer the form'); await ctx.close(); }
+{ const { p, ctx } = await open(390, 'no-preference', 844); await p.goto(url); await p.waitForTimeout(600);
+  const small = await p.evaluate(() => [...document.querySelectorAll('a,button,summary,input,select')].filter(e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== 'hidden' && !e.closest('[hidden]') && Math.min(r.width, r.height) < 24; }).map(e => e.textContent.trim().slice(0, 24)));
+  check(small.length === 0, 'targets under 24 px on a phone (WCAG 2.5.8): ' + JSON.stringify(small));
+  await p.click('.burger'); await p.waitForTimeout(300); check(await p.locator('#menu a').first().isVisible(), 'the phone menu does not open');
+  await p.keyboard.press('Escape'); await p.waitForTimeout(200); check(await p.getAttribute('.burger', 'aria-expanded') === 'false', 'Escape does not close the phone menu');
+  await p.click('.burger'); await p.waitForTimeout(300); await p.click('#menu a[href="#faq"]'); await p.waitForTimeout(300);
+  check(await p.getAttribute('.burger', 'aria-expanded') === 'false', 'a link pressed in the phone menu leaves it open'); await ctx.close(); }
 
-// 6. Every word can be read on the ground it stands on — and so can what a visitor types, in both fields, the one on the night too
+// 6. (The words on the ink ribbon, .rib, are ground-coloured on its stroke: a reading of computed colours cannot see a stroke, so they are
+//    judged on pixels by lib/qa/template_gate.mjs's legible check instead.) Every word can be read on the ground it stands on — and so can what a visitor types, in both fields, the one on the night too
 //    (4.5:1; 3:1 from 24 px). Read with motion off: nothing is half-lit and the crew is not building.
 for (const width of [1440, 390]) { const { p, ctx } = await open(width, 'reduce', width < 600 ? 844 : 900); await p.goto(url); await p.waitForTimeout(700);
   const low = await p.evaluate(() => { const out = [];
@@ -84,7 +87,7 @@ for (const width of [1440, 390]) { const { p, ctx } = await open(width, 'reduce'
     const ground = el => { for (let n = el; n; n = n.parentElement) { const c = parse(getComputedStyle(n).backgroundColor); if (c && c.a > .5) return c.rgb; } return [255, 255, 255]; };
     const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
     const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-    while (walk.nextNode()) { const t = walk.currentNode, el = t.parentElement; if (!t.data.trim() || !el || el.closest('script,style,.dv-menu:not(.is-open),details:not([open]) > :not(summary)')) continue;
+    while (walk.nextNode()) { const t = walk.currentNode, el = t.parentElement; if (!t.data.trim() || !el || el.closest('script,style,.dv-menu:not(.is-open),details:not([open]) > :not(summary),.rib,[hidden]')) continue;
       const cs = getComputedStyle(el), r = el.getBoundingClientRect(), ink = parse(cs.color); if (r.width < 2 || cs.visibility === 'hidden' || !ink) continue;
       const px = parseFloat(cs.fontSize), got = ratio(ink.rgb, ground(el)); if (got < (px >= 24 ? 3 : 4.5)) out.push(`“${t.data.trim().slice(0, 28)}” ${got.toFixed(1)}:1 at ${Math.round(px)} px`); }
     for (const f of document.querySelectorAll('input')) { const g = ground(f), typed = ratio(parse(getComputedStyle(f).color).rgb, g), hint = ratio(parse(getComputedStyle(f, '::placeholder').color).rgb, g);

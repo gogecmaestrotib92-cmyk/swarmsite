@@ -1,0 +1,186 @@
+/* landing.css — the landing's sections, on the measured build of one template of our library (its render.py CSS
+   after the nav box; the shared parts are web/css/site.css). Renamed only where the app's own classes would collide:
+   the hero's pill is .rpill, the bar .annc; the stage's cards and how, and the question pane's summary, are scoped.
+   Our additions (the three ways in, grounds under pictures that carry text) are at the end. Gate: tests/landing-layout.mjs. */
+/* opening — reference: top space 28.8vh, column 992 (words kept inside 720), junction of the two paths 156 under the note */
+.hero{position:relative;padding:28.8vh 40px 214px;text-align:center;overflow:clip}
+.hero:not(.ribbed){padding-bottom:120px}
+.hc{position:relative;z-index:1;max-width:720px;margin-inline:auto}.hc .tag{margin-bottom:24px}
+h1{font-size:96px;line-height:.95;letter-spacing:-.03em}h1.h1b{font-size:80px}h1.h1c{font-size:64px}
+.hc .lead{max-width:480px;margin:49px auto 0}.hc .btn{margin-top:24px}.hc .small{max-width:480px;margin:24px auto 0}
+.rib{position:absolute;left:50%;bottom:0;width:1440px;margin-left:-720px}.rib path{pointer-events:none}
+.rpill{position:absolute;left:50%;top:90.5%;min-width:135px;padding:0 10px;height:70px;transform:translate(-50%,-50%);background:var(--ground);border:2px solid var(--ink);border-radius:999px;display:flex;align-items:center;justify-content:center}.rpill img{height:30px;width:auto;max-width:none}.rpill.word img{height:14px;width:auto}
+.rib svg{width:100%;height:auto;overflow:visible}.rib path{fill:none}.rib .p2{stroke:var(--ink);stroke-width:30px;stroke-linecap:round}
+.rib text{font:400 18px "Figtree",sans-serif;fill:currentColor}.rib .t1{color:var(--muted)}.rib .t2{color:var(--ground)}
+/* stage — reference: deep ground, 80px corners, h2 96 at 96 from the top, cards 501 high: outlined 325 + picture */
+.stage{position:relative;margin-top:80px}
+.green{background:var(--deep);color:var(--light);border-radius:80px 80px 0 0;padding:96px 140px 48px;text-align:center}
+.stage:not(.pinned) .green{border-radius:80px}
+.d1{font-size:96px;line-height:.95;letter-spacing:-.03em}.green .lead{max-width:680px;margin:32px auto 0}
+.green .cards{display:flex;margin-top:80px;height:501px;text-align:center}
+.kc{flex:none;width:325px;border:4px solid var(--soft);border-radius:40px;padding:45px 32px;overflow:hidden}.kin{width:253px}
+.fl{font:500 20px/1.15 "Figtree",sans-serif;text-wrap:balance}.fv{font-size:48px;line-height:.95;letter-spacing:-.03em;margin-top:6px}
+.vslot{flex:1;min-width:0;position:relative}.vin{position:absolute;inset:0;border-radius:40px;overflow:hidden}
+.mk{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.mk.none{background:var(--card)}
+.vlab{position:absolute;left:0;right:0;top:0;padding:45px 32px 90px;z-index:2;text-align:center}.vlab .fl{max-width:420px;margin-inline:auto}
+.tone-dark .vlab{color:#fff;background:linear-gradient(rgba(0,0,0,.62),rgba(0,0,0,.5) 55%,rgba(0,0,0,0))}
+.tone-light .vlab{color:#111;background:linear-gradient(rgba(255,255,255,.72),rgba(255,255,255,.6) 55%,rgba(255,255,255,0))}
+.stage .how{padding:160px 40px 0;text-align:center}.d2{font-size:64px;line-height:.95;letter-spacing:-.03em;max-width:768px;margin-inline:auto}
+.stage .how .lead{max-width:640px;margin:32px auto 0;font-size:16px;font-weight:500}
+.tabs{display:none}
+.scene{padding:80px 40px 0}.st{max-width:400px;margin:0 auto 96px;text-align:center}.st:last-child{margin-bottom:0}
+.tile{position:relative;height:468px;border-radius:16px;overflow:hidden;display:flex;align-items:center;justify-content:center;padding:24px}
+.tile::after,.lay:not(.base)::after,.pg::after{content:"";position:absolute;inset:0;background:var(--ground);opacity:.18}.pg::after{opacity:.3}
+.tile .shot,.lay .shot{position:relative;z-index:1;width:auto;height:auto;max-width:100%;max-height:100%;border-radius:6px;box-shadow:0 12px 40px rgba(0,0,0,.28)}
+.tx h3{font-size:32px;line-height:.95;letter-spacing:-.03em;margin-top:32px}.tx p{margin-top:20px}
+.more{display:inline-flex;align-items:center;gap:6px;font-weight:600;margin-top:20px}.more:hover{text-decoration:underline;text-underline-offset:3px}
+.vis{display:none}
+/* pinned build (wide screens, scripts on, motion allowed) */
+.stage.pinned{height:calc(100vh + var(--P))}
+.pinned .pin{position:sticky;top:0;height:100vh;overflow:clip}
+.pinned .track{position:absolute;left:0;top:0;width:100%;will-change:transform}
+.pinned .green{height:100vh;display:flex;flex-direction:column;border-radius:var(--rt,80px) var(--rt,80px) var(--rb,0px) var(--rb,0px)}
+.pinned .green .cards{flex:1;min-height:0;height:auto}
+.pinned .vin{visibility:hidden}
+.pinned .how{position:absolute;left:0;right:0;top:calc(100vh + 160px);padding-top:0}
+.pinned .scene{position:absolute;left:0;top:var(--travel);width:100%;height:100vh;padding:0}
+.pinned .tile{display:none}.pinned .st{margin:0;max-width:none;text-align:left}
+.pinned .tabs{display:flex;flex-direction:column;position:absolute;left:max(24px,50% - 620px);top:calc(50vh - var(--ch)/2 + 9px)}
+.tb{font:400 20px/.95 "EB Garamond",serif;text-align:left;padding:8px 0 8px 13px;border-left:4px solid var(--card);color:var(--muted);transition:color .3s,border-color .3s}
+.tb.on{color:var(--ink);border-left-color:var(--accent)}
+.pinned .tx{position:absolute;left:calc(50% + 200px + var(--gap));width:min(292px,50vw - 224px - var(--gap));bottom:calc(50vh - var(--ch)/2 + 9px);opacity:0;visibility:hidden;transform:translateY(20px);transition:opacity .3s,transform .3s,visibility 0s .3s}
+.pinned .st.on .tx{opacity:1;visibility:visible;transform:none;transition:opacity .3s,transform .3s}
+.pinned .tx h3{margin-top:0}.pinned .tx p{margin-top:33px}
+.pinned .vis{display:block;position:absolute;left:0;top:0;z-index:3;overflow:hidden;border-radius:40px;will-change:transform,width,height}
+.lay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;transition:opacity .5s}.lay.base,.lay.on{opacity:1}
+.lay .shot{opacity:0;transition:opacity .5s}.lay.on .shot{opacity:1}
+/* features — reference: h2 75, sticky card 400 at the left, titles 48 from x686, 303 apart, the others at 35% */
+.shead{text-align:center}.d3{font-size:75px;line-height:1;letter-spacing:-.03em;max-width:864px;margin-inline:auto}
+.shead .lead{max-width:768px;margin:32px auto 0}
+.feat{padding-top:128px}.stage.pinned+.feat{padding-top:0}
+.fgrid{display:grid;grid-template-columns:400px 1fr;column-gap:186px;margin-top:198px}.nopic .fgrid{display:block;max-width:564px;margin-inline:auto}
+.fside{position:relative}.fcard{position:sticky;top:calc(50vh - var(--fh)/2);height:var(--fh);background:var(--card);border-radius:16px;overflow:hidden}
+.fl2{position:absolute;inset:12px;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .4s}.fl2.on{opacity:1}
+.fl2 img{width:auto;height:auto;max-width:100%;max-height:100%;border-radius:6px}
+.flist{max-width:564px;padding:54px 0 120px}.fi{margin-bottom:184px;transition:opacity .4s}.fi:last-child{margin-bottom:0}
+.fi h3{font-size:48px;line-height:.95;letter-spacing:-.03em}.fi p{margin-top:32px}
+.fpic{display:none}
+.js .feat:not(.nopic) .fi{opacity:.35}.js .feat:not(.nopic) .fi.on{opacity:1}
+/* plans — reference pricing page: cards 298, r32, 2px line, a tilted name tag on the top edge */
+.plans{padding-top:128px}
+.pgrid{display:grid;grid-template-columns:repeat(var(--n),minmax(0,404px));justify-content:center;gap:16px;margin-top:104px}
+.plan{position:relative;border:2px solid var(--card);border-radius:32px;padding:56px 30px 32px}.plan.marked{border-color:var(--ink)}
+.pname{position:absolute;top:-22px;left:50%;transform:translateX(-50%) rotate(-5deg);font:600 18px/1.3 "Figtree",sans-serif;padding:8px 16px;border-radius:999px;border:2px solid var(--ground);box-shadow:1px 2px 4px rgba(0,0,0,.18);white-space:nowrap}
+.price{font-size:40px;line-height:.95;letter-spacing:-.03em;margin-top:13px}.plan .btn{width:100%;margin-top:55px}
+.pline{font-size:14px;font-style:italic;color:var(--muted);margin-top:24px}.plan ul{margin-top:16px;display:grid;gap:13px}
+.plan li{display:grid;grid-template-columns:16px 1fr;gap:10px;font-size:14px;line-height:1.3}.plan li svg{margin-top:1px}
+.pnote{max-width:768px;margin:40px auto 0;text-align:center}
+/* logo strip and quotes (only when the data has them) */
+.lg{background:var(--band);border-radius:80px 80px 0 0;margin-top:80px;padding:159px 0 188px;overflow:hidden}.lg+.stage{margin-top:-80px}
+.lgm{display:flex;width:max-content;animation:lgrun var(--t,40s) linear infinite}.lgr{display:flex;align-items:center;gap:96px;padding-right:96px}.lgr img{height:28px;width:auto}
+@keyframes lgrun{to{transform:translateX(-50%)}}
+.qs{background:var(--band);color:var(--band-ink);border-radius:80px;margin-top:128px;padding:128px 40px}
+.qpin{display:grid;gap:24px;justify-content:center}
+.qc{position:relative;margin:0;width:min(416px,100%);min-height:460px;border-radius:48px;padding:32px;display:flex;flex-direction:column;justify-content:space-between;gap:32px}
+.qc.wide{width:min(740px,100%);display:grid;grid-template-columns:1fr 326px;grid-template-rows:1fr auto;column-gap:32px;padding:16px 16px 16px 32px}
+.qc blockquote{margin:0;font:400 32px/.95 "EB Garamond",serif;letter-spacing:-.03em;padding-top:16px}.qc figcaption{display:grid;gap:2px;font-size:14px;padding-bottom:16px}.qc figcaption span:first-child{font-weight:600}
+.qp{grid-column:2;grid-row:1/3;border-radius:32px;overflow:hidden;display:flex;align-items:center}.qp img{width:100%;height:auto;border-radius:32px}
+.qs.run{padding:0;height:calc(100vh + var(--Q))}.run .qpin{position:sticky;top:0;height:100vh;display:block;overflow:clip}.run .qc{position:absolute;left:0;top:0;will-change:transform}
+/* questions — reference: box 816 r32, deep pane 388x420 r16, answer in a pale bubble at the right */
+.faq{padding-top:128px}
+.fq{position:relative;width:min(816px,100%);margin:48px auto 0;background:var(--card);border-radius:32px;padding:16px;min-height:452px}
+.fqq{width:388px;max-width:100%;height:420px;background:var(--deep);color:var(--light);border-radius:16px;padding:28px 12px 0;overflow:hidden}
+.fqg{position:absolute;left:28px;bottom:16px;width:352px;height:50px;background:linear-gradient(var(--deep-0),var(--deep));pointer-events:none}
+.fql{height:100%;overflow-y:auto;display:grid;gap:4px;align-content:start;padding-bottom:40px;scrollbar-width:thin}
+.fq summary{list-style:none;cursor:pointer;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:16px;border-radius:4px;font-size:14px;line-height:1.3;transition:background-color .2s}
+.fq summary::-webkit-details-marker{display:none}.fq summary .down{display:none;flex:none;transition:transform .2s}
+.fq summary:hover,.fq details[open] summary{background:var(--soft)}
+.ans{position:absolute;left:436px;right:44px;top:44px;max-height:calc(100% - 60px);overflow:auto;color:var(--ink)}
+.ans .q{text-align:right;font-size:14px;color:var(--muted)}.ans .a{margin-top:17px;background:var(--bubble);border-radius:12px 12px 12px 2px;padding:12px 16px;font-size:14px;line-height:1.3}
+.js details[open] .ans{animation:ansin .3s ease both}@keyframes ansin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+/* close — reference: full-bleed picture, 80px corners, 864 high, line at 120 */
+.close{position:relative;margin-top:128px;border-radius:80px;overflow:hidden;min-height:864px;display:flex;align-items:center;justify-content:center;padding:100px 40px 32px;text-align:center}
+.close.plain{background:var(--deep);color:var(--light)}
+.veil{position:absolute;inset:0}.close.plain .veil,.close.plain .mk{display:none}
+.close.tone-dark:not(.plain){color:#fff}.tone-dark .veil{background:rgba(0,0,0,.5)}
+.close.tone-light:not(.plain){color:#111}.tone-light .veil{background:rgba(255,255,255,.6)}
+.cc{position:relative;z-index:1;max-width:1024px}.close h2{font-size:120px;line-height:.85;letter-spacing:-.03em}.close h2.c2{font-size:96px;line-height:.9}
+.cc .lead{max-width:640px;margin:64px auto 0}.cc .btn{margin-top:24px}
+/* foot — reference: link cards 612x170 r12 with a 150 square, four columns of 14px links, the name ~1240 wide */
+.ft{padding:80px 0 50px}.pcards{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.pcard{display:flex;align-items:center;gap:32px;min-height:170px;padding:8px 32px 8px 8px;background:var(--card);border:2px solid transparent;border-radius:12px;transition:border-color .3s}.pcard:hover{border-color:var(--ink)}
+.pg{position:relative;flex:none;width:150px;height:150px;border-radius:6px;overflow:hidden}.pt{display:grid;gap:12px;flex:1}.pt strong{font-weight:600}.pd{color:var(--muted)}
+.pcard .chev{flex:none}
+.fcols{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:48px}.fcols li{font-size:14px;line-height:1.3;margin-bottom:4px}.fcols a:hover,.legal a:hover{text-decoration:underline;text-underline-offset:3px}
+.big{margin-top:64px;font:400 var(--fs,200px)/1.1 var(--brand);letter-spacing:-.02em;white-space:nowrap}.big img{width:100%}
+.legal{display:flex;flex-wrap:wrap;gap:8px 24px;margin-top:40px;font-size:14px}.ftext{margin-top:16px;font-size:14px;font-weight:400;color:var(--muted);max-width:768px}
+/* phone bar — reference: slides up from the bottom edge after the first screen */
+.appbar{display:none}
+@media (max-width:1100px){.green{padding-inline:40px}.fgrid{column-gap:64px}}
+/* phone build — reference at 390: margins 20, corners 40, everything in one column, no pin */
+@media (max-width:991px){
+.wrap{width:min(560px,100% - 40px)}
+.annc{min-height:37px;padding:11px 20px;font-size:12px}.annc a{margin-left:10px}.annc .chev{width:11px;height:11px;vertical-align:-2px}
+.nv{top:8px;margin:13px auto -67px;height:54px;transition:transform .35s cubic-bezier(.2,.7,.2,1)}.nv.away{transform:translateY(-78px)}.nvb{height:54px;padding:0 8px 0 16px;gap:10px}.nvl{display:none}.logo{margin-right:auto}.burger{display:flex}
+.btn.nb{min-height:34px;padding:8px;font-size:13px;border-width:1px;min-width:0}.btn.nb .lt{white-space:nowrap}.btn.nb.long{display:none}
+.hero{padding:123px 20px 167px}.hero:not(.ribbed){padding-bottom:80px}
+h1,h1.h1b{font-size:48px}h1.h1c{font-size:40px}.hc .lead{font-size:18px;margin-top:24px;max-width:350px}
+
+.rib{width:864px;margin-left:-432px}.rib text{font-size:30px}.rib .p2{stroke-width:50px}
+.stage{margin-top:48px}.green,.stage:not(.pinned) .green{border-radius:40px;padding:56px 20px 32px}
+.d1{font-size:48px}.green .lead{font-size:16px;margin-top:23px}
+.green .cards{flex-direction:column;height:auto;margin-top:49px;max-width:520px;margin-inline:auto}.kc{width:auto;border-radius:20px;padding:24px 12px 28px;min-height:192px}.kin{width:auto}
+.fl{font-size:18px}.fv{font-size:32px}.vslot{flex:none;height:192px}.vin{border-radius:20px}.vlab{padding:24px 12px 60px}
+.stage .how{padding:92px 20px 0}.d2{font-size:40px}.stage .how .lead{font-size:14px}
+.scene{padding:48px 20px 0}.st{max-width:520px;margin-bottom:64px}.tile{height:483px}.tx p{font-size:14px}
+.feat,.plans,.faq{padding-top:96px}.d3{font-size:40px;line-height:.95}.shead .lead{font-size:16px;margin-top:23px}
+.fgrid{display:block;margin-top:52px}.fside{display:none}.flist{padding:0;max-width:none;text-align:center}
+.fi{margin-bottom:60px}.fi h3{font-size:32px}.fi p{font-size:14px;margin-top:32px}
+.js .feat:not(.nopic) .fi{opacity:1}
+.fpic{display:flex;align-items:center;justify-content:center;background:var(--card);border-radius:16px;padding:12px;margin-bottom:32px;min-height:200px}.fpic img{width:auto;max-height:340px;border-radius:6px}
+.pgrid{grid-template-columns:1fr;gap:40px;margin-top:64px}.price{font-size:32px}.plan .btn{margin-top:32px}
+.fq{padding:0;background:none;min-height:0;margin-top:40px}.fqq{width:auto;height:auto;padding:28px 12px 12px}.fqg{display:none}.fql{height:auto;overflow:visible;padding:0}
+.fq summary .down{display:block}.fq details[open] summary .down{transform:rotate(180deg)}
+.ans{position:static;max-height:none;overflow:visible;color:inherit;padding:4px 16px 16px}.ans .q{display:none}.ans .a{margin:0;background:none;padding:0;border-radius:0}
+.lg{border-radius:40px 40px 0 0;padding:92px 0 140px;margin-top:48px}.lg+.stage{margin-top:-40px}.qs{border-radius:40px;margin-top:96px;padding:64px 20px}.qc,.qc.wide{display:flex;padding:24px;min-height:0;border-radius:32px}.qc blockquote{font-size:24px}
+.close{margin-top:96px;border-radius:40px;min-height:540px;padding:64px 20px}.close h2,.close h2.c2{font-size:44px;line-height:.9}.cc .lead{font-size:18px;margin-top:24px}
+.ft{padding:56px 0 120px}.pcards{grid-template-columns:1fr}.pcard{flex-wrap:wrap;gap:16px;padding:16px;min-height:0}.pg{width:88px;height:88px}.pt{flex-basis:100%;order:3}.pcard .chev{margin-left:auto}
+.fcols{grid-template-columns:1fr 1fr;gap:32px 16px}.fcols li{margin-bottom:6px}.big{margin-top:48px}
+.appbar{position:fixed;left:0;right:0;bottom:0;z-index:60;display:flex;align-items:center;gap:12px;min-height:89px;padding:16px 14px;background:var(--deep);color:var(--light);transform:translateY(100%);transition:transform .4s cubic-bezier(.2,.7,.2,1)}
+.appbar[hidden]{display:none}.appbar.up{transform:none}.abx{width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex:none}
+.appbar p{display:grid;gap:4px;flex:1;min-width:0}.appbar strong{font-size:14px;font-weight:600}.appbar span{font-size:12px;font-weight:400}
+.abb{flex:none;max-width:48%;background:var(--accent);color:var(--on-accent);font:600 13px/1.1 "Figtree",sans-serif;padding:10px 20px;border-radius:160px;text-align:center}
+}
+@media (max-width:767px){.rpill{min-width:86px;padding:0 5px;height:44px}.rpill img{height:20px}.rpill.word img{height:9px}.rib{width:390px;margin-left:-195px}.rib text{font-size:46px}.rib .p2{stroke-width:80px}.rib .t2{transform:translateY(8px)}
+.big{font-size:min(var(--fs),200px)}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+/* ── ours ── */
+html{scroll-padding-top:100px}
+/* the first action: the three ways in, then the address field where the reference has its one button (24 under the lead) */
+.entry{display:grid;gap:12px;margin-top:32px}.hc .entry .btn{margin-top:0}
+.entry .urlf[hidden],.entry .alt[hidden],.opts[hidden]{display:none}
+.entry .alt{display:grid;justify-items:center;gap:12px;padding:8px 0 4px}
+.opts{max-width:600px;width:100%;margin-inline:auto;text-align:left}.opts>summary{margin-inline:auto;display:flex;justify-content:center}
+.opts>summary{list-style:none;cursor:pointer;display:flex;justify-content:center;align-items:center;gap:8px;min-height:44px;font-weight:600;color:var(--muted)}.opts>summary::-webkit-details-marker{display:none}
+.opts>summary::before{content:"+";display:inline-grid;place-items:center;width:22px;height:22px;border:2px solid var(--card);border-radius:50%;font-size:14px;line-height:1}.opts[open]>summary::before{content:"−"}
+.opts>summary:hover{color:var(--ink)}.opts .row{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:4px 0 8px}
+.close .urlf{margin-top:24px}.close .urlf .btn{margin-top:0}.close .urlf .pre{color:#57534d}
+/* features without screens: each way in ends in its own action */
+.fi .more{margin-top:24px}
+/* a picture that carries text keeps a ground of its own tone under it (shown while it loads, and what a reader of colours sees) */
+.tone-light .vin{background-color:#e9e3db}.tone-dark .vin{background-color:#1a1a1a}.close.tone-dark{background-color:#161616}.rpill img{border-radius:50%}
+@media (max-width:991px){.entry{margin-top:24px}.opts .row{grid-template-columns:1fr}}
+/* the stacked build on a wide screen (reduced motion, no script): the four steps side by side, not one 400px column in a 1440 page */
+@media (min-width:992px){.stage:not(.pinned) .scene{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:16px;max-width:1320px;margin-inline:auto}.stage:not(.pinned) .st{margin:0;max-width:none}.stage:not(.pinned) .tile{height:360px}
+.ans{background-color:var(--card)}}   /* the answer stands on the card beside the pane, not on the pane */
+/* WCAG 2.5.8: every link at least 24 high */
+.fcols a,.legal a,.annc a,.more{display:inline-flex;align-items:center;min-height:24px}
+/* the agents at work, where the reference has its large picture: a made-up client's page on the ground picture, and the
+   product's own agents (web/js/swarm2.js) acting on the places the capture measured on it (web/visuals/ui-page.json) */
+.kin .k2{margin-top:44px}
+.live{position:absolute;inset:28px 28px 0;z-index:1;overflow:hidden;border-radius:14px 14px 0 0;background:#fbf8f1;box-shadow:0 24px 70px rgba(0,0,0,.28)}
+.live .lpage{display:block;width:100%;height:auto;max-width:none}
+.lcap{position:absolute;left:12px;bottom:12px;z-index:8;padding:6px 12px;border-radius:999px;background:var(--ground);color:var(--ink);font:600 13px/1.2 var(--sans);box-shadow:0 0 0 2px var(--ink)}
+.live.quiet .s2-cur,.live.quiet .s2-x,.live.quiet .s2-spot,.live.quiet .lcap{opacity:0!important;transition:opacity .3s}
+.lay.base{padding:0}
+@media (max-width:991px){.kin .k2{margin-top:20px}.vslot{height:300px}.live{inset:12px 12px 0;border-radius:10px 10px 0 0}.lcap{font-size:12px;padding:5px 10px;left:8px;bottom:8px}}

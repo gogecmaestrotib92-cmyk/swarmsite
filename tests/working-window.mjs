@@ -27,10 +27,10 @@ async function open(width, height) {
   await page.goto(`https://app.test/app?url=river.test&job=${ID}`); await page.waitForTimeout(3200);
   return { page, state, errors };
 }
-const agents = page => page.evaluate(() => { const f = document.querySelector('#frame').getBoundingClientRect(); return [...document.querySelectorAll('#frame .s2-cur')].map(c => { const im = c.querySelector('.agent-photo'), r = (im || c).getBoundingClientRect(), cs = getComputedStyle(c);
+const agents = page => page.evaluate(() => { const f = document.querySelector('#frame').getBoundingClientRect(); return [...document.querySelectorAll('#frame .s2-cur')].map(c => { const im = c.querySelector('.agent-photo'), r = (im || c.querySelector('.tag') || c).getBoundingClientRect(), cs = getComputedStyle(c);
   return { seen: cs.opacity === '1' && cs.display !== 'none' && (!im || getComputedStyle(im).opacity === '1') && r.width > 20 && r.right > f.left && r.left < f.right && r.bottom > f.top && r.top < f.bottom, x: Math.round(r.left), y: Math.round(r.top), says: c.querySelector('.tag s').textContent }; }); });
 try {
-  for (const [width, height, least] of [[1440, 900, 10], [390, 800, 6]]) {
+  for (const [width, height, least] of [[1440, 900, 8], [390, 800, 5]]) {   // one agent for each job: eight on a desk, five on a phone (2026-11-13: named cursors, no longer a dozen figures)
     const { page, state, errors } = await open(width, height); const first = await agents(page);
     assert.ok(first.filter(a => a.seen).length >= least, `${width}: ${least}+ agents are on the page and drawn within three seconds, with no event: ${JSON.stringify(first.filter(a => a.seen).length)} of ${first.length}`);
     assert.ok(first.every(a => a.says === ''), 'an agent with no event of its own shows no finding: ' + JSON.stringify(first.map(a => a.says)));

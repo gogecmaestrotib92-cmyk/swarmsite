@@ -50,7 +50,7 @@ export function publicJob(row) {
       store: !!t.store,   // the editor works on what a finished job kept; where it keeps it is the server's
       variants: vs.map((v, i) => { const id = publicId(v, i);
         return { slug: id, id, name: v.name || designName(i), url: String(v.url || '').replace(/\/[^/]*$/, '/' + id), approach: v.approach || '', why: scrub(v.why), package: v.package,
-          ...(v.package_why ? { package_why: v.package_why.map(scrub) } : {}), ...(v.bytes != null ? { bytes: v.bytes } : {}), ...(v.made ? { made: { family: v.made.family, palette: v.made.palette } } : {}) }; }),
+          ...(v.package_why ? { package_why: v.package_why.map(scrub) } : {}), ...(v.bytes != null ? { bytes: v.bytes } : {}), ...(/^https:\/\/[^\s"<>]+-cover\.jpg$/.test(String(v.cover || '')) ? { cover: v.cover } : {}), ...(v.made ? { made: { family: v.made.family, palette: v.made.palette } } : {}) }; }),
       rejected: (t.rejected || []).map((x, i) => ({ name: `Library design ${i + 1}`, why: scrub(x?.why) })),
       not_shown: (t.not_shown || []).map(x => { let where; try { where = x?.where ? JSON.parse(scrub(JSON.stringify(x.where))) : undefined; } catch { where = undefined; }
         return { failed: (x?.failed || []).map(scrub), ...(where ? { where } : {}) }; }),   // what the gate measured (where on which screen), never which template

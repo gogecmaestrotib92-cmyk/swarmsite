@@ -2,90 +2,131 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Swarmsite — a site from nothing</title><meta name="robots" content="noindex">
-<link rel="preload" href="/fonts/instrument-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<title>Swarmsite — a site from nothing</title><meta name="robots" content="noindex"><link rel="icon" type="image/png" href="/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;1,400&amp;family=Figtree:wght@400;500;600;700&amp;family=Shrikhand&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/site.css">
+<link rel="stylesheet" href="/header.css">
 <style>
-@font-face{font-family:'Instrument Sans';font-weight:400;font-display:swap;src:url(/fonts/instrument-sans-latin-400-normal.woff2) format('woff2')}
-@font-face{font-family:'Instrument Sans';font-weight:500;font-display:swap;src:url(/fonts/instrument-sans-latin-500-normal.woff2) format('woff2')}
-@font-face{font-family:'JetBrains Mono';font-weight:400;font-display:swap;src:url(/fonts/jetbrains-mono-latin-400-normal.woff2) format('woff2')}
-:root{--paper:#F5F5F4;--ink:#111;--muted:#6B6B68;--line:rgba(17,17,17,.14);--bad:#a3261b;--sans:'Instrument Sans',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace}
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
-a{color:inherit}
-main{max-width:820px;margin:0 auto;padding:56px 20px 120px;display:grid;gap:22px}
-h1{font-weight:400;font-size:clamp(30px,4.4vw,48px);line-height:1.06;letter-spacing:-.03em;max-width:18ch}
-.intro{color:var(--muted);max-width:60ch}
-fieldset{border:1px solid var(--line);border-radius:18px;background:#fff;padding:18px 20px 20px;display:grid;gap:14px;min-width:0}
-legend{font:500 13px var(--mono);color:var(--muted);padding:0 6px;text-transform:lowercase}
-label{display:grid;gap:6px;font-weight:500;font-size:15px;min-width:0}
-.hint{font-weight:400;font-size:13.5px;color:var(--muted)}
-input,select,textarea{font:400 16px var(--sans);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px;background:#fff;width:100%;min-width:0}
+/* "I don't have a site": the form, asked a little at a time. Four short steps and a last look — who you are, your
+   photographs, what you offer, how to reach you — one on the screen at once; only the name is needed, every other step
+   can be passed. The kind of business comes first and shapes the rest (a restaurant is asked for dishes, an address and
+   hours; an app for features and its button). Beside the steps, what the page will have so far. The data sent is the
+   same as it always was (lib/templates/form.py). Tokens, type and buttons: /css/site.css. */
+:root{--line:rgba(20,20,20,.12);--bad:#a3261b}
+[hidden]{display:none!important}
+*{box-sizing:border-box}body{margin:0}
+main{max-width:1080px;margin:0 auto;padding:104px 20px 56px;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;align-items:start}
+.top{grid-column:1/-1;display:grid;gap:14px}
+h1{font:400 48px/.95 var(--serif);letter-spacing:-.03em;text-wrap:balance}
+.intro{font-size:18px;line-height:1.35;max-width:640px;color:var(--ink)}
+/* where you are: the steps by name */
+.prog{display:flex;gap:2px;padding:2px;background:var(--card);border-radius:999px;width:max-content;max-width:100%}
+.prog button{min-height:40px;padding:8px 14px;border-radius:999px;font:600 14px/1 var(--sans);color:var(--muted);white-space:nowrap;display:inline-flex;align-items:center;gap:8px}
+.prog button b{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--line2);color:var(--ground);font:700 12px/1 var(--sans)}
+.prog button[aria-current="step"]{background:var(--ground);color:var(--ink);box-shadow:inset 0 0 0 2px var(--ink)}.prog button[aria-current="step"] b,.prog button.done b{background:var(--ink)}
+.prog button:disabled{cursor:default}.where{display:none}
+/* one step: a panel in the card tone, a sheet on it */
+.step{background:var(--card);border-radius:32px;padding:16px;display:grid;gap:4px}
+.step>*{background:var(--paper);padding:20px 24px;border-radius:6px}.step>:first-child{border-radius:18px 18px 6px 6px}.step>:last-child{border-radius:6px 6px 18px 18px}
+.step h2{font:400 36px/1 var(--serif);letter-spacing:-.03em}.step h2+p{margin-top:8px}
+.grid{display:grid;gap:16px}
+label{display:grid;gap:6px;font-weight:600;font-size:16px;min-width:0}
+.hint{font-weight:400;font-size:14px;line-height:1.35;color:var(--muted)}
+input,select,textarea{width:100%;min-width:0;min-height:48px;padding:10px 14px;border:2px solid var(--card);border-radius:8px;background:var(--paper);font:500 16px/1.3 var(--sans);color:var(--ink)}
+input:focus,select:focus,textarea:focus{outline:0;border-color:var(--ink)}input::placeholder{color:var(--muted);font-weight:400}
 input[type=color]{padding:4px;width:64px}
-input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+button:focus-visible,summary:focus-visible,.pill:focus-within{outline:2px solid var(--ink);outline-offset:2px}
 .two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.three{display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px}
-.rows{display:grid;gap:10px}.row{display:grid;grid-template-columns:2fr 1fr 2fr auto;gap:8px;align-items:end}.row.hours{grid-template-columns:2fr 1fr 1fr auto}.row.step,.row.figure{grid-template-columns:minmax(0,1fr) minmax(0,2fr) auto}
-.pill{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;padding:9px 16px;font:500 14px var(--sans);border:1px solid var(--line);background:#fff;min-height:44px;cursor:pointer;color:var(--ink)}
-.pill.ink{background:var(--ink);color:#fff;border-color:var(--ink)}.pill:disabled{opacity:.45;cursor:default}
-.x{width:44px;padding:0}
-.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
-.ph{border:1px solid var(--line);border-radius:14px;overflow:hidden;display:grid;background:#fff}
-.ph img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:#ecebe7}
-.ph .q{padding:10px 12px 12px;display:grid;gap:8px}
-.drop{border:1.5px dashed var(--line);border-radius:14px;padding:18px;text-align:center;color:var(--muted);display:grid;gap:8px;justify-items:center}
-.check{display:flex;gap:10px;align-items:center;font-weight:400}.check input{width:auto;min-height:0}
-.foot{position:sticky;bottom:0;background:var(--paper);padding:14px 0;border-top:1px solid var(--line);display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-.status{color:var(--muted);font-size:14.5px;max-width:52ch}.status.bad{color:var(--bad)}
-@media(max-width:700px){main{padding:36px 16px 120px}.two,.three{grid-template-columns:minmax(0,1fr)}.row,.row.hours,.row.step,.row.figure{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.row>label:first-child{grid-column:1/-1}}
+.kinds{display:flex;flex-wrap:wrap;gap:8px}.kinds label{display:inline-flex;align-items:center;min-height:40px;padding:6px 14px;border:2px solid var(--card);border-radius:999px;font-size:15px;cursor:pointer;transition:border-color .2s,background-color .2s}
+.kinds input{position:absolute;opacity:0;width:1px;height:1px;min-height:0}.kinds label:has(input:checked){border-color:var(--ink);background:var(--ground)}.kinds label:has(input:focus-visible){outline:2px solid var(--ink);outline-offset:2px}
+.rows{display:grid;gap:10px}.row{display:grid;grid-template-columns:2fr 1fr 2fr auto;gap:8px;align-items:end}.row.hours{grid-template-columns:2fr 1fr 1fr auto}.row.step-row,.row.figure{grid-template-columns:minmax(0,1fr) minmax(0,2fr) auto}
+.row label{font-size:14px;color:var(--muted);font-weight:500}
+.pill{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:10px 18px;border-radius:8px;border:2px solid var(--ink);background:transparent;font:600 15px/1 var(--sans);color:var(--ink);cursor:pointer;white-space:nowrap;transition:transform .2s}
+.pill:hover:not(:disabled){transform:scale(.98)}.pill.ink{background:var(--accent);color:var(--on-accent);min-height:52px;padding-inline:24px}.pill.quiet{border-color:var(--card)}.pill:disabled{opacity:.45;cursor:default}
+.x{width:48px;padding:0}
+.more{border:2px solid var(--card);border-radius:12px}.more[open]{border-color:var(--line2)}.more>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;min-height:48px;padding:8px 14px;font-weight:600}.more>summary::-webkit-details-marker{display:none}
+.more>summary::before{content:"+";display:inline-grid;place-items:center;width:22px;height:22px;border:2px solid var(--card);border-radius:50%;font-size:14px;line-height:1}.more[open]>summary::before{content:"−"}
+.more>summary small{font:400 14px var(--sans);color:var(--muted)}.more>div{display:grid;gap:16px;padding:6px 14px 16px}
+.drop{display:grid;justify-items:center;gap:10px;padding:28px 20px;border:2px dashed var(--line2);border-radius:16px;text-align:center;color:var(--muted)}
+.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}.photos:empty{display:none}
+.ph{display:grid;background:var(--card);border-radius:16px;padding:8px;gap:8px}.ph img{width:100%;aspect-ratio:4/3;object-fit:contain;display:block;border-radius:10px;background:var(--paper)}.ph .q{display:grid;gap:8px}.ph select,.ph input{min-height:44px;font-size:15px;border-color:var(--paper)}
+.look{display:flex;gap:16px;flex-wrap:wrap;align-items:center}.logo-pick{display:inline-flex;align-items:center;gap:12px}.logo-pick img{height:44px;width:auto;max-width:120px;border-radius:6px;background:var(--card)}
+.check{display:flex;gap:10px;align-items:center;font-weight:600}.check input[type=checkbox]{width:18px;height:18px;min-height:0;accent-color:var(--ink)}
+.nav{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.nav .sp{flex:1}
+.status{font-size:15px;line-height:1.35;color:var(--muted);flex:1 1 220px}.status.bad{color:var(--bad)}
+/* what the page will have */
+.have{position:sticky;top:104px;background:var(--card);border-radius:24px;padding:12px}.have>div{background:var(--paper);border-radius:14px;padding:18px 18px 20px}
+.have h2{font:400 26px/1 var(--serif);letter-spacing:-.03em;margin-bottom:12px}.have ul{display:grid;gap:8px;font-size:15px}.have li{display:grid;grid-template-columns:18px 1fr;gap:8px;align-items:start;color:var(--muted)}
+.have li::before{content:"";width:10px;height:10px;margin-top:5px;border-radius:50%;border:2px solid var(--line2)}.have li.on{color:var(--ink);font-weight:600}.have li.on::before{background:var(--ink);border-color:var(--ink)}
+.have p{margin-top:12px;font-size:14px;color:var(--muted)}
+.step .have{position:static;background:var(--paper)}.step .have>div{padding:0;background:none;border-radius:0}.kind-sel{display:none}
+@media(max-width:991px){main{grid-template-columns:minmax(0,1fr);padding:88px 16px 48px;gap:16px}h1{font-size:40px}.intro{font-size:16px}aside.have{display:none}
+  .prog{display:none}.where{display:block;font:600 14px/1.3 var(--sans);color:var(--muted)}.where i{display:block;height:4px;margin-top:8px;border-radius:2px;background:var(--card);overflow:hidden}.where i::after{content:"";display:block;height:100%;width:var(--p,20%);background:var(--ink);border-radius:2px;transition:width .3s}
+  .step{border-radius:20px;padding:8px}.step>*{padding:16px}.step h2{font-size:30px}}
+@media(max-width:700px){.kinds{display:none}.kind-sel{display:block}.two,.three{grid-template-columns:minmax(0,1fr)}.row,.row.hours,.row.step-row,.row.figure{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.row>label:first-child{grid-column:1/-1}.nav .pill{flex:1 1 auto}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
+<header class="hd"><div class="hd-grp"><a class="hd-brand" href="/" aria-label="Swarmsite, front page">swarmsite</a></div><div class="hd-grp"><a class="hd-item" href="/">Back to the site</a></div></header>
 <main>
-  <h1>A site from what you tell us</h1>
-  <p class="intro">No site yet? Fill in what is true about your business and add your own photographs. We make three designs from it, and you choose one. Anything you leave empty is left out of the page; we do not write it for you.</p>
+  <div class="top">
+    <h1>A site from what you tell us</h1>
+    <p class="intro">A few short steps. Only your name is needed; pass anything else. What you leave empty is left out of the page — we do not write it for you.</p>
+    <div class="prog" id="prog" role="group" aria-label="Steps"></div>
+    <p class="where" id="where" aria-hidden="true"></p>
+  </div>
   <form id="f" novalidate>
-    <div style="display:grid;gap:22px">
-    <fieldset><legend>who you are</legend>
-      <label>Name of the business <input id="name" required maxlength="80" autocomplete="organization"></label>
-      <label>What you do, in one sentence <span class="hint">This is the first line of the page.</span><input id="sentence" maxlength="160" placeholder="Rice dishes cooked over wood, by the river"></label>
-      <div class="two">
-        <label>Kind of business <select id="kind"><option value="">Choose…</option></select></label>
-        <label>In your own words <span class="hint">e.g. "family rice restaurant", "app for runners"</span><input id="niche" maxlength="120"></label>
+    <section class="step" data-step="1" data-name="Who you are">
+      <div><h2>Who you are</h2></div>
+      <div class="grid">
+        <label>Name of the business <input id="name" required maxlength="80" autocomplete="organization"></label>
+        <div class="grid" style="gap:8px"><span id="kindL" style="font-weight:600">What kind of business is it?</span><div class="kinds" id="kinds" role="radiogroup" aria-labelledby="kindL"></div><select id="kind" class="kind-sel" aria-labelledby="kindL"><option value="">Choose…</option></select></div>
+        <label>What you do, in one sentence <span class="hint">This is the first line of the page.</span><input id="sentence" maxlength="160"></label>
+        <details class="more"><summary>Say it in your own words <small>optional</small></summary><div><label>What kind of business, as you would say it <span class="hint">e.g. "family rice restaurant", "app for runners"</span><input id="niche" maxlength="120"></label></div></details>
       </div>
-      <div class="check"><input type="checkbox" id="hasAccent"><label for="hasAccent" style="display:inline">My business has a colour</label><input type="color" id="accent" value="#b5452a" aria-label="Your colour" hidden></div>
-      <label>Logo <span class="hint">Optional. A picture file.</span><input type="file" id="logo" accept="image/png,image/jpeg,image/webp"></label>
-    </fieldset>
-    <fieldset><legend>what you offer</legend>
-      <label>A title for the list <span class="hint">Optional, e.g. "Menu", "Treatments", "What it does"</span><input id="offersTitle" maxlength="80"></label>
-      <div class="rows" id="offers"></div>
-      <div><button type="button" class="pill" id="addOffer">Add a line</button></div>
-    </fieldset>
-    <fieldset><legend>how it works</legend>
-      <label>A title for the steps <span class="hint">Optional, e.g. "How it works", "How to book"</span><input id="stepsTitle" maxlength="80"></label>
-      <div class="rows" id="steps"></div>
-      <div><button type="button" class="pill" id="addStep">Add a step</button></div>
-    </fieldset>
-    <fieldset><legend>numbers you stand behind</legend>
-      <p class="hint">Optional. Only what is true and you could show, e.g. "1998" — "cooking since", "2 000" — "teams use it".</p>
-      <div class="rows" id="figures"></div>
-      <div><button type="button" class="pill" id="addFigure">Add a number</button></div>
-    </fieldset>
-    <fieldset><legend>your photographs</legend>
-      <div class="drop"><span>Add photographs of your place, your work, your dishes, your team or your product. For each, tell us what is in it.</span><label class="pill" style="display:inline-flex">Choose photographs<input type="file" id="files" accept="image/png,image/jpeg,image/webp" multiple style="position:absolute;width:1px;height:1px;opacity:0"></label></div>
-      <div class="photos" id="photos"></div>
-    </fieldset>
-    <fieldset><legend>how to reach you</legend>
-      <div class="two">
-        <label>The one button: its words <span class="hint">e.g. "Book a table", "Sign up"</span><input id="linkT" maxlength="40"></label>
-        <label>…and where it goes <span class="hint">A web address, or leave empty</span><input id="linkH" inputmode="url" maxlength="500" placeholder="https://"></label>
+    </section>
+    <section class="step" data-step="2" data-name="Photographs" hidden>
+      <div><h2>Your photographs</h2><p class="hint">They decide how the page looks more than anything else. For each, say what is in it.</p></div>
+      <div class="grid">
+        <div class="drop" id="drop"><span id="dropT">Add photographs of your place, your work, your team or your product.</span><label class="pill">Choose photographs<input type="file" id="files" accept="image/png,image/jpeg,image/webp" multiple style="position:absolute;width:1px;height:1px;opacity:0;min-height:0"></label></div>
+        <div class="photos" id="photos"></div>
+        <div class="look"><span class="logo-pick"><img id="logoPrev" alt="" hidden><label class="pill quiet"><span id="logoT">Add your logo</span><input type="file" id="logo" accept="image/png,image/jpeg,image/webp" style="position:absolute;width:1px;height:1px;opacity:0;min-height:0"></label></span>
+          <span class="check"><input type="checkbox" id="hasAccent"><label for="hasAccent" style="display:inline">My business has a colour</label><input type="color" id="accent" value="#b5452a" aria-label="Your colour" hidden></span></div>
       </div>
-      <div class="three"><label>Street <input id="street" maxlength="120" autocomplete="street-address"></label><label>Postcode <input id="postcode" maxlength="20" autocomplete="postal-code"></label><label>City <input id="city" maxlength="80" autocomplete="address-level2"></label></div>
-      <div class="two"><label>Phone <input id="phone" type="tel" maxlength="40" autocomplete="tel"></label><label>Email <input id="email" type="email" maxlength="120" autocomplete="email"></label></div>
-      <div class="rows" id="hours"></div>
-      <div><button type="button" class="pill" id="addHours">Add opening hours</button></div>
-    </fieldset>
+    </section>
+    <section class="step" data-step="3" data-name="What you offer" hidden>
+      <div><h2>What you offer</h2><p class="hint" id="offerHint">One line for each thing. A price or a note only where you have one.</p></div>
+      <div class="grid">
+        <div class="rows" id="offers"></div>
+        <div><button type="button" class="pill quiet" id="addOffer">Add a line</button></div>
+        <details class="more"><summary>A title for this list <small>optional</small></summary><div><label>Title <span class="hint">e.g. "Menu", "Treatments", "What it does"</span><input id="offersTitle" maxlength="80"></label></div></details>
+        <details class="more" id="moreSteps"><summary>How it works, in steps <small>optional</small></summary><div><div class="rows" id="steps"></div><div><button type="button" class="pill quiet" id="addStep">Add a step</button></div><label>A title for the steps <span class="hint">e.g. "How it works", "How to book"</span><input id="stepsTitle" maxlength="80"></label></div></details>
+        <details class="more" id="moreFigures"><summary>Numbers you can show <small>optional</small></summary><div><p class="hint">Only what is true, e.g. "1998" — "cooking since", "2 000" — "teams use it".</p><div class="rows" id="figures"></div><div><button type="button" class="pill quiet" id="addFigure">Add a number</button></div></div></details>
+      </div>
+    </section>
+    <section class="step" data-step="4" data-name="How to reach you" hidden>
+      <div><h2>How to reach you</h2><p class="hint">The page has one button. Say what it should say and where it leads.</p></div>
+      <div class="grid">
+        <div class="two"><label>The button says <input id="linkT" maxlength="40"></label><label>It leads to <span class="hint">A web address, or leave empty</span><input id="linkH" inputmode="url" maxlength="500" placeholder="https://"></label></div>
+        <div class="two"><label>Phone <input id="phone" type="tel" maxlength="40" autocomplete="tel"></label><label>Email <input id="email" type="email" maxlength="120" autocomplete="email"></label></div>
+        <details class="more" id="morePlace"><summary>An address and opening hours <small>optional</small></summary><div>
+          <div class="three"><label>Street <input id="street" maxlength="120" autocomplete="street-address"></label><label>Postcode <input id="postcode" maxlength="20" autocomplete="postal-code"></label><label>City <input id="city" maxlength="80" autocomplete="address-level2"></label></div>
+          <div class="rows" id="hours"></div><div><button type="button" class="pill quiet" id="addHours">Add opening hours</button></div></div></details>
+      </div>
+    </section>
+    <section class="step" data-step="5" data-name="Check" hidden>
+      <div><h2>Your page will have</h2><p class="hint">Go back to any step to add something. What is not here is left out of the page.</p></div>
+      <div class="have"><div><ul id="haveEnd"></ul></div></div>
+    </section>
+    <div class="nav" style="margin-top:16px">
+      <button type="button" class="pill quiet" id="back" hidden>Back</button>
+      <p class="status" id="status" role="status" aria-live="polite">Only the name is needed.</p>
+      <button type="button" class="pill" id="next">Next <span aria-hidden="true">→</span></button>
+      <button class="pill ink" id="go" type="submit" hidden>Make three designs <span aria-hidden="true">→</span></button>
     </div>
-    <div class="foot"><p class="status" id="status" role="status" aria-live="polite">Only the name is needed. The more that is true here, the more the page can show.</p><button class="pill ink" id="go" type="submit">Make three designs <span aria-hidden="true">→</span></button></div>
   </form>
+  <aside class="have" aria-label="What your page will have so far"><div><h2>Your page will have</h2><ul id="haveSide"></ul><p>It fills in as you go.</p></div></aside>
 </main>
 <script src="/config.js"></script>
 <script>
@@ -95,15 +136,37 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 const API=(window.SWARMSITE_API||'').replace(/\/$/,''); const $=s=>document.querySelector(s);
 const KINDS=[['restaurant','Restaurant, café or bar'],['hotel','Hotel or guest house'],['venue','A place people visit'],['shop','Shop'],['clinic','Clinic or practice'],['law','Law firm'],['service','A service (trades, studio, agency…)'],['school','School or courses'],['person','One person (consultant, artist…)'],['software','Software or online product'],['app','A phone app'],['corporate','A company'],['nonprofit','Non-profit']];
 const ROLES=[['','What is in this picture?'],['dish','A dish or a drink'],['room','A room or the inside'],['exterior','The outside, the street'],['bar','The bar'],['team','Our team'],['portrait','A portrait'],['work','Our work'],['workshop','Where we work'],['product','A product'],['screen','A screen of our software'],['phone','A screen of our app'],['detail','A detail'],['landscape','A landscape'],['action','Something being done'],['other','Something else']];
-for(const [v,t] of KINDS){ const o=document.createElement('option'); o.value=v; o.textContent=t; $('#kind').appendChild(o); }
-$('#hasAccent').onchange=e=>{ $("#accent").hidden=!e.target.checked; };
+/* what each kind of business is asked: the word for a line of its offer, examples for the fields (examples only: a
+   placeholder is never sent), whether a place with an address and hours is what it is, and what to photograph */
+const ASK={restaurant:{line:'Dish or drink',eg:'Arroz negro',sent:'Rice dishes cooked over wood, by the river',btn:'Book a table',place:1,photo:'your dishes, the room, the street outside, your team'},
+  hotel:{line:'Room',eg:'Double room with a balcony',sent:'Twelve rooms above the old harbour',btn:'Book a room',place:1,photo:'the rooms, the house from outside, the view, breakfast'},
+  venue:{line:'What there is',eg:'The main hall',sent:'A hall for concerts and weddings, by the park',btn:'Ask for a date',place:1,photo:'the rooms, the outside, an evening in full swing'},
+  shop:{line:'Product',eg:'Linen apron',sent:'Kitchen linen, sewn in our workshop',btn:'Visit the shop',place:1,photo:'your products, the shop, a detail of how they are made'},
+  clinic:{line:'Treatment',eg:'Check-up and cleaning',sent:'A dental practice for the whole family',btn:'Book an appointment',place:1,photo:'the practice, the team, a treatment room'},
+  law:{line:'Area of practice',eg:'Employment law',sent:'Employment and family law, in plain words',btn:'Ask for a first talk',place:1,photo:'the partners, the office'},
+  service:{line:'Service',eg:'Bathroom renovation',sent:'Bathrooms renovated in two weeks',btn:'Ask for a quote',place:0,photo:'your work, finished and under way, and your team'},
+  school:{line:'Course',eg:'Evening pottery, eight weeks',sent:'Pottery courses for beginners',btn:'Sign up for a course',place:1,photo:'a class under way, the room, work by students'},
+  person:{line:'What you do',eg:'Portrait sessions',sent:'Portraits and reportage photography',btn:'Write to me',place:0,photo:'a portrait of you and your work'},
+  software:{line:'Feature',eg:'Receipts read for you',sent:'Bookkeeping for market stalls',btn:'Start free',place:0,photo:'screens of your product'},
+  app:{line:'Feature',eg:'Runs mapped as you go',sent:'A running log that needs no account',btn:'Get the app',place:0,photo:'screens of your app, on a phone'},
+  corporate:{line:'What you make',eg:'Cast aluminium parts',sent:'Aluminium castings for machine builders',btn:'Contact us',place:0,photo:'the works, your products, your people'},
+  nonprofit:{line:'What you do',eg:'Free meals, every weekday',sent:'Meals for people who need one',btn:'Support us',place:0,photo:'your work as it happens, the people behind it'}};
+const ask=()=>ASK[$('#kind').value]||{line:'Name',eg:'',sent:'What you do, as you would say it to a visitor',btn:'Contact us',place:0,photo:'your place, your work, your team or your product'};
+for(const [v,t] of KINDS){ $('#kind').appendChild(new Option(t,v)); const l=document.createElement('label'), i=document.createElement('input'); i.type='radio'; i.name='kindPick'; i.value=v; i.onchange=()=>{ $('#kind').value=v; $('#kind').dispatchEvent(new Event('change')); }; l.append(i,document.createTextNode(t)); $('#kinds').appendChild(l); }
+/* the kind shapes the rest: examples, the word for a line, the address opened for a place */
+$('#kind').onchange=()=>{ const a=ask(), v=$('#kind').value; document.querySelectorAll('#kinds input').forEach(i=>{ i.checked=i.value===v; });
+  $('#sentence').placeholder=a.sent; $('#linkT').placeholder=a.btn; $('#dropT').textContent='Add photographs: '+a.photo+'.';
+  document.querySelectorAll('#offers .offer').forEach(r=>{ r.querySelector('label').firstChild.textContent=a.line; r.querySelector('.o-name').placeholder=a.eg; });
+  if(a.place) $('#morePlace').open=true; have(); };
+$('#hasAccent').onchange=e=>{ $("#accent").hidden=!e.target.checked; have(); };
+$('#logo').onchange=e=>{ const f=e.target.files[0], im=$('#logoPrev'); if(im.src) URL.revokeObjectURL(im.src); if(f){ im.src=URL.createObjectURL(f); im.hidden=false; $('#logoT').textContent='Change your logo'; } else { im.hidden=true; im.removeAttribute('src'); $('#logoT').textContent='Add your logo'; } have(); };
 const field=(label,cls,attrs={})=>{ const l=document.createElement('label'); l.textContent=label; const i=document.createElement('input'); i.className=cls; Object.assign(i,attrs); l.appendChild(i); return l; };
-const removeBtn=(row,after)=>{ const b=document.createElement('button'); b.type='button'; b.className='pill x'; b.setAttribute('aria-label','Remove this line'); b.textContent='×'; b.onclick=()=>{ row.remove(); after&&after(); }; return b; };
-function addOffer(){ const r=document.createElement('div'); r.className='row offer'; r.append(field('Name','o-name',{maxLength:120}),field('Price','o-price',{maxLength:40,placeholder:'optional'}),field('A note','o-note',{maxLength:300,placeholder:'optional'}),removeBtn(r,syncOffers)); $('#offers').appendChild(r); r.querySelector('input').addEventListener('input',syncOffers); syncOffers(); r.querySelector('input').focus(); }
+const removeBtn=(row,after)=>{ const b=document.createElement('button'); b.type='button'; b.className='pill quiet x'; b.setAttribute('aria-label','Remove this line'); b.textContent='×'; b.onclick=()=>{ row.remove(); after&&after(); have(); }; return b; };
+function addOffer(quiet){ const a=ask(), r=document.createElement('div'); r.className='row offer'; r.append(field(a.line,'o-name',{maxLength:120,placeholder:a.eg}),field('Price','o-price',{maxLength:40,placeholder:'optional'}),field('A note','o-note',{maxLength:300,placeholder:'optional'}),removeBtn(r,syncOffers)); $('#offers').appendChild(r); r.querySelector('input').addEventListener('input',syncOffers); syncOffers(); if(quiet!==true) r.querySelector('input').focus(); }
 function addHours(){ const r=document.createElement('div'); r.className='row hours'; r.append(field('Days','h-days',{maxLength:40,placeholder:'Tue–Sun'}),field('Opens','h-open',{maxLength:12,placeholder:'13:00'}),field('Closes','h-close',{maxLength:12,placeholder:'23:00'}),removeBtn(r)); $('#hours').appendChild(r); r.querySelector('input').focus(); }
-function addStep(){ const r=document.createElement('div'); r.className='row step'; r.append(field('Step','s-title',{maxLength:120}),field('In a sentence','s-text',{maxLength:300,placeholder:'optional'}),removeBtn(r,syncOffers)); $('#steps').appendChild(r); r.querySelector('input').addEventListener('input',syncOffers); syncOffers(); r.querySelector('input').focus(); }
+function addStep(){ const r=document.createElement('div'); r.className='row step-row'; r.append(field('Step','s-title',{maxLength:120}),field('In a sentence','s-text',{maxLength:300,placeholder:'optional'}),removeBtn(r,syncOffers)); $('#steps').appendChild(r); r.querySelector('input').addEventListener('input',syncOffers); syncOffers(); r.querySelector('input').focus(); }
 function addFigure(){ const r=document.createElement('div'); r.className='row figure'; r.append(field('Number','g-v',{maxLength:24}),field('What it counts','g-l',{maxLength:80}),removeBtn(r)); $('#figures').appendChild(r); r.querySelector('input').focus(); }
-$('#addOffer').onclick=addOffer; $('#addHours').onclick=addHours; $('#addStep').onclick=addStep; $('#addFigure').onclick=addFigure; addOffer(); $('#offers input').blur();
+$('#addOffer').onclick=addOffer; $('#addHours').onclick=addHours; $('#addStep').onclick=()=>{ $('#moreSteps').open=true; addStep(); }; $('#addFigure').onclick=()=>{ $('#moreFigures').open=true; addFigure(); }; addOffer(true);
 /* the offers and steps a photograph may go with, kept in step with the lists above */
 function syncOffers(){ const names=[...document.querySelectorAll('#offers .o-name')].map(i=>i.value.trim()), steps=[...document.querySelectorAll('#steps .s-title')].map(i=>i.value.trim());
   document.querySelectorAll('.ph .with').forEach(s=>{ const keep=s.value; s.replaceChildren(new Option('Goes with… (optional)',''));
@@ -115,23 +178,47 @@ async function shrink(file,max=1600){ const url=URL.createObjectURL(file); try{ 
   const c=document.createElement('canvas'); c.width=Math.round(img.naturalWidth*k); c.height=Math.round(img.naturalHeight*k); c.getContext('2d').drawImage(img,0,0,c.width,c.height);
   const keepPng=file.type==='image/png'&&file.size<4e5; return await new Promise(ok=>c.toBlob(b=>ok(b),keepPng?'image/png':'image/jpeg',.86)); } finally{ URL.revokeObjectURL(url); } }
 const photos=[];   /* {blob, el} */
-$('#files').onchange=async e=>{ for(const f of [...e.target.files].slice(0,24-photos.length)){ let blob; try{ blob=await shrink(f); }catch{ say(`${f.name} is not a picture we can read.`,true); continue; }
+async function addFiles(list){ for(const f of [...list].slice(0,24-photos.length)){ let blob; try{ blob=await shrink(f); }catch{ say(`${f.name} is not a picture we can read.`,true); continue; }
   const el=document.createElement('div'); el.className='ph'; const img=document.createElement('img'); img.alt=''; img.src=URL.createObjectURL(blob);
   const q=document.createElement('div'); q.className='q'; const role=document.createElement('select'); role.className='role'; role.setAttribute('aria-label','What is in this picture?'); for(const [v,t] of ROLES) role.appendChild(new Option(t,v));
   const withS=document.createElement('select'); withS.className='with'; withS.setAttribute('aria-label','Which line of what you offer it shows');
   const alt=document.createElement('input'); alt.className='alt'; alt.maxLength=200; alt.placeholder='Describe it in a few words (optional)'; alt.setAttribute('aria-label','Describe it in a few words');
   const p={blob,el}; q.append(role,withS,alt,removeBtn(el,()=>{ photos.splice(photos.indexOf(p),1); })); el.append(img,q); $('#photos').appendChild(el); photos.push(p); }
-  e.target.value=''; syncOffers(); };
+  syncOffers(); have(); }
+$('#files').onchange=async e=>{ await addFiles(e.target.files); e.target.value=''; };
+{ const d=$('#drop'); ['dragenter','dragover'].forEach(t=>d.addEventListener(t,e=>{ e.preventDefault(); d.style.borderColor='var(--ink)'; })); ['dragleave','drop'].forEach(t=>d.addEventListener(t,e=>{ e.preventDefault(); d.style.borderColor=''; })); d.addEventListener('drop',e=>addFiles([...e.dataTransfer.files].filter(f=>/^image\/(png|jpeg|webp)$/.test(f.type)))); }
 function say(t,bad){ const s=$('#status'); s.textContent=t; s.classList.toggle('bad',!!bad); }
 const val=s=>($(s)?.value||'').trim();
+const filled=sel=>[...document.querySelectorAll(sel)].filter(i=>i.value.trim()).length;
+/* what the page will have so far: read off the form, nothing promised that is not filled in */
+function have(){ const n=photos.length, o=filled('#offers .o-name'), st=filled('#steps .s-title'), fg=filled('#figures .g-v'), hrs=filled('#hours .h-days');
+  const rows=[[!!val('#name'),val('#name')?`Your name: ${val('#name')}`:'Your name'],[!!val('#sentence'),'A first line, in your words'],[n>0,n?`${n} photograph${n===1?'':'s'} of yours`:'Your photographs'],[!!$('#logo').files[0],'Your logo'],[$('#hasAccent').checked,'Your colour'],
+    [o>0,o?`${o} line${o===1?'':'s'} of what you offer`:'What you offer'],[st>0,st?`${st} step${st===1?'':'s'} of how it works`:'How it works, in steps'],[fg>0,fg?`${fg} number${fg===1?'':'s'}`:'Numbers'],
+    [!!val('#linkT'),val('#linkT')?`A button: “${val('#linkT')}”`:'A button'],[!!(val('#phone')||val('#email')),'Phone or email'],[!!(val('#street')||val('#city')),'Your address'],[hrs>0,'Opening hours']];
+  for(const id of ['#haveSide','#haveEnd']){ const ul=$(id); ul.replaceChildren(); for(const [on,t] of rows){ if(id==='#haveEnd'&&!on) continue; const li=document.createElement('li'); li.className=on?'on':''; li.textContent=t; ul.appendChild(li); } }
+  nextLabel(); }
+/* the steps: one on the screen; the name is the only thing asked for before going on */
+const STEPS=[...document.querySelectorAll('.step')]; let at=1;
+const empty=n=>n===2?!photos.length&&!$('#logo').files[0]&&!$('#hasAccent').checked:n===3?!filled('#offers input,#steps input,#figures input,#offersTitle'):n===4?!filled('[data-step="4"] input'):false;
+function nextLabel(){ const b=$('#next'); b.firstChild.textContent=at>1&&at<5&&empty(at)?'Skip this ':at===4?'Check it ':'Next '; }
+function go(n,focus){ if(n>1&&!val('#name')){ say('The name of the business is needed.',true); at=1; n=1; focus=true; } else if(n!==at||!$('#status').classList.contains('bad')) say(n===1?'Only the name is needed.':n===5?'Nothing is written for you: only what is here goes on the page.':'Everything here is optional.');
+  at=n; STEPS.forEach(s=>{ s.hidden=+s.dataset.step!==n; }); document.querySelector('aside.have').style.visibility=n===5?'hidden':''; $('#back').hidden=n===1; $('#next').hidden=n===5; $('#go').hidden=n!==5;
+  document.querySelectorAll('#prog button').forEach((b,i)=>{ b.toggleAttribute('aria-current',false); if(i+1===n) b.setAttribute('aria-current','step'); b.classList.toggle('done',i+1<n); });
+  const w=$('#where'); w.textContent=`Step ${n} of 5 · ${STEPS[n-1].dataset.name}`; const bar=document.createElement('i'); bar.style.setProperty('--p',n*20+'%'); w.appendChild(bar);
+  have(); if(focus!==false){ if(n===1&&!val('#name')) $('#name').focus(); else STEPS[n-1].querySelector('h2').scrollIntoView({block:'start',behavior:'auto'}); scrollTo(0,n===1?0:Math.max(0,scrollY-110)); } }
+STEPS.forEach((s,i)=>{ const b=document.createElement('button'); b.type='button'; const k=document.createElement('b'); k.textContent=i+1; b.append(k,document.createTextNode(s.dataset.name)); b.onclick=()=>go(i+1); $('#prog').appendChild(b); });
+$('#next').onclick=()=>go(at+1); $('#back').onclick=()=>go(at-1);
+$('#f').addEventListener('input',have); $('#f').addEventListener('change',have);
+$('#f').addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target.tagName==='INPUT'&&e.target.type!=='file'&&at<5){ e.preventDefault(); go(at+1); } });
+go(1,false); $('#kind').dispatchEvent(new Event('change'));
 async function upload(blob){ const r=await fetch(API+'/uploads',{method:'POST',headers:{'content-type':blob.type||'image/jpeg'},body:blob}); const j=await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.error||'The photograph could not be sent.'); return j.file; }
-$('#f').onsubmit=async e=>{ e.preventDefault(); if(!val('#name')){ say('The name of the business is needed.',true); $('#name').focus(); return; }
-  const go=$('#go'); go.disabled=true;
+$('#f').onsubmit=async e=>{ e.preventDefault(); if(at<5){ go(at+1); return; } if(!val('#name')){ go(1); return; }
+  const btn=$('#go'); btn.disabled=true; $('#back').disabled=true;
   try{ const offerRows=[...document.querySelectorAll('#offers .offer')];
     const form={ name:val('#name'), sentence:val('#sentence'), kind:val('#kind'), niche:val('#niche'), lang:(navigator.language||'en').slice(0,2),
       ...($('#hasAccent').checked?{accent:$('#accent').value}:{}), offers_title:val('#offersTitle'),
       offers:offerRows.map(r=>({name:r.querySelector('.o-name').value.trim(),price:r.querySelector('.o-price').value.trim(),note:r.querySelector('.o-note').value.trim()})),
-      steps_title:val('#stepsTitle'), steps:[...document.querySelectorAll('#steps .step')].map(r=>({title:r.querySelector('.s-title').value.trim(),text:r.querySelector('.s-text').value.trim()})),
+      steps_title:val('#stepsTitle'), steps:[...document.querySelectorAll('#steps .step-row')].map(r=>({title:r.querySelector('.s-title').value.trim(),text:r.querySelector('.s-text').value.trim()})),
       figures:[...document.querySelectorAll('#figures .figure')].map(r=>({v:r.querySelector('.g-v').value.trim(),l:r.querySelector('.g-l').value.trim()})),
       link:{t:val('#linkT'),h:val('#linkH')}, contact:{street:val('#street'),postcode:val('#postcode'),city:val('#city'),phone:val('#phone'),email:val('#email'),
       hours:[...document.querySelectorAll('#hours .hours')].map(r=>({days:r.querySelector('.h-days').value.trim(),open:r.querySelector('.h-open').value.trim(),close:r.querySelector('.h-close').value.trim()}))}, photos:[] };
@@ -142,7 +229,7 @@ $('#f').onsubmit=async e=>{ e.preventDefault(); if(!val('#name')){ say('The name
     const r=await fetch(API+'/jobs',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({options:{engine:'templates',source:'form'},form})}); const j=await r.json().catch(()=>({}));
     if(!r.ok) throw new Error(j.error||'The designs could not be started.');
     location.href='/app?job='+encodeURIComponent(j.id); }
-  catch(err){ say(String(err.message||err),true); go.disabled=false; } };
+  catch(err){ say(String(err.message||err),true); btn.disabled=false; $('#back').disabled=false; } };
 </script>
 </body>
 </html>
