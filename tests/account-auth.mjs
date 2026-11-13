@@ -31,4 +31,13 @@ const row = { id: 'j1', url: 'https://x.test/', status: 'done', step: 'upload', 
 assert.deepEqual(mine(row), { id: 'j1', url: 'https://x.test/', status: 'done', step: 'upload', created_at: '2026-11-11T10:00:00Z', seconds: 300, preview: 'https://api.test/p/j1?v=1', before: 'https://cdn.test/before.jpg', designs: 2 });
 assert.ok(!JSON.stringify(mine(row)).includes('private') && !JSON.stringify(mine(row)).includes('2.5'), 'what a job cost and what the critic said stay on the server');
 assert.deepEqual(mine({ id: 'j2', url: 'u', status: 'queued', created_at: 't' }), { id: 'j2', url: 'u', status: 'queued', step: null, created_at: 't', seconds: null, preview: null, before: null, designs: 0 });
+// a template job: its designs by id, a cover for each, the one paid for, and whether the editor can open it — never a template's name
+const tj = { id: 'j3', url: 'form:casa-fern-1a2b3c4d', status: 'done', created_at: 't', options: { engine: 'templates', source: 'form', form: { name: 'Casa Fern', photos: [{ file: 'secret.jpg' }] } },
+  result: { beforeUrl: 'https://cdn.test/before.jpg', paid: { maze: { at: 't2', user: 'u1', session: 'cs_live_private' } },
+    templates: { store: { data: 'j3/data.json' }, variants: [{ slug: 'griffin', id: 'v1', cover: 'https://cdn.test/j3/t/v1-cover.jpg' }, { slug: 'maze', id: 'v2', cover: 'javascript:alert(1)' }, { slug: 'cerebrium', id: 'v3' }] } } };
+const m = mine(tj);
+assert.equal(m.designs, 3); assert.deepEqual(m.covers, [{ id: 'v1', cover: 'https://cdn.test/j3/t/v1-cover.jpg' }, { id: 'v2', cover: null }, { id: 'v3', cover: null }], 'a cover is an https cover file or nothing');
+assert.deepEqual(m.paid, ['v2']); assert.equal(m.editable, true); assert.equal(m.name, 'Casa Fern');
+assert.ok(!/griffin|maze|cerebrium|cs_live|secret\.jpg|data\.json/.test(JSON.stringify(m)), 'no template name, no payment session, no private file reaches the dashboard: ' + JSON.stringify(m));
+assert.equal(mine({ ...tj, status: 'running' }).editable, false);
 console.log('Accounts: a token is verified, an allowance is counted, a dashboard sees only its own summary');
