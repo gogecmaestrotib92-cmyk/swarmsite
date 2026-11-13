@@ -17,10 +17,10 @@ own data.json when it carries made pictures):
     fields(data) -> [{path, value, block}]       every text the visitor may rewrite
     pictures(data) -> [{src, w, h}]              the client's own pictures, the only ones a slot may take
     slots(data) -> [{path, src}]                 every place a picture stands
-    palettes(data) -> [{name, ground, ink, accent}]   a few that read (ink on ground ≥ 7:1)
+    palettes(data) -> [{name, ground, ink, accent, tone}]   a few that read (ink on ground ≥ 7:1); tone: light | dark
     python3 lib/templates/edit.py render <data.json> <slug> [--ops ops.json] [--base URL]   → the page, on stdout
     python3 lib/templates/edit.py apply <data.json> <ops.json> [--slug S]                 → {data, refused}
-    python3 lib/templates/edit.py describe <data.json> [--ops F] [--slug S]  → {fields, pictures, slots, blocks, palettes, refused, movable}
+    python3 lib/templates/edit.py describe <data.json> [--ops F] [--slug S]  → {fields, pictures, slots, blocks, palettes, refused, movable, tone}
     python3 lib/templates/edit.py measure <picture>                         → {w, h} of a JPEG, PNG or WebP
     python3 lib/templates/edit.py package <data.json> <slug> --ops F --media-from URL|DIR --zip Z [--verify]
                                     the edited page's package, compared offline with the edited page → {ok, why, bytes}
@@ -131,16 +131,31 @@ def contrast(a, b):
     return (la + .05) / (lb + .05)
 
 
+def tone(ground):
+    """'dark' or 'light': which way a ground reads. A design is measured on the client's own tone; the other one is a
+    different page (a logo drawn for a light bar, a picture with see-through edges, a card that was a shade of white)"""
+    return 'dark' if HEX.match(ground or '') and _lum(ground) < .18 else 'light'
+
+
 def palettes(d):
-    """a few grounds the client's accent can stand on; each with ink that reads on it at 7:1 or better. The accent is
-    the client's own when they have one; it is kept only where it reads on the ground at 3:1 (a button, a large word)"""
+    """a few grounds the client's accent can stand on; each with ink that reads on it at 7:1 or better, and its tone.
+    The accent is the client's own when they have one; it is kept only where it reads on the ground at 3:1 (a button,
+    a large word)"""
     acc = ((d.get('palette') or {}).get('accent') or '').lower()
     out = []
     for name, ground, ink in (('white', '#ffffff', '#151515'), ('paper', '#f5f1e8', '#1b1813'), ('stone', '#e9e7e2', '#141414'),
                               ('ink', '#111111', '#f2f2ef'), ('night', '#0d1424', '#eef1f6'), ('forest', '#10201a', '#eef3ee')):
         a = acc if HEX.match(acc or '') and contrast(acc, ground) >= 3 else ink
-        out.append({'name': name, 'ground': ground, 'ink': ink, 'accent': a})
+        out.append({'name': name, 'ground': ground, 'ink': ink, 'accent': a, 'tone': tone(ground)})
     return [p for p in out if contrast(p['ink'], p['ground']) >= 7]
+
+
+def other_tone(d):
+    """the palette a job tries a design on to learn whether it holds in the tone the client's page is not: the first of
+    `palettes` of the other tone -> {op} or None"""
+    mine = tone((d.get('palette') or {}).get('ground') or '#ffffff')
+    p = next((p for p in palettes(d) if p['tone'] != mine), None)
+    return {'op': 'palette', 'ground': p['ground'], 'ink': p['ink'], 'accent': p['accent']} if p else None
 
 
 def blocks(d):
@@ -337,8 +352,11 @@ if __name__ == '__main__':
         data, refused = apply(load(a[1]), load(a[2]), opt('--slug'))
         print(json.dumps({'data': data, 'refused': refused}, ensure_ascii=False))
     elif a[:1] == ['describe'] and len(a) >= 2:
-        data, refused = apply(load(a[1]), load(opt('--ops')) if opt('--ops') else [], opt('--slug'))
-        print(json.dumps({**describe(data), 'refused': refused, 'movable': movable(opt('--slug'))}, ensure_ascii=False))
+        given = load(a[1])
+        data, refused = apply(given, load(opt('--ops')) if opt('--ops') else [], opt('--slug'))
+        # `tone`: the tone of the page as the job made it, before any edit — the one its designs were measured on
+        print(json.dumps({**describe(data), 'refused': refused, 'movable': movable(opt('--slug')),
+                          'tone': tone((given.get('palette') or {}).get('ground') or '#ffffff')}, ensure_ascii=False))
     elif a[:1] == ['package'] and len(a) >= 3:
         print(json.dumps(package(load(a[1]), a[2], load(opt('--ops')) if opt('--ops') else [], opt('--media-from', ''), opt('--zip'), verify='--verify' in a), ensure_ascii=False))
     elif a[:1] == ['files'] and len(a) >= 2:
