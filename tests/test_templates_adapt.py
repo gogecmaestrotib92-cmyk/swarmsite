@@ -530,3 +530,17 @@ def test_a_label_is_not_a_headline_and_one_statement_is_one_heading():
     # a statement with a heading of its own stays
     d = A.adapt({'inventory': {**inv1, 'copy': {'h1': 'A home for every animal', 'text': 'A home for every animal ' + text, 'headings': []}}, 'factsheet': {'page': {'statement': {'title': 'Latest News', 'text': say}}}})
     assert d.get('statement', {}).get('title') == 'Latest News'
+
+
+def test_a_list_of_bare_labels_is_carried_and_the_data_says_what_of_the_page_it_holds():
+    """a place that lists what it has as labels (no sentence each): the list stands as it stands on the page; and the
+    adapter counts which of the page's sections reached the data"""
+    labels = ['Cafe', 'Free parking', 'Showers', 'Shop', 'Baby changing']
+    text = 'Millbrook Services on the old north road. Everything for a stop on the way. Our services ' + ' '.join(labels)
+    inv = {'url': 'https://millbrook.example/', 'title': 'Millbrook Services', 'copy': {'h1': 'Millbrook Services on the old north road', 'text': text, 'headings': []}}
+    fs = {'page': {'features': {'title': 'Our services', 'items': [{'t': x} for x in labels]}}}
+    d = A.adapt({'inventory': inv, 'factsheet': fs})
+    assert A.validate(d) == [] and [i['t'] for i in d['features']['items']] == labels and not any(i.get('d') for i in d['features']['items'])
+    assert A.adapt({'inventory': inv, 'factsheet': {'page': {'features': {'title': 'Our services', 'items': [{'t': x} for x in labels[:3]]}}}}).get('features') is None, 'three bare labels are not yet a list'
+    cv = d['_adapter']['coverage']
+    assert set(cv) == {'sections', 'carried', 'left'} and cv['carried'] <= cv['sections'] and isinstance(cv['left'], list)

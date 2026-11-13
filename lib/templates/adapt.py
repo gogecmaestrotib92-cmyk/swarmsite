@@ -710,8 +710,12 @@ def _reader_blocks(d, hero, fs, corpus, actions, secs, rules, gaps):
     ft = page.get('features') if isinstance(page.get('features'), dict) else {}
     if 'features' not in d:
         items = [{'t': corpus.recase(own(x.get('t'))), 'd': own(x.get('d'), 220)} for x in ft.get('items') or [] if isinstance(x, dict) and own(x.get('t')) and len(own(x.get('t'))) <= 80]
-        if len(items) >= 3 and sum(1 for i in items if i['d']) * 3 >= len(items) * 2:
-            d['features'] = {'title': corpus.recase(own(ft.get('title'))) if own(ft.get('title')) else '', 'text': own(ft.get('text'), 320), 'items': items[:9]}
+        worded = sum(1 for i in items if i['d']) * 3 >= len(items) * 2
+        # a list the page sets as bare labels (Cafetería · WIFI · Parking …: what a place has) is a list too: four or
+        # more of them stand as it stands there, without sentences nobody wrote (owner's review, 2026-11-13: a service
+        # area's fourteen services were left out and the page had two lines)
+        if len(items) >= 3 and worded or len(items) >= 4:
+            d['features'] = {'title': corpus.recase(own(ft.get('title'))) if own(ft.get('title')) else '', 'text': own(ft.get('text'), 320), 'items': items[:9] if worded else [{'t': i['t'], 'd': i['d']} for i in items[:16]]}
             took.append('features')
     cl = page.get('close') if isinstance(page.get('close'), dict) else {}
     if 'close' not in d and own(cl.get('title')):
@@ -1268,6 +1272,40 @@ def adapt(seed):
                 d['hero'][slot] = st['text']
         del d['statement']
         rules.append('statement: left out — its heading is the headline again; its text stands with the opening')
+    # what of the page's sections reached the data. A section is carried when its heading stands somewhere in the data.
+    def said():
+        out = []
+
+        def walk(v):
+            if isinstance(v, dict):
+                for k, x in v.items():
+                    if not str(k).startswith('_'):
+                        walk(x)
+            elif isinstance(v, list):
+                for x in v:
+                    walk(x)
+            elif isinstance(v, str):
+                out.append(_key(v))
+        walk(d)
+        return out
+    have = said()
+    carried = lambda sec: bool(_key(sec['title'])) and any(_key(sec['title']) in t for t in have)
+    # a section left over that is a heading over its own paragraph is not dropped because the schema has one statement:
+    # the first stands as the statement where there is none, the next (up to six) as cards, each with the link the
+    # section itself carries, where the page has no row of cards of its own
+    rest = [x for x in secs if not carried(x) and x['level'] != 'H1' and len(x['title'].split()) <= 12 and len(_body(x)) >= 60]
+    if rest and 'statement' not in d:
+        x = rest.pop(0)
+        d['statement'] = {'title': corpus.recase(x['title']), 'text': _body(x)}
+        rules.append('statement: the first section left over that is a heading over a paragraph')
+    if len(rest) >= 2 and not d.get('links'):
+        d['links'] = [{'t': corpus.recase(x['title']), 'd': _body(x, cap=220), 'h': (x['actions'][0]['h'] if x['actions'] else None)} for x in rest[:6]]
+        gaps[:] = [g for g in gaps if not g.startswith('links: none')]
+        rules.append('links: %d section(s) left over, each a heading over its paragraph, stand as cards (the page has no row of cards of its own)' % len(d['links']))
+    have = said()
+    heads = [x for x in secs if _key(x['title'])]
+    left = [corpus.recase(x['title']) for x in heads if not carried(x)]
+    cover = {'sections': len(heads), 'carried': len(heads) - len(left), 'left': left[:40]}
     figs = {_key('%s %s' % (f.get('v') or '', f.get('l') or '')) for f in d.get('figures') or [] if isinstance(f, dict)}
     if d['hero'].get('note') and _key(d['hero']['note']) in figs:    # the short line beside the opening is one of the page's figures: said once, as the figure
         del d['hero']['note']
@@ -1276,6 +1314,7 @@ def adapt(seed):
         if k not in ('hero', 'brand', 'statement') and not k.startswith('_') and isinstance(b, dict) and _key(b.get('title')) and _key(b.get('title')) == _key(d['hero'].get('title')):
             del b['title']
             rules.append('%s.title: left out — it is the headline again' % k)
+    d['_adapter']['coverage'] = cover
     return d
 
 
