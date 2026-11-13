@@ -6,6 +6,8 @@ const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..'); cons
 try {
   // a 2×1 picture, as a data address, so the page asks nobody for anything (two greys: a picture with something in it, not a bare ground)
   const PIC = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200"><rect width="400" height="200" fill="#7a7a7a"/><rect x="200" width="200" height="200" fill="#626262"/></svg>');
+  // a see-through picture: dark bars and nothing behind them
+  const CLEAR = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="240">' + [0, 1, 2, 3, 4].map(i => '<rect x="' + (30 + i * 75) + '" y="40" width="36" height="160" fill="#0a0a0a"/>').join('') + '</svg>');
   const page = (body, css = '') => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0;font:18px/1.5 Arial,sans-serif;background:#fff;color:#111}section{padding:40px 24px;max-width:900px}h1{font:700 44px/1.1 Arial,sans-serif;margin:0 0 16px}img{display:block;max-width:100%;height:auto}${css}</style></head><body>${body}</body></html>`;
   const sound = '<section><h1>The books of a stall</h1><p>Photograph each receipt and the ledger keeps itself. Ten minutes on a Sunday closes the week.</p><img src="' + PIC + '" width="400" height="200" alt=""></section>';
   const pages = {
@@ -24,6 +26,11 @@ try {
     // footer links that roll: each holds a visible label and a copy below it, cut away by overflow:hidden — the cut copy is not a line under the next link;
     // and a very wide, short picture at its own ratio but a fractional width is not distorted
     rolled: page(sound + '<footer style="padding:24px">' + ['Pricing', 'Changelog', 'Careers', 'Contact'].map(w => '<a href="#" style="display:block;overflow:hidden;height:22px;line-height:22px;color:#111;text-decoration:none"><span style="display:block">' + w + '</span><span aria-hidden="true" style="display:block">' + w + '</span></a>').join('') + '<img src="' + 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="480" height="131"><rect width="480" height="131" fill="#7a7a7a"/></svg>') + '" style="width:153.3px;height:auto" alt=""></footer>'),
+    // a see-through diagram with dark ink on a dark ground, and a dark logo on a dark bar: what they show cannot be seen
+    unseen: page(sound + '<section style="background:#000;color:#f5f5f5"><h2>How it works</h2><p>Four steps, drawn.</p><img src="' + CLEAR + '" width="400" height="240" alt="steps"></section>'),
+    darklogo: page('<header style="background:#0b0b0d;padding:16px 24px"><img src="' + CLEAR + '" width="100" height="60" alt="mark"></header>' + sound),
+    // the same diagram on a light ground, and on a dark ground under its own white plate: seen
+    seen: page(sound + '<section><img src="' + CLEAR + '" width="400" height="240" alt="steps"></section><section style="background:#000;color:#f5f5f5"><h2>How it works</h2><p>Four steps, drawn.</p><img src="' + CLEAR + '" width="400" height="240" style="background:#fff" alt="steps"></section>'),
     script: page(sound + '<script>nothingOfTheKind()</script>'),
     squeezed: page(sound + '<section><img src="' + PIC + '" style="width:300px;height:300px;max-width:none" alt=""><img src="' + PIC + '" style="width:300px;height:300px;object-fit:cover" alt=""></section>'),
     twoh1: page(sound + '<section><h1>A second first heading</h1></section>'),
@@ -90,6 +97,10 @@ try {
   assert.deepEqual(out.squeezed.failed.filter(k => k !== 'blank'), ['distorted']);   // (two small pictures stacked in a wide column leave its side empty: blank too)
   assert.equal(out.squeezed.checks.distorted.filter(d => d.at === 'd').length, 1, 'a squeezed picture is named once; a cropped one (cover) is not');
   assert.deepEqual(out.twoh1.failed, ['h1']); assert.equal(out.twoh1.checks.h1[0].count, 2);
+  assert.ok(out.unseen.failed.includes('unseen') && out.unseen.checks.unseen.some(u => u.alt === 'steps' && u.shows < 14 && u.holds >= 24), 'dark ink of a see-through picture on a dark ground is not seen: ' + JSON.stringify(out.unseen.checks));
+  assert.ok(out.darklogo.failed.includes('unseen') && out.darklogo.checks.unseen.some(u => u.alt === 'mark'), 'a dark logo on a dark bar is not seen: ' + JSON.stringify(out.darklogo.checks));
+  assert.ok(!out.seen.failed.includes('unseen'), 'the same picture on a light ground or on its own plate is seen: ' + JSON.stringify(out.seen.checks.unseen));
+  assert.ok(!out.sound.failed.includes('unseen') && !out.contained.failed.includes('unseen'), 'a picture that fills its place is seen');
   assert.deepEqual(out.blank.failed, ['blank'], 'a screen of bare ground beside one column of text is blank: ' + JSON.stringify(out.blank.checks));
   assert.ok(out.blank.checks.blank.some(b => b.at === 'd' && b.share >= .35 && b.w >= 500), 'it says where the empty region is and how much of the screen it takes');
   assert.ok(out.full.ok, 'the same column beside a picture is not blank: ' + JSON.stringify(out.full.checks));
