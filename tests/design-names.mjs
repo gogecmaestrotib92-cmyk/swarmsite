@@ -22,7 +22,7 @@ const row = { id: J, url: 'https://sportbotai.com', status: 'done', result: { mo
     store: { data: `${J}/data.json`, variants: { griffin: `${J}/griffin.data.json`, terminal: `${J}/terminal.data.json` } },
     variants: [v('griffin', 0), v('terminal', 1), v('cerebrium', 2)],
     rejected: TEMPLATE_SLUGS.filter(s => !['griffin', 'terminal', 'cerebrium'].includes(s)).map(s => ({ slug: s, why: `niche: it is for shop; ${s} needs catalogue` })),
-    not_shown: [{ slug: 'maze', failed: ['legible'] }], timings_ms: { gate: 19604 } },
+    not_shown: [{ slug: 'maze', failed: ['blank'], where: { blank: [{ at: 'd', scroll: 3280, share: 0.38, note: 'maze' }] } }], timings_ms: { gate: 19604 } },
   paid: { griffin: { user: 'u1', session: 'cs_live_1', at: '2026-11-12T19:00:00Z' } },
   edited: { status: 'ready', slug: 'terminal', hash: 'abc', package: `${J}/terminal.edited-abc.zip`, at: 't' },
   publish: { status: 'refused', slug: 'cerebrium', name: 'sportbot', why: ['cerebrium: 1 of 9 screens differ'], at: 't' } } };
@@ -41,6 +41,7 @@ assert.equal(row.result.templates.variants[0].slug, 'griffin', 'the stored job i
 assert.equal(publicJob(null), null); assert.deepEqual(publicJob({ id: 'x', status: 'queued' }), { id: 'x', status: 'queued' });
 
 // the way back: an address's id → the template, for the server only
+assert.deepEqual([t.not_shown[0].failed, t.not_shown[0].where.blank[0].share, t.not_shown[0].slug], [['blank'], 0.38, undefined], 'a design held back says what was measured, not which it was');
 assert.equal(internalSlug(row, 'v1'), 'griffin'); assert.equal(internalSlug(row, 'v3'), 'cerebrium'); assert.equal(internalSlug(row, 'v4'), ''); assert.equal(internalSlug(null, 'v1'), '');
 assert.equal(internalSlug(row, 'griffin'), '', 'a job made with ids answers only to them');
 assert.equal(publicOf(row, 'terminal'), 'v2'); assert.equal(publicOf(row, 'maze'), '');
