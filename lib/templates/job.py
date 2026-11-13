@@ -225,7 +225,7 @@ def choose(data, out, base='', limit=3, gate_kw=None, library=None, t=None):
     three = PI.pick_three(data, lib_root) if lib_root else []
     sel = S.select({**data, 'media': {**(data.get('media') or {}), 'made': three[0]}} if three else data, limit=limit)
     t['select'] = round((time.perf_counter() - t0) * 1000)
-    families, copied = {}, set()
+    families, copied, typed = {}, set(), set()
     t['render'] = t['gate'] = 0
 
     def render(c, i):
@@ -233,6 +233,8 @@ def choose(data, out, base='', limit=3, gate_kw=None, library=None, t=None):
         made = three[i % len(three)] if three else {}
         v = {**data, 'media': {**(data.get('media') or {}), 'made': made}} if made else data
         v = S.without(v, c.get('drops'))                             # what the client has not: the section is left out, never made up
+        if c['slug'] in typed:                                        # its logo cannot be seen on this design's bar: the name is set in type
+            v = {**v, 'brand': {**{k: x for k, x in (v.get('brand') or {}).items() if k != 'logo_wordmark'}, 'logo': None}}
         for rel in PI.files(made):                                    # the library files this variant shows, beside it like any media
             if rel not in copied and rel.startswith('media/') and '..' not in Path(rel).parts:
                 (out / rel).parent.mkdir(parents=True, exist_ok=True)
@@ -253,9 +255,19 @@ def choose(data, out, base='', limit=3, gate_kw=None, library=None, t=None):
         t['render'] += round((time.perf_counter() - t0) * 1000)
         t0 = time.perf_counter()
         gates = G.check(files, **(gate_kw or {})) if files else []
+        # A logo the gate cannot see where a design stands it (a dark mark on a dark bar, a white one on white) is not a
+        # reason to hold the design back: that design sets the client's name in type, and is gated once more as it will
+        # be shown. Only when the logo is all that is unseen and nothing else fails.
+        logo = Path(str((data.get('brand') or {}).get('logo') or '')).name
+        again = [k for k, ((c, _), g) in enumerate(zip(batch, gates)) if logo and c['slug'] not in typed and g.get('failed') == ['unseen']
+                 and all(u.get('file') == logo for u in (g.get('checks') or {}).get('unseen') or [{}])]
+        if again:
+            typed.update(batch[k][0]['slug'] for k in again)
+            for k, g in zip(again, G.check([render(*batch[k]) for k in again], **(gate_kw or {}))):
+                gates[k] = g
         t['gate'] += round((time.perf_counter() - t0) * 1000)
         return [{**c, **({'made': families[c['slug']]} if c['slug'] in families else {}), 'ok': g['ok'], 'failed': g['failed'], 'gate': {k: v for k, v in (g.get('checks') or {}).items() if v},
-                 'gate_ms': g.get('ms'), **({'error': g['error']} if g.get('error') else {})} for (c, _), g in zip(batch, gates)]
+                 'gate_ms': g.get('ms'), **({'error': g['error']} if g.get('error') else {}), **({'logo': 'set in type'} if c['slug'] in typed else {})} for (c, _), g in zip(batch, gates)]
     # Three are shown (owner's rule): a chosen variant that fails the gate is not shown, and the next of the reserve is
     # rendered into its slot and gated, until three pass or the reserve is spent. A gate that could not run at all
     # (failed=['tool']) is not a verdict on the template: nothing is taken from the reserve for it.

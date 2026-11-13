@@ -58,6 +58,33 @@ def test_a_variant_that_fails_the_gate_is_not_shown(tmp_path, monkeypatch):
     assert r['shown'] == [] and r['chosen'][0]['error'] == 'no Chrome', 'a page that could not be checked is not shown'
 
 
+def test_a_logo_that_cannot_be_seen_on_a_design_is_set_in_type_there(tmp_path, monkeypatch):
+    """the gate's `unseen` naming only the logo: that design is rendered again with the name in type and gated again"""
+    monkeypatch.setenv('SWARMSITE_LIBRARY', 'none')
+    calls = []
+
+    def check(files, **kw):
+        calls.append([Path(f).name for f in files])
+        res = []
+        for f in files:
+            dark = Path(f).name == 'griffin.html' and 'media/logo.svg' in Path(f).read_text()
+            res.append({'page': str(f), 'ok': not dark, 'failed': ['unseen'] if dark else [],
+                        'checks': {'unseen': [{'at': 'd', 'file': 'logo.svg', 'shows': 0, 'holds': 90}]} if dark else {}, 'ms': 5})
+        return res
+    monkeypatch.setattr(G, 'check', check)
+    out = tmp_path / 'templates'
+    r = JOB.build(capture(tmp_path), out)
+    g = next(c for c in r['chosen'] if c['slug'] == 'griffin')
+    assert 'griffin' in r['shown'] and g['logo'] == 'set in type' and g['failed'] == [] and calls[1] == ['griffin.html']
+    assert 'media/logo.svg' not in (out / 'griffin.html').read_text() + (out / 'pub' / 'griffin.html').read_text() and 'Tallyfern' in (out / 'griffin.html').read_text()
+    assert json.loads((out / 'griffin.data.json').read_text())['brand']['logo'] is None, 'the package and the editor read the design as shown'
+    assert all('logo' not in c for c in r['chosen'] if c['slug'] != 'griffin') and json.loads((out / 'data.json').read_text())['brand']['logo'] == 'media/logo.svg'
+    # another picture unseen, or anything else failing with it: the design is held back as before
+    monkeypatch.setattr(G, 'check', lambda files, **kw: [{'page': str(f), 'ok': False, 'failed': ['unseen'], 'checks': {'unseen': [{'at': 'd', 'file': 'img1.jpg'}]}, 'ms': 5} for f in files])
+    r = JOB.build(capture(tmp_path / 'b'), tmp_path / 'b' / 'templates')
+    assert r['shown'] == [] and all('logo' not in c for c in r['chosen'])
+
+
 def test_a_site_nothing_fits_and_pictures_that_could_not_be_written(tmp_path, monkeypatch):
     monkeypatch.setattr(G, 'check', lambda files, **kw: [{'page': str(f), 'ok': True, 'failed': []} for f in files])
     r = JOB.build(capture(tmp_path, 'empty'), tmp_path / 'templates')

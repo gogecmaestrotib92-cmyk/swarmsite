@@ -20,7 +20,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 TOOL = HERE.parent / 'qa' / 'template_gate.mjs'
-CHECKS = ('sideways', 'errors', 'distorted', 'h1', 'legible', 'overlap', 'cut', 'first', 'blank')
+CHECKS = ('sideways', 'errors', 'distorted', 'h1', 'legible', 'overlap', 'cut', 'first', 'blank', 'unseen')
 
 
 def _registry():
