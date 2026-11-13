@@ -1184,13 +1184,9 @@
           "type": "array",
           "items": {
             "type": "object",
-            "required": [
-              "title"
-            ],
             "properties": {
               "title": {
-                "type": "string",
-                "minLength": 1
+                "type": "string"
               },
               "text": {
                 "type": "string"

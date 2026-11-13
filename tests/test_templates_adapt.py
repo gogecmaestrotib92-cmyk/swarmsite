@@ -544,3 +544,12 @@ def test_a_list_of_bare_labels_is_carried_and_the_data_says_what_of_the_page_it_
     assert A.adapt({'inventory': inv, 'factsheet': {'page': {'features': {'title': 'Our services', 'items': [{'t': x} for x in labels[:3]]}}}}).get('features') is None, 'three bare labels are not yet a list'
     cv = d['_adapter']['coverage']
     assert set(cv) == {'sections', 'carried', 'left'} and cv['carried'] <= cv['sections'] and isinstance(cv['left'], list)
+
+
+def test_a_headings_words_inside_a_sentence_are_not_a_border():
+    """a later heading whose words also stand in running text (a place's own name) does not cut the passage there"""
+    text = 'On the old north road stands our stop Millbrook Halt . It has a cafe and a shop. MILLBROOK HALT Open every day.'
+    assert A.cut_at(text, ['MILLBROOK HALT'])[0] == 'On the old north road stands our stop Millbrook Halt . It has a cafe and a shop.'
+    assert A.cut_at('A fine place. Millbrook Halt Open every day.', ['MILLBROOK HALT'])[0] == 'A fine place.', 'after a full stop it is the heading'
+    assert A.cut_at('See the prices Our Plans Start free.', ['Our Plans'])[0] == 'See the prices', 'written as the heading is: the heading'
+    assert A.cut_at('Inside there are tables, a cafe, Self Service, a grill and shops. Self Service Open all day.', ['Self Service'])[0] == 'Inside there are tables, a cafe, Self Service, a grill and shops.', 'after a comma it is an item of the sentence'

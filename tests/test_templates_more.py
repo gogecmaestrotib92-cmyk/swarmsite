@@ -41,12 +41,12 @@ def test_no_leftovers_no_band():
 def test_leftover_sections_stand_whole_and_unused_photographs_are_one_strip():
     d = client()
     long = 'We keep the ledger for you. ' * 30
-    d['more'] = {'sections': [{'title': 'How the week closes', 'text': long.strip()}, {'title': 'Who it is for <b>', 'text': 'Stall holders.\n\nAnd those who help them.'}, {'title': '', 'text': 'no heading: not set'}]}
+    d['more'] = {'sections': [{'title': 'How the week closes', 'text': long.strip()}, {'title': 'Who it is for <b>', 'text': 'Stall holders.\n\nAnd those who help them.'}, {'title': '', 'text': 'What the opening goes on to say.'}, {'title': '', 'text': ''}]}
     d['media']['photos'] = [{'src': 'media/p%d.jpg' % i, 'w': 1200, 'h': 800, 'alt': 'photo %d' % i} for i in range(1, 8)]
     page = '<main><section><h2>Ledger</h2><img src="../../media/p1.jpg"></section></main><footer>foot</footer>'
     out = M.add(d, page)
     assert out.index('data-more') < out.index('</main>') < out.index('<footer'), 'under the template\'s sections, above its foot'
-    assert long.strip() in out and '<p>Stall holders.</p><p>And those who help them.</p>' in out and 'Who it is for &lt;b&gt;' in out and 'no heading' not in out
+    assert long.strip() in out and '<p>Stall holders.</p><p>And those who help them.</p>' in out and 'Who it is for &lt;b&gt;' in out and '<div class="sw-more-lead"><p>What the opening goes on to say.</p></div>' in out
     strip = re.search(r'<div class="sw-strip"[^>]*>(.*?)</div>', out).group(1)
     shown = re.findall(r'src="\.\./\.\./(media/p\d\.jpg)"', strip)
     assert 'media/p1.jpg' not in shown and shown == ['media/p%d.jpg' % i for i in range(2, 8)], 'the photographs the page did not ask for, in order, a whole number of rows'

@@ -277,10 +277,27 @@ def cut_at(text, stops, buttons=()):
     for s, is_button in [(x, False) for x in stops] + [(x, True) for x in buttons]:
         if len(norm(s)) < 8 and len(norm(s).split()) < 2 and not re.search(r'\d', s):
             continue
-        b = before(text, s)
+        b = before(text, s) if is_button else _before_border(text, s)
         if b is not None and (best is None or len(b) < len(best)):
             best, by = b, is_button
     return (best, by) if best is not None else (norm(text), False)
+
+
+def _before_border(text, phrase):
+    """the text before the first standing of a heading as a border. A heading's words also stand inside sentences
+    ("… surge nuestra área de servicio Abades Bailén." under a later heading ABADES BAILÉN): where they follow a word
+    in lower case with no stop after it, and are not written as the heading is, they are part of the sentence and the
+    next standing is looked for (a service area's whole description was cut at its own name, 2026-11-13)."""
+    (t, sq, keep), key = _squeeze(text), _key(phrase)
+    at = sq.find(key) if key else -1
+    while at != -1:
+        start, end = keep[at], keep[at + len(key) - 1] + 1
+        prev = t[:start].rstrip().rsplit(' ', 1)[-1] if t[:start].strip() else ''
+        inside = bool(prev) and (prev.endswith(',') or (prev[:1].islower() and not re.search(r'[.!?…:;)\]"”’]$', prev) and norm(t[start:end]) != norm(phrase)))   # after a comma it is an item of a list in a sentence
+        if not inside:
+            return t[:start].strip()
+        at = sq.find(key, at + 1)
+    return None
 
 
 def slug(s):
@@ -1317,6 +1334,29 @@ def adapt(seed):
         body, own_pics = _body(x, cap=1200), pics_of(x['title'])
         if len(body) >= 40 or own_pics:                               # words of its own, or pictures of its own under a heading (a hall, a brand, a dish)
             extra.append({'title': corpus.recase(x['title']), 'text': body if len(body) >= 40 else '', **({'imgs': own_pics} if own_pics else {})})
+    # A passage is not cut to fit a place. The template's places hold a line or two (the opening's text, the statement):
+    # where the page says more under the same heading, the rest is carried whole —
+    #   the statement's section, when it runs on past what the statement holds, leaves the statement's place and
+    #   stands under the template's sections with its heading and all its words;
+    #   what the opening goes on to say stands there first, without a heading (the headline is said once).
+    said_now = said()
+    # (a film's control — Play, Video Player — that the flattened capture ran in before a sentence is not its first word)
+    unsaid = lambda sec: [re.sub(r'\s+([,.;:!?])', r'\1', re.sub(r'^(?:Video Player|Play|Pause|Reproducir|Abspielen|Lecture)\s+(?=[A-ZÀ-Ý¿¡])', '', p)) for p in sentences(_body(sec, cap=2000))
+                          if len(p.split()) >= 6 and running(p) and not re.search(r'[·|•]', p) and re.search(r'[.!?…]["”’)]?$', p) and not any(_key(p) in t for t in said_now)]   # sentences, not the labels the flattened capture ran in between them
+    front = []
+    st2 = d.get('statement')
+    src = next((x for x in secs if isinstance(st2, dict) and _key(x['title']) == _key(st2.get('title')) and x['level'] != 'H1'), None)
+    if src and len(' '.join(unsaid(src))) >= 160:
+        front.append({'title': corpus.recase(src['title']), 'text': _body(src, cap=2000), **({'imgs': pics_of(src['title'])} if pics_of(src['title']) else {})})
+        del d['statement']
+        rules.append('statement: its section runs on past a statement\'s length; it stands whole under the template\'s sections instead')
+        said_now = said()
+    if hero_sec:
+        more_of_opening = ' '.join(unsaid(hero_sec))
+        if len(more_of_opening) >= 160:
+            front.insert(0, {'title': '', 'text': more_of_opening})
+            rules.append('more: what the opening goes on to say (%d characters past the opening\'s place) stands under the template\'s sections, without a heading' % len(more_of_opening))
+    extra = front + extra
     if extra:
         d['more'] = {'sections': extra[:12]}
         rules.append('more: %d section(s) the schema has no block for, each a heading over its own words, set under the template\'s sections' % len(d['more']['sections']))

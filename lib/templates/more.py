@@ -32,6 +32,7 @@ CSS = """
 .sw-more h3{margin:0 0 .6em;font-size:clamp(20px,1.7vw,26px);line-height:1.15;color:inherit;text-wrap:balance;overflow-wrap:anywhere}
 .sw-more p{margin:0;font-size:clamp(16px,1.25vw,19px);line-height:1.6;color:inherit;max-width:62ch;opacity:.86}
 .sw-more p+p{margin-top:1em}
+.sw-more .sw-more-lead p{font-size:clamp(19px,1.7vw,26px);line-height:1.45;max-width:46em;opacity:1}
 .sw-more-grid{display:grid;grid-template-columns:repeat(var(--c,3),minmax(0,1fr));gap:clamp(32px,4vw,64px) clamp(24px,4vw,56px)}
 .sw-more-grid p{font-size:clamp(15px,1.1vw,17px)}
 .sw-more-pic{display:block;width:100%;margin:clamp(24px,3vw,48px) 0 0}.sw-more-pic+.sw-more-in{margin-top:clamp(48px,7vw,104px)}
@@ -99,7 +100,7 @@ def groups(secs):
             out.extend(('row', x) for x in run)
         run.clear()
     for x in secs:
-        if x['text'] and len(x['text']) <= SHORT and not x.get('imgs'):
+        if x['title'] and x['text'] and len(x['text']) <= SHORT and not x.get('imgs'):
             run.append(x)
         else:
             flush()
@@ -113,13 +114,13 @@ def band(d, page):
     asked = lambda src: (BASE + src) in page or (BASE + html.escape(src, quote=True)) in page
     secs, own = [], set()
     for x in ((d.get('more') or {}).get('sections') or [])[:MAX_SECTIONS]:
-        if not isinstance(x, dict) or not x.get('title'):
+        if not isinstance(x, dict) or not (x.get('title') or x.get('text')):
             continue
         # a section's own pictures, unless the template's page (or a section before it) already shows them
         imgs = [p for p in x.get('imgs') or [] if isinstance(p, dict) and p.get('src') and not asked(p['src']) and p['src'] not in own]
         own.update(p['src'] for p in imgs)
-        if x.get('text') or imgs:
-            secs.append({'title': x['title'], 'text': str(x.get('text') or ''), 'imgs': imgs})
+        if x.get('text') or (imgs and x.get('title')):
+            secs.append({'title': str(x.get('title') or ''), 'text': str(x.get('text') or ''), 'imgs': imgs})
     pics = [p for p in unused_photos(d, page) if p['src'] not in own][:MAX_PHOTOS]
     if len(pics) < MIN_PHOTOS:
         pics = []
@@ -132,6 +133,9 @@ def band(d, page):
             if kind == 'grid':
                 cells = ''.join('<div><h3>%s</h3>%s</div>' % (_e(x['title']), _paras(x['text'])) for x in g)
                 parts.append('<div class="sw-more-in"><div class="sw-more-grid" style="--c:%d">%s</div></div>' % (2 if len(g) in (2, 4) else 3, cells))
+                continue
+            if not g['title']:                                        # what the opening goes on to say: a passage with no heading of its own
+                parts.append('<div class="sw-more-in"><div class="sw-more-lead">%s</div></div>' % _paras(g['text']))
                 continue
             parts.append('<div class="sw-more-in"><div class="sw-more-row"><h2>%s</h2><div>%s</div></div></div>' % (_e(g['title']), _paras(g['text'])))
             wide = lambda p: int(p.get('w') or 0) >= 1200 and int(p.get('w') or 0) >= 1.2 * int(p.get('h') or 1)
