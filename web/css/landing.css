@@ -164,7 +164,7 @@ html{scroll-padding-top:100px}
 .opts>summary{list-style:none;cursor:pointer;display:flex;justify-content:center;align-items:center;gap:8px;min-height:44px;font-weight:600;color:var(--muted)}.opts>summary::-webkit-details-marker{display:none}
 .opts>summary::before{content:"+";display:inline-grid;place-items:center;width:22px;height:22px;border:2px solid var(--card);border-radius:50%;font-size:14px;line-height:1}.opts[open]>summary::before{content:"−"}
 .opts>summary:hover{color:var(--ink)}.opts .row{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:4px 0 8px}
-.close .urlf{margin-top:24px}.close .urlf .pre{color:#57534d}
+.close .urlf{margin-top:24px}.close .urlf .btn{margin-top:0}.close .urlf .pre{color:#57534d}
 /* features without screens: each way in ends in its own action */
 .fi .more{margin-top:24px}
 /* a picture that carries text keeps a ground of its own tone under it (shown while it loads, and what a reader of colours sees) */
