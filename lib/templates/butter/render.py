@@ -202,7 +202,7 @@ h1,h2,h3,h4{font-weight:400;overflow-wrap:break-word}
 .slab .bk{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 100%;border-radius:inherit;opacity:.5}
 .slot{position:relative;flex:1;aspect-ratio:1}
 .tile{position:absolute;inset:0;border-radius:25%;overflow:hidden;transform-origin:0 0;will-change:transform;background:var(--c,var(--soft2))}
-.tile img{width:100%;height:100%;object-fit:cover}
+.tile img{width:100%;height:100%;object-fit:cover;object-position:50% 28%}   /* a screen's working part, not its top bar */
 
 /* three stories: big sentence and the product, whole */
 .st{padding:16.5vw 0}
@@ -533,7 +533,11 @@ def render(d: dict) -> str:
     # ── 3 statement and the slab of tiles
     if hero.get('text2'):
         ws = str(hero['text2']).split()
-        tiles = [dict(b) for b in blur[:5]] or [{'c': c} for c in ([accent] + list(pal.get('extra') or []))[:5]]
+        # the tiles are things to look at, so they are the client's own: product screens, then phone screens, then photographs
+        # (never a library picture, never a bare colour — owner, 2026-11-13). A client with none has the statement without tiles.
+        md_ = g('media') or {}
+        own = [x for k in ('screens', 'phones', 'photos') for x in (md_.get(k) or []) if isinstance(x, dict) and x.get('src') and not x.get('lettering')]
+        tiles = [dict(x, shot=1) for x in own[:5]] if len(own) >= 2 else []
         n = min(len(tiles), max(0, len(ws) // 3))
         tiles = tiles[:n]
         at = {}
@@ -552,7 +556,7 @@ def render(d: dict) -> str:
             slab = '<div class="stm-b"><div class="slab">%s%s</div></div>' % (_img(sky, 'bk', alt='', slot='slab-sky') if (sky and sky.get('src')) else '', ''.join(
                 '<div class="slot"><div class="tile"%s>%s</div></div>' % (
                     (' style="--c:%s"' % e(t['c'])) if t.get('c') else '',
-                    _img(t, alt='', slot='tile-blur') if t.get('src') else '') for t in tiles))
+                    _img(t, alt='', slot='tile-own') if t.get('src') else '') for t in tiles))
         out.append('<section class="stm"><div class="wrap"><div class="stm-a"><h2 class="h2 rf">%s</h2></div>%s</div></section>' % (' '.join(parts), slab))
 
     # ── 4-6 three stories: a feature's own words beside a general view of the product (alt stays the picture's alt)
@@ -574,8 +578,12 @@ def render(d: dict) -> str:
     if fit:
         crops = ['0% 0%', '100% 0%', '50% 0%', '22% 100%', '78% 0%', '50% 100%', '100% 100%', '0% 100%']
         cards = ''
+        cown = [x for k in ('screens', 'phones', 'photos') for x in ((g('media') or {}).get(k) or []) if isinstance(x, dict) and x.get('src') and not x.get('lettering')]
         for i, f in enumerate(fit):
-            pic = ('<div class="pic">%s</div>' % _img(sky, alt='', slot='card-sky').replace('<img ', '<img style="object-position:%s" ' % crops[i % len(crops)], 1)) if (sky and sky.get('src')) else ''
+            # a card's picture is a thing to look at: the client's own screens and photographs in turn, each in another crop;
+            # a client with fewer than two has cards of words (never a crop of a library picture — owner, 2026-11-13)
+            x = cown[i % len(cown)] if len(cown) >= 2 else None
+            pic = ('<div class="pic">%s</div>' % _img(x, alt='', slot='card-own').replace('<img ', '<img style="object-position:%s" ' % crops[i % len(crops)], 1)) if x else ''
             cards += '<li class="card rs" style="--d:%dms">%s<h3 class="h4">%s</h3>%s</li>' % (
                 min(i, 4) * 80, pic, e(f['t']), ('<p class="small mute">%s</p>' % e(f['d'])) if f.get('d') else '')
         head = ''
