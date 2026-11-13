@@ -537,7 +537,7 @@ def render(d: dict) -> str:
         # (never a library picture, never a bare colour — owner, 2026-11-13). A client with none has the statement without tiles.
         md_ = g('media') or {}
         own = [x for k in ('screens', 'phones', 'photos') for x in (md_.get(k) or []) if isinstance(x, dict) and x.get('src') and not x.get('lettering')]
-        tiles = [dict(x, shot=1) for x in own[:5]] if len(own) >= 2 else []
+        tiles = [dict(x, shot=1) for x in own[:2]] if len(own) >= 2 else []   # two: each grows into a large tile of the slab (five small ones left the slab a strip and the screen under it bare)
         n = min(len(tiles), max(0, len(ws) // 3))
         tiles = tiles[:n]
         at = {}

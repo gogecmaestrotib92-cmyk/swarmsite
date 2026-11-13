@@ -68,7 +68,7 @@ def test_tiles_and_cards_take_the_clients_own_pictures_or_none():
     shots = [{'src': 'media/screen-%d.jpg' % i, 'w': 1800, 'h': 1125, 'alt': ''} for i in (1, 2, 3)]
     rich = {**d, 'media': {**d['media'], 'screens': shots, 'phones': [], 'photos': []}}
     html = R.render('butter', rich, '')
-    assert html.count('data-slot="tile-own"') >= 2 and 'data-slot="card-own"' in html and 'media/screen-1.jpg' in html
+    assert html.count('data-slot="tile-own"') == 2 and 'data-slot="card-own"' in html and 'media/screen-1.jpg' in html
     assert not [u for u in SL.uses(html) if u['slot'] in ('tile-own', 'card-own', 'tile-blur', 'card-sky')], 'no library picture in a tile or a card'
     bare = R.render('butter', {**d, 'media': {**d['media'], 'screens': [], 'phones': [], 'photos': []}}, '')
     assert 'class="slot"' not in bare and 'data-slot="card-own"' not in bare and 'class="stm"' in bare, 'no picture of the client\'s own: the statement runs without tiles, the cards are words'
