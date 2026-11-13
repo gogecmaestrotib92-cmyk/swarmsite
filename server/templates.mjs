@@ -134,7 +134,9 @@ export async function runTemplateJob(deps) {
     const store = { data: `${job.id}/data.json`, variants: {} };
     await deps.uploadPrivate(path.join(tdir, 'data.json'), store.data, 'application/json');
     for (const slug of shown) { const f = path.join(tdir, `${slug}.data.json`); if (fs.existsSync(f)) { store.variants[slug] = `${job.id}/${slug}.data.json`; await deps.uploadPrivate(f, store.variants[slug], 'application/json'); } }
-    result.templates = { variants: out, niche: built.niche, pictures: built.pictures, not_shown: built.chosen.filter(c => !shown.includes(c.slug)).map(c => ({ slug: c.slug, failed: c.failed })),
+    result.templates = { variants: out, niche: built.niche, pictures: built.pictures, not_shown: built.chosen.filter(c => !shown.includes(c.slug)).map(c => ({ slug: c.slug, failed: c.failed,
+      // what the gate measured, so a design held back on the server can be traced from the job itself (three readings a check)
+      where: Object.fromEntries(Object.entries(c.gate || {}).map(([k, v]) => [k, (Array.isArray(v) ? v : [v]).slice(0, 3)])) })),
       fallback: !!built.fallback,   // true: the client's own niche had fewer than three, a neighbouring niche's filled the rest
       rejected: (built.rejected || []).slice(0, 60), media: built.media, group: built.group || null, store, timings_ms: { ...built.timings_ms } };
     if (fromForm) {   // what the form left out, in the visitor's terms: an empty field is a section left out, said so
