@@ -75,7 +75,10 @@ export function pageEvents(dir) {
   if (g.nav) say('Reader', `Menu · ${Number(g.nav.links) || 0} links`, g.nav.rect);
   if (g.logo) say('Type', 'Logo found', g.logo);
   if (g.h1) say('Reader', `Headline · ${q(g.h1.text)}`, g.h1.rect);
-  const secs = (g.sections || []).filter(x => R(x.rect)).slice(0, 8), imgs = (g.images || []).filter(x => R(x.rect)).slice(0, 6), heads = (g.headings || []).filter(x => R(x.rect) && x.text).slice(0, 5), ctas = (g.ctas || []).filter(x => R(x.rect) && x.text).slice(0, 3);
+  // a section is a band of the page, not the wrapper that holds all of it (production, automateed.com: "Section 1" was 38 903 px
+  // high); a picture is one a visitor would call a picture, not the logo measured a second time
+  const logo = R(g.logo), same = (a, b) => a && b && Math.abs(a.x - b.x) < 4 && Math.abs(a.y - b.y) < 4 && Math.abs(a.w - b.w) < 4;
+  const secs = (g.sections || []).filter(x => R(x.rect) && x.rect.h <= 1800).slice(0, 8), imgs = (g.images || []).filter(x => R(x.rect) && x.rect.w >= 200 && x.rect.h >= 120 && !same(R(x.rect), logo)).slice(0, 6), heads = (g.headings || []).filter(x => R(x.rect) && x.text).slice(0, 5), ctas = (g.ctas || []).filter(x => R(x.rect) && x.text).slice(0, 3);
   for (let i = 0; i < Math.max(secs.length, imgs.length, heads.length, ctas.length); i++) {   // down the page together, not one kind after another
     if (secs[i]) say('Layout', `Section ${i + 1} · ${Number(secs[i].words) || 0} words`, secs[i].rect);
     if (heads[i]) say('Copy', `Heading · ${q(heads[i].text)}`, heads[i].rect);
@@ -141,6 +144,7 @@ export async function runTemplateJob(deps) {
     try { const pe = pageEvents(dir);
       if (fs.existsSync(path.join(dir, 'before-full.jpg')) && pe.pageHeight) { result.beforeFullUrl = await deps.upload(path.join(dir, 'before-full.jpg'), `${job.id}/before-full.jpg`, 'image/jpeg'); result.pageHeight = pe.pageHeight; }
       const seen = result.beforeFullUrl ? pe.events : pe.events.filter(e => !e.rect || e.rect.y + Math.min(e.rect.h, 200) <= 900);   // with only the first screen kept, only what stands on it
+      if (result.beforeUrl || result.beforeFullUrl) await deps.save(result);   // the picture of the page is in the job before the events that are drawn on it (it used to arrive with the designs, when the working screen was already gone)
       if (seen.length) await deps.emit(seen);
     } catch { /* the pictures of the work are never worth the job */ }
     // "I built a first version of my app": their screenshots, fetched like a form's photographs, kept in their order

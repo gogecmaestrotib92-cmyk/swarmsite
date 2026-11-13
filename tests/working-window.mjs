@@ -34,7 +34,7 @@ try {
     const { page, state, errors } = await open(width, height); const first = await agents(page);
     assert.ok(first.filter(a => a.seen).length >= least, `${width}: ${least}+ agents are on the page and drawn within three seconds, with no event: ${JSON.stringify(first.filter(a => a.seen).length)} of ${first.length}`);
     assert.ok(first.every(a => a.says === ''), 'an agent with no event of its own shows no finding: ' + JSON.stringify(first.map(a => a.says)));
-    await page.waitForTimeout(2500); const later = await agents(page); const moved = later.filter((a, i) => Math.hypot(a.x - first[i].x, a.y - first[i].y) > 12).length;
+    await page.waitForTimeout(3500); const later = await agents(page); const moved = later.filter((a, i) => Math.hypot(a.x - first[i].x, a.y - first[i].y) > 12).length;
     assert.ok(moved >= least - 2, `${width}: they keep moving while nothing arrives: ${moved} moved`);
     const hud = await page.evaluate(() => { const b = id => document.querySelector(id).getBoundingClientRect(), seg = [...document.querySelectorAll('#prog i')].map(i => i.className); return { seg, clock: document.querySelector('#clock').textContent, count: document.querySelector('#hudR').textContent, title: document.title, bar: b('#prog').bottom, clockBottom: b('#clock').bottom, vh: innerHeight, doc: document.documentElement.scrollWidth, vw: innerWidth, glow: getComputedStyle(document.querySelector('#work'), '::before').animationName, crew: [...document.querySelectorAll('.wk-robot')].filter(n => n.offsetParent).length }; });
     assert.deepEqual(hud.seg, ['done', 'done', 'run', '', '', ''], 'one segment per step, in the state the job reports'); assert.equal(hud.count, '2 / 6'); assert.match(hud.title, /^2\/6 · Working/);

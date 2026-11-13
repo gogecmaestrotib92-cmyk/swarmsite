@@ -34,7 +34,7 @@ try {
       fetchUpload: async (file, local) => { fetched.push(file); fs.copyFileSync(path.join(root, file.startsWith('1b1e') ? 'web/logo/swarmsite-mark.png' : 'web/favicon.png'), local); },   // a screenshot must be 200 px or more
       publicBase: key => 'https://storage.example/previews/' + key,
       setStep: async (id, status) => { steps.push(`${id}:${status}`); }, emit: async evs => { events.push(...evs); },
-      save: async r => { saves.push(JSON.parse(JSON.stringify({ variants: r.templates?.variants, packagesBefore: [...priv.keys()].filter(k => k.endsWith('.zip')).length }))); } };
+      save: async r => { saves.push(JSON.parse(JSON.stringify({ before: r.beforeUrl || null, at: events.length, variants: r.templates?.variants, packagesBefore: [...priv.keys()].filter(k => k.endsWith('.zip')).length }))); } };
     const result = await runTemplateJob(deps);
     return { result, log, steps, events, saves, pub, priv, dir, fetched, built };
   }
@@ -85,7 +85,8 @@ try {
   assert.ok([...x.pub.keys()].some(k => /\/t\/media\/library\//.test(k)), 'the library pictures a preview shows are published beside it');
   assert.ok(![...x.pub.keys()].some(k => /data\.json$|\.zip$/.test(k)), 'no data store or package is public');
   assert.ok(![...x.pub.keys()].some(k => k.endsWith('.zip')));
-  assert.equal(x.saves.length, 1); assert.deepEqual(x.saves[0].variants.map(v => [v.slug, v.package]), shown.map(s => [s, 'pending'])); assert.equal(x.saves[0].packagesBefore, 0, 'the previews are saved before any package is made');
+  assert.equal(x.saves.length, 2); assert.ok(x.saves[0].before && !x.saves[0].variants && x.saves[0].at <= x.events.findIndex(e => e.rect), 'the picture of the page is saved as soon as it is taken, before the events drawn on it: ' + JSON.stringify(x.saves[0]));
+  x.saves.shift(); assert.deepEqual(x.saves[0].variants.map(v => [v.slug, v.package]), shown.map(s => [s, 'pending'])); assert.equal(x.saves[0].packagesBefore, 0, 'the previews are saved before any package is made');
   assert.deepEqual(x.result.budget, { calls: 1, in: 21000, out: 2400, usd: 0.066 }, 'what the visitor cost: the reader, from the job ledger');
   assert.ok(['adapt', 'select', 'render', 'gate'].every(k => typeof t.timings_ms[k] === 'number') && ['capture', 'read', 'choose', 'publish', 'package'].every(k => typeof t.timings_ms.steps[k] === 'number'), 'stage timings in the job record');
   assert.ok(x.result.beforeUrl && x.events.some(e => e.role === 'QA' && e.text === `Design ${gi + 1}: every screen passes`) && !x.events.some(e => /griffin/i.test(e.text)) && x.events.some(e => e.text === '1 picture'));
@@ -93,6 +94,10 @@ try {
   // 1a · what the capture measured on the page reaches the working screen with its place, so the agents act where it stands
   assert.ok(x.events.some(e => e.role === 'Reader' && e.text === 'Menu · 6 links' && e.rect && e.rect.w === 1440 && e.rect.h === 72), 'the menu, with its place: ' + JSON.stringify(x.events.filter(e => e.rect)));
   assert.ok(x.events.filter(e => e.rect).every(e => ['x', 'y', 'w', 'h'].every(k => Number.isFinite(e.rect[k]))) && !x.events.some(e => /^Button/.test(e.text)), 'a place without all four numbers is left out (the fixture’s buttons have only y)');
+  { const d = fs.mkdtempSync(path.join(tmp, 'geo-')); fs.writeFileSync(path.join(d, 'geometry.json'), JSON.stringify({ pageHeight: 9000, logo: { x: 112, y: 24, w: 249, h: 32 },
+      sections: [{ rect: { x: 0, y: 81, w: 1440, h: 38903 }, words: 13 }, { rect: { x: 0, y: 900, w: 1440, h: 640 }, words: 80 }], images: [{ rect: { x: 112, y: 24, w: 249, h: 32 }, w: 218, h: 28 }, { rect: { x: 615, y: 1483, w: 211, h: 313 }, w: 180, h: 270 }] }));
+    const pe = (await import('../server/templates.mjs')).pageEvents(d); assert.deepEqual(pe.events.map(e => e.text), ['Logo found', 'Section 1 · 80 words', 'Picture 1 · 180×270'], 'a wrapper as high as the page is not a section, and the logo is not a picture');
+    assert.equal(pe.pageHeight, 7000, 'no taller than the picture that is kept'); }
   { const pe = (await import('../server/templates.mjs')).pageEvents(path.join(tmp, 'nothing-here')); assert.deepEqual(pe, { events: [], pageHeight: 0 }, 'no capture files: no events, and no error'); }
 
   // 1b · every design has a cover: its first screen photographed at rest, published by its id, in the job the chooser reads
