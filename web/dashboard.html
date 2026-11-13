@@ -2,48 +2,61 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Your projects — Swarmsite</title><meta name="robots" content="noindex">
-<link rel="preload" href="/fonts/instrument-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Shrikhand&display=swap" rel="stylesheet">
+<title>Your projects — Swarmsite</title><meta name="robots" content="noindex"><link rel="icon" type="image/png" href="/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;1,400&amp;family=Figtree:wght@400;500;600;700&amp;family=Shrikhand&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/site.css">
 <link rel="stylesheet" href="/header.css">
 <style>
-@font-face{font-family:'Instrument Sans';font-weight:400;font-display:swap;src:url(/fonts/instrument-sans-latin-400-normal.woff2) format('woff2')}
-@font-face{font-family:'Instrument Sans';font-weight:500;font-display:swap;src:url(/fonts/instrument-sans-latin-500-normal.woff2) format('woff2')}
-@font-face{font-family:'JetBrains Mono';font-weight:400;font-display:swap;src:url(/fonts/jetbrains-mono-latin-400-normal.woff2) format('woff2')}
-:root{--paper:#f1f1ee;--ink:#141414;--muted:#66665f;--line:rgba(20,20,20,.14);--accent:#833b46;--sans:'Instrument Sans',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace}
-*{box-sizing:border-box;margin:0;padding:0}body{min-height:100svh;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
-a{color:inherit;text-decoration:none}.lab{font-family:var(--mono);font-size:11.5px;color:var(--muted);letter-spacing:.02em}
-.pill{display:inline-flex;align-items:center;justify-content:center;gap:10px;border-radius:999px;padding:0 22px;font:500 15px var(--sans);border:0;background:var(--ink);color:var(--paper);min-height:44px;white-space:nowrap;cursor:pointer;transition:transform .2s cubic-bezier(.22,1,.36,1)}.pill.accent{background:var(--accent);color:#fff}.pill:active{transform:scale(.97)}
-main :focus-visible{outline:2px solid var(--accent);outline-offset:3px}
-main{width:min(1180px,100%);margin:0 auto;padding:clamp(120px,15vh,168px) clamp(20px,4vw,64px) 96px}
-.head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:16px 32px;margin-bottom:clamp(24px,4vw,44px)}h1{font-weight:400;font-size:clamp(34px,5vw,64px);line-height:1;letter-spacing:-.045em}
-.meter{display:grid;gap:6px;min-width:200px}.meter i{display:block;height:4px;border-radius:99px;background:var(--line);overflow:hidden}.meter i b{display:block;height:100%;background:var(--ink);border-radius:99px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:16px}
-.card{display:grid;grid-template-rows:auto 1fr;background:#fff;box-shadow:0 0 0 1px var(--line);border-radius:20px;overflow:hidden;transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s}.card:hover{transform:translateY(-3px);box-shadow:0 0 0 1px var(--line),0 22px 50px -24px rgba(17,17,17,.28)}
-.shot{aspect-ratio:16/10;background:#e9e8e4 center/cover;border-bottom:1px solid var(--line);display:grid;place-items:center}.shot span{font-family:var(--mono);font-size:12px;color:var(--muted)}
-.body{display:grid;gap:8px;padding:16px 18px 18px}.site{font-weight:500;font-size:17px;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.row{display:flex;justify-content:space-between;gap:12px;align-items:center}
-.state{display:inline-flex;align-items:center;gap:7px;font-size:13px}.state::before{content:"";width:7px;height:7px;border-radius:50%;background:#9a9a96}.state.done::before{background:#1f9d55}.state.running::before,.state.queued::before{background:#d99a1c;animation:pulse 1.4s ease-in-out infinite}.state.failed::before{background:#c0392b}
-@keyframes pulse{50%{opacity:.35}}@media (prefers-reduced-motion:reduce){.state::before{animation:none!important}.card,.pill{transition:none}}
-.empty{color:var(--muted);border:1px dashed var(--line);border-radius:20px;padding:clamp(20px,4vw,36px)}
-.new{display:grid;gap:12px;margin-bottom:clamp(36px,5vw,64px)}.new label{font-family:var(--mono);font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
-.urlbox{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 22px;border-radius:999px;background:#fff;box-shadow:0 0 0 1px var(--line),0 18px 50px rgba(17,17,17,.05);transition:box-shadow .2s}.urlbox:focus-within{box-shadow:0 0 0 1px #6f6f69,0 0 0 4px rgba(17,17,17,.06),0 18px 50px rgba(17,17,17,.08)}
-.urlbox .pre{font-family:var(--mono);font-size:13px;color:var(--muted)}.urlbox input{flex:1;min-width:0;min-height:48px;border:0;outline:0;background:transparent;font:500 18px var(--sans);color:var(--ink)}.urlbox input::placeholder{color:#6e6e68;opacity:1}
-@media (max-width:640px){.urlbox{flex-wrap:wrap;border-radius:26px;padding:8px 8px 8px 18px}.urlbox .pre{display:none}.urlbox input{flex:1 1 100%}.urlbox .pill{width:100%;min-height:50px}}
-.help{color:var(--muted);font-size:14px;padding-left:22px}@media (max-width:640px){.help{padding-left:4px}}.help.err{color:#b3261e}.sub{font-family:var(--mono);font-weight:400;font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:16px}.note{color:var(--muted);margin-top:18px}.note.err{color:#b3261e}[hidden]{display:none!important}
+/* The dashboard: what a signed-in visitor has made, and where the next one starts. Each project is a card in the manner
+   of the chooser — the covers of its designs, its name, where it stands in plain words, and the two things done with it:
+   open its designs, edit the one chosen. Starting a project offers the same three ways in as the front page.
+   Tokens, type, buttons and the address field: /css/site.css. */
+:root{--line:rgba(20,20,20,.12);--bad:#a3261b}
+[hidden]{display:none!important}
+main{width:min(1240px,100%);margin:0 auto;padding:128px 24px 96px;display:grid;gap:40px}
+main :focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+.head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:16px 32px}
+h1{font:400 75px/1 var(--serif);letter-spacing:-.03em}
+.lab{font:500 14px/1.3 var(--sans);color:var(--muted)}
+.meter{display:grid;gap:8px;min-width:220px}.meter i{display:block;height:6px;border-radius:99px;background:var(--card);overflow:hidden}.meter i b{display:block;height:100%;background:var(--ink);border-radius:99px}
+.start{background:var(--card);border-radius:32px;padding:16px}.start>div{background:var(--paper);border-radius:16px;padding:28px;display:grid;gap:16px;justify-items:start}
+.start h2{font:400 36px/1 var(--serif);letter-spacing:-.03em}.start .ways{margin-inline:0}.start .urlf{margin-inline:0;max-width:640px}
+.help{font-size:15px;color:var(--muted)}.help.err{color:var(--bad)}
+.sub{font:400 36px/1 var(--serif);letter-spacing:-.03em}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:16px}
+.proj{display:grid;gap:0;background:var(--card);border-radius:32px;padding:16px;border:2px solid transparent;transition:border-color .3s}.proj:hover{border-color:var(--ink)}
+.card{display:grid;gap:0;color:inherit}
+/* each cover whole, in its own proportion (16:10): the first large, the other two beside it */
+.covers{display:grid;grid-template-columns:2fr 1fr;gap:6px}
+.cv{aspect-ratio:16/10;border-radius:10px;background:var(--paper) top center/cover no-repeat}.cv.main{grid-row:1/3;aspect-ratio:auto;min-height:100%;border-radius:16px}.covers.one{grid-template-columns:1fr}.covers.one .cv.main{grid-row:auto;aspect-ratio:16/10}
+.cv.none{display:grid;place-items:center;font-size:14px;color:var(--muted)}
+.body{display:grid;gap:8px;padding:18px 8px 6px}.site{font:400 30px/1 var(--serif);letter-spacing:-.03em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.state{display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:600}.state::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--line2)}.state.done::before{background:var(--ink)}.state.running::before,.state.queued::before{background:var(--deep);animation:pulse 1.4s ease-in-out infinite}.state.failed::before{background:var(--bad)}
+@keyframes pulse{50%{opacity:.3}}
+.acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:12px 8px 4px}
+.pill{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:8px 16px;border-radius:8px;border:2px solid var(--ink);background:transparent;font:600 15px/1 var(--sans);color:var(--ink);white-space:nowrap;cursor:pointer;transition:transform .2s}.pill:hover{transform:scale(.98)}.pill.ink{background:var(--accent)}
+.paid{margin-left:auto;padding:6px 12px;border-radius:999px;background:var(--ground);font:600 13px/1.2 var(--sans);box-shadow:inset 0 0 0 2px var(--ink)}
+.empty{background:var(--card);border-radius:32px;padding:16px}.empty span{display:block;background:var(--paper);border-radius:16px;padding:28px;font-size:18px}
+.note{color:var(--muted)}.note.err{color:var(--bad)}
+@media(max-width:991px){main{padding:96px 16px 72px;gap:28px}h1{font-size:44px}.start{border-radius:20px;padding:8px}.start>div{padding:20px}.start h2,.sub{font-size:30px}.proj{border-radius:24px;padding:10px}.site{font-size:26px}}
+@media(prefers-reduced-motion:reduce){.state::before{animation:none!important}.proj,.pill{transition:none}}
 </style>
 </head>
 <body>
 <header class="hd" data-hd data-hd-page="dashboard"><div class="hd-grp"><a class="hd-brand" href="/" aria-label="Swarmsite, front page">swarmsite</a><a class="hd-item hd-wide" data-hd-projects href="/dashboard" hidden>Projects</a></div><div class="hd-grp" data-hd-right><a class="hd-cta" href="#new">New project</a></div></header>
 <main>
-  <div class="head"><h1>Your projects</h1><div class="meter" id="meter" hidden><span class="lab" id="meterText"></span><i><b id="meterBar"></b></i></div></div>
-  <form class="new" id="new" onsubmit="return false" novalidate>
-    <label for="site">Start a project</label>
-    <div class="urlbox"><span class="pre" aria-hidden="true">https://</span><input id="site" type="text" inputmode="url" autocomplete="url" autocapitalize="none" spellcheck="false" placeholder="yourwebsite.com" aria-describedby="newHelp"><button class="pill accent" id="go" type="submit">Get three designs <span aria-hidden="true">→</span></button></div>
-    <p class="help" id="newHelp">Paste the address of a site. You choose what to keep on the next screen; the designs are saved here.</p>
-  </form>
+  <div class="head"><h1>Your <em>projects</em></h1><div class="meter" id="meter" hidden><span class="lab" id="meterText"></span><i><b id="meterBar"></b></i></div></div>
+  <section class="start" aria-labelledby="startH"><div>
+    <h2 id="startH">Start a project</h2>
+    <div class="ways" role="tablist" aria-label="How do you want to start?"><button type="button" role="tab" data-way="site" aria-selected="true">I have a site</button><button type="button" role="tab" data-way="app" aria-selected="false">I built a first version of my app</button><button type="button" role="tab" data-way="none" aria-selected="false">I don’t have a site</button></div>
+    <form class="urlf" id="new" onsubmit="return false" novalidate><span class="pre" aria-hidden="true">https://</span><input id="site" type="text" inputmode="url" autocomplete="url" autocapitalize="none" spellcheck="false" placeholder="yourwebsite.com" aria-label="The address of your site" aria-describedby="newHelp"><button class="btn" id="go" type="submit">Get three designs</button></form>
+    <a class="btn" id="formGo" href="/start" hidden>Start the short form</a>
+    <p class="help" id="newHelp">Paste the address of a site. The designs start at once and are kept here.</p>
+  </div></section>
   <h2 class="sub" id="listHead" hidden>Saved projects</h2>
   <div class="grid" id="grid" aria-live="polite"></div>
-  <p class="empty" id="empty" hidden>No projects yet — your first one will appear here when you start it.</p>
+  <p class="empty" id="empty" hidden><span>No projects yet. Your first one appears here when you start it.</span></p>
   <p class="note" id="note" role="status"></p>
 </main>
 <script src="/config.js"></script>
@@ -55,12 +68,27 @@ const $ = s => document.querySelector(s);
 const host = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return String(u || '').slice(0, 60); } };
 const when = t => { const d = new Date(t); return isNaN(d) ? '' : d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }); };
 const STATE = { done: 'Ready', running: 'Working', queued: 'In the queue', failed: 'Did not finish' };
-function card(j) {   // built with the DOM, never with markup: a site's address is whatever its owner typed
+const safe = u => typeof u === 'string' && /^https:\/\//.test(u) ? 'url("' + u.replace(/["\\\n()]/g, '') + '")' : '';
+/* a project: the covers of its designs (the picture of the old page for an older project), its name, where it stands, and
+   what is done with it. Built with the DOM, never with markup: an address or a name is whatever its owner typed. */
+function card(j) {
+  const proj = document.createElement('div'); proj.className = 'proj';
   const a = document.createElement('a'); a.className = 'card'; a.href = '/app?job=' + encodeURIComponent(j.id) + '&url=' + encodeURIComponent(j.url || '');
-  const shot = document.createElement('div'); shot.className = 'shot'; if (j.before && /^https:\/\//.test(j.before)) shot.style.backgroundImage = 'url("' + j.before.replace(/["\\\n]/g, '') + '")'; else { const s = document.createElement('span'); s.textContent = STATE[j.status] || j.status; shot.appendChild(s); }
-  const body = document.createElement('div'); body.className = 'body'; const site = document.createElement('div'); site.className = 'site'; site.textContent = host(j.url);
+  const cs = (j.covers || []).filter(c => safe(c.cover)).slice(0, 3), covers = document.createElement('div'); covers.className = 'covers' + (cs.length < 3 ? ' one' : '');
+  const tile = (bg, cls) => { const d = document.createElement('div'); d.className = 'cv ' + cls; if (bg) d.style.backgroundImage = bg; return d; };
+  if (cs.length >= 3) covers.append(tile(safe(cs[0].cover), 'main'), tile(safe(cs[1].cover), ''), tile(safe(cs[2].cover), ''));
+  else if (cs.length) covers.append(tile(safe(cs[0].cover), 'main'));
+  else if (safe(j.before)) covers.append(tile(safe(j.before), 'main'));
+  else { const d = tile('', 'main none'); d.textContent = STATE[j.status] || j.status; covers.append(d); }
+  const body = document.createElement('div'); body.className = 'body'; const site = document.createElement('div'); site.className = 'site'; site.textContent = j.name || host(j.url);
   const row = document.createElement('div'); row.className = 'row'; const st = document.createElement('span'); st.className = 'state ' + (STATE[j.status] ? j.status : ''); st.textContent = (STATE[j.status] || j.status) + (j.status === 'done' && j.designs ? ' · ' + j.designs + (j.designs === 1 ? ' design' : ' designs') : '');
-  const date = document.createElement('span'); date.className = 'lab'; date.textContent = when(j.created_at); row.append(st, date); body.append(site, row); a.append(shot, body); return a;
+  const date = document.createElement('span'); date.className = 'lab'; date.textContent = when(j.created_at); row.append(st, date); body.append(site, row); a.append(covers, body); proj.appendChild(a);
+  const acts = document.createElement('div'); acts.className = 'acts'; const link = (t, href, cls) => { const l = document.createElement('a'); l.className = 'pill' + (cls || ''); l.href = href; l.textContent = t; return l; };
+  acts.append(link(j.status === 'done' ? 'Open designs' : j.status === 'failed' ? 'See what happened' : 'See it work', a.href, ''));
+  const which = (j.paid || [])[0] || (j.covers || [])[0]?.id;
+  if (j.editable && /^v[1-9][0-9]?$/.test(which || '')) acts.append(link('Edit', '/edit?job=' + encodeURIComponent(j.id) + '&slug=' + which, ' ink'));
+  if ((j.paid || []).length) { const p = document.createElement('span'); p.className = 'paid'; p.textContent = 'Paid · Design ' + String(j.paid[0]).slice(1); acts.append(p); }
+  proj.appendChild(acts); return proj;
 }
 async function load() {
   const [me, jobs] = await Promise.all([Auth.api('/me'), Auth.api('/me/jobs')]);
@@ -71,10 +99,14 @@ async function load() {
   $('#grid').replaceChildren(...list.map(card)); $('#empty').hidden = list.length > 0; $('#listHead').hidden = list.length === 0;
   if (list.some(j => j.status === 'running' || j.status === 'queued')) setTimeout(() => load().catch(() => {}), 15000);   // a working project updates by itself
 }
-/* Starting a project happens here: the address goes straight to the screen where the direction is set. */
+/* Starting a project: the same three ways in as the front page. An address goes straight to the designs; a first version of
+   an app goes by way of its screenshots; no site, the short form. */
+let way = 'site'; const HELP = { site: 'Paste the address of a site. The designs start at once and are kept here.', app: 'Paste its address. Next you add up to six screenshots of your app.', none: 'One short form about your business, with your own photographs.' };
+document.querySelectorAll('.ways [data-way]').forEach((b, i, all) => { const pick = () => { way = b.dataset.way; all.forEach(x => { x.setAttribute('aria-selected', String(x === b)); x.tabIndex = x === b ? 0 : -1; }); $('#new').hidden = way === 'none'; $('#formGo').hidden = way !== 'none'; $('#newHelp').textContent = HELP[way]; $('#newHelp').classList.remove('err'); };
+  b.onclick = pick; b.tabIndex = i ? -1 : 0; b.addEventListener('keydown', e => { const k = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0; if (!k) return; e.preventDefault(); const n = all[(i + k + all.length) % all.length]; n.click(); n.focus(); }); });
 const startNew = () => { const raw = $('#site').value.trim().replace(/^https?:\/\//i, '').replace(/\s+/g, ''); const help = $('#newHelp');
   if (!/^[^\s/]+\.[^\s/]{2,}/.test(raw)) { help.textContent = 'Type the address of a site, for example yoursite.com.'; help.classList.add('err'); $('#site').focus(); return; }
-  location.href = '/app?url=' + encodeURIComponent(raw); };
+  location.href = '/app?url=' + encodeURIComponent(raw) + (way === 'app' ? '&with=screens' : ''); };
 $('#go').onclick = startNew; $('#site').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); startNew(); } });
 document.addEventListener('click', e => { if (!e.target.closest('.hd a[href="#new"]')) return; e.preventDefault(); $('#new').scrollIntoView({ behavior: 'smooth', block: 'center' }); $('#site').focus({ preventScroll: true }); });   // "New project", in the header or in the account panel
 if (location.hash === '#new') setTimeout(() => $('#site').focus(), 60);

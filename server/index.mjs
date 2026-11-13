@@ -12,7 +12,7 @@ import crypto from 'node:crypto';
 import { makeUserOf, allowance, mine } from './auth.mjs';
 import { STEPS_T, STEPS_F, enabled as templatesEnabled, runTemplateJob, mayDownload, previewable, imageType, formProblem, extrasProblem, UPLOAD, libraryCount, previewKey } from './templates.mjs';
 import { publicJob, internalSlug, publicOf, downloadName } from './designs.mjs';
-import { makeEditor, mayKeep, editable, opsProblem } from './editor.mjs';
+import { makeEditor, mayKeep, editable, opsProblem, runGate } from './editor.mjs';
 import { ensurePrivateBucket } from './bucket.mjs'; import { runCleanup } from './cleanup.mjs';
 import { runPublish, runRepackage, editedPackage, editsHash, nameProblem } from './publish.mjs';
 import { payGate, stripeOf, checkout, webhook, withPaid, configured as payConfigured, paidBy } from './payments.mjs';
@@ -56,7 +56,7 @@ app.get('/config', (_, res) => res.json({ auth: { require: AUTH.require, free: A
 app.get('/me', async (req, res) => { const user = await userOf(req); if (!user) return res.status(401).json({ error: 'sign in' }); res.json({ id: user.id, email: user.email, previews: allowance({ used: await usedBy(user.id), free: AUTH.free }) }); });
 app.get('/me/jobs', async (req, res) => {
   const user = await userOf(req); if (!user) return res.status(401).json({ error: 'sign in' });
-  const { data, error } = await sb.from('jobs').select('id,url,status,step,created_at,result').eq('user_id', user.id).order('created_at', { ascending: false }).limit(60);
+  const { data, error } = await sb.from('jobs').select('id,url,status,step,created_at,result,options').eq('user_id', user.id).order('created_at', { ascending: false }).limit(60);
   if (error) return res.status(500).json({ error: 'could not list' });
   res.json((data || []).map(mine));
 });
@@ -244,7 +244,7 @@ const EDITOR = makeEditor({
   publishPublic: async (local, key, type) => upload(local, key, type),
   publicBase: key => sb.storage.from(BUCKET).getPublicUrl(key).data.publicUrl,
   python: args => child('python3', args, 30000),
-  gate: async file => { const out = await child('node', ['lib/qa/template_gate.mjs', file], 90000).catch(e => String(e.message)); return String(out).trim().split('\n').reverse().map(l => { try { return JSON.parse(l); } catch { return null; } }).find(x => x && x.page) || { ok: false, failed: ['tool'] }; },
+  gate: file => runGate(file, { root: ROOT }),   // exit 1 is the gate saying the page fails, not the tool failing (server/editor.mjs)
   tmp: () => { fs.mkdirSync(OUT, { recursive: true }); return OUT; } });
 const editHits = new Map();
 const editLimited = (ip, kind, max) => { const k = kind + ip, now = Date.now(), h = (editHits.get(k) || []).filter(t => now - t < 3600e3); if (h.length >= max) return true; h.push(now); editHits.set(k, h); if (editHits.size > 10000) editHits.clear(); return false; };

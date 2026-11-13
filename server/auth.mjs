@@ -24,8 +24,15 @@ export function makeUserOf(sb, ttlMs = 60000, now = () => Date.now()) {
 export const allowance = ({ used = 0, free = 0, paid = false } = {}) => { const u = Math.max(0, Number(used) || 0), f = Math.max(0, Number(free) || 0); return { used: u, free: f, left: Math.max(0, f - u), allowed: !!paid || u < f }; };
 
 export const mine = row => {
-  const r = row?.result || {}; const studio = r.studio || {};
-  return { id: row.id, url: row.url, status: row.status, step: row.step || null, created_at: row.created_at, seconds: r.seconds ?? null,
+  const r = row?.result || {}; const studio = r.studio || {}; const t = r.templates && typeof r.templates === 'object' ? r.templates : null;
+  const out = { id: row.id, url: row.url, status: row.status, step: row.step || null, created_at: row.created_at, seconds: r.seconds ?? null,
     preview: typeof r.previewUrl === 'string' ? r.previewUrl : null, before: typeof r.beforeUrl === 'string' ? r.beforeUrl : null,
     designs: Array.isArray(studio.variants) ? studio.variants.filter(v => v && v.clean).length : (r.previewUrl ? 1 : 0) };
+  if (!t) return out;
+  // a template job: its designs by id (never a template's name), the cover of each, which one was paid for, whether it can be edited
+  const vs = Array.isArray(t.variants) ? t.variants : [], id = (v, i) => (v && typeof v.id === 'string' && v.id) || `v${i + 1}`;
+  const paid = r.paid && typeof r.paid === 'object' ? Object.keys(r.paid).map(k => { const i = vs.findIndex(v => v.slug === k); return i >= 0 ? id(vs[i], i) : ''; }).filter(Boolean) : [];
+  const name = row?.options?.source === 'form' ? String(row.options?.form?.name || '').slice(0, 80) : '';
+  return { ...out, designs: vs.length, covers: vs.map((v, i) => ({ id: id(v, i), cover: /^https:\/\/[^\s"<>]+-cover\.jpg$/.test(String(v.cover || '')) ? v.cover : null })),
+    paid, editable: row.status === 'done' && !!t.store && vs.length > 0, ...(name ? { name } : {}) };
 };
