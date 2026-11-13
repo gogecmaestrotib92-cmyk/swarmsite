@@ -1175,6 +1175,36 @@
           }
         }
       }
+    },
+    "more": {
+      "type": "object",
+      "description": "What of the client's page the template has no place for: sections in page order, each a heading over its own words, whole. Written under the template's sections by more.py.",
+      "properties": {
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "title"
+            ],
+            "properties": {
+              "title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "text": {
+                "type": "string"
+              },
+              "imgs": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/picture"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

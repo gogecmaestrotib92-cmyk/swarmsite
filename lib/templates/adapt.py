@@ -1302,6 +1302,24 @@ def adapt(seed):
         d['links'] = [{'t': corpus.recase(x['title']), 'd': _body(x, cap=220), 'h': (x['actions'][0]['h'] if x['actions'] else None)} for x in rest[:6]]
         gaps[:] = [g for g in gaps if not g.startswith('links: none')]
         rules.append('links: %d section(s) left over, each a heading over its paragraph, stand as cards (the page has no row of cards of its own)' % len(d['links']))
+    # what is still left, a heading over its own words, goes under the template's sections whole (more.py): a template
+    # has a fixed number of places and a client's page does not
+    have = said()
+    # a section's own pictures: those the capture found standing under that section's heading on the client's page
+    # (images.json `sec`), and only photographs the data already carries — never any picture beside any words
+    by_id = {str(p.get('src') or '').rsplit('/', 1)[-1].rsplit('.', 1)[0]: p for p in (d.get('media') or {}).get('photos') or [] if isinstance(p, dict)}
+    pics_of = lambda title: [{k: by_id[str(i.get('id'))][k] for k in ('src', 'w', 'h', 'alt') if by_id[str(i.get('id'))].get(k) is not None}
+                             for i in images if isinstance(i, dict) and _key(i.get('sec')) and _key(i.get('sec')) == _key(title) and str(i.get('id')) in by_id][:4]
+    extra = []
+    for x in secs:
+        if carried(x) or x['level'] == 'H1' or len(x['title'].split()) > 14:
+            continue
+        body, own_pics = _body(x, cap=1200), pics_of(x['title'])
+        if len(body) >= 40 or own_pics:                               # words of its own, or pictures of its own under a heading (a hall, a brand, a dish)
+            extra.append({'title': corpus.recase(x['title']), 'text': body if len(body) >= 40 else '', **({'imgs': own_pics} if own_pics else {})})
+    if extra:
+        d['more'] = {'sections': extra[:12]}
+        rules.append('more: %d section(s) the schema has no block for, each a heading over its own words, set under the template\'s sections' % len(d['more']['sections']))
     have = said()
     heads = [x for x in secs if _key(x['title'])]
     left = [corpus.recase(x['title']) for x in heads if not carried(x)]

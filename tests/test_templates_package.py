@@ -168,16 +168,17 @@ def test_a_package_that_does_not_look_like_the_preview_is_refused(tmp_path):
     lib = tmp_path / 'lib' / 'still'
     lib.mkdir(parents=True)
     lib.joinpath('render.py').write_text(
-        "def render(d):\n    return ('<!doctype html><html lang=\"en\"><head><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><style>body{margin:0;font:18px/1.5 Arial;color:#111;background:#fff}"
+        "def render(d):\n    return ('<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><style>body{margin:0;font:18px/1.5 Arial;color:#111;background:#fff}"
         "section{padding:60px 24px;min-height:700px}img{display:block;max-width:100%;height:auto}</style></head><body><section><h1>' + d['hero']['title'] + '</h1><p>' + d['hero']['text'] + '</p>"
         "<img src=\"../../' + d['media']['photos'][0]['src'] + '\" width=\"480\" height=\"322\" alt=\"\"></section><section style=\"background:#111;color:#eee\"><p>' + d['close']['title'] + '</p></section></body></html>')\n", encoding='utf-8')
     S.stand_ins(PLACE, tmp_path / 'src')
     preview = tmp_path / 'preview.html'
     preview.write_text(R.render('still', PLACE, (tmp_path / 'src').resolve().as_uri() + '/', root=tmp_path / 'lib'), encoding='utf-8')
     rep = P.build('still', PLACE, tmp_path / 'src', tmp_path / 'site.zip', root=tmp_path / 'lib')
-    assert rep['fonts'] == [] and rep['media'] == ['media/casaolmo/arroz.jpg']
-    res = P.verify(preview, rep['zip'], tmp_path / 'w1')
-    assert res['ok'] and res['why'] == [] and res['outside'] == [] and [w['at'] for w in res['widths']] == ['d', 'm'] and all(w['worst'] == 0 and w['screens'] >= 2 for w in res['widths']), res
+    # the page asks for its own picture and for the photographs it had no place for, set as one strip under its sections (more.py)
+    assert rep['fonts'] == [] and rep['media'][0] == 'media/casaolmo/arroz.jpg' and set(rep['media']) <= {p['src'] for p in PLACE['media']['photos']} and len(rep['media']) > 1
+    res = P.verify(preview, rep['zip'], tmp_path / 'w1', shots=os.environ.get('PKG_SHOTS') or None)
+    assert res['ok'] and res['why'] == [] and res['outside'] == [] and [w['at'] for w in res['widths']] == ['d', 'm'] and all(w['worst'] == 0 and w['screens'] >= 2 for w in res['widths']), [(w['at'], w['worst'], w['screens']) for w in res['widths']]
 
     def tampered(name, change):
         z2 = tmp_path / (name + '.zip')
