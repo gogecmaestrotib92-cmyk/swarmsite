@@ -5,10 +5,15 @@ A template is measured on two or three test clients, and those happen to have tw
 is tried on made-up variants of a client, and the gate (lib/qa/template_gate.mjs) must pass on each:
 
     plans-1 · plans-3 · plans-5 · features-2 · features-9 · steps-1 · steps-6 · h1-12-words · button-40 · no-faq · no-photographs
+    and the soft sections absent (select.py offers a template that misses one of them with that section dropped, so the
+    template must hold without it): no-features · no-close · no-steps · no-step-pictures · no-screens · no-made ·
+    minimal (the hero, the brand, three photographs and the contact lines; nothing else) · photos-3 (the client as given
+    with only its first three photographs: a template that breaks on it names `photos` in `hard` of its needs.json)
 
     variants(d) -> {name: data, or None when the client has nothing of that kind to vary}
     run(slugs, d, outdir, media=None) -> {slug: {'base': result, 'variants': {name: result}, 'fails': [names]}}
     python3 lib/templates/stress.py [slug …] [--client FILE] [--media DIR] [--out DIR] [--json]
+    python3 lib/templates/stress.py --sweep [slug …] [--out DIR] [--json]     every template × every test client of its niche × the soft variants
 
 The variants are stress data, never shown to a client: longer lists repeat the client's own items under numbered names,
 the long heading and the long label are made from the client's own words. A result names what fails in the variant
@@ -28,7 +33,11 @@ import zlib
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-NAMES = ('plans-1', 'plans-3', 'plans-5', 'features-2', 'features-9', 'steps-1', 'steps-6', 'h1-12-words', 'button-40', 'no-faq', 'no-photographs')
+NAMES = ('plans-1', 'plans-3', 'plans-5', 'features-2', 'features-9', 'steps-1', 'steps-6', 'h1-12-words', 'button-40', 'no-faq', 'no-photographs',
+         'no-features', 'no-close', 'no-steps', 'no-step-pictures', 'no-screens', 'no-made', 'minimal', 'photos-3')
+# what the minimal client keeps: who it is, its opening, how to reach it — the least a capture yields (see minimal())
+MINIMAL_KEEP = ('brand', 'lang', 'kind', 'character', 'palette', 'type', 'nav', 'hero', 'cta', 'signin', 'contact', 'foot', '_note')
+PLACE_CONTACT = ('address', 'phone', 'email', 'hours', 'booking', 'social')
 
 
 def _sibling(name):
@@ -118,7 +127,83 @@ def variants(d):
                 if isinstance(it, dict) and it.get('img') in gone:
                     it.pop('img')
     out['no-photographs'] = v
+    # the soft sections absent, each alone: the block is not in the data at all (that is how the adapter leaves a
+    # section it could not read); a client without the block has no variant of it
+    for name, key in (('no-features', 'features'), ('no-close', 'close'), ('no-steps', 'steps')):
+        v = None
+        if _present(d.get(key)):
+            v = copy.deepcopy(d)
+            v.pop(key)
+        out[name] = v
+    v = None
+    if any(isinstance(i, dict) and i.get('img') for i in (d.get('steps') or {}).get('items') or []):
+        v = copy.deepcopy(d)
+        for i in v['steps']['items']:
+            if isinstance(i, dict):
+                i.pop('img', None)
+    out['no-step-pictures'] = v
+    out['no-screens'] = _without_media(d, ('screens', 'phones', 'video'))
+    out['no-made'] = _without_media(d, ('made',))
+    out['minimal'] = minimal(d)
+    v = None
+    if len([p for p in m.get('photos') or [] if isinstance(p, dict)]) > 3:
+        v = copy.deepcopy(d)
+        gone = {p.get('src') for p in v['media']['photos'][3:] if isinstance(p, dict)}
+        v['media']['photos'] = v['media']['photos'][:3]
+        for holder, key in ((v.get('steps') or {}, 'items'), (v.get('place') or {}, 'spaces')):
+            for it in holder.get(key) or []:
+                if isinstance(it, dict) and it.get('img') in gone:
+                    it.pop('img')
+    out['photos-3'] = v
     return {n: out[n] for n in NAMES}
+
+
+def _present(v):
+    if isinstance(v, dict):
+        return any(_present(x) for x in v.values())
+    if isinstance(v, list):
+        return any(_present(x) for x in v)
+    return v not in (None, '', False)
+
+
+def _without_media(d, kinds):
+    """the client without these kinds of picture, and every step or space picture that was one of them; None when it
+    has none of them"""
+    m = d.get('media') if isinstance(d.get('media'), dict) else {}
+    if not any(_present(m.get(k)) for k in kinds):
+        return None
+    v = copy.deepcopy(d)
+    gone = set()
+    for k in kinds:
+        x = m.get(k)
+        for p in (x if isinstance(x, list) else [x] if isinstance(x, dict) else []):
+            if isinstance(p, dict):
+                gone.update(q for q in (p.get('src'), p.get('poster')) if q)
+    for k in kinds:
+        v['media'][k] = None if k == 'video' else ({} if k == 'made' else [])
+    if 'made' in kinds:
+        v['media'].pop('made', None)
+    for holder, key in ((v.get('steps') or {}, 'items'), (v.get('place') or {}, 'spaces')):
+        for it in holder.get(key) or []:
+            if isinstance(it, dict) and it.get('img') in gone:
+                it.pop('img')
+    return v
+
+
+def minimal(d):
+    """The least a capture yields: the brand, the opening, at most three photographs and the contact lines; every
+    other block absent. A client with fewer than three photographs keeps what it has (stress data invents no
+    picture). None when that is the client as given."""
+    v = {k: copy.deepcopy(d[k]) for k in MINIMAL_KEEP if k in d}
+    m = d.get('media') if isinstance(d.get('media'), dict) else {}
+    v['media'] = {'screens': [], 'phones': [], 'photos': copy.deepcopy([p for p in m.get('photos') or [] if isinstance(p, dict)][:3]), 'video': None}
+    place = d.get('place') if isinstance(d.get('place'), dict) else {}
+    if any(_present(place.get(k)) for k in PLACE_CONTACT):
+        v['place'] = {k: copy.deepcopy(place[k]) for k in PLACE_CONTACT if k in place}
+    rest = [k for k in d if k not in MINIMAL_KEEP and k not in ('media', 'place') and _present(d[k])]
+    rest += [k for k in ('screens', 'phones', 'video') if _present(m.get(k))] + (['photos'] if len(m.get('photos') or []) > 3 else [])
+    rest += [k for k in place if k not in PLACE_CONTACT and _present(place[k])]
+    return v if rest else None                                       # already no more than the minimal client: nothing to take away
 
 
 # ───────────────────────── stand-in pictures
@@ -131,11 +216,14 @@ def _rgb(h, fallback=(128, 128, 128)):
 
 
 def png(w, h, top, bottom):
-    """a w×h picture that goes from one colour at the top to another at the bottom"""
-    rows = bytearray()
+    """a w×h picture that goes from one colour at the top to another at the bottom, in squares of two tones: a stand-in
+    must read as a picture with something in it (the gate's `blank` check takes a flat ground for an empty slot)"""
+    rows, sq = bytearray(), max(6, min(w, h) // 8)
     for y in range(h):
         t = y / max(1, h - 1)
-        rows += b'\x00' + bytes(round(a + (b - a) * t) for a, b in zip(top, bottom)) * w
+        base = [round(a + (b - a) * t) for a, b in zip(top, bottom)]
+        two = (bytes(base), bytes(max(0, min(255, c + (34 if sum(base) < 384 else -34))) for c in base))
+        rows += b'\x00' + b''.join(two[((x // sq) + (y // sq)) % 2] * min(sq, w - x) for x in range(0, w, sq))
     chunk = lambda kind, data: struct.pack('>I', len(data)) + kind + data + struct.pack('>I', zlib.crc32(kind + data) & 0xffffffff)
     return b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', w, h, 8, 2, 0, 0, 0)) + chunk(b'IDAT', zlib.compress(bytes(rows), 9)) + chunk(b'IEND', b'')
 
@@ -199,25 +287,51 @@ def _new(base, res):
     return out
 
 
-def run(slugs, d, outdir, media=None, **kw):
+def with_made(d, root=None):
+    """the client with the first family of made pictures the library gives it (what a job adds before it renders), or
+    as given when its kind takes none or there is no library"""
+    PI = _sibling('pictures')
+    lib = PI.root_of(root)
+    three = PI.pick_three(d, lib) if lib else []
+    if not three:
+        return d
+    return {**d, 'media': {**(d.get('media') or {}), 'made': three[0]}}
+
+
+def run(slugs, d, outdir, media=None, made=False, names=None, **kw):
+    """made=True: the client as given carries the made pictures a job would give it — the library's own files, beside
+    the stand-ins — so that no-made is a real variant. names: only these variants (default every one)."""
     R, G = _sibling('registry'), _sibling('gate')
     outdir = Path(outdir)
     outdir.mkdir(parents=True, exist_ok=True)
+    if made:
+        d = with_made(d)
     if media:
         base_url = Path(media).resolve().as_uri() + '/'
     else:
         stand_ins(d, outdir)
         base_url = outdir.resolve().as_uri() + '/'
-    vs = variants(d)
+        PI = _sibling('pictures')
+        lib = PI.root_of() if (d.get('media') or {}).get('made') else None
+        for rel in PI.files((d.get('media') or {}).get('made')) if lib else []:
+            if (lib / rel).is_file():                               # a made picture is what the library holds, not a stand-in
+                (outdir / rel).write_bytes((lib / rel).read_bytes())
+    vs = {n: v for n, v in variants(d).items() if names is None or n in names}
     jobs = []
     for s in slugs:
         for name, v in [('base', d)] + list(vs.items()):
             if v is None:
                 continue
             f = outdir / ('%s--%s.html' % (s, name))
-            f.write_text(R.render(s, v, base_url), encoding='utf-8')
+            try:
+                f.write_text(R.render(s, v, base_url), encoding='utf-8')
+            except Exception as ex:                                  # a template that raises on a variant has failed it
+                jobs.append((s, name, {'page': str(f), 'ok': False, 'failed': ['render'], 'checks': {'render': [{'error': '%s: %s' % (type(ex).__name__, str(ex)[:160])}]}}))
+                continue
             jobs.append((s, name, f))
-    results = G.check([f for _, _, f in jobs], **kw)
+    pages = [f for _, _, f in jobs if not isinstance(f, dict)]
+    got = iter(G.check(pages, **kw))
+    results = [f if isinstance(f, dict) else next(got) for _, _, f in jobs]
     report = {s: {'base': None, 'variants': {n: None for n in vs}, 'fails': []} for s in slugs}
     for (s, name, f), res in zip(jobs, results):
         slim = {'ok': res['ok'], 'failed': res['failed'], 'checks': {k: v for k, v in (res.get('checks') or {}).items() if v}}
@@ -236,6 +350,32 @@ def run(slugs, d, outdir, media=None, **kw):
             if res['new']:
                 report[s]['fails'].append(name)
     return report
+
+
+FIXTURES = HERE.parent.parent / 'tests' / 'fixtures' / 'templates'
+SOFT_VARIANTS = ('no-features', 'no-close', 'no-steps', 'no-step-pictures', 'no-screens', 'no-made', 'minimal', 'photos-3')
+
+
+def sweep(outdir, slugs=None, names=SOFT_VARIANTS, fixtures=None, **kw):
+    """Every template through every test client of its niche, as given and in each of `names`; a software client
+    with the made pictures a job gives it. The verdict is the gate's own (ok on the page, not only 'nothing new'):
+    a soft section dropped is a page shown to a visitor. -> [{'slug', 'client', 'variant', 'ok', 'failed', 'checks'}]"""
+    R, S = _sibling('registry'), _sibling('select')
+    fixtures = fixtures or sorted(FIXTURES.glob('*.json'))
+    rows = []
+    for f in fixtures:
+        d = json.loads(Path(f).read_text(encoding='utf-8'))
+        niche = S.client(d)['niche']
+        mine = [t['slug'] for t in R.list_templates() if t['selectable'] and (slugs is None or t['slug'] in slugs)
+                and set(x for w in t['needs'].get('niche') or [] for x in S.niche_tags(w)) & set(niche)]
+        if not mine:
+            continue
+        rep = run(mine, d, Path(outdir) / Path(f).stem, made=True, names=names, **kw)
+        for slug, r in rep.items():
+            for name, res in [('base', r['base'])] + [(n, r['variants'].get(n)) for n in names]:
+                if res is not None:
+                    rows.append({'slug': slug, 'client': Path(f).stem, 'variant': name, 'ok': res['ok'], 'failed': res['failed'], 'checks': res.get('checks') or {}})
+    return rows
 
 
 def table(report):
@@ -272,12 +412,19 @@ if __name__ == '__main__':
             opt[flag] = argv[i + 1]
             del argv[i:i + 2]
     as_json = '--json' in argv
+    sweep_ = '--sweep' in argv                                        # every template through every test client of its niche
     slugs = [a for a in argv if not a.startswith('--')] or _sibling('registry').slugs()
     client = Path(opt.get('--client') or HERE.parent.parent / 'tests' / 'fixtures' / 'templates' / 'tallyfern.json')
     import tempfile
     tmp = None
     if '--out' not in opt:
         tmp = tempfile.TemporaryDirectory(prefix='stress-')
+    if sweep_:
+        rep = sweep(opt.get('--out') or tmp.name, slugs=[a for a in argv if not a.startswith('--')] or None)
+        print(json.dumps(rep, ensure_ascii=False) if as_json else '\n'.join('%-14s %-14s %-17s %s' % (r['slug'], r['client'], r['variant'], 'ok' if r['ok'] else 'FAILS ' + ', '.join(r['failed'])) for r in rep))
+        if tmp:
+            tmp.cleanup()
+        sys.exit(1 if any(not r['ok'] for r in rep) else 0)
     rep = run(slugs, json.loads(client.read_text(encoding='utf-8')), opt.get('--out') or tmp.name, opt.get('--media'))
     print(json.dumps(rep, ensure_ascii=False) if as_json else table(rep))
     if tmp:

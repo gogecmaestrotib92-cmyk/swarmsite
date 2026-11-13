@@ -11,10 +11,12 @@ for a variant the visitor may download, the package.
                       adapter.json      what the adapter could not fill (gaps) and the rules it applied
                       media/…           every picture the data names, written from the capture
                       <slug>.html       each chosen variant, media beside it — the page the gate judges and the package is made from
-                      <slug>.data.json  a variant's own data when it takes made pictures (three variants, three families)
+                      <slug>.data.json  a variant's own data when it differs from data.json: made pictures (three variants, three
+                                        families), or the soft sections it misses taken out (select.without)
                       media/library/…   the library files the variants show
                       pub/<slug>.html   the same render with its media at --base (the page a preview address serves)
-                      templates.json    {niche, pictures, chosen, shown, rejected, timings_ms}
+                      templates.json    {niche, pictures, chosen, shown, fallback, rejected, media, group, timings_ms}
+                    Three are shown: a chosen variant that fails the gate gives its slot to the next of select's reserve
         prints templates.json as one line
     python3 lib/templates/job.py package <out dir> <slug> <zip> [--verify]
         prints {slug, ok, why, bytes, files, ms} as one line and exits 0; ok=false means the package is refused
@@ -68,6 +70,9 @@ def write_media(seed, d, out):
         elif src.get('from') == 'logos':
             i = src.get('index')
             raw = _bytes(marks[i].get('data')) if isinstance(i, int) and 0 <= i < len(marks) else None
+        elif src.get('from') == 'product':                            # the product's own pages, photographed by capture (product.json)
+            i, rows = src.get('index'), ((seed.get('product') or {}).get(src.get('kind')) or []) if src.get('kind') in ('screens', 'phones') else []
+            raw = _bytes(rows[i].get('data')) if isinstance(i, int) and 0 <= i < len(rows) and isinstance(rows[i], dict) else None
         else:
             raw = None
         if not raw:
@@ -118,7 +123,7 @@ def from_form(form, photos, out):
 def build(job_dir, out, base='', limit=3, gate_kw=None, library=None, form=None, photos=None):
     """job_dir: a capture with the reader's factsheet — or, with `form`, the visitor's form (a dict) and `photos`, the
     folder of their uploads: the same data, the same choice, the same gate"""
-    A, R, S, G = _mod('adapt'), _mod('registry'), _mod('select'), _mod('gate')
+    A = _mod('adapt')
     out = Path(out)
     (out / 'pub').mkdir(parents=True, exist_ok=True)
     t = {}
@@ -136,10 +141,28 @@ def build(job_dir, out, base='', limit=3, gate_kw=None, library=None, form=None,
         written, missing = write_media(seed, d, out)
         d = _drop(d, missing)
         notes = d.get('_adapter', {})
+        read = _mod('lettering').mark(d, out)                       # photographs with words drawn into them are marked, never shown under type
+        if read:
+            notes.setdefault('rules', []).append('media.photos[].lettering: OCR read words in %d photograph(s): %s' % (
+                len(read), '; '.join('%s: %s' % (k.rsplit('/', 1)[-1], ' '.join(v[:5])) for k, v in read.items())[:300]))
     data = {k: v for k, v in d.items() if not k.startswith('_')}
     (out / 'data.json').write_text(json.dumps(data, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
     (out / 'adapter.json').write_text(json.dumps({**notes, 'media_missing': missing}, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
     t['media'] = round((time.perf_counter() - t0) * 1000)
+    res = choose(data, out, base, limit, gate_kw, library, t)
+    res['media'] = {'written': len(written), 'missing': missing, 'library': res.pop('library')}
+    res['timings_ms'] = res.pop('timings_ms')
+    (out / 'templates.json').write_text(json.dumps(res, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
+    return res
+
+
+def choose(data, out, base='', limit=3, gate_kw=None, library=None, t=None):
+    """The client's data (its media already beside `out`) -> the three variants chosen, rendered and gated:
+    {niche, pictures, chosen, shown, fallback, rejected, group, library, timings_ms}"""
+    R, S, G = _mod('registry'), _mod('select'), _mod('gate')
+    out = Path(out)
+    (out / 'pub').mkdir(parents=True, exist_ok=True)
+    t = {} if t is None else t
     t0 = time.perf_counter()
     # made pictures: three families of the prepared library, in the order the client's niche gives (owner, 2026-11-12);
     # none for places, clinics, law, services, shops, schools, people, nonprofits — and none when there is no library
@@ -148,11 +171,14 @@ def build(job_dir, out, base='', limit=3, gate_kw=None, library=None, form=None,
     three = PI.pick_three(data, lib_root) if lib_root else []
     sel = S.select({**data, 'media': {**(data.get('media') or {}), 'made': three[0]}} if three else data, limit=limit)
     t['select'] = round((time.perf_counter() - t0) * 1000)
-    t0 = time.perf_counter()
-    files, families, copied = [], {}, set()
-    for i, c in enumerate(sel['chosen']):
+    families, copied = {}, set()
+    t['render'] = t['gate'] = 0
+
+    def render(c, i):
+        """one variant: its made family (by its slot), its soft sections dropped, rendered twice -> the gated file"""
         made = three[i % len(three)] if three else {}
         v = {**data, 'media': {**(data.get('media') or {}), 'made': made}} if made else data
+        v = S.without(v, c.get('drops'))                             # what the client has not: the section is left out, never made up
         for rel in PI.files(made):                                    # the library files this variant shows, beside it like any media
             if rel not in copied and rel.startswith('media/') and '..' not in Path(rel).parts:
                 (out / rel).parent.mkdir(parents=True, exist_ok=True)
@@ -160,22 +186,45 @@ def build(job_dir, out, base='', limit=3, gate_kw=None, library=None, form=None,
                 copied.add(rel)
         if made:
             families[c['slug']] = {'family': made.get('family'), 'palette': made.get('palette')}
+        if v is not data:                                             # the package and the editor read the variant's own data
             (out / (c['slug'] + '.data.json')).write_text(json.dumps(v, ensure_ascii=False) + '\n', encoding='utf-8')
         f = out / (c['slug'] + '.html')
         f.write_text(R.render(c['slug'], v, ''), encoding='utf-8')
         (out / 'pub' / (c['slug'] + '.html')).write_text(R.render(c['slug'], v, base), encoding='utf-8')
-        files.append(f)
-    t['render'] = round((time.perf_counter() - t0) * 1000)
-    t0 = time.perf_counter()
-    gates = G.check(files, **(gate_kw or {})) if files else []
-    t['gate'] = round((time.perf_counter() - t0) * 1000)
-    chosen = []
-    for c, g in zip(sel['chosen'], gates):
-        chosen.append({**c, **({'made': families[c['slug']]} if c['slug'] in families else {}), 'ok': g['ok'], 'failed': g['failed'], 'gate': {k: v for k, v in (g.get('checks') or {}).items() if v}, 'gate_ms': g.get('ms'), **({'error': g['error']} if g.get('error') else {})})
-    res = {'niche': sel['niche'], 'pictures': sel['pictures'], 'chosen': chosen, 'shown': [c['slug'] for c in chosen if c['ok'] and not c['failed']],
-           'rejected': sel['rejected'], 'media': {'written': len(written), 'missing': missing, 'library': len(copied)}, 'group': PI.niche_group(data)[0], 'timings_ms': t}
-    (out / 'templates.json').write_text(json.dumps(res, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
-    return res
+        return f
+
+    def gated(batch):
+        t0 = time.perf_counter()
+        files = [render(c, i) for c, i in batch]
+        t['render'] += round((time.perf_counter() - t0) * 1000)
+        t0 = time.perf_counter()
+        gates = G.check(files, **(gate_kw or {})) if files else []
+        t['gate'] += round((time.perf_counter() - t0) * 1000)
+        return [{**c, **({'made': families[c['slug']]} if c['slug'] in families else {}), 'ok': g['ok'], 'failed': g['failed'], 'gate': {k: v for k, v in (g.get('checks') or {}).items() if v},
+                 'gate_ms': g.get('ms'), **({'error': g['error']} if g.get('error') else {})} for (c, _), g in zip(batch, gates)]
+    # Three are shown (owner's rule): a chosen variant that fails the gate is not shown, and the next of the reserve is
+    # rendered into its slot and gated, until three pass or the reserve is spent. A gate that could not run at all
+    # (failed=['tool']) is not a verdict on the template: nothing is taken from the reserve for it.
+    passed = lambda c: c['ok'] is True and not c['failed']
+    chosen = gated([(c, i) for i, c in enumerate(sel['chosen'])])
+    reserve = list(sel.get('reserve') or [])
+    free = [i for i, c in enumerate(chosen) if not passed(c)]          # slots to fill: a replacement takes its slot's made family
+    nxt, taken = len(chosen), set()
+    while reserve and sum(map(passed, chosen)) < limit and not any(c['failed'] == ['tool'] for c in chosen):
+        batch, reserve = reserve[:limit - sum(map(passed, chosen))], reserve[limit - sum(map(passed, chosen)):]
+        slots = []
+        for _ in batch:
+            slots.append(free.pop(0) if free else nxt)
+            nxt += 0 if slots[-1] < nxt else 1
+        taken.update(c['slug'] for c in batch)
+        new = gated(list(zip(batch, slots)))
+        free += [s for s, c in zip(slots, new) if not passed(c)]
+        chosen += new
+    shown = [c['slug'] for c in chosen if passed(c)][:limit]
+    rejected = [r for r in sel['rejected'] if r['slug'] not in taken]
+    return {'niche': sel['niche'], 'pictures': sel['pictures'], 'chosen': chosen, 'shown': shown,
+            'fallback': any(c.get('fallback') for c in chosen if c['slug'] in shown),
+            'rejected': rejected, 'group': PI.niche_group(data)[0], 'library': len(copied), 'timings_ms': t}
 
 
 def package(out, slug, zip_path, verify=True, workdir=None):

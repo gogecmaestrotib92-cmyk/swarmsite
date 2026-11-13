@@ -208,6 +208,10 @@ def s_walk(d, colours):
         ey = '<p class="ey mono"><i class="mk"></i><span class="no">%02d</span><b>%s</b></p>' % (i + 1, e(x['k'])) if x.get('k') else '<p class="ey mono"><i class="mk"></i><span class="no">%02d</span></p>' % (i + 1)
         arts += '<article class="wp" data-i="%d" style="--c:%s"><div class="wp-t">%s<h3>%s</h3>%s%s</div>%s</article>' % (
             i, colours[i % len(colours)], ey, e(x['title']), '<p class="t20">%s</p>' % e(x['text']) if x.get('text') else '', pill(x.get('cta'), 'ghost'), fig)
+    if not any(x.get('img') for x in items):
+        # no step has a picture: the steps stand side by side under their heading — no held screen, no empty half beside them
+        return ('<section class="walk rule nofig" style="--n:%d"><div class="in walk-l"><div class="wc">%s<div class="wrow">%s</div></div></div></section>') % (
+            min(len(items), 4), intro, arts)
     return ('<section class="walk rule" id="walk" style="--n:%d"><div class="in walk-pin"><div class="walk-l"><div class="rail" aria-hidden="true"></div>'
             '<ol class="wl wl-top mono" aria-hidden="true">%s</ol><div class="wc">%s%s</div><ol class="wl wl-bot mono" aria-hidden="true">%s</ol></div>'
             '<div class="walk-r" aria-hidden="true"><div class="wtrack"></div></div></div></section>') % (len(items), labels, intro, arts, labels)
@@ -304,10 +308,16 @@ def s_faq(d, field, pic=None, over=''):
         pane = ('<div class="pane"><video class="vid" src="%s"%s%s muted loop playsinline preload="metadata" aria-label="%s"></video></div>') % (
             e(m(v['src'])), ' poster="%s"' % e(m(v['poster'])) if v.get('poster') else '',
             ' width="%s" height="%s"' % (e(v['w']), e(v['h'])) if v.get('w') and v.get('h') else '', e(v.get('alt', '')))
+    else:
+        # no film: the product's last screen stands beside the answers (the accordion above opens on the first)
+        screens = [x for x in md.get('screens') or [] if x.get('src')]
+        if screens:
+            pane = '<div class="pane"><div class="scr"><figure class="sc on">%s</figure></div></div>' % img(screens[-1])
     dl = ''.join('<div><dt>%s</dt><dd>%s</dd></div>' % (e(x['q']), e(x.get('a', ''))) for x in items)
     acts = pill(h.get('primary'), '', True) + pill(h.get('secondary'), 'ghost')
-    return '<section class="faq rule"><div class="in two%s<div class="col">%s<dl>%s</dl>%s</div>%s</div></section>' % (
-        _field('pairs-backdrop', field, pic, over, pane),
+    # nothing to stand beside them: the answers run in two columns across the section, not down one half of it
+    return '<section class="faq rule%s"><div class="in two%s<div class="col">%s<dl>%s</dl>%s</div>%s</div></section>' % (
+        '' if pane else ' flow', _field('pairs-backdrop', field, pic, over, pane),
         '<h2 class="h2">%s</h2>' % e(f['title']) if f.get('title') else '', dl, '<div class="acts">%s</div>' % acts if acts else '', pane)
 
 
@@ -390,6 +400,8 @@ h1{font:300 72px/1 var(--serif);letter-spacing:-.02em;font-variation-settings:"o
 .mk{position:absolute;left:-44px;top:3px;width:8px;height:8px;border-radius:50%;background:var(--c);box-shadow:0 0 0 3px var(--bg),0 0 0 4px color-mix(in srgb,var(--c) 60%,transparent),0 0 0 7px var(--bg),0 0 0 8px color-mix(in srgb,var(--c) 30%,transparent),0 0 0 11px var(--bg),0 0 0 11.5px color-mix(in srgb,var(--c) 30%,transparent),0 0 0 14.5px var(--bg)}
 .wi{position:relative;justify-self:center;line-height:0}.wi img{max-height:62vh;width:auto;max-width:min(34vw,100%);border-radius:8px;box-shadow:0 0 0 1px var(--line)}
 .walk-r{display:none}
+.nofig .wrow{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:40px;margin-top:40px}.nofig .wp{display:block;padding:0}.nofig .wp h3{font-size:32px}
+@media (max-width:900px){.nofig .wrow{grid-template-columns:1fr;gap:32px;margin-top:24px}.nofig .wp h3{font-size:24px}}
 /* pinned: the section is one screen held for 380 + 625 a step; labels wait below, pass, and collect above; the pictures ride the scroll */
 .walk.pin{height:calc(100vh + 380px + var(--n)*625px)}.pin .walk-pin{position:sticky;top:0;height:100vh;display:grid;grid-template-columns:1fr 1fr}
 .pin .walk-l{position:relative;height:100vh;padding:80px 40px 40px}.pin .rail{display:block;position:absolute;left:-1px;top:0;bottom:0;width:1px;background:linear-gradient(transparent 0,var(--rc,transparent) min(200px,var(--p,0px)),var(--rc,transparent) max(calc(var(--p,0px) - 200px),min(200px,var(--p,0px))),transparent var(--p,0px)),var(--line)}
@@ -423,6 +435,8 @@ h1{font:300 72px/1 var(--serif);letter-spacing:-.02em;font-variation-settings:"o
 .rows{width:100%;margin-top:12px}.rows li{position:relative;display:grid;grid-template-columns:52px 1fr;gap:24px;align-items:center;padding:16px 0;font:400 20px/26px var(--sans)}.rows li+li::before{content:"";position:absolute;top:0;left:76px;right:0;border-top:1px dashed var(--line)}
 .rows i{width:52px;height:52px;display:grid;place-items:center;border:1px solid var(--dim);border-radius:4px;color:var(--soft);font-style:normal}.pl .pill{margin-top:24px}.pnote{margin-top:40px;max-width:44em;color:var(--mute)}
 /* picture row: each picture whole at its own proportion, on the reference's card columns */
+.faq.flow .two{grid-template-columns:1fr}.faq.flow dl{display:block;columns:2;column-gap:56px}.faq.flow dl>div{break-inside:avoid;margin-bottom:24px}
+@media (max-width:900px){.faq.flow dl{columns:1}}
 .cards{display:grid;grid-template-columns:repeat(var(--k),1fr);gap:40px;align-items:start}.cards[style*="--k:4"]{gap:16px}
 .cards.run{display:flex;overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:thin;scrollbar-color:var(--dim) transparent;margin:0 -40px;padding:0 40px 16px}.cards.run li{flex:0 0 calc((100% - (var(--k) - 1)*16px)/var(--k));scroll-snap-align:start}
 .cards li{min-width:0}.cards img{width:100%;border-radius:2px}.ct{font:300 24px/32px var(--sans);margin-top:16px}.by{margin-top:28px;color:var(--mute)}

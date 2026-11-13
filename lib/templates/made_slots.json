@@ -1,0 +1,83 @@
+{
+ "butter": [
+  "figures-backdrop",
+  "foot-sky",
+  "opening-sky",
+  "plan-sky",
+  "questions-backdrop",
+  "slab-sky"
+ ],
+ "cerebrium": [
+  "backdrop",
+  "class:c",
+  "class:g"
+ ],
+ "clicky": [
+  "backdrop",
+  "band",
+  "wallpaper"
+ ],
+ "deepbook": [
+  "banner:land",
+  "facts-picture:land",
+  "foot:land",
+  "hero-backdrop:land",
+  "panel:land"
+ ],
+ "dock": [
+  "class:bg",
+  "class:fbg",
+  "land"
+ ],
+ "fluently": [
+  "close-backdrop",
+  "hero-backdrop",
+  "result-card",
+  "tile-field",
+  "walk-field"
+ ],
+ "glossar": [
+  "foot-backdrop",
+  "showcase-backdrop"
+ ],
+ "granola": [
+  "class:bgi"
+ ],
+ "griffin": [
+  "accordion-backdrop",
+  "pairs-backdrop"
+ ],
+ "linearity": [
+  "sky"
+ ],
+ "maze": [
+  "backdrop",
+  "plan"
+ ],
+ "mindmarket": [
+  "band-picture",
+  "story-backdrop",
+  "tile-ground"
+ ],
+ "serus": [
+  "card-backdrop",
+  "corner-card"
+ ],
+ "supaste": [
+  "field",
+  "land",
+  "land-lead"
+ ],
+ "terminal": [
+  "card-ground",
+  "opening-backdrop",
+  "quote-backdrop",
+  "steps-backdrop"
+ ],
+ "writer": [
+  "features-sky",
+  "figure-field",
+  "panel-sky",
+  "sky"
+ ]
+}

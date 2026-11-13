@@ -67,12 +67,16 @@ def test_three_of_the_clients_niche_whose_needs_are_met(tmp_path):
     assert [c['slug'] for c in r['chosen']] == ['bravo', 'alpha', 'carol']                         # the client has phone screens: the app template leads
     assert all(c['why'] and c['approach'] for c in r['chosen'])
     rej = {x['slug']: x['why'] for x in r['rejected']}
-    assert 'screens_min 9, the client has 8' in rej['delta'] and 'niche' in rej['echo'] and 'place' in rej['echo'] and rej['foxtrot'] == 'needs quotes'
+    assert 'screens_min 9, the client has 8' in rej['delta'] and 'niche' in rej['echo'] and 'place' in rej['echo']
+    assert rej['foxtrot'] == 'fits without needs quotes, but 3 template(s) come before it', 'a soft miss is a reserve, behind every template that meets everything'
+    assert {c['slug'] for c in r['reserve']} == {'delta', 'foxtrot'} and all(c['missing'] for c in r['reserve'])
     assert 'no needs.json' in rej['golf'], 'a template without needs.json is not selectable, and the answer says so'
     assert set(rej) | {c['slug'] for c in r['chosen']} == set(R.slugs(lib)), 'every template of the library is accounted for'
-    # the light product without phones: software for companies leads; it has no faq and only three screens
-    assert chosen(BOOKS, lib) == ['alpha', 'bravo']
-    assert why(BOOKS, lib, 'carol') == 'needs faq'
+    # the light product without phones: software for companies leads; it has no faq: carol is the third, shown without one
+    r = S.select(BOOKS, root=lib)
+    assert [c['slug'] for c in r['chosen']] == ['alpha', 'bravo', 'carol'] and not r['fallback']
+    assert r['chosen'][2]['missing'] == ['needs faq'] and r['chosen'][2]['drops'] == ['faq'] and 'shown without what it misses: needs faq' in r['chosen'][2]['why']
+    assert r['chosen'][0]['missing'] == [] and r['chosen'][0]['drops'] == []
 
 
 def test_the_same_data_gives_the_same_three_and_nothing_is_changed(tmp_path):
@@ -114,6 +118,84 @@ def test_a_client_without_usable_pictures_gets_only_templates_that_hold_without_
     assert chosen(PRODUCT, lib) == ['pictured', 'typeled', 'screens'], 'with pictures all three fit; the type-led one comes second as the other approach'
 
 
+def test_three_are_filled_first_from_full_fits_then_from_soft_misses_never_from_hard_ones(tmp_path):
+    """Owner's rule (2026-11-12): every visitor is shown three designs of their niche. A soft need missed is a section
+    dropped; a hard one keeps the template out."""
+    lib = library(tmp_path,
+                  full=need('software product', needs=['steps']),
+                  nofeat=need('software product', needs=['steps', 'features'], motif='sky'),                 # one soft miss
+                  twomiss=need('software product', needs=['features', 'close'], screens_min=2, motif='sheet'),  # two soft misses
+                  stepsimg=need('software product', needs=['steps', 'steps.img'], motif='blur'),            # a part of every item
+                  nohero=need('software product', needs=['hero.kicker']),                                   # hard: the opening
+                  shop=need('software product', needs=['catalogue']),                                       # hard: a block of the niche
+                  photos=need('software product', photos_min=4, hard=['photos']),                          # hard: the sweep found it breaks with fewer
+                  fewer=need('software product', photos_min=4, motif='field'),                              # soft: three of four
+                  fewest=need('software product', photos_min=12, motif='field'),                            # soft, further short: after fewer
+                  strict=need('software product', needs=['features'], hard=['features']))                   # soft made hard by the template
+    d = json.loads((FIX / 'pagewright.json').read_text(encoding='utf-8'))
+    r = S.select(d, root=lib)
+    assert [c['slug'] for c in r['chosen']] == ['full', 'nofeat', 'stepsimg'] and [c['slug'] for c in r['reserve']] == ['fewer', 'twomiss', 'fewest']
+    by = {c['slug']: c for c in r['chosen'] + r['reserve']}
+    assert by['full']['missing'] == [] and by['nofeat']['drops'] == ['features'] and by['stepsimg']['drops'] == ['steps.img']
+    assert by['twomiss']['missing'] == ['screens_min 2, the client has 0', 'needs features', 'needs close'] and by['twomiss']['drops'] == ['features', 'close'], 'missing screens: nothing to take out'
+    rej = {x['slug']: x['why'] for x in r['rejected']}
+    assert rej['nohero'] == 'needs hero.kicker' and rej['shop'] == 'needs catalogue' and rej['photos'] == 'photos_min 4, the client has 3' and rej['strict'] == 'needs features'
+    assert not r['fallback'] and not any(c['fallback'] for c in r['chosen']) and by['fewer']['missing'] == ['photos_min 4, the client has 3']
+    # a template that holds without pictures leaves out the photograph slots it cannot fill; `hard: [photos]` says it cannot
+    held = S.assess(need('software product', photos_min=12), S.client(d), d)
+    assert held['hard'] == [] and held['soft'] == [{'why': 'photos_min 12, the client has 3', 'drop': '', 'short': .75}]
+    bare = {**d, 'media': {'photos': []}}
+    assert S.assess(need('software product', photos_min=2), S.client(bare), bare)['hard'] == ['the client has no usable picture and the template does not hold without pictures']
+    # one of several: a slot a soft section may fill is a slot the page can drop; one of hard ones is hard
+    assert S.is_soft('features') and S.is_soft('steps.items[].img (one each)') and S.is_soft('media.made.land') and S.is_soft('close.title')
+    assert not S.is_soft('hero.title') and not S.is_soft('address') and not S.is_soft('catalogue') and not S.is_soft('8 or more product pictures')
+    assert not S.is_soft('steps.img', {'hard': ['steps']}) and not S.is_soft('features', {'hard': ['features']}) and S.is_soft('close', {'hard': ['features']})
+    a = S.assess(need('software product', needs_any=[['catalogue', 'features']]), S.client(d), d)
+    assert a['hard'] == [] and [m['drop'] for m in a['soft'] if m['drop']] == ['features']
+    a = S.assess(need('software product', needs_any=[['address', 'phone']]), S.client(d), d)
+    assert a['hard'] == ['needs one of address, phone'] and a['soft'] == []
+
+
+def test_a_missed_soft_section_is_taken_out_never_made_up():
+    d = copy.deepcopy(BOOKS)
+    v = S.without(d, ['features', 'steps.img', 'close', 'links.d', 'screens'])
+    assert d == BOOKS, 'the data given is not changed'
+    assert 'features' not in v and 'close' not in v and v['steps']['items'] and not any('img' in i for i in v['steps']['items'])
+    assert v['links'] and not any('d' in x for x in v['links']) and v['media'] == BOOKS['media'] and v['plans'] == BOOKS['plans']
+    assert S.without(d, []) is d and S.without(d, ['hero', 'catalogue']) == d, 'only soft sections are ever taken out'
+
+
+def test_a_niche_short_of_three_is_filled_from_its_nearest_group_and_says_so(tmp_path):
+    lib = library(tmp_path, inn=need('restaurant', photos_min=1), lodge=need('hotel', photos_min=1, motif='sky'), hall=need('venue', photos_min=1, needs=['faq'], motif='sheet'),
+                  desk=need('law', photos_min=1), shopfront=need('shop', photos_min=1))
+    r = S.select(PLACE, root=lib)
+    assert [(c['slug'], c['fallback'], c['niche']) for c in r['chosen']] == [('inn', False, 'restaurant'), ('lodge', True, 'hotel'), ('hall', True, 'venue')] and r['fallback']
+    assert "not the client's niche, the nearest: niche hotel" in r['chosen'][1]['why']
+    assert 'niche' in why(PLACE, lib, 'desk') and 'niche' in why(PLACE, lib, 'shopfront'), 'a restaurant is never shown a law firm to make up the three'
+    # the client's own niche comes first, a soft miss of its own before a neighbour that fits whole
+    lib2 = library(tmp_path / 'b', inn=need('restaurant', photos_min=1), inn2=need('restaurant', photos_min=1, needs=['plans'], motif='sky'), lodge=need('hotel', photos_min=1, motif='sheet'))
+    r = S.select(PLACE, root=lib2)
+    assert [(c['slug'], c['fallback']) for c in r['chosen']] == [('inn', False), ('inn2', False), ('lodge', True)]
+    assert S.NEAR['software'] == ['app'] and set(S.NEAR['service']) >= {'clinic', 'law', 'corporate', 'person', 'nonprofit', 'shop'}
+    for a, near in S.NEAR.items():                                   # the groups go both ways
+        for b in near:
+            if b in S.NEAR and a in S.FIXED:
+                assert a in S.NEAR[b], (a, b)
+
+
+def test_every_test_client_and_the_production_case_get_three_of_their_niche_from_the_library():
+    """The real library: every fixture — and pagewright, modelled on the job that got none (software, no features, no
+    close, no screens, three photographs) — gets three chosen, and a reserve behind them when the library has one."""
+    for f in sorted(FIX.glob('*.json')):
+        d = json.loads(f.read_text(encoding='utf-8'))
+        r = S.select(d)
+        assert len(r['chosen']) == 3, (f.stem, [x['why'] for x in r['rejected']][:5])
+        assert len({c['slug'] for c in r['chosen']}) == 3
+    r = S.select(json.loads((FIX / 'pagewright.json').read_text(encoding='utf-8')))
+    assert not r['fallback'] and all(c['niche'] in ('software', 'saas', 'app') for c in r['chosen']) and len(r['reserve']) >= 2
+    assert any('features' in c['drops'] for c in r['chosen']), 'shown without the features it does not have'
+
+
 def test_a_place_gets_place_templates_and_its_own_needs_are_read(tmp_path):
     lib = library(tmp_path,
                   inn=need('restaurants, hotels: places with a door', photos_min=5, needs=['menu', 'hours']),
@@ -121,10 +203,11 @@ def test_a_place_gets_place_templates_and_its_own_needs_are_read(tmp_path):
                   rooms=need('a place', photos_min=1, needs=['spaces', 'booking']),
                   product=need('software product'))
     r = S.select(PLACE, root=lib)
-    assert r['niche'] == ['restaurant', 'place'] and [c['slug'] for c in r['chosen']] == ['inn', 'rooms']
-    assert 'photos_large_min 3, the client has 2' in why(PLACE, lib, 'lodge') and 'niche' in why(PLACE, lib, 'product')
+    assert r['niche'] == ['restaurant', 'place'] and [c['slug'] for c in r['chosen']] == ['inn', 'rooms', 'lodge']
+    assert r['chosen'][2]['missing'] == ['photos_large_min 3, the client has 2'], 'two of three large photographs: offered last, saying so'
+    assert 'niche' in why(PLACE, lib, 'product')
     no_photos = {**PLACE, 'media': {'photos': []}}
-    assert chosen(no_photos, lib) == [] and 'photos_min 5, the client has 0' in why(no_photos, lib, 'inn')
+    assert chosen(no_photos, lib) == [] and 'no usable picture' in why(no_photos, lib, 'inn'), 'none of them holds without pictures'
     closed = {**PLACE, 'place': {**PLACE['place'], 'hours': [], 'menu': {'h': 'https://x.example/carta', 'sections': [], 'lists': []}}}
     assert why(closed, lib, 'inn') == 'needs menu; needs hours', 'a link to a menu is not a menu to show; hours not stated are not hours'
     assert chosen(PRODUCT, lib) == ['product']
@@ -142,7 +225,8 @@ def test_a_template_made_for_the_clients_niche_comes_before_one_that_only_also_h
                   tables=need(['restaurant', 'hotel', 'venue'], motif='sheet'))
     assert chosen(hotel, lib) == ['rooms', 'tables', 'aclinic']
     assert chosen(hotel, lib, limit=4) == ['rooms', 'tables', 'aclinic', 'bschool']
-    assert chosen(PLACE, lib) == ['tables', 'rooms'], 'for a restaurant the restaurant page leads and the hotel page is its kin'
+    assert chosen(PLACE, lib) == ['tables', 'rooms', 'aclinic'], 'for a restaurant the restaurant page leads and the hotel page is its kin'
+    assert S.select(PLACE, root=lib)['chosen'][2]['fallback'], 'the third, a clinic page that holds for a hotel, fills in from the nearest niche'
     assert [S.select(hotel, root=lib, limit=4) == S.select(hotel, root=lib, limit=4) for _ in range(3)] == [True] * 3
     # a client of one fixed niche: a page made for law before a clinic page that also lists law
     law = {**PLACE, 'kind': 'law'}
@@ -181,10 +265,13 @@ def test_needs_are_read_strictly_and_an_unreadable_one_keeps_the_template_out(tm
     assert met('made.land', with_made) == (True, False, '') and met('made.blur', with_made) == (False, False, '') and met('made.blur', with_made, ('made',)) == (True, True, '')
     lib = library(tmp_path, made=need('software product', needs=['steps', 'made.land']), vague=need('software product', needs=['a calm client']),
                   odd=need('software product', gadgets_min=2), worded=need('software product', screens_min='two'), nameless=need([]), broken='{"niche": [', unknown=need('zeppelin tours'))
-    assert chosen(PRODUCT, lib) == [] and chosen(with_made, lib) == ['made']
+    # made pictures are soft: without them the template is still offered, after every one that has them, and says so
+    r = S.select(PRODUCT, root=lib)
+    assert [(c['slug'], c['missing'], c['drops']) for c in r['chosen']] == [('made', ['needs made.land'], [])] and chosen(with_made, lib) == ['made']
+    assert S.select(with_made, root=lib)['chosen'][0]['missing'] == []
     r = S.select(PRODUCT, root=lib, promised=('made',))
-    assert [(c['slug'], c['pending']) for c in r['chosen']] == [('made', ['made.land'])] and 'waits for made.land' in r['chosen'][0]['why']
-    assert why(PRODUCT, lib, 'made') == 'needs made.land' and 'cannot read' in why(PRODUCT, lib, 'vague') and 'gadgets_min' in why(PRODUCT, lib, 'odd')
+    assert [(c['slug'], c['pending'], c['missing']) for c in r['chosen']] == [('made', ['made.land'], [])] and 'waits for made.land' in r['chosen'][0]['why']
+    assert 'cannot read' in why(PRODUCT, lib, 'vague') and 'gadgets_min' in why(PRODUCT, lib, 'odd'), 'a need that cannot be read is hard: it keeps the template out'
     assert 'not a number' in why(PRODUCT, lib, 'worded') and 'no niche' in why(PRODUCT, lib, 'nameless') and 'not a JSON object' in why(PRODUCT, lib, 'broken')
     assert 'does not know' in why(PRODUCT, lib, 'unknown')
     assert P['screens'] and P['phones'] and P['video']
@@ -209,10 +296,11 @@ def test_the_real_library_is_answered_for_whole():
         for promised in ((), ('made',)):
             r = S.select(d, promised=promised)
             names = [c['slug'] for c in r['chosen']] + [x['slug'] for x in r['rejected']]
+            assert {c['slug'] for c in r['reserve']} <= {x['slug'] for x in r['rejected']}, 'a reserve is listed with its reason too'
             assert sorted(names) == R.slugs() and len(r['chosen']) <= 3
             assert all(R.needs(c['slug']) is not None for c in r['chosen'])
-            for c in r['chosen']:
-                assert R.audit(c['slug'], {'client': d}) == []
+            for c in r['chosen'] + r['reserve']:
+                assert R.audit(c['slug'], {'client': S.without(d, c['drops'])}) == []
     assert 'no needs.json' in next((x['why'] for x in S.select(PRODUCT)['rejected'] if R.needs(x['slug']) is None), 'no needs.json')
 
 

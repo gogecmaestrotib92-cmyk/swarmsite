@@ -256,7 +256,7 @@ def panel_two(d):
                       + f'<div class="pf">{_btn(cta, "acc" if p.get("marked") else "white")}</div></article>')
         note = f'<p class="note">{e(pl["note"])}</p>' if pl.get('note') else ''
         a = (f'<div class="wrap plans"><div class="ph">{head}{text}</div>'
-             f'<div class="pcs n{min(len(plans), 3)}">{cards}</div>{note}</div>')
+             f'<div class="pcs n{min(len(plans), 3)}{"" if any(p.get("rows") or p.get("line") for p in plans) else " bare"}">{cards}</div>{note}</div>')
     if qs:
         lab = f'<p class="lab"><i></i>{e(fq["title"])}</p>' if fq.get('title') else '<span></span>'
         rows = ''.join(f'<details class="q"><summary><span>{e(q["q"])}</span>{ARROW}</summary><p>{e(q["a"])}</p></details>'
@@ -427,6 +427,7 @@ img{display:block;max-width:100%;height:auto}a{color:inherit;text-decoration:non
 .ph .big{max-width:900px}.ph .lead{margin-top:40px}
 .pcs{display:grid;gap:15px;margin-top:82px}.pcs.n1{grid-template-columns:minmax(0,670px)}.pcs.n2{grid-template-columns:1fr 1fr;gap:20px}.pcs.n3{grid-template-columns:repeat(3,1fr)}
 .pc{display:flex;flex-direction:column;min-height:596px;padding:20px;border-radius:10px;background:var(--card)}
+.pcs.bare .pc{min-height:0}.pcs.bare .pc h3{margin-top:24px}.pcs.bare .pf{margin-top:32px}
 .pc.mk{background:var(--paper)}
 .tag{color:var(--mute);line-height:14px}
 .price{margin-top:64px;font:300 72.6px/1.05 "Hanken Grotesk",sans-serif;letter-spacing:-.03em}

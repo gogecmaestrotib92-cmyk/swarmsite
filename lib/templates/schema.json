@@ -75,6 +75,10 @@
         "small": {
           "type": "boolean"
         },
+        "lettering": {
+          "type": "boolean",
+          "description": "words are drawn into the picture (OCR, lib/templates/lettering.py)"
+        },
         "page": {
           "type": "string",
           "description": "the address of the client's page the picture was found on"

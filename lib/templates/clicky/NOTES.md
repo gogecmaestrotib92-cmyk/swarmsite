@@ -154,3 +154,10 @@ the load fade and the arrival transitions have not been ticked; the stepped shot
   `hero.kicker` are not shown.
 - The heading above the rows and the text under the running line have no counterpart in the reference.
 - Captions under the small windows are the pictures' `alt` texts; the reference's are file names.
+
+## Soft sections absent (2026-11-12, branch never-zero)
+A floating window of the opening keeps its caption to one line, cut with an ellipsis at the window's width (the whole
+alt stays in `title`). A client without product screens fills the windows with photographs, whose alt texts run longer
+("A Year of Small Gardens — cover" under a 70 px upright window): wrapped to three lines it lay over the h1 at 1440
+(stress `minimal` on quillmoor). With steps, close or features absent the page drops those sections whole and holds
+(`python3 lib/templates/stress.py --sweep clicky`).

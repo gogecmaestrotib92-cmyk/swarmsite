@@ -156,7 +156,7 @@ def restaurant():
 
 
 # ───────────────────────── nothing is invented
-OWN = {'h', 'home', 'src', 'logo', 'img', 'poster', 'ground', 'ink', 'accent', 'extra', 'lang', 'kind', 'niche', 'count', 'w', 'h', 'small', 'logo_wordmark'}   # niche: a classifier, never shown
+OWN = {'h', 'home', 'src', 'logo', 'img', 'poster', 'ground', 'ink', 'accent', 'extra', 'lang', 'kind', 'niche', 'count', 'w', 'h', 'small', 'logo_wordmark', 'shape', 'page'}   # niche: a classifier, never shown
 
 
 def invented(d, seed):
@@ -182,6 +182,8 @@ def invented(d, seed):
                 walk(x, path)
         elif isinstance(v, str) and v.strip():
             where = '.'.join(path)
+            if where == 'plans.note':                                               # offers that are not cards: each the page's own name and its own price
+                return out.extend((where, p) for p in v.split(' · ') if not (said.says(p.rsplit(' ', 1)[0]) and said.says(p.rsplit(' ', 1)[-1])))
             if where == 'place.social.t' or where == 'place.phone.t' and said.says(re.sub(r'\D', '', v)):
                 return
             if where in ('place.cuisine', 'place.price_range'):                     # the page's structured data, as the reader quotes it
@@ -238,13 +240,75 @@ def test_a_product_page_becomes_the_templates_data_in_the_clients_own_words():
     assert d['faq'] == {'title': 'Questions', 'items': [{'q': 'Does it read handwriting?', 'a': 'Yes, and it marks what it could not read.'}]}
     assert d['close'] == {'title': 'Keep the books tonight.', 'text': 'Ten minutes, then the market.', 'cta': {'t': 'Start a ledger', 'h': 'https://www.tallyfern.example/signup'}}
     assert d['foot']['legal'] == '© 2026 Tallyfern' and [x['t'] for x in d['foot']['links']] == ['Terms', 'Privacy']
-    # pictures: the page's own images once each (the larger of two sizes), no made picture, no agent's crop, no shot placed as a screen
-    assert d['media'] == {'screens': [], 'phones': [], 'video': None, 'photos': [{'src': 'media/img1.jpg', 'w': 1600, 'h': 1000, 'alt': 'A fruit stall at dawn'}]}
-    assert d['_media'] == {'media/logo.svg': {'from': 'assets.logo'}, 'media/img1.jpg': {'from': 'images', 'id': 'img1'}}
-    assert [s['id'] for s in d['_adapter']['candidates']['shots']] == ['shot1']
+    # pictures: the page's own images once each (the larger of two sizes), no made picture, no agent's crop; a framed part of
+    # the home page with the build of a screen stands as a screen while the product's pages gave none — but never beside a step
+    assert d['media'] == {'screens': [{'src': 'media/shot1.jpg', 'w': 1200, 'h': 700, 'alt': 'The ledger'}], 'phones': [], 'video': None,
+                          'photos': [{'src': 'media/img1.jpg', 'w': 1600, 'h': 1000, 'alt': 'A fruit stall at dawn'}]}
+    assert d['_media'] == {'media/logo.svg': {'from': 'assets.logo'}, 'media/img1.jpg': {'from': 'images', 'id': 'img1'}, 'media/shot1.jpg': {'from': 'images', 'id': 'shot1'}}
+    assert [s['id'] for s in d['_adapter']['candidates']['shots']] == ['shot1'] and not any(i.get('img') for i in d['steps']['items'])
     gaps = ' '.join(d['_adapter']['gaps'])
-    for named in ('character', 'hero.note', 'media.screens', 'media.video', 'steps.items[].img', 'plans.items[].rows', 'foot.text', 'quotes', 'logos'):
+    for named in ('character', 'hero.note', 'media.video', 'steps.items[].img', 'plans.items[].rows', 'foot.text', 'quotes', 'logos'):
         assert named in gaps, named
+
+
+def test_a_product_gets_its_own_screens_its_price_cards_and_its_large_figures():
+    """the pages behind the top bar photographed (capture product.json) become screens and phones, and each step takes the
+    phone of the page its own call leads to; the page's price cards give each plan its list; a number set large with its
+    label is a figure; a badge beside a link is not part of its name; a notice the capture marked plain is no photograph"""
+    seed = product()
+    home = 'https://www.tallyfern.example/'
+    seed['inventory']['brand']['nav'][1] = 'LEDGER NEW'
+    seed['inventory']['actions'].insert(2, {'text': 'LEDGER NEW', 'href': home + 'ledger'})
+    sec = seed['inventory']['sourceCoverage']['sections'][2]
+    sec['sourceActions'] = [{'label': 'Open the camera', 'url': home + 'camera'}, {'label': 'See the sorting', 'url': home + 'sort'}, {'label': 'Read a month', 'url': home + 'month/'}]
+    sec['text'] = ('How it works Three small things, in order. 01 Photograph Snap each receipt as you get it. Open the camera 02 Sort Tallyfern files it under stock, rent or pay. '
+                   'See the sorting 03 Close Read the month on one page and send it to your accountant. Read a month')
+    seed['inventory']['copy']['text'] += ' Stall €9 / month For one stall Up to 200 receipts a month Export to CSV Row €29 / month Unlimited receipts Five people 12 hours saved each month'
+    pages = [('month', 'Month'), ('camera', 'Camera'), ('sort', 'Sorting'), ('prices', 'Prices')]
+    seed['product'] = {'screens': [{'id': 'screen%d' % i, 'url': home + p, 'alt': lab, 'w': 1800, 'h': 1125, 'data': PX} for i, (p, lab) in enumerate(pages)],
+                       'phones': [{'id': 'phone%d' % i, 'url': home + p, 'alt': lab, 'w': 780, 'h': 1616, 'data': PX} for i, (p, lab) in enumerate(pages)]}
+    seed['cards'] = {'plans': [{'name': 'Stall', 'price': '€9', 'per': '/ month', 'line': 'For one stall', 'rows': ['Up to 200 receipts a month', 'Export to CSV'], 'marked': False},
+                               {'name': 'Row', 'price': '€29', 'per': '/ month', 'line': '', 'rows': ['Unlimited receipts', 'Five people', 'A line the page never printed'], 'marked': True}],
+                     'stats': [{'v': '12', 'l': 'hours saved each month'}, {'v': '99', 'l': 'words nobody wrote'}]}
+    seed['images'].append({'id': 'img3', 'src': home + 'img/notice.png', 'w': 900, 'h': 600, 'alt': 'Opening hours notice', 'plain': True, 'data': PX})
+    d = A.adapt(copy.deepcopy(seed))
+    assert A.validate(d) == [] and invented(d, seed) == []
+    assert [n['t'] for n in d['nav']] == ['Ledger', 'Pricing']
+    assert [s['src'] for s in d['media']['screens']] == ['media/screen-%d.jpg' % i for i in (1, 2, 3, 4)] and len(d['media']['phones']) == 4
+    assert d['media']['screens'][0] == {'src': 'media/screen-1.jpg', 'w': 1800, 'h': 1125, 'alt': 'Month', 'page': '/month'}
+    assert d['_media']['media/phone-3.jpg'] == {'from': 'product', 'kind': 'phones', 'index': 2}
+    assert [(i['img'], i['shape']) for i in d['steps']['items']] == [('media/phone-2.jpg', 'phone'), ('media/phone-3.jpg', 'phone'), ('media/phone-1.jpg', 'phone')], 'each step: the phone of the page its call opens'
+    assert not any(p['src'] == 'media/img3.png' for p in d['media']['photos']), 'a plain notice is not a photograph'
+    st, row = d['plans']['items']
+    assert st['rows'] == ['Up to 200 receipts a month', 'Export to CSV'] and st['line'] == 'For one stall' and not st.get('marked')
+    assert row['rows'] == ['Unlimited receipts', 'Five people'] and row['marked'] is True, 'a row the page does not print is left out'
+    assert {'v': '12', 'l': 'hours saved each month'} in d['figures'] and not any(f['v'] == '99' for f in d['figures'])
+    # steps the page numbers itself (1 2 3 beside a heading and a sentence, not sub-headings): read from the capture's cards
+    bare = product()
+    bare['inventory']['copy']['headings'] = [h for h in bare['inventory']['copy']['headings'] if h['text'] not in ('Photograph', 'Sort', 'Close')]
+    run = [{'k': '01', 'title': 'Photograph', 'text': 'Snap each receipt as you get it.'}, {'k': '02', 'title': 'Sort', 'text': 'Tallyfern files it under stock, rent or pay.'},
+           {'k': '03', 'title': 'Close', 'text': 'Read the month on one page and send it to your accountant.'}]
+    assert 'steps' not in A.adapt(copy.deepcopy(bare))
+    bare['cards'] = {'steps': [{'title': 'A heading nobody set', 'items': run[:2] + [{'k': '3', 'title': 'Close', 'text': 'A sentence the page never printed.'}]}, {'title': 'How it works', 'items': run}]}
+    got = A.adapt(copy.deepcopy(bare))
+    assert got['steps']['title'] == 'How it works' and [(i['k'], i['title'], i['text']) for i in got['steps']['items']] == [(x['k'], x['title'], x['text']) for x in run] and invented(got, bare) == []
+    # a block the adapter's rules cannot cut out is taken from the reader's `page` — only what stands on the page letter for letter
+    marked = product()
+    marked['inventory']['copy']['headings'] = [h for h in marked['inventory']['copy']['headings'] if h['text'] not in ('Photograph', 'Sort', 'Close')]
+    marked['factsheet']['page'] = {'steps': {'title': 'How it works', 'text': 'Three small things, in order.', 'items': [
+        {'title': 'Photograph', 'text': 'Snap each receipt as you get it.'}, {'title': 'Sort', 'text': 'Tallyfern files it under stock, rent or pay.'},
+        {'title': 'Close', 'text': 'Read the month on one page and send it to your accountant.'}, {'title': 'Relax', 'text': 'A step the reader made up.'}]},
+        'trust': ['Never seen on the page'], 'figures': [{'v': '12', 'l': 'markets the page never names'}], 'note': 'A note of the reader\'s own'}
+    got = A.adapt(copy.deepcopy(marked))
+    assert [i['title'] for i in got['steps']['items']] == ['Photograph', 'Sort', 'Close'] and got['steps']['title'] == 'How it works' and invented(got, marked) == []
+    assert 'note' not in got['hero'] and got['figures'] == [{'v': '4,210', 'l': 'stalls keep their books here'}] and any('from the reader' in r for r in got['_adapter']['rules'])
+    marked['factsheet']['page']['steps']['items'] = [{'title': 'Take a photo', 'text': 'Snap receipts.'}, {'title': 'Sorting', 'text': 'It files them.'}]
+    assert 'steps' not in A.adapt(copy.deepcopy(marked)), 'reworded steps are not on the page: no block'
+    # fewer phones than steps: no step gets a picture (all or none), and the gap says so
+    seed['product']['phones'] = seed['product']['phones'][:2]
+    seed['product']['screens'] = seed['product']['screens'][:2]
+    d = A.adapt(copy.deepcopy(seed))
+    assert not any(i.get('img') for i in d['steps']['items']) and any(g.startswith('steps.items[].img') for g in d['_adapter']['gaps'])
 
 
 def test_a_restaurant_gets_its_place_block_from_links_and_from_lines_the_page_confirms():

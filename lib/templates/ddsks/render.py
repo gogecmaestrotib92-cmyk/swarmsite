@@ -350,7 +350,7 @@ a.t:hover .im{transform:scale(1.05)}
 
 JS = r"""
 (function(){var R=document.documentElement,h=document.querySelector('.hero.pic'),mb=document.querySelector('.mb'),mn=document.getElementById('menu');
-function past(){R.classList.toggle('past',!h||scrollY>h.offsetHeight-65)}
+function past(){R.classList.toggle('past',!h||scrollY>h.offsetHeight-40)}
 addEventListener('scroll',past,{passive:true});addEventListener('resize',past);past();
 function set(o){R.classList.toggle('open',o);mb.setAttribute('aria-expanded',o);mb.setAttribute('aria-label',o?mb.dataset.c:mb.dataset.o);if(mn){mn.setAttribute('aria-hidden',!o);if(o){var a=mn.querySelector('a');a&&setTimeout(function(){a.focus()},60)}}}
 if(mb&&mn){mb.addEventListener('click',function(e){e.preventDefault();set(!R.classList.contains('open'))});

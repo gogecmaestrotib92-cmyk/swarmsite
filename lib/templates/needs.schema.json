@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "swarmsite/templates/needs",
   "title": "What a template needs from a client — the strict form",
-  "description": "One needs.json per template. Only these keys, only these words. `niche` names the businesses the template is for, in the words of the data's `kind`. `needs` names what the client's data must hold for the template to be offered; `drops` names what the template does not show even when the client has it. Both take names from one fixed list: a block of the data (steps, plans, team …) or a named part of one (hero.text2, steps.img = every step has its picture). `needs_any` says \"one of\", `min` and `max` say how many. Everything that is a remark, a measurement or a condition these keys cannot say goes into `notes`, which no program reads. scripts/normalise_needs.py turns a free-worded needs.json into this form and lists what it could not carry over.",
+  "description": "One needs.json per template. Only these keys, only these words. `niche` names the businesses the template is for, in the words of the data's `kind`. `needs` names what the client's data must hold for the template to be offered; `drops` names what the template does not show even when the client has it; `hard` names a section the template cannot drop. Both take names from one fixed list: a block of the data (steps, plans, team …) or a named part of one (hero.text2, steps.img = every step has its picture). `needs_any` says \"one of\", `min` and `max` say how many. Everything that is a remark, a measurement or a condition these keys cannot say goes into `notes`, which no program reads. scripts/normalise_needs.py turns a free-worded needs.json into this form and lists what it could not carry over.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -201,6 +201,13 @@
       },
       "propertyNames": {
         "$ref": "#/definitions/counted"
+      }
+    },
+    "hard": {
+      "type": "array",
+      "description": "needs of the soft kind (a section the template drops whole when the client has none of it: features, close, steps, plans, links, faq, statement, figures, trust, quotes, logos, screens, phones, video, made) that this template cannot do without: a client who misses one is not offered it. lib/templates/select.py reads it; stress.py --sweep is how a template earns or loses it.",
+      "items": {
+        "$ref": "#/definitions/name"
       }
     },
     "drops": {

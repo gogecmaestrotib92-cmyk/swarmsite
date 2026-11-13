@@ -218,7 +218,7 @@ def s_hero(d, c):
     fm = size(title, [(12, 56), (999, 36)])
     wh = ''
     for n, (m, w, pos, top) in enumerate(wins):
-        cap = f'<figcaption class="cap">{e(m["alt"])}</figcaption>' if m.get('alt') else ''
+        cap = f'<figcaption class="cap" title="{e(m["alt"])}">{e(m["alt"])}</figcaption>' if m.get('alt') else ''
         wh += (f'<figure class="win" style="{pos};top:calc(var(--u)*{top});--w:{w};--n:{n + 4}"><div class="fr"><div class="bar">{DOTS}</div>'
                f'<div class="scr">{pic(m, lazy=False)}</div></div>{cap}</figure>')
     sub = f'<p class="sub">{e(h["text"])}</p>' if h.get('text') else ''
@@ -417,6 +417,7 @@ button{font:inherit;color:inherit;letter-spacing:inherit;background:none;border:
 .bar{position:relative;display:flex;align-items:center;height:20px;padding:0 4px 8px}
 .bt{position:absolute;left:50%;top:-1px;transform:translateX(-50%);max-width:calc(100% - 110px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;line-height:18px;color:var(--btc)}
 .cap{font-size:12px;line-height:18px;color:var(--mu2);text-align:center;text-wrap:balance}
+.win .cap{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bd{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 /* buttons: a glossy pill, 40 high; the first in the accent's tints, the second in window grey */
 .btn{position:relative;display:inline-flex;align-items:center;justify-content:center;height:40px;padding:0 20px 1px;border-radius:999px;border:1px solid var(--sbd);background:linear-gradient(var(--s1),var(--s2) 42%,var(--s3));color:var(--i);box-shadow:0 10px 24px rgba(0,0,0,.12);font-size:18px;line-height:27px;font-weight:500;white-space:nowrap;overflow:hidden;transition:transform .12s ease,opacity .15s ease}

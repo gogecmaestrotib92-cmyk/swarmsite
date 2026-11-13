@@ -1,6 +1,6 @@
 """adapt.py — what capture and the reader already produce → the data every reference template takes (schema.json).
 
-    adapt(seed) -> dict          seed = {'inventory', 'assets', 'images', 'factsheet', 'geometry', 'source', 'logos'}
+    adapt(seed) -> dict          seed = {'inventory', 'assets', 'images', 'factsheet', 'geometry', 'source', 'logos', 'product'}
     adapt_dir(folder) -> dict    the same, read from a job folder / bench/seed/<id>/
     validate(d) -> [problems]    against schema.json
 
@@ -28,6 +28,10 @@ HERE = Path(__file__).resolve().parent
 
 # ───────────────────────── words the rules look for (labels a site puts on the same thing in several languages)
 SIGNIN_RX = re.compile(r'^(?:log ?in|sign ?in|login|iniciar sesi[oó]n|acceder|entrar|anmelden|connexion|se connecter|accedi|prijava|prijavi se|my account|mi cuenta)$', re.I)
+SIGNUP_RX = re.compile(r'(?:^|[/.?=_-])(?:register|sign[-_]?up|signup|join|get[-_]?started|start|trial|create[-_]?account)(?:$|[/.?=&_-])', re.I)
+FEATURES_RX = re.compile(r'\b(?:features?|includes?|included|everything|what you get|toolkit|capabilit\w+|funciones|caracter[ií]sticas|incluye|funktionen|fonctionnalit\w+)\b', re.I)
+PERIOD_RX =re.compile(r'month|year|week|/\s?(?:mo|yr|wk)\b|mes\b|año|monat|jahr|mois|\ban\b|mjesec|mesec|godi', re.I)
+READY_RX =re.compile(r'^(?:ready to|start|get started|begin|try|create your|join)\b', re.I)
 CTA_RX = re.compile(r'\b(?:start|get|try|sign ?up|register|create|book|reserv\w*|run|demo|buy|download|join|subscribe|order|empez\w*|prueba|crear|comenzar|pedir|see tonight|scan)\b', re.I)
 LEGAL_RX = re.compile(r'\b(?:terms|privacy|legal|cookies?|imprint|impressum|datenschutz|aviso legal|pol[ií]tica|condiciones|mentions l[ée]gales|uslovi|privatnost)\b', re.I)
 SKIP_RX = re.compile(r'^(?:skip to|ir al contenido|saltar al|zum inhalt|aller au contenu)', re.I)
@@ -48,7 +52,14 @@ KINDS = (
     ('bar', r'\bbar\b|\bpub\b|cocktail|winery|bodega|brewery'),
     ('hotel', r'hotel|hostel|lodge|guest ?house|b&b|bed and breakfast|resort|\bvilla\b|apartments?\b|hostal|posada|pension'),
     ('venue', r'venue|event space|club\b|gallery|museum|theatre|theater|studio space'),
-    ('shop', r'\bshop\b|\bstore\b|boutique|florist|butcher|market\b|tienda'),
+    ('shop', r'\bshop\b|\bstore\b|boutique|florist|butcher|market\b|tienda|retailer|e-?commerce'),
+    ('clinic', r'clinic|cl[ií]nica|klinik|praxis|dentist\w*|dental|zahn[aä]rzt\w*|\barzt\b|[aä]rzt\w+|doctor|physio\w*|therap\w+|medical|orthop\w+|chiropract\w+|veterinar\w+|\bvet\b|optician|surgery'),
+    ('law', r'solicitors?|law firm|lawyers?|attorneys?|barristers?|legal (?:practice|services|firm)|abogad\w+|kanzlei|rechtsanw\w+|notar\w*|advokat\w*'),
+    ('school', r'school|academy|academia|escuela|college|university|kindergarten|nursery|schule|colegio|language cent(?:re|er)|training cent(?:re|er)|courses'),
+    ('nonprofit', r'charity|charitable|rescue|non-?profit|foundation|\bngo\b|association|community (?:group|organisation|organization)|volunteer\w*'),
+    ('corporate', r'engineer\w*|manufactur\w+|industrial|contractors?|construction|logistics|consultanc\w+|holdings|supplier|fabricat\w+|machin\w+'),
+    ('service', r'woodwork\w*|joiner\w*|carpent\w+|plumb\w+|electrician\w*|cleaning|gardener\w*|landscap\w+|builders?|roof\w+|repairs?|workshop|bespoke|decorat\w+|removals?|locksmith|salon|barber\w*|hairdress\w+|tailor\w*|service'),
+    ('person', r'photographer|author|writer|coach|consultant|speaker|artist|musician|designer|illustrator|freelance\w*|portfolio|trainer|filmmaker|composer|architect'),
 )
 PLACE_KINDS = {'restaurant', 'cafe', 'bar', 'hotel', 'venue', 'shop'}
 ARROWS = '→›↗➜➝⟶'
@@ -73,6 +84,9 @@ def _low(s):
 
 def has_lower(s):
     return any(c.islower() for c in s)
+
+
+BADGE_RX = re.compile(r"(?<!what's)(?<!whats)(?<!what is)(?<!\bbrand)(?<!\ball)\s+(?:new|beta|hot|soon|neu|nuevo|novo|novi|nouveau)!?$", re.I)
 
 
 def strip_label(s):
@@ -371,13 +385,17 @@ def _ext(data_uri, fallback='jpg'):
 
 def kind_of(fs, inv):
     """(kind, where it was read) — the earliest telling word in the reader's sentence, else in the page's own title and description"""
-    for where, text in (('reader: what', fs.get('what')), ('capture: title and description', ' '.join(filter(None, [inv.get('title'), (inv.get('seo') or {}).get('description')])))):
+    for where, text in (('reader: subtype', fs.get('subtype')), ('reader: what', fs.get('what')), ('capture: title and description', ' '.join(filter(None, [inv.get('title'), (inv.get('seo') or {}).get('description')])))):
         t = _low(norm(text))
         m = re.search(r'\bis (?:an?|the)\b', t)
         t = t[m.end():] if m else t
         hits = [(mm.start(), k) for k, rx in KINDS for mm in [re.search(rx, t)] if mm]
         if hits:
-            return min(hits)[1], where
+            first = min(hits)[1]
+            # "a service", "a consultant's tool", "school software": a word for a product anywhere in the line outweighs the loose ones
+            if first in ('service', 'person', 'corporate', 'school', 'nonprofit', 'shop') and any(k == 'software' for _, k in hits):
+                first = 'software'
+            return first, where
     return '', ''
 
 
@@ -438,7 +456,9 @@ def _header(inv, geo, actions, name, corpus, d, is_place, rules, gaps):
         if key in seen:
             continue
         seen.add(key)
-        items.append({'t': corpus.recase(lab), 'h': h})
+        # a badge set beside a link ('Sim NEW', 'Props Beta') is read into its label; the link is named without it
+        shown = BADGE_RX.sub('', lab) if len(lab.split()) >= 2 else lab
+        items.append({'t': corpus.recase(shown or lab), 'h': h})
     nav = []
     for it in items:
         if SIGNIN_RX.match(it['t']) and 'signin' not in d and not is_place:
@@ -560,7 +580,15 @@ def _px(v):
     return int(v) if isinstance(v, (int, float)) and not isinstance(v, bool) and v > 0 else 0
 
 
-def _pictures(images, d, media, gaps, is_place):
+def _path(u):
+    try:
+        return re.sub(r'/+$', '', urlparse(str(u or '')).path) or '/'
+    except ValueError:
+        return ''
+
+
+def _pictures(images, d, media, gaps, is_place, product=None, rules=None):
+    rules = rules if rules is not None else []
     photos, shots, seen = [], [], {}
     for im in images or []:
         if not isinstance(im, dict) or not im.get('data') or im.get('gen') or im.get('crop_of'):
@@ -572,6 +600,10 @@ def _pictures(images, d, media, gaps, is_place):
             continue
         if w < 200 or h < 200:
             continue
+        if im.get('plain'):                                          # the capture's own reading: a notice, a diagram, a blank page — not a photograph
+            continue
+        if max(w, h) <= 600 and abs(w - h) <= .08 * max(w, h) and isinstance(im.get('flat'), (int, float)) and im['flat'] >= .7:
+            continue                                                 # small, square and mostly two flat tones: a crest, a badge, an app icon — a mark, not a photograph
         stem = _stem(im.get('src') or im.get('id'))
         pic = {'src': 'media/%s.%s' % (slug(im.get('id')) or 'img', _ext(im['data'])), 'w': w, 'h': h, 'alt': norm(im.get('alt'))[:200]}
         if max(w, h) < 1000:
@@ -591,11 +623,228 @@ def _pictures(images, d, media, gaps, is_place):
     if photos:
         gaps.append('media.photos: every picture the page shows as an image is here with its own size and alt; the capture does not say what a picture shows, so `role` '
                     '(dish, room, bar, exterior, people) is not set' + ('' if is_place else ', and a product screen that the site serves as an image file is among them, not in `screens`'))
-    if not is_place:
-        gaps.append('media.screens, media.phones: empty. The capture took %d shot(s) of framed elements of the old page, but nothing in it says which of them shows the product '
-                    'and none is taken at phone width; they are listed in `_adapter.candidates.shots` and not placed' % len(shots))
-        gaps.append('media.video: none. The capture counts videos on the page and may save one film, but keeps no size or poster for it')
+    if is_place:
+        return shots
+    # a product's own screens: the pages behind its top bar photographed at desk and phone width (capture product.json),
+    # then — when those are fewer than three — the framed parts of its home page that are not a whole band of it
+    prod = product if isinstance(product, dict) else {}
+    for kind in ('screens', 'phones'):
+        for i, x in enumerate(prod.get(kind) or []):
+            if not isinstance(x, dict) or not x.get('data') or not _px(x.get('w')) or not _px(x.get('h')):
+                continue
+            src = 'media/%s-%d.%s' % (kind[:-1], i + 1, _ext(x['data']))
+            d['media'][kind].append({'src': src, 'w': _px(x['w']), 'h': _px(x['h']), 'alt': norm(x.get('alt'))[:120], 'page': _path(x.get('url'))})
+            media[src] = {'from': 'product', 'kind': kind, 'index': i}
+    if d['media']['screens'] or d['media']['phones']:
+        rules.append('media.screens, media.phones: the first screen of each page behind the top bar that shows a working product (controls, figures, data — not prose), '
+                     'photographed at 1440 and at 390 wide; alt is the page\'s own heading')
+    framed = [x for x in shots if 560 <= x['w'] <= 1300 and x['h'] >= 240 and 1.2 <= x['w'] / x['h'] <= 3.0 and not x['page']]
+    for x in sorted(framed, key=lambda x: -x['w'] * x['h'])[:max(0, 3 - len(d['media']['screens']))]:
+        im = next((i for i in images if isinstance(i, dict) and i.get('id') == x['id']), None)
+        if not im or not im.get('data'):
+            continue
+        src = 'media/%s.%s' % (slug(x['id']), _ext(im['data']))
+        first = norm(str(im.get('alt') or '').split('\n')[0])                 # the first line the framed part sets: its own heading
+        d['media']['screens'].append({'src': src, 'w': x['w'], 'h': x['h'], 'alt': first[:120]})
+        media[src] = {'from': 'images', 'id': x['id']}
+        x['placed'] = True
+    if any(x.get('placed') for x in shots):
+        rules.append('media.screens: framed parts of the home page (a box with a shadow or a rounded border round a picture or controls), narrower than the page and '
+                     'between 1.2 and 3 times as wide as tall, the largest first, while the product\'s own pages gave fewer than three')
+    if not d['media']['screens'] and not d['media']['phones']:
+        gaps.append('media.screens, media.phones: empty. No page behind the top bar showed a working product, and no framed part of the home page had the build of a screen; '
+                    'the %d shot(s) of the old page are listed in `_adapter.candidates.shots` and not placed' % len(shots))
+    gaps.append('media.video: none. The capture counts videos on the page and may save one film, but keeps no size or poster for it')
     return shots
+
+
+def _plan_cards(plans, cards, corpus):
+    """each plan gets the rows, the line and the mark of the page's price card with its name (else its price); -> how many got a card"""
+    n = 0
+    for it in plans:
+        c = next((c for c in cards if norm(c.get('name')) and _low(norm(c['name'])) == _low(it['name'])), None) \
+            or next((c for c in cards if norm(c.get('price')) and norm(c['price']) == norm(it.get('price'))), None)
+        if not c:
+            continue
+        rows = [corpus.recase(norm(r)) for r in c.get('rows') or [] if norm(r) and corpus.says(norm(r))]
+        if len(rows) < 2:
+            continue
+        it['rows'] = rows[:10]
+        line = norm(c.get('line'))
+        if line and 'line' not in it and corpus.says(line):
+            it['line'] = corpus.recase(line)
+        if c.get('marked'):
+            it['marked'] = True
+        n += 1
+    return n
+
+
+def _reader_blocks(d, hero, fs, corpus, actions, secs, rules, gaps):
+    """The blocks the adapter's own rules could not cut out of the page (they read headings and sub-headings; many pages
+    are not built that way), taken from the reader's `page` — and only the strings that stand in the capture letter for
+    letter. The reader marks where a block is; the capture says what it says. A string that is not on the page is dropped,
+    an item without its name is dropped, a block left too thin is not used."""
+    page = fs.get('page') if isinstance(fs.get('page'), dict) else {}
+    if not page:
+        return
+
+    def own(x, cap=0):
+        x = norm(x)
+        if not x or not corpus.says(x.rstrip('.…')):
+            return ''
+        got = next(corpus.spans(x), None) or next(corpus.spans(x.rstrip('.…')), '')
+        got = norm(got)
+        return lead(got, cap) if cap and len(got) > cap else got
+
+    took = []
+    st = page.get('statement') if isinstance(page.get('statement'), dict) else {}
+    if 'statement' not in d and own(st.get('title')) and len(own(st.get('text'))) >= 40:
+        d['statement'] = {'title': corpus.recase(own(st['title'])), 'text': own(st['text'], 420)}
+        took.append('statement')
+    sp = page.get('steps') if isinstance(page.get('steps'), dict) else {}
+    if 'steps' not in d:
+        items = [{'title': corpus.recase(own(x.get('title'))), 'text': own(x.get('text'), 260)} for x in sp.get('items') or [] if isinstance(x, dict) and own(x.get('title')) and own(x.get('text'))]
+        if 2 <= len(items) <= 6:
+            d['steps'] = {'title': corpus.recase(own(sp.get('title'))) if own(sp.get('title')) else '', 'text': own(sp.get('text'), 320), 'items': items}
+            took.append('steps')
+    ft = page.get('features') if isinstance(page.get('features'), dict) else {}
+    if 'features' not in d:
+        items = [{'t': corpus.recase(own(x.get('t'))), 'd': own(x.get('d'), 220)} for x in ft.get('items') or [] if isinstance(x, dict) and own(x.get('t')) and len(own(x.get('t'))) <= 80]
+        if len(items) >= 3 and sum(1 for i in items if i['d']) * 3 >= len(items) * 2:
+            d['features'] = {'title': corpus.recase(own(ft.get('title'))) if own(ft.get('title')) else '', 'text': own(ft.get('text'), 320), 'items': items[:9]}
+            took.append('features')
+    cl = page.get('close') if isinstance(page.get('close'), dict) else {}
+    if 'close' not in d and own(cl.get('title')):
+        lab = _key(strip_label(cl.get('button')))
+        act = next((a for a in actions if lab and _key(a['t']) == lab), None)
+        cta = {'t': corpus.recase(act['t']), 'h': act['h']} if act else (dict(d['cta']) if d.get('cta') else dict(hero['primary']) if hero.get('primary') else None)
+        if cta:
+            d['close'] = {'title': corpus.recase(own(cl['title'])), 'text': own(cl.get('text'), 320), 'cta': cta}
+            took.append('close')
+        else:                                                        # no call is known yet: kept until the page's call is found (see the end of adapt)
+            d["_close_wait"] = {"title": corpus.recase(own(cl["title"])), "text": own(cl.get("text"), 320)}
+    if not d.get('trust'):
+        tr = [own(x) for x in page.get('trust') or [] if isinstance(x, str) and own(x) and len(own(x)) <= 60][:6]
+        if len(tr) >= 2:
+            d['trust'] = tr
+            took.append('trust')
+    figs = d.get('figures') or []
+    if len(figs) < 3:
+        for x in page.get('figures') or []:
+            if isinstance(x, dict) and own(x.get('v')) and own(x.get('l')) and len(own(x['l']).split()) <= 12 and not re.search(r'[$€£]', norm(x['v'])) and not any(f['v'] == norm(x['v']) for f in figs):
+                figs.append({'v': norm(x['v']), 'l': own(x['l'])})
+        if len(figs) > len(d.get('figures') or []):
+            d['figures'] = figs[:6]
+            took.append('figures')
+    if 'note' not in hero and own(page.get('note')) and len(own(page['note'])) <= 60:
+        hero['note'] = own(page['note'])
+        took.append('hero.note')
+    # reviews: the reader's quotes (sheet and page), each kept only when its words stand on the page
+    if not d.get('quotes'):
+        qs, seen = [], set()
+        for x in list(page.get('quotes') or []) + [{'q': q.get('text'), 'name': q.get('who')} for q in fs.get('quotes') or [] if isinstance(q, dict)]:
+            if not isinstance(x, dict):
+                continue
+            q = own(x.get('q'), 420)
+            if len(q) < 20 or _key(q)[:60] in seen:
+                continue
+            seen.add(_key(q)[:60])
+            name, role = own(x.get('name')), own(x.get('role'))
+            qs.append({'q': q, 'name': name, **({'role': role} if role else {}), 'quote': q, 'by': name})
+        if qs:
+            d['quotes'] = qs[:6]
+            took.append('quotes')
+    # the people the page presents
+    tm = page.get('team') if isinstance(page.get('team'), dict) else {}
+    if 'team' not in d:
+        ppl = [{'name': own(x.get('name')), **({'role': own(x.get('role'))} if own(x.get('role')) else {}), **({'text': own(x.get('text'), 320)} if own(x.get('text')) else {})}
+               for x in tm.get('items') or [] if isinstance(x, dict) and own(x.get('name')) and 1 <= len(own(x.get('name')).split()) <= 6]
+        if ppl:
+            d['team'] = {'title': corpus.recase(own(tm.get('title'))) if own(tm.get('title')) else '', 'text': own(tm.get('text'), 320), 'items': ppl[:12]}
+            took.append('team')
+    # what is sold, with its prices: groups as the page lists them
+    ct = page.get('catalogue') if isinstance(page.get('catalogue'), dict) else {}
+    if 'catalogue' not in d and 'plans' not in d and 'menu' not in (d.get('place') or {}):
+        groups = []
+        for g in ct.get('groups') or []:
+            if not isinstance(g, dict):
+                continue
+            items = []
+            for x in g.get('items') or []:
+                if not isinstance(x, dict) or not own(x.get('name')):
+                    continue
+                it = {'name': own(x['name'])}
+                pr = norm(x.get('price'))
+                if pr and PRICE_RX.search(pr) and corpus.says(PRICE_RX.search(pr).group(0)):
+                    it['price'] = PRICE_RX.search(pr).group(0)
+                if own(x.get('text')):
+                    it['text'] = own(x['text'], 220)
+                items.append(it)
+            if items:
+                groups.append({'t': corpus.recase(own(g.get('t'))) if own(g.get('t')) else '', **({'text': own(g.get('text'), 220)} if own(g.get('text')) else {}), 'items': items[:12]})
+        if groups and sum(len(g['items']) for g in groups) >= 2:
+            d['catalogue'] = {'title': corpus.recase(own(ct.get('title'))) if own(ct.get('title')) else '', 'text': own(ct.get('text'), 320), 'groups': groups[:6]}
+            took.append('catalogue')
+    # how to reach them: a number and an address for letters, each as the page prints it
+    co = page.get('contact') if isinstance(page.get('contact'), dict) else {}
+    if 'contact' not in d and not (d.get('place') or {}).get('phone'):
+        c = {}
+        ph = norm(co.get('phone'))
+        if ph and len(re.sub(r'\D', '', ph)) >= 7 and corpus.says(ph):
+            c['phone'] = {'t': next(corpus.spans(ph)), 'h': 'tel:' + re.sub(r'[^\d+]', '', ph)}
+        em = norm(co.get('email'))
+        if re.fullmatch(r'[\w.+-]+@[\w-]+(?:\.[\w-]+)+', em or '') and corpus.says(em):
+            c['email'] = em.lower()
+        if c:
+            d['contact'] = c
+            took.append('contact')
+    if took:
+        heads = tuple(k + ':' for k in took) + tuple(k.split('.')[0] + ':' for k in took)
+        gaps[:] = [g for g in gaps if not (g.startswith(heads) and (' none' in g[:40] or 'empty' in g[:40] or 'not derivable' in g[:60]))]
+        rules.append('from the reader, confirmed letter for letter in the capture (the adapter\'s own rules found none): ' + ', '.join(took))
+
+
+def _step_pictures(d, rules, gaps):
+    """each step whose call leads to a page of the product gets that page's phone screen (else its desk screen); the
+    rest, in order, the product's page screens not yet given. Only screens of the product's own pages (not framed parts
+    of the home page), and all steps or none: a run of steps where one stands without its picture reads as a hole."""
+    st = d.get('steps') or {}
+    items = st.get('items') or []
+    md = d.get('media') or {}
+    phones, screens = [x for x in md.get('phones') or [] if x.get('page')], [x for x in md.get('screens') or [] if x.get('page')]
+    pool = [(x, 'phone') for x in phones] if len(phones) >= len(items) else [(x, 'screen') for x in screens]
+    if items and len(pool) < len(items):
+        # no page of the product to show beside each step: the client's own pictures stand there, in the page's order —
+        # what the product makes (a cover, a page) as a book, an upright picture as a portrait
+        own = [x for x in md.get('photos') or [] if x.get('src') and not x.get('small')] or [x for x in md.get('photos') or [] if x.get('src')]
+        if len(own) >= len(items):
+            shape = lambda x: ('book' if re.search(r'\b(?:cover|e?book|libro|buch|livre)\b', x.get('alt') or '', re.I) else 'portrait') if (x.get('h') or 0) > (x.get('w') or 0) else 'photo'
+            for it, x in zip(items, own):
+                it['img'], it['shape'] = x['src'], shape(x)
+            rules.append('steps.items[].img: the product\'s own pages gave no screen for each step; the client\'s own pictures stand beside the steps in the page\'s order')
+            return
+    if not items or len(pool) < len(items):
+        if items:
+            gaps.append('steps.items[].img: not set — the product\'s own pages gave %d screen(s) and the page %d picture(s) for %d step(s); a step is shown with a picture or not at all' % (len(pool), len(md.get('photos') or []), len(items)))
+        return
+    used, by_link = set(), 0
+    for it in items:
+        p = _path((it.get('cta') or {}).get('h'))
+        hit = next(((x, k) for x, k in pool if x.get('page') and x['page'] == p and x['src'] not in used), None)
+        if hit:
+            it['img'], it['shape'] = hit[0]['src'], hit[1]
+            used.add(hit[0]['src'])
+            by_link += 1
+    for it in items:
+        if it.get('img'):
+            continue
+        hit = next(((x, k) for x, k in pool if x['src'] not in used), None)
+        if not hit:
+            break
+        it['img'], it['shape'] = hit[0]['src'], hit[1]
+        used.add(hit[0]['src'])
+    if any(it.get('img') for it in items):
+        rules.append('steps.items[].img: %d step(s) show the screen of the page their own call leads to; the others the product\'s remaining screens in order' % by_link)
 
 
 def capture_texts(seed):
@@ -615,6 +864,7 @@ def capture_texts(seed):
         texts += [a.get('text') for a in p.get('actions') or []]
     texts += [im.get('alt') for im in seed.get('images') or [] if isinstance(im, dict) and not im.get('gen')]
     texts += [m.get('alt') for m in (seed.get('logos') or {}).get('items') or []]
+    texts += [x.get('alt') for k in ('screens', 'phones') for x in (seed.get('product') or {}).get(k) or [] if isinstance(x, dict)]   # the headings of the product's own pages
     return [t for t in texts if isinstance(t, str) and t.strip()]
 
 
@@ -746,8 +996,17 @@ def adapt(seed):
         m = re.match(r'^([+−-]?[$€£]?\d[\d.,]*\s?(?:%|\+|k|K|M|×|x)?)\s+(.{3,60})$', norm(f)) if isinstance(f, str) else None
         if m and len(m.group(2).split()) <= 8 and corpus.says(norm(f)) and not re.search(r'[.:;]', m.group(2)):
             figs.append({'v': m.group(1).strip(), 'l': corpus.recase(next(corpus.spans(m.group(2))))})
+    # and the numbers the page sets large with their own label beside them (capture cards.json), when the reader gave fewer than three
+    if len(figs) < 3:
+        had = len(figs)
+        for st in (seed.get('cards') or {}).get('stats') or []:
+            v, l = norm(st.get('v')), norm(st.get('l'))
+            if v and l and corpus.says(v) and corpus.says(l) and not any(f['v'] == v for f in figs) and len(l.split()) <= 12:
+                figs.append({'v': v, 'l': corpus.recase(next(corpus.spans(l)))})
+        if len(figs) > had:
+            rules.append('figures: besides the reader\'s, each number the page sets at least 1.6 times its body size with the words beside it (capture cards.json)')
     d['figures'] = figs[:6]
-    gaps.append('figures: %d. Only a fact the reader gives as "number + a few words" and the page prints in the same words; the capture does not pair numbers with their labels' % len(figs))
+    gaps.append('figures: %d. A fact the reader gives as "number + a few words" and the page prints in the same words, and the numbers the page sets large with their label' % len(figs))
 
     # ── faq, quotes: the capture reads these as pairs
     faq_sec = next((s for s in secs if s['faq']), None)
@@ -800,9 +1059,28 @@ def adapt(seed):
                 c = next((a for a in psec['actions'] if re.search(r'\b%s\b' % re.escape(_low(it['name'])), _low(a['t']))), None)
                 if c:
                     it['cta'] = {'t': corpus.recase(c['t']), 'h': c['h']}
+            carded = _plan_cards(plans, (seed.get('cards') or {}).get('plans') or [], corpus)
+            if carded >= 2 and carded < len(plans):
+                left = [it['name'] for it in plans if not it.get('rows')]
+                plans = [it for it in plans if it.get('rows')]
+                rules.append('plans.items: the plans the page sets as cards (%d); offers it only names in passing (%s) are not cards and are left out' % (carded, ', '.join(left)[:120]))
+            # a row of price cards holds three: with more, the plans paid by the period stand as cards when there are two or
+            # three of them (else the first three in the page's order), and every other offer is named with its price in the note
+            aside = []
+            if len(plans) > 3:
+                timed = [it for it in plans if PERIOD_RX.search(it.get('per') or '')]
+                keep = timed if 2 <= len(timed) <= 3 else plans[:3]
+                aside = [it for it in plans if not any(it is k for k in keep)]
+                plans = keep
+                rules.append('plans.items: the page prints %d offers; %s stand as cards, the others (%s) are named with their price in plans.note' % (
+                    len(keep) + len(aside), 'those paid by the period' if keep is timed else 'the first three in its order', ', '.join(it['name'] for it in aside)[:120]))
             d['plans'] = {'title': corpus.recase(psec['title']), 'text': _body(psec, amounts), 'items': plans}
-            gaps.append('plans.items[].rows, .line, .marked: empty — the reader gives each plan as name, price and its own summary; the lines of a plan card are not bordered in the capture, '
-                        'and which plan the page marks is not recorded. Every offer the page prints with a price is listed; choosing which to show is not this step\'s to decide')
+            if aside:
+                d['plans']['note'] = ' · '.join('%s %s' % (it['name'], it['price']) for it in aside)
+            if carded:
+                rules.append('plans.items[].rows, .line, .marked: read from the page\'s own price cards (capture cards.json): each card\'s list, its first short paragraph, and the one card set on a ground of its own')
+            else:
+                gaps.append('plans.items[].rows, .line, .marked: empty — no price card of the page holds a list the capture could read; every offer the page prints with a price is listed')
         elif plans:
             d['plans'] = {'title': '', 'text': '', 'items': plans}
             gaps.append('plans.title: the plans are printed on the page but no section of the capture holds them together; no heading')
@@ -825,6 +1103,9 @@ def adapt(seed):
         if len(cards) >= 3:
             d['links'] = cards
             rules.append('links: headings of the page that are links themselves, each with the link\'s own label')
+    if len(d.get("links") or []) > 6:                                # a row of link cards holds six; a longer run is the page's index, and the first six stand for it
+        rules.append("links: the page has %d such cards; the first six in its order are kept" % len(d["links"]))
+        d["links"] = d["links"][:6]
     if 'links' not in d:
         d['links'] = []
         gaps.append('links: none — no section of the page is a row of headed cards that each lead to a page')
@@ -837,10 +1118,21 @@ def adapt(seed):
             st['used'] = 'steps'
             d['steps'] = {'title': corpus.recase(st['title']), 'text': _body(st), 'items': items}
             rules.append('steps: the first section with two to five sub-headings, each over its own sentence, whose heading speaks of how / steps / ways, else the first with three or four')
-            gaps.append('steps.items[].img, .shape: not set — the capture does not say which picture belongs to which step')
     if 'steps' not in d:
-        gaps.append('steps: none — no section of the page is a short run of sub-headed parts')
-    for f in sorted([s for s in free() if len(s['kids']) >= 3], key=lambda s: -len(s['kids'])):
+        # the page numbers its steps itself (1, 2, 3 beside a heading and a sentence each — capture cards.json): taken as numbered
+        for run in (seed.get('cards') or {}).get('steps') or []:
+            items = [{'k': norm(x.get('k')), 'title': norm(x.get('title')), 'text': lead(norm(x.get('text')), 260)} for x in run.get('items') or []]
+            if 3 <= len(items) <= 6 and all(i['title'] and i['text'] and corpus.says(i['title']) and corpus.says(i['text'].rstrip('.…')) for i in items):
+                for i in items:
+                    i['title'] = corpus.recase(i['title'])
+                title = norm(run.get('title'))
+                d['steps'] = {'title': corpus.recase(title) if title and corpus.says(title) else '', 'text': '', 'items': items}
+                rules.append('steps: a run the page numbers itself (%s … %s), each number beside its own heading and sentence, under the last heading before it' % (items[0]['k'], items[-1]['k']))
+                break
+    if 'steps' not in d:
+        gaps.append('steps: none — no section of the page is a short run of sub-headed parts, and it numbers no run of steps')
+    # features: a section that says it lists what the product holds comes before the one that merely has the most parts
+    for f in sorted([s for s in free() if len(s['kids']) >= 3], key=lambda s: (0 if FEATURES_RX.search(s['title']) else 1, -len(s['kids']))):
         items = [{'t': i['title'], 'd': i['text']} for i in _items(f, corpus, 220)]
         if len(items) >= 3 and sum(1 for i in items if i['d']) * 3 >= len(items) * 2:
             f['used'] = 'features'
@@ -889,6 +1181,8 @@ def adapt(seed):
     if not secs:
         gaps.append('sections: the capture cut the home page into no headed sections (no h1/h2 on it); statement, steps, features, close cannot be read')
 
+    _reader_blocks(d, hero, fs, corpus, actions, secs, rules, gaps)
+
     # ── foot
     legal = re.search(r'(?:©|\(c\)|copyright)\s?[^|·•\n]{2,70}?(?=\s{2}|\s[|·•]|\.\s|$)', norm(copy.get('text')), re.I)
     flinks, seen = [], set()
@@ -903,7 +1197,9 @@ def adapt(seed):
         gaps.append('foot.links: none — no terms / privacy link among the links the capture kept (it keeps the first hundred of a page)')
     gaps.append('foot.text: empty — the small print of the foot is not bordered in the capture' + ('' if legal else '; foot.legal: the page prints no © line the capture read'))
 
-    shots = _pictures(images, d, media, gaps, is_place)
+    shots = _pictures(images, d, media, gaps, is_place or kind != 'software', seed.get('product') if kind == 'software' else None, rules)   # screens: a product's only
+    if not is_place:
+        _step_pictures(d, rules, gaps)
     if is_place:
         _place(d, fs, inv, pages, actions, corpus, offers, gaps, rules)
         if 'cta' not in d and d['place'].get('booking'):
@@ -920,9 +1216,35 @@ def adapt(seed):
         if 'cta' not in d and hero.get('primary'):
             d['cta'] = dict(hero['primary'])
             rules.append('cta: the top bar ends on no call; the opening\'s first button stands in')
+        if 'cta' not in d:
+            # the page's own way in: the first of its links that leads to signing up on the client's own domain and says so
+            own = '.'.join(_host(home).split('.')[-2:])
+            way = next((a for a in actions if own and _host(a['h']).endswith(own) and SIGNUP_RX.search(a['h']) and CTA_RX.search(a['t']) and len(a['t']) <= 40), None)
+            if way:
+                d['cta'] = {'t': corpus.recase(way['t']), 'h': way['h']}
+                hero.setdefault('primary', dict(d['cta']))
+                rules.append('cta: neither the top bar nor the opening has a call; the page\'s first link to signing up on the client\'s own domain stands in, and opens the page too')
+        if 'close' not in d and d.get('cta') and d.get('_close_wait'):
+            d['close'] = {**d['_close_wait'], 'cta': dict(d['cta'])}
+            gaps[:] = [g for g in gaps if not g.startswith('close: none')]
+            rules.append('close: the closing the reader marked (confirmed letter for letter in the capture), with the page\'s call under it')
+        if 'close' not in d and d.get('cta'):
+            # a late section that asks the reader to begin ("Ready to …?", "Start …") and has no call of its own takes the page's call
+            late = [s for s in secs[-4:] if s['level'] == 'H2' and not s['used'] and not s['actions'] and READY_RX.search(s['title'])]
+            if late:
+                s = late[-1]
+                s['used'] = 'close'
+                d['close'] = {'title': corpus.recase(s['title']), 'text': _body(s, [k for k in s['kids']]), 'cta': dict(d['cta'])}
+                gaps[:] = [g for g in gaps if not g.startswith('close: none')]
+                rules.append('close: one of the page\'s last four sections asks the reader to begin and has no call of its own; the page\'s call is set under it')
     if 'cta' not in d:
         gaps.append('cta: none — neither the top bar nor the opening has a call the capture read')
 
+    wait = d.pop('_close_wait', None)                                # a place: the closing the reader marked, with the place's own call
+    if wait and 'close' not in d and (d.get('cta') or hero.get('primary')):
+        d['close'] = {**wait, 'cta': dict(d.get('cta') or hero['primary'])}
+        gaps[:] = [g for g in gaps if not g.startswith('close: none')]
+        rules.append('close: the closing the reader marked (confirmed letter for letter in the capture), with the page\'s call under it')
     d['_media'] = media
     d['_adapter'] = {'version': VERSION, 'name_from': name_from, 'gaps': gaps, 'rules': rules, 'candidates': {'shots': shots},
                      'reader_missing': [m for m in fs.get('missing') or [] if isinstance(m, str)]}
@@ -1085,7 +1407,7 @@ def _place(d, fs, inv, pages, actions, corpus, offers, gaps, rules):
 
 def load_seed(folder):
     folder, out = Path(folder), {}
-    for k in ('inventory', 'assets', 'images', 'factsheet', 'geometry', 'source', 'logos'):
+    for k in ('inventory', 'assets', 'images', 'factsheet', 'geometry', 'source', 'logos', 'product', 'cards'):
         f = folder / (k + '.json')
         try:
             out[k] = json.loads(f.read_text(encoding='utf-8')) if f.is_file() else ([] if k == 'images' else {})

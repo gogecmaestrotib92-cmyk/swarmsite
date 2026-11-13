@@ -220,6 +220,10 @@ def normalise(free):
             notes.append('drops (as written): %s' % e)
     if drops or 'drops' in free:
         out['drops'] = list(dict.fromkeys(drops))
+    hard = free.get('hard')
+    if isinstance(hard, list):                                       # already strict names: kept; anything else is lost
+        out['hard'] = [x for x in hard if x in NAMES]
+        lost += ['hard: not a name of the fixed list: %r' % x for x in hard if x not in NAMES]
     out['holds_without_pictures'] = bool(free.get('holds_without_pictures'))
     motif = next((n for n, rx in MOTIFS if re.search(rx, str(free.get('motif') or '').lower())), None)
     if motif is None:
@@ -259,7 +263,7 @@ def validate(strict):
             if not isinstance(v, list):
                 bad.append('%s: not a list' % k)
                 continue
-            allowed = NICHES if k == 'niche' else NAMES if k in ('needs', 'drops') else None
+            allowed = NICHES if k == 'niche' else NAMES if k in ('needs', 'drops', 'hard') else None
             if k == 'needs_any':
                 continue
             bad += ['%s: %r is not one of the fixed words' % (k, x) for x in v if (allowed is not None and x not in allowed) or (allowed is None and not isinstance(x, str))]
