@@ -10,7 +10,7 @@ adds, to any template's page, what was left:
 
 It is written into the page by registry (before </main>, else before the last <footer>), so every template has it and
 none had to be edited. It brings no colour and no typeface of its own: the ground and the ink are the page's (it
-inherits them), and its headings take the family, weight, case and tracking of the page's own h2 — read once, at load,
+inherits them; where the page's ink does not read on the ground under it, near-black or near-white by that ground), and its headings take the family, weight, case and tracking of the page's own h2 — read once, at load,
 from the page itself — so it reads as that design's text, not as a second site under it. Words are never set beside a
 boxed picture: the words are a column, the pictures are a strip across the whole width (owner's rule, 2026-11-10).
 
@@ -48,6 +48,13 @@ JS = ("(function(){var m=document.querySelectorAll('.sw-more h2,.sw-more h3');if
       "for(var i=0;i<c.length;i++){if(!c[i].closest('.sw-more')){s=c[i];if(c[i].tagName==='H2')break}}if(!s)return;var k=getComputedStyle(s);"
       "for(var j=0;j<m.length;j++){var e=m[j].style;e.fontFamily=k.fontFamily;e.fontWeight=k.fontWeight;e.fontStyle=k.fontStyle;"
       "e.textTransform=k.textTransform;e.letterSpacing=m[j].tagName==='H2'?k.letterSpacing:'normal'}})();")
+
+# the band's ink is the page's, unless the page's ink does not read on the ground the band stands on (a template whose
+# body carries one colour and whose sections each set their own): then it is near-black or near-white, by that ground
+INK_JS = ("(function(){var b=document.querySelector('.sw-more');if(!b)return;var n=function(c){var m=(c||'').match(/[\\d.]+/g);return m?m.map(Number):null},"
+          "g=null;for(var e=b;e;e=e.parentElement){var c=n(getComputedStyle(e).backgroundColor);if(c&&(c.length<4||c[3]>.5)){g=c;break}}if(!g)g=[255,255,255];"
+          "var f=function(v){v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)},L=function(c){return .2126*f(c[0])+.7152*f(c[1])+.0722*f(c[2])},"
+          "k=n(getComputedStyle(b).color)||[0,0,0],x=L(g),y=L(k),r=(Math.max(x,y)+.05)/(Math.min(x,y)+.05);if(r<7)b.style.color=x>.4?'#111111':'#f5f5f5'})();")
 
 SHORT = 260     # a section whose words are this short is a note, not a passage: notes stand together as a grid
 
@@ -140,7 +147,7 @@ def band(d, page):
         pics = pics[:len(pics) - len(pics) % n] if len(pics) % n and len(pics) > n else pics
         out.append('<div class="sw-strip" data-more style="--n:%d">%s</div>' % (n, ''.join(_img(p) for p in pics)))
     if secs:
-        out.append('<script>%s</script>' % JS)
+        out.append('<script>%s%s</script>' % (JS, INK_JS))
     return ''.join(out)
 
 

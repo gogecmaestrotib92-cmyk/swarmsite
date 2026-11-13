@@ -75,3 +75,18 @@ def test_every_template_carries_the_band(slug):
     out = R.render(slug, d, '')
     assert 'What the template has no place for' in out and out.count('class="sw-more"') == 1 and out.index('class="sw-more"') < out.rindex('<footer')
     assert R.render(slug, d, '') == out, 'pure'
+
+
+def test_the_band_reads_on_a_page_whose_own_ink_would_not(tmp_path):
+    """a template whose body ink is its ground's colour (each of its sections sets its own): the band's words are set
+    near-white or near-black by the ground they stand on — read by the gate on pixels, at both widths"""
+    G = _load('swarmsite_templates_gate', ROOT / 'lib' / 'templates' / 'gate.py')
+    d = {'more': {'sections': [{'title': 'What is left', 'text': 'Carried under the sections, in the words of the page. ' * 4}, {'title': 'A note', 'text': 'Short.'}, {'title': 'Another', 'text': 'Short too.'}]}, 'media': {}}
+    for name, ground in (('dark', '#101214'), ('light', '#f4f1ea')):
+        page = ('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0;font:18px/1.5 Arial;background:%s;color:%s}'
+                'section.t{padding:80px 24px;color:%s}</style></head><body><main><section class="t"><h1>One heading here</h1><p>The template sets its own ink, a section at a time.</p></section></main><footer></footer></body></html>'
+                % (ground, ground, '#f5f5f5' if name == 'dark' else '#111'))
+        f = tmp_path / (name + '.html')
+        f.write_text(M.add(d, page), encoding='utf-8')
+        res = G.check([f])[0]
+        assert res['failed'] != ['tool'] and 'legible' not in res['failed'], (name, res.get('checks', {}).get('legible'))
