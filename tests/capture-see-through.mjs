@@ -37,6 +37,7 @@ try {
   assert.equal(light.plate, '#111111', 'light ink on a clear ground is laid on near-black');
   assert.ok(light.lum < 100, `light ink keeps a dark ground (lum ${light.lum})`);
   assert.equal(solid.plate, undefined, 'a picture with no clear part is left as it is');
+  assert.equal(solid.sec, 'How it works', 'a picture knows the section it stands in: the last heading before it');
   console.log('Capture lays a see-through picture on a plate its ink reads on');
 } finally {
   await new Promise(resolve => server.close(resolve));

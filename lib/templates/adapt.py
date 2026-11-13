@@ -277,10 +277,27 @@ def cut_at(text, stops, buttons=()):
     for s, is_button in [(x, False) for x in stops] + [(x, True) for x in buttons]:
         if len(norm(s)) < 8 and len(norm(s).split()) < 2 and not re.search(r'\d', s):
             continue
-        b = before(text, s)
+        b = before(text, s) if is_button else _before_border(text, s)
         if b is not None and (best is None or len(b) < len(best)):
             best, by = b, is_button
     return (best, by) if best is not None else (norm(text), False)
+
+
+def _before_border(text, phrase):
+    """the text before the first standing of a heading as a border. A heading's words also stand inside sentences
+    ("… surge nuestra área de servicio Abades Bailén." under a later heading ABADES BAILÉN): where they follow a word
+    in lower case with no stop after it, and are not written as the heading is, they are part of the sentence and the
+    next standing is looked for (a service area's whole description was cut at its own name, 2026-11-13)."""
+    (t, sq, keep), key = _squeeze(text), _key(phrase)
+    at = sq.find(key) if key else -1
+    while at != -1:
+        start, end = keep[at], keep[at + len(key) - 1] + 1
+        prev = t[:start].rstrip().rsplit(' ', 1)[-1] if t[:start].strip() else ''
+        inside = bool(prev) and (prev.endswith(',') or (prev[:1].islower() and not re.search(r'[.!?…:;)\]"”’]$', prev) and norm(t[start:end]) != norm(phrase)))   # after a comma it is an item of a list in a sentence
+        if not inside:
+            return t[:start].strip()
+        at = sq.find(key, at + 1)
+    return None
 
 
 def slug(s):
@@ -710,8 +727,12 @@ def _reader_blocks(d, hero, fs, corpus, actions, secs, rules, gaps):
     ft = page.get('features') if isinstance(page.get('features'), dict) else {}
     if 'features' not in d:
         items = [{'t': corpus.recase(own(x.get('t'))), 'd': own(x.get('d'), 220)} for x in ft.get('items') or [] if isinstance(x, dict) and own(x.get('t')) and len(own(x.get('t'))) <= 80]
-        if len(items) >= 3 and sum(1 for i in items if i['d']) * 3 >= len(items) * 2:
-            d['features'] = {'title': corpus.recase(own(ft.get('title'))) if own(ft.get('title')) else '', 'text': own(ft.get('text'), 320), 'items': items[:9]}
+        worded = sum(1 for i in items if i['d']) * 3 >= len(items) * 2
+        # a list the page sets as bare labels (Cafetería · WIFI · Parking …: what a place has) is a list too: four or
+        # more of them stand as it stands there, without sentences nobody wrote (owner's review, 2026-11-13: a service
+        # area's fourteen services were left out and the page had two lines)
+        if len(items) >= 3 and worded or len(items) >= 4:
+            d['features'] = {'title': corpus.recase(own(ft.get('title'))) if own(ft.get('title')) else '', 'text': own(ft.get('text'), 320), 'items': items[:9] if worded else [{'t': i['t'], 'd': i['d']} for i in items[:16]]}
             took.append('features')
     cl = page.get('close') if isinstance(page.get('close'), dict) else {}
     if 'close' not in d and own(cl.get('title')):
@@ -948,9 +969,15 @@ def adapt(seed):
         if len(best) > 1 and corpus.says(best[1]):
             hero['text'] = next(corpus.spans(best[1]))
     else:
-        first = next((norm(h.get('text')) for h in copy.get('headings') or [] if norm(h.get('text')) and len(norm(h.get('text')).split()) <= 12), '')
+        # a heading of one or two words is the label of a section ("Latest news", "Our services"), not what the client
+        # says of itself: set as the page's headline it opens the page on a label (owner's review, 2026-11-13)
+        first = next((norm(h.get('text')) for h in copy.get('headings') or [] if norm(h.get('text'))), '')
+        first = first if 3 <= len(first.split()) <= 12 else ''        # only the page's first heading can stand in: a later one heads a section
         hero['title'] = corpus.recase(first) if first else name
-        (rules if first else gaps).append('hero.title: the page has no h1; ' + ('its first heading stands in' if first else 'the brand name stands in'))
+        whole = norm(fs.get('best_sentence'))
+        if not first and whole and corpus.says(whole):                # under the name, the sentence the reader singled out (too long for a headline), word for word
+            hero['text'] = next(corpus.spans(whole))
+        (rules if first else gaps).append('hero.title: the page has no h1; ' + ('its first heading stands in' if first else 'the brand name stands in (the page\'s first heading is a label or a paragraph, not a headline)'))
     if hero_sec:
         pre = before(hero_sec['text'], hero_sec['title']) or ''
         if pre and len(pre) <= 48 and len(pre.split()) <= 6:
@@ -1248,6 +1275,104 @@ def adapt(seed):
     d['_media'] = media
     d['_adapter'] = {'version': VERSION, 'name_from': name_from, 'gaps': gaps, 'rules': rules, 'candidates': {'shots': shots},
                      'reader_missing': [m for m in fs.get('missing') or [] if isinstance(m, str)]}
+    # one statement is one heading: a section whose title is the headline again is not a second section — its text
+    # joins the opening where the opening has none, and the section is left out (a page that says "Latest News" as its
+    # headline, as its statement and in every band a template repeats a title in; owner's review, 2026-11-13)
+    st = d.get('statement')
+    if isinstance(st, dict) and _key(st.get('text')) and _key(st.get('text')) in (_key(d['hero'].get('text')), _key(d['hero'].get('text2'))):
+        del d['statement']                                           # the opening already says it
+        rules.append('statement: left out — its text is the opening\'s')
+    elif isinstance(st, dict) and _key(st.get('title')) and _key(st.get('title')) == _key(d['hero'].get('title')):
+        if st.get('text') and _key(st['text']) not in (_key(d['hero'].get('text')), _key(d['hero'].get('text2'))):
+            slot = 'text' if not d['hero'].get('text') else 'text2' if not d['hero'].get('text2') else ''
+            if slot:
+                d['hero'][slot] = st['text']
+        del d['statement']
+        rules.append('statement: left out — its heading is the headline again; its text stands with the opening')
+    # what of the page's sections reached the data. A section is carried when its heading stands somewhere in the data.
+    def said():
+        out = []
+
+        def walk(v):
+            if isinstance(v, dict):
+                for k, x in v.items():
+                    if not str(k).startswith('_'):
+                        walk(x)
+            elif isinstance(v, list):
+                for x in v:
+                    walk(x)
+            elif isinstance(v, str):
+                out.append(_key(v))
+        walk(d)
+        return out
+    have = said()
+    carried = lambda sec: bool(_key(sec['title'])) and any(_key(sec['title']) in t for t in have)
+    # a section left over that is a heading over its own paragraph is not dropped because the schema has one statement:
+    # the first stands as the statement where there is none, the next (up to six) as cards, each with the link the
+    # section itself carries, where the page has no row of cards of its own
+    rest = [x for x in secs if not carried(x) and x['level'] != 'H1' and len(x['title'].split()) <= 12 and len(_body(x)) >= 60]
+    if rest and 'statement' not in d:
+        x = rest.pop(0)
+        d['statement'] = {'title': corpus.recase(x['title']), 'text': _body(x)}
+        rules.append('statement: the first section left over that is a heading over a paragraph')
+    if len(rest) >= 2 and not d.get('links'):
+        d['links'] = [{'t': corpus.recase(x['title']), 'd': _body(x, cap=220), 'h': (x['actions'][0]['h'] if x['actions'] else None)} for x in rest[:6]]
+        gaps[:] = [g for g in gaps if not g.startswith('links: none')]
+        rules.append('links: %d section(s) left over, each a heading over its paragraph, stand as cards (the page has no row of cards of its own)' % len(d['links']))
+    # what is still left, a heading over its own words, goes under the template's sections whole (more.py): a template
+    # has a fixed number of places and a client's page does not
+    have = said()
+    # a section's own pictures: those the capture found standing under that section's heading on the client's page
+    # (images.json `sec`), and only photographs the data already carries — never any picture beside any words
+    by_id = {str(p.get('src') or '').rsplit('/', 1)[-1].rsplit('.', 1)[0]: p for p in (d.get('media') or {}).get('photos') or [] if isinstance(p, dict)}
+    pics_of = lambda title: [{k: by_id[str(i.get('id'))][k] for k in ('src', 'w', 'h', 'alt') if by_id[str(i.get('id'))].get(k) is not None}
+                             for i in images if isinstance(i, dict) and _key(i.get('sec')) and _key(i.get('sec')) == _key(title) and str(i.get('id')) in by_id][:4]
+    extra = []
+    for x in secs:
+        if carried(x) or x['level'] == 'H1' or len(x['title'].split()) > 14:
+            continue
+        body, own_pics = _body(x, cap=1200), pics_of(x['title'])
+        if len(body) >= 40 or own_pics:                               # words of its own, or pictures of its own under a heading (a hall, a brand, a dish)
+            extra.append({'title': corpus.recase(x['title']), 'text': body if len(body) >= 40 else '', **({'imgs': own_pics} if own_pics else {})})
+    # A passage is not cut to fit a place. The template's places hold a line or two (the opening's text, the statement):
+    # where the page says more under the same heading, the rest is carried whole —
+    #   the statement's section, when it runs on past what the statement holds, leaves the statement's place and
+    #   stands under the template's sections with its heading and all its words;
+    #   what the opening goes on to say stands there first, without a heading (the headline is said once).
+    said_now = said()
+    # (a film's control — Play, Video Player — that the flattened capture ran in before a sentence is not its first word)
+    unsaid = lambda sec: [re.sub(r'\s+([,.;:!?])', r'\1', re.sub(r'^(?:Video Player|Play|Pause|Reproducir|Abspielen|Lecture)\s+(?=[A-ZÀ-Ý¿¡])', '', p)) for p in sentences(_body(sec, cap=2000))
+                          if len(p.split()) >= 6 and running(p) and not re.search(r'[·|•]', p) and re.search(r'[.!?…]["”’)]?$', p) and not any(_key(p) in t for t in said_now)]   # sentences, not the labels the flattened capture ran in between them
+    front = []
+    st2 = d.get('statement')
+    src = next((x for x in secs if isinstance(st2, dict) and _key(x['title']) == _key(st2.get('title')) and x['level'] != 'H1'), None)
+    if src and len(' '.join(unsaid(src))) >= 160:
+        front.append({'title': corpus.recase(src['title']), 'text': _body(src, cap=2000), **({'imgs': pics_of(src['title'])} if pics_of(src['title']) else {})})
+        del d['statement']
+        rules.append('statement: its section runs on past a statement\'s length; it stands whole under the template\'s sections instead')
+        said_now = said()
+    if hero_sec:
+        more_of_opening = ' '.join(unsaid(hero_sec))
+        if len(more_of_opening) >= 160:
+            front.insert(0, {'title': '', 'text': more_of_opening})
+            rules.append('more: what the opening goes on to say (%d characters past the opening\'s place) stands under the template\'s sections, without a heading' % len(more_of_opening))
+    extra = front + extra
+    if extra:
+        d['more'] = {'sections': extra[:12]}
+        rules.append('more: %d section(s) the schema has no block for, each a heading over its own words, set under the template\'s sections' % len(d['more']['sections']))
+    have = said()
+    heads = [x for x in secs if _key(x['title'])]
+    left = [corpus.recase(x['title']) for x in heads if not carried(x)]
+    cover = {'sections': len(heads), 'carried': len(heads) - len(left), 'left': left[:40]}
+    figs = {_key('%s %s' % (f.get('v') or '', f.get('l') or '')) for f in d.get('figures') or [] if isinstance(f, dict)}
+    if d['hero'].get('note') and _key(d['hero']['note']) in figs:    # the short line beside the opening is one of the page's figures: said once, as the figure
+        del d['hero']['note']
+        rules.append('hero.note: left out — it is one of the figures')
+    for k, b in d.items():                                           # and no other block is headed by the headline: it keeps its content, without the heading
+        if k not in ('hero', 'brand', 'statement') and not k.startswith('_') and isinstance(b, dict) and _key(b.get('title')) and _key(b.get('title')) == _key(d['hero'].get('title')):
+            del b['title']
+            rules.append('%s.title: left out — it is the headline again' % k)
+    d['_adapter']['coverage'] = cover
     return d
 
 
