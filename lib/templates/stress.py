@@ -216,11 +216,14 @@ def _rgb(h, fallback=(128, 128, 128)):
 
 
 def png(w, h, top, bottom):
-    """a w×h picture that goes from one colour at the top to another at the bottom"""
-    rows = bytearray()
+    """a w×h picture that goes from one colour at the top to another at the bottom, in squares of two tones: a stand-in
+    must read as a picture with something in it (the gate's `blank` check takes a flat ground for an empty slot)"""
+    rows, sq = bytearray(), max(6, min(w, h) // 8)
     for y in range(h):
         t = y / max(1, h - 1)
-        rows += b'\x00' + bytes(round(a + (b - a) * t) for a, b in zip(top, bottom)) * w
+        base = [round(a + (b - a) * t) for a, b in zip(top, bottom)]
+        two = (bytes(base), bytes(max(0, min(255, c + (34 if sum(base) < 384 else -34))) for c in base))
+        rows += b'\x00' + b''.join(two[((x // sq) + (y // sq)) % 2] * min(sq, w - x) for x in range(0, w, sq))
     chunk = lambda kind, data: struct.pack('>I', len(data)) + kind + data + struct.pack('>I', zlib.crc32(kind + data) & 0xffffffff)
     return b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', w, h, 8, 2, 0, 0, 0)) + chunk(b'IDAT', zlib.compress(bytes(rows), 9)) + chunk(b'IEND', b'')
 

@@ -96,7 +96,7 @@ def test_stand_in_pictures_keep_each_pictures_proportion(tmp_path):
     assert raw[:8] == b'\x89PNG\r\n\x1a\n' and struct.unpack('>II', raw[16:24]) == (40, 20)
     idat = raw[raw.index(b'IDAT') + 4:raw.index(b'IEND') - 8]
     px = zlib.decompress(idat)
-    assert len(px) == 20 * (1 + 40 * 3) and px[1:4] == bytes((10, 20, 30)) and px[-3:] == bytes((200, 210, 220))
+    assert len(px) == 20 * (1 + 40 * 3) and px[1:4] == bytes((10, 20, 30)) and bytes((200, 210, 220)) in px[-40 * 3:] and len({px[i:i + 3] for i in range(1, 121, 3)}) == 2   # top colour first, bottom colour in the last row, two tones a row: a picture with something in it
     written = S.stand_ins(PRODUCT, tmp_path)
     paths = R.media_paths(PRODUCT)
     assert set(written) == {p for p in paths if not p.endswith('.mp4')} and all((tmp_path / p).is_file() for p in written)
