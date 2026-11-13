@@ -28,7 +28,8 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 /* the panel */
 .panel{display:flex;flex-direction:column;min-height:0;padding:0;border-radius:0;background:var(--paper);border-right:2px solid var(--card)}
 .tabs{flex:none;display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin:12px 12px 0;padding:2px;background:var(--card);border-radius:999px}
-.tabs button{min-height:40px;border-radius:999px;font:600 14px/1 var(--sans);color:var(--muted)}.tabs button[aria-selected="true"]{background:var(--ground);color:var(--ink);box-shadow:inset 0 0 0 2px var(--ink)}
+ui-tabs{display:flex;flex-direction:column;flex:1;min-height:0}ui-tabs-tab{display:contents}ui-dialog,ui-dialog-trigger,ui-dialog-close,ui-dialog-title,ui-dialog-description{display:contents}
+.tabs button{min-height:40px;border-radius:999px;font:600 14px/1 var(--sans);color:var(--muted)}.tabs button[aria-selected="true"],.tabs [data-selected] button,.tabs button[data-selected]{background:var(--ground);color:var(--ink);box-shadow:inset 0 0 0 2px var(--ink)}
 .says{flex:none;padding:12px 16px 0;display:grid;gap:8px}
 .status{font-size:14px;line-height:1.35;color:var(--muted)}.status.bad{color:var(--bad)}.status.ok{color:var(--ok)}
 .unread{display:grid;gap:6px;font-size:14px}.unread li{list-style:none;border-left:3px solid var(--bad);padding:4px 8px;background:#fbf3f2}
@@ -41,22 +42,25 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .f textarea,.field input,.slot select{width:100%;min-height:44px;padding:9px 12px;border:2px solid var(--card);border-radius:8px;background:var(--paper);font:500 16px/1.3 var(--sans);color:var(--ink);resize:vertical}
 .f textarea:focus,.field input:focus,.slot select:focus{outline:0;border-color:var(--ink)}.f.hit textarea{border-color:var(--ink);box-shadow:0 0 0 3px var(--accent)}
 .blocks{display:flex;flex-wrap:wrap;gap:8px}.blocks label{display:inline-flex;gap:8px;align-items:center;min-height:44px;padding:8px 14px;border:2px solid var(--card);border-radius:999px;font-weight:600;font-size:15px;cursor:pointer}.blocks label:has(input:checked){border-color:var(--ink)}.blocks input{accent-color:var(--ink);width:16px;height:16px}
-.slot{display:grid;grid-template-columns:84px minmax(0,1fr);gap:12px;align-items:center;padding:8px;border-radius:12px;border:2px solid transparent}.slot.hit{border-color:var(--ink);background:var(--ground)}
+.slot{border-radius:12px;border:2px solid var(--card)}.slot.hit{border-color:var(--ink)}
+.slot>button{display:grid;grid-template-columns:84px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;padding:8px;text-align:left;font:600 15px/1.25 var(--sans)}.slot>button small{font:500 13px var(--sans);color:var(--muted)}
 .slot img{width:84px;height:63px;object-fit:contain;border-radius:6px;background:var(--card)}
+.picks{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:8px;padding:4px 8px 10px}.picks button{padding:3px;border-radius:8px;border:2px solid transparent;background:var(--card)}.picks button[aria-pressed="true"]{border-color:var(--ink)}.picks img{display:block;width:100%;height:56px;object-fit:contain;border-radius:5px;background:var(--paper)}
 .sw{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:10px}.sw button{position:relative;aspect-ratio:1;border-radius:14px;border:2px solid var(--card);cursor:pointer;transition:transform .2s}.sw button:hover{transform:scale(.97)}
 .sw button i{position:absolute;right:8px;bottom:8px;width:16px;height:16px;border-radius:50%;box-shadow:0 0 0 2px rgba(255,255,255,.7)}
 /* the page */
 .view{position:relative;min-width:0;min-height:0;display:flex;background:var(--card)}
 .stage{position:relative;flex:1;display:flex;justify-content:center;min-height:0;padding:12px;overflow:hidden}
-.stage iframe{width:100%;height:100%;border:0;background:#fff;border-radius:14px}.stage.phone iframe{width:390px;max-width:100%}
+.stage iframe{flex:none;width:100%;height:100%;border:0;background:#fff;border-radius:14px;transform-origin:0 0}.stage.phone iframe{width:390px;max-width:100%}.stage.desk{justify-content:flex-start}
 .busy{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
 /* publish or download: the steps, in a sheet */
-.sheetw{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:16px;background:rgba(20,20,20,.45)}
-.sheetw .box{width:min(520px,100%);max-height:100%;overflow:auto;background:var(--card);border-radius:28px;padding:12px;display:grid;gap:4px}
-.sheetw .box>*{background:var(--paper);padding:18px 20px;border-radius:6px}.sheetw .box>:first-child{border-radius:18px 18px 6px 6px}.sheetw .box>:last-child{border-radius:6px 6px 18px 18px}
-.sheetw h2{font:400 34px/1 var(--serif);letter-spacing:-.03em}.sheetw h3{font:600 16px/1.3 var(--sans);margin-bottom:10px;display:flex;gap:10px;align-items:center}
-.sheetw h3 b{flex:none;display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--ink);color:var(--ground);font:700 13px/1 var(--sans)}
-.sheetw .head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.sheetw .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sheet-bg{position:fixed;inset:0;z-index:40;background:rgba(20,20,20,.45)}
+.box{position:fixed;left:50%;top:50%;z-index:41;transform:translate(-50%,-50%);width:min(520px,calc(100% - 32px));max-height:calc(100% - 32px);overflow:auto;background:var(--card);border-radius:28px;padding:12px;display:grid;gap:4px}
+.box>*{background:var(--paper);padding:18px 20px;border-radius:6px}.box>:first-child{border-radius:18px 18px 6px 6px}.box>:last-child{border-radius:6px 6px 18px 18px}
+.box h2{font:400 34px/1 var(--serif);letter-spacing:-.03em}.box h3{font:600 16px/1.3 var(--sans);margin-bottom:10px;display:flex;gap:10px;align-items:center}
+.box h3 b{flex:none;display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--ink);color:var(--ground);font:700 13px/1 var(--sans)}
+.box .head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.box .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+#takeBack{justify-self:start;min-height:40px}
 .field{display:flex;align-items:center;gap:6px;flex:1;min-width:200px}.field input{flex:1;min-width:0}
 #pubStatus:empty{display:none}#siteLink{font-weight:600;text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere}
 @media(max-width:900px){
@@ -64,7 +68,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   .main{display:flex;flex-direction:column;position:relative}.view{flex:1}.stage{padding:8px 8px 0}.stage iframe{border-radius:12px 12px 0 0}
   .view{order:1}.panel{order:2;flex:none;border-right:0;border-top:2px solid var(--card);border-radius:0;padding:0;max-height:62%}
   .tabs{margin:8px;order:3}.says{order:1;padding:8px 12px 0}.says:has(.status:empty){display:none}
-  .pane{order:2;padding:10px 12px 12px}.panel:not(.open) .pane{display:none}.panel:not(.open) .says .unread{display:none}
+  .pane{order:2;padding:10px 12px 12px}.panel:not(.open) .pane{display:none!important}.panel:not(.open) .says .unread{display:none}
 }
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -78,30 +82,36 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   <span class="sp"></span>
   <button class="pill quiet" id="undo" disabled>Undo</button>
   <button class="pill" id="save" disabled>Keep my edits</button>
-  <button class="pill ink" id="pubOpen" aria-haspopup="dialog">Download</button>
+  <ui-dialog id="pubDlg">
+    <ui-dialog-trigger><button class="pill ink" id="pubOpen">Download</button></ui-dialog-trigger>
+    <ui-dialog-backdrop class="sheet-bg" hidden></ui-dialog-backdrop>
+    <ui-dialog-content class="box" id="pubSheet" hidden>
+      <div class="head"><div><ui-dialog-title><h2 id="pubH">Download your page</h2></ui-dialog-title><ui-dialog-description><p class="lab" id="pubLab" style="margin-top:8px">This design with your edits, checked against the page before it is handed out. It needs an account; payment comes first.</p></ui-dialog-description><p class="status" id="pubStatus" role="status" aria-live="polite" style="margin-top:10px"></p></div><ui-dialog-close><button class="pill quiet" id="pubClose">Close</button></ui-dialog-close></div>
+      <div id="payStep" hidden><h3><b>1</b>Pay once for this design</h3><div class="row"><button class="pill ink" id="payGo" hidden>Pay for this design</button></div></div>
+      <div><h3><b>↓</b>Download the HTML and CSS</h3><div class="row"><button class="pill" id="prepare">Prepare my download</button><button class="pill ink" id="getZip" hidden>Download ↓</button></div></div>
+    </ui-dialog-content>
+  </ui-dialog>
 </div>
 <div class="main">
   <aside class="panel" id="panel" aria-label="Edit the page">
-    <div class="tabs" role="tablist" aria-label="What to change"><button role="tab" data-tab="text" aria-selected="true" aria-controls="pane-text">Text</button><button role="tab" data-tab="pictures" aria-selected="false" aria-controls="pane-pictures">Pictures</button><button role="tab" data-tab="colours" aria-selected="false" aria-controls="pane-colours">Colours</button><button role="tab" data-tab="sections" aria-selected="false" aria-controls="pane-sections">Sections</button></div>
-    <div class="says"><p class="status" id="status" role="status" aria-live="polite">Click a text on the page to rewrite it, or a picture to choose another.</p><ul class="unread" id="unread" hidden></ul></div>
-    <div class="pane" id="pane-text" role="tabpanel" data-pane="text"><p class="lab">Click any text on the page and type. Or open a part of the page here.</p><div id="fields" style="display:grid;gap:8px"></div></div>
-    <div class="pane" id="pane-pictures" role="tabpanel" data-pane="pictures" hidden><p class="lab">Click a picture on the page, then choose another of yours for its place.</p><div id="slots" style="display:grid;gap:4px"></div><label class="pill" style="justify-self:start">Upload a photograph<input type="file" id="upload" accept="image/png,image/jpeg,image/webp" style="position:absolute;width:1px;height:1px;opacity:0"></label></div>
-    <div class="pane" id="pane-colours" role="tabpanel" data-pane="colours" hidden><p class="lab">Each of these keeps every line readable. The dot is the colour of buttons.</p><div class="sw" id="palettes"></div></div>
-    <div class="pane" id="pane-sections" role="tabpanel" data-pane="sections" hidden><p class="lab">Untick a part to leave it out of the page.</p><div class="blocks" id="blocks"></div><p class="lab" id="moveNote"></p></div>
+    <ui-tabs id="tabs" default-value="text">
+      <ui-tabs-list class="tabs" aria-label="What to change"><ui-tabs-tab value="text"><button type="button" data-tab="text">Text</button></ui-tabs-tab><ui-tabs-tab value="pictures"><button type="button" data-tab="pictures">Pictures</button></ui-tabs-tab><ui-tabs-tab value="colours"><button type="button" data-tab="colours">Colours</button></ui-tabs-tab><ui-tabs-tab value="sections"><button type="button" data-tab="sections">Sections</button></ui-tabs-tab></ui-tabs-list>
+      <div class="says"><p class="status" id="status" role="status" aria-live="polite">Click a text on the page to rewrite it, or a picture to choose another.</p><ul class="unread" id="unread" hidden></ul><button class="pill quiet" id="takeBack" hidden>Take it back</button></div>
+      <ui-tabs-panel value="text" class="pane" id="pane-text" data-pane="text"><p class="lab">Click any text on the page and type. Or open a part of the page here.</p><div id="fields" style="display:grid;gap:8px"></div></ui-tabs-panel>
+      <ui-tabs-panel value="pictures" class="pane" id="pane-pictures" data-pane="pictures" hidden><p class="lab">Click a picture on the page, or a place here, then choose another of your pictures for it.</p><div id="slots" style="display:grid;gap:6px"></div><label class="pill" style="justify-self:start">Upload a photograph<input type="file" id="upload" accept="image/png,image/jpeg,image/webp" style="position:absolute;width:1px;height:1px;opacity:0"></label></ui-tabs-panel>
+      <ui-tabs-panel value="colours" class="pane" id="pane-colours" data-pane="colours" hidden><p class="lab">The page is checked after you choose. A colour that does not hold on this design is said so, and can be taken back. The dot is the colour of buttons.</p><div class="sw" id="palettes"></div></ui-tabs-panel>
+      <ui-tabs-panel value="sections" class="pane" id="pane-sections" data-pane="sections" hidden><p class="lab">Untick a part to leave it out of the page.</p><div class="blocks" id="blocks"></div><p class="lab" id="moveNote"></p></ui-tabs-panel>
+    </ui-tabs>
   </aside>
   <div class="view">
     <span class="busy" id="busy" hidden>updating…</span>
     <div class="stage" id="stage"><iframe id="page" title="Your page, as it will look"></iframe></div>
   </div>
 </div>
-<div class="sheetw" id="pubSheet" hidden role="dialog" aria-modal="true" aria-labelledby="pubH"><div class="box">
-  <div class="head"><div><h2 id="pubH">Download your page</h2><p class="lab" id="pubLab" style="margin-top:8px">This design with your edits, checked against the page before it is handed out. It needs an account; payment comes first.</p><p class="status" id="pubStatus" role="status" aria-live="polite" style="margin-top:10px"></p></div><button class="pill quiet" id="pubClose" aria-label="Close">Close</button></div>
-  <div id="payStep" hidden><h3><b>1</b>Pay once for this design</h3><div class="row"><button class="pill ink" id="payGo" hidden>Pay for this design</button></div></div>
-  <div><h3><b>↓</b>Download the HTML and CSS</h3><div class="row"><button class="pill" id="prepare">Prepare my download</button><button class="pill ink" id="getZip" hidden>Download ↓</button></div></div>
-</div></div>
 <script src="/config.js"></script>
 <script src="/js/auth.js" defer></script>
 <script src="/js/swarm2.js"></script>
+<script type="module" src="/vendor/ui-sdk/web.js"></script>
 <script>
 /* The editor (BRIEF-engine.md step 9). Every edit is an operation on the page's data, never on the design, so the
    same edits stand when another of the three designs is chosen. After each edit the page is rendered again (the
@@ -113,8 +123,8 @@ const nameOf=s=>/^v[1-9][0-9]?$/.test(s)?'Design '+s.slice(1):'This design';
 /* the parts of a page in plain words (the data's own names stay underneath) */
 const PART={brand:'Name',hero:'Top of the page',nav:'Menu',signin:'Sign-in link',cta:'Top button',trust:'Trust line',figures:'Numbers',statement:'Statement',steps:'Steps',features:'Features',plans:'Prices',faq:'Questions',quotes:'Quotes',logos:'Customer logos',links:'Links',close:'Closing',foot:'Footer',place:'The place',team:'Team',catalogue:'What you offer',locations:'Locations',contact:'Contact',projects:'Projects',credentials:'Credentials'};
 const partOf=b=>PART[b]||b;
-const WORD={title:'heading',text:'text',t:'',d:'description',q:'question',a:'answer',l:'label',v:'number',k:'',name:'name',price:'price',note:'note',items:'',kicker:'small line above',primary:'button',secondary:'second button',groups:'',sections:'',menu:'menu'};
-const labelOf=p=>{ const [b,...r]=p.split('.'); return [partOf(b),...r.map(x=>/^\d+$/.test(x)?'#'+(+x+1):(x in WORD?WORD[x]:x)).filter(Boolean)].join(' · '); };
+const WORD={title:'heading',text:'text',text2:'second line',title2:'second heading',img:'picture',t:'',d:'description',q:'question',a:'answer',l:'label',v:'number',k:'',name:'name',price:'price',note:'note',items:'',kicker:'small line above',primary:'button',secondary:'second button',groups:'',sections:'',menu:'menu'};
+const labelOf=p=>{ const [b,...r]=p.split('.'); return [partOf(b),...r.map(x=>/^\d+$/.test(x)?'item '+(+x+1):(x in WORD?WORD[x]:x)).filter(Boolean)].join(' · '); };
 let ops=[], kept='[]', view=null, blocksSeen=[], renderN=0, checkT=0;
 const post=(p,body)=>fetch(API+p,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
 function say(t,cls){ const s=$('#status'); s.textContent=t; s.className='status'+(cls?' '+cls:''); }
@@ -124,6 +134,7 @@ function compact(list){ const out=[], last=new Map(); list.forEach((o,i)=>{ cons
 const hist=[];   /* each edit's state before it: Undo returns to it exactly */
 function edit(op){ hist.push(ops); ops=compact([...ops,op]); $('#undo').disabled=false; refresh(); }
 $('#undo').onclick=()=>{ if(!hist.length) return; ops=hist.pop(); $('#undo').disabled=!hist.length; refresh(); };
+$('#takeBack').onclick=()=>{ $('#takeBack').hidden=true; $('#undo').click(); };
 async function describe(){ const r=await post(`/t/${ID}/${SLUG}/describe`,{ops}); const j=await r.json(); if(!r.ok) throw new Error(j.error||'This page cannot be edited.'); return j; }
 async function refresh(){ const n=++renderN; $('#busy').hidden=false; if(crew&&n>1) crew.push([{role:'Render',text:'Drawing your edit'}]);
   try{ const [d,html]=await Promise.all([describe(),post(`/t/${ID}/${SLUG}/render`,{ops}).then(async r=>{ if(!r.ok) throw new Error((await r.json().catch(()=>({}))).error||'The page could not be drawn.'); return r.text(); })]);
@@ -133,26 +144,35 @@ async function refresh(){ const n=++renderN; $('#busy').hidden=false; if(crew&&n
   catch(e){ if(n===renderN) say(String(e.message||e),'bad'); }
   finally{ if(n===renderN) $('#busy').hidden=true; } }
 async function check(n){ try{ const r=await post(`/t/${ID}/${SLUG}/check`,{ops}); const j=await r.json(); if(n!==renderN) return; const ul=$('#unread'); ul.replaceChildren();
-  if(!r.ok){ say(j.error||'The check did not run.','bad'); return; }
+  $('#takeBack').hidden=true;
+  if(!r.ok){ say(j.error||'The check could not run this time. Your edit is on the page.'); return; }
   if(j.ok){ ul.hidden=true; if(!view?.refused?.length) say('Every line reads, at desk and phone width.','ok'); if(crew&&n>1) crew.push([{role:'QA',text:'Every line reads'}]); return; }
-  for(const u of j.unread||[]){ const li=document.createElement('li'); const f=(view?.fields||[]).find(x=>norm(x.value)===norm(u.text)||norm(u.text).startsWith(norm(x.value).slice(0,40)));
-    li.textContent=`“${u.text}” reads at ${Number(u.ratio).toFixed(1)}:1 ${u.at==='m'?'on a phone':'on a desk'}. Choose another colour, or another picture for ${f?.block?partOf(f.block).toLowerCase():'this section'}, or hide it.`; ul.appendChild(li); }
-  if(j.overlap) { const li=document.createElement('li'); li.textContent='Two lines lie over each other: a text is too long for its place.'; ul.appendChild(li); }
-  if(j.sideways) { const li=document.createElement('li'); li.textContent='The page now scrolls sideways on a phone: a word or a line is too long.'; ul.appendChild(li); }
-  ul.hidden=!ul.children.length; say('Your edit makes part of the page hard to read:','bad'); if(small()) $('#panel').classList.add('open'); if(crew) crew.push([{role:'QA',text:'A line could not be read'}]); }
-  catch{ if(n===renderN) say('The check did not run.','bad'); } }
+  const failed=j.failed||[], line=t=>{ const li=document.createElement('li'); li.textContent=t; ul.appendChild(li); };
+  /* the check itself could not run (the server answers failed: ['tool']): that is not the visitor's edit, and is not said as one */
+  if(failed.includes('tool')&&!(j.unread||[]).length&&!j.overlap&&!j.sideways){ ul.hidden=true; say('The check could not run this time. Your edit is on the page; the next change is checked again.'); return; }
+  for(const u of j.unread||[]){ const f=(view?.fields||[]).find(x=>norm(x.value)===norm(u.text)||norm(u.text).startsWith(norm(x.value).slice(0,40)));
+    line(`“${u.text}” reads at ${Number(u.ratio).toFixed(1)}:1 ${u.at==='m'?'on a phone':'on a desk'}. Choose another colour, or another picture for ${f?.block?partOf(f.block).toLowerCase():'this section'}, or hide it.`); }
+  if(j.overlap) line('Two lines lie over each other: a text is too long for its place.');
+  if(j.sideways) line('The page now scrolls sideways on a phone: a word or a line is too long.');
+  const WHY={unseen:'Something on the page can no longer be seen against its ground.',blank:'A part of the page is left empty.',distorted:'A picture is drawn out of its own proportion.',cut:'A line is cut off at the edge of its place.',first:'The first screen no longer holds together.',legible:'A line no longer reads on what is behind it.'};
+  for(const k of failed) if(WHY[k]&&!(k==='legible'&&(j.unread||[]).length)) line(WHY[k]);
+  const last=ops[ops.length-1], colour=last&&last.op==='palette';
+  ul.hidden=!ul.children.length; say(colour?'This colour does not hold on this design:':'Your last change does not hold on this design:','bad'); $('#takeBack').hidden=!hist.length; if(small()) $('#panel').classList.add('open'); if(crew) crew.push([{role:'QA',text:colour?'This colour does not hold':'A change does not hold'}]); }
+  catch{ if(n===renderN) say('The check could not run this time. Your edit is on the page.'); } }
 const norm=s=>String(s||'').replace(/\s+/g,' ').trim().toLowerCase();
 /* four tabs, one shown; on a phone the panel is a sheet: a tab opens it, the same tab again closes it */
 const small=()=>matchMedia('(max-width:900px)').matches;
-function tab(name,open){ const was=document.querySelector('.tabs [aria-selected="true"]')?.dataset.tab; document.querySelectorAll('.tabs [data-tab]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===name))); document.querySelectorAll('[data-pane]').forEach(p=>p.hidden=p.dataset.pane!==name);
-  $('#panel').classList.toggle('open',open===undefined?!(small()&&was===name&&$('#panel').classList.contains('open')):open); }
-document.querySelectorAll('.tabs [data-tab]').forEach(b=>b.onclick=()=>tab(b.dataset.tab));
+/* the tabs are the UI SDK's (web/vendor/ui-sdk: arrow keys, one tab stop, the ARIA); ours is only the sheet on a phone */
+const tabsEl=$('#tabs'); let shownTab='text';
+const select=name=>{ if(tabsEl.api) tabsEl.api.select(name); else customElements.whenDefined('ui-tabs').then(()=>tabsEl.api&&tabsEl.api.select(name)); };
+function tab(name,open){ shownTab=name; select(name); $('#panel').classList.toggle('open',!!open); }
+document.querySelectorAll('.tabs [data-tab]').forEach(b=>b.addEventListener('click',()=>{ const same=shownTab===b.dataset.tab; shownTab=b.dataset.tab; $('#panel').classList.toggle('open',small()?!(same&&$('#panel').classList.contains('open')):true); }));
 /* the download: one button, its steps in a sheet. Putting the page online at a swarmsite.si name is built (server/publish.mjs)
    but not offered: hosting is not a product yet (owner, 2026-11-13). It is on only where config.js says so, and no page says so. */
 const PUBLISH=window.SWARMSITE_PUBLISH===true; const AND=PUBLISH?' or publish':'';
 if(PUBLISH){ $('#payStep').insertAdjacentHTML('afterend','<div id="onlineStep"><h3><b>↗</b>Put it online</h3><div class="row"><label class="field"><input id="siteName" maxlength="40" autocomplete="off" spellcheck="false" placeholder="your-name" aria-label="Your address"><span class="lab">.swarmsite.si</span></label><button class="pill ink" id="publish">Publish</button></div><p style="margin-top:10px"><a id="siteLink" hidden target="_blank" rel="noopener"></a></p></div>'); $('#pubOpen').textContent='Publish or download'; $('#pubH').textContent='Publish or download'; $('#pubLab').textContent='This design with your edits, checked against the page before it is handed out. Both need an account; payment comes before either.'; }
-const sheet=on=>{ $('#pubSheet').hidden=!on; if(on) $('#pubClose').focus(); else $('#pubOpen').focus(); };
-$('#pubOpen').onclick=()=>sheet(true); $('#pubClose').onclick=()=>sheet(false); $('#pubSheet').addEventListener('click',e=>{ if(e.target===e.currentTarget) sheet(false); }); addEventListener('keydown',e=>{ if(e.key==='Escape'&&!$('#pubSheet').hidden) sheet(false); });
+/* the dialog is the UI SDK's too: focus kept inside, Escape and a press outside close it, focus returns to the button */
+const dlg=$('#pubDlg'); const sheet=on=>{ customElements.whenDefined('ui-dialog').then(()=>{ dlg.open=on; }); };
 /* the agents over the page: Render while an edit is drawn, QA when the check answers — the product's own (js/swarm2.js), saying only what happened */
 const crew=window.Swarm2?Swarm2.mount($('#stage'),{roles:[['Render','#1F6F78'],['QA','#1B1B1B']],busy:2}):null;
 /* the panel */
@@ -161,8 +181,12 @@ function draw(d){
   for(const b of d.blocks||[]) if(!blocksSeen.includes(b)) blocksSeen.push(b);
   const bl=$('#blocks'); bl.replaceChildren(); for(const b of blocksSeen){ const l=document.createElement('label'); const c=document.createElement('input'); c.type='checkbox'; c.checked=(d.blocks||[]).includes(b); c.onchange=()=>edit({op:c.checked?'show':'hide',block:b}); l.append(c,document.createTextNode(partOf(b))); bl.appendChild(l); }
   $('#moveNote').textContent=(d.movable||[]).length?'':'This design keeps its own order of sections.';
-  const sl=$('#slots'); sl.replaceChildren(); for(const s of d.slots||[]){ const row=document.createElement('div'); row.className='slot'; row.dataset.path=s.path; const im=document.createElement('img'); im.alt=''; im.src=mediaUrl(s.src);
-    const sel=document.createElement('select'); sel.setAttribute('aria-label','Picture: '+labelOf(s.path)); for(const p of d.pictures||[]){ const o=new Option(p.alt||p.src.split('/').pop(),p.src); o.selected=p.src===s.src; sel.appendChild(o); } sel.onchange=()=>edit({op:'picture',path:s.path,src:sel.value}); row.append(im,sel); sl.appendChild(row); }
+  /* the pictures: each place on the page with the picture standing in it; a place opened shows the client's own pictures to choose from */
+  const sl=$('#slots'); const wasOpen=sl.querySelector('.slot.hit')?.dataset.path; sl.replaceChildren();
+  for(const sl1 of d.slots||[]){ const row=document.createElement('div'); row.className='slot'; row.dataset.path=sl1.path; row.dataset.src=sl1.src;
+    const head=document.createElement('button'); head.type='button'; head.setAttribute('aria-expanded','false'); const im=document.createElement('img'); im.alt=''; const cur=(d.pictures||[]).find(p=>p.src===sl1.src);
+    const nm=document.createElement('span'); nm.textContent=placeOf(sl1.path); const sm=document.createElement('small'); sm.textContent='Change'; head.append(im,nm,sm); head.onclick=()=>pickFor(sl1.path,row.classList.contains('hit')&&!!row.querySelector('.picks')?null:sl1.path); row.appendChild(head); sl.appendChild(row); }
+  if(wasOpen) pickFor(wasOpen,wasOpen,true);
   /* the texts, by part of the page: a short list of parts, each opened on its own — never one long column */
   const fs=$('#fields'); const openNow=new Set([...fs.querySelectorAll('details[open]')].map(x=>x.dataset.block)); fs.replaceChildren(); const groups=new Map();
   for(const f of d.fields||[]){ const k=f.block||f.path.split('.')[0]; if(!groups.has(k)) groups.set(k,[]); groups.get(k).push(f); }
@@ -170,23 +194,42 @@ function draw(d){
     for(const f of list){ const w=document.createElement('label'); w.className='f'; w.dataset.path=f.path; const sp=document.createElement('span'); sp.textContent=labelOf(f.path).split(' · ').slice(1).join(' · ')||partOf(k); const t=document.createElement('textarea'); t.rows=Math.min(4,Math.ceil(f.value.length/34)||1); t.value=f.value;
       t.onchange=()=>{ if(t.value.trim()&&t.value!==f.value) edit({op:'text',path:f.path,value:t.value}); else if(!t.value.trim()){ t.value=f.value; say('An empty text cannot stand on the page: hide its section instead.','bad'); } }; w.append(sp,t); box.appendChild(w); }
     fs.appendChild(g); } }
-function mediaUrl(src){ const f=$('#page'); const d=f.contentDocument; const im=d&&[...d.querySelectorAll('img')].find(i=>(i.getAttribute('src')||'').endsWith(src)); return im?im.src:''; }
+/* where the page's own pictures are served from: read off a picture the page shows, so one that is not on the page yet can be shown as a choice too */
+let mediaBase='';
+function mediaUrl(src){ const d=$('#page').contentDocument; const im=d&&[...d.querySelectorAll('img')].find(i=>(i.getAttribute('src')||'').endsWith(src)); if(im){ mediaBase=im.src.slice(0,im.src.length-src.length); return im.src; } return mediaBase?mediaBase+src:''; }
+const placeOf=p=>{ const [b,...r]=p.split('.'); const n=r.filter(x=>/^\d+$/.test(x)).map(x=>+x+1); return b==='media'?`${r[0]==='screens'?'Screen':r[0]==='phones'?'Phone screen':'Photograph'} ${n[0]||''}`.trim():`${partOf(b)}${n.length?' · item '+n[0]:''}`; };
+function thumbs(){ document.querySelectorAll('#slots .slot').forEach(r=>{ const u=mediaUrl(r.dataset.src); if(u) r.querySelector('img').src=u; }); document.querySelectorAll('#slots .picks button').forEach(b=>{ const u=mediaUrl(b.dataset.src); if(u) b.querySelector('img').src=u; }); }
+function pickFor(mark,open,quiet){ document.querySelectorAll('#slots .slot').forEach(r=>{ r.classList.toggle('hit',r.dataset.path===mark); r.querySelector('.picks')?.remove(); r.firstChild.setAttribute('aria-expanded','false'); });
+  const row=open&&document.querySelector(`#slots .slot[data-path="${CSS.escape(open)}"]`); if(!row) return; row.firstChild.setAttribute('aria-expanded','true');
+  const g=document.createElement('div'); g.className='picks'; g.setAttribute('role','group'); g.setAttribute('aria-label','Your pictures for '+placeOf(open));
+  for(const p of view?.pictures||[]){ const b=document.createElement('button'); b.type='button'; b.dataset.src=p.src; b.title=p.alt||''; b.setAttribute('aria-label',p.alt||p.src.split('/').pop()); b.setAttribute('aria-pressed',String(p.src===row.dataset.src)); const i=document.createElement('img'); i.alt=''; i.loading='lazy'; b.appendChild(i); b.onclick=()=>{ if(p.src!==row.dataset.src) edit({op:'picture',path:open,src:p.src}); }; g.appendChild(b); }
+  row.appendChild(g); thumbs(); if(!quiet) row.scrollIntoView({block:'nearest',behavior:'smooth'}); }
 /* the page: a text clicked is edited where it stands; a picture clicked shows its slot */
-function show(html){ const f=$('#page'); const y=f.contentWindow?.scrollY||0; f.onload=()=>{ const d=f.contentDocument; try{ f.contentWindow.scrollTo(0,y); }catch{}
-    d.addEventListener('click',e=>{ const a=e.target.closest('a'); if(a) e.preventDefault(); const im=e.target.closest('img');
-      if(im){ const src=im.getAttribute('src')||''; const s=(view.slots||[]).find(x=>src.endsWith(x.src)); if(s){ hit('#slots .slot',s.path); return; } }
+function show(html){ const f=$('#page'); const y=f.contentWindow?.scrollY||0; f.onload=()=>{ const d=f.contentDocument, w=f.contentWindow;
+    /* back to where the visitor was: at once, and again while the page settles (fonts, pictures and the page's own script change its height) */
+    let lastH=-1, calm=0; const back=()=>{ try{ const h=d.documentElement.scrollHeight; if(Math.abs(w.scrollY-y)>2) w.scrollTo({top:y,behavior:'instant'}); calm=h===lastH?calm+1:0; lastH=h; if(calm>=3) stop(); }catch{ stop(); } };   /* until its height has stood still for three looks */
+    const t=setInterval(back,60); const stop=()=>clearInterval(t); back(); setTimeout(stop,1200); ['wheel','touchstart','keydown','pointerdown'].forEach(k=>d.addEventListener(k,stop,{once:true,passive:true}));
+    d.addEventListener('click',e=>{ const a=e.target.closest('a'); if(a) e.preventDefault();
+      const under=d.elementsFromPoint(e.clientX,e.clientY), im=under.find(el=>el.tagName==='IMG'&&(view.slots||[]).some(x=>(el.getAttribute('src')||'').endsWith(x.src)));   /* the picture under the pointer, also when a link or a veil lies over it */
+      if(im&&!under.slice(0,under.indexOf(im)).some(el=>(view.fields||[]).some(x=>norm(x.value)===norm(el.textContent)&&norm(x.value)))){ const src=im.getAttribute('src')||''; const s=(view.slots||[]).find(x=>src.endsWith(x.src)); hit('#slots .slot',s.path); return; }
       let el=e.target; while(el&&el!==d.body){ const t=norm(el.textContent); const fld=(view.fields||[]).find(x=>norm(x.value)===t); if(fld){ inline(el,fld); return; } el=el.parentElement; } },true);
-    document.querySelectorAll('#slots img').forEach((im,i)=>{ const s=view.slots[i]; im.src=mediaUrl(s.src); }); };
+    thumbs(); };
   f.srcdoc=html; }
+/* "Desktop" is the page as a desk screen shows it: 1440 wide, made smaller to fit beside the panel — not a narrow window that the
+   design answers with its phone layout. "Phone" is 390 wide. On a phone the page is simply the phone's width. */
+function fit(){ const st=$('#stage'), f=$('#page'); const desk=!st.classList.contains('phone')&&!small(); st.classList.toggle('desk',desk);
+  if(!desk){ f.style.width=f.style.height=f.style.transform=''; return; } const cs=getComputedStyle(st), W=st.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight), H=st.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom), k=Math.min(1,W/1440);
+  f.style.width='1440px'; f.style.height=(H/k)+'px'; f.style.transform=k<1?`scale(${k})`:''; }
+addEventListener('resize',fit); fit();
 /* what was clicked on the page is shown in the panel: its tab, its part opened, the field marked. A text is typed on the page
    itself, so on a phone the sheet stays down for it; a picture's choice is in the panel, so the sheet comes up. */
-function hit(sel,path){ const pic=sel.includes('.slot'); tab(pic?'pictures':'text',small()?pic:true); document.querySelectorAll(sel).forEach(x=>x.classList.toggle('hit',x.dataset.path===path)); const x=document.querySelector(`${sel}[data-path="${CSS.escape(path)}"]`); if(!x) return;
+function hit(sel,path){ const pic=sel.includes('.slot'); tab(pic?'pictures':'text',small()?pic:true); if(!pic) document.querySelectorAll(sel).forEach(x=>x.classList.toggle('hit',x.dataset.path===path)); const x=document.querySelector(`${sel}[data-path="${CSS.escape(path)}"]`); if(!x) return;
   const g=x.closest('details'); if(g){ document.querySelectorAll('#fields details').forEach(o=>{ if(o!==g) o.open=false; }); g.open=true; }
-  x.scrollIntoView({block:'center',behavior:'smooth'}); if(pic) x.querySelector('select')?.focus({preventScroll:true}); }
+  if(pic){ pickFor(path,path); return; } x.scrollIntoView({block:'center',behavior:'smooth'}); }
 function inline(el,fld){ hit('#fields .f',fld.path); el.contentEditable='plaintext-only'; el.focus(); const before=el.textContent;
   const done=()=>{ el.contentEditable='false'; el.removeEventListener('blur',done); const v=el.textContent.replace(/\s+/g,' ').trim(); if(v&&v!==norm(before)&&v!==fld.value.trim()) edit({op:'text',path:fld.path,value:v}); else if(!v){ el.textContent=before; say('An empty text cannot stand on the page: hide its section instead.','bad'); } };
   el.addEventListener('blur',done); el.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); el.blur(); } if(e.key==='Escape'){ el.textContent=before; el.blur(); } }); }
-document.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{ document.querySelectorAll('[data-w]').forEach(x=>x.classList.toggle('on',x===b)); $('#stage').classList.toggle('phone',b.dataset.w==='phone'); });
+document.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{ document.querySelectorAll('[data-w]').forEach(x=>x.classList.toggle('on',x===b)); $('#stage').classList.toggle('phone',b.dataset.w==='phone'); fit(); });
 /* a photograph of their own, added while editing */
 $('#upload').onchange=async e=>{ const file=e.target.files[0]; e.target.value=''; if(!file) return; say('Sending the photograph…');
   try{ const r=await fetch(API+'/uploads',{method:'POST',headers:{'content-type':file.type||'image/jpeg'},body:file}); const j=await r.json(); if(!r.ok) throw new Error(j.error);

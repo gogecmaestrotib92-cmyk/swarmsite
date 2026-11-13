@@ -20,11 +20,14 @@ try {
       if (u.hostname === 'app.test' && u.pathname === '/edit') return r.fulfill({ contentType: 'text/html', body: html });
       if (u.hostname === 'app.test' && u.pathname === '/config.js') return r.fulfill({ contentType: 'application/javascript', body: "window.SWARMSITE_API='https://api.test'" });
       if (u.hostname === 'app.test' && u.pathname === '/login') { state.landed = u.search; return r.fulfill({ contentType: 'text/html', body: '<p>login</p>' }); }
+      if (u.hostname === 'app.test' && u.pathname.startsWith('/vendor/')) return r.fulfill({ contentType: 'application/javascript', body: fs.readFileSync(path.join(root, 'web', u.pathname)) });   // the UI SDK's elements (tabs, the dialog), served from the site itself
       if (r.request().headers()['access-control-request-method']) return r.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'POST, PUT' } });
       const t = u.pathname.match(/^\/t\/[0-9a-f-]{36}\/(v[0-9]+)\/(describe|render|check)$/);
       if (u.hostname === 'api.test' && t) { const [, pub, what] = t, slug = TPL[pub], ops = body?.ops ?? [];   // the page speaks of v1, v2; the server of templates
         if (what === 'describe') return json({ ...JSON.parse(edit(o => ['describe', data, '--ops', o, '--slug', slug], ops)), ops: body?.ops ?? [], variants: ['v1', 'v2'] });
         if (what === 'render') { state.renders.push({ slug, ops }); return r.fulfill({ headers: { 'access-control-allow-origin': '*' }, contentType: 'text/html', body: edit(o => ['render', data, slug, '--ops', o, '--base', 'https://storage.example/t/'], ops) }); }
+        if (ops.some(o => o.op === 'text' && /Tool down/.test(o.value))) return json({ ok: false, failed: ['tool'], unread: [], overlap: 0, sideways: 0 });
+        if (ops.at(-1)?.op === 'palette' && ops.at(-1).ground === '#111111') return json({ ok: false, failed: ['unseen'], unread: [], overlap: 0, sideways: 0 });
         const bad = ops.some(o => o.op === 'text' && /Unreadable/.test(o.value));
         return json(bad ? { ok: false, failed: ['legible'], unread: [{ text: 'Unreadable line here', ratio: 2.1, at: 'm' }], overlap: 0, sideways: 0 } : { ok: true, failed: [], unread: [], overlap: 0, sideways: 0 }); }
       if (u.hostname === 'api.test' && u.pathname === `/t/${id}/edits` && m === 'PUT') { state.put = body; return json({ error: 'Sign in to keep your edits.', login: true }, 401); }
@@ -34,12 +37,23 @@ try {
     await frame.locator('h1').waitFor({ timeout: 15000 });
     await page.waitForFunction(() => /Every line reads/.test(document.querySelector('#status').textContent), null, { timeout: 10000 });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth), 0, 'no sideways scroll at ' + width);
+    await page.waitForFunction(() => !!customElements.get('ui-tabs') && !!customElements.get('ui-dialog'));
+    // "Desktop" is a desk screen: the page is laid out 1440 wide and made smaller to fit, not squeezed into the phone layout
+    if (width === 1440) assert.deepEqual(await page.evaluate(() => { const f = document.querySelector('#page'); return [f.contentWindow.innerWidth, f.getBoundingClientRect().right <= innerWidth]; }), [1440, true], 'the desktop view is 1440 wide and fits');
+    else assert.ok(await page.evaluate(() => document.querySelector('#page').contentWindow.innerWidth <= 390), 'on a phone the page is the phone\'s width');
     // a text clicked on the page is rewritten where it stands
     await frame.locator('h1').click();
     assert.equal(await frame.locator('[contenteditable="plaintext-only"]').count(), 1, 'the clicked text is editable in place');
     await page.keyboard.press('ControlOrMeta+a'); await page.keyboard.type('Closed by six, every evening'); await page.keyboard.press('Enter');
     await page.waitForFunction(() => document.querySelector('#page').contentDocument?.querySelector('h1')?.textContent.includes('Closed by six'), null, { timeout: 10000 });
     assert.deepEqual(state.renders.at(-1).ops, [{ op: 'text', path: 'hero.title', value: 'Closed by six, every evening' }]);
+    // the place on the page is kept when it is drawn again
+    { await page.waitForTimeout(1400); const y0 = await page.evaluate(() => { const w = document.querySelector('#page').contentWindow; w.scrollTo(0, 900); return w.scrollY; }); await page.waitForTimeout(200);
+      await page.locator('.tabs [data-tab="sections"]').click(); await page.locator('#blocks label', { hasText: /^Links$/ }).locator('input').uncheck(); await until(() => state.renders.at(-1).ops.some(o => o.op === 'hide' && o.block === 'links'), 'the section to be left out'); await page.waitForTimeout(1800);
+      const y1 = await page.evaluate(() => document.querySelector('#page').contentWindow.scrollY); assert.ok(y0 > 300 && Math.abs(y1 - y0) < 40, `the page stays where the visitor was after an edit: ${y0} → ${y1}`);
+      await page.locator('#undo').click(); await until(() => !state.renders.at(-1).ops.some(o => o.op === 'hide'), 'the section back'); await page.evaluate(() => document.querySelector('#page').contentWindow.scrollTo(0, 0)); await page.locator('.tabs [data-tab="text"]').click(); if (width < 900 && await page.locator('#panel.open').count()) await page.locator('.tabs [data-tab="text"]').click(); }
+    // the tabs answer the keyboard as tabs do: one tab stop, the arrows move and choose
+    if (width === 1440) { await page.locator('.tabs [data-tab="text"]').focus(); await page.keyboard.press('ArrowRight'); assert.equal(await page.locator('[data-pane]:not([hidden])').getAttribute('data-pane'), 'pictures', 'Right Arrow chooses the next tab'); assert.deepEqual(await page.locator('.tabs button').evaluateAll(bs => bs.map(b => b.tabIndex)), [-1, 0, -1, -1]); await page.keyboard.press('ArrowLeft'); }
     // the panel shows one thing at a time: four tabs, and the texts as a short list of the page's parts, the clicked one opened
     assert.deepEqual(await page.locator('.tabs [role=tab]').allTextContents(), ['Text', 'Pictures', 'Colours', 'Sections']);
     assert.equal(await page.locator('[data-pane]:not([hidden])').count(), 1, 'one pane at a time');
@@ -59,6 +73,10 @@ try {
     const last = state.renders.at(-1).ops;
     assert.deepEqual(last.map(o => o.op), ['text', 'hide', 'palette']);
     assert.equal(await page.locator('#fields textarea').evaluateAll(ts => ts.find(t => t.closest('.f').dataset.path === 'hero.title')?.value), 'Closed by six, every evening');
+    // a colour that does not hold is said as that, with a way back; a check that could not run is not said as the visitor's fault
+    await page.locator('#palettes button[aria-label="Colours: ink"]').click(); await page.waitForFunction(() => /This colour does not hold/.test(document.querySelector('#status').textContent), null, { timeout: 10000 });
+    assert.match(await page.locator('#unread').textContent(), /can no longer be seen/); await page.locator('#takeBack').click(); await until(() => state.renders.at(-1).ops.at(-1)?.ground !== '#111111', 'the colour taken back');
+    await page.waitForFunction(() => /Every line reads/.test(document.querySelector('#status').textContent), null, { timeout: 10000 });
     // another design: every edit kept
     await page.locator('#designs button', { hasText: 'Design 2' }).click();
     await page.waitForFunction(() => document.querySelector('#page').contentDocument?.body?.textContent.includes('Closed by six'), null, { timeout: 10000 });
@@ -73,6 +91,13 @@ try {
     const ta = page.locator('#fields .f[data-path="hero.title"] textarea'); await ta.fill('Unreadable on purpose'); await ta.blur();
     await page.waitForFunction(() => !document.querySelector('#unread').hidden, null, { timeout: 10000 });
     assert.match(await page.locator('#unread').textContent(), /reads at 2\.1:1 on a phone\. Choose another colour, or another picture/);
+    await ta.fill('Tool down'); await ta.blur(); await page.waitForFunction(() => /could not run this time/.test(document.querySelector('#status').textContent), null, { timeout: 10000 });
+    assert.ok(await page.locator('#unread').isHidden() && !(await page.locator('#status').getAttribute('class')).includes('bad'), 'a check that could not run names no line and blames no edit');
+    await ta.fill('Unreadable on purpose'); await ta.blur(); await page.waitForFunction(() => !document.querySelector('#unread').hidden, null, { timeout: 10000 });
+    // a picture is chosen from the visitor's own, shown as pictures
+    await page.locator('.tabs [data-tab="pictures"]').click(); if (width < 900 && !(await page.locator('#panel.open').count())) await page.locator('.tabs [data-tab="pictures"]').click();
+    if (await page.locator('#slots .slot').count()) { await page.locator('#slots .slot > button').first().click(); const picks = page.locator('#slots .picks button'); assert.ok(await picks.count() >= 1, 'a place opened shows the pictures to choose from');
+      const other = page.locator('#slots .picks button[aria-pressed="false"]').first(); if (await other.count()) { const src = await other.getAttribute('data-src'); await other.click(); await until(() => state.renders.at(-1).ops.some(o => o.op === 'picture' && o.src === src), 'the picture to be drawn'); } }
     // keeping the edits needs an account: the visitor is sent to sign in, the edits wait for them
     await page.locator('#save').click();
     await page.waitForFunction(() => location.pathname === '/login', null, { timeout: 10000 });
@@ -87,6 +112,7 @@ try {
       const json = (o, status = 200) => r.fulfill({ status, headers: { 'access-control-allow-origin': '*' }, contentType: 'application/json', body: JSON.stringify(o) });
       if (u.hostname === 'app.test' && u.pathname === '/edit') return r.fulfill({ contentType: 'text/html', body: html });
       if (u.hostname === 'app.test' && u.pathname === '/config.js') return r.fulfill({ contentType: 'application/javascript', body: "window.SWARMSITE_API='https://api.test';window.SWARMSITE_PUBLISH=true" });
+      if (u.hostname === 'app.test' && u.pathname.startsWith('/vendor/')) return r.fulfill({ contentType: 'application/javascript', body: fs.readFileSync(path.join(root, 'web', u.pathname)) });   // the UI SDK's elements (tabs, the dialog), served from the site itself
       if (r.request().headers()['access-control-request-method']) return r.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'POST, PUT' } });
       const t = u.pathname.match(/^\/t\/[0-9a-f-]{36}\/(v[0-9]+)\/(describe|render|check)$/);
       if (t) { const [, pub, what] = t, slug = TPL[pub], ops = body?.ops ?? [];
