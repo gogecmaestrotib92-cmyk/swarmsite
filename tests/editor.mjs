@@ -23,7 +23,7 @@ try {
   for (const slug of ['griffin', 'maze']) { const html = await E.render(row, slug, ops);
     assert.ok(html.includes('Closed by six, every evening') && html.includes(`https://storage.example/previews/${ID}/t/media/`), slug); }
   // the readability gate, said in the visitor's words
-  assert.deepEqual(await E.check(row, 'griffin', ops), { ok: true, failed: [], unread: [], overlap: 0, sideways: 0 });
+  assert.deepEqual(await E.check(row, 'griffin', ops), { ok: true, failed: [], unread: [], overlap: 0, sideways: 0, unseen: [] });
   gateAnswer = { ok: false, failed: ['legible'], checks: { legible: [{ at: 'm', ratio: 2.14, text: 'Closed by six, every evening' }], overlap: [], sideways: [] } };
   const c = await E.check(row, 'griffin', ops);
   assert.equal(c.ok, false); assert.deepEqual(c.unread, [{ text: 'Closed by six, every evening', ratio: 2.14, at: 'm' }]);
@@ -41,9 +41,21 @@ try {
   assert.equal(mayKeep({ user: null, row }).status, 401); assert.deepEqual(mayKeep({ user: { id: 'u1' }, row }), { status: 200, claim: true });
   assert.equal(mayKeep({ user: { id: 'u2' }, row: { ...row, user_id: 'u1' } }).status, 403); assert.deepEqual(mayKeep({ user: { id: 'u1' }, row: { ...row, user_id: 'u1' } }), { status: 200, claim: false });
   assert.ok(editable(row, 'griffin') && !editable(row, 'cerebrium') && !editable({ ...row, status: 'running' }, 'griffin') && !editable(row, '../griffin') && !editable({ ...row, result: { templates: { variants: [{ slug: 'griffin' }] } } }, 'griffin'));
+  // a picture that can no longer be seen is passed on by its name
+  gateAnswer = { ok: false, failed: ['unseen'], checks: { unseen: [{ at: 'd', file: 'logo.svg', alt: 'Tallyfern', shows: 12.7 }], legible: [] } };
+  assert.deepEqual((await E.check(row, 'griffin', [])).unseen, [{ alt: 'Tallyfern', at: 'd' }]);
+  // the gate's own answer when a page fails: it exits 1 and prints why. That is an answer, never "the tool did not run"
+  // (production, 2026-11-13: every failing check came back as failed: ['tool'], because a helper threw away what a
+  // non-zero exit had printed). Run for real, in Chrome, on a page with a line nobody can read.
+  { const { gateAnswer: answer, runGate } = await import('../server/editor.mjs'); const bad = path.join(tmp, 'unreadable.html');
+    fs.writeFileSync(bad, '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><body style="margin:0;background:#fff;font:20px Arial"><h1 style="color:#111;margin:40px">A page</h1><p style="color:#fdfdfd;margin:40px">Nobody can read this line on a white ground.</p></body></html>');
+    const got = await runGate(bad, { root }); assert.equal(got.ok, false); assert.ok(got.failed.includes('legible') && !got.failed.includes('tool'), 'a failing page is answered with its reason: ' + JSON.stringify(got.failed));
+    assert.ok((got.checks.legible || []).some(x => /Nobody can read/.test(x.text)), 'and names the line');
+    assert.deepEqual(answer(''), { ok: false, failed: ['tool'] }, 'only a gate that printed nothing did not run'); assert.deepEqual(answer('noise\n{"page":"x","ok":true,"failed":[]}\n').ok, true); }
   // the server's wiring
   const src = fs.readFileSync(path.join(root, 'server/index.mjs'), 'utf8');
   for (const r of ["app.post('/t/:id/:slug/describe'", "app.post('/t/:id/:slug/render'", "app.post('/t/:id/:slug/check'", "app.post('/t/:id/photos'", "app.put('/t/:id/edits'"]) assert.ok(src.includes(r), r);
+  assert.ok(/gate: file => runGate\(file, \{ root: ROOT \}\)/.test(src), 'the worker reads the gate through runGate, which keeps the answer of a failing page');
   assert.ok(/mayKeep\(\{ user, row \}\)/.test(src) && /editLimited\(clientIp\(req\), 'r', 600\)/.test(src) && /editLimited\(clientIp\(req\), 'c', 120\)/.test(src), 'keeping needs an account; trying is rate-limited');
   console.log('Editor: edits replayed on both designs, the gate in the visitor\'s words, a photograph added, edits kept beside the data, and who may keep them');
 } finally { fs.rmSync(tmp, { recursive: true, force: true }); }

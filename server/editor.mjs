@@ -7,8 +7,16 @@
    download. Everything is passed in, so the flow is tested without a database, a bucket or Chrome:
      deps: { readPrivate(key) → Buffer | null, writePrivate(key, buf, type), publishPublic(local, key, type) → url,
              publicBase(key) → url, python(args) → stdout, gate(file) → {ok, failed, checks}, tmp() → dir } */
-import fs from 'node:fs'; import path from 'node:path';
+import fs from 'node:fs'; import path from 'node:path'; import { spawn } from 'node:child_process';
 import { SLUG, UPLOAD } from './templates.mjs';
+
+/* The gate on one page (lib/qa/template_gate.mjs), for the editor's check. The gate exits 1 when the page fails — that is
+   its answer, printed as a line of JSON, not a crash. (Until 2026-11-13 the worker ran it through a helper that rejects
+   every non-zero exit and threw the answer away, so on production a failing page was always reported as failed: ['tool']
+   and the editor could never name the line that did not read.) Only when nothing was printed did the tool not run. */
+export const gateAnswer = out => String(out || '').trim().split('\n').reverse().map(l => { try { return JSON.parse(l); } catch { return null; } }).find(x => x && x.page) || { ok: false, failed: ['tool'] };
+export const runGate = (file, { root, ms = 90000, node = 'node' } = {}) => new Promise(ok => { let out = ''; const p = spawn(node, ['lib/qa/template_gate.mjs', file], { cwd: root, env: process.env }); const t = setTimeout(() => p.kill('SIGKILL'), ms);
+  p.stdout.on('data', d => { out += d; if (out.length > 8e6) p.kill('SIGKILL'); }); p.stderr.on('data', () => {}); p.on('error', () => { clearTimeout(t); ok(gateAnswer('')); }); p.on('close', () => { clearTimeout(t); ok(gateAnswer(out)); }); });
 
 export const MAX_OPS = 400;
 const OP = new Set(['text', 'picture', 'hide', 'show', 'move', 'palette', 'photo']);
@@ -51,7 +59,8 @@ export function makeEditor(deps) {
         fs.writeFileSync(f, String(await deps.python(['lib/templates/edit.py', 'render', path.join(dir, 'data.json'), slug, '--ops', path.join(dir, 'ops.json'), '--base', deps.publicBase(`${row.id}/t/`)])));
         const g = await deps.gate(f) || {}; const c = g.checks || {};
         return { ok: !!g.ok && !(g.failed || []).length, failed: g.failed || [], unread: (c.legible || []).slice(0, 12).map(x => ({ text: String(x.text || '').slice(0, 120), ratio: x.ratio, at: x.at })),
-          overlap: (c.overlap || []).length, sideways: (c.sideways || []).length };
+          overlap: (c.overlap || []).length, sideways: (c.sideways || []).length,
+          unseen: (c.unseen || []).slice(0, 6).map(x => ({ alt: String(x.alt || '').slice(0, 80), at: x.at })) };   // a picture that cannot be seen where it stands, by the name the page gives it
       });
     },
     // a photograph the visitor uploads while editing: measured, published beside the preview's media, offered as their own

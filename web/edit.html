@@ -139,7 +139,7 @@ async function describe(){ const r=await post(`/t/${ID}/${SLUG}/describe`,{ops})
 async function refresh(){ const n=++renderN; $('#busy').hidden=false; if(crew&&n>1) crew.push([{role:'Render',text:'Drawing your edit'}]);
   try{ const [d,html]=await Promise.all([describe(),post(`/t/${ID}/${SLUG}/render`,{ops}).then(async r=>{ if(!r.ok) throw new Error((await r.json().catch(()=>({}))).error||'The page could not be drawn.'); return r.text(); })]);
     if(n!==renderN) return; view=d; draw(d); show(html); $('#save').disabled=JSON.stringify(ops)===kept;
-    if(d.refused?.length) say(`${d.refused.length} edit${d.refused.length===1?'':'s'} cannot be made on this design: ${d.refused.map(x=>x.why).filter((v,i,a)=>a.indexOf(v)===i).join('; ')}.`,'bad'); else say('Checking that every line still reads…');
+    if(d.refused?.length) say(`${d.refused.length} edit${d.refused.length===1?'':'s'} cannot be made on this design: ${d.refused.map(x=>x.why).filter((v,i,a)=>a.indexOf(v)===i).join('; ')}.`,'bad'); else say('Checking the page at desk and phone width… about fifteen seconds. You can go on meanwhile.');
     clearTimeout(checkT); checkT=setTimeout(()=>check(n),900); }
   catch(e){ if(n===renderN) say(String(e.message||e),'bad'); }
   finally{ if(n===renderN) $('#busy').hidden=true; } }
@@ -155,7 +155,8 @@ async function check(n){ try{ const r=await post(`/t/${ID}/${SLUG}/check`,{ops})
   if(j.overlap) line('Two lines lie over each other: a text is too long for its place.');
   if(j.sideways) line('The page now scrolls sideways on a phone: a word or a line is too long.');
   const WHY={unseen:'Something on the page can no longer be seen against its ground.',blank:'A part of the page is left empty.',distorted:'A picture is drawn out of its own proportion.',cut:'A line is cut off at the edge of its place.',first:'The first screen no longer holds together.',legible:'A line no longer reads on what is behind it.'};
-  for(const k of failed) if(WHY[k]&&!(k==='legible'&&(j.unread||[]).length)) line(WHY[k]);
+  for(const u of (j.unseen||[]).filter((x,i,a)=>a.findIndex(y=>y.alt===x.alt)===i)) line(`${u.alt?`“${u.alt}”`:'A picture'} can no longer be seen against what is behind it. Choose another colour, or another picture for its place.`);
+  for(const k of failed) if(WHY[k]&&!(k==='legible'&&(j.unread||[]).length)&&!(k==='unseen'&&(j.unseen||[]).length)) line(WHY[k]);
   const last=ops[ops.length-1], colour=last&&last.op==='palette';
   ul.hidden=!ul.children.length; say(colour?'This colour does not hold on this design:':'Your last change does not hold on this design:','bad'); $('#takeBack').hidden=!hist.length; if(small()) $('#panel').classList.add('open'); if(crew) crew.push([{role:'QA',text:colour?'This colour does not hold':'A change does not hold'}]); }
   catch{ if(n===renderN) say('The check could not run this time. Your edit is on the page.'); } }
@@ -211,8 +212,9 @@ function show(html){ const f=$('#page'); const y=f.contentWindow?.scrollY||0; f.
     const t=setInterval(back,60); const stop=()=>clearInterval(t); back(); setTimeout(stop,1200); ['wheel','touchstart','keydown','pointerdown'].forEach(k=>d.addEventListener(k,stop,{once:true,passive:true}));
     d.addEventListener('click',e=>{ const a=e.target.closest('a'); if(a) e.preventDefault();
       const under=d.elementsFromPoint(e.clientX,e.clientY), im=under.find(el=>el.tagName==='IMG'&&(view.slots||[]).some(x=>(el.getAttribute('src')||'').endsWith(x.src)));   /* the picture under the pointer, also when a link or a veil lies over it */
-      if(im&&!under.slice(0,under.indexOf(im)).some(el=>(view.fields||[]).some(x=>norm(x.value)===norm(el.textContent)&&norm(x.value)))){ const src=im.getAttribute('src')||''; const s=(view.slots||[]).find(x=>src.endsWith(x.src)); hit('#slots .slot',s.path); return; }
-      let el=e.target; while(el&&el!==d.body){ const t=norm(el.textContent); const fld=(view.fields||[]).find(x=>norm(x.value)===t); if(fld){ inline(el,fld); return; } el=el.parentElement; } },true);
+      if(im&&!under.slice(0,under.indexOf(im)).some(el=>(view.fields||[]).some(x=>norm(x.value)===norm(el.textContent)&&norm(x.value)))){ const src=im.getAttribute('src')||''; const s=(view.slots||[]).find(x=>src.endsWith(x.src)); e.stopPropagation(); hit('#slots .slot',s.path); return; }
+      /* a click that edits is the editor's alone: the page's own script must not also answer it (production, 2026-11-13: on one design a text clicked to be edited also moved the page by about 90 px, on 2 clicks of 8) */
+      let el=e.target; while(el&&el!==d.body){ const t=norm(el.textContent); const fld=(view.fields||[]).find(x=>norm(x.value)===t); if(fld){ e.stopPropagation(); e.preventDefault(); inline(el,fld); return; } el=el.parentElement; } },true);
     thumbs(); };
   f.srcdoc=html; }
 /* "Desktop" is the page as a desk screen shows it: 1440 wide, made smaller to fit beside the panel — not a narrow window that the
