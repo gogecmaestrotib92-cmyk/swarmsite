@@ -191,7 +191,7 @@ a{color:inherit;text-decoration:none}
   <div class="cards" id="cards"></div>
   <div class="choose-none" id="chooseNone" hidden><p id="chooseNoneP"></p><ul id="chooseWhy"></ul><p id="chooseStart" style="margin-top:14px">Or <a href="/start" style="text-decoration:underline">tell us about your business</a>: three designs from what you write and your own photographs.</p></div>
   <details class="choose-none" id="chooseLeft" hidden><summary>What the page leaves out, because the form did not say it</summary><ul id="chooseLeftList"></ul></details>
-  <div class="choose-foot"><p class="choose-note" id="chooseNote" role="status">Pick the one you like.</p><span style="display:flex;gap:8px;flex-wrap:wrap"><a class="pill" id="editGo" hidden>Edit and publish</a><button class="pill ink" id="payGo" hidden>Pay and download</button><button class="pill ink" id="download" disabled>Download the page <span aria-hidden="true">↓</span></button></span></div>
+  <div class="choose-foot"><p class="choose-note" id="chooseNote" role="status">Pick the one you like.</p><span style="display:flex;gap:8px;flex-wrap:wrap"><a class="pill" id="editGo" hidden>Edit</a><button class="pill ink" id="payGo" hidden>Pay and download</button><button class="pill ink" id="download" disabled>Download the page <span aria-hidden="true">↓</span></button></span></div>
 </div>
 <div class="full" id="full" role="dialog" aria-modal="true" aria-label="Design, full screen">
   <div class="full-bar"><span class="lab" id="fullName"></span><div class="seg"><button class="on" data-f="desktop">Desktop</button><button data-f="mobile">Phone</button></div><div class="l"><button class="pill ink" id="fullPick">Choose this one</button><button class="pill" id="fullClose">Close</button></div></div>
@@ -308,7 +308,7 @@ $('#download').onclick=async()=>{ const id=lastJob?.id, slug=picked; if(!id||!sl
   catch{ say(slug,'The download did not go through. Check your connection and try again.'); }
   finally{ renderDownload(); } };
 /* payment: Stripe Checkout for the chosen design, offered only where the server says payment is on (a 402 with pay_url) */
-function offerPay(id,slug){ say(slug,'This design is paid for once; then it is yours to download and publish.'); const b=$('#payGo'); b.hidden=false; $('#download').hidden=true;
+function offerPay(id,slug){ say(slug,'This design is paid for once; then it is yours to download.'); const b=$('#payGo'); b.hidden=false; $('#download').hidden=true;
   b.onclick=async()=>{ b.disabled=true; try{ const send=window.Auth&&Auth.enabled?(p,i)=>Auth.api(p,i):(p,i)=>fetch(API+p,i);
     const r=await send('/pay',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({job:id,slug,from:'app'})}); const j=await r.json().catch(()=>({}));
     if(r.status===401){ location.href='/login?next='+encodeURIComponent(location.pathname+location.search); return; }

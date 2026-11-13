@@ -93,7 +93,7 @@ try {
     st.coverHeld = false; await page.waitForFunction(() => document.querySelectorAll('.card .shot.ready img.cover').length === 3, null, { timeout: 8000 });
     assert.deepEqual(await page.locator('.card .state.ok').allTextContents(), Array(3).fill('Ready'), 'each card says it is ready once its own cover and download are');
     assert.ok(await page.locator('#editGo').isHidden()); await page.locator('.card').nth(0).locator('.pickb').click();
-    assert.equal(await page.locator('#editGo').isHidden(), true, 'Edit and publish only once the job kept its data');
+    assert.equal(await page.locator('#editGo').isHidden(), true, 'Edit only once the job kept its data');
     await page.close(); }
   // a site no design fits
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });

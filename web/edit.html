@@ -8,7 +8,7 @@
 <style>
 /* The editor. The page is the thing: it fills the screen and is edited where it stands. Beside it one panel with four
    tabs (Text, Pictures, Colours, Sections), one shown at a time; on a phone the tabs are a bar at the foot and the
-   panel a sheet that opens over the lower part of the page. Publishing and the download are one button, last in the
+   panel a sheet that opens over the lower part of the page. The download is one button, last in the
    bar, that opens their steps. Tokens, type and buttons: /css/site.css. */
 :root{--line:rgba(20,20,20,.12);--bad:#a3261b;--ok:#1f6b3a}
 [hidden]{display:none!important}
@@ -78,7 +78,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   <span class="sp"></span>
   <button class="pill quiet" id="undo" disabled>Undo</button>
   <button class="pill" id="save" disabled>Keep my edits</button>
-  <button class="pill ink" id="pubOpen" aria-haspopup="dialog">Publish or download</button>
+  <button class="pill ink" id="pubOpen" aria-haspopup="dialog">Download</button>
 </div>
 <div class="main">
   <aside class="panel" id="panel" aria-label="Edit the page">
@@ -95,9 +95,8 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   </div>
 </div>
 <div class="sheetw" id="pubSheet" hidden role="dialog" aria-modal="true" aria-labelledby="pubH"><div class="box">
-  <div class="head"><div><h2 id="pubH">Publish or download</h2><p class="lab" style="margin-top:8px">This design with your edits, checked against the page before it is handed out. Both need an account; payment comes before either.</p><p class="status" id="pubStatus" role="status" aria-live="polite" style="margin-top:10px"></p></div><button class="pill quiet" id="pubClose" aria-label="Close">Close</button></div>
+  <div class="head"><div><h2 id="pubH">Download your page</h2><p class="lab" id="pubLab" style="margin-top:8px">This design with your edits, checked against the page before it is handed out. It needs an account; payment comes first.</p><p class="status" id="pubStatus" role="status" aria-live="polite" style="margin-top:10px"></p></div><button class="pill quiet" id="pubClose" aria-label="Close">Close</button></div>
   <div id="payStep" hidden><h3><b>1</b>Pay once for this design</h3><div class="row"><button class="pill ink" id="payGo" hidden>Pay for this design</button></div></div>
-  <div><h3><b>↗</b>Put it online</h3><div class="row"><label class="field"><input id="siteName" maxlength="40" autocomplete="off" spellcheck="false" placeholder="your-name" aria-label="Your address"><span class="lab">.swarmsite.si</span></label><button class="pill ink" id="publish">Publish</button></div><p style="margin-top:10px"><a id="siteLink" hidden target="_blank" rel="noopener"></a></p></div>
   <div><h3><b>↓</b>Download the HTML and CSS</h3><div class="row"><button class="pill" id="prepare">Prepare my download</button><button class="pill ink" id="getZip" hidden>Download ↓</button></div></div>
 </div></div>
 <script src="/config.js"></script>
@@ -148,7 +147,10 @@ const small=()=>matchMedia('(max-width:900px)').matches;
 function tab(name,open){ const was=document.querySelector('.tabs [aria-selected="true"]')?.dataset.tab; document.querySelectorAll('.tabs [data-tab]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===name))); document.querySelectorAll('[data-pane]').forEach(p=>p.hidden=p.dataset.pane!==name);
   $('#panel').classList.toggle('open',open===undefined?!(small()&&was===name&&$('#panel').classList.contains('open')):open); }
 document.querySelectorAll('.tabs [data-tab]').forEach(b=>b.onclick=()=>tab(b.dataset.tab));
-/* publish or download: one button, its steps in a sheet */
+/* the download: one button, its steps in a sheet. Putting the page online at a swarmsite.si name is built (server/publish.mjs)
+   but not offered: hosting is not a product yet (owner, 2026-11-13). It is on only where config.js says so, and no page says so. */
+const PUBLISH=window.SWARMSITE_PUBLISH===true; const AND=PUBLISH?' or publish':'';
+if(PUBLISH){ $('#payStep').insertAdjacentHTML('afterend','<div id="onlineStep"><h3><b>↗</b>Put it online</h3><div class="row"><label class="field"><input id="siteName" maxlength="40" autocomplete="off" spellcheck="false" placeholder="your-name" aria-label="Your address"><span class="lab">.swarmsite.si</span></label><button class="pill ink" id="publish">Publish</button></div><p style="margin-top:10px"><a id="siteLink" hidden target="_blank" rel="noopener"></a></p></div>'); $('#pubOpen').textContent='Publish or download'; $('#pubH').textContent='Publish or download'; $('#pubLab').textContent='This design with your edits, checked against the page before it is handed out. Both need an account; payment comes before either.'; }
 const sheet=on=>{ $('#pubSheet').hidden=!on; if(on) $('#pubClose').focus(); else $('#pubOpen').focus(); };
 $('#pubOpen').onclick=()=>sheet(true); $('#pubClose').onclick=()=>sheet(false); $('#pubSheet').addEventListener('click',e=>{ if(e.target===e.currentTarget) sheet(false); }); addEventListener('keydown',e=>{ if(e.key==='Escape'&&!$('#pubSheet').hidden) sheet(false); });
 /* the agents over the page: Render while an edit is drawn, QA when the check answers — the product's own (js/swarm2.js), saying only what happened */
@@ -201,28 +203,29 @@ $('#save').onclick=async()=>{ const b=$('#save'); b.disabled=true;
   catch(e){ say(String(e.message||e),'bad'); b.disabled=false; } };
 /* the download and the site: both the one package of these edits, made and compared with the page before it is handed out */
 /* payment: one design of this job, paid once through Stripe Checkout; back here afterwards */
-function offerPay(){ pubSay('This design is paid for once; then it is yours to download and publish.'); const b=$('#payGo'); b.hidden=false; $('#payStep').hidden=false; sheet(true);
+function offerPay(){ pubSay(PUBLISH?'This design is paid for once; then it is yours to download and publish.':'This design is paid for once; then it is yours to download.'); const b=$('#payGo'); b.hidden=false; $('#payStep').hidden=false; sheet(true);
   b.onclick=async()=>{ b.disabled=true; try{ const r=await send('/pay',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({job:ID,slug:SLUG,from:'edit'})}); const j=await r.json().catch(()=>({}));
-    if(r.status===401){ toLogin(); return; } if(j.paid){ b.hidden=true; $('#payStep').hidden=true; pubSay('Paid. Prepare your download or publish.','ok'); return; } if(!r.ok||!j.url) throw new Error(j.error||'Payment could not be started.'); location.href=j.url; }
+    if(r.status===401){ toLogin(); return; } if(j.paid){ b.hidden=true; $('#payStep').hidden=true; pubSay('Paid. Prepare your download'+AND+'.','ok'); return; } if(!r.ok||!j.url) throw new Error(j.error||'Payment could not be started.'); location.href=j.url; }
     catch(e){ pubSay(String(e.message||e),'bad'); b.disabled=false; } }; }
 function pubSay(t,cls){ const s=$('#pubStatus'); s.textContent=t; s.className='status'+(cls?' '+cls:''); }
 async function follow(field,since,done){ for(let i=0;i<200;i++){ await new Promise(r=>setTimeout(r,i?3000:800)); const j=await fetch(API+'/jobs/'+ID).then(r=>r.json()).catch(()=>null); const s=j?.result?.[field];
   if(!s||s.slug!==SLUG||Date.parse(s.at)<Date.parse(since)) continue;   /* only what this start wrote */ if(['packaging','deploying'].includes(s.status)){ pubSay(s.status==='packaging'?'Making the package and comparing it with your page…':'Putting it online…'); continue; } done(s); return; } pubSay('It is taking long; come back to this page later.','bad'); }
-async function start(path,body,field,done){ $('#prepare').disabled=$('#publish').disabled=true;
+const both=off=>{ $('#prepare').disabled=off; if($('#publish')) $('#publish').disabled=off; };
+async function start(path,body,field,done){ both(true);
   try{ if(JSON.stringify(ops)!==kept&&!(await keep())) return; const r=await send(path,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body||{})});
     if(r.status===401){ toLogin(); return; } const j=await r.json().catch(()=>({})); if(r.status===402&&j.pay_url){ offerPay(); return; } if(!r.ok){ pubSay(j.error||'It could not be started.','bad'); return; } await follow(field,j.at,done); }
   catch(e){ pubSay(String(e.message||e),'bad'); }
-  finally{ $('#prepare').disabled=$('#publish').disabled=false; } }
+  finally{ both(false); } }
 $('#prepare').onclick=()=>start(`/t/${ID}/${SLUG}/prepare`,{},'edited',s=>{ if(s.status!=='ready'){ pubSay('The package did not match your page, so it is not offered: '+(s.why||[]).join('; '),'bad'); return; }
   pubSay('Your download is ready.','ok'); const a=$('#getZip'); a.hidden=false; a.onclick=async()=>{ const r=await send(`/t/${ID}/${SLUG}/package`,{}); if(!r.ok){ pubSay((await r.json().catch(()=>({}))).error||'The download is not available.','bad'); return; }
     const u=URL.createObjectURL(await r.blob()), l=document.createElement('a'); l.href=u; l.download=`${nameOf(SLUG).toLowerCase().replace(/[^a-z0-9]+/g,'-')}.zip`; document.body.appendChild(l); l.click(); l.remove(); setTimeout(()=>URL.revokeObjectURL(u),4000); }; });
-$('#publish').onclick=()=>{ const name=$('#siteName').value.trim().toLowerCase(); if(!/^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])$/.test(name)||name.includes('--')){ pubSay('A name is 3 to 40 small letters, digits and single dashes.','bad'); $('#siteName').focus(); return; }
+if(PUBLISH) $('#publish').onclick=()=>{ const name=$('#siteName').value.trim().toLowerCase(); if(!/^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])$/.test(name)||name.includes('--')){ pubSay('A name is 3 to 40 small letters, digits and single dashes.','bad'); $('#siteName').focus(); return; }
   start(`/t/${ID}/${SLUG}/publish`,{name},'publish',s=>{ if(s.status==='live'){ pubSay('Your site is online.','ok'); const a=$('#siteLink'); a.href=s.url; a.textContent=s.url.replace('https://',''); a.hidden=false; }
     else pubSay((s.status==='refused'?'Not published: ':'Publishing failed: ')+(s.why||[]).join('; '),'bad'); }); };
 /* switching design keeps every edit */
 function designs(list){ const w=$('#designs'); w.replaceChildren(); for(const s of list){ const b=document.createElement('button'); b.textContent=nameOf(s); b.setAttribute('aria-pressed',String(s===SLUG));
   b.onclick=()=>{ if(s===SLUG) return; SLUG=s; history.replaceState(null,'',`?job=${ID}&slug=${s}`); designs(list); refresh(); }; w.appendChild(b); } }
-(async()=>{ if(!/^[0-9a-f-]{36}$/.test(ID)||!SLUG){ say('No page to edit here.','bad'); return; } $('#back').href='/app?job='+ID; if(qs.get('paid')===SLUG){ pubSay('Payment received. Prepare your download or publish — if it says payment is still needed, give it a moment.','ok'); sheet(true); } else if(qs.get('paid')==='0'){ pubSay('Payment was not completed. Nothing was charged.'); sheet(true); }
+(async()=>{ if(!/^[0-9a-f-]{36}$/.test(ID)||!SLUG){ say('No page to edit here.','bad'); return; } $('#back').href='/app?job='+ID; if(qs.get('paid')===SLUG){ pubSay('Payment received. Prepare your download'+AND+' — if it says payment is still needed, give it a moment.','ok'); sheet(true); } else if(qs.get('paid')==='0'){ pubSay('Payment was not completed. Nothing was charged.'); sheet(true); }
   try{ const d=await describe(); ops=d.ops||[]; kept=JSON.stringify(ops);
     try{ const waiting=sessionStorage.getItem('edits:'+ID); if(waiting){ ops=JSON.parse(waiting); sessionStorage.removeItem('edits:'+ID); } }catch{}
     $('#undo').disabled=true; designs(d.variants||[SLUG]); await refresh(); }

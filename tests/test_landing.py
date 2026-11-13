@@ -42,7 +42,13 @@ def test_the_facts_it_states_are_the_engines_own():
     gate = read('lib', 'qa', 'template_gate.mjs')
     assert "['d', 1440, 900], ['m', 390, 844]" in gate and 'Checked on a desk screen and a phone' in WORDS
     assert re.search(r"def build\(job_dir, out, base='', limit=3\b", read('lib', 'templates', 'job.py')) and 'Three designs' in WORDS
-    assert "export const DOMAIN = 'swarmsite.si'" in read('server', 'publish.mjs') and 'name.swarmsite.si' in WORDS
+    # hosting is not offered yet (owner, 2026-11-13): the offer is three designs, choose, edit, pay once, download. Publishing
+    # stays in the server, unreachable from the pages: no page promises an address or says "publish", and the switch is off.
+    for f in ('index.html', 'app.html', 'edit.html', 'start.html', 'login.html'):
+        seen = text(read('web', f).split('<body>', 1)[1])
+        assert not re.search(r'publish|name\.swarmsite\.si|put it online', seen, re.I), f
+    assert 'SWARMSITE_PUBLISH' not in read('web', 'config.js') and 'window.SWARMSITE_PUBLISH===true' in read('web', 'edit.html')
+    assert 'Download the HTML and CSS' in WORDS and '79 €' in WORDS
     assert 'prefers-reduced-motion:reduce' in read('web', 'css', 'landing.css') and 'Reduced motion respected' in WORDS
     assert re.search(r"SCREENS = 6\b", read('lib', 'templates', 'job.py')) and 'up to six screenshots' in WORDS
 
