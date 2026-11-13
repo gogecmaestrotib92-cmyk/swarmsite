@@ -40,10 +40,20 @@ try {
     await page.keyboard.press('ControlOrMeta+a'); await page.keyboard.type('Closed by six, every evening'); await page.keyboard.press('Enter');
     await page.waitForFunction(() => document.querySelector('#page').contentDocument?.querySelector('h1')?.textContent.includes('Closed by six'), null, { timeout: 10000 });
     assert.deepEqual(state.renders.at(-1).ops, [{ op: 'text', path: 'hero.title', value: 'Closed by six, every evening' }]);
+    // the panel shows one thing at a time: four tabs, and the texts as a short list of the page's parts, the clicked one opened
+    assert.deepEqual(await page.locator('.tabs [role=tab]').allTextContents(), ['Text', 'Pictures', 'Colours', 'Sections']);
+    assert.equal(await page.locator('[data-pane]:not([hidden])').count(), 1, 'one pane at a time');
+    assert.deepEqual(await page.locator('#fields details[open]').evaluateAll(ds => ds.map(d => d.dataset.block)), ['hero'], 'the part whose text was clicked is the one open');
+    assert.ok(await page.locator('#fields details').count() >= 5 && await page.locator('#fields details').count() <= 24, 'the texts are grouped by part of the page');
+    assert.ok(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight + 1), 'the editor itself never scrolls: the page and the panel do, each in its place');
+    const cols = await page.evaluate(() => ({ shown: [...document.querySelectorAll('#fields textarea')].filter(t => t.checkVisibility()).length, all: document.querySelectorAll('#fields textarea').length, open: document.querySelectorAll('#fields details[open] textarea').length }));
+    assert.ok(cols.shown < cols.all / 2 && cols.shown === (width > 900 ? cols.open : 0), JSON.stringify(cols) + ' at ' + width + ': ' + 'no long column of every text: only the open part shows its fields, and on a phone the sheet stays down while a text is typed on the page');
+    assert.ok(await page.locator('#publish').isHidden() && await page.locator('#pubOpen').isVisible(), 'publishing waits behind its one button');
     // a section hidden; a colour chosen; the panel's text field follows the page
+    await page.locator('.tabs [data-tab="sections"]').click();
     await page.locator('#blocks label', { hasText: /^Questions$/ }).locator('input').uncheck();
     await page.waitForFunction(() => document.querySelectorAll('#blocks input:not(:checked)').length === 1);
-    await page.locator('#palettes button').first().click();
+    await page.locator('.tabs [data-tab="colours"]').click(); await page.locator('#palettes button').first().click();
     await until(() => state.renders.at(-1).ops.some(o => o.op === 'palette'), 'the colour to be rendered');
     const last = state.renders.at(-1).ops;
     assert.deepEqual(last.map(o => o.op), ['text', 'hide', 'palette']);
@@ -58,6 +68,7 @@ try {
     await until(() => state.renders.length > n, 'the page after Undo');
     assert.deepEqual((state.renders.at(-1).ops).map(o => o.op), ['text', 'hide']);
     // a line that no longer reads is named, with what to change
+    await page.locator('.tabs [data-tab="text"]').click(); if (!(await page.locator('#fields details[data-block="hero"]').evaluate(d => d.open))) await page.locator('#fields details[data-block="hero"] > summary').click();
     const ta = page.locator('#fields .f[data-path="hero.title"] textarea'); await ta.fill('Unreadable on purpose'); await ta.blur();
     await page.waitForFunction(() => !document.querySelector('#unread').hidden, null, { timeout: 10000 });
     assert.match(await page.locator('#unread').textContent(), /reads at 2\.1:1 on a phone\. Choose another colour, or another picture/);
@@ -86,7 +97,9 @@ try {
       return r.abort(); });
     await page.goto(`https://app.test/edit?job=${id}&slug=v1`);
     await page.frameLocator('#page').locator('h1').waitFor({ timeout: 15000 });
+    await page.locator('#fields details[data-block="hero"] > summary').click();
     const ta = page.locator('#fields .f[data-path="hero.title"] textarea'); await ta.fill('Closed by six'); await ta.blur();
+    await page.locator('#pubOpen').click(); assert.ok(await page.locator('#pubSheet').isVisible() && await page.locator('#payGo').isHidden() && await page.locator('#getZip').isHidden(), 'the steps open; nothing is offered before it applies');
     await page.locator('#siteName').fill('Casa Fern'); await page.locator('#publish').click();
     assert.match(await page.locator('#pubStatus').textContent(), /3 to 40 small letters/); assert.equal(state.published, null, 'a bad name is not sent');
     await page.locator('#siteName').fill('casa-fern'); await page.locator('#publish').click();
