@@ -31,7 +31,7 @@ async function open(pagePath, { configured = true, signedIn = false, methods = "
     if (u.pathname === '/js/auth.js') return r.fulfill({ contentType: 'application/javascript', body: file('js/auth.js') });
     if (u.pathname === '/login') return r.fulfill({ contentType: 'text/html', body: file('login.html') });
     if (u.pathname === '/dashboard') return r.fulfill({ contentType: 'text/html', body: file('dashboard.html') });
-    if (u.pathname === '/header.css') return r.fulfill({ contentType: 'text/css', body: file('header.css') });
+    if (u.pathname === '/header.css' || u.pathname.startsWith('/css/')) return r.fulfill({ contentType: 'text/css', body: file(u.pathname.slice(1)) });   // the shared layer (web/css/site.css) and the landing's sections
     if (u.pathname.startsWith('/js/')) { try { return r.fulfill({ contentType: 'application/javascript', body: file(u.pathname.slice(1)) }); } catch { return r.fulfill({ status: 204, body: '' }); } }
     seen.gone.push(u.pathname + u.search);
     if (u.pathname === '/app') return r.fulfill({ contentType: 'text/html', body: file('app.html') });

@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sign in — Swarmsite</title><meta name="robots" content="noindex">
-<link rel="preload" href="/fonts/instrument-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Shrikhand&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;1,400&amp;family=Figtree:wght@400;500;600;700&amp;family=Shrikhand&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/site.css">
 <link rel="stylesheet" href="/header.css">
 <style>
 @font-face{font-family:'Instrument Sans';font-weight:400;font-display:swap;src:url(/fonts/instrument-sans-latin-400-normal.woff2) format('woff2')}
@@ -19,6 +19,20 @@ label{font-size:13px;font-weight:500}input{width:100%;min-height:48px;border:1px
 .pill{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:48px;border-radius:999px;border:1px solid var(--line);background:#fff;font:500 15px var(--sans);cursor:pointer;transition:transform .3s cubic-bezier(.2,.8,.2,1)}.pill.ink{background:var(--ink);color:#fff;border-color:var(--ink)}.pill:hover{transform:translateY(-1px)}.pill:active{transform:scale(.98)}.pill[disabled]{opacity:.5;cursor:default;transform:none}.pill svg{flex:none}
 .or{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;color:var(--muted);font-size:13px}.or::before,.or::after{content:"";height:1px;background:var(--line)}
 .stack{display:grid;gap:10px}.note{font-size:14px;min-height:1.5em}.note.err{color:#b3261e}.fine{font-size:13px}[hidden]{display:none!important}
+/* ── the shared layer (/css/site.css: the library template's measured build) on this page's own parts ── */
+:root{--ink:#141414;--muted:#575755;--paper:#fffefb;--line:rgba(20,20,20,.12);--sans:"Figtree",system-ui,sans-serif}
+body{background:var(--ground);color:var(--ink);font-family:var(--sans);font-weight:500}
+h1{font:400 64px/.95 var(--serif);letter-spacing:-.03em;text-wrap:balance}
+.pill{border-radius:8px;border:2px solid var(--ink);background:transparent;font:600 15px/1 var(--sans);color:var(--ink);min-height:44px;transition:transform .2s}.pill:hover:not(:disabled){transform:scale(.98)}
+.pill.ink{background:var(--accent);color:var(--on-accent);border-color:var(--on-accent);min-height:52px;padding-inline:24px}
+input,select,textarea{border:2px solid var(--card);border-radius:8px;background:var(--paper);font:500 16px/1.3 var(--sans)}input:focus,select:focus,textarea:focus{outline:0;border-color:var(--ink)}
+.lab{font:500 14px/1.3 var(--sans);color:var(--muted)}
+@media(max-width:991px){h1{font-size:44px}}
+main{padding:128px 20px 64px}.card{width:min(460px,100%);background:var(--card);border:0;border-radius:32px;padding:16px;gap:0;box-shadow:none}
+.card>*{background:var(--paper);padding:10px 24px}.card>:first-child{border-radius:16px 16px 0 0;padding-top:28px}.card>:last-child{border-radius:0 0 16px 16px;padding-bottom:24px}
+.card>[hidden]{display:none!important}h1{font-size:48px;margin-bottom:12px}.card p{color:var(--muted)}label{font-size:14px;font-weight:600}input{border-radius:8px;min-height:52px}
+.pill{width:100%;min-height:52px;border-radius:8px;justify-content:center}.or::before,.or::after{background:var(--card);height:2px}
+@media(max-width:991px){h1{font-size:40px}}
 </style>
 </head>
 <body>

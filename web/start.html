@@ -3,7 +3,9 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Swarmsite — a site from nothing</title><meta name="robots" content="noindex">
-<link rel="preload" href="/fonts/instrument-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;1,400&amp;family=Figtree:wght@400;500;600;700&amp;family=Shrikhand&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/site.css">
+<link rel="stylesheet" href="/header.css">
 <style>
 @font-face{font-family:'Instrument Sans';font-weight:400;font-display:swap;src:url(/fonts/instrument-sans-latin-400-normal.woff2) format('woff2')}
 @font-face{font-family:'Instrument Sans';font-weight:500;font-display:swap;src:url(/fonts/instrument-sans-latin-500-normal.woff2) format('woff2')}
@@ -36,9 +38,26 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .foot{position:sticky;bottom:0;background:var(--paper);padding:14px 0;border-top:1px solid var(--line);display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .status{color:var(--muted);font-size:14.5px;max-width:52ch}.status.bad{color:var(--bad)}
 @media(max-width:700px){main{padding:36px 16px 120px}.two,.three{grid-template-columns:minmax(0,1fr)}.row,.row.hours,.row.step,.row.figure{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.row>label:first-child{grid-column:1/-1}}
+/* ── the shared layer (/css/site.css: the library template's measured build) on this page's own parts ── */
+:root{--ink:#141414;--muted:#575755;--paper:#fffefb;--line:rgba(20,20,20,.12);--sans:"Figtree",system-ui,sans-serif}
+body{background:var(--ground);color:var(--ink);font-family:var(--sans);font-weight:500}
+h1{font:400 64px/.95 var(--serif);letter-spacing:-.03em;text-wrap:balance}
+.pill{border-radius:8px;border:2px solid var(--ink);background:transparent;font:600 15px/1 var(--sans);color:var(--ink);min-height:44px;transition:transform .2s}.pill:hover:not(:disabled){transform:scale(.98)}
+.pill.ink{background:var(--accent);color:var(--on-accent);border-color:var(--on-accent);min-height:52px;padding-inline:24px}
+input,select,textarea{border:2px solid var(--card);border-radius:8px;background:var(--paper);font:500 16px/1.3 var(--sans)}input:focus,select:focus,textarea:focus{outline:0;border-color:var(--ink)}
+.lab{font:500 14px/1.3 var(--sans);color:var(--muted)}
+@media(max-width:991px){h1{font-size:44px}}
+main{max-width:860px;padding:128px 20px 140px;gap:24px}.intro{font-size:20px;line-height:1.3;color:var(--ink);max-width:640px}
+#f>div{gap:16px!important}fieldset{background:var(--card);border:0;border-radius:32px;padding:16px;gap:0}fieldset>*{background:var(--paper);padding:12px 20px}
+fieldset>legend{display:contents;font:400 32px/.95 var(--serif);letter-spacing:-.03em;color:var(--ink);text-transform:none}fieldset>legend+*{border-radius:16px 16px 0 0;padding-top:20px}fieldset>:last-child{border-radius:0 0 16px 16px;padding-bottom:20px}
+fieldset>p.hint:first-of-type{border-radius:16px 16px 0 0}label{font-weight:600;font-size:16px}.hint{font-size:14px;color:var(--muted)}
+.drop{border:2px dashed var(--line2);border-radius:16px;color:var(--muted);padding:28px}.ph{border:0;border-radius:16px;background:var(--card);padding:8px}.ph img{border-radius:10px;object-fit:contain;background:var(--paper)}
+.foot{background:var(--ground);border-top:2px solid var(--card);padding:16px 0}.status{font-size:16px;color:var(--ink)}
+@media(max-width:700px){main{padding:96px 16px 140px}fieldset{border-radius:20px;padding:8px}}
 </style>
 </head>
 <body>
+<header class="hd"><div class="hd-grp"><a class="hd-brand" href="/" aria-label="Swarmsite, front page">swarmsite</a></div><div class="hd-grp"><a class="hd-item" href="/">Back to the site</a></div></header>
 <main>
   <h1>A site from what you tell us</h1>
   <p class="intro">No site yet? Fill in what is true about your business and add your own photographs. We make three designs from it, and you choose one. Anything you leave empty is left out of the page; we do not write it for you.</p>
@@ -103,7 +122,7 @@ function addOffer(){ const r=document.createElement('div'); r.className='row off
 function addHours(){ const r=document.createElement('div'); r.className='row hours'; r.append(field('Days','h-days',{maxLength:40,placeholder:'Tue–Sun'}),field('Opens','h-open',{maxLength:12,placeholder:'13:00'}),field('Closes','h-close',{maxLength:12,placeholder:'23:00'}),removeBtn(r)); $('#hours').appendChild(r); r.querySelector('input').focus(); }
 function addStep(){ const r=document.createElement('div'); r.className='row step'; r.append(field('Step','s-title',{maxLength:120}),field('In a sentence','s-text',{maxLength:300,placeholder:'optional'}),removeBtn(r,syncOffers)); $('#steps').appendChild(r); r.querySelector('input').addEventListener('input',syncOffers); syncOffers(); r.querySelector('input').focus(); }
 function addFigure(){ const r=document.createElement('div'); r.className='row figure'; r.append(field('Number','g-v',{maxLength:24}),field('What it counts','g-l',{maxLength:80}),removeBtn(r)); $('#figures').appendChild(r); r.querySelector('input').focus(); }
-$('#addOffer').onclick=addOffer; $('#addHours').onclick=addHours; $('#addStep').onclick=addStep; $('#addFigure').onclick=addFigure; addOffer(); $('#offers input').blur();
+$('#addOffer').onclick=addOffer; $('#addHours').onclick=addHours; $('#addStep').onclick=addStep; $('#addFigure').onclick=addFigure; addOffer(); $('#offers input').blur(); scrollTo(0,0);   /* the first empty line is made without taking the visitor away from the top */
 /* the offers and steps a photograph may go with, kept in step with the lists above */
 function syncOffers(){ const names=[...document.querySelectorAll('#offers .o-name')].map(i=>i.value.trim()), steps=[...document.querySelectorAll('#steps .s-title')].map(i=>i.value.trim());
   document.querySelectorAll('.ph .with').forEach(s=>{ const keep=s.value; s.replaceChildren(new Option('Goes with… (optional)',''));

@@ -22,11 +22,14 @@ try {
       if (u.hostname === 'api.test' && /^\/t\/[^/]+\/[a-z0-9]+\/package$/.test(u.pathname)) { state.asked.push(u.pathname); return r.fulfill({ status: 402, contentType: 'application/json', body: JSON.stringify({ error: 'Payment is needed', pay: true }) }); }
       if (u.hostname === 'api.test' && u.pathname.startsWith(`/t/${id}/`)) return r.fulfill({ contentType: 'text/html', body: `<!doctype html><body style="margin:0;font:40px Arial"><h1>${u.pathname.split('/').pop()}</h1><p style="height:2000px">page</p></body>` });
       return r.abort(); });
-    await page.goto('https://app.test/app?url=tallyfern.example');
-    await page.locator('#go').click();
+    let briefSeen = false; await page.exposeFunction('__brief', () => { briefSeen = true; });
+    await page.addInitScript(() => { new MutationObserver(() => { const b = document.querySelector('#brief'); if (b && !b.classList.contains('hide') && getComputedStyle(b).display !== 'none') window.__brief(); }).observe(document, { subtree: true, childList: true, attributes: true }); });
+    await page.goto('https://app.test/app?url=tallyfern.example&niche=software&goal=Start%20a%20trial');   // "I have a site": the designs start at once, no brief
     await page.locator('#choose.on').waitFor({ timeout: 10000 });
     assert.equal(state.posted?.options?.engine, 'templates', 'the job asks for the template path where the server has it on');
-    assert.equal(state.posted.options.mode, 'seo-safe', 'the brief keeps its own SEO choice');
+    assert.deepEqual(state.posted.options, { engine: 'templates', niche: 'software', goal: 'Start a trial' }, 'only what the visitor gave beside the address; the old brief is not asked on the template path');
+    assert.equal(briefSeen, false, 'the old brief is never shown on the template path');
+    assert.equal(await page.locator('.card .how').count(), 0, 'nothing internal under a design\'s name');
     const cards = page.locator('.card'); assert.equal(await cards.count(), 3);
     const boxes = await cards.evaluateAll(cs => cs.map(c => { const r = c.getBoundingClientRect(); return { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width) }; }));
     if (width === 1440) assert.ok(boxes.every(b => b.y === boxes[0].y) && boxes[0].x < boxes[1].x && boxes[1].x < boxes[2].x, 'side by side on a desk: ' + JSON.stringify(boxes));
@@ -59,6 +62,36 @@ try {
     assert.ok(!(await page.locator('#result.on').count()), 'the old single-preview view stays out of the way');
     await page.close();
   }
+  // covers: a design with a cover shows that still once it has loaded, never its live page; until then the card says what it waits for.
+  // And "I built a first version of my app": screenshots are uploaded as they are chosen, and the job carries their names.
+  { const COVER = fs.readFileSync(path.join(root, 'web/favicon.png'));
+    const st = { posted: null, ups: 0, coverHeld: true }; const vs = [0, 1, 2].map(i => ({ ...variant(['griffin', 'maze', 'cerebrium'][i], 'ready', i), cover: `https://store.test/p/${id}/t/v${i + 1}-cover.jpg` }));
+    const job = { id, url: 'https://www.tallyfern.example/', status: 'done', created_at: new Date().toISOString(), steps: steps.map(s => ({ ...s, status: 'done' })), result: { templates: { variants: vs, rejected: [] }, events: [] } };
+    const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    await page.route('**/*', async r => { const u = new URL(r.request().url());
+      if (u.pathname === '/app') return r.fulfill({ contentType: 'text/html', body: html });
+      if (u.pathname === '/config.js') return r.fulfill({ contentType: 'application/javascript', body: "window.SWARMSITE_API='https://api.test'" });
+      if (u.pathname === '/js/swarm2.js') return r.fulfill({ contentType: 'application/javascript', body: 'window.Swarm2={mount:()=>({stop(){},phase(){},push(){},setPage(){}})}' });
+      if (u.pathname === '/config') return r.fulfill({ contentType: 'application/json', body: JSON.stringify({ auth: {}, templates: true }) });
+      if (u.pathname === '/uploads') { st.ups++; return r.fulfill({ contentType: 'application/json', body: JSON.stringify({ file: `0000000${st.ups}-4e5f-4a6b-8c7d-9e0f1a2b3c4d.png` }) }); }
+      if (u.pathname === '/jobs' && r.request().method() === 'POST') { st.posted = JSON.parse(r.request().postData()); return r.fulfill({ contentType: 'application/json', body: JSON.stringify({ id }) }); }
+      if (u.pathname === `/jobs/${id}`) return r.fulfill({ contentType: 'application/json', body: JSON.stringify(publicJob(job)) });
+      if (u.hostname === 'store.test') { while (st.coverHeld) await new Promise(ok => setTimeout(ok, 50)); return r.fulfill({ contentType: 'image/png', body: COVER }); }
+      if (u.pathname.startsWith(`/t/${id}/`)) throw new Error('a card with a cover asked for its live page');
+      return r.abort(); });
+    await page.goto('https://app.test/app?url=tallyfern.example&with=screens');
+    await page.locator('#shots').waitFor(); assert.match(await page.locator('#h').textContent(), /screenshots/i);
+    await page.setInputFiles('#shotFiles', [path.join(root, 'web/logo/swarmsite-mark.png'), path.join(root, 'web/apple-touch-icon.png')]);
+    await page.waitForFunction(() => !document.querySelector('#shotsGo').disabled && document.querySelectorAll('.thumb:not(.up)').length === 2);
+    await page.locator('#shotsGo').click(); await page.locator('#choose.on').waitFor({ timeout: 10000 });
+    assert.deepEqual({ ...st.posted.options, screens: [...(st.posted.options.screens || [])].sort() }, { engine: 'templates', screens: ['00000001-4e5f-4a6b-8c7d-9e0f1a2b3c4d.png', '00000002-4e5f-4a6b-8c7d-9e0f1a2b3c4d.png'] }, 'both screenshots go with the job, by the names the server gave them');
+    assert.equal(await page.locator('.card .shot iframe').count(), 0, 'a card with a cover never loads its live page');
+    assert.deepEqual(await page.locator('.card .wait span').allTextContents(), Array(3).fill('Bringing in the cover…'), 'each card says what it waits for');
+    assert.equal(await page.locator('.card .shot.ready').count(), 0, 'nothing half-drawn is shown while the covers come');
+    st.coverHeld = false; await page.waitForFunction(() => document.querySelectorAll('.card .shot.ready img.cover').length === 3, null, { timeout: 8000 });
+    assert.ok(await page.locator('#editGo').isHidden()); await page.locator('.card').nth(0).locator('.pickb').click();
+    assert.equal(await page.locator('#editGo').isHidden(), true, 'Edit and publish only once the job kept its data');
+    await page.close(); }
   // a site no design fits
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   await page.route('**/*', async r => { const u = new URL(r.request().url());
