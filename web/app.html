@@ -2,21 +2,19 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Swarmsite — rebuilding your site</title><meta name="robots" content="noindex">
+<title>Swarmsite — your three designs</title><link rel="icon" type="image/png" href="/favicon.png"><meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;1,400&amp;family=Figtree:wght@400;500;600;700&amp;family=Shrikhand&amp;display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/site.css">
 <link rel="stylesheet" href="/header.css">
 <style>
-@font-face{font-family:'JetBrains Mono';font-weight:400;font-display:swap;src:url(/fonts/jetbrains-mono-latin-400-normal.woff2) format('woff2')}
-/* tokens, type, buttons and fields: /css/site.css (the shared layer). What follows is this page's own. */
+@font-face{font-family:'JetBrains Mono';font-weight:400;font-display:swap;src:url(/fonts/jetbrains-mono-latin-400-normal.woff2) format('woff2')}/* tokens, type, buttons and fields: /css/site.css (the shared layer). What follows is this page's own. */
 :root{--line:rgba(20,20,20,.12);--panel:#141414;--mono:'JetBrains Mono',ui-monospace,monospace}
 *{box-sizing:border-box;margin:0;padding:0}html,body{height:100%}
 body{line-height:1.5}
 a{color:inherit;text-decoration:none}
 .lab{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
 .pill{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:9px 16px;font-weight:500;font-size:14px;border:1px solid var(--line);background:#fff;min-height:40px;cursor:pointer;transition:transform .35s cubic-bezier(.2,.8,.2,1)}
-.pill.ink{background:var(--ink);color:#fff;border-color:var(--ink)}.pill:hover{transform:translateY(-2px)}.pill:active{transform:scale(.97);transition:transform 100ms ease-out}
-/* stage */
+.pill.ink{background:var(--ink);color:#fff;border-color:var(--ink)}.pill:hover{transform:translateY(-2px)}.pill:active{transform:scale(.97);transition:transform 100ms ease-out}/* stage */
 .stage{min-height:100svh;display:grid;align-content:center;justify-items:center;padding:96px 20px 40px;gap:26px;text-align:center}
 .stage[hidden]{display:none}
 .h{font-weight:400;font-size:clamp(28px,4vw,48px);line-height:1.08;letter-spacing:-.025em;max-width:20ch}
@@ -29,15 +27,11 @@ a{color:inherit;text-decoration:none}
 .frame .hud{z-index:6;position:absolute;left:0;right:0;bottom:0;padding:18px 22px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.75));color:#fff;display:flex;justify-content:space-between;align-items:end;gap:16px;text-align:left}
 .frame .hud .lab{color:rgba(255,255,255,.7)}
 .log{width:min(1100px,94vw);display:flex;flex-wrap:wrap;gap:8px 18px;justify-content:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);min-height:18px}.log span{display:inline-flex;align-items:center;gap:6px}.log b{width:7px;height:7px;border-radius:50%;display:inline-block}
-.brief{width:min(760px,94vw);display:grid;gap:14px;text-align:left;border:1px solid var(--line);border-radius:18px;background:#fff;padding:18px 20px}
-.brief .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.brief .row.col{flex-direction:column;align-items:stretch;gap:6px}
-.brief .lab{min-width:44px}.brief input[type=text],.brief input:not([type]){border:1px solid var(--line);border-radius:10px;padding:11px 12px;font:500 15px var(--sans);min-height:44px}
+
 .chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:13.5px;min-height:36px;cursor:pointer}.chip input{accent-color:var(--ink)}
-.brief.hide{display:none}
+
 .notify{width:min(760px,94vw);display:grid;gap:8px;text-align:left;margin-top:6px}.notify[hidden]{display:none}.notify label{font:500 15px var(--sans)}.notify-row{display:flex;gap:8px}.notify input{flex:1;min-width:0;border:1px solid var(--line);border-radius:999px;padding:11px 16px;font:500 15px var(--sans);min-height:44px}.notify .lab{min-height:1em}
 @media(max-width:700px){.notify{width:100%}}
-
-.brief-more{display:grid;gap:26px}.brief-more>summary{cursor:pointer;list-style:none;font:500 15px var(--sans);color:#69645f;padding:4px 0;display:flex;align-items:center;gap:10px}.brief-more>summary::-webkit-details-marker{display:none}.brief-more>summary::before{content:"+";display:inline-grid;place-items:center;width:22px;height:22px;border:1px solid var(--line);border-radius:50%;font-size:15px;color:#111}.brief-more[open]>summary::before{content:"−"}.brief-more>summary .brief-more-t{white-space:nowrap;color:#111}.brief-more>summary .optional{font-weight:400;font-size:13px;line-height:1.3}
 
 .steps{width:min(720px,94vw);display:grid;gap:0;text-align:left;border:1px solid var(--line);border-radius:18px;background:#fff;overflow:hidden}
 .step{display:grid;grid-template-columns:22px 1fr auto;gap:14px;align-items:center;padding:13px 18px;border-top:1px solid var(--line);font-size:15px}
@@ -45,8 +39,7 @@ a{color:inherit;text-decoration:none}
 .step.running .dot{background:var(--ink);animation:pulse 1.2s infinite}.step.done .dot{background:#1F9D55}.step.failed .dot{background:#D9424A}
 .step .note{font-family:var(--mono);font-size:11px;color:var(--muted)}
 @keyframes pulse{50%{transform:scale(.6);opacity:.4}}
-.micro{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}
-/* result */
+.micro{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}/* result */
 .result{position:fixed;inset:var(--result-top-height,83px) 0 0;z-index:10;background:var(--ground);display:none;flex-direction:column}
 .result.on{display:flex}
 .draft-bar{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--line);background:#fff;font:500 14px var(--sans);color:#111}.draft-bar[hidden]{display:none}.draft-bar .lab{margin-left:auto}.draft-dots{display:inline-flex;gap:4px}.draft-dots i{width:7px;height:7px;border-radius:50%;background:#7C3AED;animation:draftpulse 1.2s ease-in-out infinite}.draft-dots i:nth-child(2){background:#E63946;animation-delay:.2s}.draft-dots i:nth-child(3){background:#0EA5E9;animation-delay:.4s}@keyframes draftpulse{0%,100%{opacity:.35;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
@@ -58,20 +51,14 @@ a{color:inherit;text-decoration:none}
 .seg.studio{order:-1;flex-basis:100%;align-items:center;border:0;border-radius:0;overflow:visible;gap:8px;flex-wrap:wrap;margin-bottom:6px}.seg.studio .pick{font:600 14px var(--sans);margin-right:6px}.seg.studio button{border:1px solid var(--line);border-radius:999px;padding:10px 18px;font-size:14px;min-height:44px}.seg.studio button.on{border-color:var(--ink)}
 .coverage{position:relative}.coverage[hidden]{display:none}.coverage>summary{list-style:none}.coverage>summary::-webkit-details-marker{display:none}.coverage-panel{position:fixed;bottom:calc(var(--result-bar-height,68px) + 12px);right:16px;width:min(440px,calc(100vw - 32px));max-height:min(65vh,520px,calc(100vh - var(--result-bar-height,68px) - var(--result-top-height,83px) - 24px));overflow:auto;background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 16px 45px rgba(0,0,0,.15);font-size:14px;line-height:1.45;z-index:30}.coverage-panel h2{font-size:18px;font-weight:500;margin-bottom:8px}.coverage-panel h3{font-size:14px;font-weight:500;margin:16px 0 5px}.coverage-panel p{color:var(--muted)}.coverage-panel ul{list-style:none}.coverage-panel li{padding:7px 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere}.coverage-panel .status{display:block;color:var(--muted);font-size:12px}.coverage-panel a{text-decoration:underline;text-underline-offset:3px}
 .err{color:#D9424A;max-width:60ch}
-@media(max-width:700px){.frame{aspect-ratio:3/4}.bar{padding:10px 12px}}
-
-/* Same visual language as the landing; preserve the existing flow and controls. */
-.stage{padding-top:115px}.h{letter-spacing:-.045em}.brief{border-radius:24px;padding:28px;gap:20px;box-shadow:0 25px 70px rgba(17,17,17,.06)}.brief .row{gap:9px}.brief .row.col{gap:9px}.brief .row.col .lab{font-size:12px}.chip{min-height:40px;background:#fafafa;transition:background .2s,border-color .2s}.chip:has(input:checked){background:#ededeb;border-color:#888}.brief input[type=text],.brief input:not([type]){background:#fafafa;border-radius:12px}.frame{box-shadow:0 35px 90px #1112}.bar{padding:14px 20px}.stage:has(.brief:not(.hide)) .frame,.stage:has(.brief:not(.hide)) .log,.stage:has(.brief:not(.hide)) .steps,.stage:has(.brief:not(.hide))>.micro{display:none}
-@media(max-width:700px){.brief,.frame,.steps,.log{width:100%;max-width:100%}.brief{padding:20px}.result iframe{max-width:100%}}
-
-/* The brief is the first step of the product, so it uses the landing's type and color. */
-.stage{align-content:start;padding-top:clamp(118px,13vh,150px)}.stage>*{min-width:0}.brief-caption{width:100%;max-width:44ch;color:#69645f;font-size:16px;margin-top:-12px}.stage:has(.brief.hide) .brief-caption{display:none}.stage:has(.brief:not(.hide)) .h{font-size:clamp(38px,5vw,64px);max-width:none}.brief{width:min(820px,100%);padding:clamp(24px,4vw,48px);gap:30px;border-radius:8px;box-shadow:none}.option-group{border:0;min-width:0;display:grid;gap:12px}.option-group legend,.brief .row.col>label{font-size:16px;font-weight:500;letter-spacing:-.015em}.option-group legend{padding:0;margin-bottom:12px}.brief .row.col{gap:10px}.optional{font-size:12px;font-weight:400;color:#777;margin-left:6px}.chip{background:#f7f6f3;font-size:14px;min-height:44px;padding:9px 14px}.chip input{accent-color:#833b46}.chip:has(input:checked){background:#f3e1dd;border-color:#b67c80}.chip:focus-within{outline:2px solid #833b46;outline-offset:2px}.brief input[type=text],.brief input:not([type]){background:#faf9f7;border-radius:4px;min-height:50px}.brief input:focus{outline:2px solid #833b46;outline-offset:2px}.brief-action{display:flex;gap:20px;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding-top:26px}.brief-action .pill.ink{background:#833b46;border-color:#833b46;padding:12px 18px;min-width:210px;justify-content:space-between}.brief-action .pill.ink:disabled{opacity:.6;cursor:wait}.brief-action p{font-size:13px;color:#777}.err{font-size:14px}.stage:has(.brief:not(.hide)) .err:empty{display:none}
-@media(max-width:700px){.stage{padding:120px 20px 50px}.stage:has(.brief:not(.hide)) .h{font-size:40px}.brief-caption{font-size:15px}.brief{padding:24px 20px;gap:26px}.brief-action{flex-direction:column;align-items:stretch;gap:10px}.brief-action .pill.ink{width:100%}.brief-action p{text-align:center}.url{overflow-wrap:anywhere;max-width:100%}}
-/* ── The working window. A job takes minutes, so the window has to say, at every moment, that it is running: a light
+@media(max-width:700px){.frame{aspect-ratio:3/4}.bar{padding:10px 12px}}/* Same visual language as the landing; preserve the existing flow and controls. */
+.stage{padding-top:115px}.h{letter-spacing:-.045em}.chip{min-height:40px;background:#fafafa;transition:background .2s,border-color .2s}.chip:has(input:checked){background:#ededeb;border-color:#888}.frame{box-shadow:0 35px 90px #1112}.bar{padding:14px 20px}
+@media(max-width:700px){.frame,.steps,.log{width:100%;max-width:100%}.result iframe{max-width:100%}}.stage{align-content:start;padding-top:clamp(118px,13vh,150px)}.stage>*{min-width:0}.chip{background:#f7f6f3;font-size:14px;min-height:44px;padding:9px 14px}.chip input{accent-color:#833b46}.chip:has(input:checked){background:#f3e1dd;border-color:#b67c80}.chip:focus-within{outline:2px solid #833b46;outline-offset:2px}.err{font-size:14px}
+@media(max-width:700px){.stage{padding:120px 20px 50px}.url{overflow-wrap:anywhere;max-width:100%}}/* ── The working window. A job takes minutes, so the window has to say, at every moment, that it is running: a light
    that travels round the frame, the crew looking over its edge, agents that stay on the page, a bar with one segment
    per step, and a clock. Everything it states is read from the job (step, count, time); nothing is invented. ── */
-.work{position:relative;width:max(min(1100px,94vw,(100svh - 410px) * 16 / 9),min(560px,94vw));margin-top:92px}   /* never taller than the screen leaves room for: the bar and the clock at its foot are seen without scrolling */.work .frame{position:relative;z-index:1;width:100%}
-.stage:has(.brief:not(.hide)) .work{display:none}
+.work{position:relative;width:max(min(1100px,94vw,(100svh - 410px) * 16 / 9),min(560px,94vw));margin-top:92px}/* never taller than the screen leaves room for: the bar and the clock at its foot are seen without scrolling */.work .frame{position:relative;z-index:1;width:100%}
+
 @property --wk-a{syntax:'<angle>';inherits:false;initial-value:0deg}
 .work::before,.work::after{content:"";position:absolute;inset:-3px;border-radius:25px;background:conic-gradient(from var(--wk-a),rgba(237,197,190,0) 0 48%,#edc5be 68%,#833b46 86%,rgba(237,197,190,0));animation:wk-spin 4.2s linear infinite;pointer-events:none}
 .work::after{inset:-18px;border-radius:40px;filter:blur(34px);opacity:.9}
@@ -104,9 +91,7 @@ a{color:inherit;text-decoration:none}
 .draft-bar .lab{padding:5px 9px;border-radius:99px;box-shadow:0 0 0 1px var(--line);font-variant-numeric:tabular-nums;white-space:nowrap;flex:none}.draft-bar #draftClock{margin-left:auto}.draft-bar #draftRound{margin-left:0}
 .seg button{min-height:44px;padding:8px 16px;font-size:14px;transition:background-color .2s,color .2s}.seg button:not(.on):hover{background:#f1f1ee}.bar .pill{min-height:44px}.pill:focus-visible,.seg button:focus-visible{outline:2px solid #833b46;outline-offset:2px}
 @media(max-width:700px){.work{width:100%;margin-top:64px}.wk-robot{flex-basis:70px;width:70px;height:93.333px;top:-70px}.wk-robot:nth-child(n+4){display:none}.frame .hud{padding:40px 14px 14px}.hud-r{gap:10px}
-  @keyframes wk-look{0%,6%,92%,100%{transform:translateY(16px) rotate(0)}16%,30%{transform:translateY(0) rotate(-2deg)}42%,54%{transform:translateY(1px) rotate(-6deg)}66%,76%{transform:translateY(0) rotate(5deg)}86%{transform:translateY(3px) rotate(0)}}}
-
-/* the template path: three designs to choose from (side by side; stacked on a phone), each opens full screen, one is picked and downloaded */
+  @keyframes wk-look{0%,6%,92%,100%{transform:translateY(16px) rotate(0)}16%,30%{transform:translateY(0) rotate(-2deg)}42%,54%{transform:translateY(1px) rotate(-6deg)}66%,76%{transform:translateY(0) rotate(5deg)}86%{transform:translateY(3px) rotate(0)}}}/* the template path: three designs to choose from (side by side; stacked on a phone), each opens full screen, one is picked and downloaded */
 .choose{position:fixed;inset:var(--result-top-height,83px) 0 0;z-index:11;background:var(--ground);display:none;flex-direction:column;overflow:auto}
 .choose.on{display:flex}
 .choose-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;padding:28px 24px 8px;max-width:1440px;width:100%;margin:0 auto}
@@ -126,36 +111,32 @@ a{color:inherit;text-decoration:none}
 .full-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;background:#fff;flex-wrap:wrap}.full iframe{flex:1;border:0;background:#fff;width:100%}
 .full.is-phone{align-items:center}.full.is-phone iframe{flex:1 0 auto;width:390px;max-width:100%}
 @media(max-width:900px){.cards,.cards[data-n="2"]{grid-template-columns:minmax(0,1fr)}.choose-head{padding:22px 16px 4px}.cards{padding:16px}.choose-foot{padding:12px 16px}}
-@media(prefers-reduced-motion:reduce){.work::before,.work::after,.wk-robot i,.wk-robot .hd3::before,.wk-live,.frame .skel i,.draft-bar::after,.step.running .dot{animation:none!important}.wk-prog i.run::after{animation:none;background:rgba(255,255,255,.55)}.draft-bar::after{background-size:100% 100%;opacity:.5}}
-/* ── the shared layer's look (site.css: the library template's measured build) on this page ── */
+@media(prefers-reduced-motion:reduce){.work::before,.work::after,.wk-robot i,.wk-robot .hd3::before,.wk-live,.frame .skel i,.draft-bar::after,.step.running .dot{animation:none!important}.wk-prog i.run::after{animation:none;background:rgba(255,255,255,.55)}.draft-bar::after{background-size:100% 100%;opacity:.5}}/* ── the shared layer's look (site.css: the library template's measured build) on this page ── */
 .lab{font:500 14px/1.3 var(--sans);color:var(--muted)}
 .pill{min-height:44px;padding:10px 18px;border-radius:8px;border:2px solid var(--ink);background:transparent;font:600 15px/1 var(--sans);color:var(--ink);transition:transform .2s}
 .pill:hover{transform:scale(.98)}.pill.ink{background:var(--accent);color:var(--on-accent);border-color:var(--on-accent)}
 .stage{gap:24px}.h{font:400 56px/.95 var(--serif);letter-spacing:-.03em;max-width:20ch}.frame .skel i{background:linear-gradient(100deg,#4a1d26 20%,#5c2a34 40%,#4a1d26 60%);background-size:200% 100%}.url{font:500 14px var(--sans)}
-.stage:has(.brief:not(.hide)) .h,.stage:has(.shots:not([hidden])) .h{font-size:75px;line-height:1}
-.brief{background:var(--card);border:0;border-radius:32px;padding:16px;gap:0;box-shadow:none}.brief>*{background:var(--paper)}
-.brief>.option-group,.brief>.brief-more,.brief>.brief-action{padding:24px 28px}.brief>:first-child{border-radius:16px 16px 0 0}.brief>:last-child{border-radius:0 0 16px 16px}
-.brief-action{border-top:2px solid var(--card)!important}.brief-action .pill.ink{min-height:52px}
+.stage:has(.shots:not([hidden])) .h{font-size:75px;line-height:1}
 .chip{border:2px solid var(--card);background:var(--paper);font-weight:600}.chip:has(input:checked){background:var(--ground);border-color:var(--ink)}.chip input{accent-color:var(--ink)}
 .work::before,.work::after{display:none}.frame{border-radius:16px;box-shadow:none;background:var(--deep)}.frame .skel{background:var(--deep)}
 .steps{background:var(--card);border:0;border-radius:32px;padding:16px;gap:4px}.step{background:var(--paper);border:0;border-radius:12px}.step:first-child{border-radius:12px}
 .step.done .dot{background:var(--ink)}.notify-row{border:2px solid var(--ink);box-shadow:none;background:var(--paper)}.notify .pill{background:var(--accent);color:var(--ink);border-color:var(--ink)}
 .steps:empty{display:none}.stage:has(.shots:not([hidden])) :is(.steps,.log,.micro,.notify){display:none}
-.again{display:flex;gap:12px;justify-content:center}.again[hidden]{display:none}
-/* screenshots of an app, before it starts — one panel: card tone, a paper sheet on it */
+.again{display:flex;gap:12px;justify-content:center}.again[hidden]{display:none}/* screenshots of an app, before it starts — one panel: card tone, a paper sheet on it */
 .shots{width:min(760px,100%)}.shots[hidden]{display:none}.shots .sheet{display:grid;gap:20px;text-align:left}
 .drop{position:relative;display:grid;justify-items:center;gap:8px;padding:36px 20px;border:2px dashed var(--line2);border-radius:16px;text-align:center;cursor:pointer;transition:border-color .2s,background-color .2s}
 .drop:hover,.drop:focus-within{border-color:var(--ink);background:var(--ground)}.drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
 .thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}.thumbs:empty{display:none}
-.thumb{position:relative;display:grid;place-items:center;aspect-ratio:4/3;padding:8px;background:var(--card);border-radius:12px}.thumb img{max-width:100%;max-height:100%;width:auto;height:auto;border-radius:4px}
+.thumb{position:relative;display:grid;place-items:center;height:128px;padding:8px;background:var(--card);border-radius:12px}.thumb img{max-width:100%;max-height:112px;width:auto;height:auto;border-radius:4px}
 .thumb.up img{opacity:.45}.thumb .x{position:absolute;top:6px;right:6px;width:32px;height:32px;border-radius:50%;background:var(--ink);color:var(--ground);font-size:18px;line-height:32px}
 .thumb .st{position:absolute;left:8px;bottom:8px;padding:2px 8px;border-radius:999px;background:var(--ground);font-size:12px}
-.shots-act{display:flex;gap:16px;align-items:center;flex-wrap:wrap}.shots-act .link{background:none;border:0;cursor:pointer}
-/* the chooser — the reference's plan cards: card tone, r32; the cover on it r16; serif names; the accent slab to choose */
+.shots-act{display:flex;gap:16px;align-items:center;flex-wrap:wrap}.shots-act .link{background:none;border:0;cursor:pointer}/* the chooser — the reference's plan cards: card tone, r32; the cover on it r16; serif names; the accent slab to choose */
 .choose{background:var(--ground)}.choose-head{display:grid;justify-items:center;justify-content:center;text-align:center;gap:12px;padding:56px 24px 16px}
 .choose-head h2{font:400 75px/1 var(--serif);letter-spacing:-.03em}.choose-head p{margin:0 auto;font-size:20px;line-height:1.3;color:var(--ink);max-width:640px;text-wrap:balance}
-.choose-meta{display:inline-flex;align-items:center;gap:10px;min-height:36px;padding:6px 14px;border-radius:999px;background:var(--card);font-size:14px;color:var(--ink)}.choose-meta:empty{display:none}
-.choose-meta i{width:8px;height:8px;border-radius:50%;background:var(--deep);animation:ch-live 1.4s ease-in-out infinite}.choose-meta.done i{animation:none;background:var(--ink)}@keyframes ch-live{50%{opacity:.25}}
+.card .state{position:relative;display:flex;align-items:center;gap:10px;min-height:36px;margin:0 0 12px;padding:0 8px 10px;font-size:14px;line-height:1.3;color:var(--ink)}
+.card .state i{flex:none;width:8px;height:8px;border-radius:50%;background:var(--ink)}.card .state.busy i{background:var(--deep);animation:ch-live 1.4s ease-in-out infinite}@keyframes ch-live{50%{opacity:.25}}
+.card .state::after{content:"";position:absolute;left:8px;right:8px;bottom:0;height:2px;border-radius:2px;background:var(--line2)}
+.card .state.busy::after{background:linear-gradient(90deg,var(--line2) 0 35%,var(--ink) 35% 65%,var(--line2) 65% 100%);background-size:300% 100%;animation:ch-run 1.8s linear infinite}@keyframes ch-run{from{background-position:100% 0}to{background-position:0 0}}
 .cards{gap:16px;padding:32px 24px 40px}
 .card{border:2px solid transparent;border-radius:32px;background:var(--card);padding:16px;gap:0;transition:border-color .3s}.card.picked{border-color:var(--ink);box-shadow:none}
 .card .shot{border-radius:16px;background:var(--paper)}.card .shot img.cover{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top;opacity:0;transition:opacity .5s}
@@ -163,7 +144,6 @@ a{color:inherit;text-decoration:none}
 .card .wait{position:absolute;inset:0;display:grid;align-content:center;justify-items:center;gap:14px;padding:24px;text-align:center;transition:opacity .4s}.card .shot.ready .wait{opacity:0;pointer-events:none}
 .card .wait .bars{display:grid;gap:8px;width:62%}.card .wait .bars i{height:10px;border-radius:6px;background:linear-gradient(90deg,var(--card) 20%,#ece9e3 40%,var(--card) 60%);background-size:200% 100%;animation:sh 1.6s linear infinite}
 .card .wait .bars i:nth-child(1){height:22px;width:80%;justify-self:center}.card .wait .bars i:nth-child(2){height:22px;width:60%;justify-self:center}.card .wait .bars i:nth-child(3){width:70%;justify-self:center}
-.card .wait span{font-size:14px;color:var(--muted)}
 .card .meta{flex-direction:row;align-items:baseline;justify-content:space-between;padding:20px 8px 4px}.card .name{font:400 32px/.95 var(--serif);letter-spacing:-.03em}
 .card .acts{padding:16px 8px 8px;gap:8px}.card .acts .pill{flex:1 1 auto;justify-content:center}
 .choose-foot{background:var(--ground);border-top:2px solid var(--card);padding:16px 24px}.choose-note{color:var(--ink);font-size:16px}
@@ -171,8 +151,8 @@ a{color:inherit;text-decoration:none}
 .full-bar{background:var(--ground);border-bottom:2px solid var(--card);padding:12px 16px}
 .seg{border:2px solid var(--card);border-radius:22px;background:var(--card);padding:2px;gap:2px;flex-wrap:wrap;max-width:100%}.seg button{border-radius:999px;background:transparent;font-weight:600}.seg button.on{background:var(--ground);color:var(--ink);box-shadow:inset 0 0 0 2px var(--ink)}
 .seg.studio button.on{border-color:var(--ink)}
-@media(max-width:991px){.h,.stage:has(.brief:not(.hide)) .h,.stage:has(.shots:not([hidden])) .h{font-size:44px}.choose-head h2{font-size:44px}.choose-head p{font-size:18px}.choose-head{padding:32px 20px 8px}.card{border-radius:24px;padding:10px}.cards{padding:20px 16px 28px}}
-@media(prefers-reduced-motion:reduce){.choose-meta i,.card .wait .bars i{animation:none!important}}
+@media(max-width:991px){.h,.stage:has(.shots:not([hidden])) .h{font-size:44px}.choose-head h2{font-size:44px}.choose-head p{font-size:18px}.choose-head{padding:32px 20px 8px}.card{border-radius:24px;padding:10px}.cards{padding:20px 16px 28px}}
+@media(prefers-reduced-motion:reduce){.card .state i,.card .state::after,.card .wait .bars i{animation:none!important}}
 </style>
 </head>
 <body>
@@ -181,32 +161,8 @@ a{color:inherit;text-decoration:none}
 <section class="stage" id="stage">
   <span class="lab" id="urlLab"></span>
   <h1 class="h" id="h">Reading your site…</h1>
-  <p class="brief-caption">Choose what to keep. Your agents will shape the rest.</p>
-  <form class="brief hide" id="brief" onsubmit="return false">
-    <fieldset class="option-group"><legend>Does this page already rank on Google?</legend><div class="row">
-      <label class="chip"><input type="radio" name="mode" value="seo-safe" checked><span>Yes — keep my SEO</span></label>
-      <label class="chip"><input type="radio" name="mode" value="free"><span>No — redesign freely</span></label>
-    </div></fieldset>
-    <details class="brief-more" id="briefMore"><summary><span class="brief-more-t">More options</span><span class="optional">font, colours, type of site, notes</span></summary>
-    <fieldset class="option-group"><legend>What should we keep? <span class="optional">the swarm picks type and colour unless you keep yours</span></legend><div class="row">
-      <label class="chip"><input type="checkbox" name="keepFont"><span>Original font</span></label>
-      <label class="chip"><input type="checkbox" name="keepColours"><span>Original colours</span></label>
-      <label class="chip"><input type="checkbox" name="keepLogo" checked><span>Original logo</span></label>
-    </div></fieldset>
-    <fieldset class="option-group"><legend>What kind of site is this?</legend><div class="row">
-      <label class="chip"><input type="radio" name="kind" value=""><span>Let the swarm decide</span></label>
-      <label class="chip"><input type="radio" name="kind" value="place"><span>Restaurant, hotel or clinic</span></label>
-      <label class="chip"><input type="radio" name="kind" value="service"><span>Agency, studio or service</span></label>
-      <label class="chip"><input type="radio" name="kind" value="software"><span>Software</span></label>
-      <label class="chip"><input type="radio" name="kind" value="product"><span>Product or shop</span></label>
-    </div></fieldset>
-    <div class="row col"><label for="keepNote">Anything else to keep? <span class="optional">Optional</span></label><input id="keepNote" name="keep" placeholder="e.g. a headline, prices or a photo" maxlength="300"></div>
-    <div class="row col"><label for="goalNote">What should visitors do? <span class="optional">Optional</span></label><input id="goalNote" name="goal" placeholder="e.g. Book a table or start a trial" maxlength="80"></div>
-    </details>
-    <div class="brief-action"><button class="pill ink" id="go">Start my preview <span aria-hidden="true">↗</span></button><p>Your current website stays unchanged.</p></div>
-  </form>
   <form class="shots panel" id="shots" hidden onsubmit="return false"><div class="sheet">
-    <label class="drop" for="shotFiles"><input type="file" id="shotFiles" accept="image/png,image/jpeg,image/webp" multiple><span class="h-s">Add up to six screenshots</span><span class="small">PNG, JPEG or WebP, each under 8 MB. Your screens are shown whole, never cropped.</span></label>
+    <label class="drop" for="shotFiles"><input type="file" id="shotFiles" accept="image/png,image/jpeg,image/webp" multiple><span class="h-s serif">Add up to six screenshots</span><span class="small">PNG, JPEG or WebP, each under 8 MB. Your screens are shown whole, never cropped.</span></label>
     <ul class="thumbs" id="thumbs" aria-label="Your screenshots"></ul>
     <div class="shots-act"><button class="btn" id="shotsGo" type="submit">Create my designs</button><button class="link" id="shotsSkip" type="button">Start without screenshots</button></div>
     <p class="small" id="shotsNote" role="status"></p>
@@ -215,7 +171,7 @@ a{color:inherit;text-decoration:none}
   <div class="frame" id="frame"><div class="skel" id="skel"><i class="sk-nav"></i><i class="sk-h"></i><i class="sk-h sk-h2"></i><i class="sk-p"></i><i class="sk-btn"></i><i class="sk-img"></i></div><img id="before" alt=""><div class="hud"><div class="wk-prog" id="prog" role="progressbar" aria-label="Steps finished" aria-valuemin="0" aria-valuemax="6" aria-valuenow="0"></div><div class="hud-row"><span class="hud-l"><i class="wk-live" aria-hidden="true"></i><span class="lab" id="hudL" role="status">agents waking up</span></span><span class="lab hud-r"><span id="clock" aria-label="Time so far">00:00</span><span id="hudR">0 / 6</span></span></div></div></div></div>
   <div class="log" id="log"></div>
   <div class="steps" id="steps"></div>
-  <div class="micro"><span class="lab" id="micro">First version in under a minute · stay or come back, this page remembers the job</span></div>
+  <div class="micro"><span class="lab" id="micro">Stay or come back: this page remembers the job</span></div>
   <form class="notify" id="notify" hidden onsubmit="return false"><label for="notifyEmail">Email me the link when it’s ready</label><div class="notify-row"><input id="notifyEmail" type="email" placeholder="you@company.com" autocomplete="email"><button class="pill" id="notifyGo">Notify me</button></div><span class="lab" id="notifyNote"></span></form>
   <p class="err" id="err" role="alert"></p>
   <div class="again" id="again" hidden><button class="btn" id="againGo" type="button">Try again</button><a class="pill" href="/">Back to the front page</a></div>
@@ -231,7 +187,7 @@ a{color:inherit;text-decoration:none}
 </div>
 
 <div class="choose" id="choose" aria-labelledby="chooseH">
-  <div class="choose-head"><p class="tag">Your designs</p><h2 id="chooseH">Choose <em>a design</em></h2><p id="chooseSub">Three designs made from your site, each checked on a desk screen and a phone. Open one to see it whole.</p><span class="choose-meta" id="chooseMeta" role="status"></span></div>
+  <div class="choose-head"><p class="tag">Your designs</p><h2 id="chooseH">Choose <em>a design</em></h2><p id="chooseSub">Three designs made from your site, each checked on a desk screen and a phone. Open one to see it whole.</p></div>
   <div class="cards" id="cards"></div>
   <div class="choose-none" id="chooseNone" hidden><p id="chooseNoneP"></p><ul id="chooseWhy"></ul><p id="chooseStart" style="margin-top:14px">Or <a href="/start" style="text-decoration:underline">tell us about your business</a>: three designs from what you write and your own photographs.</p></div>
   <details class="choose-none" id="chooseLeft" hidden><summary>What the page leaves out, because the form did not say it</summary><ul id="chooseLeftList"></ul></details>
@@ -318,8 +274,15 @@ let CFG=null; const config=async()=>{ if(CFG) return CFG; try{ CFG=await (await 
 let picked='', chooserFor='';
 /* a design is shown by the name the server gives it ("Design 1"); `slug` in the job is its id (v1), never a template's */
 const nameOf=id=>{ const vs=lastJob?.result?.templates?.variants||[]; const i=vs.findIndex(v=>v.slug===id); return i<0?'This design':(vs[i].name||`Design ${i+1}`); };
-function waiting(text){ const w=document.createElement('div'); w.className='wait'; const bars=document.createElement('div'); bars.className='bars'; bars.setAttribute('aria-hidden','true'); bars.append(...[0,1,2,3].map(()=>document.createElement('i'))); const t=document.createElement('span'); t.textContent=text; w.append(bars,t); return w; }
-function live(shot,v){ const f=document.createElement('iframe'); f.src=v.url; f.title=nameOf(v.slug)+' — preview'; f.loading='lazy'; f.tabIndex=-1; f.setAttribute('aria-hidden','true'); f.addEventListener('load',()=>setTimeout(()=>shot.classList.add('ready'),2500),{once:true}); shot.appendChild(f); const t=shot.querySelector('.wait span'); if(t) t.textContent='Drawing the first screen…'; requestAnimationFrame(fitShots); }   /* the live page is held back until it has loaded and its opening has played */
+function waiting(){ const w=document.createElement('div'); w.className='wait'; w.setAttribute('aria-hidden','true'); const bars=document.createElement('div'); bars.className='bars'; bars.append(...[0,1,2,3].map(()=>document.createElement('i'))); w.append(bars); return w; }
+/* the line above each card says where THAT design stands: its first screen still coming, its download being prepared, ready.
+   Nothing on the page says "ready" for all three while one of them is not (owner, 2026-11-12). */
+function paintStates(){ const job=lastJob, vs=job?.result?.templates?.variants||[]; document.querySelectorAll('.card').forEach(card=>{ const v=vs.find(x=>x.slug===card.dataset.slug), st=card.querySelector('.state'); if(!v||!st) return;
+    const shot=card.querySelector('.shot'), seen=shot.classList.contains('ready');
+    const [cls,text]=!seen?['busy',shot.dataset.wait||'Drawing the first screen…']:v.package==='pending'&&job.status!=='done'?['busy','Preparing the download…']:v.package==='ready'?['ok','Ready']:['ok','Ready to look at'];
+    if(st.dataset.is!==cls+text){ st.dataset.is=cls+text; st.className='state '+cls; st.lastChild.textContent=text; } }); }
+const shown=shot=>{ shot.classList.add('ready'); paintStates(); };
+function live(shot,v){ const f=document.createElement('iframe'); f.src=v.url; f.title=nameOf(v.slug)+' — preview'; f.loading='lazy'; f.tabIndex=-1; f.setAttribute('aria-hidden','true'); f.addEventListener('load',()=>setTimeout(()=>shown(shot),2500),{once:true}); shot.appendChild(f); shot.dataset.wait='Drawing the first screen…'; paintStates(); requestAnimationFrame(fitShots); }   /* the live page is held back until it has loaded and its opening has played */
 function fitShots(){ document.querySelectorAll('.card .shot').forEach(sh=>{ const f=sh.querySelector('iframe'); if(f) f.style.transform=`scale(${sh.clientWidth/1440})`; }); }
 addEventListener('resize',fitShots);
 function openFull(v){ const f=$('#full'); $('#fullFrame').src=v.url; $('#fullName').textContent=nameOf(v.slug); f.dataset.slug=v.slug; f.classList.add('on'); $('#fullClose').focus(); }
@@ -355,17 +318,18 @@ let paidSeen=false;
 function showChooser(job){ lastJob=job;
   if(!paidSeen){ const p=new URLSearchParams(location.search).get('paid'); if(p&&p!=='0'&&(job.result?.templates?.variants||[]).some(v=>v.slug===p)){ paidSeen=true; setTimeout(()=>{ pick(p); say(p,'Payment received. Download the page — if it says payment is still needed, give it a moment.'); },0); } } const t=job.result.templates, vs=t.variants||[];
   $('#stage').hidden=true; $('#result').classList.remove('on'); $('#choose').classList.add('on'); layoutResult();
-  { const m=$('#chooseMeta'), left=vs.filter(v=>v.package==='pending').length; m.classList.toggle('done',job.status==='done'); m.replaceChildren(document.createElement('i'),document.createTextNode(job.status==='done'?(vs.length?`Ready · ${vs.length} design${vs.length===1?'':'s'} · checked on a desk screen and a phone`:'Finished'):`Preparing the downloads · ${vs.length-left} of ${vs.length} ready`)); }
   const key=job.id+':'+vs.map(v=>v.slug+(v.cover?'+':'')).join(','); if(chooserFor!==key){ chooserFor=key; const cards=$('#cards'); cards.replaceChildren(); cards.dataset.n=String(vs.length);
     for(const v of vs){ const card=document.createElement('article'); card.className='card'; card.dataset.slug=v.slug;
-      const shot=document.createElement('div'); shot.className='shot'; shot.appendChild(waiting(v.cover?'Bringing in the cover…':'Drawing the first screen…'));   /* a card shows its design only once it is whole: a still cover taken by the worker at rest, else the live page after it has settled */
-      if(v.cover){ const im=document.createElement('img'); im.className='cover'; im.alt=nameOf(v.slug)+': its first screen'; im.decoding='async'; im.onload=()=>shot.classList.add('ready'); im.onerror=()=>{ im.remove(); live(shot,v); }; im.src=v.cover; shot.appendChild(im); }
+      const state=document.createElement('p'); state.className='state busy'; state.setAttribute('role','status'); state.append(document.createElement('i'),document.createElement('span'));
+      const shot=document.createElement('div'); shot.className='shot'; shot.dataset.wait=v.cover?'Bringing in the cover…':'Drawing the first screen…'; shot.appendChild(waiting());   /* a card shows its design only once it is whole: a still cover taken by the worker at rest, else the live page after it has settled */
+      if(v.cover){ const im=document.createElement('img'); im.className='cover'; im.alt=nameOf(v.slug)+': its first screen'; im.decoding='async'; im.onload=()=>shown(shot); im.onerror=()=>{ im.remove(); live(shot,v); }; im.src=v.cover; shot.appendChild(im); }
       else live(shot,v);
       const meta=document.createElement('div'); meta.className='meta'; const nm=document.createElement('span'); nm.className='name'; nm.textContent=nameOf(v.slug); meta.append(nm);   /* nothing internal under the name (owner, 2026-11-12) */
       const acts=document.createElement('div'); acts.className='acts'; const open=document.createElement('button'); open.className='pill open'; open.textContent='Open full screen ↗'; open.onclick=()=>openFull(v);
       const pb=document.createElement('button'); pb.className='pill ink pickb'; pb.setAttribute('aria-pressed','false'); pb.textContent='Choose this one'; pb.onclick=()=>pick(v.slug); const ed=document.createElement('a'); ed.className='pill editb'; ed.href=`/edit?job=${encodeURIComponent(job.id)}&slug=${encodeURIComponent(v.slug)}`; ed.textContent='Edit'; acts.append(open,pb,ed);
-      card.append(shot,meta,acts); cards.appendChild(card); }
+      card.append(state,shot,meta,acts); cards.appendChild(card); }
     requestAnimationFrame(fitShots); }
+  paintStates();
   document.querySelectorAll('.card .editb').forEach(a=>{ a.hidden=job.status!=='done'||!t.store; });   /* the editor works on the data the finished job kept */
   const none=$('#chooseNone'); none.hidden=vs.length>0; $('.choose-foot').hidden=!vs.length;
   const fromForm=job.result.source==='form', left=t.left_out||[]; $('#chooseLeft').hidden=!(fromForm&&left.length); $('#chooseStart').hidden=fromForm;
@@ -391,38 +355,35 @@ async function poll(id){ try{ const r=await fetch(`${API}/jobs/${id}`); if(!r.ok
     if(['queued','running'].includes(job.status) && job.notify?.available && !notifyDone){ $('#notify').hidden=false; if(job.notify.email){ $('#notifyNote').textContent='We’ll email you the link.'; $('#notifyEmail').disabled=true; $('#notifyGo').disabled=true; notifyDone=true; } } if(job.status==='failed'){ still(); if(sw) sw.stop(); if(draftSw){ draftSw.stop(); draftSw=null; } const message=String(job.error||'unknown'); const providerUnavailable=/your credit balance is too low to access the anthropic api/i.test(message) || message==='The AI service is temporarily unavailable. Please try again later.'; $('#err').textContent=providerUnavailable?'The AI service is temporarily unavailable. Please try again later.':'Something broke: '+message+'. Try again or send us the URL.'; $('#h').textContent='That one didn’t go through.'; return; }
   }catch(e){ if(e instanceof TypeError){ lost=true; $('#micro').classList.add('warn'); $('#micro').textContent='Connection lost — the job keeps running; checking again…'; } else $('#err').textContent=e.message; }   /* a dropped connection is not a failed job */
   setTimeout(()=>poll(id), 3000); }
-if(innerWidth>700){const m=document.getElementById('briefMore'); if(m) m.open=true;}
-function briefData(){ const f=$('#brief'); const d={keepFont:f.keepFont.checked,keepColours:f.keepColours.checked,keepLogo:f.keepLogo.checked,mode:(f.querySelector('[name=mode]:checked')||{}).value||'seo-safe',kind:(f.querySelector('[name=kind]:checked')||{}).value||'',keep:f.keep.value.trim(),goal:f.goal.value.trim()}; return d; }
+let launching=false;
+/* every way in ends here: POST /jobs on the template path, with what the visitor gave beside the address */
 async function launch(url,extra){
-  const button=$('#go'); if(button.disabled) return; button.disabled=true; $('#err').textContent='';
-  $('#brief').classList.add('hide'); $('#h').textContent='Reading your site…';
+  if(launching) return; launching=true; $('#err').textContent=''; $('#again').hidden=true; $('#h').textContent=extra&&extra.source==='form'?'Reading what you told us…':'Reading your site…';
   try {
     $('#work').classList.remove('is-still'); startClock(Date.now()); sw=Swarm2.mount($('#frame'),CREW());
     const send=window.Auth&&Auth.enabled?(p,i)=>Auth.api(p,i):(p,i)=>fetch(API+p,i);   /* a signed-in visitor's preview is theirs from the start */
-    const cfg=await config(); const options=cfg.templates?{engine:'templates',...(extra||{})}:briefData();   /* the template path, where the deployment has it on: no brief; what the visitor gave beside the address */
+    const options={engine:'templates',...(extra||{})};
     const r=await send('/jobs',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url,options})});
     const j=await r.json().catch(()=>({}));
-    if(r.status===401&&j.login){ location.href='/login?next='+encodeURIComponent('/app?url='+encodeURIComponent(url)); return; }
+    if(r.status===401&&j.login){ location.href='/login?next='+encodeURIComponent(location.pathname+location.search); return; }   /* back to the same way in (the address, with=screens, kind, goal) once signed in */
     if(r.status===402){ const e=new Error(j.error||'Your free previews are used.'); e.shown=true; throw e; }
     if(!r.ok || !j.id) throw new Error('Could not start preview');
     history.replaceState(null,'',`/app?url=${encodeURIComponent(url)}&job=${j.id}`); poll(j.id);
   } catch(e) {
-    if(sw){sw.stop();sw=null} if(draftSw){draftSw.stop();draftSw=null} clearInterval(ticking); ticking=null; t0=0; document.title=TITLE; if(CFG&&CFG.templates){ $('#h').textContent='That did not start.'; $('#again').hidden=false; $('#againGo').onclick=()=>{ $('#again').hidden=true; launch(url,extra); }; } else { $('#brief').classList.remove('hide'); $('#h').textContent='Set the direction.'; }
+    if(sw){sw.stop();sw=null} if(draftSw){draftSw.stop();draftSw=null} clearInterval(ticking); ticking=null; t0=0; document.title=TITLE; $('#h').textContent='That did not start.'; $('#again').hidden=false; $('#againGo').onclick=()=>launch(url,extra);
     $('#err').textContent=e&&e.shown?e.message:'We couldn’t start your preview. Check your connection and try again.';
-    setTimeout(()=>{button.disabled=false},750);
+    setTimeout(()=>{launching=false},750);
   }
 }
 async function start(){ let id=qs.get('job'); const url=qs.get('url'); $('#urlLab').textContent=url?('https://'+url.replace(/^https?:\/\//,'')):'';
-  if(id){ $('#brief').classList.add('hide'); sw=Swarm2.mount($('#frame'),CREW()); poll(id); config().then(c=>{ if(c.templates){ MICRO='Stay or come back: this page remembers the job'; if(!lost) $('#micro').textContent=MICRO; } }); return; }
+  if(id){ sw=Swarm2.mount($('#frame'),CREW()); poll(id); return; }
   if(!url){ /* nothing to work on: a signed-in visitor starts one among their projects, anyone else on the front page.
        The account script is deferred, so the answer is only known once the document is parsed. */
     const leave=async()=>{ const signed=window.Auth&&Auth.enabled&&await Auth.session(); location.replace(signed?'/dashboard#new':'/#top'); };
     if(document.readyState==='loading') addEventListener('DOMContentLoaded',leave); else leave(); return; }
-  const cfg=await config();
-  if(cfg.templates){ MICRO='Stay or come back: this page remembers the job'; $('#micro').textContent=MICRO; const extra={}; const niche=qs.get('niche'), goal=(qs.get('goal')||'').trim().slice(0,80); if(niche) extra.niche=niche; if(goal) extra.goal=goal;
-    if(qs.get('with')==='screens') return shotsStep(url,extra);   /* "I built a first version of my app": its screenshots first */
-    return launch(url,extra); }   /* "I have a site": the designs start at once */
-  $('#brief').classList.remove('hide'); $('#h').textContent='Set the direction.'; $('#brief').querySelector('[name=kind][value=""]').checked=true; $('#go').onclick=()=>launch(url); }
+  const extra={}; const niche=qs.get('niche'), goal=(qs.get('goal')||'').trim().slice(0,80); if(niche) extra.niche=niche; if(goal) extra.goal=goal;
+  if(qs.get('with')==='screens') return shotsStep(url,extra);   /* "I built a first version of my app": its screenshots first */
+  return launch(url,extra); }   /* "I have a site": the designs start at once */
 /* up to six screenshots, each uploaded as it is chosen (POST /uploads, the form's own route); the job carries their names */
 function shotsStep(url,extra){ const shots=[]; const list=$('#thumbs'), note=$('#shotsNote'), go=$('#shotsGo'); $('#shots').hidden=false; $('#work').hidden=true; $('#h').textContent='Add screenshots of your app';
   const busy=()=>shots.some(s=>!s.file&&!s.failed); const paint=()=>{ go.disabled=busy(); note.textContent=busy()?'Uploading…':shots.filter(s=>s.file).length?`${shots.filter(s=>s.file).length} of 6 added`:''; };

@@ -86,9 +86,12 @@ try {
     await page.locator('#shotsGo').click(); await page.locator('#choose.on').waitFor({ timeout: 10000 });
     assert.deepEqual({ ...st.posted.options, screens: [...(st.posted.options.screens || [])].sort() }, { engine: 'templates', screens: ['00000001-4e5f-4a6b-8c7d-9e0f1a2b3c4d.png', '00000002-4e5f-4a6b-8c7d-9e0f1a2b3c4d.png'] }, 'both screenshots go with the job, by the names the server gave them');
     assert.equal(await page.locator('.card .shot iframe').count(), 0, 'a card with a cover never loads its live page');
-    assert.deepEqual(await page.locator('.card .wait span').allTextContents(), Array(3).fill('Bringing in the cover…'), 'each card says what it waits for');
+    assert.deepEqual(await page.locator('.card .state.busy').allTextContents(), Array(3).fill('Bringing in the cover…'), 'the line above each card says what that card waits for');
     assert.equal(await page.locator('.card .shot.ready').count(), 0, 'nothing half-drawn is shown while the covers come');
+    assert.equal(await page.locator('#chooseMeta').count(), 0, 'nothing in the head says "ready" for all three while a card is not');
+    assert.ok(await page.locator('.card').first().evaluate(c => c.querySelector('.state').getBoundingClientRect().bottom <= c.querySelector('.shot').getBoundingClientRect().top), 'the state stands above its cover');
     st.coverHeld = false; await page.waitForFunction(() => document.querySelectorAll('.card .shot.ready img.cover').length === 3, null, { timeout: 8000 });
+    assert.deepEqual(await page.locator('.card .state.ok').allTextContents(), Array(3).fill('Ready'), 'each card says it is ready once its own cover and download are');
     assert.ok(await page.locator('#editGo').isHidden()); await page.locator('.card').nth(0).locator('.pickb').click();
     assert.equal(await page.locator('#editGo').isHidden(), true, 'Edit and publish only once the job kept its data');
     await page.close(); }
