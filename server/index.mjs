@@ -10,7 +10,7 @@ import { saveCrawlCheckpoint, restoreCrawlCheckpoint } from './crawl_checkpoint.
 import { spawn } from 'node:child_process'; import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
 import { makeUserOf, allowance, mine } from './auth.mjs';
-import { STEPS_T, STEPS_F, enabled as templatesEnabled, runTemplateJob, mayDownload, previewable, imageType, formProblem, extrasProblem, UPLOAD, libraryCount, previewKey } from './templates.mjs';
+import { STEPS_T, STEPS_F, typicalOf, enabled as templatesEnabled, runTemplateJob, mayDownload, previewable, imageType, formProblem, extrasProblem, UPLOAD, libraryCount, previewKey } from './templates.mjs';
 import { publicJob, internalSlug, publicOf, downloadName } from './designs.mjs';
 import { makeEditor, mayKeep, editable, opsProblem, runGate } from './editor.mjs';
 import { ensurePrivateBucket } from './bucket.mjs'; import { runCleanup } from './cleanup.mjs';
@@ -52,7 +52,12 @@ function rateLimited(ip) {
 const AUTH = { require: process.env.REQUIRE_LOGIN === '1', free: Math.max(0, Number(process.env.FREE_PREVIEWS_PER_USER || 3)) };
 const userOf = makeUserOf(sb);
 const usedBy = async userId => { const { count } = await sb.from('jobs').select('id', { count: 'exact', head: true }).eq('user_id', userId).neq('status', 'failed'); return count || 0; };
-app.get('/config', (_, res) => res.json({ auth: { require: AUTH.require, free: AUTH.free }, templates: TEMPLATES }));
+// what each step usually takes here, from the last forty finished jobs' own timings; asked of the database at most every ten minutes
+let typical = { at: 0, steps: {} };
+const typicalSteps = async () => { if (Date.now() - typical.at < 600e3) return typical.steps; typical.at = Date.now();
+  try { const { data } = await sb.from('jobs').select('t:result->templates->timings_ms->steps').eq('status', 'done').order('created_at', { ascending: false }).limit(40); typical.steps = typicalOf((data || []).map(r => r.t)); } catch { /* the page has its own figures */ }
+  return typical.steps; };
+app.get('/config', async (_, res) => res.json({ auth: { require: AUTH.require, free: AUTH.free }, templates: TEMPLATES, typical: await typicalSteps() }));
 app.get('/me', async (req, res) => { const user = await userOf(req); if (!user) return res.status(401).json({ error: 'sign in' }); res.json({ id: user.id, email: user.email, previews: allowance({ used: await usedBy(user.id), free: AUTH.free }) }); });
 app.get('/me/jobs', async (req, res) => {
   const user = await userOf(req); if (!user) return res.status(401).json({ error: 'sign in' });
@@ -216,6 +221,7 @@ app.get('/t/:id/:slug', async (req, res) => {
   res.set({ 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-frame-options': 'ALLOWALL', 'x-robots-tag': 'noindex' });
   res.send(Buffer.from(await data.arrayBuffer()));
 });
+const within = (p, ms) => { let t; return Promise.race([p, new Promise((_, no) => { t = setTimeout(() => no(new Error('no answer in ' + ms + ' ms')), ms); })]).finally(() => clearTimeout(t)); };
 app.get('/t/:id/:slug/package', async (req, res) => {
   if (!/^[0-9a-f-]{36}$/.test(req.params.id)) return res.status(400).end();
   const user = await userOf(req);
@@ -232,8 +238,12 @@ app.get('/t/:id/:slug/package', async (req, res) => {
   // ?link=1 — an address the visitor's own browser downloads the file from, good for ten minutes. A page that fetches
   // the bytes and hands them to the browser as a made-up link is ignored by phone browsers after the wait (owner, on a
   // phone, 2026-11-14: "nothing happened"); a real address is a download everywhere, with the browser's own progress.
-  if (req.query.link) { const { data: s } = await sb.storage.from(PACKAGE_BUCKET).createSignedUrl(edited || `${row.id}/${slug}.zip`, 600, { download: downloadName(row, slug) });
-    return s?.signedUrl ? res.set('cache-control', 'no-store').json({ url: s.signedUrl, name: downloadName(row, slug) }) : res.status(404).json({ error: 'package not found' }); }
+  // The storage is given fifteen seconds and is always answered for: a visitor's page waited on this request with its
+  // button held and nothing said (owner, 2026-11-14) — whatever happens here, the page is told.
+  if (req.query.link) { let s = null, why = '';
+    try { const r = await within(sb.storage.from(PACKAGE_BUCKET).createSignedUrl(edited || `${row.id}/${slug}.zip`, 600, { download: downloadName(row, slug) }), 15000); s = r?.data; why = r?.error?.message || ''; } catch (e) { why = String(e?.message || e); }
+    if (!s?.signedUrl) console.warn('package link', row.id, slug, why.slice(0, 160));
+    return s?.signedUrl ? res.set('cache-control', 'no-store').json({ url: s.signedUrl, name: downloadName(row, slug) }) : res.status(/not.?found/i.test(why) ? 404 : 503).json({ error: /not.?found/i.test(why) ? 'package not found' : 'The file could not be reached just now. Try again in a moment.' }); }
   const { data, error: e2 } = await sb.storage.from(PACKAGE_BUCKET).download(edited || `${row.id}/${slug}.zip`);
   if (e2 || !data) return res.status(404).json({ error: 'package not found' });
   res.set({ 'content-type': 'application/zip', 'content-disposition': `attachment; filename="${downloadName(row, slug)}"`, 'cache-control': 'no-store' });
