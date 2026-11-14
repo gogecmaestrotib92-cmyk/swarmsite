@@ -57,7 +57,7 @@ a{color:inherit;text-decoration:none}
 @media(max-width:700px){.stage{padding:120px 20px 50px}.url{overflow-wrap:anywhere;max-width:100%}}/* ── The working window. A job takes minutes, so the window has to say, at every moment, that it is running: a light
    that travels round the frame, the crew looking over its edge, agents that stay on the page, a bar with one segment
    per step, and a clock. Everything it states is read from the job (step, count, time); nothing is invented. ── */
-.work{position:relative;width:max(min(1100px,94vw,(100svh - 410px) * 16 / 9),min(560px,94vw));margin-top:92px}/* never taller than the screen leaves room for: the bar and the clock at its foot are seen without scrolling */.work .frame{position:relative;z-index:1;width:100%}
+.work{position:relative;width:max(min(1100px,94vw,(100svh - 488px) * 16 / 9),min(560px,94vw));margin-top:92px}/* never taller than the screen leaves room for: the bar and the clock at its foot are seen without scrolling */.work .frame{position:relative;z-index:1;width:100%}
 
 @property --wk-a{syntax:'<angle>';inherits:false;initial-value:0deg}
 .work::before,.work::after{content:"";position:absolute;inset:-3px;border-radius:25px;background:conic-gradient(from var(--wk-a),rgba(237,197,190,0) 0 48%,#edc5be 68%,#833b46 86%,rgba(237,197,190,0));animation:wk-spin 4.2s linear infinite;pointer-events:none}
@@ -121,6 +121,11 @@ a{color:inherit;text-decoration:none}
 .work::before,.work::after{display:none}.frame{border-radius:16px;box-shadow:none;background:var(--deep)}.frame .skel{background:var(--deep)}
 .steps{background:var(--card);border:0;border-radius:32px;padding:16px;gap:4px}.step{background:var(--paper);border:0;border-radius:12px}.step:first-child{border-radius:12px}
 .step.done .dot{background:var(--ink)}.notify-row{border:2px solid var(--ink);box-shadow:none;background:var(--paper)}.notify .pill{background:var(--accent);color:var(--ink);border-color:var(--ink)}
+/* the ring under the heading: how far the job is, by the time each step usually takes (web/js/progress.js) */
+.ring{position:relative;width:84px;height:84px;margin:-4px auto 0;flex:none}.ring[hidden]{display:none}.ring svg{width:100%;height:100%;transform:rotate(-90deg);display:block}
+.ring circle{fill:none;stroke-width:6}.ring .rt{stroke:var(--card)}.ring .rv{stroke:var(--deep);stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100;transition:stroke-dashoffset 1s linear}
+.ring b{position:absolute;inset:0;display:grid;place-items:center;font:500 18px/1 var(--sans);font-variant-numeric:tabular-nums;color:var(--ink);letter-spacing:-.01em}
+@media(min-width:992px){.ring{width:72px;height:72px;margin:-10px auto -8px}.ring b{font-size:16px}}@media(max-width:700px){.work .frame{max-height:max(280px,calc(100svh - 440px))}}/* a phone: the frame gives the ring its room, so the bar and the clock at its foot stay on the screen */.stage:has(.shots:not([hidden])) .ring{display:none}@media(prefers-reduced-motion:reduce){.ring .rv{transition:none}}
 .steps:empty{display:none}.stage:has(.shots:not([hidden])) :is(.steps,.log,.micro,.notify){display:none}
 .again{display:flex;gap:12px;justify-content:center}.again[hidden]{display:none}/* screenshots of an app, before it starts — one panel: card tone, a paper sheet on it */
 .shots{width:min(760px,100%)}.shots[hidden]{display:none}.shots .sheet{display:grid;gap:20px;text-align:left}
@@ -161,6 +166,7 @@ a{color:inherit;text-decoration:none}
 <section class="stage" id="stage">
   <span class="lab" id="urlLab"></span>
   <h1 class="h" id="h">Reading your site…</h1>
+  <div class="ring" id="ring" role="progressbar" aria-label="How far your designs are" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden><svg viewBox="0 0 80 80" aria-hidden="true"><circle class="rt" cx="40" cy="40" r="34"/><circle class="rv" id="ringV" cx="40" cy="40" r="34" pathLength="100"/></svg><b id="ringN">0%</b></div>
   <form class="shots panel" id="shots" hidden onsubmit="return false"><div class="sheet">
     <label class="drop" for="shotFiles"><input type="file" id="shotFiles" accept="image/png,image/jpeg,image/webp" multiple><span class="h-s serif">Add up to six screenshots</span><span class="small">PNG, JPEG or WebP, each under 8 MB. Your screens are shown whole, never cropped.</span></label>
     <ul class="thumbs" id="thumbs" aria-label="Your screenshots"></ul>
@@ -202,6 +208,7 @@ a{color:inherit;text-decoration:none}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js" defer></script>
 <script src="/js/auth.js" defer></script>
 <script src="/js/header.js" defer></script>
+<script src="/js/progress.js"></script>
 <script src="/js/swarm2.js"></script>
 <script>
 const API = window.SWARMSITE_API; const qs = new URLSearchParams(location.search);
@@ -214,9 +221,15 @@ $('#coverage').addEventListener('toggle',positionCoverage); window.addEventListe
 /* The clock: how long this job has been going, from the moment it was started (the job's own time when the page is
    opened later; a browser clock that disagrees wildly is not believed). */
 let t0=0, ticking=null; const TITLE=document.title;
-function startClock(at){ if(t0) return; t0=at; const show=()=>{ const s=Math.max(0,Math.floor((Date.now()-t0)/1000)); const t=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); $('#clock').textContent=t; $('#draftClock').textContent=t; }; show(); ticking=setInterval(show,1000); }
+function startClock(at){ if(t0) return; t0=at; const show=()=>{ const s=Math.max(0,Math.floor((Date.now()-t0)/1000)); const t=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); $('#clock').textContent=t; $('#draftClock').textContent=t; paintRing(); }; show(); ticking=setInterval(show,1000); }
 function still(){ clearInterval(ticking); ticking=null; $('#work').classList.add('is-still'); }
-function renderSteps(job){ if(!t0&&['queued','running'].includes(job.status)){ const made=Date.parse(job.created_at), age=Date.now()-made; startClock(age>=0&&age<3*3600e3?made:Date.now()); }
+/* The ring: the share of the usual time behind us, down to the moment the designs are shown. It is drawn every second
+   from the job as last read and the worker's own usual times (/config `typical`); it never goes back, and says 100
+   only when the work is done. A job that failed or is over shows none. */
+let ringJob=null, ringMax=0, ringAsked=false;
+function paintRing(){ const el=$('#ring'), job=ringJob; if(!el||!window.Progress) return; if(!ringAsked){ ringAsked=true; config(); }   /* the usual times, once; until they come the page's own are used */ if(!job||!['queued','running'].includes(job.status)||job.result?.templates){ el.hidden=true; return; }
+  const p=Progress.of(job,(CFG&&CFG.typical)||{},Date.now()); ringMax=Math.max(ringMax,p.pct); el.hidden=false; el.setAttribute('aria-valuenow',ringMax); $('#ringN').textContent=ringMax+'%'; $('#ringV').style.strokeDashoffset=String(100-ringMax); }
+function renderSteps(job){ ringJob=job; paintRing(); if(!t0&&['queued','running'].includes(job.status)){ const made=Date.parse(job.created_at), age=Date.now()-made; startClock(age>=0&&age<3*3600e3?made:Date.now()); }
   { const bar=$('#prog'), n=job.steps.length, done=job.steps.filter(s=>s.status==='done').length; if(bar.children.length!==n) bar.replaceChildren(...job.steps.map(()=>document.createElement('i'))); job.steps.forEach((s,i)=>{ bar.children[i].className=s.status==='done'?'done':s.status==='running'?'run':''; }); bar.setAttribute('aria-valuemax',n); bar.setAttribute('aria-valuenow',done);
     document.title=job.status==='done'?'✓ Preview ready — Swarmsite':job.status==='failed'?TITLE:`${done}/${n} · ${job.status==='queued'?'In the queue':'Working'} — Swarmsite`; }   /* seen from another tab too */
   const el=$('#steps'), rows=document.createDocumentFragment(); for(const s of job.steps){const row=document.createElement('div'); row.className='step'; if(['pending','running','done','failed'].includes(s.status)) row.classList.add(s.status); const dot=document.createElement('span'); dot.className='dot'; const label=document.createElement('span'); label.textContent=s.label; const note=document.createElement('span'); note.className='note'; note.textContent=s.status==='done'?(s.note||'done'):s.status==='running'?'working…':''; row.append(dot,label,note); rows.appendChild(row);} el.replaceChildren(rows);
@@ -302,14 +315,15 @@ let busy=false;   /* a download being asked for: the button waits and the line s
 let said={slug:'',text:''};   /* what the last download answered stays until another design is picked (the poll re-renders this line) */
 const say=(slug,text)=>{ said={slug,text}; $('#chooseNote').textContent=text; };
 $('#download').onclick=async()=>{ const id=lastJob?.id, slug=picked; if(!id||!slug||busy) return; busy=true; say(slug,'Getting your download…'); renderDownload();
-  try{ const send=window.Auth&&Auth.enabled?(p,i)=>Auth.api(p,i):(p,i)=>fetch(API+p,i); const r=await send(`/t/${id}/${slug}/package?link=1`,{});
-    if(r.status===401){ location.href='/login?next='+encodeURIComponent(location.pathname+location.search); return; }
+  try{ const send=window.Auth&&Auth.enabled?(p,i)=>Auth.api(p,i):(p,i)=>fetch(API+p,i); const stop=new AbortController(), late=setTimeout(()=>stop.abort(),25000); let r; try{ r=await send(`/t/${id}/${slug}/package?link=1`,{signal:stop.signal}); } finally{ clearTimeout(late); }   /* never left waiting: after 25 s it is said */
+    if(r.status===401){ if(window.Auth&&Auth.enabled&&await Auth.session()){ say(slug,'Your sign-in was not accepted here. Sign out and sign in again, then come back to this page.'); return; }   /* signed in and still refused: not sent round to the sign-in page and straight back */
+      location.href='/login?next='+encodeURIComponent(location.pathname+location.search); return; }
     if(r.status===402){ const j=await r.json().catch(()=>({})); if(j.pay_url){ offerPay(id,slug); return; } say(slug,'Payment comes before the download — it is not open yet. Your designs stay here.'); return; }
     const j=await r.json().catch(()=>({})); if(j.prepare){ say(slug,'You edited this design, so its download is made in the editor: open Edit, then Download.'); return; }
     if(!r.ok||!j.url){ say(slug,j.error||'The download is not available.'); return; }
     /* the file's own address, for ten minutes: the browser downloads it itself (a phone too), and the same address stays in the line as a link */
     said={slug,text:'Your download has started: a zip with the page, its pictures and fonts. Unzip it and open index.html.',url:j.url}; location.href=j.url; }
-  catch{ say(slug,'The download did not go through. Check your connection and try again.'); }
+  catch(e){ say(slug,e&&e.name==='AbortError'?'The server did not answer in time. Try again in a moment.':'The download did not go through. Check your connection and try again.'); }
   finally{ busy=false; renderDownload(); } };
 /* payment: Stripe Checkout for the chosen design, offered only where the server says payment is on (a 402 with pay_url) */
 function offerPay(id,slug){ say(slug,'This design is paid for once; then it is yours to download.'); const b=$('#payGo'); b.hidden=false; $('#download').hidden=true;

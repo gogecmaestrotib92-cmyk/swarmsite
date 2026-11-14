@@ -111,7 +111,11 @@ try {
     await page.route('**/*', async r => { const u = new URL(r.request().url()), m = r.request().method(), body = m === 'GET' ? null : JSON.parse(r.request().postData() || 'null');
       const json = (o, status = 200) => r.fulfill({ status, headers: { 'access-control-allow-origin': '*' }, contentType: 'application/json', body: JSON.stringify(o) });
       if (u.hostname === 'app.test' && u.pathname === '/edit') return r.fulfill({ contentType: 'text/html', body: html });
-      if (u.hostname === 'app.test' && u.pathname === '/config.js') return r.fulfill({ contentType: 'application/javascript', body: "window.SWARMSITE_API='https://api.test';window.SWARMSITE_PUBLISH=true" });
+      if (u.hostname === 'app.test' && u.pathname === '/config.js') return r.fulfill({ contentType: 'application/javascript', body: "window.SWARMSITE_API='https://api.test';window.SWARMSITE_PUBLISH=true;window.SWARMSITE_SUPABASE={url:'https://proj.supabase.test',anon:'public'}" });
+      // a visitor who is signed in: the sign-in library (stood in for here) and the site's own auth.js, as on the real page
+      if (u.hostname === 'cdn.jsdelivr.net' && /supabase-js/.test(u.pathname)) return r.fulfill({ contentType: 'application/javascript', body: "window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:{access_token:'tok-1',user:{email:'v@example.test'}}}}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}),signOut:async()=>({})}})}" });
+      if (u.hostname === 'app.test' && u.pathname === '/js/auth.js') return r.fulfill({ contentType: 'application/javascript', body: fs.readFileSync(path.join(root, 'web/js/auth.js')) });
+      if (u.hostname === 'api.test' && /\/(edits|prepare|publish|package)$/.test(u.pathname)) (state.tokens ||= []).push(r.request().headers().authorization || '');
       if (u.hostname === 'app.test' && u.pathname.startsWith('/vendor/')) return r.fulfill({ contentType: 'application/javascript', body: fs.readFileSync(path.join(root, 'web', u.pathname)) });   // the UI SDK's elements (tabs, the dialog), served from the site itself
       if (r.request().headers()['access-control-request-method']) return r.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'POST, PUT' } });
       const t = u.pathname.match(/^\/t\/[0-9a-f-]{36}\/(v[0-9]+)\/(describe|render|check)$/);
@@ -143,6 +147,9 @@ try {
     await page.locator('#prepare').click(); await page.locator('#getZip:not([hidden])').waitFor({ timeout: 20000 });
     const dl = page.waitForEvent('download', { timeout: 10000 }); await page.locator('#getZip').click(); const got = await dl;
     assert.equal(got.suggestedFilename(), 'casa-fern-design-1.zip'); assert.equal(state.asked, '?link=1');
+    // every request that needs the account carries it: the editor did not load the sign-in library, so a signed-in
+    // visitor's Prepare was answered "sign in", and the sign-in page sent them straight back (owner, 2026-11-14)
+    assert.ok(state.tokens.length >= 4 && state.tokens.every(t => t === 'Bearer tok-1'), 'keeping, publishing, preparing and downloading are asked as the signed-in visitor: ' + JSON.stringify(state.tokens));
     await page.waitForFunction(() => /Your download has started/.test(document.querySelector('#pubStatus').textContent));
     assert.equal(await page.locator('#pubStatus #zipLink').getAttribute('href'), 'https://files.test/signed/design-1.zip?token=t'); assert.ok(await page.locator('#pubSheet').isVisible(), 'the editor is still there');
     await page.close(); }

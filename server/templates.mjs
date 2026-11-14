@@ -32,6 +32,12 @@ export const STEPS_F = [
   ['publish', 'Publishing the three previews'],
   ['package', 'Preparing the downloads'],
 ];
+// How long each step usually takes, in seconds: the median over finished jobs' own timings (`timings_ms.steps`), for
+// the working screen's ring (web/js/progress.js). A step timed 0 (nothing ran) is not counted; fewer than three
+// readings of a step say nothing about it.
+export function typicalOf(rows) { const by = {};
+  for (const r of rows || []) for (const [id, ms] of Object.entries(r || {})) if (/^[a-z]{1,20}$/.test(id) && Number.isFinite(+ms) && +ms >= 500) (by[id] ||= []).push(+ms / 1000);
+  return Object.fromEntries(Object.entries(by).filter(([, v]) => v.length >= 3).map(([id, v]) => { v.sort((a, b) => a - b); const m = v.length >> 1; return [id, Math.round(v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2)]; })); }
 export const UPLOAD = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(jpg|png|webp)$/;
 // what an uploaded file is, from its first bytes (never from what the browser says it is)
 export function imageType(buf) {

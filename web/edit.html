@@ -109,6 +109,7 @@ ui-tabs{display:flex;flex-direction:column;flex:1;min-height:0}ui-tabs-tab{displ
   </div>
 </div>
 <script src="/config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js" defer></script>
 <script src="/js/auth.js" defer></script>
 <script src="/js/swarm2.js"></script>
 <script type="module" src="/vendor/ui-sdk/web.js"></script>
@@ -239,7 +240,11 @@ $('#upload').onchange=async e=>{ const file=e.target.files[0]; e.target.value=''
   catch(err){ say(String(err.message||'The photograph could not be added.'),'bad'); } };
 /* keep: an account; the first to keep edits on these designs owns them */
 const send=(p,i)=>window.Auth&&Auth.enabled?Auth.api(p,i):fetch(API+p,i);
-const toLogin=()=>{ try{ sessionStorage.setItem('edits:'+ID,JSON.stringify(ops)); }catch{} location.href='/login?next='+encodeURIComponent(location.pathname+location.search); };
+/* Sign-in is asked for once. A visitor who IS signed in and is still answered 401 is not sent round again (the sign-in
+   page would send them straight back here, and the page would only start over — owner, 2026-11-14): it is said. */
+const toLogin=async()=>{ try{ sessionStorage.setItem('edits:'+ID,JSON.stringify(ops)); }catch{}
+  if(window.Auth&&Auth.enabled&&await Auth.session()){ const t='Your sign-in was not accepted here. Sign out and sign in again, then come back to this page.'; say(t,'bad'); pubSay(t,'bad'); return; }
+  location.href='/login?next='+encodeURIComponent(location.pathname+location.search); };
 async function keep(){ const r=await send(`/t/${ID}/edits`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({ops})});
   if(r.status===401){ toLogin(); return null; }
   const j=await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.error||'The edits could not be kept.'); kept=JSON.stringify(ops); $('#save').disabled=true; return j; }
@@ -263,11 +268,12 @@ async function start(path,body,field,done){ both(true);
   finally{ both(false); } }
 $('#prepare').onclick=()=>start(`/t/${ID}/${SLUG}/prepare`,{},'edited',s=>{ if(s.status!=='ready'){ pubSay('The package did not match your page, so it is not offered: '+(s.why||[]).join('; '),'bad'); return; }
   pubSay('Your download is ready.','ok'); const a=$('#getZip'); a.hidden=false; a.onclick=async()=>{ a.disabled=true; pubSay('Getting your download…');
-    try{ const r=await send(`/t/${ID}/${SLUG}/package?link=1`,{}), j=await r.json().catch(()=>({})); if(!r.ok||!j.url){ pubSay(j.error||'The download is not available.','bad'); return; }
+    const stop=new AbortController(), late=setTimeout(()=>stop.abort(),25000);
+    try{ const r=await send(`/t/${ID}/${SLUG}/package?link=1`,{signal:stop.signal}), j=await r.json().catch(()=>({})); if(!r.ok||!j.url){ pubSay(j.error||'The download is not available.','bad'); return; }
       /* the file's own address, for ten minutes: the browser downloads it itself (a phone too); the same address stays as a link */
       pubSay('Your download has started: a zip with the page, its pictures and fonts.','ok'); const l=document.createElement('a'); l.href=j.url; l.id='zipLink'; l.textContent='Tap here if it has not started'; l.style.textDecoration='underline'; $('#pubStatus').append(' ',l,'.'); location.href=j.url; }
-    catch{ pubSay('The download did not go through. Check your connection and try again.','bad'); }
-    finally{ a.disabled=false; } }; });
+    catch(e){ pubSay(e&&e.name==='AbortError'?'The server did not answer in time. Try again in a moment.':'The download did not go through. Check your connection and try again.','bad'); }
+    finally{ clearTimeout(late); a.disabled=false; } }; });
 if(PUBLISH) $('#publish').onclick=()=>{ const name=$('#siteName').value.trim().toLowerCase(); if(!/^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])$/.test(name)||name.includes('--')){ pubSay('A name is 3 to 40 small letters, digits and single dashes.','bad'); $('#siteName').focus(); return; }
   start(`/t/${ID}/${SLUG}/publish`,{name},'publish',s=>{ if(s.status==='live'){ pubSay('Your site is online.','ok'); const a=$('#siteLink'); a.href=s.url; a.textContent=s.url.replace('https://',''); a.hidden=false; }
     else pubSay((s.status==='refused'?'Not published: ':'Publishing failed: ')+(s.why||[]).join('; '),'bad'); }); };
