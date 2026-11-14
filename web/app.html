@@ -296,17 +296,21 @@ function renderDownload(){ const v=(lastJob?.result?.templates?.variants||[]).fi
   if(!v){ b.disabled=true; n.textContent='Pick the one you like.'; return; }
   if(v.package==='pending'){ b.disabled=true; n.textContent=`${nameOf(v.slug)} chosen · its download is being prepared…`; return; }
   if(v.package!=='ready'){ b.disabled=true; n.textContent=`${nameOf(v.slug)} can be looked at but not downloaded: its file did not match the preview.`; return; }
-  b.disabled=false; n.textContent=said.slug===v.slug&&said.text?said.text:`${nameOf(v.slug)} chosen · the download is the same page, with its pictures and fonts.`; }
+  b.disabled=busy; n.textContent=said.slug===v.slug&&said.text?said.text:`${nameOf(v.slug)} chosen · the download is the same page, with its pictures and fonts.`;
+  if(said.slug===v.slug&&said.url){ const l=document.createElement('a'); l.href=said.url; l.id='zipLink'; l.textContent='Tap here if it has not started'; l.style.textDecoration='underline'; n.append(' ',l,'.'); } }
+let busy=false;   /* a download being asked for: the button waits and the line says so */
 let said={slug:'',text:''};   /* what the last download answered stays until another design is picked (the poll re-renders this line) */
 const say=(slug,text)=>{ said={slug,text}; $('#chooseNote').textContent=text; };
-$('#download').onclick=async()=>{ const id=lastJob?.id, slug=picked; if(!id||!slug) return; const b=$('#download'), n=$('#chooseNote'); b.disabled=true;
-  try{ const send=window.Auth&&Auth.enabled?(p,i)=>Auth.api(p,i):(p,i)=>fetch(API+p,i); const r=await send(`/t/${id}/${slug}/package`,{});
+$('#download').onclick=async()=>{ const id=lastJob?.id, slug=picked; if(!id||!slug||busy) return; busy=true; say(slug,'Getting your download…'); renderDownload();
+  try{ const send=window.Auth&&Auth.enabled?(p,i)=>Auth.api(p,i):(p,i)=>fetch(API+p,i); const r=await send(`/t/${id}/${slug}/package?link=1`,{});
     if(r.status===401){ location.href='/login?next='+encodeURIComponent(location.pathname+location.search); return; }
     if(r.status===402){ const j=await r.json().catch(()=>({})); if(j.pay_url){ offerPay(id,slug); return; } say(slug,'Payment comes before the download — it is not open yet. Your designs stay here.'); return; }
-    if(!r.ok){ const j=await r.json().catch(()=>({})); say(slug,j.error||'The download is not available.'); return; }
-    const blob=await r.blob(), a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=((lastJob.url||'site').replace(/^https?:\/\/(www\.)?/,'').replace(/[^a-z0-9.-]+/gi,'-').replace(/-+$/,''))+'-'+nameOf(slug).toLowerCase().replace(/[^a-z0-9]+/g,'-')+'.zip'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000); say(slug,'Downloaded. Unzip it and open index.html — or put the folder on any web host.'); }
+    const j=await r.json().catch(()=>({})); if(j.prepare){ say(slug,'You edited this design, so its download is made in the editor: open Edit, then Download.'); return; }
+    if(!r.ok||!j.url){ say(slug,j.error||'The download is not available.'); return; }
+    /* the file's own address, for ten minutes: the browser downloads it itself (a phone too), and the same address stays in the line as a link */
+    said={slug,text:'Your download has started: a zip with the page, its pictures and fonts. Unzip it and open index.html.',url:j.url}; location.href=j.url; }
   catch{ say(slug,'The download did not go through. Check your connection and try again.'); }
-  finally{ renderDownload(); } };
+  finally{ busy=false; renderDownload(); } };
 /* payment: Stripe Checkout for the chosen design, offered only where the server says payment is on (a 402 with pay_url) */
 function offerPay(id,slug){ say(slug,'This design is paid for once; then it is yours to download.'); const b=$('#payGo'); b.hidden=false; $('#download').hidden=true;
   b.onclick=async()=>{ b.disabled=true; try{ const send=window.Auth&&Auth.enabled?(p,i)=>Auth.api(p,i):(p,i)=>fetch(API+p,i);

@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/playwright:v1.65.0-noble
+FROM mcr.microsoft.com/playwright:v1.65.1-noble
 RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-pip ffmpeg tesseract-ocr && rm -rf /var/lib/apt/lists/* \
  && pip3 install --break-system-packages --no-cache-dir anthropic pillow
 WORKDIR /srv

@@ -229,6 +229,11 @@ app.get('/t/:id/:slug/package', async (req, res) => {
   // with kept edits: the verified package of those edits, once one is made (publish, or "download with my edits")
   const kept = await EDITOR.saved(row); const edited = kept.length ? editedPackage(row.result, slug, editsHash(kept)) : null;
   if (kept.length && !edited && req.query.as !== 'made') return res.status(409).json({ error: 'Your edits are not in a download yet: prepare it first.', prepare: true });
+  // ?link=1 — an address the visitor's own browser downloads the file from, good for ten minutes. A page that fetches
+  // the bytes and hands them to the browser as a made-up link is ignored by phone browsers after the wait (owner, on a
+  // phone, 2026-11-14: "nothing happened"); a real address is a download everywhere, with the browser's own progress.
+  if (req.query.link) { const { data: s } = await sb.storage.from(PACKAGE_BUCKET).createSignedUrl(edited || `${row.id}/${slug}.zip`, 600, { download: downloadName(row, slug) });
+    return s?.signedUrl ? res.set('cache-control', 'no-store').json({ url: s.signedUrl, name: downloadName(row, slug) }) : res.status(404).json({ error: 'package not found' }); }
   const { data, error: e2 } = await sb.storage.from(PACKAGE_BUCKET).download(edited || `${row.id}/${slug}.zip`);
   if (e2 || !data) return res.status(404).json({ error: 'package not found' });
   res.set({ 'content-type': 'application/zip', 'content-disposition': `attachment; filename="${downloadName(row, slug)}"`, 'cache-control': 'no-store' });
