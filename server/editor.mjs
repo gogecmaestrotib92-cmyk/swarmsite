@@ -46,7 +46,8 @@ export function makeEditor(deps) {
     saved,
     // what the editor shows: the page's texts, pictures, sections and colours after the edits, and what was refused
     async describe(row, slug, ops) {
-      return withFiles(row, slug, ops, async dir => lastJson(await deps.python(['lib/templates/edit.py', 'describe', path.join(dir, 'data.json'), '--ops', path.join(dir, 'ops.json'), '--slug', slug])) || {});
+      const d = await withFiles(row, slug, ops, async dir => lastJson(await deps.python(['lib/templates/edit.py', 'describe', path.join(dir, 'data.json'), '--ops', path.join(dir, 'ops.json'), '--slug', slug])) || {});
+      return { ...d, palettes: offered(row, slug, d) };
     },
     // the edited page, its media where the preview's are
     async render(row, slug, ops) {
@@ -83,4 +84,10 @@ export function mayKeep({ user, row }) {
   if (row?.user_id && row.user_id !== user.id) return { status: 403, body: { error: 'These designs belong to another account.' } };
   return { status: 200, claim: !row?.user_id };
 }
+// The colours the editor offers on one design: only those of a tone the job measured that design to hold (`tones` of
+// the variant, lib/templates/job.py). A job made before that was measured knows only the tone its page was made in
+// (`tone` of describe), and its designs were gated on that one. A colour that the check would refuse is not offered.
+export const offered = (row, slug, d) => { const v = (row?.result?.templates?.variants || []).find(x => x.slug === slug) || {};
+  const tones = Array.isArray(v.tones) ? v.tones : [d.tone].filter(Boolean);
+  return (d.palettes || []).filter(p => tones.includes(p.tone)); };
 export const editable = (row, slug) => !!row && SLUG.test(String(slug || '')) && row.status === 'done' && (row.result?.templates?.variants || []).some(v => v.slug === slug) && !!row.result?.templates?.store;

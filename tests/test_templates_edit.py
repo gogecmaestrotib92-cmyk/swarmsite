@@ -74,6 +74,9 @@ def test_colours_are_refused_when_the_text_would_not_read():
     pals = E.palettes(D)
     assert len(pals) >= 4 and all(E.contrast(p['ink'], p['ground']) >= 7 for p in pals)
     assert all(p['accent'] == p['ink'] or E.contrast(p['accent'], p['ground']) >= 3 for p in pals), 'an accent that would not read is not offered on that ground'
+    assert {p['tone'] for p in pals} == {'light', 'dark'} and all(p['tone'] == E.tone(p['ground']) for p in pals) and E.tone('#fbf7ee') == 'light' and E.tone('#0d1424') == 'dark'
+    op = E.other_tone(D)                                           # the palette a job tries a design on: the first of the tone the client's page is not
+    assert E.tone(D['palette']['ground']) == 'dark' and E.tone(op['ground']) == 'light' and E.tone(E.other_tone({**D, 'palette': {**D['palette'], 'ground': '#fbf7ee'}})['ground']) == 'dark'
     d, refused = E.apply(D, [{'op': 'palette', **{k: pals[0][k] for k in ('ground', 'ink', 'accent')}}])
     assert refused == [] and d['palette']['ground'] == pals[0]['ground'] and d['palette'].get('extra') == D['palette'].get('extra')
 
@@ -93,7 +96,7 @@ def test_the_command_line_renders_describes_and_measures(tmp_path):
     r = run('render', str(tmp_path / 'd.json'), 'griffin', '--ops', str(tmp_path / 'o.json'), '--base', 'https://store.example/j/t/')
     assert r.returncode == 0 and 'Kept in an evening, by hand' in r.stdout and 'https://store.example/j/t/media/' in r.stdout and '"refused"' in r.stderr
     j = json.loads(run('describe', str(tmp_path / 'd.json'), '--ops', str(tmp_path / 'o.json'), '--slug', 'griffin').stdout)
-    assert set(j) >= {'fields', 'pictures', 'slots', 'blocks', 'palettes', 'refused', 'movable'} and j['refused'][0]['i'] == 1
+    assert set(j) >= {'fields', 'pictures', 'slots', 'blocks', 'palettes', 'refused', 'movable', 'tone'} and j['refused'][0]['i'] == 1
     assert any(f['value'] == 'Kept in an evening, by hand' for f in j['fields'])
     c = lambda k, dd: struct.pack('>I', len(dd)) + k + dd + struct.pack('>I', zlib.crc32(k + dd) & 0xffffffff)
     (tmp_path / 'p.png').write_bytes(b'\x89PNG\r\n\x1a\n' + c(b'IHDR', struct.pack('>IIBBBBB', 640, 480, 8, 2, 0, 0, 0)) + c(b'IDAT', zlib.compress(b'\x00' * 1921 * 480)) + c(b'IEND', b''))

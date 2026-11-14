@@ -38,9 +38,10 @@ def test_a_job_folder_becomes_gated_variants_with_their_media(tmp_path, monkeypa
     monkeypatch.setattr(G, 'check', lambda files, **kw: [seen.append([Path(f).name for f in files]) or {'page': str(f), 'ok': True, 'failed': [], 'checks': {}, 'ms': 5} for f in files])
     out = tmp_path / 'templates'
     r = JOB.build(capture(tmp_path), out, base='https://store.example/j/t/')
-    assert 'griffin' in r['shown'] and len(r['shown']) <= 3 and [c['slug'] for c in r['chosen']] == r['shown'] and seen == [[s + '.html' for s in r['shown']]] * len(r['shown'])  # one gate call for all, logged once a page
+    assert 'griffin' in r['shown'] and len(r['shown']) <= 3 and [c['slug'] for c in r['chosen']] == r['shown'] and seen == [[s + '.html' for s in r['shown']]] * len(r['shown']) + [[s + '.tone.html' for s in r['shown']]] * len(r['shown'])  # one gate call for all, logged once a page; then one for the other tone
     assert r['niche'][0] == 'software' and any(x['slug'] == 'maze' for x in r['rejected']) and r['media'] == {'written': 3, 'missing': [], 'library': 0}   # the logo, the photograph, and the framed part of the page that stands as a screen
-    assert set(r['timings_ms']) == {'adapt', 'media', 'select', 'render', 'gate'}
+    assert set(r['timings_ms']) == {'adapt', 'media', 'select', 'render', 'gate', 'tones'}
+    assert all(c['tones'] == ['light', 'dark'] for c in r['chosen']) and not list(out.glob('*.tone.html'))   # a light client whose designs also pass on a dark ground; the trial pages are not kept
     data = json.loads((out / 'data.json').read_text())
     assert data['brand']['name'] == 'Tallyfern' and not any(k.startswith('_') for k in data)
     assert (out / 'media' / 'logo.svg').read_bytes().startswith(b'<svg') and (out / 'media' / 'img1.jpg').is_file()
@@ -83,6 +84,34 @@ def test_a_logo_that_cannot_be_seen_on_a_design_is_set_in_type_there(tmp_path, m
     monkeypatch.setattr(G, 'check', lambda files, **kw: [{'page': str(f), 'ok': False, 'failed': ['unseen'], 'checks': {'unseen': [{'at': 'd', 'file': 'img1.jpg'}]}, 'ms': 5} for f in files])
     r = JOB.build(capture(tmp_path / 'b'), tmp_path / 'b' / 'templates')
     assert r['shown'] == [] and all('logo' not in c for c in r['chosen'])
+
+
+def test_a_design_is_measured_on_the_other_tone_and_holds_only_what_passed(tmp_path, monkeypatch):
+    """the editor offers a design the colours of a tone only where the job measured it: the tone the page was made in,
+    and the other one when the design passes the gate under a palette of it (three designs of one real job failed
+    every dark ground, 2026-11-13)"""
+    monkeypatch.setenv('SWARMSITE_LIBRARY', 'none')
+    dark = []
+
+    def check(files, **kw):
+        out = []
+        for f in files:
+            trial = Path(f).name.endswith('.tone.html')
+            if trial:
+                dark.append('#111111' in Path(f).read_text())
+            bad = trial and Path(f).name.startswith('griffin')
+            out.append({'page': str(f), 'ok': not bad, 'failed': ['legible'] if bad else [], 'checks': {}, 'ms': 5})
+        return out
+    monkeypatch.setattr(G, 'check', check)
+    r = JOB.build(capture(tmp_path), tmp_path / 'templates')
+    by = {c['slug']: c for c in r['chosen']}
+    assert dark and all(dark), 'the trial page is the design on the dark ground the editor would offer'
+    assert by['griffin']['tones'] == ['light'] and by['griffin']['tone_failed'] == ['legible']
+    assert all(c['tones'] == ['light', 'dark'] and 'tone_failed' not in c for s, c in by.items() if s != 'griffin' and s in r['shown'])
+    # a gate that could not run proves nothing: the other tone is not offered
+    monkeypatch.setattr(G, 'check', lambda files, **kw: [{'page': str(f), 'ok': not Path(f).name.endswith('.tone.html'), 'failed': ['tool'] if Path(f).name.endswith('.tone.html') else [], 'checks': {}} for f in files])
+    r = JOB.build(capture(tmp_path / 'b'), tmp_path / 'b' / 'templates')
+    assert r['shown'] and all(c['tones'] == ['light'] for c in r['chosen'] if c['slug'] in r['shown'])
 
 
 def test_a_site_nothing_fits_and_pictures_that_could_not_be_written(tmp_path, monkeypatch):

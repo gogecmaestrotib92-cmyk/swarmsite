@@ -179,7 +179,8 @@ export async function runTemplateJob(deps) {
       await deps.upload(path.join(tdir, 'pub', `${slug}.html`), `${job.id}/t/${id}.html`, 'text/html');
       const c = built.chosen.find(x => x.slug === slug) || {};
       out.push({ slug, id, name: designName(i), approach: c.approach || '', why: c.why || '', url: `${deps.self}/t/${job.id}/${id}`, package: 'pending', ...(c.made ? { made: c.made } : {}),
-        ...(c.drops?.length ? { drops: c.drops } : {}), ...(c.fallback ? { fallback: true, niche: c.niche } : {}) });
+        ...(c.drops?.length ? { drops: c.drops } : {}), ...(c.fallback ? { fallback: true, niche: c.niche } : {}),
+        ...(Array.isArray(c.tones) ? { tones: c.tones.filter(x => x === 'light' || x === 'dark') } : {}) });   // the tones the job measured this design to hold: the colours its editor offers
     }
     // each design's cover: its first screen photographed at rest (lib/templates/covers.mjs), so the chooser never shows a
     // page caught half-drawn. A cover that could not be taken leaves that card to its live preview — never the job.
