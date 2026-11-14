@@ -121,6 +121,10 @@ try {
         return json({ ok: true, failed: [], unread: [], overlap: 0, sideways: 0 }); }
       if (u.pathname === `/t/${id}/edits`) { state.put++; return json({ kept: body.ops.length }); }
       if (u.pathname === `/t/${id}/v1/publish`) { state.published = body; return json({ status: 'packaging', name: body.name, at: new Date().toISOString() }, 202); }
+      if (u.pathname === `/t/${id}/v1/prepare`) { state.prepared = later(); return json({ status: 'packaging', at: state.prepared }, 202); }
+      if (u.pathname === `/t/${id}/v1/package`) { state.asked = u.search; return json({ url: 'https://files.test/signed/design-1.zip?token=t', name: 'casa-fern-design-1.zip' }); }
+      if (u.hostname === 'files.test') return r.fulfill({ contentType: 'application/zip', headers: { 'content-disposition': 'attachment; filename="casa-fern-design-1.zip"' }, body: Buffer.from('PK\u0005\u0006' + '\u0000'.repeat(18), 'latin1') });
+      if (u.pathname === `/jobs/${id}` && state.prepared) return json({ id, status: 'done', result: { edited: { status: 'ready', slug: 'v1', at: state.prepared } } });
       if (u.pathname === `/jobs/${id}`) { state.polls++; return json({ id, status: 'done', result: { publish: state.polls < 2 ? { status: 'live', slug: 'v1', name: 'old', url: 'https://old.swarmsite.si', at: t0 } : state.polls < 3 ? { status: 'packaging', slug: 'v1', at: later() } : { status: 'live', slug: 'v1', name: 'casa-fern', url: 'https://casa-fern.swarmsite.si', at: later() } } }); }
       return r.abort(); });
     await page.goto(`https://app.test/edit?job=${id}&slug=v1`);
@@ -134,6 +138,13 @@ try {
     await page.locator('#siteLink:not([hidden])').waitFor({ timeout: 20000 });
     assert.equal(await page.locator('#siteLink').getAttribute('href'), 'https://casa-fern.swarmsite.si', 'the old site of an earlier publish is not taken for this one');
     assert.deepEqual(state.published, { name: 'casa-fern' }); assert.equal(state.put, 1, 'the edits were kept before publishing');
+    // the download: prepared, then fetched by the browser itself from the address the server hands out; the line says
+    // it has started and keeps that address as a link (a phone ignores bytes a page hands it after a wait)
+    await page.locator('#prepare').click(); await page.locator('#getZip:not([hidden])').waitFor({ timeout: 20000 });
+    const dl = page.waitForEvent('download', { timeout: 10000 }); await page.locator('#getZip').click(); const got = await dl;
+    assert.equal(got.suggestedFilename(), 'casa-fern-design-1.zip'); assert.equal(state.asked, '?link=1');
+    await page.waitForFunction(() => /Your download has started/.test(document.querySelector('#pubStatus').textContent));
+    assert.equal(await page.locator('#pubStatus #zipLink').getAttribute('href'), 'https://files.test/signed/design-1.zip?token=t'); assert.ok(await page.locator('#pubSheet').isVisible(), 'the editor is still there');
     await page.close(); }
-  console.log('Edit page 1440/390: text edited where it stands, a section hidden, a colour, another design keeping every edit, Undo, an unreadable line named, keeping asks for an account; publish keeps the edits first and shows the new address');
+  console.log('Edit page 1440/390: text edited where it stands, a section hidden, a colour, another design keeping every edit, Undo, an unreadable line named, keeping asks for an account; publish keeps the edits first and shows the new address; the download is fetched by the browser from the address handed out');
 } finally { await browser.close(); fs.rmSync(tmp, { recursive: true, force: true }); }
