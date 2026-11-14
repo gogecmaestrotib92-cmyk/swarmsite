@@ -18,7 +18,14 @@ try {
   // what the editor shows, after the edits sent
   const ops = [{ op: 'text', path: 'hero.title', value: 'Closed by six, every evening' }, { op: 'hide', block: 'faq' }, { op: 'text', path: 'kind', value: 'x' }];
   const d = await E.describe(row, 'griffin', ops);
-  assert.ok(d.fields.some(f => f.path === 'hero.title' && f.value === 'Closed by six, every evening') && !d.blocks.includes('faq') && d.refused.length === 1 && d.palettes.length >= 4 && d.movable.length === 0);
+  assert.ok(d.fields.some(f => f.path === 'hero.title' && f.value === 'Closed by six, every evening') && !d.blocks.includes('faq') && d.refused.length === 1 && d.palettes.length >= 2 && d.movable.length === 0);
+  // the colours offered are those of a tone the job measured this design to hold; a job made before that was measured
+  // offers the tone its page was made in (this client's is dark), and an edit to a light ground does not change what was measured
+  assert.ok(d.tone === 'dark' && d.palettes.every(p => p.tone === 'dark'), 'an unmeasured design offers its own tone only');
+  const both = { ...row, result: { templates: { ...row.result.templates, variants: [{ slug: 'griffin', tones: ['dark', 'light'] }, { slug: 'maze', tones: ['dark'] }] } } };
+  const dk = [{ op: 'palette', ground: '#ffffff', ink: '#151515', accent: '#151515' }];
+  const pg = (await E.describe(both, 'griffin', dk)).palettes, pm = await E.describe(both, 'maze', dk);
+  assert.ok(pg.some(p => p.tone === 'dark') && pg.some(p => p.tone === 'light') && pm.tone === 'dark' && pm.palettes.length && pm.palettes.every(p => p.tone === 'dark'));
   // the edited page, its media where the preview's are; the same edits on the other design
   for (const slug of ['griffin', 'maze']) { const html = await E.render(row, slug, ops);
     assert.ok(html.includes('Closed by six, every evening') && html.includes(`https://storage.example/previews/${ID}/t/media/`), slug); }

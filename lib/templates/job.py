@@ -213,7 +213,7 @@ def build(job_dir, out, base='', limit=3, gate_kw=None, library=None, form=None,
 def choose(data, out, base='', limit=3, gate_kw=None, library=None, t=None):
     """The client's data (its media already beside `out`) -> the three variants chosen, rendered and gated:
     {niche, pictures, chosen, shown, fallback, rejected, group, library, timings_ms}"""
-    R, S, G = _mod('registry'), _mod('select'), _mod('gate')
+    R, S, G, E = _mod('registry'), _mod('select'), _mod('gate'), _mod('edit')
     out = Path(out)
     (out / 'pub').mkdir(parents=True, exist_ok=True)
     t = {} if t is None else t
@@ -228,8 +228,12 @@ def choose(data, out, base='', limit=3, gate_kw=None, library=None, t=None):
     families, copied, typed = {}, set(), set()
     t['render'] = t['gate'] = 0
 
-    def render(c, i):
-        """one variant: its made family (by its slot), its soft sections dropped, rendered twice -> the gated file"""
+    slot = {}
+
+    def render(c, i, op=None):
+        """one variant: its made family (by its slot), its soft sections dropped, rendered twice -> the gated file.
+        With `op` (a palette): the same variant under that edit, one file beside it, for the gate only"""
+        slot[c['slug']] = i
         made = three[i % len(three)] if three else {}
         v = {**data, 'media': {**(data.get('media') or {}), 'made': made}} if made else data
         v = S.without(v, c.get('drops'))                             # what the client has not: the section is left out, never made up
@@ -240,6 +244,10 @@ def choose(data, out, base='', limit=3, gate_kw=None, library=None, t=None):
                 (out / rel).parent.mkdir(parents=True, exist_ok=True)
                 (out / rel).write_bytes((lib_root / rel).read_bytes())
                 copied.add(rel)
+        if op:
+            f = out / (c['slug'] + '.tone.html')
+            f.write_text(R.render(c['slug'], {k: x for k, x in E.apply(v, [op], c['slug'])[0].items() if k != '_order'}, ''), encoding='utf-8')
+            return f
         if made:
             families[c['slug']] = {'family': made.get('family'), 'palette': made.get('palette')}
         if v is not data:                                             # the package and the editor read the variant's own data
@@ -287,6 +295,29 @@ def choose(data, out, base='', limit=3, gate_kw=None, library=None, t=None):
         free += [s for s, c in zip(slots, new) if not passed(c)]
         chosen += new
     shown = [c['slug'] for c in chosen if passed(c)][:limit]
+    # Which tones each shown design holds on, for the editor's colours. A design is gated on the client's own ground; a
+    # ground of the other tone is another page (a logo drawn for a light bar, a card that was a shade of white, a picture
+    # with see-through edges), and three real designs of one job all failed on it (2026-11-13). So each shown design is
+    # rendered once more under the first palette of the other tone the editor would offer and gated as it stands; the
+    # editor offers a tone only where the design was measured to hold it (server/editor.mjs). A gate that could not run
+    # proves nothing: the other tone is then not offered.
+    t0 = time.perf_counter()
+    mine, op = E.tone((data.get('palette') or {}).get('ground') or ''), E.other_tone(data)
+    if not (data.get('palette') or {}).get('ground'):
+        mine = None                                                   # the design stands on its own ground: only what is tried is known
+    tried = [c for c in chosen if c['slug'] in shown] if op else []
+    files = [render(c, slot[c['slug']], op) for c in tried]
+    for c, g in zip(tried, G.check(files, **(gate_kw or {})) if files else []):
+        holds = g.get('ok') is True and not g.get('failed')
+        c['tones'] = ([mine] if mine else []) + ([E.tone(op['ground'])] if holds else [])
+        if not holds:
+            c['tone_failed'] = g.get('failed') or []
+    for c in chosen:
+        if c['slug'] in shown and 'tones' not in c:
+            c['tones'] = [mine] if mine else []
+    for f in files:
+        f.unlink(missing_ok=True)
+    t['tones'] = round((time.perf_counter() - t0) * 1000)
     rejected = [r for r in sel['rejected'] if r['slug'] not in taken]
     return {'niche': sel['niche'], 'pictures': sel['pictures'], 'chosen': chosen, 'shown': shown,
             'fallback': any(c.get('fallback') for c in chosen if c['slug'] in shown),
