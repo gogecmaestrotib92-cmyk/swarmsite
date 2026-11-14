@@ -262,8 +262,12 @@ async function start(path,body,field,done){ both(true);
   catch(e){ pubSay(String(e.message||e),'bad'); }
   finally{ both(false); } }
 $('#prepare').onclick=()=>start(`/t/${ID}/${SLUG}/prepare`,{},'edited',s=>{ if(s.status!=='ready'){ pubSay('The package did not match your page, so it is not offered: '+(s.why||[]).join('; '),'bad'); return; }
-  pubSay('Your download is ready.','ok'); const a=$('#getZip'); a.hidden=false; a.onclick=async()=>{ const r=await send(`/t/${ID}/${SLUG}/package`,{}); if(!r.ok){ pubSay((await r.json().catch(()=>({}))).error||'The download is not available.','bad'); return; }
-    const u=URL.createObjectURL(await r.blob()), l=document.createElement('a'); l.href=u; l.download=`${nameOf(SLUG).toLowerCase().replace(/[^a-z0-9]+/g,'-')}.zip`; document.body.appendChild(l); l.click(); l.remove(); setTimeout(()=>URL.revokeObjectURL(u),4000); }; });
+  pubSay('Your download is ready.','ok'); const a=$('#getZip'); a.hidden=false; a.onclick=async()=>{ a.disabled=true; pubSay('Getting your download…');
+    try{ const r=await send(`/t/${ID}/${SLUG}/package?link=1`,{}), j=await r.json().catch(()=>({})); if(!r.ok||!j.url){ pubSay(j.error||'The download is not available.','bad'); return; }
+      /* the file's own address, for ten minutes: the browser downloads it itself (a phone too); the same address stays as a link */
+      pubSay('Your download has started: a zip with the page, its pictures and fonts.','ok'); const l=document.createElement('a'); l.href=j.url; l.id='zipLink'; l.textContent='Tap here if it has not started'; l.style.textDecoration='underline'; $('#pubStatus').append(' ',l,'.'); location.href=j.url; }
+    catch{ pubSay('The download did not go through. Check your connection and try again.','bad'); }
+    finally{ a.disabled=false; } }; });
 if(PUBLISH) $('#publish').onclick=()=>{ const name=$('#siteName').value.trim().toLowerCase(); if(!/^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])$/.test(name)||name.includes('--')){ pubSay('A name is 3 to 40 small letters, digits and single dashes.','bad'); $('#siteName').focus(); return; }
   start(`/t/${ID}/${SLUG}/publish`,{name},'publish',s=>{ if(s.status==='live'){ pubSay('Your site is online.','ok'); const a=$('#siteLink'); a.href=s.url; a.textContent=s.url.replace('https://',''); a.hidden=false; }
     else pubSay((s.status==='refused'?'Not published: ':'Publishing failed: ')+(s.why||[]).join('; '),'bad'); }); };
