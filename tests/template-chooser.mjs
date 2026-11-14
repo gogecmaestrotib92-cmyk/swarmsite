@@ -19,7 +19,8 @@ try {
       if (u.hostname === 'api.test' && u.pathname === '/config') return r.fulfill({ contentType: 'application/json', body: JSON.stringify({ auth: {}, templates: true }) });
       if (u.hostname === 'api.test' && u.pathname === '/jobs' && r.request().method() === 'POST') { state.posted = JSON.parse(r.request().postData()); return r.fulfill({ contentType: 'application/json', body: JSON.stringify({ id }) }); }
       if (u.hostname === 'api.test' && u.pathname === `/jobs/${id}`) return r.fulfill({ contentType: 'application/json', body: JSON.stringify(publicJob(state.job)) });
-      if (u.hostname === 'api.test' && /^\/t\/[^/]+\/[a-z0-9]+\/package$/.test(u.pathname)) { state.asked.push(u.pathname); return r.fulfill({ status: 402, contentType: 'application/json', body: JSON.stringify({ error: 'Payment is needed', pay: true }) }); }
+      if (u.hostname === 'api.test' && /^\/t\/[^/]+\/[a-z0-9]+\/package$/.test(u.pathname)) { state.asked.push(u.pathname + u.search); return state.free ? r.fulfill({ contentType: 'application/json', body: JSON.stringify({ url: 'https://files.test/signed/design-1.zip?token=t', name: 'tallyfern-design-1.zip' }) }) : r.fulfill({ status: 402, contentType: 'application/json', body: JSON.stringify({ error: 'Payment is needed', pay: true }) }); }
+      if (u.hostname === 'files.test') return r.fulfill({ contentType: 'application/zip', headers: { 'content-disposition': 'attachment; filename="tallyfern-design-1.zip"' }, body: Buffer.from('PK\u0005\u0006' + '\u0000'.repeat(18), 'latin1') });
       if (u.hostname === 'api.test' && u.pathname.startsWith(`/t/${id}/`)) return r.fulfill({ contentType: 'text/html', body: `<!doctype html><body style="margin:0;font:40px Arial"><h1>${u.pathname.split('/').pop()}</h1><p style="height:2000px">page</p></body>` });
       return r.abort(); });
     let briefSeen = false; await page.exposeFunction('__brief', () => { briefSeen = true; });
@@ -50,7 +51,7 @@ try {
     // download: ready → asks; a refused package and one being prepared → not offered
     assert.equal(await page.locator('#download').isDisabled(), false);
     await page.locator('#download').click(); await page.waitForFunction(() => /Payment comes before the download/.test(document.querySelector('#chooseNote').textContent));
-    assert.deepEqual(state.asked, [`/t/${id}/v2/package`], 'the download asks the package endpoint, which answers with the payment hook');
+    assert.deepEqual(state.asked, [`/t/${id}/v2/package?link=1`], 'the download asks the package endpoint, which answers with the payment hook');
     await page.locator('.card').nth(2).locator('.pickb').click(); assert.ok(await page.locator('#download').isDisabled() && /did not match the preview/.test(await page.locator('#chooseNote').textContent()));
     await page.locator('.card').nth(0).locator('.pickb').click(); assert.ok(await page.locator('#download').isDisabled() && /being prepared/.test(await page.locator('#chooseNote').textContent()));
     // the job finishes: the package that was being prepared is ready, the choice is kept, the cards are not rebuilt
@@ -60,6 +61,14 @@ try {
     assert.equal(await page.locator('.card.picked').getAttribute('data-slug'), 'v1');
     assert.equal(await page.locator('.card .shot iframe').first().evaluate(f => f.dataset.stamp), 'kept', 'the previews are not reloaded on every poll');
     assert.ok(!(await page.locator('#result.on').count()), 'the old single-preview view stays out of the way');
+    // a design that may be downloaded: the browser itself fetches the file from the address the server hands out (a
+    // phone ignores bytes handed to it by the page after a wait), the line says it has started and keeps that address as a link
+    state.free = true; const dl = page.waitForEvent('download', { timeout: 10000 });
+    await page.locator('#download').click(); const got = await dl;
+    assert.equal(got.suggestedFilename(), 'tallyfern-design-1.zip'); assert.equal(got.url(), 'https://files.test/signed/design-1.zip?token=t');
+    await page.waitForFunction(() => /Your download has started/.test(document.querySelector('#chooseNote').textContent) && !document.querySelector('#download').disabled);
+    assert.equal(await page.locator('#chooseNote #zipLink').getAttribute('href'), 'https://files.test/signed/design-1.zip?token=t');
+    await page.waitForTimeout(2600); assert.ok(await page.locator('#chooseNote #zipLink').count() === 1 && await page.locator('.choose.on').count() === 1, 'the line and its link stay through the next poll; the chooser is still there');
     await page.close();
   }
   // covers: a design with a cover shows that still once it has loaded, never its live page; until then the card says what it waits for.
