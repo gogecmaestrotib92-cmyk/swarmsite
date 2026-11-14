@@ -1,0 +1,29 @@
+# The quality bench: real sites chosen by shape, not by trade. One address a line; what follows # is the shape it stands for.
+# Run each through the engine (capture → reader → build), then `python3 scripts/quality_table.py <runs root>`.
+# Add a site whenever a new shape breaks the engine; never remove one because it fails.
+https://sportbotai.com                              # app, long landing, product screens
+https://automateed.com                              # app, very long landing (24 sections), see-through pictures
+https://pdfbeautifier.com                           # app, no photographs, upload widget text
+https://simscore.ai                                 # app, short
+https://courtsensei.com                             # app, people and quotes
+https://www.abadesareas.com/abades-bailen-a4/       # place, sub-page address, list of bare labels, 27 pictures, two languages
+https://balamorestaurante.es                        # restaurant, very little text, Spanish
+https://restaurantebutarque.es                      # restaurant, menu, Spanish
+https://thegardenhouserooms.co.uk                   # rooms, headline repeated as statement
+https://brinsleyanimalrescue.org                    # charity, no h1, embedded news feed
+https://levisolicitors.co.uk                        # law, service cards that are not headings
+https://gundel-ollmann.de                           # clinic, one section, German, dark logo
+https://escuela-montalban.com                       # school, many languages, long text under few headings
+https://markseaton.com                              # person, one section
+https://buscottwoodworking.co.uk                    # trade, 20 pictures, little text
+https://thomas-brown-engineering.co.uk              # engineering firm, 28 pictures
+https://wildandrust.co.uk                           # shop (Shopify), section ids as headings
+https://thecavanbakery.co.uk                        # bakery, many locations
+https://www.wedgesbakery.co.uk                      # bakery, cafe and deli, family story
+https://www.hambletonbakery.co.uk                   # bakery shop (Shopify), products with prices
+https://tischlerei-mahn.de                          # joinery, German
+https://sixphysio.com                               # clinic group, many treatments and locations
+https://studio.market.dev                           # open-source developer tool
+https://developerhub.io                             # docs product, pricing tiers
+https://kaylonipearson.mypixieset.com               # photographer on a hosted portfolio platform
+https://gails.com                                   # bakery chain, large shop site
