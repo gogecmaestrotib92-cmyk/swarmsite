@@ -83,7 +83,7 @@ def brief(blocks):
             continue
         t = norm(b.get('text'))
         shown = t if len(t) <= SHOW else t[:SHOW] + '… (+%d more characters, carried whole)' % (len(t) - SHOW)
-        marks = (' folded' if b.get('folded') else '') + (' faded' if b.get('dim') else '')
+        marks = (' folded' if b.get('folded') else '') + (' faded' if b.get('dim') else '') + (' link' if k == 'li' and b.get('href') else '')
         lines.append('%d %s%s %s' % (b['i'], kind, marks, json.dumps(shown, ensure_ascii=False)))
     return '\n'.join(lines)
 
@@ -198,7 +198,8 @@ def resolve(raw, blocks):
         title = title_of(x.get('title')) if x.get('title') is not None else ''
         got = [one(n, ('h', 'p', 'li', 'quote', 'cap')) for n in (x.get('text') if isinstance(x.get('text'), list) else []) if n not in skipped]
         parts = [(b['kind'], norm(b['text']), b['i']) for b in got if b]
-        if not parts:                                    # a heading with nothing under it is not a section: the block goes back
+        menu = parts and all(k == 'li' and byi[n].get('href') for k, _, n in parts)   # nothing but links: a menu, not a section of the page
+        if not parts or menu:                            # (a heading with nothing under it is not a section either): the blocks go back
             used.clear()
             used.update(mark)
             continue
@@ -234,4 +235,4 @@ def assign(folder):
 
 if __name__ == '__main__':
     r = assign(sys.argv[1])
-    print(json.dumps(r['measure'], ensure_ascii=False)[:600])
+    print(json.dumps({k: r['measure'][k] for k in ('sections', 'words', 'placed', 'sections_words', 'skipped', 'left', 'kept', 'places')}, ensure_ascii=False))

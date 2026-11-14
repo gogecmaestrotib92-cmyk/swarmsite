@@ -108,7 +108,8 @@ def complete(d, seed, key, sentences, pics_of, rules):
         head = sec['title']
         paras, items = [], []
         for k, t in sec['parts']:
-            if said(t) or (re.search(r'(…|\.\.\.)$', t) and len(t) <= 200):   # said already, or a teaser the page itself cut short
+            t = re.sub(r'(…|\.\.\.)\s*\S+(?:\s\S+){0,2}$', '…', t)        # a teaser's own control after its cut ("… See more") is not its words
+            if said(t) or (re.search(r'(…|\.\.\.)$', t) and len(t) <= 80):    # said already, or a scrap the page itself cut short
                 continue
             if k == 'p' and len(t) > 200:                    # a passage the data says the opening of: the rest of it, by sentence
                 t = ' '.join(x for x in sentences(t) if not said(x))
@@ -122,7 +123,7 @@ def complete(d, seed, key, sentences, pics_of, rules):
                 paras.append(t)
         text = '\n\n'.join(paras + _list(items))
         own = pics_of(head) if head else []
-        if len(text) < 40 and not (own and head):
+        if len(text) < 40 and not (own and head and not said(head)):   # pictures stand under a heading of their own, never under none
             continue
         out.append({'title': ('' if said(head) else head)[:160], 'text': text, **({'imgs': own} if own else {})})
         words_carried += len(text.split())

@@ -84,3 +84,13 @@ def test_the_result_is_valid_data():
     d = data()
     run(d)
     assert not [e for e in adapt.validate(d) if 'more' in e or 'features' in e or 'quotes' in e]
+
+
+def test_a_teasers_control_is_not_its_words_and_a_scrap_is_not_carried():
+    d = data()
+    sd = seed({'hero': {'title': 0}, 'sections': [{'title': 13, 'text': [14, 15]}]})
+    sd['blocks']['blocks'][14].update(kind='p', text='Meet the lovely Winnie, who has now joined our sheep herd. Winnie lived as a pet sheep with a pony... See more')
+    sd['blocks']['blocks'][15].update(kind='p', text='While it is still a…')
+    F.complete(d, sd, adapt._key, adapt.sentences, lambda t: [], [])
+    sec = next(s for s in d['more']['sections'] if s['title'] == 'Opening hours')
+    assert sec['text'] == 'Meet the lovely Winnie, who has now joined our sheep herd. Winnie lived as a pet sheep with a pony…'

@@ -80,3 +80,12 @@ def test_garbage_from_the_model_gives_an_empty_page_and_the_whole_rest():
     for raw in (None, [], 'x', {'hero': 'x', 'features': [1], 'quotes': {'q': 1}, 'skip': 'all'}):
         r = A.resolve(raw, blocks())
         assert r['page'] == {} and r['rest'] == [] and r['measure']['left'] == r['measure']['words']
+
+
+def test_a_section_that_is_nothing_but_links_is_a_menu_and_is_not_carried():
+    b = blocks()
+    for i in (5, 6, 7):
+        b[i]['href'] = 'https://x.test/p%d' % i
+    r = A.resolve({'hero': {'title': 1}, 'sections': [{'title': 4, 'text': [5, 6, 7]}, {'title': 8, 'text': [9]}]}, b)
+    assert [s['title'] for s in r['rest']] == ['Rooms for weddings'] and {4, 5, 6, 7} <= {x['i'] for x in r['measure']['left_blocks']}
+    assert '5 li·1 link "Cafe"' in A.brief(b)

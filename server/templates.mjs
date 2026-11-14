@@ -1,7 +1,7 @@
 /* templates.mjs — the `templates` job mode: a visitor's site → three variants of the template library → a package.
    Beside the old path, behind TEMPLATES_MODE=1 (off unless the deployment says so).
 
-   capture (Playwright) → read (the reader: the ONE paid model call of this path) → choose (lib/templates/job.py build:
+   capture (Playwright) → read (the reader, then the page's blocks placed by number: the two paid model calls of this path) → choose (lib/templates/job.py build:
    adapt → select → render three → gate) → publish (the variants that passed the gate, as preview pages) → package
    (lib/templates/job.py package: zip + offline comparison with the preview; uploaded to a private bucket).
 
@@ -158,6 +158,14 @@ export async function runTemplateJob(deps) {
   if (!fromForm) await step('read', async () => {
     const f = lastJson(await run('python3', ['-c', READER, dir], { timeoutMs: deps.readerTimeoutMs || 180000 })) || {};
     await deps.emit([{ role: 'Reader', text: String(f.what || '').slice(0, 120) }, { role: 'Reader', text: `${Number(f.n) || 0} source facts` }]);
+    // the page's blocks placed by number (lib/templates/assign.py → assign.json): a second, smaller model call, by which a long page
+    // stays long (lib/templates/fromblocks.py). It is never what a job fails on: with no blocks, or a call that fails or runs long,
+    // the build goes on from the reader's sheet alone, as it did before. SWARM_BLOCKS=0 turns it off.
+    if (process.env.SWARM_BLOCKS !== '0' && fs.existsSync(path.join(dir, 'blocks.json'))) {
+      try { const m = lastJson(await run('python3', ['lib/templates/assign.py', dir], { timeoutMs: 150000 })) || {};
+        if (Number(m.sections) > 0) await deps.emit([{ role: 'Reader', text: `${Number(m.sections)} more section${Number(m.sections) === 1 ? '' : 's'} of your page kept` }]); }
+      catch (e) { console.warn('blocks: not placed —', String(e && e.message || e).slice(0, 200)); try { fs.rmSync(path.join(dir, 'assign.json'), { force: true }); } catch {} }
+    }
   });
   const tdir = path.join(dir, 'templates'); const base = deps.publicBase(`${job.id}/t/`);
   const built = await step('choose', async () => {
