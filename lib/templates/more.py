@@ -20,7 +20,7 @@ import html
 import re
 
 BASE = '../../'
-MAX_SECTIONS, MAX_PHOTOS, MIN_PHOTOS = 12, 8, 3
+MAX_SECTIONS, MAX_PHOTOS, MIN_PHOTOS = 40, 8, 3
 
 CSS = """
 .sw-more{position:relative;z-index:1;padding:clamp(56px,9vw,128px) 0 clamp(40px,6vw,88px);color:inherit}
@@ -33,6 +33,9 @@ CSS = """
 .sw-more p{margin:0;font-size:clamp(16px,1.25vw,19px);line-height:1.6;color:inherit;max-width:62ch;opacity:.86}
 .sw-more p+p{margin-top:1em}
 .sw-more .sw-more-lead p{font-size:clamp(19px,1.7vw,26px);line-height:1.45;max-width:46em;opacity:1}
+.sw-more-long{display:block}.sw-more-long h2{margin-bottom:clamp(20px,2.4vw,36px);max-width:22em}
+.sw-more-long .sw-more-body{column-count:2;column-gap:clamp(32px,5vw,80px)}.sw-more-long .sw-more-body p{max-width:none;break-inside:avoid}
+.sw-more-plain p{max-width:62ch}
 .sw-more-grid{display:grid;grid-template-columns:repeat(var(--c,3),minmax(0,1fr));gap:clamp(32px,4vw,64px) clamp(24px,4vw,56px)}
 .sw-more-grid p{font-size:clamp(15px,1.1vw,17px)}
 .sw-more-pic{display:block;width:100%;margin:clamp(24px,3vw,48px) 0 0}.sw-more-pic+.sw-more-in{margin-top:clamp(48px,7vw,104px)}
@@ -41,7 +44,7 @@ CSS = """
 .sw-strip{position:relative;z-index:1;display:grid;grid-template-columns:repeat(var(--n,4),minmax(0,1fr));gap:4px;margin:0;padding:0 0 clamp(40px,6vw,88px)}
 .sw-strip img{display:block;width:100%;height:100%;aspect-ratio:4/3;object-fit:cover}
 @media (max-width:900px){.sw-more-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:760px){.sw-more-row{grid-template-columns:minmax(0,1fr);gap:12px}.sw-more-grid{grid-template-columns:minmax(0,1fr)}.sw-strip{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:760px){.sw-more-row{grid-template-columns:minmax(0,1fr);gap:12px}.sw-more-grid{grid-template-columns:minmax(0,1fr)}.sw-more-long .sw-more-body{column-count:1}.sw-strip{grid-template-columns:repeat(2,minmax(0,1fr))}}
 """
 
 # the band's headings take the page's own heading face: read from its first h2 (else its h1) once the page has loaded
@@ -57,7 +60,8 @@ INK_JS = ("(function(){var b=document.querySelector('.sw-more');if(!b)return;var
           "var f=function(v){v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)},L=function(c){return .2126*f(c[0])+.7152*f(c[1])+.0722*f(c[2])},"
           "k=n(getComputedStyle(b).color)||[0,0,0],x=L(g),y=L(k),r=(Math.max(x,y)+.05)/(Math.min(x,y)+.05);if(r<7)b.style.color=x>.4?'#111111':'#f5f5f5'})();")
 
-SHORT = 260     # a section whose words are this short is a note, not a passage: notes stand together as a grid
+LONG = 700      # a passage longer than this is set in two columns under its heading
+SHORT = 300     # a section whose words are this short is a note, not a passage: notes stand together as a grid
 
 
 def _e(s):
@@ -100,7 +104,7 @@ def groups(secs):
             out.extend(('row', x) for x in run)
         run.clear()
     for x in secs:
-        if x['title'] and x['text'] and len(x['text']) <= SHORT and not x.get('imgs'):
+        if x['text'] and len(x['text']) <= SHORT:            # with or without a heading; a note's own picture is not set in its cell (it stands in the strip of photographs below)
             run.append(x)
         else:
             flush()
@@ -118,6 +122,8 @@ def band(d, page):
             continue
         # a section's own pictures, unless the template's page (or a section before it) already shows them
         imgs = [p for p in x.get('imgs') or [] if isinstance(p, dict) and p.get('src') and not asked(p['src']) and p['src'] not in own]
+        if x.get('text') and len(str(x['text'])) <= SHORT:
+            imgs = [] if x.get('text') else imgs
         own.update(p['src'] for p in imgs)
         if x.get('text') or (imgs and x.get('title')):
             secs.append({'title': str(x.get('title') or ''), 'text': str(x.get('text') or ''), 'imgs': imgs})
@@ -131,13 +137,21 @@ def band(d, page):
         parts = []
         for kind, g in groups(secs):
             if kind == 'grid':
-                cells = ''.join('<div><h3>%s</h3>%s</div>' % (_e(x['title']), _paras(x['text'])) for x in g)
+                cells = ''.join('<div>%s%s</div>' % ('<h3>%s</h3>' % _e(x['title']) if x['title'] else '', _paras(x['text'])) for x in g)
                 parts.append('<div class="sw-more-in"><div class="sw-more-grid" style="--c:%d">%s</div></div>' % (2 if len(g) in (2, 4) else 3, cells))
                 continue
-            if not g['title']:                                        # what the opening goes on to say: a passage with no heading of its own
-                parts.append('<div class="sw-more-in"><div class="sw-more-lead">%s</div></div>' % _paras(g['text']))
+            if not g['title']:                                        # a passage with no heading of its own: the first is what the opening goes on to say, set large; later ones are plain text in the text column
+                parts.append('<div class="sw-more-in"><div class="sw-more-lead">%s</div></div>' % _paras(g['text']) if not parts else
+                             ('<div class="sw-more-in"><div class="sw-more-long"><div class="sw-more-body">%s</div></div></div>' if len(g['text']) > LONG else '<div class="sw-more-in sw-more-plain">%s</div>') % _paras(g['text']))
+                if not g['imgs']:
+                    continue
+                parts.append('<div class="sw-strip sw-more-pic" style="--n:%d;padding-bottom:0">%s</div>' % (max(2, len(g['imgs'])), ''.join(_img(p) for p in g['imgs'])) if len(g['imgs']) > 1 else
+                             '<div class="sw-more-in"><figure class="sw-more-own" style="max-width:%dpx">%s</figure></div>' % (min(int(g['imgs'][0].get('w') or 640), 720), _img(g['imgs'][0])))
                 continue
-            parts.append('<div class="sw-more-in"><div class="sw-more-row"><h2>%s</h2><div>%s</div></div></div>' % (_e(g['title']), _paras(g['text'])))
+            if len(g['text']) > LONG:                                # a long passage: its heading over it, its words in two columns across the width (a heading beside it leaves half the screen empty for its whole length)
+                parts.append('<div class="sw-more-in"><div class="sw-more-long"><h2>%s</h2><div class="sw-more-body">%s</div></div></div>' % (_e(g['title']), _paras(g['text'])))
+            else:
+                parts.append('<div class="sw-more-in"><div class="sw-more-row"><h2>%s</h2><div>%s</div></div></div>' % (_e(g['title']), _paras(g['text'])))
             wide = lambda p: int(p.get('w') or 0) >= 1200 and int(p.get('w') or 0) >= 1.2 * int(p.get('h') or 1)
             if len(g['imgs']) == 1 and wide(g['imgs'][0]):           # one large landscape picture: across the whole width
                 parts.append('<figure class="sw-more-pic">%s</figure>' % _img(g['imgs'][0]))
