@@ -1373,6 +1373,9 @@ def adapt(seed):
             del b['title']
             rules.append('%s.title: left out — it is the headline again' % k)
     d['_adapter']['coverage'] = cover
+    if seed.get('assign') and seed.get('blocks'):                    # the switch: a capture that carries the reader's placement by number (fromblocks.py)
+        import fromblocks
+        fromblocks.complete(d, seed, _key, sentences, pics_of, rules)
     return d
 
 
@@ -1532,7 +1535,7 @@ def _place(d, fs, inv, pages, actions, corpus, offers, gaps, rules):
 
 def load_seed(folder):
     folder, out = Path(folder), {}
-    for k in ('inventory', 'assets', 'images', 'factsheet', 'geometry', 'source', 'logos', 'product', 'cards'):
+    for k in ('inventory', 'assets', 'images', 'factsheet', 'geometry', 'source', 'logos', 'product', 'cards', 'blocks', 'assign'):
         f = folder / (k + '.json')
         try:
             out[k] = json.loads(f.read_text(encoding='utf-8')) if f.is_file() else ([] if k == 'images' else {})

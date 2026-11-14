@@ -36,31 +36,38 @@ def test_numbers_become_the_blocks_own_words():
     assert r['page']['close']['button'] == 'Contact us'
 
 
-def test_what_is_placed_nowhere_is_carried_in_page_order_with_its_picture():
-    r = A.resolve(RAW, blocks())
-    assert [(s['title'], s['text'], s['imgs']) for s in r['rest']] == [
-        ('Rooms for weddings', 'A hall for two hundred guests, with its own kitchen and a garden behind it.\n\nOpen every day of the year.', ['https://x.test/hall.jpg'])]
+def test_further_sections_are_carried_by_number_in_page_order():
+    r = A.resolve({**RAW, 'sections': [{'title': 8, 'text': [9, 11]}]}, blocks())
+    assert r['rest'] == [{'title': 'Rooms for weddings', 'at': 9, 'parts': [('p', 'A hall for two hundred guests, with its own kitchen and a garden behind it.'), ('p', 'Open every day of the year.')]}]
     m = r['measure']
-    assert m['placed'] + m['rest'] + m['skipped'] == m['words'] and m['kept'] == 1, m     # the skipped blocks here are lone links, which are not counted as the page's words
+    assert m['placed'] + m['sections_words'] + m['skipped'] + m['left'] == m['words'] and m['kept'] == 1 and m['left'] == 0, m
+
+
+def test_what_the_reader_puts_nowhere_is_counted_and_named_as_left():
+    r = A.resolve(RAW, blocks())
+    assert r['rest'] == [] and [b['i'] for b in r['measure']['left_blocks']] == [8, 9, 11] and r['measure']['left'] > 0 and r['measure']['kept'] < 1
 
 
 def test_a_number_that_is_not_a_listed_block_or_is_used_twice_is_dropped():
-    raw = {'hero': {'title': 1, 'text': [2, 99, 14, 'x', True]}, 'statement': {'title': 1, 'text': [9]}}
+    raw = {'hero': {'title': 1, 'text': [2, 99, 14, 'x', True]}, 'statement': {'title': 1, 'text': [9]}, 'sections': [{'title': 8, 'text': [9, 2]}, {'title': 4, 'text': []}, 'x']}
     r = A.resolve(raw, blocks())
     assert r['page']['hero']['text'] == 'At the crossing of the old north road stands our stop Millbrook Halt.'      # 99 is no block, 14 is the foot's
-    assert 'statement' not in r['page'] and any(s['title'] == 'Rooms for weddings' and 'two hundred guests' in s['text'] for s in r['rest'])
+    assert 'statement' not in r['page']                                                                              # its heading is the headline's block
+    assert [(s['title'], [t for _, t in s['parts']]) for s in r['rest']] == [('Rooms for weddings', ['A hall for two hundred guests, with its own kitchen and a garden behind it.'])]
+    assert 4 in [b['i'] for b in r['measure']['left_blocks']], 'a heading with nothing under it is not a section'
 
 
 def test_a_place_too_thin_gives_its_blocks_back():
-    r = A.resolve({'hero': {'title': 1}, 'features': {'title': 4, 'items': [{'t': 5}, {'t': 6}]}}, blocks())
+    r = A.resolve({'hero': {'title': 1}, 'features': {'title': 4, 'items': [{'t': 5}, {'t': 6}]}, 'sections': [{'title': 4, 'text': [5, 6, 7]}]}, blocks())
     assert 'features' not in r['page']
-    assert any(s['title'] == 'Our services' and s['text'] == 'Cafe\nFree parking\nShowers' for s in r['rest'])
+    assert [(s['title'], [t for _, t in s['parts']]) for s in r['rest']] == [('Our services', ['Cafe', 'Free parking', 'Showers'])]
 
 
 def test_skipped_words_are_counted_and_named_never_silent():
-    r = A.resolve({'hero': {'title': 1}, 'skip': [{'n': [9], 'why': 'demo'}]}, blocks())
+    r = A.resolve({'hero': {'title': 1}, 'skip': [{'n': [9], 'why': 'demo'}], 'sections': [{'title': 8, 'text': [9, 11]}]}, blocks())
     m = r['measure']
     assert m['skipped'] == 15 and m['kept'] < 1 and m['skipped_blocks'][0]['i'] == 9 and m['skipped_blocks'][0]['why'] == 'demo'
+    assert [t for _, t in r['rest'][0]['parts']] == ['Open every day of the year.'], 'a skipped block is not carried by a section either'
 
 
 def test_the_reader_is_shown_each_block_once_and_only_the_pages_own_regions():
@@ -72,4 +79,4 @@ def test_the_reader_is_shown_each_block_once_and_only_the_pages_own_regions():
 def test_garbage_from_the_model_gives_an_empty_page_and_the_whole_rest():
     for raw in (None, [], 'x', {'hero': 'x', 'features': [1], 'quotes': {'q': 1}, 'skip': 'all'}):
         r = A.resolve(raw, blocks())
-        assert r['page'] == {} and r['measure']['kept'] == 1
+        assert r['page'] == {} and r['rest'] == [] and r['measure']['left'] == r['measure']['words']
