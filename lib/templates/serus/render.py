@@ -146,9 +146,12 @@ def render(d: dict) -> str:
         ask = f'''<div class="ask">
 {f'<p class="shown{" lab" if any(a[0] for a in asks) else ""}" data-shown>{f"<small>{e(asks[0][0])}</small>" if asks[0][0] else ""}<span>{e(asks[0][1])}</span></p>' if asks else ''}
 <div class="askrow">{f'<a class="chipb" href="{e(secd.get("h"))}">{e(secd.get("t"))}</a>' if secd.get('t') else ''}<a class="send" href="{e(prim.get('h'))}"><span>{e(prim.get('t'))}</span>{ARROW}</a></div></div>'''
-    opening = f'''<section class="open" style="--rd:{rows_d};--rm:{rows_m}"><div class="col">
+    # with no call to set in the ask-box there is no box: the opening is then the line and the sentence under it, and
+    # only as tall as they are (a document tool with no button of its own had a headline alone on 630 px of empty ground)
+    lede = '' if ask or not hero.get('text') or hero.get('text') in lines[1:] else f'<p class="lede">{e(hero.get("text"))}</p>'
+    opening = f'''<section class="open{'' if ask else ' bare'}" style="--rd:{rows_d};--rm:{rows_m}"><div class="col">
 <div class="h1w"><h1 aria-label="{e(title)}">{mark}<span class="line" data-lines='{e(json.dumps(lines, ensure_ascii=False))}'>{e(title)}</span></h1></div>
-{ask}{f'<p class="note">{e(hero.get("note"))}</p>' if hero.get('note') else ''}</div></section>'''
+{ask}{lede}{f'<p class="note">{e(hero.get("note"))}</p>' if hero.get('note') else ''}</div></section>'''
 
     # ---- 2 trust row: marks if the client has them, otherwise its own short lines of proof ----
     logos, trust = d.get('logos') or [], d.get('trust') or []
@@ -290,6 +293,7 @@ h1,h2,h3,h4,p,ul{{margin:0;padding:0}}ul{{list-style:none}}a{{color:inherit;text
 .btn-o{{border:1px solid {c['line']};color:{c['I']}}}.btn-o:hover{{background:{c['chip']}}}.btn-w{{background:#fff;color:#171717}}.btn-w:hover{{background:#e6e6e6}}
 .wide{{display:flex;width:100%;margin-top:8px}}
 .open{{margin-top:56px;padding:96px 24px;display:flex;flex-direction:column;align-items:center;min-height:632px}}
+.open.bare{{min-height:0;padding-bottom:40px}}.lede{{max-width:560px;margin:8px auto 0;text-align:center;font-size:17px;line-height:1.55;color:{c.get('sec', c['I'])}}}
 .col{{width:100%;max-width:672px}}.h1w{{padding:16px 0 32px}}
 h1{{display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;font:400 40px/1.15 '{SERIF}','Iowan Old Style',Georgia,serif;letter-spacing:-.017em;min-height:calc(52px + var(--rd) * 46px);font-optical-sizing:auto}}
 .mark{{width:auto;height:auto;max-height:36px;max-width:180px;border-radius:8px}}.line{{display:block}}.line .w{{display:inline-block;white-space:nowrap}}.line .l{{display:inline-block}}

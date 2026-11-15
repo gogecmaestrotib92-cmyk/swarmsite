@@ -587,6 +587,11 @@ def test_a_trial_is_not_a_plan_a_close_is_said_once_and_a_buttons_label_is_not_a
     assert [p['name'] for p in d['plans']['items']] == ['Head Coach'] and d['plans']['items'][0]['cta'] == cta and d['plans']['note'] == '14-day free trial'
     assert 'close' not in d and [x['d'] for x in d['links']] == ['2 pages · timed blocks and linked diagrams', '2 pages · 12 players and highlighted statistics']
     assert len(rules) == 3 and A.validate(d) == []
+    # the statement too: a heading that also heads a list is said once, and its sentence stands under the list's heading when that has none
+    f = {'brand': {'name': 'P'}, 'hero': {'title': 'Your PDF, redesigned.'}, 'statement': {'title': '5 distinct art directions', 'text': 'Each is a complete visual system.'},
+         'features': {'title': '5 distinct art directions', 'items': [{'t': 'Clinical'}, {'t': 'Editorial'}, {'t': 'Athletic'}]}, 'close': {'title': 'Try it', 'text': 'x'}}
+    A._roles(f, [])
+    assert 'statement' not in f and f['features']['text'] == 'Each is a complete visual system.' and f['close']['title'] == 'Try it'
     # a trial with a price is a plan; a list of only trials is left as it is; a close with its own heading stays; cards that end differently are not cut
     e = {'brand': {'name': 'C'}, 'hero': {'title': 'T'}, 'plans': {'items': [{'name': 'Trial month', 'price': '€9'}, {'name': 'Year', 'price': '€90'}]}, 'close': {'title': 'Start today'},
          'links': [{'t': 'a', 'd': 'Read the whole guide here'}, {'t': 'b', 'd': 'See every plan in detail'}]}
