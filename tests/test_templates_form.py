@@ -146,3 +146,25 @@ def test_screenshots_kind_and_goal_beside_an_address_are_the_visitors_own(tmp_pa
     assert same == d, 'an unknown kind and no goal change nothing'
     bare, said = JOB.visitor({'brand': {'name': 'X'}}, tmp_path / 'o3', [], '', 'Book a table')
     assert 'cta' not in bare and any('no button' in n for n in said), 'no button with an address: the goal is noted, never invented into one'
+
+
+def test_software_with_no_steps_typed_shows_its_offers_as_picture_cards_each_with_a_screen(up):
+    """two offers and a few screenshots are not two bare labels over a strip: each offer stands with the next of the
+    visitor's own screens; an offer set as a card is not listed again; with steps typed, or fewer than two screens,
+    nothing changes"""
+    form = {'name': 'Tallyfern', 'sentence': 'The books of a stall', 'kind': 'software', 'offers_title': 'What it does',
+            'offers': [{'name': 'Receipts', 'note': 'Keep each receipt.'}, {'name': 'Month on a page'}, {'name': 'Export'}],
+            'photos': [{'file': 'a.png', 'role': 'screen'}, {'file': 'c.webp', 'role': 'screen'}, {'file': 'b.jpg', 'role': 'room'}]}
+    d, n = F.from_form(form, up)
+    cards = d['steps']['items']
+    assert [(c['title'], c.get('text'), c['shape']) for c in cards] == [('Receipts', 'Keep each receipt.', 'screen'), ('Month on a page', None, 'screen')]
+    assert len({c['img'] for c in cards}) == 2 and all(c['img'].startswith('media/upload/') for c in cards) and d['steps']['title'] == 'What it does'
+    assert [i['t'] for i in d['features']['items']] == ['Export'] and any(r.startswith('steps: no steps were typed') for r in n['rules'])
+    two = F.from_form({**form, 'offers': form['offers'][:2]}, up)[0]
+    assert 'features' not in two and len(two['steps']['items']) == 2, 'every offer is a card: no list repeats them'
+    typed = F.from_form({**form, 'steps': [{'title': 'Photograph'}, {'title': 'Sort'}]}, up)[0]
+    assert [s['title'] for s in typed['steps']['items']] == ['Photograph', 'Sort'] and len(typed['features']['items']) == 3
+    one = F.from_form({**form, 'photos': form['photos'][:1]}, up)[0]
+    assert 'steps' not in one and len(one['features']['items']) == 3
+    shop = F.from_form({**form, 'kind': 'shop'}, up)[0]
+    assert 'steps' not in shop
