@@ -58,6 +58,8 @@ Goal: refactor until the architecture is simple enough to explain in five lines,
 
 - 2026-11-15 — **A phone in fluently's held section stands in a device's frame.** Beside the reference (a hand holding the phone), ours was a rounded rectangle with a hairline; it now has a dark body, a light rim and a deep shadow, so it reads as a phone (`fluently/render.py`, one rule). Seen: reference · before · after, same screen. **Next:** the same reading, template by template, for windows and panels on dark clients.
 
+- 2026-11-15 — **On a dark client clicky's windows have a chrome that reads.** Beside the reference (pale grey bars with a dark outline on a near-white page), a dark client's windows were dark on dark. There the chrome now takes a fifth to a third of the ink and the outline half of it (`clicky/render.py` `colours`). Seen reference · before · after: the windows stand clear of the page; what they hold is still the product's own dark screens, where the reference holds bright films — a difference of content, not of the template. **Next:** the same reading for the other templates of pale references that a dark client is shown.
+
 ## Known debt
 - Designer (direct.py) still writes all copy; Copy agent only trims. Split: Designer = blueprint/mode/beats skeleton, Copy = every sentence from the fact sheet.
 - `cells` beat type overlaps `facts`; merge.
