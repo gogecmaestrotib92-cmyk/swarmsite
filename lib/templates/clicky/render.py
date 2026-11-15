@@ -187,11 +187,50 @@ SLOTS = [  # the five small windows of the opening at 1440: anchor, offset, top,
     ('P', 'r', 31, 378, 210, 147, 300), ('L', 'l', 38, 405, 222, 132, 190)]
 
 
+READ = .7   # the least a product's screen is shown at in a small window, of its own size: 13 px letters stand 9 px high
+
+
+def busiest(grid, fw, fh, pad=None):
+    """the centre (fractions) of the part of a screen fw wide and fh tall (fractions) holding the most of the product:
+    on capture's map of detail; with no map, the middle of the screen past the flat margin round it"""
+    if not grid:
+        l = (pad or [0, 0])[0] or 0
+        return l + .5 * (1 - 2 * l), .4
+    R, C = len(grid), len(grid[0])
+    w, h = max(1, min(C, round(fw * C))), max(1, min(R, round(fh * R)))
+    best_v, at = -1, (0, 0)
+    for y in range(R - h + 1):
+        for x in range(C - w + 1):
+            v = sum(sum(row[x:x + w]) for row in grid[y:y + h])
+            if v > best_v:
+                best_v, at = v, (x, y)
+    return (at[0] + w / 2) / C, (at[1] + h / 2) / R
+
+
+def detail(m, bw, bh, cssw):
+    """a product's screen in a small window: the part of it with most of the product on it (capture's map of detail),
+    at a size that reads. The reference's windows each hold one subject large — a face, a room; a whole screen of an
+    app shrunk into one is a smear of 3 px letters (the windows design on a court-sports app, owner, 2026-11-15). The
+    picture keeps its own proportion and is moved and clipped inside the window, never stretched."""
+    a = asp(m)
+    s0 = max(bw / cssw, bh * a / cssw)                                  # the scale at which it just covers the window
+    k = max(1, READ / s0)
+    dw = s0 * k * cssw
+    dh = dw / a
+    fx, fy = busiest(m.get('detail'), bw / dw, bh / dh, m.get('pad'))
+    x = min(max(0, fx * dw - bw / 2), dw - bw)
+    y = min(max(0, fy * dh - bh / 2), dh - bh)
+    return (f'aspect-ratio:{bw:.0f}/{bh:.0f}',
+            f'width:{100 * dw / bw:.2f}%;left:{-100 * x / bw:.2f}%;top:{-100 * y / bh:.2f}%')
+
+
 def hero_media(d):
     md = d.get('media') or {}
     used = {i.get('img') for i in (d.get('steps') or {}).get('items') or []}
     key = lambda m: m.get('src') in used                               # pictures the feature rows do not show come first
     alls = [x for x in (md.get('screens') or []) + (md.get('phones') or []) + (md.get('photos') or []) if x.get('src')]
+    screens = {x.get('src') for x in md.get('screens') or []}
+    phones = {x.get('src') for x in md.get('phones') or []}
     land = [x for x in alls if 1 <= asp(x) <= 2.6]
     port = sorted([x for x in alls if asp(x) < 1], key=key)
     v = md.get('video')
@@ -207,9 +246,19 @@ def hero_media(d):
         m = pool[0].pop(0) if pool[0] else (pool[1].pop(0) if pool[1] else None)
         if not m:
             continue
-        w = round(min((wl if asp(m) >= 1 else wp) - 10, hmax * asp(m))) + 10
+        # an upright slot with only wide product screens left takes an upright window on one, so the cluster keeps
+        # the reference's mix of shapes — five wide windows of one interface read as five thumbnails (2026-11-15)
+        cut = kind == 'P' and asp(m) >= 1.3 and m.get('src') in screens
+        w = wp if cut else round(min((wl if asp(m) >= 1 else wp) - 10, hmax * asp(m))) + 10
         pos = {'c': f'left:calc(50% + var(--u)*{off})', 'l': f'left:calc(var(--u)*{off})', 'r': f'right:calc(var(--u)*{off})'}[anchor]
-        wins.append((m, w, pos, top))
+        view = None
+        if m.get('src') in screens or m.get('src') in phones:
+            bw = w - 10
+            bh = hmax if cut else bw / asp(m)
+            # its size as the page set it: a desk screen is at most the 1440 page it was photographed in, a phone 430
+            cssw = min(m.get('w') or 1440, 430 if m.get('src') in phones else 1440)
+            view = detail(m, bw, bh, cssw)
+        wins.append((m, w, pos, top, view))
     return big, wins
 
 
@@ -217,13 +266,17 @@ def s_hero(d, c):
     h = d.get('hero') or {}
     big, wins = hero_media(d)
     title = h.get('title') or (d.get('brand') or {}).get('name') or ''
-    fs = size(title, [(12, 88), (24, 72), (999, 56)])
+    fs = size(title, [(12, 88), (32, 72), (999, 56)])    # two lines of 16 letters at 72 hold in the 640 column
     fm = size(title, [(12, 56), (999, 36)])
     wh = ''
-    for n, (m, w, pos, top) in enumerate(wins):
+    for n, (m, w, pos, top, cut) in enumerate(wins):
         cap = f'<figcaption class="cap" title="{e(m["alt"])}">{e(m["alt"])}</figcaption>' if m.get('alt') else ''
+        img = pic(m, lazy=False)
+        if cut:
+            img = img.replace('<img ', f'<img style="{cut[1]}" ', 1)
+        scr = f'<div class="scr dt" style="{cut[0]}">' if cut else '<div class="scr">'
         wh += (f'<figure class="win" style="{pos};top:calc(var(--u)*{top});--w:{w};--n:{n + 4}"><div class="fr"><div class="bar">{DOTS}</div>'
-               f'<div class="scr">{pic(m, lazy=False)}</div></div>{cap}</figure>')
+               f'{scr}{img}</div></div>{cap}</figure>')
     sub = f'<p class="sub">{e(h["text"])}</p>' if h.get('text') else ''
     sub2 = f'<p class="sub2">{e(h["text2"])}</p>' if h.get('text2') else ''
     note = next((t for t in d.get('trust') or [] if t and t != h.get('note')), '')
@@ -444,7 +497,7 @@ button{font:inherit;color:inherit;letter-spacing:inherit;background:none;border:
 .win{position:absolute;display:flex;flex-direction:column;align-items:center;gap:6px;width:calc(var(--u)*var(--w));touch-action:none;user-select:none;animation:hin .45s ease-out both;animation-delay:calc(var(--n)*16ms + .11s)}
 .win .fr,.fig,.note{border:1px solid var(--edge2);border-radius:8px;background:linear-gradient(90deg,var(--clo),var(--chi) 50%,var(--clo))}
 .win .fr{width:100%;padding:8px 4px 4px;filter:drop-shadow(0 10px 12px rgba(0,0,0,.12));transition:transform .12s ease;cursor:grab}.win.held .fr{transform:scale(.97);cursor:grabbing}
-.scr{border-radius:4px;overflow:hidden;background:var(--clo)}.scr img{width:100%}
+.scr{border-radius:4px;overflow:hidden;background:var(--clo)}.scr img{width:100%}.scr.dt{position:relative}.scr.dt img{position:absolute;max-width:none;height:auto}
 .head{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:32px;min-height:526px;padding:200px 20px 32px;text-align:center;pointer-events:none;animation:hin .45s ease-out .05s both}.head>*{pointer-events:auto}
 .hg{display:flex;flex-direction:column;align-items:center;gap:8px;max-width:calc(var(--u)*640)}
 h1{font-weight:500;font-size:calc(var(--u)*var(--fs));line-height:1.1;letter-spacing:-.03em;text-wrap:balance}

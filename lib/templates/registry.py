@@ -159,7 +159,57 @@ def _page(slug, d, root=None):
         f = P.tint(accent, m.group(1), pals) if pals else ''
         if f and j >= 0:
             page = page[:j + 1] + '<style data-sw-art>img[src*="media/library/"]{filter:%s}</style>' % f + page[j + 1:]
+    page = _readable(d, page)
     return page
+
+
+# A product's screen shown far under its own size is a smear (letters 3 px high), whatever the template: the windows
+# design, then linearity, fluently, butter, griffin, supaste and dock were each measured showing screens at 13–44 % of
+# their size on two software sites (owner, at full size beside the reference, 2026-11-15). Where a screen's box comes
+# out under LOW of the screen's own width, the picture is shown at READ of its width inside the same box, moved to the
+# part capture's map of detail (`detail`) says is busiest for that box's shape. At its own pixels the crop was too
+# tight — half a headline in a small card read as broken text — so the same file is given that size (srcset with its
+# own pixel width and `sizes`: the only candidate, so every browser draws it alike; sharp, nothing new to send), drawn
+# with object-fit: none (a crop), and the box is held at the size the template gave it. Measured again on every resize, so a phone width gets its own crop.
+LOW, READ = .45, .6
+READABLE = ('(()=>{const D=JSON.parse(document.getElementById("sw-detail").textContent),LOW=%s,READ=%s;'
+            'const name=s=>{const m=(s||"").match(/([^\\/?#]+)(?:[?#].*)?$/);return m&&m[1]};'
+            'const busiest=(g,fw,fh)=>{const R=g.length,C=g[0].length,w=Math.max(1,Math.min(C,Math.round(fw*C))),h=Math.max(1,Math.min(R,Math.round(fh*R)));let b=-1,bx=0,by=0;'
+            'for(let y=0;y+h<=R;y++)for(let x=0;x+w<=C;x++){let v=0;for(let r=y;r<y+h;r++)for(let c=x;c<x+w;c++)v+=g[r][c];if(v>b){b=v;bx=x;by=y}}return[(bx+w/2)/C,(by+h/2)/R]};'
+            'const undo=im=>{if(!im.dataset.swDt)return;const o=JSON.parse(im.dataset.swDt);for(const k in o)im.style[k]=o[k];'
+            'for(const[a,k]of[["srcset","swSs"],["sizes","swSz"]])if(im.dataset[k]!==undefined){if(im.dataset[k])im.setAttribute(a,im.dataset[k]);else im.removeAttribute(a);delete im.dataset[k]}delete im.dataset.swDt};'
+            'const fit=()=>{const ims=[...document.images].filter(im=>D[name(im.getAttribute("src"))]&&im.naturalWidth);ims.forEach(undo);'
+            'for(const im of ims){const e=D[name(im.getAttribute("src"))];'
+            'if(!im.dataset.swNw){im.dataset.swNw=im.naturalWidth;im.dataset.swNh=im.naturalHeight}'
+            'const bw=im.clientWidth,bh=im.clientHeight,nw=+im.dataset.swNw,nh=+im.dataset.swNh;'
+            'if(bw<80||bh<60||bw/e.c>=LOW)continue;'
+            'const d=Math.min(nw/(READ*e.c),nw/bw,nh/bh);if(d<=1.01&&nw<bw*1.2)continue;'
+            'const iw=nw/d,ih=nh/d,[fx,fy]=busiest(e.g,bw/iw,bh/ih),x=Math.min(0,Math.max(bw-iw,bw/2-fx*iw)),y=Math.min(0,Math.max(bh-ih,bh/2-fy*ih));'
+            'const s=im.style;im.dataset.swDt=JSON.stringify({objectFit:s.objectFit,objectPosition:s.objectPosition,width:s.width,height:s.height,maxWidth:s.maxWidth});'
+            'im.dataset.swSs=im.getAttribute("srcset")||"";im.dataset.swSz=im.getAttribute("sizes")||"";'
+            's.width=bw+"px";s.height=bh+"px";s.maxWidth="none";s.objectFit="none";s.objectPosition=Math.round(x)+"px "+Math.round(y)+"px";'
+            'im.sizes=Math.round(iw)+"px";im.srcset=(im.currentSrc||im.src)+" "+nw+"w"}};'
+            'let t;const later=()=>{clearTimeout(t);t=setTimeout(fit,120)};'
+            'if(document.readyState==="complete")fit();else addEventListener("load",fit);addEventListener("resize",later);'
+            'for(const im of document.images)if(!im.complete)im.addEventListener("load",later,{once:true})})()') % (LOW, READ)
+
+
+def _readable(d, page):
+    """the map of detail of each desk screen the data names, and the few lines that use it (see LOW above)"""
+    md = d.get('media') if isinstance(d.get('media'), dict) else {}
+    maps = {}
+    for m in md.get('screens') or []:
+        g, src = m.get('detail') if isinstance(m, dict) else None, str((m or {}).get('src') or '')
+        if g and src and isinstance(m.get('w'), (int, float)):
+            # its width as the page set it: a desk screen was photographed in a page at most 1440 wide
+            maps[src.rsplit('/', 1)[-1]] = {'c': min(int(m['w']), 1440), 'g': g}
+    if not maps or 'id="sw-detail"' in page:
+        return page
+    k = page.rfind('</body>')
+    if k < 0:
+        return page
+    blob = json.dumps(maps, separators=(',', ':')).replace('</', '<\\/')
+    return page[:k] + '<script type="application/json" id="sw-detail">%s</script><script data-sw-detail>%s</script>' % (blob, READABLE) + page[k:]
 
 
 def render(slug, d, media_base=None, root=None):
