@@ -448,7 +448,7 @@ h1{font-weight:600;font-size:64px;line-height:1;letter-spacing:-.06em;max-width:
 .bd{margin-top:24px;max-width:360px;font-weight:500;font-size:18px;line-height:22px;letter-spacing:-.06em}
 .wk-f{position:relative;display:grid;place-items:center;min-width:0;height:100%}
 .fld{position:absolute;top:0;bottom:0;left:-14%;right:calc(-1*max(24px,(100vw - 1200px)/2));background-size:cover;background-position:center;opacity:.5;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 48%),linear-gradient(transparent 0,#000 16%,#000 84%,transparent 100%);-webkit-mask-composite:source-in;mask-image:linear-gradient(90deg,transparent 0,#000 48%),linear-gradient(transparent 0,#000 16%,#000 84%,transparent 100%);mask-composite:intersect}
-.wk-f img{position:relative;max-height:min(70vh,631px);max-width:100%;width:auto;border-radius:8px;box-shadow:0 0 0 1px color-mix(in srgb,var(--i) 14%,transparent)}.wk-f.phone img{border-radius:46px;border:10px solid #0a0a0c;box-shadow:0 0 0 1.5px rgba(255,255,255,.2),0 0 0 3.5px #1b1b1f,0 44px 90px -34px rgba(0,0,0,.75)}
+.wk-f img{position:relative;max-height:min(70vh,631px);max-width:100%;width:auto;border-radius:8px;box-shadow:0 0 0 1px color-mix(in srgb,var(--i) 14%,transparent)}.wk-f.phone img{border-radius:36px;box-shadow:0 0 0 10px #0a0a0c,0 0 0 11.5px rgba(255,255,255,.2),0 0 0 13.5px #1b1b1f,0 44px 90px -24px rgba(0,0,0,.75)}
 .dots{display:none}
 /* held: the section is one screen pinned for 1350 a step (640 on a phone); words, picture and field change together in .48s */
 .wk.pin{height:calc(100vh + (var(--n) + .47)*1350px)}.pin .wk-pin{position:sticky;top:0;height:100vh;overflow:clip}.pin .wk-in{position:relative;height:100%}
