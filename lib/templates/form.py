@@ -233,6 +233,21 @@ def from_form(form, photos_dir=None):
             steps[st]['img'] = src
     if steps:
         d['steps'] = {**({'title': _s(f.get('steps_title'), MAX['offers_title'])} if _s(f.get('steps_title'), MAX['offers_title']) else {}), 'items': steps}
+    elif kind in SOFT and len((d.get('features') or {}).get('items') or []) >= 2 and len(pics['screens']) + len(pics['phones']) >= 2:
+        # Software with no steps typed: what it offers, each beside a screen of the product, stands as the page's picture
+        # cards — the reference sites of this kind show the product area by area, a screen to each (owner, 2026-11-15:
+        # two offers and six screenshots gave two bare labels and a strip). No step of a process is written: these are
+        # the visitor's own offers, in their order, each with the next of their own screens. An offer set as a card is
+        # not said again in the list under it.
+        shots = [(x['src'], 'screen') for x in pics['screens']] + [(x['src'], 'phone') for x in pics['phones']]
+        cards = [{'title': it['t'], **({'text': it['d']} if it.get('d') else {}), 'img': src, 'shape': shape} for it, (src, shape) in zip(d['features']['items'][:6], shots)]
+        d['steps'] = {**({'title': d['features']['title']} if d['features'].get('title') else {}), 'items': cards}
+        left = d['features']['items'][len(cards):]
+        if left:
+            d['features']['items'] = left
+        else:
+            del d['features']
+        rules.append('steps: no steps were typed; %d offer(s), each with a screen of the product, stand as the picture cards (and are not listed again under them)' % len(cards))
     figs = []
     for g in (f.get('figures') or [])[:4] if isinstance(f.get('figures'), list) else []:
         g = g if isinstance(g, dict) else {}
