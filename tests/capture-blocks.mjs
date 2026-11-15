@@ -26,6 +26,7 @@ const page = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>
 <section><h2>Millbrook Halt</h2><p>Open every day of the year, from six in the morning.</p><blockquote>The best stop on the road.</blockquote><p class="off">A copy that is not shown.</p>
 <details><summary>Is there a shower?</summary><p>Yes, on the ground floor, free for drivers.</p></details></section>
 <section><h2><span>Made</span> <span>by</span> <span>hand</span></h2><p style="opacity:0">Shown once the page is scrolled to it.</p>
+<p><s>Install another tool before practice.</s></p><p style="text-decoration:line-through">Rebuild every handout.</p>
 <p><a class="btn" href="/adults">For adults</a><a class="btn" href="/children">For children</a></p><select><option>April 2019</option><option>March 2011</option></select></section>
 </main>
 <footer><p>© Millbrook Halt Ltd</p><a href="/privacy">Privacy</a></footer></body></html>`;
@@ -68,6 +69,8 @@ try {
   assert.ok(find('h', /^Made by hand$/)); assert.ok(find('a', /^For adults$/) && find('a', /^For children$/));
   // words the page holds faded until the scroll reaches them are there, marked; a closed menu's choices are not the page's words
   assert.equal(find('p', /^Shown once the page/).dim, true); assert.ok(!lead.dim && !B.some(b => /April 2019/.test(b.text)));
+  // what the page crosses out is marked: it is what the page says is not so
+  assert.equal(find('p', /^Install another tool/).struck, true); assert.equal(find('p', /^Rebuild every handout/).struck, true); assert.ok(!lead.struck);
   // landmarks
   assert.ok(B.filter(b => b.region === 'nav').map(b => b.text).join(' ').includes('Services') && find('p', /^© Millbrook/).region === 'footer' && B.filter(b => b.region === 'consent').length >= 1);
   assert.ok(!B.some(b => b.region === 'main' && /cookies/.test(b.text)), 'a consent bar is not the page\'s own words');

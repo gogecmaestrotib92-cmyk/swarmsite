@@ -89,3 +89,11 @@ def test_a_section_that_is_nothing_but_links_is_a_menu_and_is_not_carried():
     r = A.resolve({'hero': {'title': 1}, 'sections': [{'title': 4, 'text': [5, 6, 7]}, {'title': 8, 'text': [9]}]}, b)
     assert [s['title'] for s in r['rest']] == ['Rooms for weddings'] and {4, 5, 6, 7} <= {x['i'] for x in r['measure']['left_blocks']}
     assert '5 li·1 link "Cafe"' in A.brief(b)
+
+
+def test_what_the_page_crosses_out_is_never_shown_to_the_reader_nor_carried():
+    b = blocks()
+    b[9]['struck'] = True
+    assert 'two hundred guests' not in A.brief(b)
+    r = A.resolve({'hero': {'title': 1}, 'sections': [{'title': 8, 'text': [9, 11]}]}, b)
+    assert [t for _, t in r['rest'][0]['parts']] == ['Open every day of the year.']

@@ -67,8 +67,9 @@ def norm(s):
 
 
 def listed(blocks):
-    """the blocks the reader is shown: the page's own regions, each said once (a carousel's copy, a repeated bar: not again)"""
-    out = [b for b in blocks if b.get('region') in LISTED and b.get('same') is None and (b.get('kind') != 'img' or (b.get('w', 0) >= 200 and b.get('h', 0) >= 140))]
+    """the blocks the reader is shown: the page's own regions, each said once (a carousel's copy, a repeated bar: not again);
+    never a block the page crosses out — carried as plain words it would say the opposite of the page"""
+    out = [b for b in blocks if b.get('region') in LISTED and b.get('same') is None and not b.get('struck') and (b.get('kind') != 'img' or (b.get('w', 0) >= 200 and b.get('h', 0) >= 140))]
     return out[:MAX_LIST]
 
 
