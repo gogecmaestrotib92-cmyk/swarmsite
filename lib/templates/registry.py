@@ -142,7 +142,15 @@ def _page(slug, d, root=None):
             sys.modules[key] = mod
             spec.loader.exec_module(mod)
         return sys.modules[key]
-    return part('more').add(d, page)
+    page = part('more').add(d, page)
+    # A headline's lines are of a like length: no word left alone on a line ("Your team. / Your / game plan.", owner's
+    # review 2026-11-15). Sixteen templates did not ask for it. It stands first in <head>, so a template that sets
+    # its own wrapping keeps it.
+    i = page.find('<head')
+    j = page.find('>', i) if i >= 0 else -1
+    if j >= 0 and 'data-sw-wrap' not in page:
+        page = page[:j + 1] + '<style data-sw-wrap>h1,h2,h3{text-wrap:balance}</style>' + page[j + 1:]
+    return page
 
 
 def render(slug, d, media_base=None, root=None):
