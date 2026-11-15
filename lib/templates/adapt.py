@@ -890,6 +890,55 @@ def _step_pictures(d, rules, gaps):
         rules.append('steps.items[].img: %d step(s) show the screen of the page their own call leads to; the others the product\'s remaining screens in order' % by_link)
 
 
+TRIAL = re.compile(r'\b(?:free trial|trial|probn\w+|prueba|essai|testphase|testzeitraum|periodo de prueba|période d\'essai)\b', re.I)
+
+
+def _roles(d, rules):
+    """What a thing on the client's page IS decides where it stands on the new one. Three roles the rules got wrong on a
+    real page (a coaching product, owner's review 2026-11-15):
+
+      a trial is not a plan      "14-day free trial — Free" stood as a second price card. A plan named as a trial, with no
+                                 amount of money, leaves the list; its button goes to the plan that has none, and its
+                                 name stands as the plans' note.
+      a closing call is said once  the page's last call had the heading and the words of the prices' own heading: the
+                                 same sentence twice down the page. A close that repeats another block's heading is
+                                 left out.
+      a button's label is not a card's words  each card of links ended in the label of its own button ("… linked
+                                 diagrams Open sample PDF"). Words that end every card alike are a control, not the
+                                 card's sentence.
+    """
+    pl = d.get('plans')
+    if isinstance(pl, dict) and isinstance(pl.get('items'), list) and len(pl['items']) >= 2:
+        money = lambda it: bool(re.search(r'\d', str(it.get('price') or '')))
+        trials = [it for it in pl['items'] if isinstance(it, dict) and TRIAL.search(str(it.get('name') or '')) and not money(it)]
+        keep = [it for it in pl['items'] if it not in trials]
+        if trials and keep:
+            pl['items'] = keep
+            t = trials[0]
+            if t.get('cta') and not keep[0].get('cta'):
+                keep[0]['cta'] = t['cta']
+            if not pl.get('note'):
+                pl['note'] = norm(t.get('name'))
+            rules.append('plans: "%s" is a trial, not a plan — left out of the list; its button stands with the plan, its name as the plans\' note' % norm(t.get('name'))[:60])
+    cl = d.get('close')
+    if isinstance(cl, dict) and _key(cl.get('title')):
+        twin = next((k for k, b in d.items() if k not in ('close', 'hero', 'brand') and not k.startswith('_') and isinstance(b, dict) and _key(b.get('title')) == _key(cl['title'])), None)
+        if twin:
+            del d['close']
+            rules.append('close: left out — its heading is the heading of `%s`; a sentence is said once' % twin)
+    lk = d.get('links')
+    if isinstance(lk, list) and len(lk) >= 2 and all(isinstance(x, dict) and norm(x.get('d')) for x in lk):
+        words = [norm(x['d']).split() for x in lk]
+        n = 0
+        while n < 5 and all(len(w) > n + 3 for w in words) and len({w[-(n + 1)].lower() for w in words}) == 1:
+            n += 1
+        if n >= 2:
+            tail = ' '.join(words[0][-n:])
+            for x, w in zip(lk, words):
+                x['d'] = ' '.join(w[:-n]).rstrip(' ·–—-,:;')
+            rules.append('links[].d: "%s" ended every card — the label of its button, not the card\'s words; taken off' % tail)
+
+
 def capture_texts(seed):
     """every text the capture read off the client's pages (the reader's fact sheet is not among them)"""
     inv, assets, geo = seed.get('inventory') or {}, seed.get('assets') or {}, seed.get('geometry') or {}
@@ -1394,6 +1443,7 @@ def adapt(seed):
         if k not in ('hero', 'brand', 'statement') and not k.startswith('_') and isinstance(b, dict) and _key(b.get('title')) and _key(b.get('title')) == _key(d['hero'].get('title')):
             del b['title']
             rules.append('%s.title: left out — it is the headline again' % k)
+    _roles(d, rules)
     d['_adapter']['coverage'] = cover
     if seed.get('assign') and seed.get('blocks'):                    # the switch: a capture that carries the reader's placement by number (fromblocks.py)
         import fromblocks

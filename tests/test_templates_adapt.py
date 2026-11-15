@@ -572,3 +572,27 @@ def test_the_states_of_a_product_demo_are_its_screens_each_once_in_the_demos_ord
     assert [x['alt'] for x in d['media']['screens']] == ['Ledger', 'Receipts', 'Month', 'Export']
     assert any(r.startswith('media.screens: 4 state(s) of the page') for r in d['_adapter']['rules'])
     assert A.validate(d) == []
+
+
+def test_a_trial_is_not_a_plan_a_close_is_said_once_and_a_buttons_label_is_not_a_cards_words():
+    """what a thing on the client's page is decides where it stands (adapt._roles)"""
+    cta = {'t': 'Start the trial', 'h': 'https://x.example/start'}
+    d = {'brand': {'name': 'Courtline'}, 'hero': {'title': 'Your team. Your plan.'},
+         'plans': {'title': 'One tool. One price.', 'items': [{'name': 'Head Coach', 'price': '€69', 'rows': []}, {'name': '14-day free trial', 'price': 'Free', 'cta': cta, 'rows': []}]},
+         'close': {'title': 'One tool. One price.', 'text': 'x'},
+         'links': [{'t': 'A practice', 'd': '2 pages · timed blocks and linked diagrams Open sample PDF', 'h': 'https://x.example/a.pdf'},
+                   {'t': 'The opposition', 'd': '2 pages · 12 players and highlighted statistics Open sample PDF', 'h': 'https://x.example/b.pdf'}]}
+    rules = []
+    A._roles(d, rules)
+    assert [p['name'] for p in d['plans']['items']] == ['Head Coach'] and d['plans']['items'][0]['cta'] == cta and d['plans']['note'] == '14-day free trial'
+    assert 'close' not in d and [x['d'] for x in d['links']] == ['2 pages · timed blocks and linked diagrams', '2 pages · 12 players and highlighted statistics']
+    assert len(rules) == 3 and A.validate(d) == []
+    # a trial with a price is a plan; a list of only trials is left as it is; a close with its own heading stays; cards that end differently are not cut
+    e = {'brand': {'name': 'C'}, 'hero': {'title': 'T'}, 'plans': {'items': [{'name': 'Trial month', 'price': '€9'}, {'name': 'Year', 'price': '€90'}]}, 'close': {'title': 'Start today'},
+         'links': [{'t': 'a', 'd': 'Read the whole guide here'}, {'t': 'b', 'd': 'See every plan in detail'}]}
+    before = json.loads(json.dumps(e))
+    A._roles(e, [])
+    assert e == before
+    only = {'brand': {'name': 'C'}, 'hero': {'title': 'T'}, 'plans': {'items': [{'name': 'Free trial'}, {'name': 'Trial for teams'}]}}
+    A._roles(only, [])
+    assert len(only['plans']['items']) == 2
