@@ -223,3 +223,12 @@ def test_a_library_picture_is_set_in_the_clients_own_accent_and_left_alone_when_
     for accent, pal in (('#2f6fe4', 'oxblood'), ('#888888', 'oxblood'), (None, 'oxblood'), ('#ff4a1f', 'none-such'), ('#e8734a', 'sand-peach'), ('#d05a56', 'oxblood')):
         assert P.tint(accent, pal, pals) == '', (accent, pal)
     assert 'brightness' not in P.tint('#ff3b00', 'sand-peach', pals) and P.tint('#ff3b00', 'sand-peach', pals).startswith('saturate(')
+
+
+def test_a_device_frame_is_drawn_round_a_picture_never_by_changing_its_box():
+    """a border on a picture changes the box the gate measures against the picture's own proportions: fluently's framed
+    phone was read as distorted and the design held back on production (2026-11-15). The frame is rings of shadow."""
+    from pathlib import Path
+    src = (Path(__file__).resolve().parents[1] / 'lib' / 'templates' / 'fluently' / 'render.py').read_text(encoding='utf-8')
+    rule = re.search(r'\.wk-f\.phone img\{([^}]*)\}', src).group(1)
+    assert 'border:' not in rule and 'padding' not in rule and 'box-shadow:0 0 0 10px' in rule, rule
