@@ -617,3 +617,17 @@ def test_a_page_a_product_makes_is_its_picture_though_the_capture_calls_it_plain
     d = A.adapt(copy.deepcopy(seed))
     assert [p['src'] for p in d['media']['photos']] == ['media/img1.jpg', 'media/img2.jpg'], d['media']['photos']
     assert A.validate(d) == []
+
+
+def test_a_page_of_two_grounds_takes_the_one_its_own_theme_colour_agrees_with():
+    """a dark product whose page is half dark, half pale: the ground is not whichever covers a few more boxes"""
+    inv = {'colors': {'bg': [{'c': '#f7dbba', 'n': 1941}, {'c': '#14120f', 'n': 1727}, {'c': '#fbead1', 'n': 588}],
+                      'text': [{'c': '#0a0806', 'n': 40}, {'c': '#ff4a1f', 'n': 33}, {'c': '#f7dbba', 'n': 26}], 'buttons': [{'c': '#ff4a1f', 'n': 1}]}}
+    rules = []
+    p = A.palette(inv, {'palette': {'themeColor': '#0D0F14'}}, [], rules)
+    assert p['ground'] == '#14120f' and p['ink'] == '#f7dbba' and p['accent'] == '#ff4a1f' and any(r.startswith('palette.ground') for r in rules)
+    # no theme colour, a theme colour of the first ground's tone, or a second ground that is a minor one: the first stays
+    assert A.palette(inv, {}, [], [])['ground'] == '#f7dbba'
+    assert A.palette(inv, {'palette': {'themeColor': '#fff8ee'}}, [], [])['ground'] == '#f7dbba'
+    minor = {'colors': {**inv['colors'], 'bg': [{'c': '#f7dbba', 'n': 1941}, {'c': '#14120f', 'n': 400}]}}
+    assert A.palette(minor, {'palette': {'themeColor': '#0D0F14'}}, [], [])['ground'] == '#f7dbba'
