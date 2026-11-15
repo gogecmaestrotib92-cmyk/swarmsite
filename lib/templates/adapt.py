@@ -925,12 +925,18 @@ def _roles(d, rules):
             if not pl.get('note'):
                 pl['note'] = norm(t.get('name'))
             rules.append('plans: "%s" is a trial, not a plan — left out of the list; its button stands with the plan, its name as the plans\' note' % norm(t.get('name'))[:60])
-    cl = d.get('close')
-    if isinstance(cl, dict) and _key(cl.get('title')):
-        twin = next((k for k, b in d.items() if k not in ('close', 'hero', 'brand') and not k.startswith('_') and isinstance(b, dict) and _key(b.get('title')) == _key(cl['title'])), None)
-        if twin:
-            del d['close']
-            rules.append('close: left out — its heading is the heading of `%s`; a sentence is said once' % twin)
+    # a heading is said once: the statement and the closing call are a heading over a sentence and nothing more — where
+    # another block (a list, the plans, the steps) is headed by the same words, that block keeps them and the bare one
+    # is left out (a document tool's "5 distinct art directions" stood as its statement and again over its list)
+    for bare in ('statement', 'close'):
+        b = d.get(bare)
+        if isinstance(b, dict) and _key(b.get('title')):
+            twin = next((k for k, x in d.items() if k not in (bare, 'hero', 'brand') and not k.startswith('_') and isinstance(x, dict) and _key(x.get('title')) == _key(b['title'])), None)
+            if twin:
+                if b.get('text') and not d[twin].get('text') and twin not in ('statement', 'close'):
+                    d[twin]['text'] = b['text']                  # its sentence is not lost: it stands under the heading that stays
+                del d[bare]
+                rules.append('%s: left out — its heading is the heading of `%s`; a sentence is said once' % (bare, twin))
     lk = d.get('links')
     if isinstance(lk, list) and len(lk) >= 2 and all(isinstance(x, dict) and norm(x.get('d')) for x in lk):
         words = [norm(x['d']).split() for x in lk]
