@@ -234,29 +234,44 @@ def test_a_device_frame_is_drawn_round_a_picture_never_by_changing_its_box():
     assert 'border:' not in rule and 'padding' not in rule and 'box-shadow:0 0 0 10px' in rule, rule
 
 
+
+def _clicky():
+    spec = importlib.util.spec_from_file_location('clicky_render', ROOT / 'lib' / 'templates' / 'clicky' / 'render.py')
+    R = importlib.util.module_from_spec(spec); spec.loader.exec_module(R)
+    return R
+
+
 def test_wide_screens_alone_still_give_the_windows_opening_upright_windows():
     """Courtsensei on production, beside the reference (2026-11-15): six wide screens of one interface stood in five
     wide windows and read as five thumbnails of the same thing. An upright slot with only wide screens left takes an
-    upright cut of one (a crop — object-fit: cover — never a stretch); a photograph is never cut this way."""
-    spec = importlib.util.spec_from_file_location('clicky_render', ROOT / 'lib' / 'templates' / 'clicky' / 'render.py')
-    R = importlib.util.module_from_spec(spec); spec.loader.exec_module(R)
+    upright window on one; a photograph is never set that way. A title of 26 letters stands at 72."""
+    R = _clicky()
     scr = [{'src': 'media/screen-%d.jpg' % i, 'w': 1800, 'h': 1125, 'alt': 'S%d' % i} for i in range(1, 7)]
     big, wins = R.hero_media({'media': {'screens': scr, 'phones': [], 'photos': []}})
-    assert big and len(wins) == 5 and sum(1 for w in wins if w[4]) == 2, wins
+    assert big and len(wins) == 5 and sum(1 for w in wins if w[1] < 160) == 2, [w[1] for w in wins]
     page = R.s_hero({'hero': {'title': 'Your team. Your game plan.'}, 'media': {'screens': scr, 'phones': [], 'photos': []}}, {})
-    assert page.count('class="scr up"') == 2 and '--fs:72' in page
-    assert re.search(r'\.scr\.up img\{[^}]*object-fit:cover', (ROOT / 'lib' / 'templates' / 'clicky' / 'render.py').read_text())
+    assert page.count('class="scr dt"') == 5 and '--fs:72' in page
     ph = [{'src': 'media/photo-%d.jpg' % i, 'w': 1800, 'h': 1125, 'alt': ''} for i in range(1, 7)]
     assert not any(w[4] for w in R.hero_media({'media': {'screens': [], 'phones': [], 'photos': ph}})[1])
 
 
-def test_an_upright_cut_starts_where_the_screen_does_past_the_margin_its_demo_sets():
-    """Courtsensei's live-game demo stands on a flat dark margin (15.6 % of its width each side, measured at capture):
-    an upright cut from the picture's left edge was half black (2026-11-15). The cut starts past the margin."""
-    spec = importlib.util.spec_from_file_location('clicky_render2', ROOT / 'lib' / 'templates' / 'clicky' / 'render.py')
-    R = importlib.util.module_from_spec(spec); spec.loader.exec_module(R)
-    at = lambda scr: [float(re.search(r'--at:([\d.]+)%', w[4]).group(1)) for w in R.hero_media({'media': {'screens': scr, 'phones': [], 'photos': []}})[1] if w[4]]
-    plain = [{'src': 'media/s%d.jpg' % i, 'w': 767, 'h': 533, 'alt': 'S'} for i in range(1, 7)]
-    assert at(plain) == [0.0, 0.0]
-    framed = [{**m, 'pad': [.156, .156]} for m in plain]
-    assert len(at(framed)) == 2 and all(20 < v <= 100 for v in at(framed)), at(framed)
+def test_a_screen_in_a_small_window_is_its_busiest_part_at_a_size_that_reads():
+    """The owner, at full size beside the reference (2026-11-15): a 767 px screen of an app shrunk into a 200 px
+    window is a smear of 3 px letters, where the reference's windows each hold one subject large. A product's screen
+    in a window is shown at READ of its own size at least, moved to the part capture's map of detail says is busiest,
+    clipped by the window and never stretched (its width alone is set; its height follows)."""
+    R = _clicky()
+    g = [[0] * 32 for _ in range(22)]
+    for y in range(14, 20):
+        for x in range(22, 30):
+            g[y][x] = 90                                               # the product: the lower right of the screen
+    m = {'src': 'media/tab1.jpg', 'w': 767, 'h': 533, 'alt': 'S', 'detail': g}
+    box, img = R.detail(m, 172, 110, 767)
+    width = float(re.search(r'width:([\d.]+)%', img).group(1)) / 100 * 172
+    assert width / 767 >= R.READ - 1e-3 and 'height' not in img and box == 'aspect-ratio:172/110'
+    left, top = (-float(re.search(k + r':(-?[\d.]+)%', img).group(1)) / 100 for k in ('left', 'top'))
+    cx, cy = (left * 172 + 86) / width, (top * 110 + 55) / (width / (767 / 533))
+    assert .6 < cx < 1 and .55 < cy < 1, (cx, cy)
+    assert R.busiest(None, .3, .3, [.156, .156])[0] == .5                 # no map: the middle past the flat margin
+    css = (ROOT / 'lib' / 'templates' / 'clicky' / 'render.py').read_text()
+    assert re.search(r'\.scr\.dt img\{[^}]*position:absolute[^}]*height:auto', css)

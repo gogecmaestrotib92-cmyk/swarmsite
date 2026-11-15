@@ -614,6 +614,14 @@ def _path(u):
         return ''
 
 
+def _detail(x):
+    """where on a screen the product is (capture: a map of detail, 32 columns, each cell 0–99), kept only when well formed"""
+    g = x.get('detail') if isinstance(x, dict) else None
+    ok = (isinstance(g, list) and 4 <= len(g) <= 64 and all(isinstance(r, list) and len(r) == 32 for r in g)
+          and all(isinstance(v, int) and not isinstance(v, bool) and 0 <= v <= 99 for r in g for v in r))
+    return {'detail': g} if ok else {}
+
+
 def _pictures(images, d, media, gaps, is_place, product=None, rules=None):
     rules = rules if rules is not None else []
     photos, shots, seen = [], [], {}
@@ -666,7 +674,7 @@ def _pictures(images, d, media, gaps, is_place, product=None, rules=None):
             if not isinstance(x, dict) or not x.get('data') or not _px(x.get('w')) or not _px(x.get('h')):
                 continue
             src = 'media/%s-%d.%s' % (kind[:-1], i + 1, _ext(x['data']))
-            d['media'][kind].append({'src': src, 'w': _px(x['w']), 'h': _px(x['h']), 'alt': norm(x.get('alt'))[:120], 'page': _path(x.get('url'))})
+            d['media'][kind].append({'src': src, 'w': _px(x['w']), 'h': _px(x['h']), 'alt': norm(x.get('alt'))[:120], 'page': _path(x.get('url')), **_detail(x)})
             media[src] = {'from': 'product', 'kind': kind, 'index': i}
             num = lambda v: v if isinstance(v, (int, float)) and not isinstance(v, bool) else 0
             # how full the picture itself is (capture: the share of it that is not its commonest tone) before the page's
@@ -709,7 +717,7 @@ def _pictures(images, d, media, gaps, is_place, product=None, rules=None):
         first = norm(str(im.get('alt') or '').split('\n')[0])                 # the first line the framed part sets: its own heading
         pad = im.get('pad')                                                    # the flat margin the demo sets round this screen (capture)
         pad = [round(float(v), 3) for v in pad] if isinstance(pad, list) and len(pad) == 2 and all(isinstance(v, (int, float)) and not isinstance(v, bool) and 0 <= v <= .5 for v in pad) else None
-        d['media']['screens'].append({'src': src, 'w': x['w'], 'h': x['h'], 'alt': first[:120], **({'pad': pad} if pad else {})})
+        d['media']['screens'].append({'src': src, 'w': x['w'], 'h': x['h'], 'alt': first[:120], **({'pad': pad} if pad else {}), **_detail(im)})
         media[src] = {'from': 'images', 'id': x['id']}
         x['placed'] = True
     if any(x.get('placed') for x in shots):
