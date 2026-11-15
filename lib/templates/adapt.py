@@ -660,6 +660,7 @@ def _pictures(images, d, media, gaps, is_place, product=None, rules=None):
     # a product's own screens: the pages behind its top bar photographed at desk and phone width (capture product.json),
     # then — when those are fewer than three — the framed parts of its home page that are not a whole band of it
     prod = product if isinstance(product, dict) else {}
+    rich = {}
     for kind in ('screens', 'phones'):
         for i, x in enumerate(prod.get(kind) or []):
             if not isinstance(x, dict) or not x.get('data') or not _px(x.get('w')) or not _px(x.get('h')):
@@ -667,6 +668,12 @@ def _pictures(images, d, media, gaps, is_place, product=None, rules=None):
             src = 'media/%s-%d.%s' % (kind[:-1], i + 1, _ext(x['data']))
             d['media'][kind].append({'src': src, 'w': _px(x['w']), 'h': _px(x['h']), 'alt': norm(x.get('alt'))[:120], 'page': _path(x.get('url'))})
             media[src] = {'from': 'product', 'kind': kind, 'index': i}
+            rich[src] = x.get('score') if isinstance(x.get('score'), (int, float)) and not isinstance(x.get('score'), bool) else 0
+        # the screen with most of the product on it comes first: a template's opening takes the first, and the first page
+        # behind the bar is often the emptiest (a betting tool's opening showed a phone with "no lines yet" while its
+        # picks and simulator screens, full of the product, stood further down — seen beside the reference, 2026-11-15).
+        # The capture's own score of each page (controls, data, numbers, drawings against prose) is the measure.
+        d['media'][kind].sort(key=lambda m: -rich.get(m['src'], 0))
     if d['media']['screens'] or d['media']['phones']:
         rules.append('media.screens, media.phones: the first screen of each page behind the top bar that shows a working product (controls, figures, data — not prose), '
                      'photographed at 1440 and at 390 wide; alt is the page\'s own heading')
