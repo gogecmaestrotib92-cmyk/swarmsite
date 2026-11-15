@@ -2,8 +2,9 @@
 answer each ("what is in this picture?"), as the same contract data the adapter writes (schema.json). Then the same
 select → three previews as a captured site (lib/templates/job.py build --form).
 
-Nothing is invented: a field left empty is a section left out; no sentence, label, price or hour is written that the
-visitor did not write. The one thing chosen for them is where a typed thing goes — what they offer is a menu for a
+No fact is invented: no label, price, hour, number or name is written that the visitor did not write. What a first
+page needs in words and the visitor left empty — the sentence under the headline, what the business is about, a line
+for each offer, the closing call — may be drafted for them (write.py, `draft` in the form; owner, 2026-11-15). The one thing chosen for them is where a typed thing goes — what they offer is a menu for a
 restaurant, features for software, a priced list for anyone else — and that rule is written down in `rules`.
 
     from_form(form, photos_dir=None) -> (data, {'gaps': [...], 'rules': [...], 'media': {rel: file}})
@@ -282,7 +283,25 @@ def from_form(form, photos_dir=None):
             d['locations'] = [{'name': name, **({'address': addr} if addr else {}), **({'phone': ph} if ph else {}), **({'email': email} if email else {}), **({'hours': hours} if hours else {})}]
     if not (addr or ph or email or hours):
         gaps.append('contact: no way to reach them was typed; no contact section')
-    return d, {'gaps': gaps, 'rules': rules, 'media': media}
+    # a draft written for them (lib/templates/write.py): only what the visitor left empty, each field named in `written`
+    dr = f.get('draft') if isinstance(f.get('draft'), dict) else {}
+    written = []
+    lede = _s(dr.get('lede'), 300)
+    if lede and not d['hero'].get('text'):
+        d['hero']['text'] = lede
+        written.append('hero.text')
+    ab = dr.get('about') if isinstance(dr.get('about'), dict) else {}
+    if _s(ab.get('title'), 90) and _s(ab.get('text'), 560) and 'statement' not in d:
+        d['statement'] = {'title': _s(ab.get('title'), 90), 'text': _s(ab.get('text'), 560)}
+        written.append('statement')
+    cl = dr.get('closing') if isinstance(dr.get('closing'), dict) else {}
+    if _s(cl.get('title'), 90) and 'close' not in d:
+        d['close'] = {'title': _s(cl.get('title'), 90), **({'text': _s(cl.get('text'), 260)} if _s(cl.get('text'), 260) else {}), **({'cta': dict(d['hero']['primary'])} if d['hero'].get('primary') else {})}
+        written.append('close')
+    written += [w for w in dr.get('written') or [] if isinstance(w, str) and w.startswith('offers.')]
+    if written:
+        rules.append('draft: %s written for the visitor from what they typed (write.py) — a draft they change in the editor; no fact among it' % ', '.join(written))
+    return d, {'gaps': gaps, 'rules': rules, 'media': media, 'written': written}
 
 
 if __name__ == '__main__':

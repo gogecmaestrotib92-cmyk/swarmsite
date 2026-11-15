@@ -138,6 +138,14 @@ export async function runTemplateJob(deps) {
     fs.mkdirSync(photos, { recursive: true });
     for (const f of formFiles(form)) await deps.fetchUpload(f, path.join(photos, f));
     fs.writeFileSync(path.join(dir, 'form.json'), JSON.stringify(form));
+    // the words a first page needs and the visitor left empty, drafted from what they typed (lib/templates/write.py: one small model
+    // call; it may describe and invite, never state a fact). It is never what a job fails on: when the call fails or runs long the
+    // page is made of the typed words alone, as before. SWARM_WRITE=0 turns it off.
+    if (process.env.SWARM_WRITE !== '0') {
+      try { const w = lastJson(await run('python3', ['lib/templates/write.py', path.join(dir, 'form.json')], { timeoutMs: 90000 })) || {};
+        if (Array.isArray(w.written) && w.written.length) await deps.emit([{ role: 'Writer', text: `A first draft of ${w.written.length} text${w.written.length === 1 ? '' : 's'} from what you typed — change any of it in the editor` }]); }
+      catch (e) { console.warn('draft: not written —', String(e && e.message || e).slice(0, 200)); }
+    }
     extra.push('--form', path.join(dir, 'form.json'), '--photos', photos);
     await deps.emit([{ role: 'Reader', text: `${formFiles(form).length} photograph${formFiles(form).length === 1 ? '' : 's'} from you` }]);
   });
