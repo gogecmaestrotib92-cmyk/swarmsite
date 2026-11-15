@@ -62,6 +62,37 @@ try {
     assert.ok(f.photos.every(p => /\.jpg$/.test(p.file)), 'each photograph is named by what the server gave back for it');
     assert.deepEqual(f.link, { t: 'Book a table', h: 'casafern.example/book' }); assert.deepEqual(f.contact.hours, [{ days: 'Tue–Sun', open: '13:00', close: '23:00' }]); assert.equal(f.contact.city, 'Valencia');
     await page.close();
+    // software is shown by its screens: two are needed, said before the end, and the form is not sent without them
+    { const st = { job: null, ups: 0 }; const p2 = await browser.newPage({ viewport: { width, height: 900 } });
+      await p2.route('**/*', async r => { const u = new URL(r.request().url()), m = r.request().method();
+        if (u.hostname === 'app.test' && u.pathname === '/start') return r.fulfill({ contentType: 'text/html', body: html });
+        if (u.hostname === 'app.test' && u.pathname === '/config.js') return r.fulfill({ contentType: 'application/javascript', body: "window.SWARMSITE_API='https://api.test'" });
+        if (u.hostname === 'app.test' && u.pathname === '/app') return r.fulfill({ contentType: 'text/html', body: '<p>chooser</p>' });
+        if (r.request().headers()['access-control-request-method']) return r.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'POST' } });
+        if (u.hostname === 'api.test' && u.pathname === '/uploads' && m === 'POST') { st.ups++; return r.fulfill({ headers: { 'access-control-allow-origin': '*' }, contentType: 'application/json', body: JSON.stringify({ file: `0b1e2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c${String(st.ups).padStart(2, '0')}.jpg` }) }); }
+        if (u.hostname === 'api.test' && u.pathname === '/jobs' && m === 'POST') { st.job = JSON.parse(r.request().postData()); return r.fulfill({ headers: { 'access-control-allow-origin': '*' }, contentType: 'application/json', body: JSON.stringify({ id }) }); }
+        return r.abort(); });
+      await p2.goto('https://app.test/start'); await p2.locator('#name').fill('Tallyfern');
+      if (width > 700) await p2.locator('#kinds label', { hasText: 'Software or online product' }).click(); else await p2.locator('#kind').selectOption('software');
+      assert.match(await p2.locator('#status').textContent(), /two screenshots of your product/, 'said at the first step');
+      await p2.locator('#next').click();
+      assert.equal(await p2.locator('#phH').textContent(), 'Screens of your product'); assert.match(await p2.locator('#phHint').textContent(), /At least two screenshots/);
+      assert.equal(await p2.locator('#next').textContent(), 'Next →', 'this step is not one to skip');
+      await p2.locator('#next').click();
+      assert.equal(await p2.locator('.step:not([hidden])').getAttribute('data-step'), '2', 'no further without them'); assert.match(await p2.locator('#status').textContent(), /Two screenshots of your product are needed/);
+      if (width > 700) await p2.locator('#prog button').nth(4).click(); assert.equal(await p2.locator('.step:not([hidden])').getAttribute('data-step'), '2', 'nor by the steps at the top');
+      await p2.locator('#files').setInputFiles([path.join(root, 'web/before-960.webp'), path.join(root, 'web/after-960.webp')]); await p2.locator('.ph').nth(1).waitFor();
+      assert.deepEqual(await p2.locator('.ph .role').evaluateAll(l => l.map(s => s.value)), ['screen', 'screen'], 'a software\'s picture is taken for a screen until they say otherwise');
+      await p2.locator('.ph .role').nth(1).selectOption('team'); await p2.locator('#next').click();
+      assert.equal(await p2.locator('.step:not([hidden])').getAttribute('data-step'), '2', 'a picture of the team is not a screen');
+      assert.ok((await p2.locator('#haveSide li').allTextContents()).includes('Two screenshots of your product (needed; 1 so far)'));
+      await p2.locator('.ph .role').nth(1).selectOption('screen'); await p2.locator('#next').click();
+      assert.equal(await p2.locator('.step:not([hidden])').getAttribute('data-step'), '3'); await p2.locator('#next').click(); await p2.locator('#next').click();
+      assert.ok((await p2.locator('#haveEnd li').allTextContents()).includes('2 screens of your product')); assert.match(await p2.locator('#status').textContent(), /drafted for you/);
+      assert.equal(await p2.evaluate(() => document.documentElement.scrollWidth - innerWidth), 0);
+      await p2.locator('#go').click(); await p2.waitForFunction(() => location.pathname === '/app', null, { timeout: 15000 });
+      assert.equal(st.job.form.kind, 'software'); assert.deepEqual(st.job.form.photos.map(p => p.role), ['screen', 'screen']);
+      await p2.close(); }
   }
   console.log('Start form 1440/390: one step at a time, name required, the kind shapes what is asked, what the page will have is said before it is made, photographs sent one by one with their answer and pairing, the form as the job, the visitor lands in the chooser');
 } finally { await browser.close(); }
