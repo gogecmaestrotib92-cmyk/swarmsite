@@ -94,3 +94,12 @@ def test_a_teasers_control_is_not_its_words_and_a_scrap_is_not_carried():
     F.complete(d, sd, adapt._key, adapt.sentences, lambda t: [], [])
     sec = next(s for s in d['more']['sections'] if s['title'] == 'Opening hours')
     assert sec['text'] == 'Meet the lovely Winnie, who has now joined our sheep herd. Winnie lived as a pet sheep with a pony…'
+
+
+def test_a_section_the_flat_text_carried_with_crossed_out_words_is_dropped():
+    d = data()
+    d['more']['sections'].append({'title': 'What you can verify', 'text': 'Install another tool before practice. Try the full workflow.'})
+    sd = seed(RAW)
+    sd['blocks']['blocks'].append({'i': 16, 'kind': 'p', 'text': 'Install another tool before practice.', 'region': 'main', 'struck': True})
+    F.complete(d, sd, adapt._key, adapt.sentences, lambda t: [], [])
+    assert not any('Install another tool' in s['text'] for s in d['more']['sections'])

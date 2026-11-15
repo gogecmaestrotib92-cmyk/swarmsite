@@ -130,7 +130,10 @@ def complete(d, seed, key, sentences, pics_of, rules):
     words_total = res['measure']['words']
     # what the adapter's own rules had carried below and the blocks' sections do not say stays (no page says less than before)
     told = [key(x['title']) for x in out] + [key(x['text']) for x in out] + have
+    crossed = [k for k in (key(b.get('text')) for b in blocks if b.get('struck')) if k]   # what the page crosses out: the flat text carried it as plain words
     for x in ((d.get('more') or {}).get('sections') or []):
+        if any(k in key(x.get('text')) for k in crossed):
+            continue
         t, body = key(x.get('title')), [p for p in sentences(x.get('text') or '') if key(p)]
         if (t and any(t == k for k in told)) or (body and sum(1 for p in body if any(key(p) in k for k in told)) >= len(body) / 2):
             continue
