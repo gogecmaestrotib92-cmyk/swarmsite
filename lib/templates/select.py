@@ -471,8 +471,12 @@ def assess(n, c, d, promised=()):
             have = count(name, d, p)
             if have is None or not isinstance(want, int) or isinstance(want, bool):
                 hard.append('a need this step cannot read: %s %s = %r' % (key, name, want))
+            elif beyond(have, want) and key == 'min':
+                # a template's own least is not a section it can do without: below it the page is not that design
+                # (three picture cards with no picture of the product were "shown without what it misses", 2026-11-15)
+                hard.append('at least %s %d, the client has %d' % (name, want, have))
             elif beyond(have, want):
-                miss(name, '%s %s %d, the client has %d' % ('at least' if key == 'min' else 'at most', name, want, have))
+                miss(name, 'at most %s %d, the client has %d' % (name, want, have))
     return {'niche': niche, 'hard': hard, 'soft': soft, 'pending': pending, 'met': met}
 
 

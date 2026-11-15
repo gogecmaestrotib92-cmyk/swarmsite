@@ -46,29 +46,32 @@ def test_leftover_sections_stand_whole_and_unused_photographs_are_one_strip():
     page = '<main><section><h2>Ledger</h2><img src="../../media/p1.jpg"></section></main><footer>foot</footer>'
     out = M.add(d, page)
     assert out.index('data-more') < out.index('</main>') < out.index('<footer'), 'under the template\'s sections, above its foot'
-    assert long.strip() in out and '<p>Stall holders.</p><p>And those who help them.</p>' in out and 'Who it is for &lt;b&gt;' in out and '<div><p>What the opening goes on to say.</p></div>' in out   # a short passage without a heading stands with the short ones beside it, in the grid
-    assert '<div class="sw-more-long"><h2>How the week closes</h2><div class="sw-more-body">' in out, 'a long passage: its heading over it, its words in columns'
+    # every section is a card — never bare paragraphs under the template (owner, 2026-11-15)
+    assert long.strip() in out and '<p>Stall holders.</p><p>And those who help them.</p>' in out and 'Who it is for &lt;b&gt;' in out
+    assert '<article class="sw-card"><p>What the opening goes on to say.</p></article>' in out, 'a passage without a heading is a card too'
+    assert '<article class="sw-card sw-wide"><h3>How the week closes</h3><div class="sw-card-body">' in out, 'a long passage: a row of its own, its words in columns'
+    assert out.count('<article class="sw-card') == 3 and not re.search(r'<section class="sw-more"[^>]*>(?:(?!</section>).)*?<div class="sw-more-in">\s*<p>', out, re.S)
     first = M.add({**d, 'more': {'sections': [{'title': '', 'text': 'What the opening goes on to say.'}, {'title': 'After', 'text': 'x' * 400}]}}, page)
-    assert '<div class="sw-more-lead"><p>What the opening goes on to say.</p></div>' in first, 'the first passage without a heading is set large'
+    assert '<article class="sw-card sw-lead"><p>What the opening goes on to say.</p></article>' in first, 'the first passage without a heading is set a size larger'
     wall = M.add({**d, 'more': {'sections': [{'title': '', 'text': 'A feed of cut news. ' * 40}, {'title': 'After', 'text': 'x' * 400}]}}, page)
-    assert 'sw-more-lead">' not in wall and '<div class="sw-more-long"><div class="sw-more-body">' in wall, 'a long passage without a heading is not set large'
+    assert 'sw-lead' not in wall.split('</style>')[1] and 'sw-wide' in wall.split('</style>')[1], 'a long passage without a heading is not set large'
+    chips = M.band({**d, 'more': {'sections': [{'title': 'Open', 'text': 'Monday · Tuesday · Wednesday\n\nCome by. · Any time.'}]}}, page)
+    assert '<ul class="sw-chips"><li>Monday</li><li>Tuesday</li><li>Wednesday</li></ul>' in chips and '<p>Come by. · Any time.</p>' in chips, 'a run of three or more labels is a row of chips'
     strip = re.search(r'<div class="sw-strip"[^>]*>(.*?)</div>', out).group(1)
     shown = re.findall(r'src="\.\./\.\./(media/p\d\.jpg)"', strip)
     assert 'media/p1.jpg' not in shown and shown == ['media/p%d.jpg' % i for i in range(2, 8)], 'the photographs the page did not ask for, in order, a whole number of rows'
     css = re.search(r'<style>(.*?)</style>', out).group(1)
     assert not re.search(r'#[0-9a-f]{3,8}\b|rgb\(|font-family', css), 'no colour and no typeface of its own: the page\'s ground, ink and heading face'
     assert M.add(d, out.replace('</main>', '')).count('data-more') > out.count('data-more') - 3   # a page with no <main>: before its foot
-    # short notes stand together as a grid; a passage, or a section with its own picture, is a row — its picture across the whole width under it
+    # cards stand in columns that end level; a long card is a row of its own between them; a section's own picture stands in the strip
     notes = [{'title': 'Note %d' % i, 'text': 'A short line.'} for i in range(1, 4)]
     d2 = dict(d, more={'sections': [{'title': 'Alone', 'text': 'Short.'}, {'title': 'The yard', 'text': long.strip(), 'imgs': [{'src': 'media/p7.jpg', 'w': 1600, 'h': 900, 'alt': 'the yard'}]}] + notes})
     out2 = M.band(d2, page)
-    assert out2.count('class="sw-more-grid"') == 1 and out2.count('<h3>') == 3 and out2.count('<h2>') == 2
-    assert out2.index('The yard') < out2.index('class="sw-more-pic"') and 'media/p7.jpg' not in re.search(r'<div class="sw-strip"[^>]*>(.*?)</div>', out2).group(1), 'its own picture is not also in the strip'
-    assert '<figure' not in M.band(dict(d2, more={'sections': [dict(d2['more']['sections'][1], imgs=[{'src': 'media/p1.jpg'}])]}), page), 'a picture the template already shows is not shown again'
+    assert out2.count('class="sw-cards"') == 2 and out2.count('<h3>') == 5 and '<h2>' not in out2 and 'style="--c:3"' in out2
+    assert out2.index('Alone') < out2.index('The yard') < out2.index('Note 1'), 'in page order'
+    assert 'media/p7.jpg' in re.search(r'<div class="sw-strip"[^>]*>(.*?)</div>', out2).group(1) and '<figure' not in out2, 'a section\'s picture is not boxed in its card'
     small = M.band(dict(d, more={'sections': [{'title': 'A cover', 'text': '', 'imgs': [{'src': 'media/p6.jpg', 'w': 600, 'h': 900}]}]}), page)
-    assert 'class="sw-more-own" style="max-width:600px"' in small and '<figure class="sw-more-pic">' not in small, 'a small or upright picture stands at its own size'
-    halls = M.band(dict(d, more={'sections': [{'title': 'The halls', 'text': '', 'imgs': [{'src': 'media/p%d.jpg' % i, 'w': 800, 'h': 600} for i in (5, 6, 7)]}]}), page)
-    assert 'The halls' in halls and halls.count('media/p5.jpg') == 1 and 'style="--n:3;' in halls, 'a heading over its own pictures, no words: a section too'
+    assert 'A cover' not in small and 'sw-card' not in small.split('</style>')[1], 'a heading with no words under it is not a card'
     two = dict(d, more={}, media={**d['media'], 'photos': d['media']['photos'][:3]})
     assert M.band(two, page) == '', 'two photographs left are not a strip'
 

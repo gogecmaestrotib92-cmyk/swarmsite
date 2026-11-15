@@ -304,11 +304,14 @@ def test_a_product_gets_its_own_screens_its_price_cards_and_its_large_figures():
     assert 'note' not in got['hero'] and got['figures'] == [{'v': '4,210', 'l': 'stalls keep their books here'}] and any('from the reader' in r for r in got['_adapter']['rules'])
     marked['factsheet']['page']['steps']['items'] = [{'title': 'Take a photo', 'text': 'Snap receipts.'}, {'title': 'Sorting', 'text': 'It files them.'}]
     assert 'steps' not in A.adapt(copy.deepcopy(marked)), 'reworded steps are not on the page: no block'
-    # fewer phones than steps: no step gets a picture (all or none), and the gap says so
+    # fewer screens of the product's pages than steps: the first steps show the product as the home page shows it
+    # (a software page's pictures are its screens), a step past them keeps its words without one
     seed['product']['phones'] = seed['product']['phones'][:2]
     seed['product']['screens'] = seed['product']['screens'][:2]
     d = A.adapt(copy.deepcopy(seed))
-    assert not any(i.get('img') for i in d['steps']['items']) and any(g.startswith('steps.items[].img') for g in d['_adapter']['gaps'])
+    got = [i.get('img') for i in d['steps']['items']]
+    assert len([g for g in got if g]) >= 2 and len(set(g for g in got if g)) == len([g for g in got if g]), got
+    assert any(r.startswith('steps.items[].img:') and 'as the home page shows it' in r for r in d['_adapter']['rules'])
 
 
 def test_a_restaurant_gets_its_place_block_from_links_and_from_lines_the_page_confirms():
@@ -553,3 +556,19 @@ def test_a_headings_words_inside_a_sentence_are_not_a_border():
     assert A.cut_at('A fine place. Millbrook Halt Open every day.', ['MILLBROOK HALT'])[0] == 'A fine place.', 'after a full stop it is the heading'
     assert A.cut_at('See the prices Our Plans Start free.', ['Our Plans'])[0] == 'See the prices', 'written as the heading is: the heading'
     assert A.cut_at('Inside there are tables, a cafe, Self Service, a grill and shops. Self Service Open all day.', ['Self Service'])[0] == 'Inside there are tables, a cafe, Self Service, a grill and shops.', 'after a comma it is an item of the sentence'
+
+
+def test_the_states_of_a_product_demo_are_its_screens_each_once_in_the_demos_order():
+    """capture photographs each tab of the page's own product demo (images.json: shot, state); those are the product's
+    screens — all of them, in the demo's order, before any other framed part of the page"""
+    seed = product()
+    seed['product'] = {}
+    px = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAAA//EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AN//Z'
+    seed['images'] = [i for i in seed['images'] if not (isinstance(i, dict) and i.get('shot'))]
+    seed['images'] += [{'id': 'shot1', 'src': 'visual-shot', 'shot': True, 'w': 1200, 'h': 800, 'alt': 'The ledger', 'data': px}]
+    seed['images'] += [{'id': 'tab%d' % (n + 1), 'src': 'visual-shot', 'shot': True, 'state': name, 'alt': name, 'w': 900, 'h': 560, 'data': px} for n, name in enumerate(['Ledger', 'Receipts', 'Month', 'Export'])]
+    d = A.adapt(copy.deepcopy(seed))
+    assert [x['src'] for x in d['media']['screens']] == ['media/tab1.jpg', 'media/tab2.jpg', 'media/tab3.jpg', 'media/tab4.jpg'], d['media']['screens']
+    assert [x['alt'] for x in d['media']['screens']] == ['Ledger', 'Receipts', 'Month', 'Export']
+    assert any(r.startswith('media.screens: 4 state(s) of the page') for r in d['_adapter']['rules'])
+    assert A.validate(d) == []

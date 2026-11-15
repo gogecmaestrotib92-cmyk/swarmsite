@@ -613,7 +613,7 @@ def _pictures(images, d, media, gaps, is_place, product=None, rules=None):
         w, h = _px(im.get('w')), _px(im.get('h'))
         if im.get('shot'):
             if w >= 480 and h >= 200:
-                shots.append({'id': im.get('id'), 'w': w, 'h': h, 'alt': norm(im.get('alt')).split('  ')[0][:120], 'page': im.get('page') or ''})
+                shots.append({'id': im.get('id'), 'w': w, 'h': h, 'alt': norm(im.get('alt')).split('  ')[0][:120], 'page': im.get('page') or '', 'state': norm(im.get('state'))})
             continue
         if w < 200 or h < 200:
             continue
@@ -656,7 +656,14 @@ def _pictures(images, d, media, gaps, is_place, product=None, rules=None):
         rules.append('media.screens, media.phones: the first screen of each page behind the top bar that shows a working product (controls, figures, data — not prose), '
                      'photographed at 1440 and at 390 wide; alt is the page\'s own heading')
     framed = [x for x in shots if 560 <= x['w'] <= 1300 and x['h'] >= 240 and 1.2 <= x['w'] / x['h'] <= 3.0 and not x['page']]
-    for x in sorted(framed, key=lambda x: -x['w'] * x['h'])[:max(0, 3 - len(d['media']['screens']))]:
+    # the states of the page's own product demo (capture: each tab of a tablist over a framed panel, each a different
+    # screen) come first and whole, in the demo's order: they are the product shown screen by screen, and no two are
+    # alike. Only where the page has no such demo do other framed parts of it stand in, the largest first, up to three.
+    states = [x for x in framed if x.get('state')]
+    pick = states[:6] if len(states) >= 2 else sorted(framed, key=lambda x: -x['w'] * x['h'])[:max(0, 3 - len(d['media']['screens']))]
+    if len(states) >= 2:
+        rules.append('media.screens: %d state(s) of the page\'s own product demo (its tabs), each a different screen, in the demo\'s order' % len(pick))
+    for x in pick:
         im = next((i for i in images if isinstance(i, dict) and i.get('id') == x['id']), None)
         if not im or not im.get('data'):
             continue
@@ -843,6 +850,21 @@ def _step_pictures(d, rules, gaps):
             for it, x in zip(items, own):
                 it['img'], it['shape'] = x['src'], shape(x)
             rules.append('steps.items[].img: the product\'s own pages gave no screen for each step; the client\'s own pictures stand beside the steps in the page\'s order')
+            return
+    if items and len(pool) < len(items):
+        # still short: the product as the home page itself shows it (its framed screens and phones), in the page's
+        # order, to the first steps — at least two, or none. A software page's own pictures ARE its screens; a step
+        # left without one keeps its words, and a template that draws a picture card for each step draws those with one
+        # (a coaching product got three cards of bare landscape and no screen of the product: owner, 2026-11-15).
+        seen, home = set(), []
+        for x in (md.get('screens') or []) + (md.get('phones') or []):
+            if x.get('src') and x['src'] not in seen and not any(it.get('img') == x['src'] for it in items):
+                seen.add(x['src'])
+                home.append((x, 'phone' if x in (md.get('phones') or []) else 'screen'))
+        if len(home) >= 2:
+            for it, (x, k) in zip(items, home):
+                it['img'], it['shape'] = x['src'], k
+            rules.append('steps.items[].img: %d of %d step(s) show the product as the home page shows it (its own screens), in order' % (min(len(home), len(items)), len(items)))
             return
     if not items or len(pool) < len(items):
         if items:
