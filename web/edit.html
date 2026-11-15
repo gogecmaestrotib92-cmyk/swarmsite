@@ -271,7 +271,7 @@ $('#prepare').onclick=()=>start(`/t/${ID}/${SLUG}/prepare`,{},'edited',s=>{ if(s
     const stop=new AbortController(), late=setTimeout(()=>stop.abort(),25000);
     try{ const r=await send(`/t/${ID}/${SLUG}/package?link=1`,{signal:stop.signal}), j=await r.json().catch(()=>({})); if(!r.ok||!j.url){ pubSay(j.error||'The download is not available.','bad'); return; }
       /* the file's own address, for ten minutes: the browser downloads it itself (a phone too); the same address stays as a link */
-      pubSay('Your download has started: a zip with the page, its pictures and fonts.','ok'); const l=document.createElement('a'); l.href=j.url; l.id='zipLink'; l.textContent='Tap here if it has not started'; l.style.textDecoration='underline'; $('#pubStatus').append(' ',l,'.'); location.href=j.url; }
+      pubSay('Your download has started: a zip with the page, its pictures and fonts. Unzip it and open index.html; README.txt in it says how to put the page online.','ok'); const l=document.createElement('a'); l.href=j.url; l.id='zipLink'; l.textContent='Tap here if it has not started'; l.style.textDecoration='underline'; $('#pubStatus').append(' ',l,'.'); location.href=j.url; }
     catch(e){ pubSay(e&&e.name==='AbortError'?'The server did not answer in time. Try again in a moment.':'The download did not go through. Check your connection and try again.','bad'); }
     finally{ clearTimeout(late); a.disabled=false; } }; });
 if(PUBLISH) $('#publish').onclick=()=>{ const name=$('#siteName').value.trim().toLowerCase(); if(!/^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])$/.test(name)||name.includes('--')){ pubSay('A name is 3 to 40 small letters, digits and single dashes.','bad'); $('#siteName').focus(); return; }
