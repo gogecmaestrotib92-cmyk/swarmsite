@@ -660,7 +660,7 @@ def _pictures(images, d, media, gaps, is_place, product=None, rules=None):
     # a product's own screens: the pages behind its top bar photographed at desk and phone width (capture product.json),
     # then — when those are fewer than three — the framed parts of its home page that are not a whole band of it
     prod = product if isinstance(product, dict) else {}
-    rich = {}
+    rich, raw = {}, {}
     for kind in ('screens', 'phones'):
         for i, x in enumerate(prod.get(kind) or []):
             if not isinstance(x, dict) or not x.get('data') or not _px(x.get('w')) or not _px(x.get('h')):
@@ -672,11 +672,24 @@ def _pictures(images, d, media, gaps, is_place, product=None, rules=None):
             # how full the picture itself is (capture: the share of it that is not its commonest tone) before the page's
             # count of controls: an empty state has every button and shows nothing
             rich[src] = (round(num(x.get('fill')), 1), num(x.get('score')))
+            if isinstance(x.get('fill'), (int, float)) and not isinstance(x.get('fill'), bool):
+                raw[src] = x['fill']
         # the screen with most of the product on it comes first: a template's opening takes the first, and the first page
         # behind the bar is often the emptiest (a betting tool's opening showed a phone with "no lines yet" while its
         # picks and simulator screens, full of the product, stood further down — seen beside the reference, 2026-11-15).
         # The measure: how full the picture is, then the capture's own score of the page (controls, data, numbers, drawings).
         d['media'][kind].sort(key=lambda m: tuple(-v for v in rich.get(m['src'], (0, 0))))
+        # an empty state is not a picture of the product: a screen under 15 % full is left out where at least two fuller
+        # ones stand. A template gives its opening the picture its steps did not take — and that was the emptiest one
+        # (production, a betting tool: phones 0.40, 0.22, 0.42 full beside its steps, 0.13 in its opening; 2026-11-15)
+        if raw:
+            full = [m for m in d['media'][kind] if raw.get(m['src'], 1) >= .15]
+            if len(full) >= 2 and len(full) < len(d['media'][kind]):
+                for m in d['media'][kind]:
+                    if m not in full:
+                        media.pop(m['src'], None)
+                rules.append('media.%s: %d screen(s) under 15 %% full (an empty state) left out' % (kind, len(d['media'][kind]) - len(full)))
+                d['media'][kind] = full
     if d['media']['screens'] or d['media']['phones']:
         rules.append('media.screens, media.phones: the first screen of each page behind the top bar that shows a working product (controls, figures, data — not prose), '
                      'photographed at 1440 and at 390 wide; alt is the page\'s own heading')

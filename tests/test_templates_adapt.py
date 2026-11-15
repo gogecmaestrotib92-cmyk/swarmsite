@@ -646,7 +646,13 @@ def test_the_screen_with_most_of_the_product_on_it_comes_first():
     # how full the picture itself is comes before the page's count of controls: an empty state has every button and shows nothing
     for x, fill in zip(scr, (.41, .08, .39)):
         x['fill'] = fill
-    assert [m['src'] for m in A.adapt(copy.deepcopy(seed))['media']['screens']][:3] == ['media/screen-3.jpg', 'media/screen-1.jpg', 'media/screen-2.jpg'], 'fill 0.4, 0.4, 0.1: the two full ones by score, the empty one last'
+    got = [m['src'] for m in A.adapt(copy.deepcopy(seed))['media']['screens']]
+    assert got[:2] == ['media/screen-3.jpg', 'media/screen-1.jpg'] and 'media/screen-2.jpg' not in got, 'fill 0.4, 0.4, 0.1: the two full ones by score; the empty one is not a picture of the product'
+    # an empty state is not a picture of the product: under 15 % full it is left out where two fuller ones stand
+    scr.append({'id': 'screen3', 'url': home + 'empty', 'alt': 'Empty', 'w': 1800, 'h': 1125, 'data': PX, 'score': 40.0, 'fill': .12})
+    d2 = A.adapt(copy.deepcopy(seed))
+    assert 'media/screen-4.jpg' not in [m['src'] for m in d2['media']['screens']] and any(r.startswith('media.screens: 2 screen(s) under 15') for r in d2['_adapter']['rules'])
+    scr.pop()
     for x in scr:
         x.pop('score', None)
         x.pop('fill', None)
