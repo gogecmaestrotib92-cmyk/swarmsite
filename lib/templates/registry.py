@@ -150,6 +150,15 @@ def _page(slug, d, root=None):
     j = page.find('>', i) if i >= 0 else -1
     if j >= 0 and 'data-sw-wrap' not in page:
         page = page[:j + 1] + '<style data-sw-wrap>h1,h2,h3{text-wrap:balance}</style>' + page[j + 1:]
+    # a library picture stands in the client's own accent (pictures.tint): one filter for every prepared picture of the page
+    m = re.search(r'media/library/[a-z0-9-]+/([a-z0-9-]+)/', page)
+    accent = (d.get('palette') or {}).get('accent') if isinstance(d.get('palette'), dict) else None
+    if m and accent and 'data-sw-art' not in page:
+        P = part('pictures')
+        _, pals = P.library(root)
+        f = P.tint(accent, m.group(1), pals) if pals else ''
+        if f and j >= 0:
+            page = page[:j + 1] + '<style data-sw-art>img[src*="media/library/"]{filter:%s}</style>' % f + page[j + 1:]
     return page
 
 

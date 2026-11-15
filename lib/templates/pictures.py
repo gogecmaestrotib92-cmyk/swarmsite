@@ -77,6 +77,36 @@ def library(root=None):
     return rows, pals
 
 
+def tint(accent, palette, pals):
+    """The CSS filter that sets a library picture in the client's own accent: '' when there is nothing to do.
+
+    The library's pictures were prepared in 24 quiet palettes; the reference sites' art is the brand's colour at full
+    strength (a glossy magenta ribbon carrying the whole opening). Beside its reference a design's opening read as a dull
+    brown wave on a page whose accent is a bright orange (owner's review, 2026-11-15). The picture is not made again:
+    its colour is turned toward the client's accent (at most 30° of hue) and its saturation raised to the accent's
+    (the accent's own saturation over the palette's, × 1.15, between 1 and 1.9). A client with no accent, a grey accent,
+    or one further than 30° round the wheel from the palette's is left as it is — a turned picture of another colour
+    family is no longer that picture."""
+    import colorsys
+    pal = (pals or {}).get(palette) if palette else None
+    if not accent or not isinstance(pal, dict) or not pal.get('accent'):
+        return ''
+    try:
+        ch, cs, _ = colorsys.rgb_to_hsv(*[v / 255 for v in _rgb(accent)])
+        ph, ps, _ = colorsys.rgb_to_hsv(*[v / 255 for v in _rgb(pal['accent'])])
+    except (ValueError, TypeError):
+        return ''
+    if cs < .35 or ps < .15:
+        return ''
+    turn = ((ch - ph) * 360 + 180) % 360 - 180
+    if abs(turn) > 30:
+        return ''
+    sat = max(1.0, min(1.9, 1.15 * cs / ps))
+    if sat <= 1.2 and abs(turn) < 4:                          # already of the client's colour: left as prepared
+        return ''
+    return 'saturate(%.2f) hue-rotate(%ddeg)' % (sat, round(turn)) + (' brightness(1.08)' if _tone(pal) == 'dark' else '')
+
+
 def _tone(palette):
     return palette.get('tone') or ('dark' if _lum(palette.get('ground')) < .45 else 'light')
 

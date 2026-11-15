@@ -75,7 +75,7 @@ def test_one_h1_no_none_and_the_clients_own_words(slug, client):
 def test_the_media_prefix_is_a_parameter_and_the_default_is_the_templates_own_page(slug):
     for name, d in CLIENTS.items():
         own = R._page(slug, copy.deepcopy(d))                      # the template's page with what it has no place for under its sections (more.py)
-        assert R.render(slug, d) == own and R.render(slug, d, '../../') == own and own.replace('<style data-sw-wrap>h1,h2,h3{text-wrap:balance}</style>', '', 1).startswith(R.load(slug).render(copy.deepcopy(d))[:2000]) and own.count('data-sw-wrap') == 1   # the one line the registry sets first in <head>: a headline's lines of a like length
+        assert R.render(slug, d) == own and R.render(slug, d, '../../') == own and re.sub(r'<style data-sw-(?:wrap|art)>[^<]*</style>', '', own).startswith(R.load(slug).render(copy.deepcopy(d))[:2000]) and own.count('data-sw-wrap') == 1   # the one line the registry sets first in <head>: a headline's lines of a like length
         paths = R.media_paths(d)
         used = R.media_used(slug, d)
         assert set(used) <= set(paths)
@@ -209,3 +209,17 @@ def test_the_two_templates_are_the_measured_ones_unchanged_when_the_research_fol
     drift = [s for s in ('griffin', 'maze') if (src / s / 'render.py').is_file() and (src / s / 'render.py').read_bytes() != (ROOT / 'lib' / 'templates' / s / 'render.py').read_bytes()]
     if drift:
         pytest.skip('the research copy has moved on since import: ' + ', '.join(drift) + ' — re-import with scripts/import_template.py --force')
+
+
+def test_a_library_picture_is_set_in_the_clients_own_accent_and_left_alone_when_it_already_is():
+    """pictures.tint: the prepared picture is turned toward the client's accent (at most 30° of hue) and its saturation
+    raised to the accent's; nothing for a grey or missing accent, another colour family, or a palette of that colour"""
+    import importlib.util
+    from pathlib import Path
+    spec = importlib.util.spec_from_file_location('pics_tint', Path(__file__).resolve().parents[1] / 'lib' / 'templates' / 'pictures.py')
+    P = importlib.util.module_from_spec(spec); spec.loader.exec_module(P)
+    pals = {'oxblood': {'name': 'oxblood', 'ground': '#1c0a0c', 'accent': '#d05a56'}, 'sand-peach': {'name': 'sand-peach', 'ground': '#f8ebdd', 'accent': '#e8734a'}}
+    assert P.tint('#ff4a1f', 'oxblood', pals) == 'saturate(1.72) hue-rotate(10deg) brightness(1.08)'
+    for accent, pal in (('#2f6fe4', 'oxblood'), ('#888888', 'oxblood'), (None, 'oxblood'), ('#ff4a1f', 'none-such'), ('#e8734a', 'sand-peach'), ('#d05a56', 'oxblood')):
+        assert P.tint(accent, pal, pals) == '', (accent, pal)
+    assert 'brightness' not in P.tint('#ff3b00', 'sand-peach', pals) and P.tint('#ff3b00', 'sand-peach', pals).startswith('saturate(')
