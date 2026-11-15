@@ -304,3 +304,20 @@ def test_every_page_carries_the_map_of_its_screens_and_the_lines_that_keep_them_
     assert ran == len(SLUGS)
     gate = (ROOT / 'lib' / 'qa' / 'template_gate.mjs').read_text()
     assert "f !== 'none'" in gate and 'small: []' in gate and re.search(r'const SMALL = \.45', gate) and R.LOW == .45
+
+
+
+def test_a_phone_screen_is_in_the_map_at_the_width_it_was_drawn_in():
+    """A client's phone screen is photographed 390 wide drawn at 2 (780 px). Two templates showed sportbot's phones at
+    34–43 % of that width (2026-11-16): letters of 3 px. Phones go in the same map as desk screens, with their own width
+    (half their pixels), so the same lines keep them readable and the gate's `small` sees them."""
+    g = [[(x * y) % 5 for x in range(32)] for y in range(40)]
+    d = copy.deepcopy(CLIENTS['tallyfern'])
+    md = d.setdefault('media', {})
+    md['phones'] = [{'src': 'media/phone-1.jpg', 'w': 780, 'h': 1616, 'alt': 'app', 'detail': g}]
+    page = R.render('linearity', d)
+    maps = json.loads(re.search(r'<script type="application/json" id="sw-detail">(.*?)</script>', page, re.S).group(1))
+    assert maps['phone-1.jpg'] == {'c': 390, 'g': g}
+    md['phones'][0].pop('detail')
+    m = re.search(r'<script type="application/json" id="sw-detail">(.*?)</script>', R.render('linearity', d), re.S)
+    assert not m or 'phone-1.jpg' not in json.loads(m.group(1))

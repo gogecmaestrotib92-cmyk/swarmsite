@@ -722,10 +722,10 @@ const hero=$('.hero'),hm=$('.hero-main'),hc=$('.hero-c'),sc=$('.scene'),ths=$$('
 const H0=250,HS=420,HT=120,SP=1.6,RS=330,RT=260;
 const how=$('.how'),hw=$('.how-w'),hx=$('.how-x'),caps=$('.caps'),row=$('.caps-row'),ring=$('.ring');let CT=0,CR=0;
 function lay(){const vw=innerWidth,vh=innerHeight,k=vh/900,rem=parseFloat(getComputedStyle(R).fontSize),w=wide.matches;
- if(hero){ /* lanes measured at 1440: two cut by the edges, two nearer the middle; the middle stays free for the words */
+ if(hero){ /* lanes measured at 1440: two cut by the edges, two nearer the middle; the middle stays free for the words; a phone's screen (r<.6) is widened, not narrowed: at .82 of a lane it was 148 px, letters of 3 px, where the reference's posters stand 200–240 wide */
   const lanes=w?[[-.052,.125],[.905,.135],[.155,.135],[.705,.135],[-.045,.14],[.875,.15],[.165,.125],[.715,.125]]:[[0,0],[0,0]];
   ths.forEach((t,i)=>{const r=parseFloat(t.style.getPropertyValue('--r'))||1;let x,wd;
-   if(w){const L=lanes[i%8];wd=L[1]*vw*(r<.8?.82:1);if(r>1.2)wd=Math.min(wd*1.08,.14*vw);x=L[0]*vw;if(i%4===1||i%8===5)x=Math.min(x,vw-wd*.62);}
+   if(w){const L=lanes[i%8];wd=L[1]*vw*(r<.6?1.15:r<.8?.82:1);if(r>1.2)wd=Math.min(wd*1.08,.14*vw);x=L[0]*vw;if(i%4===1||i%8===5)x=Math.min(x,vw-wd*.62);}
    else{wd=(r<.8?.2:r>2.4?.5:.27)*vw;x=i%2?vw-Math.min(wd*.62,54):-(wd-Math.min(wd*.62,54));}
    t.style.setProperty('--w',wd+'px');t.style.setProperty('--x',x+'px');t._h=wd/r;t._x=x;t._y0=i*(w?90:120);t._s=(w&&(i%4>1))?1.3:1.08;});
   HE=sc?1800:700;hero.style.setProperty('--hh',(HE*k+vh)+'px');}

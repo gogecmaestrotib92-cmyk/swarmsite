@@ -171,6 +171,7 @@ def _page(slug, d, root=None):
 # tight — half a headline in a small card read as broken text — so the same file is given that size (srcset with its
 # own pixel width and `sizes`: the only candidate, so every browser draws it alike; sharp, nothing new to send), drawn
 # with object-fit: none (a crop), and the box is held at the size the template gave it. Measured again on every resize, so a phone width gets its own crop.
+# The client's phone screens follow the same rule since 2026-11-16: two templates showed them at 34–43 % of their width.
 LOW, READ = .45, .6
 READABLE = ('(()=>{const D=JSON.parse(document.getElementById("sw-detail").textContent),LOW=%s,READ=%s;'
             'const name=s=>{const m=(s||"").match(/([^\\/?#]+)(?:[?#].*)?$/);return m&&m[1]};'
@@ -195,14 +196,16 @@ READABLE = ('(()=>{const D=JSON.parse(document.getElementById("sw-detail").textC
 
 
 def _readable(d, page):
-    """the map of detail of each desk screen the data names, and the few lines that use it (see LOW above)"""
+    """the map of detail of each desk screen and phone screen the data names, and the few lines that use it (see LOW above)"""
     md = d.get('media') if isinstance(d.get('media'), dict) else {}
     maps = {}
-    for m in md.get('screens') or []:
-        g, src = m.get('detail') if isinstance(m, dict) else None, str((m or {}).get('src') or '')
-        if g and src and isinstance(m.get('w'), (int, float)):
-            # its width as the page set it: a desk screen was photographed in a page at most 1440 wide
-            maps[src.rsplit('/', 1)[-1]] = {'c': min(int(m['w']), 1440), 'g': g}
+    for kind in ('screens', 'phones'):
+        for m in md.get(kind) or []:
+            g, src = m.get('detail') if isinstance(m, dict) else None, str((m or {}).get('src') or '')
+            if g and src and isinstance(m.get('w'), (int, float)):
+                # its width as the page set it: a desk screen was photographed in a page at most 1440 wide, a phone in
+                # one 390 wide drawn at 2 (lib/pipeline/product.mjs) — its letters read at half its pixels
+                maps[src.rsplit('/', 1)[-1]] = {'c': min(int(m['w']), 1440) if kind == 'screens' else max(1, round(m['w'] / 2)), 'g': g}
     if not maps or 'id="sw-detail"' in page:
         return page
     k = page.rfind('</body>')
