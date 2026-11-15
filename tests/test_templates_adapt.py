@@ -631,3 +631,18 @@ def test_a_page_of_two_grounds_takes_the_one_its_own_theme_colour_agrees_with():
     assert A.palette(inv, {'palette': {'themeColor': '#fff8ee'}}, [], [])['ground'] == '#f7dbba'
     minor = {'colors': {**inv['colors'], 'bg': [{'c': '#f7dbba', 'n': 1941}, {'c': '#14120f', 'n': 400}]}}
     assert A.palette(minor, {'palette': {'themeColor': '#0D0F14'}}, [], [])['ground'] == '#f7dbba'
+
+
+def test_the_screen_with_most_of_the_product_on_it_comes_first():
+    """a template's opening takes the first screen; the capture's own score of each page says which shows most"""
+    seed = product()
+    home = 'https://www.tallyfern.example/'
+    seed['product'] = {'screens': [{'id': 'screen%d' % i, 'url': home + p, 'alt': lab, 'w': 1800, 'h': 1125, 'data': PX, 'score': sc}
+                                   for i, (p, lab, sc) in enumerate([('month', 'Month', 4.0), ('camera', 'Camera', 31.5), ('sort', 'Sorting', 12.0)])]}
+    scr = seed['product']['screens']
+    d = A.adapt(copy.deepcopy(seed))
+    got = [m['src'] for m in d['media']['screens']][:3]
+    assert got == ['media/screen-2.jpg', 'media/screen-3.jpg', 'media/screen-1.jpg'], got
+    for x in scr:
+        x.pop('score', None)
+    assert [m['src'] for m in A.adapt(copy.deepcopy(seed))['media']['screens']][:3] == ['media/screen-1.jpg', 'media/screen-2.jpg', 'media/screen-3.jpg'], 'no score: the bar\'s own order'
