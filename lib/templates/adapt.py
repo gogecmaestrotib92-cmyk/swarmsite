@@ -350,6 +350,16 @@ def palette(inv, assets, gaps, rules):
         gaps.append('palette: the capture measured no page ground; the templates fall back to their own')
         return None
     ground = bg[0][0]
+    # A page of two grounds — light sections and dark ones, nearly as much of each — is not the one that happens to
+    # cover a few more boxes. Where the second ground covers at least 60 % of what the first does and is of the other
+    # tone, the page's own `theme-color` (what the client tells a browser its page is) says which is the page's: a
+    # dark product whose page opens dark and continues on a pale ground was set pale from top to bottom, its dark
+    # screens on a ground they were never drawn for (owner's review, 2026-11-15).
+    if len(bg) >= 2 and bg[1][1] >= .6 * bg[0][1] and (_lum(bg[0][0]) > .4) != (_lum(bg[1][0]) > .4):
+        theme = _hex((assets.get('palette') or {}).get('themeColor'))
+        if theme and (_lum(theme) > .4) == (_lum(bg[1][0]) > .4):
+            ground = bg[1][0]
+            rules.append('palette.ground: the page has two grounds of opposite tone, nearly as much of each; its own theme-color agrees with the second, which is the ground')
     readable = [(h, n) for h, n in tx if contrast(h, ground) >= 4.5]
     if readable:
         top = max(n for _, n in readable)
