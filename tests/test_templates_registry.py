@@ -275,3 +275,32 @@ def test_a_screen_in_a_small_window_is_its_busiest_part_at_a_size_that_reads():
     assert R.busiest(None, .3, .3, [.156, .156])[0] == .5                 # no map: the middle past the flat margin
     css = (ROOT / 'lib' / 'templates' / 'clicky' / 'render.py').read_text()
     assert re.search(r'\.scr\.dt img\{[^}]*position:absolute[^}]*height:auto', css)
+
+
+def test_every_page_carries_the_map_of_its_screens_and_the_lines_that_keep_them_readable():
+    """Measured on two software sites (2026-11-15): seven templates showed product screens at 13–44 % of their own size.
+    The registry adds, to any page whose data has a desk screen with capture's map of detail, the map and a few lines
+    that show such a screen at its own pixels inside the same box (object-fit: none, a crop) where its box comes out
+    under LOW of its width; a page without a map is unchanged, and the same data gives the same bytes."""
+    g = [[(x + y) % 7 for x in range(32)] for y in range(20)]
+    ran = 0
+    for slug in SLUGS:
+        d = copy.deepcopy(CLIENTS['tallyfern'])
+        bare = R.render(slug, d)
+        assert 'id="sw-detail"' not in bare
+        md = d.setdefault('media', {})
+        scr = md.get('screens') or []
+        if not scr:
+            continue
+        scr[0] = {**scr[0], 'w': 1800, 'detail': g}
+        page = R.render(slug, d)
+        assert page == R.render(slug, copy.deepcopy(d))
+        blob = re.search(r'<script type="application/json" id="sw-detail">(.*?)</script>', page, re.S)
+        assert blob, slug
+        maps = json.loads(blob.group(1))
+        assert maps[scr[0]['src'].rsplit('/', 1)[-1]] == {'c': 1440, 'g': g}
+        assert 'objectFit="none"' in page and page.index('id="sw-detail"') < page.rindex('</body>')
+        ran += 1
+    assert ran == len(SLUGS)
+    gate = (ROOT / 'lib' / 'qa' / 'template_gate.mjs').read_text()
+    assert "f !== 'none'" in gate and 'small: []' in gate and re.search(r'const SMALL = \.45', gate) and R.LOW == .45

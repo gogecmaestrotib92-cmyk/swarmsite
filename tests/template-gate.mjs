@@ -34,6 +34,12 @@ try {
     script: page(sound + '<script>nothingOfTheKind()</script>'),
     squeezed: page(sound + '<section><img src="' + PIC + '" style="width:300px;height:300px;max-width:none" alt=""><img src="' + PIC + '" style="width:300px;height:300px;object-fit:cover" alt=""></section>'),
     twoh1: page(sound + '<section><h1>A second first heading</h1></section>'),
+    // a mark that squashes for good (an animated transform): its layout box keeps the picture's shape — not distorted
+    squash: page(sound + '<section><img src="' + PIC + '" width="400" height="200" style="animation:sq .4s infinite alternate" alt=""></section>', '@keyframes sq{to{transform:scaleY(.8) scaleX(1.05)}}'),
+    // a product screen the page's map names, shown in a 300 px box at 300 / 1440 of its width: a smear (small); the same
+    // screen cropped at a size that reads (object-fit: none, the file declared denser) is not
+    smear: page(sound + '<section><img src="s.png" style="width:300px;height:150px" alt=""></section><script type="application/json" id="sw-detail">{"s.png":{"c":1440,"g":[[1]]}}</script>'),
+    readable: page(sound + '<section><img src="s.png" srcset="s.png 400w" sizes="1000px" style="width:300px;height:150px;max-width:none;object-fit:none" alt=""></section><script type="application/json" id="sw-detail">{"s.png":{"c":1440,"g":[[1]]}}</script>'),
     // a screen of dark ground with the text in one narrow column and nothing beside it: the empty half a picture slot leaves
     blank: page(sound + '<section style="max-width:none;min-height:1800px;background:#0b0b0d;color:#f5f5f5"><h2>Three ways in</h2><p style="max-width:360px">One match, the whole slate, your own bet.</p><div style="height:1500px;margin-left:50%;background:radial-gradient(#0b0b0d,#0c0c0e)"></div></section><section style="max-width:none"><p>The end.</p></section>'),
     // the same column beside a picture that has something in it, and beside a drawn panel: not blank
@@ -55,6 +61,7 @@ try {
       + '<script>let x=0;const el=document.getElementById("run");(function go(){x-=1.2;el.style.transform="translateX("+(x%400)+"px)";requestAnimationFrame(go)})()</script>',
       'section{margin:0 auto}h1{animation:rise 1.1s cubic-bezier(.16,1,.3,1) both}@keyframes rise{from{opacity:0;transform:translateY(110px)}to{opacity:1;transform:none}}'),
   };
+  fs.writeFileSync(path.join(dir, 's.png'), Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAZAAAADICAIAAABJdyC1AAACBUlEQVR42u3UMQEAMAzDsG2wgzgwRqL9JAg+fJMcmNZWBMY9CQDDAjAswLAADAvAsADDAjAsAMMCDAvAsAAMCzAsAMMCMCzAsAAMC8CwAMMCMCwAwwIMC8CwAAwLMCwAwwIwLMCwAAwLMCwAwwIwLMCwAAwLwLAAwwIwLADDAgwLwLAADAswLADDAjAswLAADAvAsADDAjAsAMMCDAvAsAAMCzAsAMMCMCzAsAAMCzAsAMMCMCzAsAAMC8CwAMMCMCwAwwIMC8CwAAwLMCwAwwIwLMCwAAwLwLAAwwIwLADDAgwLwLAADAswLADDAjAswLAADAswLADDAjAswLAADAvAsADDAjAsAMMCDAvAsAAMCzAsAMMCMCzAsAAMC8CwAMMCMCwAwwIMC8CwAAwLMCwAwwIwLMCwAAwLMCwAwwIwLMCwAAwLwLAAwwIwLADDAgwLwLAADAswLADDAjAswLAADAvAsADDAjAsAMMCDAvAsAAMCzAsAMMCMCzAsAAMCzAsAMMCMCzAsAAMC8CwAMMCMCwAwwIMC8CwAAwLMCwAwwIwLMCwAAwLwLAAwwIwLADDAgwLwLAADAswLADDAjAswLAADAswLADDAjAswLAADAvAsADDAjAsAMMCDAvAsAAMCzAsAMMCMCzAsAAMC8CwAMMCMCwAwwIMC8CwAAwLMCyAPR/AjQW2owbh2QAAAABJRU5ErkJggg==', 'base64'));   // a product screen as a file the map names (raster: a density in srcset sets its natural size)
   const files = Object.entries(pages).map(([n, html]) => { const f = path.join(dir, n + '.html'); fs.writeFileSync(f, html); return f; });
   const r = spawnSync('node', [path.join(root, 'lib/qa/template_gate.mjs'), ...files], { encoding: 'utf8', timeout: 175000 });
   assert.ok(r.status === 1, 'one page fails → exit 1; got ' + r.status + ' ' + (r.stderr || '').slice(0, 300));
@@ -96,6 +103,9 @@ try {
   assert.deepEqual(out.script.failed, ['errors']); assert.ok(/nothingOfTheKind/.test(out.script.checks.errors[0].text));
   assert.deepEqual(out.squeezed.failed.filter(k => k !== 'blank'), ['distorted']);   // (two small pictures stacked in a wide column leave its side empty: blank too)
   assert.equal(out.squeezed.checks.distorted.filter(d => d.at === 'd').length, 1, 'a squeezed picture is named once; a cropped one (cover) is not');
+  assert.ok(out.squash.ok, 'a picture squashed by an animation for a beat is not distorted: ' + JSON.stringify(out.squash.checks));
+  assert.deepEqual(out.smear.failed, ['small']); assert.ok(out.smear.checks.small.some(x => x.at === 'd' && x.file === 's.png' && x.scale < .45), 'the screen shown as a smear is named, with its scale');
+  assert.ok(!out.readable.failed.includes('small'), 'the same screen cropped at a size that reads is not small: ' + JSON.stringify(out.readable.checks.small));
   assert.deepEqual(out.twoh1.failed, ['h1']); assert.equal(out.twoh1.checks.h1[0].count, 2);
   assert.ok(out.unseen.failed.includes('unseen') && out.unseen.checks.unseen.some(u => u.alt === 'steps' && u.shows < 14 && u.holds >= 24), 'dark ink of a see-through picture on a dark ground is not seen: ' + JSON.stringify(out.unseen.checks));
   assert.ok(out.darklogo.failed.includes('unseen') && out.darklogo.checks.unseen.some(u => u.alt === 'mark'), 'a dark logo on a dark bar is not seen: ' + JSON.stringify(out.darklogo.checks));
