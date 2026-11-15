@@ -668,12 +668,15 @@ def _pictures(images, d, media, gaps, is_place, product=None, rules=None):
             src = 'media/%s-%d.%s' % (kind[:-1], i + 1, _ext(x['data']))
             d['media'][kind].append({'src': src, 'w': _px(x['w']), 'h': _px(x['h']), 'alt': norm(x.get('alt'))[:120], 'page': _path(x.get('url'))})
             media[src] = {'from': 'product', 'kind': kind, 'index': i}
-            rich[src] = x.get('score') if isinstance(x.get('score'), (int, float)) and not isinstance(x.get('score'), bool) else 0
+            num = lambda v: v if isinstance(v, (int, float)) and not isinstance(v, bool) else 0
+            # how full the picture itself is (capture: the share of it that is not its commonest tone) before the page's
+            # count of controls: an empty state has every button and shows nothing
+            rich[src] = (round(num(x.get('fill')), 1), num(x.get('score')))
         # the screen with most of the product on it comes first: a template's opening takes the first, and the first page
         # behind the bar is often the emptiest (a betting tool's opening showed a phone with "no lines yet" while its
         # picks and simulator screens, full of the product, stood further down — seen beside the reference, 2026-11-15).
-        # The capture's own score of each page (controls, data, numbers, drawings against prose) is the measure.
-        d['media'][kind].sort(key=lambda m: -rich.get(m['src'], 0))
+        # The measure: how full the picture is, then the capture's own score of the page (controls, data, numbers, drawings).
+        d['media'][kind].sort(key=lambda m: tuple(-v for v in rich.get(m['src'], (0, 0))))
     if d['media']['screens'] or d['media']['phones']:
         rules.append('media.screens, media.phones: the first screen of each page behind the top bar that shows a working product (controls, figures, data — not prose), '
                      'photographed at 1440 and at 390 wide; alt is the page\'s own heading')
