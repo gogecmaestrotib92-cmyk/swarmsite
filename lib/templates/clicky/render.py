@@ -69,7 +69,10 @@ def colours(p):
     G, I, A = p.get('ground', '#f5f5f5'), p.get('ink', '#000000'), p.get('accent', '#0f7fff')
     dark = lum(G) < .2
     card = mix(G, I, .08) if dark else mix(G, '#ffffff', .85)
-    clo, chi = (mix(G, I, .12), mix(G, I, .22)) if dark else (mix(G, I, .13), mix(G, I, .03))
+    # a window's chrome: on the reference a pale grey bar with a dark outline, clear of a near-white page. On a dark
+    # client the same step (12–22 % of ink) left dark windows on a dark page — beside the reference they did not read
+    # as windows at all (2026-11-15); there the chrome takes a fifth to a third of the ink and the outline half of it
+    clo, chi = (mix(G, I, .2), mix(G, I, .34)) if dark else (mix(G, I, .13), mix(G, I, .03))
     veilg = mix(G, card, .5)
     mu = quiet(I, [G, card, clo], .4, 5.0)                      # 60% ink: body copy under a heading
     mu2 = quiet(I, [G, card, clo], .5, 5.8)                     # 50–40% ink: captions, notes
@@ -86,7 +89,7 @@ def colours(p):
         s1, s2, s3, sbd = mix(G, I, .28), mix(G, I, .18), mix(G, I, .14), mix(G, I, .5)
     else:
         s1, s2, s3, sbd = mix(card, '#ffffff', .6), mix(G, I, .05), mix(G, I, .1), mix(G, I, .62)
-    edge = mix(G, I, .34) if dark else I
+    edge = mix(G, I, .5) if dark else I
     term = mix(G, I, .09) if dark else mix(I, '#000000', .25)
     if lum(term) > .08:
         term = '#1a1a1a'
