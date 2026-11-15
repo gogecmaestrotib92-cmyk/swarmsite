@@ -13,7 +13,7 @@ try {
   assert.equal(enabled({}), false, 'off unless the deployment says so'); assert.equal(enabled({ TEMPLATES_MODE: '1' }), true);
   assert.deepEqual(STEPS_T.map(s => s[0]), ['capture', 'read', 'choose', 'publish', 'package']);
 
-  async function scenario({ capture = 'product', pkg = 'real-stub', form = null, extras = {}, covers = 'real' } = {}) {
+  async function scenario({ capture = 'product', pkg = 'real-stub', form = null, extras = {}, covers = 'real', draft = 'none' } = {}) {
     const jobRoot = fs.mkdtempSync(path.join(tmp, 'job-')), dir = path.join(jobRoot, 'site'), log = [], steps = [], events = [], saves = [], pub = new Map(), priv = new Map(), fetched = [], built = [];
     const job = { id: '22222222-2222-4222-8222-222222222222', url: form ? 'form:tallyfern-1a2b3c4d' : 'https://www.tallyfern.example/', options: { engine: 'templates', mode: 'seo-safe', ...extras, ...(form ? { source: 'form', form } : {}) }, result: {} };
     const run = async (cmd, args, opts = {}) => {
@@ -21,6 +21,7 @@ try {
       if (args[1] === 'build') built.push(args.slice(2));
       log.push(args[0] === '-c' ? 'reader' : args[0] + (args[1] === 'build' || args[1] === 'package' ? ' ' + args[1] : ''));
       if (args[0] === 'lib/pipeline/capture.mjs') { const r = spawnSync(py, ['tests/fixtures/templates/capture.py', dir, capture], { cwd: root, encoding: 'utf8' }); assert.equal(r.status, 0, r.stderr); fs.writeFileSync(path.join(dir, 'before-hero.jpg'), 'jpg'); opts.onLine?.('{"event":{"role":"Photos","text":"1 picture"}}'); return ''; }
+      if (args[0] === 'lib/templates/write.py') { if (draft === 'crash') throw new Error('python3 lib/templates/write.py exit 1'); return '{"written":[]}'; }   // the draft for a form job: tested in tests/test_templates_write.py; here, that a job goes on without it
       if (args[0] === '-c') { fs.writeFileSync(path.join(dir, 'budget.json'), JSON.stringify({ calls: 1, in: 21000, out: 2400, usd: 0.066 })); return '{"what":"A ledger for market stalls","n":3}'; }
       if (args[1] === 'build') return real(cmd, args, { dir });
       if (args[1] === 'package') { const zip = args[4];   // the package itself is tested in tests/test_templates_package.py; here: what the worker does with each verdict
@@ -50,7 +51,7 @@ try {
   const shownOf = r => r.templates.variants.map(v => v.slug), packs = r => shownOf(r).map(() => 'lib/templates/job.py package');
   let x = await scenario({ form });
   assert.ok(shownOf(x.result).includes('griffin') && shownOf(x.result).length <= 3, shownOf(x.result).join());
-  assert.deepEqual(x.log, ['lib/templates/job.py build', ...packs(x.result)], 'no capture and no reader: a form job makes no paid call');
+  assert.deepEqual(x.log, ['lib/templates/write.py', 'lib/templates/job.py build', ...packs(x.result)], 'no capture and no reader: a form job asks only for its draft, then builds');
   assert.deepEqual(x.steps, STEPS_F.flatMap(([id]) => [`${id}:running`, `${id}:done`])); assert.deepEqual(x.fetched, [UP]);
   assert.equal(x.result.source, 'form'); assert.equal(x.result.budget, null, 'nothing priced');
   assert.ok(x.result.templates.left_out.some(g => /contact\.phone/.test(g)), 'what the form left out is in the job, for the visitor');
