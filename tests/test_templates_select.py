@@ -323,3 +323,31 @@ def test_a_template_below_its_own_least_is_not_shown_without_it():
     S = importlib.util.module_from_spec(spec); spec.loader.exec_module(S)
     src = Path(S.__file__).read_text(encoding='utf-8')
     assert "hard.append('at least %s %d, the client has %d'" in src and "miss(name, 'at most" in src
+
+
+def test_a_client_of_a_dark_ground_is_shown_templates_of_dark_references_first():
+    """a template rebuilt from a dark reference keeps that reference's contrasts on a dark client's page; on a pale
+    client's page the same template waits behind the pale ones (needs.json `tone`, measured on the reference)"""
+    import importlib.util
+    import json as J
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[1]
+    spec = importlib.util.spec_from_file_location('sel_tone', root / 'lib' / 'templates' / 'select.py')
+    S = importlib.util.module_from_spec(spec); spec.loader.exec_module(S)
+    d = J.loads((root / 'tests' / 'fixtures' / 'templates' / 'tallyfern.json').read_text(encoding='utf-8'))
+    dark = {s for s in ('chisel', 'dawnsaunders', 'fluently', 'griffin', 'innerflow', 'linearity', 'newground', 'wilsonharle')
+            if J.loads((root / 'lib' / 'templates' / s / 'needs.json').read_text(encoding='utf-8')).get('tone') == 'dark'}
+    assert len(dark) == 8
+
+    def order(ground):
+        x = J.loads(J.dumps(d)); x.setdefault('palette', {})['ground'] = ground
+        r = S.select(x, limit=3, promised=('made',))
+        return [c['slug'] for c in r['chosen'] + r['reserve']]
+    on_dark, on_pale = order('#0b0b0d'), order('#ffffff')
+    both = [s for s in on_dark if s in dark and s in on_pale]
+    assert both, 'the fixture fits at least one template of a dark reference'
+    assert sorted(on_dark) == sorted(on_pale), 'tone changes the order, never who fits'
+    assert on_dark[0] in dark, on_dark
+    plain = J.loads(J.dumps(d)); plain.pop('palette', None)
+    r = S.select(plain, limit=3, promised=('made',))
+    assert on_pale == [c['slug'] for c in r['chosen'] + r['reserve']], 'a pale client\'s order is as it was'

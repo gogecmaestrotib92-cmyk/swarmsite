@@ -29,7 +29,7 @@ PRODUCT, PLACE = (json.loads((FIX / (n + '.json')).read_text(encoding='utf-8')) 
 
 def test_the_strict_schema_names_the_niches_and_blocks_of_the_contract():
     assert N.NICHES == ['software', 'app', 'restaurant', 'hotel', 'clinic', 'law', 'service', 'shop', 'school', 'person', 'corporate', 'nonprofit', 'venue']
-    assert N.SCHEMA['additionalProperties'] is False and set(N.KEYS) == {'niche', 'photos_min', 'photos_large_min', 'screens_min', 'phones_ok', 'needs', 'needs_any', 'min', 'max', 'drops', 'hard', 'holds_without_pictures', 'motif', 'notes'}
+    assert N.SCHEMA['additionalProperties'] is False and set(N.KEYS) == {'niche', 'photos_min', 'photos_large_min', 'screens_min', 'phones_ok', 'needs', 'needs_any', 'min', 'max', 'drops', 'hard', 'holds_without_pictures', 'motif', 'tone', 'notes'}
     assert len(N.NAMES) == len(set(N.NAMES))
     data = set(A.schema()['properties'])
     for name in N.NAMES:                                              # every name leads to a block the data schema knows
