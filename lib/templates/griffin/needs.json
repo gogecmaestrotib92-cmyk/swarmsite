@@ -44,5 +44,6 @@
     "One landscape screen or more for the feature list; a film for the questions (else the backdrop shows bare at the right).",
     "The 390 build of the two no-picture renders was run through shots.mjs (clean) but not looked at.",
     "Not for places: nothing here shows menu, hours, address or rooms."
-  ]
+  ],
+ "tone": "dark"
 }
