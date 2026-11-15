@@ -50,6 +50,8 @@ def test_leftover_sections_stand_whole_and_unused_photographs_are_one_strip():
     assert '<div class="sw-more-long"><h2>How the week closes</h2><div class="sw-more-body">' in out, 'a long passage: its heading over it, its words in columns'
     first = M.add({**d, 'more': {'sections': [{'title': '', 'text': 'What the opening goes on to say.'}, {'title': 'After', 'text': 'x' * 400}]}}, page)
     assert '<div class="sw-more-lead"><p>What the opening goes on to say.</p></div>' in first, 'the first passage without a heading is set large'
+    wall = M.add({**d, 'more': {'sections': [{'title': '', 'text': 'A feed of cut news. ' * 40}, {'title': 'After', 'text': 'x' * 400}]}}, page)
+    assert 'sw-more-lead">' not in wall and '<div class="sw-more-long"><div class="sw-more-body">' in wall, 'a long passage without a heading is not set large'
     strip = re.search(r'<div class="sw-strip"[^>]*>(.*?)</div>', out).group(1)
     shown = re.findall(r'src="\.\./\.\./(media/p\d\.jpg)"', strip)
     assert 'media/p1.jpg' not in shown and shown == ['media/p%d.jpg' % i for i in range(2, 8)], 'the photographs the page did not ask for, in order, a whole number of rows'

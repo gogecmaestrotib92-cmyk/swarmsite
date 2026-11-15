@@ -60,6 +60,7 @@ INK_JS = ("(function(){var b=document.querySelector('.sw-more');if(!b)return;var
           "var f=function(v){v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)},L=function(c){return .2126*f(c[0])+.7152*f(c[1])+.0722*f(c[2])},"
           "k=n(getComputedStyle(b).color)||[0,0,0],x=L(g),y=L(k),r=(Math.max(x,y)+.05)/(Math.min(x,y)+.05);if(r<7)b.style.color=x>.4?'#111111':'#f5f5f5'})();")
 
+LEAD = 420      # what is set large under the opening is a few lines, never a screenful
 LONG = 700      # a passage longer than this is set in two columns under its heading
 SHORT = 300     # a section whose words are this short is a note, not a passage: notes stand together as a grid
 
@@ -140,8 +141,8 @@ def band(d, page):
                 cells = ''.join('<div>%s%s</div>' % ('<h3>%s</h3>' % _e(x['title']) if x['title'] else '', _paras(x['text'])) for x in g)
                 parts.append('<div class="sw-more-in"><div class="sw-more-grid" style="--c:%d">%s</div></div>' % (2 if len(g) in (2, 4) else 3, cells))
                 continue
-            if not g['title']:                                        # a passage with no heading of its own: the first is what the opening goes on to say, set large; later ones are plain text in the text column
-                parts.append('<div class="sw-more-in"><div class="sw-more-lead">%s</div></div>' % _paras(g['text']) if not parts else
+            if not g['title']:                                        # a passage with no heading of its own: the first, when it is a few lines, is what the opening goes on to say, set large; a longer one and later ones are plain text (large type down a whole screen is a wall, not a lead)
+                parts.append('<div class="sw-more-in"><div class="sw-more-lead">%s</div></div>' % _paras(g['text']) if not parts and len(g['text']) <= LEAD else
                              ('<div class="sw-more-in"><div class="sw-more-long"><div class="sw-more-body">%s</div></div></div>' if len(g['text']) > LONG else '<div class="sw-more-in sw-more-plain">%s</div>') % _paras(g['text']))
                 if not g['imgs']:
                     continue
