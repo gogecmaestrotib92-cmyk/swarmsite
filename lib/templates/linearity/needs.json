@@ -26,5 +26,6 @@
   "The page holds the scroll in three places at 1024 and wider (opening 1800 px, steps 250 + 420 a step + 120, sideways run 1.6 px a px + 330 a feature + 260); a client with many features lengthens the last one.",
   "A place (restaurant, hotel, shop) is not a fit.",
   "measured: {\"sportbot\": \"4 screens, 4 phones, 1 film, 3 steps, 4 links, 7 features, 4 figures, 2 plans, 4 questions: every section renders; 13 936 px at 1440 (was 29 233); shots.mjs clean and legible.mjs ok at 1440 and 390\", \"automateed\": \"3 screens, 7 upright book pictures, 3 links, 5 features, 2 plans, no questions, no film: every section but the questions renders; 11 603 px at 1440 (was 25 228); shots.mjs clean and legible.mjs ok\", \"both with media.made = {}\": \"render without errors, no sky element (checked as markup only, not looked at): the page stands on its plain ground\", \"no client pictures at all\": \"not measured on a test client; by construction the statement stands alone, the steps hold an empty place, panels are text only and the wheel has no tiles - not a page to offer\"}"
- ]
+ ],
+ "tone": "dark"
 }

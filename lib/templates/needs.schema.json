@@ -219,6 +219,7 @@
     "holds_without_pictures": {
       "type": "boolean"
     },
+    "tone": {"enum": ["dark", "light"], "description": "the tone of the reference this template was rebuilt from, measured on its full page (more than half of it darker than 70/255 = dark). A client whose own ground is of the same tone is shown these first: the reference's own contrasts hold. Left out = light."},
     "motif": {
       "enum": [
         "land",
