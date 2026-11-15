@@ -322,7 +322,7 @@ $('#download').onclick=async()=>{ const id=lastJob?.id, slug=picked; if(!id||!sl
     const j=await r.json().catch(()=>({})); if(j.prepare){ say(slug,'You edited this design, so its download is made in the editor: open Edit, then Download.'); return; }
     if(!r.ok||!j.url){ say(slug,j.error||'The download is not available.'); return; }
     /* the file's own address, for ten minutes: the browser downloads it itself (a phone too), and the same address stays in the line as a link */
-    said={slug,text:'Your download has started: a zip with the page, its pictures and fonts. Unzip it and open index.html.',url:j.url}; location.href=j.url; }
+    said={slug,text:'Your download has started: a zip with the page, its pictures and fonts. Unzip it and open index.html; README.txt in it says how to put the page online.',url:j.url}; location.href=j.url; }
   catch(e){ say(slug,e&&e.name==='AbortError'?'The server did not answer in time. Try again in a moment.':'The download did not go through. Check your connection and try again.'); }
   finally{ busy=false; renderDownload(); } };
 /* payment: Stripe Checkout for the chosen design, offered only where the server says payment is on (a 402 with pay_url) */

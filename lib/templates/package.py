@@ -44,14 +44,81 @@ TOOL = HERE.parent / 'qa' / 'package_compare.mjs'
 # The hinted set is what most visitors' browsers get and draws the same on a Mac (which ignores hinting).
 UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'
 FONT_HOSTS = ('https://fonts.googleapis.com/', 'https://fonts.gstatic.com/')
+# What the client reads first after the download (owner, 2026-11-15): written for someone who has never put a page
+# online. Every sentence is something the product does (tests/test_templates_package.py holds it to the zip).
 README = """%(name)s — your new page
 
-index.html   open it in a browser; put the whole folder on any web host as it is
-media/       the pictures and films of the page
-fonts/       the typefaces of the page (open licences; they travel with the page)
-data.json    the words, links and pictures the page was made from
+This folder is your whole design, and it is yours: the page's HTML and
+CSS, its pictures and its typefaces. Nothing is missing and nothing is
+kept back with us. It works on its own: no account, no subscription, and
+it loads nothing from anywhere else.
 
-The page asks the internet for nothing: everything it shows is in this folder.
+Use it as you like: put it online as it is, hand it to whoever builds
+your site, or build further on it.
+
+
+1. HAVE A LOOK
+
+   Unzip the download, open the folder and double-click index.html.
+   It opens in your browser: the same page you saw in the preview.
+
+   This is only you, looking at it on your own computer. Nobody else can
+   see it yet. (A phone can keep the zip, but looking at the page and
+   putting it online is best done on a computer.)
+
+
+2. PUT IT ONLINE
+
+   A page is on the internet once its files are with a web host. Keep the
+   files and folders named as they are.
+
+   You already have hosting (where your present site or your domain is):
+     a. Sign in to its control panel and open the file manager, or connect
+        with an FTP program.
+     b. Open the folder of your site. It is usually called public_html,
+        www or htdocs.
+     c. If your old site is in there, save a copy of it first.
+     d. Upload index.html and the folders media and fonts. index.html must
+        lie directly in the site's folder, not inside another folder.
+     e. Open your address in a browser. Your new page is there.
+
+   You have no hosting yet:
+     Any host for "static" sites will do. Some let you drag this folder
+     into the browser and give you an address at once, on a free plan:
+     Netlify Drop and Cloudflare Pages are two. Your own domain is added
+     afterwards in that host's settings, under "custom domain".
+
+   Someone else looks after your site:
+     Send them this zip. It is all they need.
+
+
+3. CHECK IT ONCE IT IS ONLINE
+
+   Open it on your phone as well as your computer, and press every button
+   and link once: the phone number, the email, the booking, the menu.
+   They lead where they led on the page you edited.
+
+
+4. CHANGE SOMETHING LATER
+
+   The easy way: sign in at swarmsite.si, open your project, press Edit,
+   make the change and download again. A design you paid for is paid for
+   once, so the next download costs nothing. Upload the new files over the
+   old ones.
+
+   By hand: index.html is plain HTML and opens in any text editor. To swap
+   a picture, put the new one in media under the old one's file name.
+
+
+WHAT IS IN THE FOLDER
+
+   index.html   the design: the whole page, its HTML and CSS in one file
+   media        its pictures and films
+   fonts        its typefaces (open licences; they travel with the page)
+   data.json    the words, links and pictures the page was made from;
+                the page does not need it online
+   README.txt   this note; the page does not need it online
+
 Made with Swarmsite.
 """
 # the visitor never reads which reference a template was rebuilt from (owner, 2026-11-12): not here, not in a file name

@@ -88,6 +88,12 @@ def test_the_zip_holds_the_page_its_media_its_fonts_and_asks_for_nothing_outside
     assert P.outside(page) == [], 'nothing left that a browser would fetch from outside'
     assert 'href="https://' in page, 'the client\'s own links stay links'
     assert data == {k: v for k, v in client.items() if not k.startswith('_')} and client['brand']['name'] in readme and slug not in readme
+    # the note is a guide for someone who has never put a page online: look, put online, check, change later — and it
+    # names every file of the zip's top level and nothing the product does not do (no publishing at our address)
+    for head in ('1. HAVE A LOOK', '2. PUT IT ONLINE', '3. CHECK IT ONCE IT IS ONLINE', '4. CHANGE SOMETHING LATER', 'WHAT IS IN THE FOLDER'):
+        assert head in readme
+    assert all(n.split('/')[0] in readme for n in names) and 'public_html' in readme and 'swarmsite.si' in readme
+    assert not __import__('re').search(r'publish|\.swarmsite\.si|%\(', readme, __import__('re').I) and max(map(len, readme.splitlines())) <= 78
     # the same input gives the same zip
     again = P.build(slug, client, tmp_path / 'src', tmp_path / 'out' / 'again.zip', fetch=fonts([]))
     assert Path(again['zip']).read_bytes() == Path(rep['zip']).read_bytes()
