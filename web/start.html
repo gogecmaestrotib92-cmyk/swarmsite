@@ -87,7 +87,7 @@ button:focus-visible,summary:focus-visible,.pill:focus-within{outline:2px solid 
       </div>
     </section>
     <section class="step" data-step="2" data-name="Photographs" hidden>
-      <div><h2>Your photographs</h2><p class="hint">They decide how the page looks more than anything else. For each, say what is in it.</p></div>
+      <div><h2 id="phH">Your photographs</h2><p class="hint" id="phHint">They decide how the page looks more than anything else. For each, say what is in it.</p></div>
       <div class="grid">
         <div class="drop" id="drop"><span id="dropT">Add photographs of your place, your work, your team or your product.</span><label class="pill">Choose photographs<input type="file" id="files" accept="image/png,image/jpeg,image/webp" multiple style="position:absolute;width:1px;height:1px;opacity:0;min-height:0"></label></div>
         <div class="photos" id="photos"></div>
@@ -116,7 +116,7 @@ button:focus-visible,summary:focus-visible,.pill:focus-within{outline:2px solid 
       </div>
     </section>
     <section class="step" data-step="5" data-name="Check" hidden>
-      <div><h2>Your page will have</h2><p class="hint">Go back to any step to add something. What is not here is left out of the page.</p></div>
+      <div><h2>Your page will have</h2><p class="hint">Go back to any step to add something.</p></div>
       <div class="have"><div><ul id="haveEnd"></ul></div></div>
     </section>
     <div class="nav" style="margin-top:16px">
@@ -152,12 +152,21 @@ const ASK={restaurant:{line:'Dish or drink',eg:'Arroz negro',sent:'Rice dishes c
   corporate:{line:'What you make',eg:'Cast aluminium parts',sent:'Aluminium castings for machine builders',btn:'Contact us',place:0,photo:'the works, your products, your people'},
   nonprofit:{line:'What you do',eg:'Free meals, every weekday',sent:'Meals for people who need one',btn:'Support us',place:0,photo:'your work as it happens, the people behind it'}};
 const ask=()=>ASK[$('#kind').value]||{line:'Name',eg:'',sent:'What you do, as you would say it to a visitor',btn:'Contact us',place:0,photo:'your place, your work, your team or your product'};
+/* software and a phone app are shown by their screens: most designs for them hold at least one, and a form of that kind
+   with no picture got no design at all (2026-11-15). Two screens are asked for, said before the end, and the form is not
+   sent without them. A screen is a picture answered "a screen of our software" or "of our app". */
+const SOFT=()=>['software','app'].includes($('#kind').value);
+const shotsN=()=>photos.filter(p=>['screen','phone'].includes(p.el.querySelector('.role').value)).length;
+const shotsShort=()=>SOFT()&&shotsN()<2;
+const NEED='Two screenshots of your product are needed: the designs for software are built around them.';
 for(const [v,t] of KINDS){ $('#kind').appendChild(new Option(t,v)); const l=document.createElement('label'), i=document.createElement('input'); i.type='radio'; i.name='kindPick'; i.value=v; i.onchange=()=>{ $('#kind').value=v; $('#kind').dispatchEvent(new Event('change')); }; l.append(i,document.createTextNode(t)); $('#kinds').appendChild(l); }
 /* the kind shapes the rest: examples, the word for a line, the address opened for a place */
 $('#kind').onchange=()=>{ const a=ask(), v=$('#kind').value; document.querySelectorAll('#kinds input').forEach(i=>{ i.checked=i.value===v; });
   $('#sentence').placeholder=a.sent; $('#linkT').placeholder=a.btn; $('#dropT').textContent='Add photographs: '+a.photo+'.';
+  const soft=SOFT(); $('#phH').textContent=soft?'Screens of your product':'Your photographs'; $('#phHint').textContent=soft?'At least two screenshots of your product are needed: the designs for software are built around them. Add more if you have them, and say what is in each.':'They decide how the page looks more than anything else. For each, say what is in it.';
+  if(soft) photos.forEach(p=>{ const r=p.el.querySelector('.role'); if(!r.value) r.value=v==='app'?'phone':'screen'; });
   document.querySelectorAll('#offers .offer').forEach(r=>{ r.querySelector('label').firstChild.textContent=a.line; r.querySelector('.o-name').placeholder=a.eg; });
-  if(a.place) $('#morePlace').open=true; have(); };
+  if(a.place) $('#morePlace').open=true; have(); if(at<3&&!$('#status').classList.contains('bad')) go(at,false); };
 $('#hasAccent').onchange=e=>{ $("#accent").hidden=!e.target.checked; have(); };
 $('#logo').onchange=e=>{ const f=e.target.files[0], im=$('#logoPrev'); if(im.src) URL.revokeObjectURL(im.src); if(f){ im.src=URL.createObjectURL(f); im.hidden=false; $('#logoT').textContent='Change your logo'; } else { im.hidden=true; im.removeAttribute('src'); $('#logoT').textContent='Add your logo'; } have(); };
 const field=(label,cls,attrs={})=>{ const l=document.createElement('label'); l.textContent=label; const i=document.createElement('input'); i.className=cls; Object.assign(i,attrs); l.appendChild(i); return l; };
@@ -180,7 +189,7 @@ async function shrink(file,max=1600){ const url=URL.createObjectURL(file); try{ 
 const photos=[];   /* {blob, el} */
 async function addFiles(list){ for(const f of [...list].slice(0,24-photos.length)){ let blob; try{ blob=await shrink(f); }catch{ say(`${f.name} is not a picture we can read.`,true); continue; }
   const el=document.createElement('div'); el.className='ph'; const img=document.createElement('img'); img.alt=''; img.src=URL.createObjectURL(blob);
-  const q=document.createElement('div'); q.className='q'; const role=document.createElement('select'); role.className='role'; role.setAttribute('aria-label','What is in this picture?'); for(const [v,t] of ROLES) role.appendChild(new Option(t,v));
+  const q=document.createElement('div'); q.className='q'; const role=document.createElement('select'); role.className='role'; role.setAttribute('aria-label','What is in this picture?'); for(const [v,t] of ROLES) role.appendChild(new Option(t,v)); if(SOFT()) role.value=$('#kind').value==='app'?'phone':'screen';   /* what a software's picture most likely is; theirs to change */
   const withS=document.createElement('select'); withS.className='with'; withS.setAttribute('aria-label','Which line of what you offer it shows');
   const alt=document.createElement('input'); alt.className='alt'; alt.maxLength=200; alt.placeholder='Describe it in a few words (optional)'; alt.setAttribute('aria-label','Describe it in a few words');
   const p={blob,el}; q.append(role,withS,alt,removeBtn(el,()=>{ photos.splice(photos.indexOf(p),1); })); el.append(img,q); $('#photos').appendChild(el); photos.push(p); }
@@ -191,8 +200,8 @@ function say(t,bad){ const s=$('#status'); s.textContent=t; s.classList.toggle('
 const val=s=>($(s)?.value||'').trim();
 const filled=sel=>[...document.querySelectorAll(sel)].filter(i=>i.value.trim()).length;
 /* what the page will have so far: read off the form, nothing promised that is not filled in */
-function have(){ const n=photos.length, o=filled('#offers .o-name'), st=filled('#steps .s-title'), fg=filled('#figures .g-v'), hrs=filled('#hours .h-days');
-  const rows=[[!!val('#name'),val('#name')?`Your name: ${val('#name')}`:'Your name'],[!!val('#sentence'),'A first line, in your words'],[n>0,n?`${n} photograph${n===1?'':'s'} of yours`:'Your photographs'],[!!$('#logo').files[0],'Your logo'],[$('#hasAccent').checked,'Your colour'],
+function have(){ const n=photos.length, soft=SOFT(), k=shotsN(), o=filled('#offers .o-name'), st=filled('#steps .s-title'), fg=filled('#figures .g-v'), hrs=filled('#hours .h-days');
+  const rows=[[!!val('#name'),val('#name')?`Your name: ${val('#name')}`:'Your name'],[!!val('#sentence'),'A first line, in your words'],soft?[k>=2,k>=2?`${k} screens of your product`+(n>k?`, ${n-k} other photograph${n-k===1?'':'s'}`:''):`Two screenshots of your product (needed; ${k} so far)`]:[n>0,n?`${n} photograph${n===1?'':'s'} of yours`:'Your photographs'],[!!$('#logo').files[0],'Your logo'],[$('#hasAccent').checked,'Your colour'],
     [o>0,o?`${o} line${o===1?'':'s'} of what you offer`:'What you offer'],[st>0,st?`${st} step${st===1?'':'s'} of how it works`:'How it works, in steps'],[fg>0,fg?`${fg} number${fg===1?'':'s'}`:'Numbers'],
     [!!val('#linkT'),val('#linkT')?`A button: “${val('#linkT')}”`:'A button'],[!!(val('#phone')||val('#email')),'Phone or email'],[!!(val('#street')||val('#city')),'Your address'],[hrs>0,'Opening hours']];
   for(const id of ['#haveSide','#haveEnd']){ const ul=$(id); ul.replaceChildren(); for(const [on,t] of rows){ if(id==='#haveEnd'&&!on) continue; const li=document.createElement('li'); li.className=on?'on':''; li.textContent=t; ul.appendChild(li); } }
@@ -200,8 +209,8 @@ function have(){ const n=photos.length, o=filled('#offers .o-name'), st=filled('
 /* the steps: one on the screen; the name is the only thing asked for before going on */
 const STEPS=[...document.querySelectorAll('.step')]; let at=1;
 const empty=n=>n===2?!photos.length&&!$('#logo').files[0]&&!$('#hasAccent').checked:n===3?!filled('#offers input,#steps input,#figures input,#offersTitle'):n===4?!filled('[data-step="4"] input'):false;
-function nextLabel(){ const b=$('#next'); b.firstChild.textContent=at>1&&at<5&&empty(at)?'Skip this ':at===4?'Check it ':'Next '; }
-function go(n,focus){ if(n>1&&!val('#name')){ say('The name of the business is needed.',true); at=1; n=1; focus=true; } else if(n!==at||!$('#status').classList.contains('bad')) say(n===1?'Only the name is needed.':n===5?'Nothing is written for you: only what is here goes on the page.':'Everything here is optional.');
+function nextLabel(){ const b=$('#next'); b.firstChild.textContent=at>1&&at<5&&empty(at)&&!(at===2&&shotsShort())?'Skip this ':at===4?'Check it ':'Next '; }
+function go(n,focus){ if(n>1&&!val('#name')){ say('The name of the business is needed.',true); at=1; n=1; focus=true; } else if(n>2&&shotsShort()){ say(NEED,true); n=2; focus=true; } else if(n!==at||!$('#status').classList.contains('bad')) say(n===1?(SOFT()?'The name is needed, and two screenshots of your product at the next step.':'Only the name is needed.'):n===2&&SOFT()?'Two screenshots of your product are needed here.':n===5?'Short texts you left empty are drafted for you. No number, price or name is made up, and every word can be changed in the editor.':'Everything here is optional.');
   at=n; STEPS.forEach(s=>{ s.hidden=+s.dataset.step!==n; }); document.querySelector('aside.have').style.visibility=n===5?'hidden':''; $('#back').hidden=n===1; $('#next').hidden=n===5; $('#go').hidden=n!==5;
   document.querySelectorAll('#prog button').forEach((b,i)=>{ b.toggleAttribute('aria-current',false); if(i+1===n) b.setAttribute('aria-current','step'); b.classList.toggle('done',i+1<n); });
   const w=$('#where'); w.textContent=`Step ${n} of 5 · ${STEPS[n-1].dataset.name}`; const bar=document.createElement('i'); bar.style.setProperty('--p',n*20+'%'); w.appendChild(bar);
@@ -212,7 +221,7 @@ $('#f').addEventListener('input',have); $('#f').addEventListener('change',have);
 $('#f').addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target.tagName==='INPUT'&&e.target.type!=='file'&&at<5){ e.preventDefault(); go(at+1); } });
 go(1,false); $('#kind').dispatchEvent(new Event('change'));
 async function upload(blob){ const r=await fetch(API+'/uploads',{method:'POST',headers:{'content-type':blob.type||'image/jpeg'},body:blob}); const j=await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.error||'The photograph could not be sent.'); return j.file; }
-$('#f').onsubmit=async e=>{ e.preventDefault(); if(at<5){ go(at+1); return; } if(!val('#name')){ go(1); return; }
+$('#f').onsubmit=async e=>{ e.preventDefault(); if(at<5){ go(at+1); return; } if(!val('#name')){ go(1); return; } if(shotsShort()){ go(3); return; }
   const btn=$('#go'); btn.disabled=true; $('#back').disabled=true;
   try{ const offerRows=[...document.querySelectorAll('#offers .offer')];
     const form={ name:val('#name'), sentence:val('#sentence'), kind:val('#kind'), niche:val('#niche'), lang:(navigator.language||'en').slice(0,2),

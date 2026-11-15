@@ -75,7 +75,7 @@ try {
   // And "I built a first version of my app": screenshots are uploaded as they are chosen, and the job carries their names.
   { const COVER = fs.readFileSync(path.join(root, 'web/favicon.png'));
     const st = { posted: null, ups: 0, coverHeld: true }; const vs = [0, 1, 2].map(i => ({ ...variant(['griffin', 'maze', 'cerebrium'][i], 'ready', i), cover: `https://store.test/p/${id}/t/v${i + 1}-cover.jpg` }));
-    const job = { id, url: 'https://www.tallyfern.example/', status: 'done', created_at: new Date().toISOString(), steps: steps.map(s => ({ ...s, status: 'done' })), result: { templates: { variants: vs, rejected: [] }, events: [] } };
+    const job = { id, url: 'https://www.tallyfern.example/', status: 'done', created_at: new Date().toISOString(), steps: steps.map(s => ({ ...s, status: 'done' })), result: { templates: { variants: vs, rejected: [], niche: ['software', 'saas', 'app'], pictures: 1 }, events: [] } };   // software whose site showed one picture
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
     await page.route('**/*', async r => { const u = new URL(r.request().url());
       if (u.pathname === '/app') return r.fulfill({ contentType: 'text/html', body: html });
@@ -103,6 +103,10 @@ try {
     assert.deepEqual(await page.locator('.card .state.ok').allTextContents(), Array(3).fill('Ready'), 'each card says it is ready once its own cover and download are');
     assert.ok(await page.locator('#editGo').isHidden()); await page.locator('.card').nth(0).locator('.pickb').click();
     assert.equal(await page.locator('#editGo').isHidden(), true, 'Edit only once the job kept its data');
+    // software whose site gave fewer than two pictures: said plainly, with the way in that takes screenshots
+    assert.match(await page.locator('#chooseScreensP').textContent(), /no screens of your product on your site.*add up to six screenshots/);
+    assert.equal(await page.locator('#chooseScreensGo').getAttribute('href'), '/app?url=https%3A%2F%2Fwww.tallyfern.example%2F&with=screens');
+    assert.ok(await page.locator('#chooseScreens').evaluate(b => b.getBoundingClientRect().bottom <= document.querySelector('#cards').getBoundingClientRect().top + 1 && b.scrollWidth <= b.clientWidth), 'the note stands above the cards');
     await page.close(); }
   // a site no design fits
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
@@ -117,6 +121,7 @@ try {
   assert.equal(await page.locator('.card').count(), 0); assert.match(await page.locator('#chooseH').textContent(), /No design fits/);
   assert.deepEqual(await page.locator('#chooseWhy li').allTextContents(), ['Library design 1: needs steps; needs features', 'Library design 2: screens_min 2, the client has 0']);
   assert.ok(await page.locator('.choose-foot').isHidden());
+  assert.ok(await page.locator('#chooseScreens').isHidden(), 'screenshots are asked of software only');
   await page.close();
   console.log('Chooser 1440/390: engine templates sent, three cards side by side / stacked, full screen, pick, download waits for its package then asks for payment, no fit explained');
 } finally { await browser.close(); }
