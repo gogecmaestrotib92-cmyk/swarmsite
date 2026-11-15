@@ -313,3 +313,13 @@ def test_the_file_named_select_does_not_stand_in_for_the_standard_librarys():
             "print(subprocess.run([sys.executable, '-c', 'print(1)'], capture_output=True, text=True).stdout.strip())") % str(ROOT / 'lib' / 'templates')
     out = subprocess.run([sys.executable, '-c', code], capture_output=True, text=True, timeout=60)
     assert out.returncode == 0 and out.stdout.strip() == '1', out.stderr[-400:]
+
+
+def test_a_template_below_its_own_least_is_not_shown_without_it():
+    """`min` is the template's own least: three picture cards with no picture of the product are not that design"""
+    import importlib.util
+    from pathlib import Path
+    spec = importlib.util.spec_from_file_location('sel_min', Path(__file__).resolve().parents[1] / 'lib' / 'templates' / 'select.py')
+    S = importlib.util.module_from_spec(spec); spec.loader.exec_module(S)
+    src = Path(S.__file__).read_text(encoding='utf-8')
+    assert "hard.append('at least %s %d, the client has %d'" in src and "miss(name, 'at most" in src

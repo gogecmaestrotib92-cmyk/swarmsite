@@ -133,6 +133,8 @@ def render(d: dict) -> str:
     rows_m = max(1, math.ceil(longest / 24))        # ~24 at 30.4px fill 358
     steps = d.get('steps') or {}
     sitems = steps.get('items') or []
+    if any(x.get('img') for x in sitems):                         # a picture card is the product on its ground: a step with no picture of the product is not drawn as a card of bare landscape
+        sitems = [x for x in sitems if x.get('img')]
     feats = d.get('features') or {}
     fitems = feats.get('items') or []
     # the box is a display, not a field: each line is a step's short name over its title, in the page's ink, changed by
