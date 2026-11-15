@@ -643,6 +643,11 @@ def test_the_screen_with_most_of_the_product_on_it_comes_first():
     d = A.adapt(copy.deepcopy(seed))
     got = [m['src'] for m in d['media']['screens']][:3]
     assert got == ['media/screen-2.jpg', 'media/screen-3.jpg', 'media/screen-1.jpg'], got
+    # how full the picture itself is comes before the page's count of controls: an empty state has every button and shows nothing
+    for x, fill in zip(scr, (.41, .08, .39)):
+        x['fill'] = fill
+    assert [m['src'] for m in A.adapt(copy.deepcopy(seed))['media']['screens']][:3] == ['media/screen-3.jpg', 'media/screen-1.jpg', 'media/screen-2.jpg'], 'fill 0.4, 0.4, 0.1: the two full ones by score, the empty one last'
     for x in scr:
         x.pop('score', None)
+        x.pop('fill', None)
     assert [m['src'] for m in A.adapt(copy.deepcopy(seed))['media']['screens']][:3] == ['media/screen-1.jpg', 'media/screen-2.jpg', 'media/screen-3.jpg'], 'no score: the bar\'s own order'
