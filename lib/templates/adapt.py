@@ -617,7 +617,12 @@ def _pictures(images, d, media, gaps, is_place, product=None, rules=None):
             continue
         if w < 200 or h < 200:
             continue
-        if im.get('plain'):                                          # the capture's own reading: a notice, a diagram, a blank page — not a photograph
+        # the capture's own reading "plain": a notice, a diagram, a blank page — not a photograph. But a page is what some
+        # products MAKE (a redesigned document, a report, a book's page): a large upright sheet the client's page shows
+        # with words of its own for it is the product, and is kept (a document tool's own "before" and "after" pages
+        # were thrown away as blank paper and the page had no picture of the product at all — 2026-11-15)
+        sheet = not is_place and w >= 700 and h >= 900 and .6 <= w / h <= .85 and len(norm(im.get('alt'))) >= 6
+        if im.get('plain') and not sheet:
             continue
         if max(w, h) <= 600 and abs(w - h) <= .08 * max(w, h) and isinstance(im.get('flat'), (int, float)) and im['flat'] >= .7:
             continue                                                 # small, square and mostly two flat tones: a crest, a badge, an app icon — a mark, not a photograph
@@ -846,7 +851,7 @@ def _step_pictures(d, rules, gaps):
         # what the product makes (a cover, a page) as a book, an upright picture as a portrait
         own = [x for x in md.get('photos') or [] if x.get('src') and not x.get('small')] or [x for x in md.get('photos') or [] if x.get('src')]
         if len(own) >= len(items):
-            shape = lambda x: ('book' if re.search(r'\b(?:cover|e?book|libro|buch|livre)\b', x.get('alt') or '', re.I) else 'portrait') if (x.get('h') or 0) > (x.get('w') or 0) else 'photo'
+            shape = lambda x: ('book' if re.search(r'\b(?:cover|e?book|libro|buch|livre|page|document|pdf|report|sheet|invoice|seite|dokument|p[áa]gina|documento)\b', x.get('alt') or '', re.I) else 'portrait') if (x.get('h') or 0) > (x.get('w') or 0) else 'photo'
             for it, x in zip(items, own):
                 it['img'], it['shape'] = x['src'], shape(x)
             rules.append('steps.items[].img: the product\'s own pages gave no screen for each step; the client\'s own pictures stand beside the steps in the page\'s order')

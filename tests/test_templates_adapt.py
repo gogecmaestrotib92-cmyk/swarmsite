@@ -596,3 +596,19 @@ def test_a_trial_is_not_a_plan_a_close_is_said_once_and_a_buttons_label_is_not_a
     only = {'brand': {'name': 'C'}, 'hero': {'title': 'T'}, 'plans': {'items': [{'name': 'Free trial'}, {'name': 'Trial for teams'}]}}
     A._roles(only, [])
     assert len(only['plans']['items']) == 2
+
+
+def test_a_page_a_product_makes_is_its_picture_though_the_capture_calls_it_plain():
+    """a document tool's own "before" and "after" pages — large upright sheets the page shows with words of its own —
+    are the product; a plain picture that is not such a sheet (a notice, a diagram) is still left out, and so is a sheet
+    on a place's page (a menu photographed is not the restaurant)"""
+    px = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAAA//EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AN//Z'
+    seed = product()
+    seed['product'] = {}
+    seed['images'] = [{'id': 'img1', 'src': 'https://x.example/before.png', 'w': 1400, 'h': 1980, 'alt': 'Before — original document', 'plain': True, 'flat': .9, 'data': px},
+                      {'id': 'img2', 'src': 'https://x.example/after.png', 'w': 1400, 'h': 1978, 'alt': 'After — the redesigned page', 'plain': True, 'flat': .96, 'data': px},
+                      {'id': 'img3', 'src': 'https://x.example/notice.png', 'w': 1200, 'h': 400, 'alt': 'A notice about cookies', 'plain': True, 'flat': .97, 'data': px},
+                      {'id': 'img4', 'src': 'https://x.example/blank.png', 'w': 1400, 'h': 1980, 'alt': '', 'plain': True, 'flat': .99, 'data': px}]
+    d = A.adapt(copy.deepcopy(seed))
+    assert [p['src'] for p in d['media']['photos']] == ['media/img1.jpg', 'media/img2.jpg'], d['media']['photos']
+    assert A.validate(d) == []
