@@ -516,7 +516,7 @@ def select(d, limit=3, promised=(), root=None):
     near = _near(c['niche'])
     cands, rejected = [], []
     # the client's own tone: a ground darker than a fifth of white is a dark page. A template whose reference is of the
-    # same tone comes first — on it the reference's own contrasts hold (a dark product on a pale reference's page was
+    # same tone comes first (for a dark client only: a pale client's order is as it was) — on it the reference's own contrasts hold (a dark product on a pale reference's page was
     # dark windows on a dark ground the reference never had; owner, 2026-11-15: "you did not see it was bad")
     g = str((d.get('palette') or {}).get('ground') or '').lstrip('#')
     try:
@@ -547,7 +547,7 @@ def select(d, limit=3, promised=(), root=None):
                                               '; shown without what it misses: ' + ', '.join(missing) if missing else '',
                                               '; waits for ' + ', '.join(a['pending']) if a['pending'] else '')
         cands.append({'slug': t['slug'], 'approach': approach(n), 'pending': a['pending'], 'drops': drops, 'missing': missing, 'niche': niche,
-                      'fallback': fallback, 'why': why, '_tier': tier, '_key': (tier, 0 if (n.get('tone') or 'light') == tone else 1, rank, ld, len(missing), round(sum(m.get('short', 0) for m in a['soft']), 3), -a['met'], t['slug'])})
+                      'fallback': fallback, 'why': why, '_tier': tier, '_key': (tier, 1 if tone == 'dark' and n.get('tone') != 'dark' else 0, rank, ld, len(missing), round(sum(m.get('short', 0) for m in a['soft']), 3), -a['met'], t['slug'])})
     cands.sort(key=lambda x: x['_key'])
     order, seen = [], set()
     for tier in range(4):                                            # tier by tier; within one, one of each approach first

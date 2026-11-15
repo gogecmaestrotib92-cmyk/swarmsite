@@ -347,5 +347,7 @@ def test_a_client_of_a_dark_ground_is_shown_templates_of_dark_references_first()
     both = [s for s in on_dark if s in dark and s in on_pale]
     assert both, 'the fixture fits at least one template of a dark reference'
     assert sorted(on_dark) == sorted(on_pale), 'tone changes the order, never who fits'
-    assert min(on_dark.index(s) for s in both) < min(on_pale.index(s) for s in both), (on_dark, on_pale)
-    assert on_dark[0] in dark and on_pale[0] not in dark
+    assert on_dark[0] in dark, on_dark
+    plain = J.loads(J.dumps(d)); plain.pop('palette', None)
+    r = S.select(plain, limit=3, promised=('made',))
+    assert on_pale == [c['slug'] for c in r['chosen'] + r['reserve']], 'a pale client\'s order is as it was'
