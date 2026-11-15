@@ -194,6 +194,7 @@ a{color:inherit;text-decoration:none}
 
 <div class="choose" id="choose" aria-labelledby="chooseH">
   <div class="choose-head"><p class="tag">Your designs</p><h2 id="chooseH">Choose <em>a design</em></h2><p id="chooseSub">Three designs made from your site, each checked on a desk screen and a phone. Open one to see it whole.</p></div>
+  <div class="choose-none" id="chooseScreens" hidden><p id="chooseScreensP"></p><p style="margin-top:12px"><a class="pill ink" id="chooseScreensGo"></a></p></div>
   <div class="cards" id="cards"></div>
   <div class="choose-none" id="chooseNone" hidden><p id="chooseNoneP"></p><ul id="chooseWhy"></ul><p id="chooseStart" style="margin-top:14px">Or <a href="/start" style="text-decoration:underline">tell us about your business</a>: three designs from what you write and your own photographs.</p></div>
   <details class="choose-none" id="chooseLeft" hidden><summary>What the page leaves out, because the form did not say it</summary><ul id="chooseLeftList"></ul></details>
@@ -355,6 +356,12 @@ function showChooser(job){ lastJob=job;
     const ul=$('#chooseLeftList'); if(ul.children.length!==left.length){ ul.replaceChildren(); for(const g of left.slice(0,30)){ const li=document.createElement('li'); li.textContent=String(g).slice(0,200); ul.appendChild(li); } } }
   if(!vs.length){ $('#chooseH').textContent=fromForm?'No design fits what you told us yet':'No design fits this site yet'; $('#chooseSub').textContent=fromForm?'Every design of the library needs something — product screens, photographs, a few steps or features — that the form did not have.':'Every design of the library needs something from a site — product screens, photographs, a few steps or features — that we could not read from yours.';
     $('#chooseNoneP').textContent='What each design was missing:'; const ul=$('#chooseWhy'); ul.replaceChildren(); for(const r of (t.rejected||[]).slice(0,8)){ const li=document.createElement('li'); li.textContent=`${r.name||'A design'}: ${String(r.why||'').slice(0,160)}`; ul.appendChild(li);} }
+  /* software without its screens: most designs for it hold a screen of the product, so a site that shows none (the product
+     behind a sign-in) gets few designs or none. Said plainly once the job is done, with the way in that takes screenshots. */
+  { const soft=(t.niche||[]).some(n=>n==='software'||n==='app'), few=soft&&job.status==='done'&&(!vs.length||(typeof t.pictures==='number'&&t.pictures<2)); $('#chooseScreens').hidden=!few;
+    if(few){ const a=$('#chooseScreensGo'), site=/^https?:\/\//.test(job.url||'');
+      $('#chooseScreensP').textContent=fromForm||!site?'Designs for software are built around screens of the product, and the form had fewer than two. Fill it in again with at least two screenshots.':(t.pictures<2?'We found no screens of your product on your site; they may be behind a sign-in. ':'')+'Designs for software are built around screens of the product: add up to six screenshots and the designs are made again with them.';
+      a.textContent=fromForm||!site?'Back to the form':'Add screenshots'; a.href=fromForm||!site?'/start':`/app?url=${encodeURIComponent(job.url)}&with=screens`; } }
   if(picked&&!vs.some(v=>v.slug===picked)) picked=''; renderDownload(); }
 
 function showDraft(job){ const d=job.result.draft; if(!d || d.round===draftShown) return; draftShown=d.round;
