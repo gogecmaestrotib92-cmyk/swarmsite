@@ -64,6 +64,8 @@ Goal: refactor until the architecture is simple enough to explain in five lines,
 
 - 2026-11-15 — **An empty state is not a picture of the product.** Production after #82 and #83: fluently is the betting tool's first design again and its held phone stands in a frame; its opening still showed the emptiest phone. Measured on the four phone pictures production used: 0.40, 0.22, 0.42 full — and 0.13, the one in the opening. The order was right; the template gives its opening the picture its steps did not take, and that was the empty one. A screen or phone under 15 % full is now left out where at least two fuller ones stand (`adapt._pictures`), so no template can set it anywhere. **Next:** see the opening on production beside the reference.
 
+- 2026-11-15 — **The windows design's opening has upright windows and a headline that carries it.** Courtsensei on production beside the reference: six wide screens of one interface stood in five wide windows and read as five thumbnails of the same thing, and a 26-letter headline was set at 56. An upright slot with only wide product screens left now takes an upright cut of one (object-fit: cover, a crop); the cut starts past the flat margin the demo sets round its screen, which capture now measures per tab state (`pad`, carried by the adapter) — without it the live-game window was half black. Headlines up to 32 letters stand at 72. Gate passes on a fresh courtsensei capture. **Next:** the small objects the reference scatters between the windows; living pictures in them.
+
 ## Known debt
 - Designer (direct.py) still writes all copy; Copy agent only trims. Split: Designer = blueprint/mode/beats skeleton, Copy = every sentence from the fact sheet.
 - `cells` beat type overlaps `facts`; merge.

@@ -192,6 +192,7 @@ def hero_media(d):
     used = {i.get('img') for i in (d.get('steps') or {}).get('items') or []}
     key = lambda m: m.get('src') in used                               # pictures the feature rows do not show come first
     alls = [x for x in (md.get('screens') or []) + (md.get('phones') or []) + (md.get('photos') or []) if x.get('src')]
+    screens = {x.get('src') for x in md.get('screens') or []}
     land = [x for x in alls if 1 <= asp(x) <= 2.6]
     port = sorted([x for x in alls if asp(x) < 1], key=key)
     v = md.get('video')
@@ -207,9 +208,17 @@ def hero_media(d):
         m = pool[0].pop(0) if pool[0] else (pool[1].pop(0) if pool[1] else None)
         if not m:
             continue
-        w = round(min((wl if asp(m) >= 1 else wp) - 10, hmax * asp(m))) + 10
+        # an upright slot with only wide product screens left: the screen stands in it as an upright cut from its
+        # left edge (its own menu and the start of its sheet), so the cluster keeps the reference's mix of shapes
+        # — five wide windows of one interface read as five thumbnails of the same thing (2026-11-15)
+        cut = kind == 'P' and asp(m) >= 1.3 and m.get('src') in screens
+        w = wp if cut else round(min((wl if asp(m) >= 1 else wp) - 10, hmax * asp(m))) + 10
         pos = {'c': f'left:calc(50% + var(--u)*{off})', 'l': f'left:calc(var(--u)*{off})', 'r': f'right:calc(var(--u)*{off})'}[anchor]
-        wins.append((m, w, pos, top))
+        at = ''
+        if cut:                                                          # the cut starts where the screen does, past the flat margin its demo sets round it
+            box, left = (wp - 10) / hmax, ((m.get('pad') or [0, 0])[0] or 0)
+            at = f'{wp - 10}/{hmax};--at:{min(100, 100 * left * asp(m) / max(.01, asp(m) - box)):.1f}%'
+        wins.append((m, w, pos, top, at))
     return big, wins
 
 
@@ -217,13 +226,14 @@ def s_hero(d, c):
     h = d.get('hero') or {}
     big, wins = hero_media(d)
     title = h.get('title') or (d.get('brand') or {}).get('name') or ''
-    fs = size(title, [(12, 88), (24, 72), (999, 56)])
+    fs = size(title, [(12, 88), (32, 72), (999, 56)])    # two lines of 16 letters at 72 hold in the 640 column
     fm = size(title, [(12, 56), (999, 36)])
     wh = ''
-    for n, (m, w, pos, top) in enumerate(wins):
+    for n, (m, w, pos, top, cut) in enumerate(wins):
         cap = f'<figcaption class="cap" title="{e(m["alt"])}">{e(m["alt"])}</figcaption>' if m.get('alt') else ''
+        scr = f'<div class="scr up" style="aspect-ratio:{cut}">' if cut else '<div class="scr">'
         wh += (f'<figure class="win" style="{pos};top:calc(var(--u)*{top});--w:{w};--n:{n + 4}"><div class="fr"><div class="bar">{DOTS}</div>'
-               f'<div class="scr">{pic(m, lazy=False)}</div></div>{cap}</figure>')
+               f'{scr}{pic(m, lazy=False)}</div></div>{cap}</figure>')
     sub = f'<p class="sub">{e(h["text"])}</p>' if h.get('text') else ''
     sub2 = f'<p class="sub2">{e(h["text2"])}</p>' if h.get('text2') else ''
     note = next((t for t in d.get('trust') or [] if t and t != h.get('note')), '')
@@ -444,7 +454,7 @@ button{font:inherit;color:inherit;letter-spacing:inherit;background:none;border:
 .win{position:absolute;display:flex;flex-direction:column;align-items:center;gap:6px;width:calc(var(--u)*var(--w));touch-action:none;user-select:none;animation:hin .45s ease-out both;animation-delay:calc(var(--n)*16ms + .11s)}
 .win .fr,.fig,.note{border:1px solid var(--edge2);border-radius:8px;background:linear-gradient(90deg,var(--clo),var(--chi) 50%,var(--clo))}
 .win .fr{width:100%;padding:8px 4px 4px;filter:drop-shadow(0 10px 12px rgba(0,0,0,.12));transition:transform .12s ease;cursor:grab}.win.held .fr{transform:scale(.97);cursor:grabbing}
-.scr{border-radius:4px;overflow:hidden;background:var(--clo)}.scr img{width:100%}
+.scr{border-radius:4px;overflow:hidden;background:var(--clo)}.scr img{width:100%}.scr.up img{height:100%;object-fit:cover;object-position:var(--at,0) 0}
 .head{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:32px;min-height:526px;padding:200px 20px 32px;text-align:center;pointer-events:none;animation:hin .45s ease-out .05s both}.head>*{pointer-events:auto}
 .hg{display:flex;flex-direction:column;align-items:center;gap:8px;max-width:calc(var(--u)*640)}
 h1{font-weight:500;font-size:calc(var(--u)*var(--fs));line-height:1.1;letter-spacing:-.03em;text-wrap:balance}

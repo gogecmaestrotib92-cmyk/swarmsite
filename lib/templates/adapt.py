@@ -707,7 +707,9 @@ def _pictures(images, d, media, gaps, is_place, product=None, rules=None):
             continue
         src = 'media/%s.%s' % (slug(x['id']), _ext(im['data']))
         first = norm(str(im.get('alt') or '').split('\n')[0])                 # the first line the framed part sets: its own heading
-        d['media']['screens'].append({'src': src, 'w': x['w'], 'h': x['h'], 'alt': first[:120]})
+        pad = im.get('pad')                                                    # the flat margin the demo sets round this screen (capture)
+        pad = [round(float(v), 3) for v in pad] if isinstance(pad, list) and len(pad) == 2 and all(isinstance(v, (int, float)) and not isinstance(v, bool) and 0 <= v <= .5 for v in pad) else None
+        d['media']['screens'].append({'src': src, 'w': x['w'], 'h': x['h'], 'alt': first[:120], **({'pad': pad} if pad else {})})
         media[src] = {'from': 'images', 'id': x['id']}
         x['placed'] = True
     if any(x.get('placed') for x in shots):
