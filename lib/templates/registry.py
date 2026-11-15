@@ -134,13 +134,15 @@ def _page(slug, d, root=None):
     page = load(slug, root).render(d)
     if not isinstance(page, str):
         raise TemplateError('template %r returned %s, not a page' % (slug, type(page).__name__))
-    key = 'swarmsite_templates_more'
-    if key not in sys.modules:
-        spec = importlib.util.spec_from_file_location(key, HERE / 'more.py')
-        mod = importlib.util.module_from_spec(spec)
-        sys.modules[key] = mod
-        spec.loader.exec_module(mod)
-    return sys.modules[key].add(d, page)
+    def part(name):
+        key = 'swarmsite_templates_' + name
+        if key not in sys.modules:
+            spec = importlib.util.spec_from_file_location(key, HERE / (name + '.py'))
+            mod = importlib.util.module_from_spec(spec)
+            sys.modules[key] = mod
+            spec.loader.exec_module(mod)
+        return sys.modules[key]
+    return part('more').add(d, page)
 
 
 def render(slug, d, media_base=None, root=None):
