@@ -263,8 +263,74 @@ def hero_media(d):
             # its size as the page set it: a desk screen is at most the 1440 page it was photographed in, a phone 430
             cssw = min(m.get('w') or 1440, 430 if m.get('src') in phones else 1440)
             view = detail(m, bw, bh, cssw)
-        wins.append((m, w, pos, top, view))
+        tall = (hmax if cut else (w - 10) / asp(m)) + 32 + (24 if m.get('alt') else 0)   # chrome 32, caption 24
+        box = ({'c': 720 + off, 'l': off, 'r': 1440 - off - w}[anchor], top, w, tall)
+        wins.append((m, w, pos, top, view, box))
     return big, wins
+
+
+# The small things the reference leaves on its desktop between the windows, at 1440 (measured, ref/tree-d.json): an
+# app's icon, two folders that are buttons, two name tags turned a few degrees. Its emoticons, its bin, its telephone
+# and its waiting ball are its own jokes and are not taken. Its small unframed pictures are not taken either: tried
+# with a client's left-over photographs (2026-11-16), dark stadium pictures 72 px wide were smudges on a dark page, and
+# nothing in the data says whether a photograph reads that small. Ours are the client's own, or are not there:
+# kind, anchor, offset, top, width, height, turn
+THINGS = [('icon', 'c', 141, 113, 46, 46, 0), ('dir', 'l', 310, 220, 40, 40, 0), ('dir', 'r', 243, 472, 44, 44, 0),
+          ('tag', 'r', 106, 141, 104, 77, -7.6), ('tag', 'l', 314, 25, 76, 65, 4)]
+HEAD = (392, 190, 656, 336)      # the headline's column at 1440 (640 wide from 200 down to the frame), 8 round it
+DIRW = 84                        # a folder's name may be this wide under it
+FOLDER = '<i class="fo" aria-hidden="true"></i>'
+
+
+def _over(a, b):
+    """the share of box a (x, y, w, h) that box b covers"""
+    w = min(a[0] + a[2], b[0] + b[2]) - max(a[0], b[0])
+    h = min(a[1] + a[3], b[1] + b[3]) - max(a[1], b[1])
+    return max(0, w) * max(0, h) / (a[2] * a[3])
+
+
+def things(d, c, wins):
+    """the client's own small things for the opening's desktop, each in a place the reference keeps one:
+      icon — the client's mark (not a wordmark) as an app's icon
+      dir  — a folder for each of the first two links of the client's menu, under its name; it is that link
+      tag  — a figure the client states and the price of a plan, as tags: what it is on the bar, the value large
+    A thing with nothing of the client's for it is not drawn; nor is one that would lie on the headline's column, or
+    that a window would cover by more than a fifth. Returns the html."""
+    b = d.get('brand') or {}
+    dirs = [n for n in d.get('nav') or [] if n.get('t') and n.get('h') and len(n['t']) <= 14][:2]
+    num = lambda v, l: bool(v and l) and len(v) <= 7 and len(l) <= 12 and any(ch.isdigit() for ch in v)
+    figs = [(f.get('v'), f.get('l')) for f in d.get('figures') or [] if num(f.get('v'), f.get('l'))]
+    costs = [(p.get('price'), p.get('name')) for p in (d.get('plans') or {}).get('items') or [] if num(p.get('price'), p.get('name'))]
+    tags = figs[:1] + costs[:1] + figs[1:] + costs[1:]           # one of each before a second of either
+    icon = b.get('logo') if b.get('logo') and not b.get('logo_wordmark') else None
+    boxes = [w[5] for w in wins]
+    hues = c.get('hues') or [c.get('A') or '#0f7fff']
+    out, n = '', len(wins) + 4
+    for kind, anchor, off, top, w, h, turn in THINGS:
+        full = (DIRW, h + 22) if kind == 'dir' else (w, h)
+        x = {'c': 720 + off, 'l': off, 'r': 1440 - off - w}[anchor] - (full[0] - w) / 2
+        box = (x, top, full[0], full[1])
+        if _over(box, HEAD) or max([_over(box, o) for o in boxes] or [0]) > .2:
+            continue
+        at = (f'left:calc(50% + var(--u)*{x - 720:g})' if anchor == 'c' else f'left:calc(var(--u)*{x:g})' if anchor == 'l'
+              else f'right:calc(var(--u)*{1440 - x - full[0]:g})')
+        st = f'{at};top:calc(var(--u)*{top});--w:{full[0]};--h:{h};--n:{n}'
+        if kind == 'icon' and icon:
+            out += f'<span class="ob oi" style="{st}" aria-hidden="true"><img src="{M}{e(icon)}" alt="" draggable="false"></span>'
+            icon = None
+        elif kind == 'dir' and dirs:
+            l = dirs.pop(0)
+            out += f'<a class="ob od" style="{st};--k:{w}" href="{e(l["h"])}">{FOLDER}<span>{e(l["t"])}</span></a>'
+        elif kind == 'tag' and tags:
+            v, l = tags.pop(0)
+            hue = hues[len(tags) % len(hues)]
+            fs = min(28 if w > 90 else 22, int((w - 14) / (.62 * len(v))))
+            out += (f'<div class="ob ot" style="{st}"><div class="tg" style="--r:{turn}deg;--hc:{hue};--ho:{best(hue, "#000000", "#ffffff")};--fs:{fs}">'
+                    f'<b>{e(l)}</b><span>{e(v)}</span><i></i></div></div>')
+        else:
+            continue
+        n += 1
+    return out
 
 
 def s_hero(d, c):
@@ -274,7 +340,7 @@ def s_hero(d, c):
     fs = size(title, [(12, 88), (32, 72), (999, 56)])    # two lines of 16 letters at 72 hold in the 640 column
     fm = size(title, [(12, 56), (999, 36)])
     wh = ''
-    for n, (m, w, pos, top, cut) in enumerate(wins):
+    for n, (m, w, pos, top, cut, _) in enumerate(wins):
         cap = f'<figcaption class="cap" title="{e(m["alt"])}">{e(m["alt"])}</figcaption>' if m.get('alt') else ''
         img = pic(m, lazy=False)
         if cut:
@@ -302,7 +368,7 @@ def s_hero(d, c):
             inner = pic(m, lazy=False)
         cap = f'<figcaption class="cap">{e(m["alt"])}</figcaption>' if m.get('alt') else ''
         bh = f'<figure class="big" style="--bw:{min(800, 520 * asp(m)):.0f}"><div class="fr">{inner}</div>{cap}</figure>'
-    return f'''<section class="hero"><div class="wins">{wh}</div>
+    return f'''<section class="hero"><div class="wins">{things(d, c, wins)}{wh}</div>
 <div class="head"><div class="hg"><h1 style="--fs:{fs};--fm:{fm}">{e(title)}</h1>{sub}{sub2}</div>{btns}</div>
 {bh}</section>'''
 
@@ -502,6 +568,15 @@ button{font:inherit;color:inherit;letter-spacing:inherit;background:none;border:
 .win{position:absolute;display:flex;flex-direction:column;align-items:center;gap:6px;width:calc(var(--u)*var(--w));touch-action:none;user-select:none;animation:hin .45s ease-out both;animation-delay:calc(var(--n)*16ms + .11s)}
 .win .fr,.fig,.note{border:1px solid var(--edge2);border-radius:8px;background:linear-gradient(90deg,var(--clo),var(--chi) 50%,var(--clo))}
 .win .fr{width:100%;padding:8px 4px 4px;filter:drop-shadow(0 10px 12px rgba(0,0,0,.12));transition:transform .12s ease;cursor:grab}.win.held .fr{transform:scale(.97);cursor:grabbing}
+.ob{position:absolute;width:calc(var(--u)*var(--w));touch-action:none;user-select:none;animation:hin .45s ease-out both;animation-delay:calc(var(--n)*16ms + .11s)}
+.oi{height:calc(var(--u)*var(--h));display:grid;place-items:center;border-radius:22%;border:1px solid var(--edge2);background:var(--g);filter:drop-shadow(0 4px 6px rgba(0,0,0,.12));cursor:grab}.oi img{max-width:64%;max-height:64%}
+.od{z-index:3;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;line-height:18px;color:var(--mu2);transition:transform .12s ease}.fo{position:relative;display:block;width:calc(var(--u)*var(--k));aspect-ratio:40/31;filter:drop-shadow(0 2px 3px rgba(0,0,0,.18))}
+.fo::before{content:"";position:absolute;inset:0;border-radius:3px;background:var(--fd);clip-path:polygon(0 0,40% 0,50% 16%,100% 16%,100% 100%,0 100%)}
+.fo::after{content:"";position:absolute;inset:26% 0 0;border-radius:3px;background:linear-gradient(var(--fl),var(--a));box-shadow:inset 0 1px 0 var(--hl)}
+.od span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.od:hover{color:var(--i)}.od:active{transform:scale(.97)}
+.ot{z-index:3;height:calc(var(--u)*var(--h));cursor:grab}.tg{display:flex;flex-direction:column;height:100%;rotate:var(--r);border-radius:3px;overflow:hidden;background:var(--tgb);color:var(--tgi);box-shadow:0 .7px 1.4px rgba(0,0,0,.25);text-align:center}
+.tg b{flex:none;padding:calc(var(--u)*5) 4px;background:var(--hc);color:var(--ho);font-size:max(9px,calc(var(--u)*11));line-height:1.2;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tg span{flex:1;display:grid;place-items:center;font-size:calc(var(--u)*var(--fs));line-height:1;font-weight:500;letter-spacing:-.02em;white-space:nowrap}.tg i{flex:none;height:14%;background:var(--hc)}
 .scr{border-radius:4px;overflow:hidden;background:var(--clo)}.scr img{width:100%}.scr.dt{position:relative}.scr.dt img{position:absolute;max-width:none;height:auto}
 .head{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:32px;min-height:526px;padding:200px 20px 32px;text-align:center;pointer-events:none;animation:hin .45s ease-out .05s both}.head>*{pointer-events:auto}
 .hg{display:flex;flex-direction:column;align-items:center;gap:8px;max-width:calc(var(--u)*640)}
@@ -608,7 +683,7 @@ h1{font-weight:500;font-size:calc(var(--u)*var(--fs));line-height:1.1;letter-spa
 .faq{padding:96px 20px 40px}.ql{margin-top:40px}.q{padding:18px}.qb{font-size:18px}.ac p{font-size:15px;line-height:22.5px}
 .foot{padding:40px 20px 24px}.fl{display:grid;grid-template-columns:1fr 1fr;gap:32px 24px}.fcol{gap:10px}.mark{margin-top:28px}}
 @media (max-width:1023px) and (min-width:640px){.rows,.dream,.fb,.pr,.faq{padding-left:max(20px,50% - 300px);padding-right:max(20px,50% - 300px)}.rows{padding-left:0;padding-right:0}.row,.row.r{padding-left:max(20px,50% - 300px);padding-right:max(20px,50% - 300px)}.mq{margin:0 calc(50% - 50vw)}}
-@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;scroll-behavior:auto!important}.js .row.dim{transform:none}.rv,.js .rv{opacity:1;translate:none;scale:none;transition:none}.btn,.win .fr,.bub,.pl,.aw{transition:none!important}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;scroll-behavior:auto!important}.js .row.dim{transform:none}.rv,.js .rv{opacity:1;translate:none;scale:none;transition:none}.btn,.win .fr,.od,.bub,.pl,.aw{transition:none!important}}
 '''
 
 JS = r'''
@@ -617,7 +692,7 @@ const still=matchMedia('(prefers-reduced-motion:reduce)').matches;R.classList.ad
 /* arrival */
 const rv=$$('.rv');if('IntersectionObserver' in window&&!still){const io=new IntersectionObserver(es=>es.forEach(x=>{if(x.isIntersecting){x.target.classList.add('in');io.unobserve(x.target)}}),{threshold:.08,rootMargin:'0px 0px -6% 0px'});rv.forEach(x=>io.observe(x))}else rv.forEach(x=>x.classList.add('in'));
 /* small windows: picked up (.97), carried, left where they are dropped */
-let zi=10;$$('.win').forEach(w=>{let sx=0,sy=0,ox=0,oy=0,on=false;
+let zi=10;$$('.win,.oi,.ot').forEach(w=>{let sx=0,sy=0,ox=0,oy=0,on=false;
  w.addEventListener('pointerdown',ev=>{if(ev.button)return;on=true;sx=ev.clientX-ox;sy=ev.clientY-oy;w.classList.add('held');w.style.zIndex=++zi;w.setPointerCapture(ev.pointerId)});
  w.addEventListener('pointermove',ev=>{if(!on)return;ox=ev.clientX-sx;oy=ev.clientY-sy;w.style.transform=`translate(${ox}px,${oy}px)`});
  const end=()=>{on=false;w.classList.remove('held')};w.addEventListener('pointerup',end);w.addEventListener('pointercancel',end)});
@@ -656,7 +731,8 @@ def render(d: dict) -> str:
          f'--ln:{rgba(I, .08 if dk else .05)};--ln2:{rgba(I, .12 if dk else .08)};--ln3:{rgba(I, .28)};--dot:{rgba(I, .16 if dk else .13)};'
          f'--gl:{rgba("#ffffff", .16 if dk else .8)};--hl:{rgba("#ffffff", .14 if dk else .8)};--hl2:{rgba("#ffffff", .08 if dk else .25)};'
          f'--gs:{rgba(c["card"], .5 if dk else .3)};--gh:{mix(I, G, .6)};--wq:{mix(I, G, .72)};--veil:{rgba(G, .96)};--veil0:{rgba(G, 0)};'
-         f'--at:{rgba(A, .2)};--ah:{rgba(A, .35)};--a6:{rgba(A, .6)};--a0:{rgba(A, 0)};--term:{rgba(c["term"], .96)};--btc:{c["btc"]};--ton:{c["ton"]};--tmu:{c["tmu"]};--mk:{c["mark"]}')
+         f'--at:{rgba(A, .2)};--ah:{rgba(A, .35)};--a6:{rgba(A, .6)};--a0:{rgba(A, 0)};--term:{rgba(c["term"], .96)};--btc:{c["btc"]};--ton:{c["ton"]};--tmu:{c["tmu"]};--mk:{c["mark"]};'
+         f'--tgb:{I if dk else "#ffffff"};--tgi:{G if dk else I};--fl:{mix(A, "#ffffff", .38)};--fd:{mix(A, "#000000", .28)}')
     body = ''.join(f(d, c) for f in (s_menubar, s_hero, s_steps, s_statement, s_wall, s_plans, s_faq, s_foot))
     title = ' — '.join(x for x in (b.get('name'), hero.get('title')) if x)
     fams = (f'family={FONT}:wght@300;400;500&family={MONO.replace(" ", "+")}:wght@400;500&family={BLOCK.replace(" ", "+")}:wght@700')

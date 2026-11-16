@@ -371,3 +371,36 @@ def test_a_small_window_shows_the_product_not_the_apps_own_menu_or_a_bar_of_cont
     assert abs(C.busiest(loud, .05, .05)[0] - 20.5 / 32) < .04            # a part one cell high: never an empty one for a loud one
     js = (ROOT / 'lib' / 'templates' / 'registry.py').read_text()
     assert 'Math.max(Math.min(g[r][c],1),Math.min(g[r][c],CAP)' in js and R.CAP == C.CAP and R.RING == C.RING
+
+
+def test_the_windows_opening_keeps_the_clients_own_small_things_between_its_windows():
+    """Beside the reference (2026-11-16): its desktop has small things between the windows, ours had none. Ours are
+    the client's own in the reference's places — a folder for each of the first two links of the menu (the link
+    itself), the mark as an app's icon, a tag for a figure and for a plan's price — and one with nothing of the
+    client's for it is not drawn; none lies on the headline's column, none is more than a fifth under a window."""
+    R = _clicky()
+    scr = [{'src': 'media/screen-%d.jpg' % i, 'w': 1800, 'h': 1125, 'alt': 'S%d' % i} for i in range(1, 7)]
+    base = {'hero': {'title': 'Your team. Your game plan.'}, 'media': {'screens': scr, 'phones': [], 'photos': []}}
+    c = R.colours({'ground': '#14120f', 'ink': '#f7dbba', 'accent': '#ff4a1f'})
+    assert 'class="ob ' not in R.s_hero(base, c)                      # nothing of the client's: nothing drawn
+    full = dict(base, brand={'name': 'N', 'logo': 'media/logo.svg'},
+                nav=[{'t': 'Blog', 'h': '/blog'}, {'t': 'A name far too long for a folder', 'h': '/x'}, {'t': 'Pricing', 'h': '/pricing'}, {'t': 'Docs', 'h': '/docs'}],
+                figures=[{'v': '42%', 'l': 'Hit rate'}, {'v': 'many', 'l': 'teams'}, {'v': '1.80', 'l': 'Avg odds'}],
+                plans={'items': [{'name': 'Pro', 'price': '€69'}, {'name': 'Free', 'price': 'Free'}]})
+    page = R.s_hero(full, c)
+    assert re.findall(r'class="ob od"[^>]*href="([^"]+)"', page) == ['/blog', '/pricing']
+    assert page.count('class="ob oi"') == 1 and 'media/logo.svg' in page
+    assert re.findall(r'<b>([^<]+)</b><span>([^<]+)</span>', page) == [('Hit rate', '42%'), ('Pro', '€69')]   # one of each; no tag without a number
+    assert 'class="ob oi"' not in R.s_hero(dict(full, brand={'name': 'N', 'logo': 'media/logo.svg', 'logo_wordmark': True}), c)
+    # places: clear of the headline's column; a thing a window would cover is left out
+    _, wins = R.hero_media(full)
+    boxes = [w[5] for w in wins]
+    for kind, anchor, off, top, w, h, turn in R.THINGS:
+        x = {'c': 720 + off, 'l': off, 'r': 1440 - off - w}[anchor]
+        assert not R._over((x, top, w, h), R.HEAD), kind
+    wide = [(dict(scr[0]), 300, '', 200, None, (250, 200, 300, 200))]   # a window lying where the left folder stands
+    left = R.things(full, c, wide)                                      # … leaves one folder's place: the first link takes it
+    assert left.count('class="ob od"') == 1 and 'right:calc' in left.split('class="ob od"')[1][:40] and 'href="/blog"' in left
+    assert all(max(R._over((1230, 141, 104, 77), b) for b in boxes) <= .2 for _ in [0])
+    src = (ROOT / 'lib' / 'templates' / 'clicky' / 'render.py').read_text()
+    assert "$$('.win,.oi,.ot')" in src and '.wins{display:none}' in src      # carried like the windows; none on a phone
