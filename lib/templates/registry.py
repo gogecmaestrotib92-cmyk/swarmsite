@@ -131,6 +131,7 @@ def rebase(page, d, media_base):
 def _page(slug, d, root=None):
     """the template's page with what the template has no place for added under its sections (more.py): the client's
     leftover sections in their own words, and the photographs the page did not ask for"""
+    d = _subject(d)
     page = load(slug, root).render(d)
     if not isinstance(page, str):
         raise TemplateError('template %r returned %s, not a page' % (slug, type(page).__name__))
@@ -173,10 +174,17 @@ def _page(slug, d, root=None):
 # with object-fit: none (a crop), and the box is held at the size the template gave it. Measured again on every resize, so a phone width gets its own crop.
 # The client's phone screens follow the same rule since 2026-11-16: two templates showed them at 34–43 % of their width.
 LOW, READ = .45, .6
-READABLE = ('(()=>{const D=JSON.parse(document.getElementById("sw-detail").textContent),LOW=%s,READ=%s;'
+# Which part: the most detail alone chose the app's own menu and its bars of filters (a window on a court-sports app
+# showed an empty side column and a button; owner's review 2026-11-16). The part is now the one most evenly full of
+# the product — a cell counts up to CAP, so one loud button does not outweigh a list — whose edge runs through the
+# least (RING of what lies on its edge is taken off, a cell with anything on it never counting under 1: a part that cuts nothing in half), on a map where the app's
+# frame has been taken out (`_subject`). clicky/render.py `busiest` is the same rule, written there for its own windows.
+CAP, RING = 20, .25
+READABLE = ('(()=>{const D=JSON.parse(document.getElementById("sw-detail").textContent),LOW=%s,READ=%s,CAP=%s,RING=%s;'
             'const name=s=>{const m=(s||"").match(/([^\\/?#]+)(?:[?#].*)?$/);return m&&m[1]};'
-            'const busiest=(g,fw,fh)=>{const R=g.length,C=g[0].length,w=Math.max(1,Math.min(C,Math.round(fw*C))),h=Math.max(1,Math.min(R,Math.round(fh*R)));let b=-1,bx=0,by=0;'
-            'for(let y=0;y+h<=R;y++)for(let x=0;x+w<=C;x++){let v=0;for(let r=y;r<y+h;r++)for(let c=x;c<x+w;c++)v+=g[r][c];if(v>b){b=v;bx=x;by=y}}return[(bx+w/2)/C,(by+h/2)/R]};'
+            'const busiest=(g,fw,fh)=>{const R=g.length,C=g[0].length,w=Math.max(1,Math.min(C,Math.round(fw*C))),h=Math.max(1,Math.min(R,Math.round(fh*R)));let b=-1/0,bx=0,by=0;'
+            'for(let y=0;y+h<=R;y++)for(let x=0;x+w<=C;x++){let v=0;for(let r=y;r<y+h;r++)for(let c=x;c<x+w;c++)'
+            'v+=Math.max(Math.min(g[r][c],1),Math.min(g[r][c],CAP)-(r===y||r===y+h-1||c===x||c===x+w-1?RING*g[r][c]:0));if(v>b){b=v;bx=x;by=y}}return[(bx+w/2)/C,(by+h/2)/R]};'
             'const undo=im=>{if(!im.dataset.swDt)return;const o=JSON.parse(im.dataset.swDt);for(const k in o)im.style[k]=o[k];'
             'for(const[a,k]of[["srcset","swSs"],["sizes","swSz"]])if(im.dataset[k]!==undefined){if(im.dataset[k])im.setAttribute(a,im.dataset[k]);else im.removeAttribute(a);delete im.dataset[k]}delete im.dataset.swDt};'
             'const fit=()=>{const ims=[...document.images].filter(im=>D[name(im.getAttribute("src"))]&&im.naturalWidth);ims.forEach(undo);'
@@ -192,7 +200,66 @@ READABLE = ('(()=>{const D=JSON.parse(document.getElementById("sw-detail").textC
             'im.sizes=Math.round(iw)+"px";im.srcset=(im.currentSrc||im.src)+" "+nw+"w"}};'
             'let t;const later=()=>{clearTimeout(t);t=setTimeout(fit,120)};'
             'if(document.readyState==="complete")fit();else addEventListener("load",fit);addEventListener("resize",later);'
-            'for(const im of document.images)if(!im.complete)im.addEventListener("load",later,{once:true})})()') % (LOW, READ)
+            'for(const im of document.images)if(!im.complete)im.addEventListener("load",later,{once:true})})()') % (LOW, READ, CAP, RING)
+
+
+def _frame(grids):
+    """for maps of one shape (three or more screens of one product): the box of each [x0, y0, x1, y1] past the app's
+    own frame — the columns and rows at its edges that say the same on most of the screens (a side menu, a top bar,
+    a notice), or nothing at all. None where a screen has no such frame or would lose more than half of itself."""
+    n, R, C = len(grids), len(grids[0]), len(grids[0][0])
+    out = []
+    for g in grids:
+        def same(r, c):
+            vs = sorted(x[r][c] for x in grids)
+            md = (vs[(n - 1) // 2] + vs[n // 2]) / 2
+            tol = max(3, .25 * md)
+            return abs(g[r][c] - md) <= tol and sum(1 for v in vs if abs(v - md) <= tol) * 3 >= n * 2
+        S = [[same(r, c) for c in range(C)] for r in range(R)]
+        # a column or row with nothing on it is no frame: an empty margin stays with the screen
+        col = lambda c: sum(S[r][c] for r in range(R)) >= .85 * R and sum(1 for r in range(R) if g[r][c] >= 6) >= 2
+        x0, x1 = 0, C
+        while x0 < C // 2 and col(x0):
+            x0 += 1
+        while x1 > C // 2 and col(x1 - 1):
+            x1 -= 1
+
+        def row(r):
+            busy = [c for c in range(x0, x1) if g[r][c] >= 6]
+            return len(busy) >= 2 and sum(S[r][c] for c in busy) >= .7 * len(busy)
+        y0, y1 = 0, R
+        while y0 < R // 3 and row(y0):
+            y0 += 1
+        while y1 > R - R // 3 and row(y1 - 1):
+            y1 -= 1
+        keep = (x1 - x0) * 2 >= C and (y1 - y0) * 2 >= R and (x0, y0, x1, y1) != (0, 0, C, R)
+        out.append([x0, y0, x1, y1] if keep else None)
+    return out
+
+
+def _subject(d):
+    """the data with each product screen's map of detail cleared where the app's own frame is (`_frame`), so no
+    template shows a menu for a product. A copy where anything changes; the caller's dict is not touched."""
+    md = d.get('media') if isinstance(d.get('media'), dict) else None
+    if not md:
+        return d
+    new = {}
+    for kind in ('screens', 'phones'):
+        ms = md.get(kind) if isinstance(md.get(kind), list) else []
+        shapes = {}
+        for i, m in enumerate(ms):
+            g = m.get('detail') if isinstance(m, dict) else None
+            if isinstance(g, list) and g and g[0] and all(isinstance(r, list) and len(r) == len(g[0]) and all(isinstance(v, (int, float)) for v in r) for r in g):
+                shapes.setdefault((len(g), len(g[0])), []).append(i)
+        for idx in shapes.values():
+            if len(idx) < 3:
+                continue
+            for i, box in zip(idx, _frame([ms[i]['detail'] for i in idx])):
+                if box:
+                    x0, y0, x1, y1 = box
+                    g = [[v if x0 <= c < x1 and y0 <= r < y1 else 0 for c, v in enumerate(row)] for r, row in enumerate(ms[i]['detail'])]
+                    new.setdefault(kind, list(ms))[i] = {**ms[i], 'detail': g}
+    return {**d, 'media': {**md, **new}} if new else d
 
 
 def _readable(d, page):
