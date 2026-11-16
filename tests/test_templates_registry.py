@@ -321,3 +321,53 @@ def test_a_phone_screen_is_in_the_map_at_the_width_it_was_drawn_in():
     md['phones'][0].pop('detail')
     m = re.search(r'<script type="application/json" id="sw-detail">(.*?)</script>', R.render('linearity', d), re.S)
     assert not m or 'phone-1.jpg' not in json.loads(m.group(1))
+
+
+def test_a_small_window_shows_the_product_not_the_apps_own_menu_or_a_bar_of_controls():
+    """The owner's review of a court-sports app (2026-11-16): the part with most detail was the app's side menu with
+    one loud button, or a bar of filters. Where three screens or more of one product share a frame (the same columns
+    and rows at their edges), the frame is taken out of each screen's map before any template reads it; the part
+    chosen is the one most evenly full whose edge cuts least; the caller's data is not changed, and one or two
+    screens are left as they are, and of screens that are all alike no more than the edges are taken."""
+    def screen(k):
+        g = [[0] * 32 for _ in range(22)]
+        for r in range(22):
+            for c in range(6):
+                g[r][c] = 30 if r % 2 else 12                         # the side menu: the same on every screen
+        for c in range(6, 32):
+            g[0][c] = 25                                              # the top bar
+        g[19][2] = 99                                                 # its one loud button
+        for r in range(4 + k, 12 + k):
+            for c in range(10 + k, 24 + k):
+                g[r][c] = 18 + (r + c + k) % 9                        # the screen's own content, different on each
+        return g
+    grids = [screen(k) for k in range(4)]
+    boxes = R._frame(grids)
+    assert all(b and b[0] == 6 and b[1] >= 1 for b in boxes), boxes
+    d = {'media': {'screens': [{'src': 'media/tab%d.jpg' % i, 'w': 767, 'h': 533, 'detail': g} for i, g in enumerate(grids)]}}
+    before = copy.deepcopy(d)
+    out = R._subject(d)
+    assert d == before and out is not d
+    g0 = out['media']['screens'][0]['detail']
+    assert all(g0[r][c] == 0 for r in range(22) for c in range(6)) and g0[0][20] == 0 and g0[6][14] == grids[0][6][14]
+    C = _clicky()
+    fx, fy = C.busiest(g0, .3, .3)
+    assert .3 < fx < .8 and .15 < fy < .6, (fx, fy)                   # with the frame out: the content
+    two = {'media': {'screens': d['media']['screens'][:2]}}
+    assert R._subject(two) is two
+    alike = {'media': {'screens': [{'src': 'a%d.jpg' % i, 'w': 767, 'h': 533, 'detail': grids[0]} for i in range(3)]}}
+    ga = R._subject(alike)['media']['screens'][0]['detail']          # screens all alike: never more than the edges go
+    assert ga[10][16] == grids[0][10][16] and sum(1 for r in ga if any(r)) * 2 >= 8
+    # a list beside a louder bar of controls: the evenly full part wins, and its edge does not run through the bar
+    g = [[0] * 32 for _ in range(22)]
+    for c in range(8, 20):
+        g[3][c] = 95
+    for r in range(8, 15):
+        for c in range(8, 18):
+            g[r][c] = 22
+    assert C.busiest(g, .32, .3)[1] > .4
+    loud = [[0] * 32 for _ in range(22)]
+    loud[10][20] = loud[10][21] = 99
+    assert abs(C.busiest(loud, .05, .05)[0] - 20.5 / 32) < .04            # a part one cell high: never an empty one for a loud one
+    js = (ROOT / 'lib' / 'templates' / 'registry.py').read_text()
+    assert 'Math.max(Math.min(g[r][c],1),Math.min(g[r][c],CAP)' in js and R.CAP == C.CAP and R.RING == C.RING

@@ -190,18 +190,23 @@ SLOTS = [  # the five small windows of the opening at 1440: anchor, offset, top,
 READ = .7   # the least a product's screen is shown at in a small window, of its own size: 13 px letters stand 9 px high
 
 
+CAP, RING = 20, .25   # as the registry's rule for every template: a cell counts up to CAP, RING of the edge is taken off
+
+
 def busiest(grid, fw, fh, pad=None):
-    """the centre (fractions) of the part of a screen fw wide and fh tall (fractions) holding the most of the product:
+    """the centre (fractions) of the part of a screen fw wide and fh tall (fractions) most evenly full of the product
+    with the least cut by its edge — a list or a drawing whole, not a bar of filters or half a button (2026-11-16):
     on capture's map of detail; with no map, the middle of the screen past the flat margin round it"""
     if not grid:
         l = (pad or [0, 0])[0] or 0
         return l + .5 * (1 - 2 * l), .4
     R, C = len(grid), len(grid[0])
     w, h = max(1, min(C, round(fw * C))), max(1, min(R, round(fh * R)))
-    best_v, at = -1, (0, 0)
+    best_v, at = float('-inf'), (0, 0)
     for y in range(R - h + 1):
         for x in range(C - w + 1):
-            v = sum(sum(row[x:x + w]) for row in grid[y:y + h])
+            v = sum(max(min(grid[r][c], 1), min(grid[r][c], CAP) - (RING * grid[r][c] if r in (y, y + h - 1) or c in (x, x + w - 1) else 0))
+                    for r in range(y, y + h) for c in range(x, x + w))
             if v > best_v:
                 best_v, at = v, (x, y)
     return (at[0] + w / 2) / C, (at[1] + h / 2) / R
