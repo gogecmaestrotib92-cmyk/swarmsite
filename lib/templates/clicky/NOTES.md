@@ -5,8 +5,11 @@ No cookie wall, no loader. Measurements are in `ref/` (`anatomy.json`, `tree-d.j
 type, ground, radius, shadow, transition; `rules.json` — keyframes, hover/active rules, breakpoints) and the probe scripts
 in `probe/` (run with `tools/run.sh node clicky/probe/<name>.mjs`; `show.py d <y0> <y1>` prints a slice of the box tree).
 
-The page is a desktop: everything is a window. That idiom is the build and is kept; the reference's stickers, memes,
-emoticons, folder icons and name tags scattered over it are its illustrations and are not taken.
+The page is a desktop: everything is a window. That idiom is the build and is kept; the reference's memes, emoticons,
+bin and telephone scattered over it are its illustrations and are not taken. Three kinds of its small things are, with
+the client's own content in the reference's places (2026-11-16, `things` in render.py): a folder for each of the first
+two links of the client's menu (it is that link), the client's mark as an app's icon, and a tag for a figure the client
+states and for a plan's price. One with nothing of the client's for it is not drawn.
 
 ## Sections of the reference, and the data each takes
 
@@ -78,7 +81,9 @@ The reference's greys at 60 / 50 / 40 / 30 % ink are below 4.5:1; ours are solve
 - **Contrast.** Greys darkened (see Colour); the sky gets a veil behind the heading (below).
 
 ## What could not be transferred, and why
-- Stickers, memes, emoticons, folder and bin icons, name tags, the rainbow badge, the cap — the reference's illustrations.
+- Memes, emoticons, the bin, the telephone, the waiting ball, the cap — the reference's illustrations. Its small
+  unframed pictures were tried with a client's left-over photographs and dropped: dark pictures 72 px wide were
+  smudges on a dark page, and the data does not say whether a photograph reads that small.
 - The folder-arch film behind the notes window and the name built from folders — illustrations; a made photograph and
   a block typeface stand in.
 - Films inside the small windows and the row windows (the clients have one film; stills otherwise), the full-screen
