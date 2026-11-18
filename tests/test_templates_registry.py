@@ -250,6 +250,37 @@ def test_the_openings_picture_is_never_what_one_screen_has_left_after_the_words(
     assert 'tiny: []' in gate and "n + '-short'" in gate and 'SHORT = 600' in gate
 
 
+def test_on_a_phone_a_desk_screen_gives_way_to_the_phone_capture_of_the_same_page():
+    """Measured on the seventeen software designs (2026-11-18): at 390 every desk screen stood at 9–25 % of its size,
+    whatever its frame — letters 3 px high. Where the data has the phone capture of the same page (`page`), the desk
+    screen's <img> stands in a <picture> whose source up to NARROW px is that capture (no script), drawn whole and
+    upright; a screen with no such capture is left as it is; a design can say `fit` or `no` on the <img>; the phone
+    file is among the media the page asks for, at any media base; the same data gives the same bytes."""
+    d = copy.deepcopy(CLIENTS['tallyfern'])
+    md = d.setdefault('media', {})
+    scr = md.get('screens') or []
+    assert len(scr) >= 2
+    scr[0] = {**scr[0], 'w': 1800, 'h': 1125, 'page': '/picks'}
+    scr[1] = {**scr[1], 'w': 1800, 'h': 1125, 'page': '/models'}
+    md['phones'] = [{'src': 'media/phone-9.jpg', 'w': 780, 'h': 1616, 'alt': 'app', 'page': '/picks'}]
+    first, second = scr[0]['src'], scr[1]['src']
+    ran = 0
+    for slug in SLUGS:
+        page = R.render(slug, copy.deepcopy(d))
+        assert page == R.render(slug, copy.deepcopy(d))
+        for m in re.finditer(r'<picture class="sw-ph( fit)?" style="--ph:780/1616"><source media="\(max-width:720px\)" srcset="([^"]+)" width="780" height="1616">(<img[^>]*>)</picture>', page):
+            assert m.group(2).endswith('media/phone-9.jpg') and first in m.group(3) and second not in m.group(3) and 'data-sw-ph="no"' not in m.group(3)
+            ran += 1
+        assert '<picture class="sw-ph' not in page or ('<style data-sw-ph>' in page and 'media/phone-9.jpg' in R.media_used(slug, d))
+        assert not re.search(r'<picture class="sw-ph[^>]*>(?:(?!</picture>).)*<picture', page, re.S), 'never a picture inside a picture'
+        based = R.render(slug, copy.deepcopy(d), media_base='https://cdn.example/x/')
+        assert '<picture class="sw-ph' not in based or 'srcset="https://cdn.example/x/media/phone-9.jpg"' in based
+    assert ran >= 5, ran
+    md['phones'][0].pop('page')
+    assert all('<picture class="sw-ph' not in R.render(slug, copy.deepcopy(d)) for slug in SLUGS), 'no capture of the same page: nothing changes'
+    assert R.NARROW == 720 and 'display:contents' in R.PHONE_CSS and 'picture.sw-ph.fit>img{max-height:100%!important}' in R.PHONE_CSS
+
+
 def _clicky():
     spec = importlib.util.spec_from_file_location('clicky_render', ROOT / 'lib' / 'templates' / 'clicky' / 'render.py')
     R = importlib.util.module_from_spec(spec); spec.loader.exec_module(R)

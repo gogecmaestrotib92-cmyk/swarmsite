@@ -123,9 +123,10 @@ def veil_for(m, veil, ink, want=4.5, least=0.0):
 
 
 def pic(m, cls, slot, lazy=True, alt=''):
-    return '<img class="%s" src="%s%s" width="%s" height="%s" alt="%s"%s decoding="async" data-slot="%s">' % (
+    return '<img class="%s" src="%s%s" width="%s" height="%s" alt="%s"%s decoding="async" data-slot="%s"%s>' % (
         cls, M, e(m['src']), int(m.get('w') or 0) or '', int(m.get('h') or 0) or '', e(alt),
-        ' loading="lazy"' if lazy else ' fetchpriority="high"', slot)
+        ' loading="lazy"' if lazy else ' fetchpriority="high"', slot,
+        ' data-sw-ph="no"' if cls == 'sc' else '')   # a screen moved by the scroll inside a frame of its own shape keeps the desk capture on a phone
 
 
 # ---------- text set for the measured motion ----------
