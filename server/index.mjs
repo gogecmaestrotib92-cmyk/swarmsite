@@ -126,6 +126,12 @@ app.post('/jobs', async (req, res) => {
   if (error) return res.status(500).json({ error: error.message });
   res.json({ id: data.id });
 });
+// What this instance's process tree is using (server/load.mjs): for a load measurement (scripts/loadtest.mjs), on a worker
+// started with LOAD_STATS=1 — otherwise there is no sampler and no such address.
+import { makeSampler } from './load.mjs';
+const LOAD = process.env.LOAD_STATS === '1' ? makeSampler({ everyMs: 2000 }) : null; if (LOAD) LOAD.start();
+app.get('/load', (req, res) => { if (!LOAD) return res.status(404).json({ error: 'not measured here' }); if (req.query.reset) LOAD.reset();
+  res.set('cache-control', 'no-store').json({ worker: WORKER_ID.slice(0, 8), slots: WORKER_CONCURRENCY, ...LOAD.stats() }); });
 app.get('/jobs', async (req, res) => { const st = req.query.status || 'running'; const { data } = await sb.from('jobs').select('id,url,status,step,created_at').eq('status', st).order('created_at', { ascending: false }).limit(20); res.json(data || []); });
 app.get('/jobs/:id', async (req, res) => {
   const { data, error } = await sb.from('jobs').select('id,url,status,step,steps,result,error,created_at,options').eq('id', req.params.id).single();
