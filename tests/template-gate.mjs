@@ -36,10 +36,17 @@ try {
     twoh1: page(sound + '<section><h1>A second first heading</h1></section>'),
     // a mark that squashes for good (an animated transform): its layout box keeps the picture's shape — not distorted
     squash: page(sound + '<section><img src="' + PIC + '" width="400" height="200" style="animation:sq .4s infinite alternate" alt=""></section>', '@keyframes sq{to{transform:scaleY(.8) scaleX(1.05)}}'),
-    // a product screen the page's map names, shown in a 300 px box at 300 / 1440 of its width: a smear (small); the same
-    // screen cropped at a size that reads (object-fit: none, the file declared denser) is not
-    smear: page(sound + '<section><img src="s.png" style="width:300px;height:150px" alt=""></section><script type="application/json" id="sw-detail">{"s.png":{"c":1440,"g":[[1]]}}</script>'),
-    readable: page(sound + '<section><img src="s.png" srcset="s.png 400w" sizes="1000px" style="width:300px;height:150px;max-width:none;object-fit:none" alt=""></section><script type="application/json" id="sw-detail">{"s.png":{"c":1440,"g":[[1]]}}</script>'),
+    // a product screen the page's list names (a 2:1 picture). Whole in its box, however small: sound. In a frame that
+    // cuts its sides (a phone's bezel half its width), or drawn larger than its box and cropped: sliced. A frame that
+    // shows its top and four fifths of its depth, and a strip of screens running off the side of a wide band: not sliced
+    whole: page(sound + '<section><div style="width:300px;border-radius:24px;overflow:hidden"><img src="s.png" style="display:block;width:300px;height:150px" alt=""></div></section><script type="application/json" id="sw-detail">{"s.png":{"c":1440}}</script>'),
+    bezel: page(sound + '<section><div style="width:150px;height:150px;border-radius:24px;overflow:hidden"><img src="s.png" style="display:block;width:300px;height:150px;max-width:none;margin-left:-75px" alt=""></div></section><script type="application/json" id="sw-detail">{"s.png":{"c":1440}}</script>'),
+    zoomed: page(sound + '<section><img src="s.png" style="display:block;width:300px;height:150px;object-fit:none" alt=""></section><script type="application/json" id="sw-detail">{"s.png":{"c":1440}}</script>'),
+    covered2: page(sound + '<section><img src="s.png" style="display:block;width:150px;height:150px;object-fit:cover" alt=""></section><script type="application/json" id="sw-detail">{"s.png":{"c":1440}}</script>'),
+    deep: page(sound + '<section><div style="width:300px;height:120px;overflow:hidden"><img src="s.png" style="display:block;width:300px;height:150px" alt=""></div></section><script type="application/json" id="sw-detail">{"s.png":{"c":1440}}</script>'),
+    // a picture of the product that takes what one screen has left after the words: fine on a tall phone, 60 px high on a short one
+    leftover: page('<section style="max-width:none;padding:16px"><h1>The books of a stall</h1><p>Photograph each receipt and the ledger keeps itself.</p><div style="height:calc(100vh - 560px);min-height:20px;display:flex;justify-content:center"><img src="s.png" style="height:100%;width:auto;max-width:100%;object-fit:contain" alt=""></div></section><script type="application/json" id="sw-detail">{"s.png":{"c":1440}}</script>'),
+    strip: page(sound + '<section><div style="width:700px;overflow:hidden"><div style="display:flex;gap:12px;width:960px">' + [0, 1, 2].map(() => '<img src="s.png" style="display:block;width:300px;height:150px;flex:none" alt="">').join('') + '</div></div></section><script type="application/json" id="sw-detail">{"s.png":{"c":1440}}</script>'),
     // a screen of dark ground with the text in one narrow column and nothing beside it: the empty half a picture slot leaves
     blank: page(sound + '<section style="max-width:none;min-height:1800px;background:#0b0b0d;color:#f5f5f5"><h2>Three ways in</h2><p style="max-width:360px">One match, the whole slate, your own bet.</p><div style="height:1500px;margin-left:50%;background:radial-gradient(#0b0b0d,#0c0c0e)"></div></section><section style="max-width:none"><p>The end.</p></section>'),
     // the same column beside a picture that has something in it, and beside a drawn panel: not blank
@@ -104,8 +111,11 @@ try {
   assert.deepEqual(out.squeezed.failed.filter(k => k !== 'blank'), ['distorted']);   // (two small pictures stacked in a wide column leave its side empty: blank too)
   assert.equal(out.squeezed.checks.distorted.filter(d => d.at === 'd').length, 1, 'a squeezed picture is named once; a cropped one (cover) is not');
   assert.ok(out.squash.ok, 'a picture squashed by an animation for a beat is not distorted: ' + JSON.stringify(out.squash.checks));
-  assert.deepEqual(out.smear.failed, ['small']); assert.ok(out.smear.checks.small.some(x => x.at === 'd' && x.file === 's.png' && x.scale < .45), 'the screen shown as a smear is named, with its scale');
-  assert.ok(!out.readable.failed.includes('small'), 'the same screen cropped at a size that reads is not small: ' + JSON.stringify(out.readable.checks.small));
+  assert.ok(!out.whole.failed.includes('sliced'), 'a screen whole in its frame is not sliced, however small: ' + JSON.stringify(out.whole.checks.sliced));
+  for (const [k, side] of [['bezel', .5], ['zoomed', .75], ['covered2', .5]]) { assert.ok(out[k].failed.includes('sliced'), k + ': a screen its frame cuts at the sides is named'); assert.ok(out[k].checks.sliced.some(x => x.file === 's.png' && Math.abs(x.wide - side) < .02), k + ': with the share of its width that is seen ' + JSON.stringify(out[k].checks.sliced)); }
+  assert.ok(out.leftover.failed.includes('tiny') && out.leftover.checks.tiny.some(x => x.at === 'm-short' && x.file === 's.png') && !out.leftover.checks.tiny.some(x => x.at === 'm'), 'a product picture that shrinks to nothing on a short phone screen is named there, and only there: ' + JSON.stringify(out.leftover.checks.tiny));
+  assert.ok(!out.whole.failed.includes('tiny'), 'a screen 300 px wide is not tiny');
+  assert.ok(!out.deep.failed.includes('sliced') && !out.strip.failed.includes('sliced'), 'a frame that shows a screen from its top, and a strip of screens running off the side, are not sliced: ' + JSON.stringify([out.deep.checks.sliced, out.strip.checks.sliced]));
   assert.deepEqual(out.twoh1.failed, ['h1']); assert.equal(out.twoh1.checks.h1[0].count, 2);
   assert.ok(out.unseen.failed.includes('unseen') && out.unseen.checks.unseen.some(u => u.alt === 'steps' && u.shows < 14 && u.holds >= 24), 'dark ink of a see-through picture on a dark ground is not seen: ' + JSON.stringify(out.unseen.checks));
   assert.ok(out.darklogo.failed.includes('unseen') && out.darklogo.checks.unseen.some(u => u.alt === 'mark'), 'a dark logo on a dark bar is not seen: ' + JSON.stringify(out.darklogo.checks));
