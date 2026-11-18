@@ -227,6 +227,8 @@ def s_show(d):
         return ''
     used = {x.get('img') for x in (d.get('steps') or {}).get('items') or []}
     side = next((x for x in (md.get('phones') or []) + (md.get('photos') or []) if x.get('src') and x['src'] not in used and (x.get('h') or 0) > (x.get('w') or 1)), None)
+    if not side:   # the upright place beside the stage takes a phone already shown before a desk screen (340 px: a desk screen stood at 24 % of its size)
+        side = next((x for x in md.get('phones') or [] if x.get('src') and (x.get('h') or 0) > (x.get('w') or 1)), None)
     if not side and len(screens) > 1:
         side = screens[1]
     head = '<h2 class="h2 gr" data-rv>%s</h2>' % rise(f['title'], .07) if f.get('title') else ''

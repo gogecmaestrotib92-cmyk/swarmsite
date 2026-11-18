@@ -155,7 +155,8 @@ def render(d):
         ar = video['w'] / video['h'] if video.get('w') and video.get('h') else 1.6
     else:
         demo_inner, ar = '', 1.6
-    demo_w = 460 if ar >= 1.3 else 400 if ar >= .9 else 330
+    # a desk screen stands 648 px wide (540 × the pin's 1.2): 45 % of its size, where 460 gave 38 % (owner, 2026-11-18: frames in which the letters read)
+    demo_w = 540 if ar >= 1.3 else 400 if ar >= .9 else 330
     fa = ground(pick(sheet, 0) if sheet else None, 'open-back', P[0], lazy=False)
     fb = ground(sheet[1] if len(sheet) > 1 else None, 'open-left', A, lazy=False, pos='0 0')
     fc = ground(sheet[2] if len(sheet) > 2 else None, 'open-low', grey, lazy=False)
@@ -435,9 +436,9 @@ h1{font-size:86.4px;line-height:.93;letter-spacing:-.02em;text-wrap:balance}
 .travel{grid-area:2/1;height:100vh;display:none}
 .pile.has-s2 .travel{display:block}
 .pin{grid-area:1/1/3/2;position:sticky;z-index:2;top:48px;height:100vh;align-self:start;pointer-events:none;overflow:hidden;padding-top:40px}
-.pin-in{height:100%;max-width:1280px;margin:0 auto;padding:0 40px;display:grid;grid-template-columns:1fr 1fr}
+.pin-in{height:100%;max-width:1280px;margin:0 auto;padding:0 40px;display:grid;grid-template-columns:5fr 7fr}
 .pin-col{grid-column:2;display:flex;align-items:center;justify-content:center}
-.demo{position:relative;width:var(--dw);transform:translate(0,-6vh) scale(1.2);will-change:transform}
+.demo{position:relative;width:var(--dw);max-width:calc(100%/1.2);transform:translate(0,-6vh) scale(1.2);will-change:transform}
 .fl{position:absolute;left:50%;top:50%;border-radius:2px;overflow:hidden;will-change:transform,opacity}
 .bgi{position:absolute;inset:0;width:100%;height:100%;max-width:none;object-fit:cover}
 .demo .win{position:relative}
@@ -494,6 +495,8 @@ h1{font-size:86.4px;line-height:.93;letter-spacing:-.02em;text-wrap:balance}
 .dev img{height:100%;width:auto;max-width:none}
 .dev.phone{border-radius:22px}.dev.book{border-radius:3px}
 .sq .dev.phone{height:84%}.sq .dev.book{height:80%}
+/* a phone stands at 45 % of its size at least on a phone's screen (176 px wide, 366 high): it stood at 31-42 % (owner, 2026-11-18: frames in which the letters read) */
+@media (max-width:1023px){.sq:has(.dev.phone){aspect-ratio:358/440}}
 
 /* plans — the coloured band */
 .plans{background:var(--bg);color:var(--fg);--mut:__AMUTED__;--line:color-mix(in srgb,var(--fg) 22%,var(--bg));padding:112px 0;margin-top:48px}
