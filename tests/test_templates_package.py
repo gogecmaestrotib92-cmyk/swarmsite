@@ -186,6 +186,7 @@ def test_a_package_that_does_not_look_like_the_preview_is_refused(tmp_path):
     # the page asks for its own picture and for the photographs it had no place for, set as one strip under its sections (more.py)
     assert rep['fonts'] == [] and rep['media'][0] == 'media/casaolmo/arroz.jpg' and set(rep['media']) <= {p['src'] for p in PLACE['media']['photos']} and len(rep['media']) > 1
     res = P.verify(preview, rep['zip'], tmp_path / 'w1', shots=os.environ.get('PKG_SHOTS') or None)
+    res0 = res
     assert res['ok'] and res['why'] == [] and res['outside'] == [] and [w['at'] for w in res['widths']] == ['d', 'm'] and all(w['worst'] == 0 and w['screens'] >= 2 for w in res['widths']), [(w['at'], w['worst'], w['screens']) for w in res['widths']]
 
     def tampered(name, change):
@@ -206,6 +207,13 @@ def test_a_package_that_does_not_look_like_the_preview_is_refused(tmp_path):
     assert not res['ok'] and any('did not load' in w for w in res['why']), res['why']
     gone = P.verify(preview, tmp_path / 'not-there.zip', tmp_path / 'w9')
     assert gone['ok'] is False and gone['why'], 'a package that cannot be opened is refused, not passed'
+    # a job's packages are compared in one browser, side by side (verify_many): each pair keeps its own verdict and its own reason
+    many = P.verify_many([(preview, rep['zip']), (preview, tmp_path / 'recoloured.zip'), (preview, tmp_path / 'not-there.zip'), (preview, tmp_path / 'calls-out.zip'), (preview, rep['zip'])], tmp_path / 'many')
+    assert [m['ok'] for m in many] == [True, False, False, False, True], [m['why'] for m in many]
+    assert any('screens differ' in w for w in many[1]['why']) and any('unpacked' in w for w in many[2]['why']) and any('tracker.example' in w for w in many[3]['why'])
+    assert many[0]['outside'] == [] and many[4]['outside'] == [] and [w['at'] for w in many[0]['widths']] == ['d', 'm'], 'what one package asks the network for is not held against another'
+    assert all(w['worst'] == 0 and w['screens'] == v['screens'] for m in (many[0], many[4]) for w, v in zip(m['widths'], res0['widths'])), 'side by side reads what one by one read'
+    assert P.verify_many([], tmp_path / 'none') == []
 
 
 @pytest.mark.skipif(not HAS_BROWSER, reason='needs node and Chrome (CHROME_PATH)')

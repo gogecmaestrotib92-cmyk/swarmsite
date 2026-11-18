@@ -3,7 +3,7 @@
 
    capture (Playwright) → read (the reader, then the page's blocks placed by number: the two paid model calls of this path) → choose (lib/templates/job.py build:
    adapt → select → render three → gate) → publish (the variants that passed the gate, as preview pages) → package
-   (lib/templates/job.py package: zip + offline comparison with the preview; uploaded to a private bucket).
+   (lib/templates/job.py packages: the zips + their offline comparison with the previews, in one browser; uploaded to a private bucket).
 
    A site from nothing (options.source = 'form'): form (the visitor's own words and photographs; lib/templates/form.py)
    in place of capture and read — the same choose, publish and package after it, and no paid call.
@@ -121,6 +121,10 @@ export const SLUG = /^[a-z0-9][a-z0-9_-]{0,63}$/;
 const READER = 'import sys; sys.path.insert(0, "lib/swarm"); import agents, json; f = agents.reader(sys.argv[1]); assert f, "reader did not produce a factsheet"; print(json.dumps({"what": f.get("what", ""), "n": len(f.get("facts", []))}))';
 const lastJson = out => String(out || '').trim().split('\n').reverse().map(l => { try { return JSON.parse(l); } catch { return null; } }).find(x => x && typeof x === 'object');
 const walk = (dir, base = dir) => fs.existsSync(dir) ? fs.readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(path.join(dir, e.name), base) : [path.relative(base, path.join(dir, e.name))]) : [];
+// `n` at a time, in order of starting; the first failure is the answer, once what was started has ended
+export async function pooled(items, n, fn) { let next = 0, failed = null;
+  await Promise.all(Array.from({ length: Math.min(n, items.length) }, async () => { while (next < items.length && !failed) { const i = next++; try { await fn(items[i], i); } catch (e) { failed ||= e; } } }));
+  if (failed) throw failed; }
 const TYPE = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.avif': 'image/avif', '.mp4': 'video/mp4', '.webm': 'video/webm' };
 
 /* deps: { job, dir, jobRoot, run, upload(local, key, type) → public url, uploadPrivate(local, key, type), publicBase(key) → url,
@@ -192,7 +196,12 @@ export async function runTemplateJob(deps) {
   });
   const variants = await step('publish', async () => {
     const shown = built.shown.filter(s => SLUG.test(s));
-    for (const rel of walk(path.join(tdir, 'media'))) await deps.upload(path.join(tdir, 'media', rel), `${job.id}/t/media/${rel.split(path.sep).join('/')}`, TYPE[path.extname(rel).toLowerCase()] || 'application/octet-stream');
+    // the covers are photographed while the media go up (they are taken from the pages on disk, and wait for no upload),
+    // and the media go up six at a time: the step used to do each of these one after another (measured 2026-11-18: 13 s median)
+    const cd = path.join(tdir, 'covers');
+    const photographed = shown.length ? run('node', ['lib/templates/covers.mjs', cd, ...shown.map(s => path.join(tdir, `${s}.html`))], { timeoutMs: 120000 }).then(o => ({ r: lastJson(o) || {} }), e => ({ e })) : null;
+    await pooled(walk(path.join(tdir, 'media')), 6, rel => deps.upload(path.join(tdir, 'media', rel), `${job.id}/t/media/${rel.split(path.sep).join('/')}`, TYPE[path.extname(rel).toLowerCase()] || 'application/octet-stream'))
+      .catch(async e => { await photographed; throw e; });   // no child process is left running behind a failed step
     const out = [];
     // a design's address, its preview file and everything a visitor sees name it by its id (v1 …) and its name (Design 1 …);
     // `slug` (the template) stays in the job for the server (server/designs.mjs, owner's rule of 2026-11-12)
@@ -206,8 +215,8 @@ export async function runTemplateJob(deps) {
     }
     // each design's cover: its first screen photographed at rest (lib/templates/covers.mjs), so the chooser never shows a
     // page caught half-drawn. A cover that could not be taken leaves that card to its live preview — never the job.
-    if (shown.length) try {
-      const cd = path.join(tdir, 'covers'), r = lastJson(await run('node', ['lib/templates/covers.mjs', cd, ...shown.map(s => path.join(tdir, `${s}.html`))], { timeoutMs: 120000 })) || {};
+    if (photographed) try {
+      const { r, e } = await photographed; if (e) throw e;
       for (const v of out) { const f = r.covers?.[v.slug]; if (f && fs.existsSync(path.join(cd, f))) v.cover = await deps.upload(path.join(cd, f), `${job.id}/t/${v.id}-cover.jpg`, 'image/jpeg'); }
     } catch (e) { await deps.emit([{ role: 'QA', text: 'The covers could not be photographed; the previews are shown live' }]); }
     // the job's data store: the client's data, and each variant's own (with its family of made pictures), in the private
@@ -229,10 +238,19 @@ export async function runTemplateJob(deps) {
     return out;
   });
   await step('package', async () => {
-    for (const v of variants) {
-      const zip = path.join(tdir, `${v.slug}.zip`); let r;
-      try { r = lastJson(await run('python3', ['lib/templates/job.py', 'package', tdir, v.slug, zip, '--verify'], { timeoutMs: 240000 })); }
-      catch (e) { r = { ok: false, why: ['the package could not be made: ' + String(e.message).slice(-200)] }; }   // a crash refuses the package, never the previews
+    const zipOf = v => path.join(tdir, `${v.slug}.zip`);
+    const one = async v => { try { return lastJson(await run('python3', ['lib/templates/job.py', 'package', tdir, v.slug, zipOf(v), '--verify'], { timeoutMs: 240000 })); }
+      catch (e) { return { ok: false, why: ['the package could not be made: ' + String(e.message).slice(-200)] }; } };   // a crash refuses the package, never the previews
+    // The packages of a job are made in one call and compared with their previews in one browser, side by side
+    // (lib/templates/job.py packages): three used to be three browsers one after another, the longest step of a job and
+    // most of it waiting (measured 2026-11-18, production: median 97 s of 252). Each keeps its own verdict. When that one
+    // call cannot answer for every design, each is made by itself as before — slower, never fewer packages.
+    let all = null;
+    if (variants.length > 1) try { const r = lastJson(await run('python3', ['lib/templates/job.py', 'packages', tdir, ...variants.flatMap(v => [v.slug, zipOf(v)]), '--verify'], { timeoutMs: 420000 }));
+      if (Array.isArray(r?.packages) && r.packages.length === variants.length && r.packages.every((p, i) => p && p.slug === variants[i].slug && typeof p.ok === 'boolean')) all = r.packages; }
+      catch (e) { console.warn('packages: made one by one —', String(e && e.message || e).slice(0, 200)); }
+    for (const [i, v] of variants.entries()) {
+      const zip = zipOf(v), r = all ? all[i] : await one(v);
       if (r?.ok && fs.existsSync(zip)) { await deps.uploadPrivate(zip, `${job.id}/${v.slug}.zip`, 'application/zip'); v.package = 'ready'; v.bytes = r.bytes; }
       else { v.package = 'refused'; v.package_why = (r?.why || []).slice(0, 3); }
     }

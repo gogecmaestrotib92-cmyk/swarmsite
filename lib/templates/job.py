@@ -23,6 +23,9 @@ for a variant the visitor may download, the package.
         prints templates.json as one line
     python3 lib/templates/job.py package <out dir> <slug> <zip> [--verify]
         prints {slug, ok, why, bytes, files, ms} as one line and exits 0; ok=false means the package is refused
+    python3 lib/templates/job.py packages <out dir> <slug> <zip> [<slug> <zip> …] [--verify]
+        the same for every variant of a job, compared with their previews in one browser side by side;
+        prints {packages: [{slug, ok, why, bytes, files, ms}, …]} as one line, in the order given, and exits 0
 
 No model call: the reader's call happened before this, in the job. No network except the gate's and the package's
 font files (Google Fonts) and nothing at all for the rest. A variant that fails the gate is not shown.
@@ -362,10 +365,9 @@ def choose(data, out, base='', limit=3, gate_kw=None, library=None, t=None):
             'rejected': rejected, 'group': PI.niche_group(data)[0], 'library': len(copied), 'timings_ms': t}
 
 
-def package(out, slug, zip_path, verify=True, workdir=None):
-    P, R = _mod('package'), _mod('registry')
-    out = Path(out)
-    t0 = time.perf_counter()
+def _pack(out, slug, zip_path):
+    """the zip of one shown variant -> (its result so far, whether there is a zip to compare)"""
+    P = _mod('package')
     try:
         own = out / (slug + '.data.json')                             # a variant with made pictures has its own data
         data = json.loads((own if own.is_file() else out / 'data.json').read_text(encoding='utf-8'))
@@ -374,15 +376,42 @@ def package(out, slug, zip_path, verify=True, workdir=None):
             raise P.PackageError('%s is not a variant this job shows' % slug)
         rep = P.build(slug, data, out, zip_path)
     except (P.PackageError, OSError, ValueError) as ex:
-        return {'slug': slug, 'ok': False, 'why': [str(ex)[:300]], 'ms': round((time.perf_counter() - t0) * 1000)}
-    res = {'slug': slug, 'ok': True, 'why': [], 'bytes': rep['bytes'], 'files': len(rep['files']), 'fonts': len(rep['fonts'])}
-    if verify:
+        return {'slug': slug, 'ok': False, 'why': [str(ex)[:300]]}, False
+    return {'slug': slug, 'ok': True, 'why': [], 'bytes': rep['bytes'], 'files': len(rep['files']), 'fonts': len(rep['fonts'])}, True
+
+
+def _verdict(res, v):
+    res.update(ok=bool(v.get('ok')), why=v.get('why') or [], compared=[{k: w.get(k) for k in ('at', 'screens', 'worst')} for w in v.get('widths') or []])
+
+
+def package(out, slug, zip_path, verify=True, workdir=None):
+    P = _mod('package')
+    out = Path(out)
+    t0 = time.perf_counter()
+    res, built = _pack(out, slug, zip_path)
+    if built and verify:
         import tempfile
         with tempfile.TemporaryDirectory(prefix='pkg-', dir=workdir) as tmp:
-            v = P.verify(out / (slug + '.html'), zip_path, tmp)
-        res.update(ok=bool(v.get('ok')), why=v.get('why') or [], compared=[{k: w.get(k) for k in ('at', 'screens', 'worst')} for w in v.get('widths') or []])
+            _verdict(res, P.verify(out / (slug + '.html'), zip_path, tmp))
     res['ms'] = round((time.perf_counter() - t0) * 1000)
     return res
+
+
+def packages(out, items, verify=True, workdir=None):
+    """[(slug, zip_path)] -> [what package() gives for each], the comparisons with the previews made in one browser,
+    side by side: a job's three packages in the time of the longest instead of one after another"""
+    P = _mod('package')
+    out = Path(out)
+    t0 = time.perf_counter()
+    made = [_pack(out, slug, zip_path) for slug, zip_path in items]
+    todo = [k for k, (_, built) in enumerate(made) if built and verify]
+    if todo:
+        import tempfile
+        with tempfile.TemporaryDirectory(prefix='pkg-', dir=workdir) as tmp:
+            for k, v in zip(todo, P.verify_many([(out / (items[k][0] + '.html'), items[k][1]) for k in todo], tmp)):
+                _verdict(made[k][0], v)
+    ms = round((time.perf_counter() - t0) * 1000)
+    return [{**res, 'ms': ms} for res, _ in made]
 
 
 if __name__ == '__main__':
@@ -397,5 +426,8 @@ if __name__ == '__main__':
     elif a[:1] == ['package'] and len(a) >= 4:
         r = package(a[1], a[2], a[3], verify='--verify' in a)
         print(json.dumps(r, ensure_ascii=False))   # exit 0 either way: the verdict is `ok`, an exit code is for a crash
+    elif a[:1] == ['packages'] and len(a) >= 4:   # packages <out> <slug> <zip> [<slug> <zip> …] [--verify]
+        rest = [x for x in a[2:] if x != '--verify']
+        print(json.dumps({'packages': packages(a[1], list(zip(rest[0::2], rest[1::2])), verify='--verify' in a)}, ensure_ascii=False))
     else:
         raise SystemExit(__doc__)
