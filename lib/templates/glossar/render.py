@@ -236,7 +236,7 @@ def s_show(d):
         back = ('<img class="bk" data-slot="showcase-backdrop" data-par="60" src="%s" alt="" width="%s" height="%s" loading="lazy" decoding="async">' % (
             e(m(pic['src'])), e(pic.get('w', '')), e(pic.get('h', ''))) if pic else '')
         stagegrid = '<div class="show-g"><div class="show-p%s"%s>%s<div class="show-s">%s</div></div>%s</div>' % (
-            ' pic' if pic else '', '' if pic else ' data-slot="showcase-backdrop"', back, img(screens[0]),
+            ' pic' if pic else '', '' if pic else ' data-slot="showcase-backdrop"', back, img(screens[0]).replace('<img ', '<img data-sw-ph="fit" ', 1),   # the stage is upright on a phone: the phone capture fits inside it
             '<div class="show-2" data-par="58">%s</div>' % img(side) if side else '')
     rows = ''.join('<div class="pair"><h3>%s</h3>%s</div>' % (e(x['t']), '<p>%s</p>' % e(x['d']) if x.get('d') else '') for x in items)
     return '<section class="show">%s%s%s</section>' % (head, stagegrid, '<div class="pairs">%s</div>' % rows if rows else '')

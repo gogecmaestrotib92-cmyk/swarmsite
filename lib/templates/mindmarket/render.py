@@ -197,7 +197,7 @@ def _timeline(d, P, used):
         used.add(pic['src'])
         a = pic['w'] / pic['h']
         pich = ('<div class="pw" aria-hidden="false"><div class="ps"><div class="pp" data-pp data-slot="opening-picture" '
-                'style="--a:%.4f">%s</div></div></div>' % (a, _img(pic, '', False)))
+                'style="--a:%.4f">%s</div></div></div>' % (a, _img(pic, '', False).replace('<img ', '<img data-sw-ph="no" ', 1)))   # held and scaled by the scroll at its own proportion: it keeps the desk screen on a phone
     if intro_txt or btn or pich:
         out.append('<div class="intro%s">%s<div class="wrap in"><div class="it">%s%s</div></div>%s</div>'
                    % ('' if pich else ' np', pich, '<p class="xs">%s</p>' % e(intro_txt) if intro_txt else '', btn,

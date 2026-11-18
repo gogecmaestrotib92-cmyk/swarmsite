@@ -160,6 +160,7 @@ def _page(slug, d, root=None):
         f = P.tint(accent, m.group(1), pals) if pals else ''
         if f and j >= 0:
             page = page[:j + 1] + '<style data-sw-art>img[src*="media/library/"]{filter:%s}</style>' % f + page[j + 1:]
+    page = _phones(d, page)
     page = _readable(d, page)
     return page
 
@@ -236,6 +237,54 @@ def _subject(d):
                     g = [[v if x0 <= c < x1 and y0 <= r < y1 else 0 for c, v in enumerate(row)] for r, row in enumerate(ms[i]['detail'])]
                     new.setdefault(kind, list(ms))[i] = {**ms[i], 'detail': g}
     return {**d, 'media': {**md, **new}} if new else d
+
+
+# On a phone a desk screen cannot be read whatever its frame: 1440 px of interface in at most 358 px is a quarter of its
+# size, letters 3 px high (measured on the seventeen software designs, 2026-11-18: every desk screen stood at 9–25 % at
+# 390). The client's own phone capture of the same page can: 390 px of interface in 264 px is two thirds. So where the
+# data has both captures of one page (`page`, lib/pipeline/product.mjs), a desk screen's picture is offered with the
+# phone capture as its source up to NARROW px (a <picture>, no script; `display:contents`, so the design's own rules
+# still lay the <img> out), drawn whole at PHONE_W px at most in a frame freed of the desk screen's proportion.
+# A design says otherwise on the <img> itself: data-sw-ph="fit" where its frame is already upright on a phone (the
+# capture fits inside it), data-sw-ph="no" where the picture is held and moved by the scroll at the desk screen's shape.
+NARROW, PHONE_W = 720, 264
+PHONE_CSS = ('picture.sw-ph{display:contents}@media(max-width:%dpx){picture.sw-ph>img{position:static!important;display:block!important;width:auto!important;height:auto!important;'
+             'max-width:min(100%%,%dpx)!important;max-height:none!important;min-width:0!important;min-height:0!important;aspect-ratio:var(--ph)!important;object-fit:fill!important;'
+             'margin-inline:auto!important;transform:none!important;border-radius:22px!important}'
+             'picture.sw-ph.fit>img{max-height:100%%!important}:has(>picture.sw-ph:not(.fit)){aspect-ratio:auto!important;height:auto!important;max-height:none!important;min-height:0!important;flex-basis:auto!important}}') % (NARROW, PHONE_W)
+
+
+def _phones(d, page):
+    """each desk screen's <img> wrapped in a <picture> whose source, on a narrow screen, is the phone capture of the same page"""
+    md = d.get('media') if isinstance(d.get('media'), dict) else {}
+    by_page = {}
+    for m in md.get('phones') or []:
+        if isinstance(m, dict) and m.get('src') and m.get('page') and isinstance(m.get('w'), (int, float)) and isinstance(m.get('h'), (int, float)) and m['h'] > m['w']:
+            by_page.setdefault(str(m['page']), m)
+    pair = {str(m['src']): by_page[str(m['page'])] for m in md.get('screens') or [] if isinstance(m, dict) and m.get('src') and str(m.get('page')) in by_page}
+    if not pair or '<picture class="sw-ph' in page:
+        return page
+    forms = {DEFAULT_MEDIA_BASE + f: ph for src, ph in pair.items() for f in {src, html.escape(src, quote=True)}}
+    rx = re.compile(r'<img\b(?![^>]*data-sw-ph="no")[^>]*?\bsrc="(%s)"[^>]*>' % '|'.join(re.escape(k) for k in sorted(forms, key=len, reverse=True)))
+    hit = []
+
+    def sub(m):
+        ph = forms[m.group(1)]
+        hit.append(1)
+        return '<picture class="sw-ph%s" style="--ph:%d/%d"><source media="(max-width:%dpx)" srcset="%s" width="%d" height="%d">%s</picture>' % (
+            ' fit' if 'data-sw-ph="fit"' in m.group(0) else '', ph['w'], ph['h'], NARROW, html.escape(DEFAULT_MEDIA_BASE + str(ph['src']), quote=True), ph['w'], ph['h'], m.group(0))
+    # never inside a <picture> the design wrote itself, a <noscript> or a script
+    out, at = [], 0
+    for blk in re.finditer(r'<(picture|script|style|noscript)\b.*?</\1\s*>', page, re.S | re.I):
+        out.append(rx.sub(sub, page[at:blk.start()]))
+        out.append(blk.group(0))
+        at = blk.end()
+    out.append(rx.sub(sub, page[at:]))
+    if not hit:
+        return page
+    page = ''.join(out)
+    j = page.find('>', page.find('<head'))
+    return page[:j + 1] + '<style data-sw-ph>%s</style>' % PHONE_CSS + page[j + 1:] if j > 0 else page
 
 
 def _readable(d, page):

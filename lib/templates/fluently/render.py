@@ -262,7 +262,9 @@ def s_bento(d, ink, pool, made, page_dark=True, ground='#000000'):
     cards = ''
     for i, x in enumerate(items):
         if i == 0:
-            o = pool.take(_tall, lambda x: True)
+            # the upright card takes an upright picture, a phone already shown above before a desk screen: a desk screen
+            # here stood 325 px wide, 23 % of its size (owner, 2026-11-18: frames in which the letters read)
+            o = pool.take(_tall) or pool.take(lambda x: True)
         elif i == 2 and video and video.get('src'):
             o = dict(video, kind='video')
         else:
