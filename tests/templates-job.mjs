@@ -116,6 +116,13 @@ try {
   x = await scenario({ covers: 'crash' });
   assert.ok(x.result.templates.variants.length && x.result.templates.variants.every(v => !v.cover && v.package === 'ready'), 'no cover: the card shows its live preview, the job goes on');
 
+  // 1b' · the media go up several at a time: all of them, never more than the pool at once, and a failed upload is the step's failure
+  { const { pooled } = await import('../server/templates.mjs'); let live = 0, most = 0; const done = [];
+    await pooled([...Array(20).keys()], 6, async i => { live++; most = Math.max(most, live); await new Promise(r => setTimeout(r, 5)); live--; done.push(i); });
+    assert.equal(done.length, 20); assert.equal(new Set(done).size, 20); assert.ok(most <= 6 && most >= 2, 'at most six at once: ' + most);
+    let started = 0; await assert.rejects(pooled([1, 2, 3, 4, 5, 6, 7, 8], 2, async i => { started++; if (i === 2) throw new Error('storage said no'); await new Promise(r => setTimeout(r, 5)); }), /storage said no/); assert.ok(started < 8, 'nothing more is started after a failure');
+    await pooled([], 6, async () => { throw new Error('never'); }); }
+
   // 1c · "I built a first version of my app": the visitor's screenshots, kind and goal beside the address go to the build
   const SHOT = '1b1e2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d.png';
   assert.equal(extrasProblem({ screens: [SHOT], niche: 'software', goal: 'Start a trial' }), '');
