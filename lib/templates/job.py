@@ -127,6 +127,32 @@ def from_form(form, photos, out):
 SCREENS = 6          # "I built a first version of my app": at most this many screenshots of it
 
 
+DIM_LEVEL, DIM_SHARE = 40, .7    # a photograph is dim when this share of it is darker than this level of 255
+
+
+def dim(d, folder):
+    """marks `dim: true` on each of data.media.photos that is near-black over most of itself — three night stadiums
+    side by side under a dark page were a black band (sportbot, measured 2026-11-17: 72–89 % of each under 40/255;
+    the client's other photographs on the bench: 0–32 %). Returns the paths marked. Without Pillow nothing is marked."""
+    try:
+        from PIL import Image
+    except ImportError:
+        return []
+    marked = []
+    for p in ((d.get('media') or {}).get('photos') or []):
+        f = Path(folder) / str(p.get('src') or '')
+        if not p.get('src') or not f.is_file():
+            continue
+        try:
+            hist = Image.open(f).convert('L').resize((64, 64)).histogram()
+        except (OSError, ValueError):
+            continue
+        if sum(hist[:DIM_LEVEL]) / (64 * 64) >= DIM_SHARE:
+            p['dim'] = True
+            marked.append(p['src'])
+    return marked
+
+
 def visitor(d, out, screens=(), kind='', goal=''):
     """what the visitor said beside the address (web/app.html): their own screenshots, ahead of whatever the capture found
     (a tall one is a phone, the rest are screens); the kind of business when they named one of the fixed niches; and their
@@ -199,6 +225,15 @@ def build(job_dir, out, base='', limit=3, gate_kw=None, library=None, form=None,
         if screens or kind or goal:
             d, said = visitor(d, out, screens, kind, goal)
             notes = {**notes, 'visitor': said}
+    dark = dim(d, out)
+    if dark:
+        notes.setdefault('rules', []).append('media.photos[].dim: %d photograph(s) near-black over most of themselves, kept out of the strip: %s' % (
+            len(dark), ', '.join(k.rsplit('/', 1)[-1] for k in dark)[:200]))
+    shown, held = _mod('more').cards(d)
+    if shown or held:
+        notes.setdefault('rules', []).append('more: %d leftover section(s) stand as cards before the closing call; %d are not on the page (no heading, a passage, a run of labels, or past six)%s' % (
+            len(shown), len(held), (': ' + '; '.join((x['title'] or x['text'][:40]) for x in held)[:300]) if held else ''))
+        notes['more'] = {'shown': len(shown), 'held': len(held)}
     data = {k: v for k, v in d.items() if not k.startswith('_')}
     (out / 'data.json').write_text(json.dumps(data, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
     (out / 'adapter.json').write_text(json.dumps({**notes, 'media_missing': missing}, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')

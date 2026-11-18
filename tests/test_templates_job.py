@@ -139,3 +139,20 @@ def test_a_package_only_for_a_variant_that_is_shown(tmp_path, monkeypatch):
     monkeypatch.setattr(P, 'verify', lambda preview, z, w, **k: {'ok': False, 'why': ['m: the package is 4100 px high, the preview 4060']})
     r = JOB.package(out, 'griffin', tmp_path / 'g2.zip', verify=True)
     assert r['ok'] is False and 'px high' in r['why'][0], 'a package that does not look like its preview is refused'
+
+
+def test_a_photograph_near_black_over_most_of_itself_is_marked_dim(tmp_path):
+    """measured 2026-11-17: three night stadiums side by side under a dark page were a black band (72–89 % of each under
+    40/255; the other photographs of the bench 0–32 %). The mark keeps one out of the strip of unused photographs."""
+    from PIL import Image
+    (tmp_path / 'media').mkdir()
+    night = Image.new('RGB', (200, 100), (8, 8, 10))
+    night.paste((230, 230, 220), (0, 0, 40, 100))                     # a lit fifth: still dim
+    night.save(tmp_path / 'media' / 'night.jpg')
+    Image.new('RGB', (200, 100), (150, 140, 120)).save(tmp_path / 'media' / 'day.jpg')
+    half = Image.new('RGB', (200, 100), (8, 8, 10))
+    half.paste((230, 230, 220), (0, 0, 100, 100))                     # half lit: a photograph with a subject
+    half.save(tmp_path / 'media' / 'half.jpg')
+    d = {'media': {'photos': [{'src': 'media/night.jpg'}, {'src': 'media/day.jpg'}, {'src': 'media/half.jpg'}, {'src': 'media/gone.jpg'}]}}
+    assert JOB.dim(d, tmp_path) == ['media/night.jpg']
+    assert [p.get('dim') for p in d['media']['photos']] == [True, None, None, None]
