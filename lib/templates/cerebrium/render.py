@@ -88,6 +88,19 @@ def _made(d, kind, i):
     return xs[i % len(xs)] if xs else None
 
 
+def _other(d, i):
+    """The page keeps one family of pictures and one colour, not one picture: the opening has the lead, the footer
+    answers it, and every place between takes another photograph of the same set in turn (owner, 2026-11-18: the same
+    picture as opening, band, three cards and footer is one picture six times, not one language)."""
+    xs = ((d.get('media') or {}).get('made') or {}).get('land') or []
+    rest, seen = [], {xs[0].get('src')} if xs else set()
+    for x in xs[1:]:
+        if x.get('src') not in seen:
+            seen.add(x.get('src'))
+            rest.append(x)
+    return rest[i % len(rest)] if rest else (xs[0] if xs else None)
+
+
 def _mark(title):
     """The reference sets one word (or phrase) of each large heading in the accent. Which word is not in the data, so the
     rule is mechanical: the longest word. Returns html with every word in its own span (the load flicker runs per word)."""
@@ -197,7 +210,7 @@ def panel_one(d):
                 src, w, hgt, alt, shape = s['src'], s.get('w'), s.get('h'), s.get('alt') or alt, 'screen'
             vis = ''
             if src:
-                g = _made(d, 'land', 0)   # the page's one motif, another crop per card, held quiet toward the dark ground
+                g = _other(d, i)   # the page's family, another photograph per card, held quiet toward the dark ground
                 ground = (f'<img class="g c{i % 4}" src="{M}{e(g["src"])}" alt="" width="{g.get("w", 1344)}" '
                           f'height="{g.get("h", 752)}" loading="lazy" decoding="async">') if g else ''
                 dim = f' width="{w}" height="{hgt}"' if w and hgt else ''
@@ -232,7 +245,7 @@ def dark_two(d):
         built = f'<div class="wrap lcs">{cs}</div>'
     if not sec and not built:
         return ''
-    return f'<section class="dk two">{_bd(_made(d, "land", 0))}{sec}{_dots() if sec and built else ""}{built}</section>'
+    return f'<section class="dk two">{_bd(_other(d, 3))}{sec}{_dots() if sec and built else ""}{built}</section>'
 
 
 def panel_two(d):
@@ -269,7 +282,7 @@ def panel_two(d):
     if fg:
         cards = ''
         for i, x in enumerate(fg):
-            pic = _made(d, 'land', 0)   # the same motif as the opening, in another crop per card
+            pic = _other(d, i + 3)   # the opening's family, another photograph per card
             img = (f'<img class="c{(i + 2) % 4}" src="{M}{e(pic["src"])}" alt="" width="{pic.get("w", 1344)}" height="{pic.get("h", 752)}" '
                    'loading="lazy" decoding="async">') if pic else ''
             tone = (pic or {}).get('tone') or 'none'

@@ -208,7 +208,7 @@ def render(d):
                 o.setdefault('alt', it.get('title'))
                 shape = it.get('shape') or ('phone' if o.get('h', 1) > o.get('w', 1) * 1.6 else 'book' if o.get('h', 1) > o.get('w', 1) else 'screen')
                 inner = window(img(o)) if shape == 'screen' else f'<div class="dev {e(shape)}">{img(o)}</div>'
-                sa, si = ground(pick([land[j] for j in (3, 4, 2) if j < len(land)], i), f'step-{i}', P[i % len(P)])
+                sa, si = ground(pick([land[j] for j in (3, 2, 1) if j < len(land)], i), f'step-{i}', P[i % len(P)])
                 pic = f'<div class="sq"{sa}>{si}<div class="sq-in" data-drift>{inner}</div></div>'
             c = it.get('cta') or {}
             body += f'''<div class="step" id="step-{i}" data-step="{i}">

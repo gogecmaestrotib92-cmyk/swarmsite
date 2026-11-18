@@ -184,3 +184,33 @@ def test_a_client_whose_words_name_a_subject_is_shown_that_subject():
     assert [m['family'] for m in three] == ['arena', 'track', 'arena2'] and len({m['land'][0]['src'] for m in three}) == 3
     # natural colours: a subject family stands in a neutral palette, which the client's accent does not turn
     assert all(PI.tint('#ff4a1f', m['palette'], pals) == '' for m in three)
+
+
+def test_a_page_keeps_one_family_of_pictures_not_one_picture():
+    """Owner, 2026-11-18, after the second wide reading named one picture repeated through a page on every design read
+    (a book pile as opening, band, three cards and footer): the page keeps one family and one colour — that is its one
+    language — but not the same photograph everywhere. Measured on every design with a subject set of five photographs:
+    a page that draws them k times spreads them, none in more than ⌈k/5⌉ + 1 places (before: one design drew its lead
+    in ten places and no other, another in six, a third its valley behind every row)."""
+    import math
+    import re
+    REG = _load('swarmsite_templates_registry', ROOT / 'lib' / 'templates' / 'registry.py')
+    rows, pals = PI.library(ROOT)
+    made = PI.build('arena', 'charcoal-neutral', rows)
+    srcs = sorted({x['src'] for x in made['land']})
+    assert len(srcs) == 5
+    base = json.loads((ROOT / 'tests' / 'fixtures' / 'templates' / 'tallyfern.json').read_text(encoding='utf-8'))
+    drew = 0
+    for slug in REG.slugs():
+        d = json.loads(json.dumps(base))
+        d.setdefault('media', {})['made'] = json.loads(json.dumps(made))
+        page = REG.render(slug, d)
+        body = re.sub(r'<style.*?</style>|<link[^>]*>', '', page, flags=re.S)
+        places = {s.rsplit('/', 1)[-1]: len(re.findall(r'<[^>]*' + re.escape(s) + r'[^>]*>', body)) for s in srcs}
+        k = sum(places.values())
+        if not k:
+            continue
+        drew += 1
+        assert max(places.values()) <= math.ceil(k / 5) + 1, (slug, places)
+        assert sum(1 for v in places.values() if v) >= min(k, 5) - 2, (slug, places)
+    assert drew >= 10, 'the designs that take made photographs were measured'

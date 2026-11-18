@@ -138,6 +138,19 @@ def family(d, c):
     return wall, wide
 
 
+def walls(d, c):
+    """the rows' wallpapers: the family's photographs in turn, the valley first — one family and one colour behind the
+    rows, not one picture behind every row (owner, 2026-11-18); the wide one stays behind the plans"""
+    land = made(d, 'land')
+    wall, wide = family(d, c)
+    out, seen = [], {(wide or {}).get('src')} if len({m.get('src') for m in land}) > 2 else set()
+    for m in ([wall] if wall else []) + [land[i] for i in (2, 3, 0, 5) if i < len(land)]:
+        if m.get('src') not in seen and not (c['dark'] and m.get('tone') == 'light'):
+            seen.add(m.get('src'))
+            out.append(m)
+    return out
+
+
 DOTS = '<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>'
 CHECK = ('<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><circle cx="8" cy="8" r="8" fill="currentColor"/>'
          '<path d="M4.6 8.3l2.3 2.2 4.5-4.8" fill="none" stroke="var(--ck)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>')
@@ -380,7 +393,7 @@ def s_steps(d, c):
         return ''
     md = d.get('media') or {}
     known = {m['src']: m for m in (md.get('screens') or []) + (md.get('phones') or []) + (md.get('photos') or []) if m.get('src')}
-    wallp = family(d, c)[0]                                         # one wallpaper for every row, as on the reference
+    wps = walls(d, c)                                               # a wallpaper for every row, of one family
     crops = ('50% 62%', '50% 38%', '50% 82%')                       # … seen through a different part of it each time
     brand = (d.get('brand') or {}).get('name')
     bt = '<span class="bt">%s</span>' % e(brand) if brand else ''
@@ -401,7 +414,7 @@ def s_steps(d, c):
         shot = ''
         if i.get('img'):
             m = known.get(i['img'], {'src': i['img'], 'alt': i.get('title')})
-            wall = bg_pic(wallp, 'wallpaper', at=crops[n % 3]) if wallp else ''
+            wall = bg_pic(wps[n % len(wps)], 'wallpaper', at=crops[n % 3]) if wps else ''
             shot = (f'<div class="shot"><div class="desk{"" if wall else " plain"}">{wall}</div><figure class="fig" style="--r:{asp(m):.4f}">'
                     f'<div class="bar">{DOTS}{bt}</div><div class="scr">{pic(m)}</div></figure></div>')
         rows += (f'<div class="row{" r" if n % 2 else ""}{"" if shot else " noshot"}"><div class="txt"><div class="wave" aria-hidden="true">'
@@ -414,7 +427,7 @@ def s_statement(d, c):
     if not s.get('title') and not s.get('text'):
         return ''
     b = d.get('brand') or {}
-    wallp = family(d, c)[0]                                         # the rows' wallpaper again, held quiet toward the ground
+    wallp = (walls(d, c) or [None])[-1]                             # one of the rows' family, held quiet toward the ground
     band = f'<div class="band">{bg_pic(wallp, "band", at="50% 30%")}</div>' if wallp else ''
     ps = ''
     if s.get('title'):
