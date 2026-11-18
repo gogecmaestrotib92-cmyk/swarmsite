@@ -280,7 +280,7 @@ def _numbers(d, P):
 def _gallery(d, P, used):
     m = d.get('media') or {}
     made = m.get('made') or {}
-    grounds = _land(d, P, (4, 3))[:1]
+    grounds = _land(d, P, (3, 2, 5, 1))                           # the family's photographs in turn, not one behind every frame (owner, 2026-11-18)
     port = [x for x in (m.get('phones') or []) + (m.get('photos') or []) if x.get('src') not in used and x.get('w') and x.get('h')]
     land = [x for x in (m.get('screens') or []) if x.get('src') not in used and x.get('w') and x.get('h')]
     v = m.get('video')

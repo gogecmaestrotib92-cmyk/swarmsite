@@ -150,9 +150,10 @@ class Pool:
         self.k = 0
 
     def again(self):
-        """the lead picture and the crop it takes this time"""
+        """the picture behind the next stage and the crop it takes: the lead's neighbours in turn — one family and one
+        colour down the page, not one picture behind every stage (owner, 2026-11-18); the lead alone when it has none"""
         self.k += 1
-        return self.lead, ('50% 62%', '30% 40%', '70% 78%', '50% 30%')[(self.k - 1) % 4]
+        return self.take() or self.lead, ('50% 62%', '30% 40%', '70% 78%', '50% 30%')[(self.k - 1) % 4]
 
     def take(self):
         if not self.xs:
