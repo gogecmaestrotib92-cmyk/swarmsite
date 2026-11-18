@@ -229,6 +229,9 @@ def build(job_dir, out, base='', limit=3, gate_kw=None, library=None, form=None,
     if dark:
         notes.setdefault('rules', []).append('media.photos[].dim: %d photograph(s) near-black over most of themselves, kept out of the strip: %s' % (
             len(dark), ', '.join(k.rsplit('/', 1)[-1] for k in dark)[:200]))
+    fitted = _mod('fit').fit(d)                                    # each slot holds what it is for, whoever filled it
+    if fitted:
+        notes.setdefault('rules', []).extend(fitted)
     shown, held = _mod('more').cards(d)
     if shown or held:
         notes.setdefault('rules', []).append('more: %d leftover section(s) stand as cards before the closing call; %d are not on the page (no heading, a passage, a run of labels, or past six)%s' % (
