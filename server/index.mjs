@@ -665,18 +665,18 @@ async function process_(job) {
   if (checkpoint?.key) { const { error } = await sb.storage.from('crawl-checkpoints').remove([checkpoint.key]); if (error) console.warn('checkpoint cleanup', job.id, error.message); }
 }
 async function loop() {
-  const slot = loop.slots = (loop.slots || 0) + 1; // one loop per slot; stagger so they do not hammer the claim RPC together
-  await new Promise(r => setTimeout(r, (slot - 1) * 700));
+  const slot = loop.slots = (loop.slots || 0) + 1;
   while (true) {
     try {
-      const { data, error } = await sb.rpc('claim_swarmsite_job', { p_worker_id: WORKER_ID, p_lease_seconds: 120 });
-      if (error) throw error;
-      const claimed = Array.isArray(data) ? data[0] : data;
-      if (claimed) { console.log('job', claimed.id, claimed.url, 'slot', slot); await JOB_CTX.run(claimed, () => runClaimed(claimed)); }
-      else await new Promise(r => setTimeout(r, 2500));
+      const claimed = await CLAIMER.next();
+      console.log('job', claimed.id, claimed.url, 'slot', slot); await JOB_CTX.run(claimed, () => runClaimed(claimed));
     } catch (e) { console.error('loop', e.message); await new Promise(r => setTimeout(r, 5000)); }
   }
 }
+// One slot of the instance asks the queue at a time, and a slot that is handed a job wakes the others (server/poll.mjs):
+// an empty queue costs one question every 2.5 s for the instance, whatever its number of slots.
+import { makeClaimer } from './poll.mjs';
+const CLAIMER = makeClaimer({ claim: async () => { const { data, error } = await sb.rpc('claim_swarmsite_job', { p_worker_id: WORKER_ID, p_lease_seconds: 120 }); if (error) throw error; return (Array.isArray(data) ? data[0] : data) || null; } });
 // the template path's job (server/templates.mjs); kept outside the stretch from runClaimed to loop that the worker tests cut out
 async function processTemplates(job) {
   if (!TEMPLATES) throw new Error('templates mode is off on this worker (see the boot log: its private bucket)');
