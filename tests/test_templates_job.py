@@ -139,6 +139,14 @@ def test_a_package_only_for_a_variant_that_is_shown(tmp_path, monkeypatch):
     monkeypatch.setattr(P, 'verify', lambda preview, z, w, **k: {'ok': False, 'why': ['m: the package is 4100 px high, the preview 4060']})
     r = JOB.package(out, 'griffin', tmp_path / 'g2.zip', verify=True)
     assert r['ok'] is False and 'px high' in r['why'][0], 'a package that does not look like its preview is refused'
+    # a job's packages in one call (the worker's way): each its own verdict, in the order asked; one not shown is refused before any browser
+    seen = []
+    monkeypatch.setattr(P, 'verify_many', lambda pairs, w, **k: seen.append([Path(a).name for a, _ in pairs]) or [{'ok': Path(a).name != 'deepbook.html', 'why': [] if Path(a).name != 'deepbook.html' else ['d: 1 of 5 screens differ'], 'widths': [{'at': 'd', 'screens': 5, 'worst': 0}]} for a, _ in pairs])
+    shown = json.loads((out / 'templates.json').read_text(encoding='utf-8'))['shown']
+    rs = JOB.packages(out, [(s, tmp_path / (s + '-m.zip')) for s in shown] + [('maze', tmp_path / 'maze-m.zip')])
+    assert [r['slug'] for r in rs] == shown + ['maze'] and seen == [[s + '.html' for s in shown]], 'only what has a zip is compared, all of it in one call'
+    assert [r['ok'] for r in rs] == [s != 'deepbook' for s in shown] + [False] and 'not a variant this job shows' in rs[-1]['why'][0]
+    assert all(r['compared'] == [{'at': 'd', 'screens': 5, 'worst': 0}] and r['bytes'] > 1000 for r in rs[:-1]) and all(isinstance(r['ms'], int) for r in rs)
 
 
 def test_a_photograph_near_black_over_most_of_itself_is_marked_dim(tmp_path):

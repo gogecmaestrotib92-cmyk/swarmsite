@@ -2,6 +2,7 @@
 
     build(slug, d, media_root, out_zip, cache=None, fetch=None) -> {'zip', 'files', 'media', 'fonts', 'bytes', 'page'}
     verify(preview, out_zip, workdir, tolerance=0.005) -> the comparison (lib/qa/package_compare.mjs); ['ok'] says deliver or refuse
+    verify_many([(preview, out_zip)], workdir) -> the same for several, in one browser side by side: one result each
     python3 lib/templates/package.py <slug> <data.json> <media root> <out.zip> [--verify]
 
 The zip holds
@@ -293,6 +294,38 @@ def verify(preview, out_zip, workdir, tolerance=0.005, shots=None, timeout=600):
     except Exception as ex:
         err = locals().get('r')
         return {'ok': False, 'why': ['the comparison could not be made: %s %s' % (type(ex).__name__, (err.stderr if err is not None else str(ex))[-300:])]}
+    return res
+
+
+def verify_many(pairs, workdir, tolerance=0.005, timeout=None):
+    """[(preview, out_zip)] -> one result for each, in order: the designs of one job compared in ONE browser, side by
+    side (lib/qa/package_compare.mjs with several pairs). Each result is what verify() gives for that pair; a pair that
+    could not be unpacked or compared is refused by itself, the others keep their own verdicts."""
+    res, ready = [None] * len(pairs), []
+    for k, (preview, out_zip) in enumerate(pairs):
+        try:
+            ready.append((k, preview, unpack(out_zip, Path(workdir) / str(k) / 'package')))
+        except (PackageError, OSError, zipfile.BadZipFile) as ex:
+            res[k] = {'ok': False, 'why': ['the package could not be unpacked: %s' % ex]}
+    if ready:
+        cmd = ['node', str(TOOL)] + [str(x) for _, preview, folder in ready for x in (preview, folder / 'index.html')] + ['--tolerance', str(tolerance)]
+        got, why = [], ''
+        try:
+            r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout or 120 + 80 * len(ready))   # three: 360 s, inside the worker's own limit for the call
+            why = (r.stderr or '')[-300:]
+            for line in r.stdout.strip().splitlines():
+                try:
+                    x = json.loads(line)
+                except ValueError:
+                    continue
+                if isinstance(x, dict) and isinstance(x.get('ok'), bool):
+                    got.append(x)
+        except (OSError, subprocess.SubprocessError) as ex:
+            why = '%s %s' % (type(ex).__name__, str(ex)[-300:])
+        if len(got) != len(ready):                                    # an answer for every pair, or none of them is trusted
+            got = [{'ok': False, 'why': ['the comparison could not be made: %s' % (why or 'the tool answered for %d of %d' % (len(got), len(ready)))]}] * len(ready)
+        for (k, _, _), x in zip(ready, got):
+            res[k] = x
     return res
 
 

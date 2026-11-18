@@ -3,7 +3,7 @@
 
    capture (Playwright) → read (the reader, then the page's blocks placed by number: the two paid model calls of this path) → choose (lib/templates/job.py build:
    adapt → select → render three → gate) → publish (the variants that passed the gate, as preview pages) → package
-   (lib/templates/job.py package: zip + offline comparison with the preview; uploaded to a private bucket).
+   (lib/templates/job.py packages: the zips + their offline comparison with the previews, in one browser; uploaded to a private bucket).
 
    A site from nothing (options.source = 'form'): form (the visitor's own words and photographs; lib/templates/form.py)
    in place of capture and read — the same choose, publish and package after it, and no paid call.
@@ -229,10 +229,19 @@ export async function runTemplateJob(deps) {
     return out;
   });
   await step('package', async () => {
-    for (const v of variants) {
-      const zip = path.join(tdir, `${v.slug}.zip`); let r;
-      try { r = lastJson(await run('python3', ['lib/templates/job.py', 'package', tdir, v.slug, zip, '--verify'], { timeoutMs: 240000 })); }
-      catch (e) { r = { ok: false, why: ['the package could not be made: ' + String(e.message).slice(-200)] }; }   // a crash refuses the package, never the previews
+    const zipOf = v => path.join(tdir, `${v.slug}.zip`);
+    const one = async v => { try { return lastJson(await run('python3', ['lib/templates/job.py', 'package', tdir, v.slug, zipOf(v), '--verify'], { timeoutMs: 240000 })); }
+      catch (e) { return { ok: false, why: ['the package could not be made: ' + String(e.message).slice(-200)] }; } };   // a crash refuses the package, never the previews
+    // The packages of a job are made in one call and compared with their previews in one browser, side by side
+    // (lib/templates/job.py packages): three used to be three browsers one after another, the longest step of a job and
+    // most of it waiting (measured 2026-11-18, production: median 97 s of 252). Each keeps its own verdict. When that one
+    // call cannot answer for every design, each is made by itself as before — slower, never fewer packages.
+    let all = null;
+    if (variants.length > 1) try { const r = lastJson(await run('python3', ['lib/templates/job.py', 'packages', tdir, ...variants.flatMap(v => [v.slug, zipOf(v)]), '--verify'], { timeoutMs: 420000 }));
+      if (Array.isArray(r?.packages) && r.packages.length === variants.length && r.packages.every((p, i) => p && p.slug === variants[i].slug && typeof p.ok === 'boolean')) all = r.packages; }
+      catch (e) { console.warn('packages: made one by one —', String(e && e.message || e).slice(0, 200)); }
+    for (const [i, v] of variants.entries()) {
+      const zip = zipOf(v), r = all ? all[i] : await one(v);
       if (r?.ok && fs.existsSync(zip)) { await deps.uploadPrivate(zip, `${job.id}/${v.slug}.zip`, 'application/zip'); v.package = 'ready'; v.bytes = r.bytes; }
       else { v.package = 'refused'; v.package_why = (r?.why || []).slice(0, 3); }
     }

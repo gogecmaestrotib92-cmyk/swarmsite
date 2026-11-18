@@ -19,15 +19,22 @@ try {
     const run = async (cmd, args, opts = {}) => {
       if (args[0] === 'lib/templates/covers.mjs') { if (covers === 'crash') throw new Error('node covers exit 2'); return real(cmd, args); }   // the covers: real Chrome, as the gate is
       if (args[1] === 'build') built.push(args.slice(2));
-      log.push(args[0] === '-c' ? 'reader' : args[0] + (args[1] === 'build' || args[1] === 'package' ? ' ' + args[1] : ''));
+      log.push(args[0] === '-c' ? 'reader' : args[0] + (['build', 'package', 'packages'].includes(args[1]) ? ' ' + args[1] : ''));
       if (args[0] === 'lib/pipeline/capture.mjs') { const r = spawnSync(py, ['tests/fixtures/templates/capture.py', dir, capture], { cwd: root, encoding: 'utf8' }); assert.equal(r.status, 0, r.stderr); fs.writeFileSync(path.join(dir, 'before-hero.jpg'), 'jpg'); opts.onLine?.('{"event":{"role":"Photos","text":"1 picture"}}'); return ''; }
       if (args[0] === 'lib/templates/write.py') { if (draft === 'crash') throw new Error('python3 lib/templates/write.py exit 1'); return '{"written":[]}'; }   // the draft for a form job: tested in tests/test_templates_write.py; here, that a job goes on without it
       if (args[0] === '-c') { fs.writeFileSync(path.join(dir, 'budget.json'), JSON.stringify({ calls: 1, in: 21000, out: 2400, usd: 0.066 })); return '{"what":"A ledger for market stalls","n":3}'; }
       if (args[1] === 'build') return real(cmd, args, { dir });
-      if (args[1] === 'package') { const zip = args[4];   // the package itself is tested in tests/test_templates_package.py; here: what the worker does with each verdict
+      // the packages themselves are tested in tests/test_templates_package.py; here: what the worker does with each verdict.
+      // A job's packages are asked for in one call (`packages`); when that call cannot answer, each is asked for by itself (`package`)
+      const verdict = (slug, zip) => { if (pkg === 'refused' || (pkg === 'one-refused' && slug === shownIn(args[2])[0])) return { slug, ok: false, why: ['d: 1 of 8 screens differ by more than 0.50 %'] };
+        fs.writeFileSync(zip, 'PK'); return { slug, ok: true, why: [], bytes: 2 }; };
+      if (args[1] === 'packages') { const rest = args.slice(3).filter(a => a !== '--verify'); assert.ok(args.includes('--verify'), 'never without the comparison');
+        if (pkg === 'crash' || pkg === 'all-crash') throw new Error('python3 lib/templates/job.py exit 1: Traceback');
+        if (pkg === 'short') return JSON.stringify({ packages: [verdict(rest[0], rest[1])] });   // an answer for one design of three is not an answer
+        return JSON.stringify({ packages: rest.flatMap((s, i) => i % 2 ? [] : [verdict(s, rest[i + 1])]) }); }
+      if (args[1] === 'package') { const zip = args[4];
         if (pkg === 'crash') throw new Error('python3 lib/templates/job.py exit 1: Traceback');
-        if (pkg === 'refused') return JSON.stringify({ slug: args[3], ok: false, why: ['d: 1 of 8 screens differ by more than 0.50 %'] });
-        fs.writeFileSync(zip, 'PK'); return JSON.stringify({ slug: args[3], ok: true, why: [], bytes: 2 }); }
+        return JSON.stringify(verdict(args[3], zip)); }
       throw new Error('unexpected run ' + args.join(' ')); };
     const deps = { job, dir, jobRoot, run, self: 'https://api.example', chrome: '',
       upload: async (local, key, type) => { assert.ok(fs.existsSync(local), local); pub.set(key, { type, bytes: fs.statSync(local).size }); return 'https://storage.example/previews/' + key; },
@@ -48,7 +55,8 @@ try {
   assert.deepEqual(STEPS_F.map(s => s[0]), ['form', 'choose', 'publish', 'package']);
   assert.equal(imageType(fs.readFileSync(path.join(root, 'web/favicon.png'))), 'png'); assert.equal(imageType(Buffer.from('<svg onload=alert(1)>')), ''); assert.equal(imageType(Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0, 0, 0, 0, 0])), 'jpg');
   // the library grows: which templates a client is shown is select's answer (tests/test_templates_select.py); here griffin is among them, up to three
-  const shownOf = r => r.templates.variants.map(v => v.slug), packs = r => shownOf(r).map(() => 'lib/templates/job.py package');
+  const shownOf = r => r.templates.variants.map(v => v.slug), packs = r => shownOf(r).length > 1 ? ['lib/templates/job.py packages'] : shownOf(r).map(() => 'lib/templates/job.py package');
+  const shownIn = tdir => JSON.parse(fs.readFileSync(path.join(tdir, 'templates.json'), 'utf8')).shown;
   let x = await scenario({ form });
   assert.ok(shownOf(x.result).includes('griffin') && shownOf(x.result).length <= 3, shownOf(x.result).join());
   assert.deepEqual(x.log, ['lib/templates/write.py', 'lib/templates/job.py build', ...packs(x.result)], 'no capture and no reader: a form job asks only for its draft, then builds');
@@ -61,7 +69,7 @@ try {
   // 1 · a site a template fits
   x = await scenario();
   assert.ok(shownOf(x.result).includes('griffin') && shownOf(x.result).length <= 3, shownOf(x.result).join());
-  assert.deepEqual(x.log, ['lib/pipeline/capture.mjs', 'reader', 'lib/templates/job.py build', ...packs(x.result)], 'one reader call, one build, one package for each variant shown');
+  assert.deepEqual(x.log, ['lib/pipeline/capture.mjs', 'reader', 'lib/templates/job.py build', ...packs(x.result)], 'one reader call, one build, and the packages of the designs shown asked for in one call');
   assert.deepEqual(x.steps, STEPS_T.flatMap(([id]) => [`${id}:running`, `${id}:done`]));
   const t = x.result.templates, shown = shownOf(x.result), gv = t.variants.find(v => v.slug === 'griffin');
   assert.equal(x.result.mode, 'templates');
@@ -123,10 +131,18 @@ try {
   assert.equal(x.result.templates.variants[0].package, 'refused'); assert.deepEqual(x.result.templates.variants[0].package_why, ['d: 1 of 8 screens differ by more than 0.50 %']); assert.ok(![...x.priv.keys()].some(k => k.endsWith('.zip')));
   x = await scenario({ pkg: 'crash' });
   assert.equal(x.result.templates.variants[0].package, 'refused'); assert.ok(/could not be made/.test(x.result.templates.variants[0].package_why[0])); assert.ok(![...x.priv.keys()].some(k => k.endsWith('.zip')));
+  // 2a · the packages are compared in one browser, and each keeps its own verdict: one refused, the others delivered
+  x = await scenario({ pkg: 'one-refused' });
+  assert.deepEqual(x.result.templates.variants.map(v => v.package), x.result.templates.variants.map((_, i) => i ? 'ready' : 'refused'), 'only the design whose package differs is refused');
+  assert.deepEqual([...x.priv.keys()].filter(k => k.endsWith('.zip')).sort(), shownOf(x.result).slice(1).map(s => `22222222-2222-4222-8222-222222222222/${s}.zip`).sort());
+  // 2b · when the one call dies, or answers for fewer designs than it was asked, each package is made by itself as before: slower, never fewer
+  for (const pkg of ['all-crash', 'short']) { x = await scenario({ pkg });
+    assert.ok(x.result.templates.variants.length > 1 && x.result.templates.variants.every(v => v.package === 'ready'), pkg + ': ' + JSON.stringify(x.result.templates.variants.map(v => v.package)));
+    assert.deepEqual(x.log.filter(l => / packages?$/.test(l)), ['lib/templates/job.py packages', ...shownOf(x.result).map(() => 'lib/templates/job.py package')], pkg); }
 
   // 3 · a site no template fits: the job ends with no variant and says why — nothing is shown that was not fit to show
   x = await scenario({ capture: 'empty' });
-  assert.deepEqual(x.result.templates.variants, []); assert.ok(x.result.templates.rejected.length >= 2); assert.ok(!x.log.includes('lib/templates/job.py package'));
+  assert.deepEqual(x.result.templates.variants, []); assert.ok(x.result.templates.rejected.length >= 2); assert.ok(!x.log.some(l => / packages?$/.test(l)));
 
   // 4 · who may see, who may download
   const row = { status: 'done', result: { templates: { variants: [{ slug: 'griffin', package: 'ready' }, { slug: 'maze', package: 'refused', package_why: ['x'] }, { slug: 'cerebrium', package: 'pending' }] } } };
