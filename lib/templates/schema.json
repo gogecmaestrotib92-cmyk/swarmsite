@@ -79,6 +79,10 @@
           "type": "boolean",
           "description": "words are drawn into the picture (OCR, lib/templates/lettering.py)"
         },
+        "dim": {
+          "type": "boolean",
+          "description": "near-black over most of the picture (lib/templates/job.py dim): not shown in a strip of photographs"
+        },
         "page": {
           "type": "string",
           "description": "the address of the client's page the picture was found on"
