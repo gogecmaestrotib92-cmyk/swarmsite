@@ -40,13 +40,12 @@ app.get('/', (_, res) => res.json({ ok: true, service: 'swarmsite', steps: STEPS
 const RATE = { perIpPerHour: Number(process.env.JOBS_PER_IP_PER_HOUR || 3), perDay: Number(process.env.JOBS_PER_DAY || 5000), maxQueue: Number(process.env.JOBS_MAX_QUEUE || 2000) };
 const JOB_MINUTES = Number(process.env.JOB_MINUTES || 4); // typical wall time of one job, for queue estimates
 const NOTIFY = { key: process.env.RESEND_API_KEY || '', from: process.env.NOTIFY_FROM || 'Swarmsite <hello@swarmsite.si>' };
-const ipHits = new Map(); // ip → [timestamps]; one worker process per instance, so in-memory is enough per instance
 const clientIp = req => String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
-function rateLimited(ip) {
-  const now = Date.now(), hits = (ipHits.get(ip) || []).filter(t => now - t < 3600e3); ipHits.set(ip, hits);
-  if (ipHits.size > 5000) for (const [k, v] of ipHits) if (!v.length || now - v[v.length - 1] > 3600e3) ipHits.delete(k);
-  if (hits.length >= RATE.perIpPerHour) return true; hits.push(now); return false;
-}
+// The count is the database's (jobs that carry this address's key, made in the last hour), so it holds across every instance
+// of the worker (server/limits.mjs); this instance's memory answers first and is what is left when the database cannot be asked.
+import { makeIpLimit } from './limits.mjs';
+const IP_LIMIT = makeIpLimit({ perHour: RATE.perIpPerHour, secret: process.env.IP_KEY_SECRET || process.env.SUPABASE_SERVICE_KEY || '', warn: t => console.warn(t),
+  countSince: async (key, since) => { const { count, error } = await sb.from('jobs').select('id', { count: 'exact', head: true }).gte('created_at', since).filter('options->>ip_key', 'eq', key); if (error) throw new Error(error.message); return count || 0; } });
 // ---- accounts: a preview belongs to whoever started it. Off until the deployment says so (REQUIRE_LOGIN=1), so the public
 // form keeps working exactly as before while the web side is being set up; a signed-in visitor's jobs are theirs either way.
 const AUTH = { require: process.env.REQUIRE_LOGIN === '1', free: Math.max(0, Number(process.env.FREE_PREVIEWS_PER_USER || 3)) };
@@ -108,7 +107,7 @@ app.post('/jobs', async (req, res) => {
   if (!mode && AUTH.require && !user) return res.status(401).json({ error: 'Sign in to start a preview.', login: true });
   if (!mode && user) { const a = allowance({ used: await usedBy(user.id), free: AUTH.free }); if (AUTH.require && !a.allowed) return res.status(402).json({ error: `Your ${a.free} free preview${a.free === 1 ? ' is' : 's are'} used.`, previews: a }); }
   const ip = clientIp(req);
-  if (!user && rateLimited(ip)) return res.status(429).json({ error: 'You have started several previews recently. Please wait an hour before starting another.' });
+  if (!user && await IP_LIMIT.limited(ip)) return res.status(429).json({ error: 'You have started several previews recently. Please wait an hour before starting another.' });
   // the same site already queued or running → hand back that job instead of paying twice
   const key = canonicalUrl(url);
   const { data: live } = await sb.from('jobs').select('id,url,status,created_at,options').in('status', ['queued', 'running']).order('created_at', { ascending: false }).limit(200);
@@ -122,6 +121,7 @@ app.post('/jobs', async (req, res) => {
   if (mode) options.engine = mode; else delete options.engine;
   if (fromForm) { options.source = 'form'; options.form = req.body.form; } else { delete options.source; delete options.form; }
   if (!mode || fromForm) { delete options.screens; delete options.niche; }
+  delete options.ip_key; if (!user) options.ip_key = IP_LIMIT.key(ip);   // what the hourly limit counts by, on every instance; never taken from the request
   const { data, error } = await sb.from('jobs').insert({ url, options, steps: (fromForm ? STEPS_F : mode ? STEPS_T : STEPS).map(([id, label]) => ({ id, label, status: 'pending' })), ...(user ? { user_id: user.id, email: user.email } : {}) }).select('id').single();
   if (error) return res.status(500).json({ error: error.message });
   res.json({ id: data.id });
@@ -584,7 +584,7 @@ async function process_(job) {
     await emit(job, eventsCapture(dir));
   });
   await timed('diagnose', async () => { const out = await run('python3', ['-I', 'lib/audit/diagnose.py', path.join(dir, 'inventory.json')]); fs.writeFileSync(path.join(dir, 'audit.json'), out); }); await emit(job, eventsDiagnose(dir));
-  fs.writeFileSync(path.join(dir, 'brief.json'), JSON.stringify({ ...(job.options || {}), url: job.url })); // the url seeds the house's colour pick for unbranded sites
+  fs.writeFileSync(path.join(dir, 'brief.json'), JSON.stringify({ ...(job.options || {}), ip_key: undefined, url: job.url })); // the url seeds the house's colour pick for unbranded sites
   // Instant first version: their page poured into the house template, no model call. Published as draft round 0 so the
   // person has something to look at within seconds; the director and the swarm replace it. Never fatal.
   try {
