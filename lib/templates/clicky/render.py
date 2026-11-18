@@ -355,7 +355,7 @@ def s_hero(d, c):
         if cut:
             img = img.replace('<img ', f'<img style="{cut[1]}" ', 1)
         scr = f'<div class="scr dt" style="{cut[0]}">' if cut else '<div class="scr">'
-        wh += (f'<figure class="win" style="{pos};top:calc(var(--u)*{top});--w:{w};--n:{n + 4}"><div class="fr"><div class="bar">{DOTS}</div>'
+        wh += (f'<figure class="win" data-sw-glimpse style="{pos};top:calc(var(--u)*{top});--w:{w};--n:{n + 4}"><div class="fr"><div class="bar">{DOTS}</div>'
                f'{scr}{img}</div></div>{cap}</figure>')
     sub = f'<p class="sub">{e(h["text"])}</p>' if h.get('text') else ''
     sub2 = f'<p class="sub2">{e(h["text2"])}</p>' if h.get('text2') else ''

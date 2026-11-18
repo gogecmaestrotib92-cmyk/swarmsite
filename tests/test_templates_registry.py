@@ -348,7 +348,7 @@ def test_every_page_lists_its_product_screens_and_never_crops_one_by_script():
     bare['media'] = {k: v for k, v in (bare.get('media') or {}).items() if k not in ('screens', 'phones')}
     assert 'id="sw-detail"' not in R.render(SLUGS[0], bare)
     gate = (ROOT / 'lib' / 'qa' / 'template_gate.mjs').read_text()
-    assert 'sliced: []' in gate and re.search(r'const SIDES = \.97', gate) and 'small: []' not in gate and not hasattr(R, 'READABLE')
+    assert 'sliced: []' in gate and re.search(r'const SIDES = \.97', gate) and re.search(r'SMALL = \.4\b', gate) and not hasattr(R, 'READABLE')
 
 
 def test_a_small_window_shows_the_product_not_the_apps_own_menu_or_a_bar_of_controls():

@@ -254,7 +254,8 @@ def tile(kind, m, lazy=False, w=None):
                  f'aria-label="{e(m.get("alt"))}" data-auto></video>')
     else:
         inner = pic(m, lazy=lazy)
-    return f'<figure class="tile {kind}" style="--r:{a:.4f}{f";--w:{w:.0f}" if w else ""}">{inner}</figure>'
+    # a tile of the opening cluster is a glimpse of the product, not the frame it is read in (data-sw-glimpse: the gate's `small` leaves it)
+    return f'<figure class="tile {kind}" data-sw-glimpse style="--r:{a:.4f}{f";--w:{w:.0f}" if w else ""}">{inner}</figure>'
 
 
 def s_hero(d, c):
@@ -447,7 +448,8 @@ def s_close(d, c):
         return ''
     md = d.get('media') or {}
     pool = (md.get('photos') or []) + (md.get('phones') or []) + (md.get('screens') or [])
-    trail = ''.join(f'<span class="tr" style="--r:{asp(m):.4f}">{pic(m)}</span>' for m in pool[:5])
+    # the trail is a run of small pictures 150 px high: glimpses, photographs before product screens
+    trail = ''.join(f'<span class="tr" data-sw-glimpse style="--r:{asp(m):.4f}">{pic(m)}</span>' for m in pool[:5])
     t = cl['title']
     return f'''<section class="close" id="close"><div class="trail" aria-hidden="true">{trail}</div><div class="wrap">
 <h2 class="d1" style="--fs:{step(t, [(30, 130), (46, 104), (999, 84)])};--fm:{step(t, [(30, 52), (46, 44), (999, 38)])}">{e(t)}</h2>
