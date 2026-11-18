@@ -499,7 +499,7 @@ h3{{font-weight:500}}.copy h3{{font-size:32px;line-height:1.15;letter-spacing:-.
 .menu{{position:fixed;top:76px;left:0;right:0;bottom:0;background:{c['ink']};color:{c['g']};flex-direction:column;align-items:flex-start;padding:30px;overflow:auto;transform:translateX(105%);transition:transform .3s,visibility .3s;visibility:hidden}}
 .open .menu{{transform:none;visibility:visible}}.menu ul{{flex-direction:column;align-items:flex-start;width:100%}}.menu ul a{{height:51px;padding:0}}.menu .btn-s{{margin:16px 0 0}}
 .menu :focus-visible{{outline-color:{c['g']}}}
-.panel{{flex-direction:column;min-height:0}}.shot{{flex:none;padding:28px 24px 0}}.shot>img{{max-height:246px;box-shadow:0 11px 30px {rgba('#000000', .28)}}}.shot.tall>img{{max-height:340px}}
+.panel{{flex-direction:column;min-height:0}}.shot{{flex:none;padding:28px 24px 0}}.shot>img{{max-height:246px;box-shadow:0 11px 30px {rgba('#000000', .28)}}}.shot.tall>img{{max-height:366px}}
 .copy{{align-self:stretch;padding:30px 25px}}.panel.pic .shot{{padding-bottom:28px}}.pgw{{-webkit-mask-image:linear-gradient(#000 70%,transparent);mask-image:linear-gradient(#000 70%,transparent)}}.panel.bare .copy{{padding:30px 25px}}.copy h3{{font-size:26px;margin-top:16px}}.copy h3+p{{margin-top:8px}}
 .pls,.pls.n3{{grid-template-columns:minmax(0,460px)}}.qgrid.c3,.qgrid.c2{{grid-template-columns:1fr;gap:15px}}
 }}

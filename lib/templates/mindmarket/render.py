@@ -642,7 +642,7 @@ h1.t1,.huge.t1{font-size:8.2165rem}h1.t2,.huge.t2{font-size:6.4rem}h1.t3,.huge.t
 .gl.n3 .g2{grid-column:2/4}.gl.n3 .g2 .gt{aspect-ratio:601/249}
 .gl.n2 .g0{grid-row:1}.gl.n2 .g1 .gt{aspect-ratio:601/863}
 .gl.n1{grid-template-columns:1fr}.gl.n1 .g0 .gt{aspect-ratio:1223/600}
-.gm{max-width:78%;max-height:78%;border-radius:10px}
+.gm{max-width:78%;max-height:78%;border-radius:10px}.gl .g1 .gm{max-width:94%;max-height:90%}
 .gl .g0 .gm{max-height:84%}
 .rails{padding:5rem 0 10rem;gap:1rem}.rp{min-height:6.25rem;padding:1.25rem 2.5rem 1.25rem 1.25rem;gap:1.25rem}.rp.nt{padding-left:2.5rem}.rp p{font-size:1.1875rem}
 .rv{width:3.76rem;height:3.76rem}

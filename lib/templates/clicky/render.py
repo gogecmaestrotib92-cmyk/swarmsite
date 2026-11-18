@@ -683,7 +683,7 @@ h1{font-weight:500;font-size:calc(var(--u)*var(--fs));line-height:1.1;letter-spa
 .row+.row{background:linear-gradient(90deg,var(--ln3) 50%,transparent 0) 20px 0/4px 2px repeat-x;background-size:4px 2px;background-clip:content-box}
 .js .row.dim{opacity:1;transform:none}
 .txt,.row.r .txt{display:contents}.copy,.row.r .copy{order:1;align-items:flex-start;text-align:left;padding:16px 0 40px}.copy h3{font-size:24px;line-height:31.2px}
-.shot{order:2;position:relative;flex:none;padding:6px;--mh:300px}.desk{border-radius:12px}.desk::after,.row.r .desk::after{display:none}.fig{padding:6px 3px 3px;border-radius:6px}
+.shot{order:2;position:relative;flex:none;padding:6px;--mh:366px}.desk{border-radius:12px}.desk::after,.row.r .desk::after{display:none}.fig{padding:6px 3px 3px;border-radius:6px}
 .wave,.row.r .wave{order:3;height:auto;margin:40px 0;justify-content:center}.mid{order:4;min-height:0}.convo,.row.r .convo{align-items:stretch}.bub{font-size:20px;line-height:1.35;min-height:46px;padding:11px 17px}.bub.req{align-self:flex-end;max-width:90%}.bub.rep{align-self:flex-start;max-width:90%}
 .dream{padding:40px 20px}.band{top:60px;height:420px}.doc{padding:20px;gap:12px;min-height:0}.np{font-size:17px;line-height:24.65px}
 .fb{padding:40px 20px;gap:36px}.mqt{gap:16px}.fsub{margin-top:-16px}.wall{columns:1}.ban{margin-top:0}.ban p{font-size:18px;line-height:27px;padding:20px 16px}.fbd p{font-size:15px;line-height:22.5px}
