@@ -135,7 +135,7 @@ def niche_group(d):
     best = None
     for i, g in enumerate(FAM['groups']):
         n = sum(words.count(w) for w in g['words'])
-        if n and (best is None or n > best[0]):
+        if n >= (g.get('min') or 1) and (best is None or n > best[0]):   # a group that names a subject asks for two telling words
             best = (n, i)
     if best:
         g = FAM['groups'][best[1]]

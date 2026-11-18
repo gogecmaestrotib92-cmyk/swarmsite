@@ -70,15 +70,17 @@ def test_the_rules_are_the_owners_file_and_the_port_picks_as_the_research_tool_d
     if not tool.is_file():
         pytest.skip('the research folder is not on this machine')
     L = _load('research_library', tool)
-    for d in (client(niche='sports betting analytics app'), client(niche='AI book publishing platform', ground='#ffffff', accent='#2563eb'), client(kind='corporate'), client(kind='restaurant'),
-              client(niche='API for developers', ground='#f6efe2', accent='#f87a14'), client(niche='payroll for companies'), client(title='Something with no telling word')):
+    # (a client whose words name a subject — sport, books, documents — is no longer chosen as the research tool chose:
+    #  its group leads with photographs of that subject, 2026-11-18; the broad groups still pick alike)
+    for d in (client(niche='wellness and travel app'), client(niche='design and video tool', ground='#ffffff', accent='#2563eb'), client(kind='corporate'), client(kind='restaurant'),
+              client(niche='GPU security for ML models', ground='#f6efe2', accent='#f87a14'), client(niche='payroll for companies'), client(title='Something with no telling word')):
         assert PI.niche_group(d) == L.niche_group(d)
         assert PI.pick_three(d, research) == L.pick_three(d['palette'], d.get('kind'), 'x', d), d
 
 
 def test_the_family_follows_what_the_client_does(lib):
     g = lambda **kw: PI.niche_group(client(**kw))[0]
-    assert g(niche='sports betting analytics app') == 'life' and g(niche='AI book publishing platform') == 'creative' and g(niche='payroll and invoices for companies') == 'serious'
+    assert g(niche='wellness and travel app') == 'life' and g(niche='design and video tool') == 'creative' and g(niche='payroll and HR for companies') == 'serious'
     assert g(niche='GPU cloud for developers') == 'technical' and g(kind='corporate') == 'corporate' and g(title='Nothing telling here') == 'default'
     assert g(niche='a tool', title='Coaching for your running habit') == 'life', 'the hero speaks where the niche says little'
     three = PI.pick_three(client(niche='sports betting analytics app'), lib)
@@ -144,3 +146,41 @@ def test_the_job_gives_three_variants_three_families_and_carries_their_files(tmp
 def R_needs(slug):
     R = _load('swarmsite_templates_registry', ROOT / 'lib' / 'templates' / 'registry.py')
     return R.needs(slug) or {}
+
+
+def test_a_client_whose_words_name_a_subject_is_shown_that_subject():
+    """Owner, 2026-11-18, after six software sites were read beside their references (an ebook tool stood on snow hills,
+    a PDF tool on a copper circuit board): many more pictures for the kinds of apps, and a rule for which goes where.
+    The groups that name a subject stand first in families.json and lead with photographs of it; a family ending in 2
+    is the same subject in other photographs, so the three designs show three pictures of the client's own subject."""
+    g = lambda niche=None, kind='software', **hero: PI.niche_group({**client(kind=kind), 'niche': niche, 'hero': hero})
+    assert g(niche='AI sports betting analysis tool', title='AI Sports Match Analysis')[0] == 'field'
+    assert g(niche='basketball coaching software', kicker='For basketball coaches')[0] == 'court'
+    assert g(niche='NBA game simulation app', text='SimScore is an NBA game simulator.')[0] == 'court'
+    assert g(niche='AI book publishing platform', title='Create, Publish and Sell Your Book with AI')[0] == 'writing'
+    assert g(niche='AI PDF redesign web tool', title='Your PDF, redesigned.', text='Drop any document.')[0] == 'documents'
+    # one word alone does not set a client among stadiums or paper: it falls to the broad groups, as before
+    assert g(niche='scheduling app', title='Book meetings without the back and forth')[0] in ('creative', 'default')
+    assert g(niche='hiring platform', title='A match for every role')[0] in ('life', 'default')
+    assert g(niche='GPU cloud for developers')[0] == 'technical' and g(kind='corporate')[0] == 'corporate'
+    assert g(niche='API and SDK for developers')[0] == 'building' and g(niche='product analytics dashboard')[0] == 'data' and g(niche='payments and invoicing for small firms')[0] == 'money'
+    fam = json.loads((ROOT / 'lib' / 'templates' / 'families.json').read_text())
+    subject = [x for x in fam['groups'] if x.get('min')]
+    assert [x['name'] for x in fam['groups'][:len(subject)]] == [x['name'] for x in subject] and all(x['min'] == 2 for x in subject), 'subject groups stand first and ask for two words'
+    # the repo's own library: every family a subject group leads with is there in both tones, in all ten slots, on disk
+    rows, pals = PI.library(ROOT)
+    for x in subject:
+        own = [f for f in x['families'] if f not in ('nature', 'ribbon', 'space', 'material', 'tech')]
+        assert len(own) >= 2, x['name']
+        for f in own:
+            for tone, ground in (('dark', '#0b0b0d'), ('light', '#fafafa')):
+                pal = PI.nearest({'ground': ground, 'accent': '#2af6a0'}, f, rows, pals)[0]
+                assert pal, (f, tone)
+                made = PI.build(f, pal, rows)
+                assert len(made['land']) == 6 and len(made['blur']) == 2 and len(made['field']) == 2 and made['sky'], (f, tone)
+                assert all((ROOT / p).is_file() for p in PI.files(made)), (f, tone)
+    # three designs, three pictures of the client's subject
+    three = PI.pick_three(client(niche='AI sports betting analysis tool', title='AI Sports Match Analysis'), ROOT)
+    assert [m['family'] for m in three] == ['arena', 'track', 'arena2'] and len({m['land'][0]['src'] for m in three}) == 3
+    # natural colours: a subject family stands in a neutral palette, which the client's accent does not turn
+    assert all(PI.tint('#ff4a1f', m['palette'], pals) == '' for m in three)
