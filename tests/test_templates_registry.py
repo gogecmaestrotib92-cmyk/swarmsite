@@ -235,92 +235,89 @@ def test_a_device_frame_is_drawn_round_a_picture_never_by_changing_its_box():
 
 
 
+def test_the_openings_picture_is_never_what_one_screen_has_left_after_the_words():
+    """The owner's test on a real client, on his phone (2026-11-18): the opening is one screen high and its picture took
+    what was left after a four-line headline — 80 px on a browser 600 px high, a phone drawn 40 px wide. The picture
+    has a least height, never more than it stands at the full width (its own proportion, --r), and the opening grows
+    past one screen to keep it; the gate reads product screens on a short phone screen too (`tiny`)."""
+    src = (Path(__file__).resolve().parents[1] / 'lib' / 'templates' / 'fluently' / 'render.py').read_text(encoding='utf-8')
+    assert re.search(r'figure\.shot\{flex:1 0 min\(var\(--sh,340px\),calc\(\(100vw - 48px\)/var\(--r,1\.6\)\)\)', src)
+    assert re.search(r'\.hero\{position:relative;min-height:max\(620px,100vh\)', src) and not re.search(r'\.hero\{[^}]*[;{]height:', src)
+    d = copy.deepcopy(CLIENTS['tallyfern'])
+    d.setdefault('media', {})['phones'] = [{'src': 'media/phone-1.jpg', 'w': 780, 'h': 1616, 'alt': 'app'}]
+    assert re.search(r'<figure class="shot tall" style="--r:0\.483">', R.render('fluently', d))
+    gate = (ROOT / 'lib' / 'qa' / 'template_gate.mjs').read_text()
+    assert 'tiny: []' in gate and "n + '-short'" in gate and 'SHORT = 600' in gate
+
+
 def _clicky():
     spec = importlib.util.spec_from_file_location('clicky_render', ROOT / 'lib' / 'templates' / 'clicky' / 'render.py')
     R = importlib.util.module_from_spec(spec); spec.loader.exec_module(R)
     return R
 
 
-def test_wide_screens_alone_still_give_the_windows_opening_upright_windows():
+def test_wide_screens_alone_leave_the_upright_windows_of_the_opening_empty():
     """Courtsensei on production, beside the reference (2026-11-15): six wide screens of one interface stood in five
-    wide windows and read as five thumbnails of the same thing. An upright slot with only wide screens left takes an
-    upright window on one; a photograph is never set that way. A title of 26 letters stands at 72."""
+    wide windows and read as five thumbnails of the same thing; an upright window on a wide screen (the remedy then)
+    cut the screen in half, which the owner called ugly on a real client (2026-11-18). An upright slot with only wide
+    screens left now stays empty: three wide windows, each showing its screen whole. A title of 26 letters stands at 72."""
     R = _clicky()
     scr = [{'src': 'media/screen-%d.jpg' % i, 'w': 1800, 'h': 1125, 'alt': 'S%d' % i} for i in range(1, 7)]
     big, wins = R.hero_media({'media': {'screens': scr, 'phones': [], 'photos': []}})
-    assert big and len(wins) == 5 and sum(1 for w in wins if w[1] < 160) == 2, [w[1] for w in wins]
+    assert big and len(wins) == 3 and all(w[1] >= 160 for w in wins), [w[1] for w in wins]
+    assert all(w[4] and w[4][1] == 'width:100%;left:0;top:0' for w in wins), 'each window shows its screen whole'
+    mixed = R.hero_media({'media': {'screens': scr, 'phones': [{'src': 'media/phone-%d.jpg' % i, 'w': 780, 'h': 1616} for i in (1, 2)], 'photos': []}})[1]
+    assert len(mixed) == 5 and sum(1 for w in mixed if w[1] < 160) == 2, 'phones take the upright windows'
     page = R.s_hero({'hero': {'title': 'Your team. Your game plan.'}, 'media': {'screens': scr, 'phones': [], 'photos': []}}, {})
-    assert page.count('class="scr dt"') == 5 and '--fs:72' in page
+    assert page.count('class="scr dt"') == 3 and '--fs:72' in page
     ph = [{'src': 'media/photo-%d.jpg' % i, 'w': 1800, 'h': 1125, 'alt': ''} for i in range(1, 7)]
     assert not any(w[4] for w in R.hero_media({'media': {'screens': [], 'phones': [], 'photos': ph}})[1])
 
 
-def test_a_screen_in_a_small_window_is_its_busiest_part_at_a_size_that_reads():
-    """The owner, at full size beside the reference (2026-11-15): a 767 px screen of an app shrunk into a 200 px
-    window is a smear of 3 px letters, where the reference's windows each hold one subject large. A product's screen
-    in a window is shown at READ of its own size at least, moved to the part capture's map of detail says is busiest,
-    clipped by the window and never stretched (its width alone is set; its height follows)."""
+def test_a_screen_in_a_small_window_stands_whole_in_a_window_of_its_own_shape():
+    """A product's screen in a window was shown enlarged and cut to its busiest part (2026-11-15); the owner, on a real
+    client, called the cut screens ugly (2026-11-18). A window now takes the screen's own proportion and shows it
+    whole: its width is the window's, nothing is moved, nothing is cut."""
     R = _clicky()
-    g = [[0] * 32 for _ in range(22)]
-    for y in range(14, 20):
-        for x in range(22, 30):
-            g[y][x] = 90                                               # the product: the lower right of the screen
-    m = {'src': 'media/tab1.jpg', 'w': 767, 'h': 533, 'alt': 'S', 'detail': g}
+    m = {'src': 'media/tab1.jpg', 'w': 767, 'h': 533, 'alt': 'S', 'detail': [[1] * 32 for _ in range(22)]}
     box, img = R.detail(m, 172, 110, 767)
-    width = float(re.search(r'width:([\d.]+)%', img).group(1)) / 100 * 172
-    assert width / 767 >= R.READ - 1e-3 and 'height' not in img and box == 'aspect-ratio:172/110'
-    left, top = (-float(re.search(k + r':(-?[\d.]+)%', img).group(1)) / 100 for k in ('left', 'top'))
-    cx, cy = (left * 172 + 86) / width, (top * 110 + 55) / (width / (767 / 533))
-    assert .6 < cx < 1 and .55 < cy < 1, (cx, cy)
+    assert box == 'aspect-ratio:172/120' and img == 'width:100%;left:0;top:0'
+    box, img = R.detail({'src': 'media/phone-1.jpg', 'w': 780, 'h': 1616}, 137, 300, 390)
+    assert box == 'aspect-ratio:137/284' and 'width:100%' in img
     assert R.busiest(None, .3, .3, [.156, .156])[0] == .5                 # no map: the middle past the flat margin
     css = (ROOT / 'lib' / 'templates' / 'clicky' / 'render.py').read_text()
     assert re.search(r'\.scr\.dt img\{[^}]*position:absolute[^}]*height:auto', css)
 
 
-def test_every_page_carries_the_map_of_its_screens_and_the_lines_that_keep_them_readable():
-    """Measured on two software sites (2026-11-15): seven templates showed product screens at 13–44 % of their own size.
-    The registry adds, to any page whose data has a desk screen with capture's map of detail, the map and a few lines
-    that show such a screen at its own pixels inside the same box (object-fit: none, a crop) where its box comes out
-    under LOW of its width; a page without a map is unchanged, and the same data gives the same bytes."""
-    g = [[(x + y) % 7 for x in range(32)] for y in range(20)]
+def test_every_page_lists_its_product_screens_and_never_crops_one_by_script():
+    """A product's screen stands whole in its frame. From 2026-11-15 to 2026-11-18 the registry added lines that drew a
+    screen larger inside a small box and cropped it (object-fit: none) so its letters would read; on a real client every
+    such frame held half a headline (the owner, on his phone, 2026-11-18). The page now only lists its screens with the
+    width each was drawn in, for the gate's `sliced`; a page without a screen is unchanged; the same data gives the
+    same bytes."""
     ran = 0
     for slug in SLUGS:
         d = copy.deepcopy(CLIENTS['tallyfern'])
-        bare = R.render(slug, d)
-        assert 'id="sw-detail"' not in bare
         md = d.setdefault('media', {})
         scr = md.get('screens') or []
         if not scr:
             continue
-        scr[0] = {**scr[0], 'w': 1800, 'detail': g}
+        scr[0] = {**scr[0], 'w': 1800}
+        md['phones'] = [{'src': 'media/phone-1.jpg', 'w': 780, 'h': 1616, 'alt': 'app'}]
         page = R.render(slug, d)
         assert page == R.render(slug, copy.deepcopy(d))
         blob = re.search(r'<script type="application/json" id="sw-detail">(.*?)</script>', page, re.S)
         assert blob, slug
         maps = json.loads(blob.group(1))
-        assert maps[scr[0]['src'].rsplit('/', 1)[-1]] == {'c': 1440, 'g': g}
-        assert 'objectFit="none"' in page and page.index('id="sw-detail"') < page.rindex('</body>')
+        assert maps[scr[0]['src'].rsplit('/', 1)[-1]] == {'c': 1440} and maps['phone-1.jpg'] == {'c': 390}
+        assert 'objectFit' not in page and 'data-sw-detail' not in page and page.index('id="sw-detail"') < page.rindex('</body>'), slug
         ran += 1
     assert ran == len(SLUGS)
+    bare = copy.deepcopy(CLIENTS['tallyfern'])
+    bare['media'] = {k: v for k, v in (bare.get('media') or {}).items() if k not in ('screens', 'phones')}
+    assert 'id="sw-detail"' not in R.render(SLUGS[0], bare)
     gate = (ROOT / 'lib' / 'qa' / 'template_gate.mjs').read_text()
-    assert "f !== 'none'" in gate and 'small: []' in gate and re.search(r'const SMALL = \.45', gate) and R.LOW == .45
-
-
-
-def test_a_phone_screen_is_in_the_map_at_the_width_it_was_drawn_in():
-    """A client's phone screen is photographed 390 wide drawn at 2 (780 px). Two templates showed sportbot's phones at
-    34–43 % of that width (2026-11-16): letters of 3 px. Phones go in the same map as desk screens, with their own width
-    (half their pixels), so the same lines keep them readable and the gate's `small` sees them."""
-    g = [[(x * y) % 5 for x in range(32)] for y in range(40)]
-    d = copy.deepcopy(CLIENTS['tallyfern'])
-    md = d.setdefault('media', {})
-    md['phones'] = [{'src': 'media/phone-1.jpg', 'w': 780, 'h': 1616, 'alt': 'app', 'detail': g}]
-    page = R.render('linearity', d)
-    maps = json.loads(re.search(r'<script type="application/json" id="sw-detail">(.*?)</script>', page, re.S).group(1))
-    assert maps['phone-1.jpg'] == {'c': 390, 'g': g}
-    md['phones'][0].pop('detail')
-    m = re.search(r'<script type="application/json" id="sw-detail">(.*?)</script>', R.render('linearity', d), re.S)
-    assert not m or 'phone-1.jpg' not in json.loads(m.group(1))
+    assert 'sliced: []' in gate and re.search(r'const SIDES = \.97', gate) and 'small: []' not in gate and not hasattr(R, 'READABLE')
 
 
 def test_a_small_window_shows_the_product_not_the_apps_own_menu_or_a_bar_of_controls():
@@ -369,8 +366,7 @@ def test_a_small_window_shows_the_product_not_the_apps_own_menu_or_a_bar_of_cont
     loud = [[0] * 32 for _ in range(22)]
     loud[10][20] = loud[10][21] = 99
     assert abs(C.busiest(loud, .05, .05)[0] - 20.5 / 32) < .04            # a part one cell high: never an empty one for a loud one
-    js = (ROOT / 'lib' / 'templates' / 'registry.py').read_text()
-    assert 'Math.max(Math.min(g[r][c],1),Math.min(g[r][c],CAP)' in js and R.CAP == C.CAP and R.RING == C.RING
+    assert R.CAP == C.CAP and R.RING == C.RING
 
 
 def test_the_windows_opening_keeps_the_clients_own_small_things_between_its_windows():

@@ -226,20 +226,12 @@ def busiest(grid, fw, fh, pad=None):
 
 
 def detail(m, bw, bh, cssw):
-    """a product's screen in a small window: the part of it with most of the product on it (capture's map of detail),
-    at a size that reads. The reference's windows each hold one subject large — a face, a room; a whole screen of an
-    app shrunk into one is a smear of 3 px letters (the windows design on a court-sports app, owner, 2026-11-15). The
-    picture keeps its own proportion and is moved and clipped inside the window, never stretched."""
+    """a product's screen in a small window: the whole screen, in a window of the screen's own proportion. For three
+    days a window showed the screen's busiest part enlarged (READ) and cut by the window; on a client's page every
+    such window held half a headline, and the owner called the cut screens ugly (2026-11-18): a screen is fitted to
+    its frame, never cut by it. `busiest` stays for a template that shows part of a screen on purpose."""
     a = asp(m)
-    s0 = max(bw / cssw, bh * a / cssw)                                  # the scale at which it just covers the window
-    k = max(1, READ / s0)
-    dw = s0 * k * cssw
-    dh = dw / a
-    fx, fy = busiest(m.get('detail'), bw / dw, bh / dh, m.get('pad'))
-    x = min(max(0, fx * dw - bw / 2), dw - bw)
-    y = min(max(0, fy * dh - bh / 2), dh - bh)
-    return (f'aspect-ratio:{bw:.0f}/{bh:.0f}',
-            f'width:{100 * dw / bw:.2f}%;left:{-100 * x / bw:.2f}%;top:{-100 * y / bh:.2f}%')
+    return f'aspect-ratio:{bw:.0f}/{bw / a:.0f}', 'width:100%;left:0;top:0'
 
 
 def hero_media(d):
@@ -264,9 +256,13 @@ def hero_media(d):
         m = pool[0].pop(0) if pool[0] else (pool[1].pop(0) if pool[1] else None)
         if not m:
             continue
-        # an upright slot with only wide product screens left takes an upright window on one, so the cluster keeps
-        # the reference's mix of shapes — five wide windows of one interface read as five thumbnails (2026-11-15)
-        cut = kind == 'P' and asp(m) >= 1.3 and m.get('src') in screens
+        # A window takes the shape of the screen it shows, and shows it whole. An upright slot with only wide product
+        # screens left stays empty: an upright window on a wide screen cut it in half (owner, 2026-11-18), and a wide
+        # window in its place made five thumbnails of one interface (2026-11-15) — fewer windows is the honest mix.
+        if kind == 'P' and asp(m) >= 1.3 and m.get('src') in screens:
+            pool[1].insert(0, m)
+            continue
+        cut = False
         w = wp if cut else round(min((wl if asp(m) >= 1 else wp) - 10, hmax * asp(m))) + 10
         pos = {'c': f'left:calc(50% + var(--u)*{off})', 'l': f'left:calc(var(--u)*{off})', 'r': f'right:calc(var(--u)*{off})'}[anchor]
         view = None

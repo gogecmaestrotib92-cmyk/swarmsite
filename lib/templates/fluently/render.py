@@ -188,7 +188,8 @@ def s_hero(d, pool, pic, lo, hi, ground):
     else:
         v, ink, a, bg = ground, (hi if ground == lo else lo), 0, ''
     shot = pool.take(lambda x: x['kind'] == 'phones', lambda x: x['kind'] == 'screens', lambda x: True)
-    fig = '<figure class="shot%s">%s</figure>' % (' tall' if _tall(shot) else '', _img(shot, '', False)) if shot else '<span class="shot"></span>'
+    # --r: the picture's own proportion, so its least height is never more than it stands at the full width
+    fig = '<figure class="shot%s" style="--r:%.3f">%s</figure>' % (' tall' if _tall(shot) else '', (shot.get('w') or 16) / (shot.get('h') or 10), _img(shot, '', False)) if shot else '<span class="shot"></span>'
     acts = _glass(h.get('primary')) + _glass(h.get('secondary'))
     hint = '<div class="hint">%s<span class="disc" aria-hidden="true"><span class="loop">%s%s</span></span></div>' % ('<p>%s</p>' % e(h['note']) if h.get('note') else '', ARROW, ARROW)
     return ('<section class="hero" data-ink="%s" style="--v:%s;--pi:%s;--pir:%s;--va:%s;--vb:%s">%s<div class="veil"></div><div class="veil2"></div>'
@@ -419,15 +420,18 @@ html.js .rv{opacity:.001;transform:translateY(-20px);transition:opacity 1.5s cub
 .cta:focus-visible{outline-color:var(--nv)}
 .roll{display:block;height:18px;overflow:hidden}.roll span,.roll::after{display:block;transition:transform .3s cubic-bezier(.4,0,.2,1)}.roll::after{content:attr(data-t)}.cta:hover .roll span,.cta:hover .roll::after{transform:translateY(-100%)}
 /* opening: one screen; the picture fills it under a veil that is half at the top, thin in the middle and whole at the foot */
-.hero{position:relative;height:100vh;min-height:620px;overflow:hidden;color:var(--pi);background:rgb(var(--v))}
+.hero{position:relative;min-height:max(620px,100vh);display:flex;flex-direction:column;overflow:hidden;color:var(--pi);background:rgb(var(--v))}
 .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .hero .veil{position:absolute;inset:0;background:linear-gradient(rgba(var(--v),var(--va)) 0%,rgba(var(--v),var(--vb)) 50%,rgb(var(--v)) 100%)}
 .hero .veil2{position:absolute;inset:0 0 auto;height:380px;background:radial-gradient(60% 100% at 50% 0,rgba(var(--v),.55) 0%,rgba(var(--v),0) 100%)}
-.hero-in{position:relative;height:100%;display:flex;flex-direction:column;align-items:center;padding:80px 24px 40px;text-align:center}
+.hero-in{position:relative;flex:1 0 auto;width:100%;display:flex;flex-direction:column;align-items:center;padding:80px 24px 40px;text-align:center}
 h1{font-weight:600;font-size:64px;line-height:1;letter-spacing:-.06em;max-width:18em;text-wrap:balance}
 .sub{margin-top:16px;max-width:560px;font-weight:500;font-size:24px;line-height:1.2;letter-spacing:-.06em;text-wrap:balance}
-.shot{flex:1 1 0;min-height:0;margin:28px 0 20px;display:flex;justify-content:center;align-items:center;max-width:100%}
-.shot img{max-height:100%;max-width:100%;width:auto;height:auto;border-radius:10px;box-shadow:0 0 0 1px rgba(var(--pir),.14),0 30px 80px rgba(0,0,0,.35)}.shot.tall img{border-radius:22px}
+/* The product's picture is never what is left of one screen after the words: on a short screen (a phone's browser with its
+   bars: 390 by 600) four lines of headline left it 80 px and the phone was drawn 40 px wide (owner, 2026-11-18). It has a
+   least height (--sh) and the opening grows past one screen to keep it; on a tall screen it still takes what is free. */
+.shot{flex:1 1 0;min-height:0;margin:28px 0 20px;max-width:100%}figure.shot{flex:1 0 min(var(--sh,340px),calc((100vw - 48px)/var(--r,1.6)));position:relative;width:100%}
+.shot img{position:absolute;inset:0;margin:auto;max-height:100%;max-width:100%;width:auto;height:auto;border-radius:10px;box-shadow:0 0 0 1px rgba(var(--pir),.14),0 30px 80px rgba(0,0,0,.35)}.shot.tall img{border-radius:22px}
 .acts{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
 .glass{display:flex;align-items:center;justify-content:center;min-height:54px;padding:10px 24px;border-radius:100px;background:rgba(var(--pir),.24);box-shadow:inset 0 0 8px rgba(var(--pir),.25);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);font-weight:500;font-size:16px;line-height:1.2;letter-spacing:-.05em;color:var(--pi);transition:background-color .15s cubic-bezier(.4,0,.2,1)}
 .glass:hover{background:rgba(var(--pir),.36)}
@@ -518,7 +522,7 @@ html.js .chip{opacity:0;transform:translateY(80px);transition:opacity .8s cubic-
 /* PHONE (measured at 390): 16 at the sides, the first screen 760 high, display 48, heads 36, the walk with its picture above its words, tiles and cards as running rows */
 @media (max-width:900px){
 .bar .wide{display:none}.seg.small{display:flex;min-width:0}.seg.small a{flex:none}.seg.small a.on{flex:0 1 auto;min-width:0}.seg.small a{font-size:12px;line-height:18px;letter-spacing:-.035em;padding:0 10px;max-width:42vw;overflow:hidden;text-overflow:ellipsis;display:block;line-height:41px}.logo span{display:none}.logo img.wm{height:20px}
-.h2{font-size:36px}.hero{height:min(100svh,760px);min-height:560px}.hero-in{padding:80px 16px 64px}h1{font-size:48px}.sub{max-width:302px;font-size:18px;line-height:1.1}
+.h2{font-size:36px}.hero{min-height:max(560px,min(100svh,760px))}figure.shot{--sh:320px}.hero-in{padding:80px 16px 64px}h1{font-size:48px}.sub{max-width:302px;font-size:18px;line-height:1.1}
 .shot{margin:24px 0 28px}.acts{width:100%;flex-wrap:nowrap}.glass{flex:1 1 0;min-width:0;min-height:49px;padding:10px 12px}.hint{margin-bottom:18px}
 .lg{padding:40px 0}
 .wk-in{width:auto;margin:0 16px}.wk-s{grid-template-columns:1fr;grid-template-rows:auto auto;min-height:0;padding:40px 0}.wk-f{order:-1;padding:24px 0 36px}.wk-p{padding:0}.wk-p .ey{margin-bottom:8px}.wk-p h2{font-size:36px;max-width:none}.bd{margin-top:12px;max-width:none;font-size:16px;line-height:20px}
