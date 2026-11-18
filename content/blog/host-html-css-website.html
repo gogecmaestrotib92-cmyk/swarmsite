@@ -1,0 +1,90 @@
+<!--{
+"title": "How to put an HTML and CSS website online, with your own domain",
+"title_tag": "How to host an HTML and CSS website with your own domain",
+"description": "You have a folder with index.html in it. Three free ways to put it online, how to connect your own domain, and what to check once it is live.",
+"standfirst": "You have a folder with an index.html in it. Here are three free ways to put it online, how to connect your own domain, and what to check once it is live.",
+"kicker": "Hosting",
+"date": "2026-11-18",
+"ground": "paper-fold", "tone": "light", "shot": "ui-design",
+"shot_alt": "A finished design, ready to download as HTML and CSS",
+"sources": [
+ ["Netlify docs: create deploys (drag and drop)", "https://docs.netlify.com/deploy/create-deploys/"],
+ ["Netlify: pricing", "https://www.netlify.com/pricing/"],
+ ["Cloudflare Pages docs: direct upload", "https://developers.cloudflare.com/pages/get-started/direct-upload/"],
+ ["Cloudflare Pages docs: limits", "https://developers.cloudflare.com/pages/platform/limits/"],
+ ["Cloudflare Pages docs: custom domains", "https://developers.cloudflare.com/pages/configuration/custom-domains/"],
+ ["GitHub docs: GitHub Pages limits", "https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits"]
+]
+}-->
+<p>A website made of HTML and CSS files is the simplest thing the web knows how to serve. There is no database behind it and no program that has to run: a web host only has to hand the files to whoever asks. That is why it is fast, why almost nothing can break, and why hosting it can cost nothing.</p>
+<p>This guide assumes you have such a folder: from a designer, from an export, or from a Swarmsite download. It takes you from the folder on your computer to your own domain with a padlock in the address bar.</p>
+
+<h2>First, look inside the folder</h2>
+<p>Whatever host you choose, it will look for one file to show first: <code>index.html</code>, at the top level of what you upload. A typical folder looks like this:</p>
+<pre><code>my-site/
+  index.html
+  media/      pictures and video
+  fonts/      typefaces
+</code></pre>
+<p>Two checks before you upload anything:</p>
+<ul class="check">
+<li><strong>If you received a zip, unpack it.</strong> You upload the folder, and <code>index.html</code> must not be buried one level deeper than you think.</li>
+<li><strong>Open <code>index.html</code> in your browser</strong> by double-clicking it. If the page looks right from your own disk, with pictures and typefaces in place, it will look right online. If something is missing here, it will be missing there.</li>
+</ul>
+<aside class="note"><p><strong>A Swarmsite download</strong> is a zip that holds <code>index.html</code>, a <code>media</code> folder, a <code>fonts</code> folder, a <code>data.json</code> with your content, and a <code>README.txt</code>. The page asks the network for nothing outside that folder, typefaces included, so it runs on any of the hosts below as it is.</p></aside>
+
+<h2>Three free ways to host it</h2>
+<p>All three serve plain files over HTTPS and let you use a domain you own. They differ in how you get the files there and in what they allow.</p>
+<div class="tw"><table>
+<thead><tr><th></th><th>How you upload</th><th>Good to know</th></tr></thead>
+<tbody>
+<tr><th scope="row">Netlify</th><td>Drag the folder onto a page in your browser</td><td>The quickest start. The free plan includes custom domains with SSL and meters use in credits.</td></tr>
+<tr><th scope="row">Cloudflare Pages</th><td>Drag the folder or a zip into the dashboard</td><td>Drag and drop takes up to 1,000 files of up to 25 MiB each. A bare domain has to use Cloudflare’s nameservers.</td></tr>
+<tr><th scope="row">GitHub Pages</th><td>Put the files in a repository</td><td>Sites up to 1 GB. GitHub’s terms say it is not meant as free hosting for running an online business.</td></tr>
+</tbody></table></div>
+<p>These are the limits each provider documents at the time of writing; the links are at the end of this page, and free plans change, so look before you rely on one. If you only want the page online today, take the first route.</p>
+
+<h3>Netlify: drag the folder</h3>
+<ol>
+<li>Create a free account and sign in. Dropping a folder works without one, but Netlify’s own documentation recommends signing in first so the site is kept in your account where you can manage it.</li>
+<li>Open <a href="https://app.netlify.com/drop">app.netlify.com/drop</a> and drag your folder onto the page.</li>
+<li>The site is live at an address ending in <code>.netlify.app</code>. Open it and check it on your phone.</li>
+</ol>
+<p>To change the site later, drag the updated folder onto the same site’s Deploys page. Each upload replaces the one before.</p>
+
+<h3>Cloudflare Pages: drag the folder or the zip</h3>
+<ol>
+<li>In the Cloudflare dashboard, open Workers &amp; Pages, choose to create an application, and pick the option to drag and drop your files.</li>
+<li>Give the project a name and drag in the folder or the zip.</li>
+<li>Deploy. The site is live at <code>your-project.pages.dev</code>.</li>
+</ol>
+<p>A new version is a new deployment from the same project page.</p>
+
+<h3>GitHub Pages: if you already keep things in Git</h3>
+<p>Put the files in a repository with <code>index.html</code> at its top level and turn on Pages in the repository’s settings. The site appears at <code>your-name.github.io/repository</code>. It suits a personal site, documentation or an open project. Read the limits page before using it for a shop or a paid product: GitHub describes those as outside what Pages is for.</p>
+
+<h3>Already paying for hosting?</h3>
+<p>If your current site lives on ordinary shared hosting, you do not need a new provider. Open the file manager in your hosting panel, or connect with an FTP program, and find the public folder, most often called <code>public_html</code> or <code>www</code>. Download a copy of what is there first. Then upload the <em>contents</em> of your folder into it, so that <code>index.html</code> sits directly inside the public folder.</p>
+<p>If the old site had more pages than the new one, their addresses will stop working unless you keep or redirect them. That is a search question as much as a hosting one: see <a href="/blog/redesign-website-without-losing-seo">redesigning without losing your rankings</a>.</p>
+
+<h2>Connect your own domain</h2>
+<p>A domain is rented by the year from a registrar. Connecting it to a host means adding one or two DNS records at the company where the domain’s DNS is managed, usually the registrar itself. The order matters:</p>
+<ol>
+<li><strong>Add the domain in your host’s dashboard first</strong> (in Netlify under Domain management, in Cloudflare Pages under Custom domains). The host then shows you the exact records it expects. Cloudflare warns that creating the record before adding the domain can leave the address failing to resolve.</li>
+<li><strong>Create those records at your DNS provider.</strong> For <code>www.example.com</code> or any other subdomain this is a <code>CNAME</code> record pointing at the address your host gave the site. For the bare domain, <code>example.com</code>, hosts differ: Netlify gives you an <code>A</code> or <code>ALIAS</code> record to add where your DNS already lives, while Cloudflare Pages needs the domain to use Cloudflare’s nameservers.</li>
+<li><strong>Wait, then check.</strong> A DNS change can take anything from minutes to a day or two to reach everyone. Copy the values from the dashboard, not from an article: they are the one thing here that must be exact.</li>
+</ol>
+<p>Decide which of the two spellings is the real one, <code>www.example.com</code> or <code>example.com</code>, and make the other redirect to it. Your host has a setting for this. Two addresses showing the same page is a small thing that confuses both visitors’ bookmarks and search engines.</p>
+
+<h2>Once it is live</h2>
+<ul class="check">
+<li><strong>The padlock.</strong> Open the site with <code>https://</code>. The host issues the certificate; if the browser still warns after the DNS change has settled, the domain’s settings in the dashboard will say what it is waiting for.</li>
+<li><strong>Both spellings.</strong> With and without <code>www</code>, with <code>http://</code> and <code>https://</code>: all four should end at one address.</li>
+<li><strong>A real phone.</strong> On mobile data, not your office Wi-Fi.</li>
+<li><strong>Every link and the contact form.</strong> A form in a static page needs somewhere to send what is typed; if yours is a plain email link, click it.</li>
+<li><strong>Tell the search engines.</strong> Add the site to Google Search Console and submit a sitemap, so the new address is crawled soon and you can see how it is found.</li>
+</ul>
+
+<h2>Changing the site later</h2>
+<p>A static site has no admin screen. To change it, you change the files and upload the folder again; the host swaps the old version for the new one. Keep the previous folder until you have looked at the new version online, so that going back is one more upload.</p>
+<p>If the folder came from Swarmsite, you make the change in the editor, download again, and upload that.</p>

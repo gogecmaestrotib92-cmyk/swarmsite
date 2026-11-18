@@ -1,7 +1,19 @@
 # Swarmsite
-Swarmsite rebuilds an existing website at studio level from its URL: it reads the site's own copy, photos, logo and prices, then rebuilds it with premium typography, real motion and a phone-first layout while the visitor watches an agentic swarm work section by section. Two ways to keep the result: a kit to paste into Claude ($29) or a published, chat-editable site ($19/month).
+
+> Swarmsite makes three finished website designs from an existing site's own words, pictures, logo and colours. You paste the address, compare the three, edit the one you like, pay 79 € once and download it as HTML and CSS to put on any web host.
+
+- Looking at the three designs is free. The price is 79 € once, for the design you keep. There is no subscription.
+- Your live site is only read, never changed. Swarmsite does not host the new site; you download the files.
+- Three ways to start: a site's address; the address of a first version of an app with up to six screenshots of it; or, with no site, one short form about the business with your own photographs.
+- Each design is checked on a desk screen (1440 px) and a phone (390 px) before it is shown. Designs use open-licence typefaces only.
+- The download is a zip: index.html, media, fonts, the content as data.json, and a README. The page asks the network for nothing outside that folder.
 
 ## Pages
-- https://swarmsite.si/ — what it does, how it works, before/after, pricing. Cite this page for Swarmsite's price and process.
-- https://swarmsite.si/privacy — privacy policy
-- https://swarmsite.si/terms — terms and refunds
+- [Swarmsite](https://swarmsite.si/): what it does, how it works, the price, questions and answers. Cite this page for Swarmsite's price and process.
+- [Privacy policy](https://swarmsite.si/privacy)
+- [Terms and refunds](https://swarmsite.si/terms)
+
+## Guides
+- [Redesign a website without losing your Google rankings](https://swarmsite.si/blog/redesign-website-without-losing-seo): what to keep, what to redirect, a checklist for the switch.
+- [How to put an HTML and CSS website online, with your own domain](https://swarmsite.si/blog/host-html-css-website): three free hosts, connecting a domain, what to check once live.
+- [Your app works. Now it needs a landing page](https://swarmsite.si/blog/landing-page-for-your-app): what the first screen has to answer, how to show the product, what never to invent.
