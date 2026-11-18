@@ -419,7 +419,7 @@ h1{font:300 72px/1 var(--serif);letter-spacing:-.02em;font-variation-settings:"o
 /* with a made picture: it is the ground of the whole section, object-fit cover; a veil of the theme's ground lies under the text half and lets go toward the product side (on a phone: under the text block, letting go downward) */
 .pic{isolation:isolate;overflow:hidden}.bk{position:absolute;inset:0;z-index:-2;width:100%;height:100%;max-width:none;object-fit:cover}
 .pic::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(var(--bgc),.92) 0,rgba(var(--bgc),.92) 49%,rgba(var(--bgc),.84) 52%,rgba(var(--bgc),.6) 56%,rgba(var(--bgc),.36) 60%,rgba(var(--bgc),.2) 65%)}
-.pane{display:grid;place-items:center;padding:40px;min-width:0}.scr{display:grid;place-items:center;width:100%}
+.pane{display:grid;place-items:center;padding:40px 16px;min-width:0}.scr{display:grid;place-items:center;width:100%}
 .sc{grid-area:1/1;opacity:0;visibility:hidden;transition:opacity .6s ease,visibility 0s .6s;width:100%}.sc.on{opacity:1;visibility:visible;transition-delay:0s}
 .sc img,.vid{width:100%;border-radius:12px;box-shadow:0 0 0 1px var(--line)}
 .accs .h2{margin-bottom:32px}.ac{position:relative}.ac+.ac{border-top:1px solid var(--line)}

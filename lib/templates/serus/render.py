@@ -360,6 +360,8 @@ a.card:hover .bg{{transform:scale(1.03);opacity:.9}}
 .open{{padding:96px 16px;min-height:593px}}h1{{font-size:30.4px;min-height:calc(52px + var(--rm) * 35px)}}
 .card{{aspect-ratio:3/4;padding:20px}}.cpill{{height:40px;padding:0 6px 0 16px;gap:8px;font-size:15px}}.cpill i{{width:28px;height:28px}}
 .shot{{margin:16px 0}}.shot img{{max-width:86%}}.sh-phone img,.sh-book img{{max-width:70%}}
+/* a phone stands at 45 % of its size at least on a phone's screen (176 px wide, 366 high): it stood at 31-42 % (owner, 2026-11-18: frames in which the letters read) */
+.card:has(.sh-phone){{aspect-ratio:auto}}.shot.sh-phone{{flex:none;height:366px}}
 .ch{{font-size:28.27px}}.cp{{font-size:16.155px}}.h28{{font-size:22.125px}}
 .news{{padding:48px 16px 112px}}.grid,.grid.g4,.grid.g8{{grid-template-columns:1fr;gap:24px}}.art h3{{font-size:16.155px;margin-top:20px}}
 .fbot{{flex-direction:column;text-align:center}}.fcols{{display:grid;grid-template-columns:1fr 1fr}}}}

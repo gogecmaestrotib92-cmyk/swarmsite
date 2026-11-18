@@ -464,10 +464,12 @@ h1{font-weight:600;font-size:64px;line-height:1;letter-spacing:-.06em;max-width:
 .dots li{width:12px;height:12px;border-radius:99px;background:color-mix(in srgb,var(--i) 16%,transparent);transition:background-color .15s cubic-bezier(.4,0,.2,1)}.dots li.on{background:var(--a)}
 /* tiles: head 80 from the top, then a tall tile (389) beside two wide ones (795), 16 apart, 40 round, 8 inside, panes 32 round */
 .bt{padding:80px 0 160px;overflow:hidden}.bt .hd2{margin-bottom:80px}
-.bt-g{display:grid;grid-template-columns:389fr 795fr;grid-template-rows:400px 400px;gap:16px;width:min(1200px,100% - 48px);margin:0 auto;align-items:stretch}
+.bt-g{display:grid;grid-template-columns:389fr 795fr;grid-template-rows:auto auto;gap:16px;width:min(1200px,100% - 48px);margin:0 auto;align-items:stretch}
 .bc{min-width:0;min-height:0}.bc1{grid-row:1/3}.bt-g.k1{grid-template-columns:1fr;grid-template-rows:auto}.bt-g.k1 .bc1{grid-row:auto;max-width:389px;justify-self:center}.bt-g.k2{grid-template-rows:816px}.bt-g.k2 .bc2{align-self:center}
 .bc article{height:100%;display:flex;gap:10px;padding:8px;border-radius:40px;overflow:hidden}
-.bc1 article{flex-direction:column;gap:16px;background:var(--i);color:var(--g)}.bc2 article{flex-direction:row-reverse;background:var(--c2);color:var(--c2t);min-height:400px}.bc3 article{background:color-mix(in srgb,var(--i) 8%,var(--g));color:var(--i)}
+.bc1 article{flex-direction:column;gap:16px;background:var(--i);color:var(--g)}.bc2 article{flex-direction:column-reverse;background:var(--c2);color:var(--c2t);min-height:400px}.bc3 article{flex-direction:column-reverse;background:color-mix(in srgb,var(--i) 8%,var(--g));color:var(--i)}
+/* a wide tile's picture stands over its words at the tile's whole width: beside them it had 377 px, and a desk screen stood at 23 % of its size (owner, 2026-11-18: frames in which the letters read) */
+.bc2 .bc-t,.bc3 .bc-t{flex:none;padding:24px 32px 28px;justify-content:flex-start}.bc2 .pane,.bc3 .pane{flex:none}.bc2 .pane img,.bc3 .pane img{max-height:none}
 .bc-t{flex:1 1 0;min-width:0;padding:32px;display:flex;flex-direction:column;justify-content:flex-end;gap:16px}.bc1 .bc-t{flex:none;padding:32px 32px 8px;justify-content:flex-start}
 .bc h3{font-weight:600;font-size:32px;line-height:1;letter-spacing:-.05em;text-wrap:balance}.bc-t p{font-weight:500;font-size:16px;line-height:20px;letter-spacing:-.03em;opacity:.9}
 .pane{flex:1 1 0;min-width:0;min-height:0;display:grid;grid-template:minmax(0,1fr)/minmax(0,1fr);place-items:center;padding:24px;border-radius:32px;overflow:hidden;background-size:cover;background-position:center;background-color:color-mix(in srgb,currentColor 8%,transparent)}
