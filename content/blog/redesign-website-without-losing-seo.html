@@ -1,0 +1,95 @@
+<!--{
+"title": "Redesign a website without losing your Google rankings",
+"title_tag": "Redesign a website without losing Google rankings: a checklist",
+"description": "A new look does not cost you rankings. Changed addresses, lost words and a forgotten noindex do. What to keep, what to redirect, and a checklist for the switch.",
+"standfirst": "A new look does not cost you rankings. Changed addresses, lost words and a forgotten noindex do. Here is what to keep, what to redirect, and what to check on the day you switch.",
+"kicker": "Redesign",
+"date": "2026-11-18",
+"ground": "metal-fold", "tone": "dark", "shot": "ui-designs",
+"shot_alt": "Three designs of one website side by side in the Swarmsite chooser",
+"sources": [
+ ["Google Search Central: site moves with URL changes", "https://developers.google.com/search/docs/crawling-indexing/site-move-with-url-changes"],
+ ["Google Search Central: redirects and Google Search", "https://developers.google.com/search/docs/crawling-indexing/301-redirects"],
+ ["Google Search Central: site moves without URL changes", "https://developers.google.com/search/docs/crawling-indexing/site-move-no-url-changes"]
+]
+}-->
+<p>Most stories about a redesign that “killed our traffic” are not about design. The colours, the typeface and the layout were never what a search engine ranked. What it ranked was a set of addresses, the words standing at each of them, and the links pointing there. A redesign loses rankings when it quietly changes one of those three while everybody is looking at the new first screen.</p>
+<p>So the work is mostly bookkeeping: know what you have, decide what happens to each piece, and check that nothing was dropped on the way. This is the order we would do it in.</p>
+
+<h2>What a search engine knows your site by</h2>
+<p>Four things carry over from the old site to the new one, or fail to:</p>
+<ul>
+<li><strong>Addresses.</strong> Every page that ranks does so at one exact URL. <code>/services/roof-repair</code> and <code>/roof-repair</code> are two different pages to a crawler, even when the text is the same.</li>
+<li><strong>Words.</strong> The headings and paragraphs on a page are what it is found for. A page that answered a question in 400 words and now shows a photograph with a slogan answers nothing.</li>
+<li><strong>Titles and descriptions.</strong> The <code>&lt;title&gt;</code> of each page is the line people see in the results. New templates often reset every title to the company name.</li>
+<li><strong>Links.</strong> Links from other sites point at your old addresses, and so do the links between your own pages.</li>
+</ul>
+<p>A redesign that keeps all four is close to invisible to search. Each of the steps below protects one of them.</p>
+
+<h2>Before you touch anything: take stock</h2>
+<p>You cannot protect a page you have forgotten about. Make one list of every address on the current site, from three places:</p>
+<ol>
+<li>Your sitemap, usually at <code>/sitemap.xml</code>.</li>
+<li>Google Search Console: the Pages report for what is indexed, and the Performance report for what brings clicks. Export both.</li>
+<li>Your analytics, for pages people land on from elsewhere: campaigns, newsletters, links from partners.</li>
+</ol>
+<p>Then mark the ones that matter. Pages rarely matter equally, and the Performance report shows which ones bring the clicks. Those are the pages where a mistake is expensive; for them, also save the current title, description and main heading, so you can compare afterwards.</p>
+<aside class="note"><p><strong>If you have no Search Console yet,</strong> set it up now, before the redesign. It is free, it takes a few minutes to verify a site, and it is the only place where you see your own pages the way Google does. Without a “before” you will not be able to tell what the redesign changed.</p></aside>
+
+<h2>Decide what happens to every address</h2>
+<p>For each line in your list there are only three honest answers:</p>
+<div class="tw"><table>
+<thead><tr><th>The page…</th><th>What to do</th><th>What a visitor to the old address gets</th></tr></thead>
+<tbody>
+<tr><td>stays, at the same address</td><td>Nothing. This is the best case, and worth some effort to arrange.</td><td>The new page</td></tr>
+<tr><td>stays, at a new address</td><td>A permanent redirect from the old address to the new one</td><td>The new page, one hop later</td></tr>
+<tr><td>is gone, with nothing like it</td><td>Let it answer “not found” (404 or 410)</td><td>An honest error page with a way onward</td></tr>
+</tbody></table></div>
+<p>The first row is the one to aim for. If the new site can serve the same paths as the old one, there is nothing to redirect and nothing for a crawler to relearn. Changing an address only because the new system prefers a different pattern is the most common way to lose a ranking for no gain.</p>
+
+<h2>Redirects, done properly</h2>
+<p>Where an address must change, the old one has to send both people and crawlers to the new one. Google’s own guide to moving a site is specific about how, and it is worth following to the letter:</p>
+<ul class="check">
+<li><strong>Make it permanent and server-side.</strong> A <code>301</code> or <code>308</code> status says the move is final. A <code>302</code> says “temporarily”, and the old address stays in the results.</li>
+<li><strong>Send each page to its own match.</strong> The old roof-repair page goes to the new roof-repair page. Sending many old pages to the home page is named in Google’s guide as a thing not to do: the visitor does not get what they came for, and neither does the crawler.</li>
+<li><strong>Go straight there.</strong> A redirect that leads to another redirect is slower and easier to break. Point each old address at the final one.</li>
+<li><strong>Leave them in place.</strong> Redirects are not scaffolding you remove after launch.</li>
+</ul>
+<blockquote><p>“Keep the redirects for as long as possible, generally at least 1 year.”</p><cite><a href="https://developers.google.com/search/docs/crawling-indexing/site-move-with-url-changes">Google Search Central, on site moves</a></cite></blockquote>
+<p>Keep the list of old and new addresses as a plain spreadsheet. On launch day it becomes your test plan: open every old address and see where you land.</p>
+
+<h2>Keep the words that were doing the work</h2>
+<p>New designs tend to have less text than the pages they replace. Sometimes that is an improvement. But before a paragraph goes, look at what the page was found for. If people arrived searching for “emergency roof repair on a Sunday” and the only place that sentence lived is being replaced by three icons, you are deleting the reason they came.</p>
+<p>For each page that matters, compare old and new:</p>
+<ul>
+<li>Is there still exactly one main heading, and does it still say what the page is about?</li>
+<li>Are the questions the old page answered still answered, in text a crawler can read (not only inside a picture)?</li>
+<li>Does the <code>&lt;title&gt;</code> still name the thing, not just the company?</li>
+<li>Do pictures that carry meaning still have a description in their <code>alt</code> text?</li>
+<li>Do the links between your pages point at the new addresses directly, not through a redirect?</li>
+</ul>
+
+<h2>The day you switch</h2>
+<p>Most launch-day damage comes from something that was right for the test site and wrong for the real one. Run through this list with the new site live:</p>
+<ul class="check">
+<li><strong>No leftover <code>noindex</code>.</strong> A test site is usually hidden from search with a <code>noindex</code> tag or a <code>robots.txt</code> block. Shipped by accident, either one removes the whole site from the results.</li>
+<li><strong>Every old address checked.</strong> Each one opens the same page, redirects to its match, or answers “not found” on purpose.</li>
+<li><strong>Each page names itself.</strong> Its canonical link points at its own new address.</li>
+<li><strong>A fresh sitemap, submitted.</strong> List the new addresses and hand the sitemap to Search Console.</li>
+<li><strong>Verification still in place.</strong> If Search Console or analytics were verified by a tag or a file on the old site, the new site needs the same tag or file.</li>
+<li><strong>It works on a phone.</strong> Open it on one; do not trust a narrowed desktop window.</li>
+</ul>
+
+<h2>The weeks after</h2>
+<p>Expect some movement. Google’s guide says ranking can fluctuate for a time during a move and settles as the site is crawled again; for a medium-sized site it speaks of a few weeks or more. A wobble in the first days is not a verdict.</p>
+<p>A fall that keeps going is different. When it happens, look for the cause in the order of how often it turns out to be the cause: redirects that are missing or point at the wrong place, a <code>noindex</code> or <code>robots.txt</code> block that survived the launch, text that was on the old page and is not on the new one, and links between your own pages that still use old addresses. Search Console’s Pages report will usually name it.</p>
+
+<h2>Where Swarmsite fits, and where it does not</h2>
+<p>Swarmsite makes three designs from the page you paste, out of that page’s own words, pictures, logo and colours. That takes care of one item on this list by construction: the new design starts from the text you already have, and you can change any of it in the editor before you download.</p>
+<p>The rest of the list stays yours, and it is better to say so plainly:</p>
+<ul>
+<li>You get one page, as HTML and CSS, to put on your own web host. If your current site has more pages than that, they keep working only if you keep them, or redirect them as described above.</li>
+<li>We never touch your live site, so nothing changes in search until you upload the new page yourself. Until then you can compare the three designs for as long as you like.</li>
+<li>Check the page against your list before you switch: the main heading, the passages that bring visitors, the title.</li>
+</ul>
+<p>When the page is ready, <a href="/blog/host-html-css-website">putting an HTML and CSS site online</a> is the next step.</p>

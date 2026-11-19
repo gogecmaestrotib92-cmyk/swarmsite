@@ -1,0 +1,77 @@
+/* blog.css — the guides (web/blog, written by scripts/seo.py from content/blog). On the shared layer (site.css): its
+   ground, ink and card tones, its display serif and text sans, its nav box, button and address field. What is the
+   blog's own: a reading column, an article's picture (one of our interface's screens, whole, on a made ground, as the
+   landing shows them), and the cards that lead to an article. The footer repeats the landing's. */
+.more{display:inline-flex;align-items:center;gap:4px;min-height:24px;font-weight:600}.more .chev{transition:transform .3s var(--ease)}
+.nvl a[aria-current],.menu a[aria-current]{color:var(--ink)}
+/* the picture */
+.cov{position:relative;display:flex;align-items:center;justify-content:center;aspect-ratio:16/9;padding:6%;border-radius:16px;overflow:hidden;background:var(--card)}
+.cov .mk{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cov::after{content:"";position:absolute;inset:0;background:var(--ground);opacity:.18}
+.cov .shot{position:relative;z-index:1;width:auto;height:auto;max-width:100%;max-height:100%;border-radius:6px;box-shadow:0 12px 40px rgba(0,0,0,.28)}
+.cov.wide{aspect-ratio:1240/600;padding:40px}
+/* the blog's opening */
+.bh{padding:196px 0 72px;text-align:center}.bh .tag{margin-bottom:20px}.bh .lead{max-width:640px;margin:28px auto 0;color:var(--muted)}
+.posts{padding-bottom:0}
+.pc{display:flex;flex-direction:column;align-items:flex-start;gap:0}
+.pc .cov{width:100%;transition:transform .5s var(--ease)}.pc:hover .cov{transform:scale(.985)}.pc:hover .more .chev{transform:translateX(4px)}
+.pc .tag{margin-top:24px}.pc h2,.pc h3{margin-top:12px;max-width:22ch}.pc.lead h2{max-width:20ch}
+.pc .pd{margin-top:12px;max-width:56ch;font-weight:400;font-size:17px;line-height:1.45;color:var(--muted)}.pc .more{margin-top:16px}
+.pc.lead .cov{aspect-ratio:1240/560;padding:40px}
+@media (min-width:992px){.pc.lead{display:grid;grid-template-columns:1fr 1fr;column-gap:32px;align-items:start}.pc.lead .cov,.pc.lead .tag{grid-column:1/-1}.pc.lead h2{grid-row:span 2}.pc.lead .pd{margin-top:16px;font-size:19px}}
+.pgrid2{display:grid;grid-template-columns:1fr 1fr;gap:64px 32px;margin-top:88px}
+/* an article */
+.ah{padding:176px 0 56px;text-align:center}.ah h1{max-width:18ch;margin-inline:auto}.ah .lead{max-width:680px;margin:28px auto 0;color:var(--muted)}
+.crumb{font:500 14px/1.3 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:20px}.crumb a{display:inline-flex;align-items:center;min-height:24px;color:var(--ink)}.crumb a:hover{text-decoration:underline;text-underline-offset:3px}
+.ah .meta{margin-top:20px}
+.body{width:min(720px,100% - 40px);margin:72px auto 0;font:400 19px/1.6 var(--sans)}
+.body>*+*{margin-top:1.15em}
+.body h2{margin-top:1.75em;font-size:44px;line-height:1;letter-spacing:-.03em;scroll-margin-top:110px}
+.body h3{margin-top:2em;font:600 22px/1.25 var(--sans);letter-spacing:-.01em;text-wrap:balance}
+.body h2+*,.body h3+*{margin-top:.8em}
+.body a{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}.body a:hover{text-decoration-thickness:2px}
+.body strong{font-weight:700}
+.body ul,.body ol{padding-left:1.3em}.body ul{list-style:disc}.body li+li{margin-top:.5em}.body li::marker{color:var(--muted)}.body ol>li::marker{font-weight:600}
+.body ul.check{list-style:none;padding-left:0}
+.body ul.check>li{position:relative;padding-left:34px}
+.body ul.check>li::before{content:"";position:absolute;left:0;top:.28em;width:20px;height:20px;border-radius:50%;background:var(--ink) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.4 6.9 11 12 5.4' fill='none' stroke='%23f4f2ec' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/16px no-repeat}
+.body code{font:500 .86em/1.2 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--card);padding:.12em .36em;border-radius:5px;overflow-wrap:anywhere}
+.body pre{background:var(--ink);color:var(--ground);border-radius:16px;padding:22px 24px;overflow-x:auto;font-size:15px;line-height:1.55}.body pre code{background:none;padding:0;font-size:1em;color:inherit;overflow-wrap:normal}
+.body blockquote{margin-inline:0;padding:28px 32px;border-radius:16px;background:var(--deep);color:var(--light)}
+.body blockquote p{font:400 30px/1.12 var(--serif);letter-spacing:-.02em;text-wrap:balance}.body blockquote cite{display:block;margin-top:16px;font:500 14px/1.3 var(--sans)}
+.body .note{background:var(--card);border-radius:16px;padding:24px 28px;font-size:17px;line-height:1.55}
+.body .tw{overflow-x:auto;margin-inline:-4px;padding-inline:4px}
+.body table{width:100%;min-width:520px;border-collapse:collapse;font-size:16px;line-height:1.4;text-align:left}
+.body th,.body td{padding:14px 16px 14px 0;vertical-align:top;border-bottom:1px solid var(--line2)}.body thead th{font:500 13px/1.3 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom-color:var(--ink)}
+.body tbody th{font-weight:700;white-space:nowrap}.body td:last-child,.body th:last-child{padding-right:0}
+.toc{background:var(--card);border-radius:16px;padding:24px 28px}.toc ol{margin-top:12px;padding-left:1.3em;font-size:17px;line-height:1.4}.toc li+li{margin-top:.35em}.body .toc a{text-decoration:none;font-weight:500}.body .toc a:hover{text-decoration:underline}
+.src{margin-top:72px;padding-top:32px;border-top:1px solid var(--line2);font-size:16px;line-height:1.5}.body .src h2{margin-top:0;font-size:32px}.src p{color:var(--muted)}
+/* the way in, again */
+.cta{padding:120px 0 0}.cbox{background:var(--deep);color:var(--light);border-radius:32px;padding:88px 32px;text-align:center}
+.cbox .lead{max-width:520px;margin:20px auto 32px}.cbox .small{margin-top:16px;color:var(--light);opacity:.82}
+.next{padding:120px 0 0}.next .pgrid2{margin-top:48px}
+/* the foot, as on the landing */
+.ft{padding:120px 0 50px}
+.fcols{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}.fcols li{font-size:14px;line-height:1.3;margin-bottom:4px}
+.fcols a,.legal a{display:inline-flex;align-items:center;min-height:24px}.fcols a:hover,.legal a:hover{text-decoration:underline;text-underline-offset:3px}
+.big{margin-top:64px;font:400 var(--fs,200px)/1.1 var(--brand);letter-spacing:-.02em;white-space:nowrap}
+.legal{display:flex;flex-wrap:wrap;gap:8px 24px;margin-top:40px;font-size:14px}
+@media (max-width:991px){
+.bh{padding:120px 0 48px}.ah{padding:112px 0 36px}.ah .lead,.bh .lead{margin-top:20px}
+.cov,.pc.lead .cov{aspect-ratio:4/3;padding:20px}.cov.wide{aspect-ratio:4/3;padding:16px;border-radius:12px}
+.pgrid2{grid-template-columns:1fr;gap:56px;margin-top:56px}
+.pc .tag{margin-top:18px}.pc .pd{font-size:16px}
+.body{margin-top:44px;font-size:17px}.body h2{font-size:32px}.body h3{font-size:20px}.body blockquote{padding:22px}.body blockquote p{font-size:24px}
+.body .note,.toc{padding:20px}.body pre{padding:18px;font-size:13px;border-radius:12px}
+.cta{padding-top:80px}.cbox{border-radius:20px;padding:56px 16px}.next{padding-top:80px}.next .pgrid2{margin-top:32px}
+.ft{padding:72px 0 56px}.fcols{grid-template-columns:1fr 1fr;gap:32px 16px}.fcols li{margin-bottom:6px}.big{margin-top:48px}
+.nvb .btn.nb{margin-left:auto}.logo{margin-right:0}
+}
+/* a table on a narrow screen: each row a block, each cell under the name of its column — nothing to scroll sideways for */
+@media (max-width:640px){
+.body table{min-width:0}.body thead{display:none}
+.body tr{display:block;padding:16px 0;border-bottom:1px solid var(--line2)}.body tbody tr:first-child{border-top:1px solid var(--ink)}
+.body td,.body tbody th{display:block;padding:0;border:0;white-space:normal}.body td+td,.body tbody th+td{margin-top:12px}
+.body td[data-label]::before{content:attr(data-label);display:block;margin-bottom:2px;font:500 12px/1.3 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.body tbody td:first-child,.body tbody th{font-weight:700;font-size:17px}
+}
