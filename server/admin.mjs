@@ -5,7 +5,8 @@
      makeAdminGate({ env, now })  → check({ ip, authorization }) → { status: 200 | 401 | 429 | 503, error? }
      summarise({ events, jobs, paid, days, now, tz })  → what web/admin.html draws
 
-   Every number is a count of rows that exist: of `events` (server/track.mjs) and of `jobs`. A day before the first
+   Visitors are the people who are not us: a browser that has opened the owner's page is counted apart (`own`), and so is
+   every job it starts; a job nobody's page was seen opening for is `unseen`. Every number is a count of rows that exist: of `events` (server/track.mjs) and of `jobs`. A day before the first
    event was ever written has null — "no data" — for what only events can say, never 0. A failed job's reason passes
    scrub() (server/designs.mjs): the page never names a template. Nothing here calls a model. */
 import crypto from 'node:crypto';
@@ -35,21 +36,31 @@ const reason = e => scrub(String(e || 'no reason was written').replace(/\s+/g, '
 const top = (map, n) => [...map.entries()].map(([key, set]) => ({ key, visitors: set.size })).sort((a, b) => b.visitors - a.visitors || (a.key < b.key ? -1 : 1)).slice(0, n);
 
 /* events: rows of `events`, or null when the table could not be read. jobs: {id, created_at, status, error, url, source,
-   engine} made in the window. paid: {id, paid} of every job with a payment (result.paid: {slug: {at}}). */
+   engine, vk} made in the window. paid: {id, paid} of every job with a payment (result.paid: {slug: {at}}). */
 export function summarise({ events, jobs = [], paid = [], days = 14, now = Date.now(), tz = 'Europe/Ljubljana', firstEventAt = null }) {
   const list = lastDays(days, now, tz), idx = new Map(list.map((d, i) => [d, i])), has = Array.isArray(events);
   const first = firstEventAt ? dayIn(Date.parse(firstEventAt), tz) : null;   // the day recording began: before it there is nothing to count
   const known = d => has && first !== null && d >= first;
   const rows = list.map(d => ({ day: d, recorded: known(d), views: known(d) ? 0 : null, visitors: known(d) ? 0 : null, pages: known(d) ? Object.fromEntries(PAGE_NAMES.map(p => [p, 0])) : null,
+    own: known(d) ? 0 : null, guest_started: known(d) ? 0 : null, guest_done: known(d) ? 0 : null, guest_failed: known(d) ? 0 : null, own_started: known(d) ? 0 : null, unseen_started: known(d) ? 0 : null,
     started: 0, done: 0, failed: 0, waiting: 0, opened: known(d) ? 0 : null, edited: known(d) ? 0 : null, kept: known(d) ? 0 : null, pay_started: known(d) ? 0 : null, paid: 0, downloaded: known(d) ? 0 : null,
     refused: known(d) ? Object.fromEntries([...REFUSALS, 'other'].map(r => [r, 0])) : null }));
-  const sets = list.map(() => ({ visitors: new Set(), opened: new Set(), edited: new Set(), kept: new Set(), pay_started: new Set(), downloaded: new Set() }));
-  const all = { visitors: new Set(), opened: new Set(), edited: new Set(), kept: new Set(), pay_started: new Set(), downloaded: new Set() };
+  const sets = list.map(() => ({ own: new Set(), visitors: new Set(), opened: new Set(), edited: new Set(), kept: new Set(), pay_started: new Set(), downloaded: new Set() }));
+  const all = { own: new Set(), visitors: new Set(), opened: new Set(), edited: new Set(), kept: new Set(), pay_started: new Set(), downloaded: new Set() };
   const refs = new Map(), camps = new Map(), pageVisitors = Object.fromEntries(PAGE_NAMES.map(p => [p, new Set()]));
   const put = (map, key, v) => { if (!map.has(key)) map.set(key, new Set()); map.get(key).add(v); };
   const STEP = { design_opened: 'opened', edit: 'edited', edit_kept: 'kept', pay_started: 'pay_started', download: 'downloaded' };
+  // Us and them. A browser that has opened the owner's page marks its reports (detail = own); its key of the day is ours,
+  // and so is a job started under that key. A job under a visitor's key is a visitor's. A job under no key we saw a page
+  // opened with — a script, a test, a blocked counter, a day before recording — is neither: it is counted as unseen.
+  const ownKeys = new Set(), guestKeys = new Set();
+  for (const e of has ? events : []) if (e.visitor && (e.name === 'visit' || e.name === 'design_opened')) (e.detail === 'own' ? ownKeys : guestKeys).add(e.visitor);
+  for (const k of ownKeys) guestKeys.delete(k);
+  const whose = j => !j?.vk ? 'unseen' : ownKeys.has(j.vk) ? 'own' : guestKeys.has(j.vk) ? 'guest' : 'unseen', jobWho = new Map(jobs.map(j => [j.id, whose(j)]));
+  const ours = e => e.detail === 'own' || (e.visitor && ownKeys.has(e.visitor)) || (e.job && jobWho.get(e.job) === 'own');
   for (const e of has ? events : []) {
     const i = idx.get(dayIn(Date.parse(e.at), tz)); if (i === undefined || !rows[i].recorded) continue; const r = rows[i];
+    if (ours(e)) { if (e.name === 'visit') { const who = (e.visitor || 'unknown') + '@' + r.day; sets[i].own.add(who); all.own.add(who); } continue; }
     if (e.name === 'visit') {
       // one person on one day is one visitor, whatever the hour: the key is made new each UTC day, so the day is part of it
       const who = (e.visitor || 'unknown') + '@' + r.day; r.views++; sets[i].visitors.add(who); all.visitors.add(who);
@@ -59,19 +70,20 @@ export function summarise({ events, jobs = [], paid = [], days = 14, now = Date.
     } else if (e.name === 'job_refused') { r.refused[REFUSALS.includes(e.detail) ? e.detail : 'other']++; }
     else if (STEP[e.name] && e.job) { sets[i][STEP[e.name]].add(e.job); all[STEP[e.name]].add(e.job); }
   }
-  rows.forEach((r, i) => { if (!r.recorded) return; r.visitors = sets[i].visitors.size; for (const k of ['opened', 'edited', 'kept', 'pay_started', 'downloaded']) r[k] = sets[i][k].size; });
+  rows.forEach((r, i) => { if (!r.recorded) return; r.visitors = sets[i].visitors.size; r.own = sets[i].own.size; for (const k of ['opened', 'edited', 'kept', 'pay_started', 'downloaded']) r[k] = sets[i][k].size; });
   const failed = [];
   for (const j of jobs) {
     const i = idx.get(dayIn(Date.parse(j.created_at), tz)); if (i === undefined) continue; const r = rows[i];
-    r.started++; if (j.status === 'done') r.done++; else if (j.status === 'failed') { r.failed++; failed.push({ at: j.created_at, site: siteOf(j.url), from: j.source === 'form' ? 'form' : 'address', reason: reason(j.error) }); } else r.waiting++;
+    r.started++; if (j.status === 'done') r.done++; else if (j.status === 'failed') { r.failed++; failed.push({ at: j.created_at, who: r.recorded ? jobWho.get(j.id) : null, site: siteOf(j.url), from: j.source === 'form' ? 'form' : 'address', reason: reason(j.error) }); } else r.waiting++;
+    if (r.recorded) { const w = jobWho.get(j.id); if (w === 'own') r.own_started++; else if (w === 'unseen') r.unseen_started++; else { r.guest_started++; if (j.status === 'done') r.guest_done++; else if (j.status === 'failed') r.guest_failed++; } }
   }
   let paidTotal = 0;
-  for (const j of paid) for (const p of Object.values(j?.paid && typeof j.paid === 'object' ? j.paid : {})) { const t = Date.parse(p?.at); if (!Number.isFinite(t)) continue; const i = idx.get(dayIn(t, tz)); if (i !== undefined) { rows[i].paid++; paidTotal++; } }
-  const sum = k => rows.reduce((a, r) => a + (r[k] || 0), 0), anyRecorded = rows.some(r => r.recorded), ev = k => anyRecorded ? all[k].size : null;
+  for (const j of paid) if (jobWho.get(j.id) !== 'own') for (const p of Object.values(j?.paid && typeof j.paid === 'object' ? j.paid : {})) { const t = Date.parse(p?.at); if (!Number.isFinite(t)) continue; const i = idx.get(dayIn(t, tz)); if (i !== undefined) { rows[i].paid++; paidTotal++; } }
+  const sum = k => rows.reduce((a, r) => a + (r[k] || 0), 0), anyRecorded = rows.some(r => r.recorded), ev = k => anyRecorded ? all[k].size : null, rec = k => anyRecorded ? sum(k) : null;
   const refusedTotal = anyRecorded ? Object.fromEntries([...REFUSALS, 'other'].map(k => [k, rows.reduce((a, r) => a + (r.refused ? r.refused[k] : 0), 0)])) : null;
   return {
     generated_at: new Date(now).toISOString(), tz, days: list.length, recording_since: firstEventAt || null, events_readable: has,
-    total: { views: anyRecorded ? sum('views') : null, visitors: ev('visitors'), started: sum('started'), done: sum('done'), failed: sum('failed'), waiting: sum('waiting'),
+    total: { views: anyRecorded ? sum('views') : null, visitors: ev('visitors'), own: ev('own'), guest_started: rec('guest_started'), guest_done: rec('guest_done'), guest_failed: rec('guest_failed'), own_started: rec('own_started'), unseen_started: rec('unseen_started'), started: sum('started'), done: sum('done'), failed: sum('failed'), waiting: sum('waiting'),
       opened: ev('opened'), edited: ev('edited'), kept: ev('kept'), pay_started: ev('pay_started'), paid: paidTotal, downloaded: ev('downloaded') },
     by_day: rows,
     pages: anyRecorded ? PAGE_NAMES.map(p => ({ key: p, views: rows.reduce((a, r) => a + (r.pages ? r.pages[p] : 0), 0), visitors: pageVisitors[p].size })).filter(p => p.views) : null,

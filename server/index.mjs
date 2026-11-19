@@ -78,7 +78,7 @@ app.get('/admin/stats', async (req, res) => {
     try { const e = await everyRow(() => sb.from('events').select('at,name,page,visitor,ref,src,medium,campaign,job,detail').gte('at', since).order('at', { ascending: true }).order('id', { ascending: true })); events = e.rows; if (e.cut) notes.push('events_cut');
       const { data: f, error: fe } = await sb.from('events').select('at').order('at', { ascending: true }).limit(1); if (fe) throw new Error(fe.message); firstEventAt = f?.[0]?.at || null; }
     catch (e) { events = null; notes.push('events_unreadable'); console.warn('admin: events could not be read —', String(e?.message || e).slice(0, 120)); }
-    const j = await everyRow(() => sb.from('jobs').select('id,created_at,status,error,url,source:options->>source,engine:options->>engine').gte('created_at', since).order('created_at', { ascending: true }).order('id', { ascending: true })); if (j.cut) notes.push('jobs_cut');
+    const j = await everyRow(() => sb.from('jobs').select('id,created_at,status,error,url,source:options->>source,engine:options->>engine,vk:options->>vk').gte('created_at', since).order('created_at', { ascending: true }).order('id', { ascending: true })); if (j.cut) notes.push('jobs_cut');
     const p = await everyRow(() => sb.from('jobs').select('id,paid:result->paid').not('result->paid', 'is', null).order('created_at', { ascending: true }).order('id', { ascending: true }), 5000);
     const body = { ...summarise({ events, jobs: j.rows, paid: p.rows, days, firstEventAt }), notes };
     adminCache.set(days, { at: Date.now(), body }); res.json({ ...body, recording: TRACK.counts() });
@@ -148,6 +148,7 @@ app.post('/jobs', async (req, res) => {
   if (mode) options.engine = mode; else delete options.engine;
   if (fromForm) { options.source = 'form'; options.form = req.body.form; } else { delete options.source; delete options.form; }
   if (!mode || fromForm) { delete options.screens; delete options.niche; }
+  delete options.vk; const vk = TRACK.visitor(req); if (vk) options.vk = vk;   // the day's key of who started it (server/track.mjs), so the owner's page can tell a visitor's job from ours; never taken from the request
   delete options.ip_key; if (!user) options.ip_key = IP_LIMIT.key(ip);   // what the hourly limit counts by, on every instance; never taken from the request
   const { data, error } = await sb.from('jobs').insert({ url, options, steps: (fromForm ? STEPS_F : mode ? STEPS_T : STEPS).map(([id, label]) => ({ id, label, status: 'pending' })), ...(user ? { user_id: user.id, email: user.email } : {}) }).select('id').single();
   if (error) return res.status(500).json({ error: error.message });
@@ -613,7 +614,7 @@ async function process_(job) {
     await emit(job, eventsCapture(dir));
   });
   await timed('diagnose', async () => { const out = await run('python3', ['-I', 'lib/audit/diagnose.py', path.join(dir, 'inventory.json')]); fs.writeFileSync(path.join(dir, 'audit.json'), out); }); await emit(job, eventsDiagnose(dir));
-  fs.writeFileSync(path.join(dir, 'brief.json'), JSON.stringify({ ...(job.options || {}), ip_key: undefined, url: job.url })); // the url seeds the house's colour pick for unbranded sites
+  fs.writeFileSync(path.join(dir, 'brief.json'), JSON.stringify({ ...(job.options || {}), vk: undefined, ip_key: undefined, url: job.url })); // the url seeds the house's colour pick for unbranded sites
   // Instant first version: their page poured into the house template, no model call. Published as draft round 0 so the
   // person has something to look at within seconds; the director and the swarm replace it. Never fatal.
   try {

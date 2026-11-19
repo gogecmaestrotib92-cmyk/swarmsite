@@ -4,7 +4,8 @@
    followed from one day into the next. That is why the site needs no consent banner (privacy.html: "cookieless analytics").
 
    What is written is only what leaves no row anywhere else (table `events`, server/migrations/20261119_events.sql):
-     visit           a page was opened              (the page's own script, web/js/track.js → POST /e)
+     visit           a page was opened              (the page's own script, web/js/track.js → POST /e); detail = own when the
+                     browser is one of ours (it has opened the owner's page) — counted apart, never as a visitor
      design_opened   a design looked at full screen (the same script)
      job_refused     POST /jobs turned a visitor away: detail = rate_limit | queue_full | day_budget
      edit            a design was changed in the editor (once a job a day an instance)
@@ -59,7 +60,7 @@ export function cleanBeacon(body) {
   if (!b || typeof b !== 'object' || Array.isArray(b) || !PAGE_EVENTS.includes(b.n)) return null;
   const job = UUID.test(String(b.j || '')) ? String(b.j) : null;
   if (b.n === 'design_opened' && !job) return null;
-  return { name: b.n, page: pageOf(b.p), ref: refHost(b.r) || null, src: tag(b.s) || null, medium: tag(b.m) || null, campaign: tag(b.c) || null, job };
+  return { name: b.n, page: pageOf(b.p), ref: refHost(b.r) || null, src: tag(b.s) || null, medium: tag(b.m) || null, campaign: tag(b.c) || null, job, ...(b.o === 1 ? { detail: 'own' } : {}) };
 }
 
 export function makeTracker({ insert, secret = '', now = () => Date.now(), flushMs = 1000, warn = () => {}, maxBuffer = 2000, perVisitorPerHour = 120, perHour = 20000, timer = true }) {

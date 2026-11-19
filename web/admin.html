@@ -52,16 +52,17 @@ form{display:grid;gap:10px;max-width:420px}input{font:inherit;min-height:48px;pa
     <p class="msg bad" id="err" hidden role="alert"></p>
     <div id="notes"></div>
     <div class="tiles" id="tiles"></div>
+    <p class="sub" id="ours" style="margin-top:12px"></p>
 
-    <section><h2>Da li neko dolazi?</h2><p class="sub">Posetioci po danu. Isti čovek se istog dana broji jednom; sutra je novi posetilac.</p>
+    <section><h2>Da li neko dolazi?</h2><p class="sub">Posetioci po danu, bez nas. Isti čovek se istog dana broji jednom; sutra je novi posetilac.</p>
       <div class="chart" id="cVisitors"></div>
       <div class="two"><div><h3>Stranice</h3><ul class="rows" id="pages"></ul></div><div><h3>Odakle dolaze</h3><ul class="rows" id="sources"></ul></div></div>
       <h3>Kampanje (utm oznake)</h3><ul class="rows" id="campaigns"></ul>
     </section>
 
-    <section><h2>Šta rade?</h2><p class="sub">Od posete do preuzimanja, za ceo period. Procenat je u odnosu na korak iznad.</p>
+    <section><h2>Šta rade?</h2><p class="sub">Samo posetioci, bez nas: od posete do preuzimanja. Procenat je u odnosu na korak iznad.</p>
       <ul class="rows" id="funnel"></ul>
-      <h3>Pokrenuti poslovi po danu</h3><div class="chart" id="cJobs"></div>
+      <h3>Svi pokrenuti poslovi po danu (i naši)</h3><div class="chart" id="cJobs"></div>
     </section>
 
     <section><h2>Po danima</h2><p class="sub">Isti brojevi kao tabela. Prevuci u stranu za sve kolone.</p><div class="scroll"><table id="table"></table></div></section>
@@ -85,6 +86,7 @@ const el=(tag,cls,text)=>{const n=document.createElement(tag); if(cls) n.classNa
 const NONE='nema podataka', num=v=>v===null||v===undefined?NONE:String(v);
 const dayLabel=d=>{const p=d.split('-'); return Number(p[2])+'. '+Number(p[1])+'.';};
 const PAGE={landing:'Početna',app:'Aplikacija (/app)',start:'Forma (/start)',edit:'Editor',dashboard:'Moji projekti',login:'Prijava',blog:'Blog',privacy:'Privatnost',terms:'Uslovi',other:'Ostalo'};
+const WHO={guest:'Posetilac · ',own:'Mi · ',unseen:'Bez posete · '};
 const REF={rate_limit:'Limit po adresi (previše u sat vremena)',queue_full:'Pun red',day_budget:'Dnevni budžet potrošen',other:'Drugo'};
 
 function showGate(msg){ $('#board').hidden=true; $('#gate').hidden=false; const m=$('#gateMsg'); m.hidden=!msg; m.textContent=msg||''; $('#key').focus(); }
@@ -101,7 +103,7 @@ async function load(fromForm){
   if(r.status===429) return showGate('Previše pogrešnih pokušaja. Sačekaj petnaest minuta.');
   if(r.status===503) return showGate('Admin stranica još nije uključena: u Railway-u nije postavljena promenljiva ADMIN_TOKEN (najmanje 16 znakova).');
   if(!r.ok){ if(!data) showGate('Brojevi trenutno ne mogu da se pročitaju.'); else say('Brojevi trenutno ne mogu da se pročitaju.'); return; }
-  store.set(key); try{ localStorage.setItem('swarmsite_notrack','1'); }catch(e){}   /* the owner's own visits are not visitors */
+  store.set(key); try{ localStorage.setItem('swarmsite_notrack','1'); }catch(e){}   /* from here on this browser's visits are counted as ours, apart from visitors (web/js/track.js) */
   data=j; $('#gate').hidden=true; $('#board').hidden=false; say(''); draw(j);
 }
 function say(t){ const m=$('#err'); m.hidden=!t; m.textContent=t; }
@@ -136,27 +138,29 @@ function draw(d){
   if((d.notes||[]).includes('events_cut')||(d.notes||[]).includes('jobs_cut')) note('Period ima više redova nego što stranica čita odjednom: brojevi su manji od stvarnih. Izaberi kraći period.',true);
 
   const tiles=$('#tiles'); tiles.textContent='';
-  [['Posetilaca',t.visitors],['Pokrenutih poslova',t.started],['Gotovih',t.done],['Plaćenih dizajna',t.paid]].forEach(([k,v])=>{ const x=el('div','tile'); const b=el('b',v===null?'none':'',num(v)); x.append(b,el('span','',k)); tiles.append(x); });
+  [['Posetilaca (bez nas)',t.visitors],['Njihovih poslova',t.guest_started],['Njihovih gotovih',t.guest_done],['Plaćenih dizajna',t.paid]].forEach(([k,v])=>{ const x=el('div','tile'); const b=el('b',v===null?'none':'',num(v)); x.append(b,el('span','',k)); tiles.append(x); });
 
+  /* us, and what cannot be told: said in words beside the visitors' numbers, never added to them */
+  $('#ours').textContent=t.own===null?'':'Mi: '+t.own+' poseta sa naših uređaja i '+t.own_started+' naših poslova. Bez zabeležene posete (skripte, testovi, blokiran brojač): '+t.unseen_started+' poslova. Svih poslova u periodu, sa danima pre beleženja: '+t.started+'.';
   bars($('#cVisitors'),d.by_day.map(r=>({day:r.day,v:r.visitors})),'Posetilaca');
   bars($('#cJobs'),d.by_day.map(r=>({day:r.day,v:r.started})),'Poslova');
   rows($('#pages'),d.pages&&d.pages.map(p=>({k:PAGE[p.key]||p.key,n:p.visitors,note:p.views+' otvaranja',meter:true})),'Nijedna poseta u ovom periodu.');
   rows($('#sources'),d.sources&&d.sources.map(s=>({k:s.key==='(direct or unknown)'?'Direktno ili nepoznato':s.key,n:s.visitors,meter:true})),'Nijedna poseta u ovom periodu.');
   rows($('#campaigns'),d.campaigns&&d.campaigns.map(s=>({k:s.key,n:s.visitors})),'Niko nije došao preko linka sa utm oznakama.');
 
-  const steps=[['Posetilaca',t.visitors],['Pokrenuli posao',t.started],['Posao gotov',t.done],['Otvorili dizajn preko celog ekrana',t.opened],['Menjali dizajn u editoru',t.edited],['Započeli plaćanje',t.pay_started],['Platili',t.paid],['Preuzeli',t.downloaded]];
-  let prev=null; rows($('#funnel'),steps.map(([k,n])=>{ const note=(n!==null&&prev!==null&&prev>0)?Math.round(n/prev*100)+'%':''; if(n!==null) prev=n; return {k,n,note,meter:true}; }).concat([{k:'Posao propao',n:t.failed},{k:'Sačuvali izmene',n:t.kept},{k:'Još u radu ili u redu',n:t.waiting}]),'');
+  const steps=[['Posetilaca',t.visitors],['Pokrenuli posao',t.guest_started],['Posao gotov',t.guest_done],['Otvorili dizajn preko celog ekrana',t.opened],['Menjali dizajn u editoru',t.edited],['Započeli plaćanje',t.pay_started],['Platili',t.paid],['Preuzeli',t.downloaded]];
+  let prev=null; rows($('#funnel'),steps.map(([k,n])=>{ const note=(n!==null&&prev!==null&&prev>0)?Math.round(n/prev*100)+'%':''; if(n!==null) prev=n; return {k,n,note,meter:true}; }).concat([{k:'Posao propao',n:t.guest_failed},{k:'Sačuvali izmene',n:t.kept},{k:'Još u radu ili u redu',n:t.waiting}]),'');
 
-  const tb=$('#table'); tb.textContent=''; const head=el('tr'); ['Dan','Posetilaca','Otvaranja','Poslova','Gotovo','Propalo','Dizajn otvoren','Menjano','Plaćanje započeto','Plaćeno','Preuzeto','Odbijeno'].forEach(h=>{ const th=el('th','',h); th.scope='col'; head.append(th); }); tb.append(head);
+  const tb=$('#table'); tb.textContent=''; const head=el('tr'); ['Dan','Posetilaca','Otvaranja','Njihovih poslova','Naših poseta','Svih poslova','Gotovo','Propalo','Dizajn otvoren','Menjano','Plaćanje započeto','Plaćeno','Preuzeto','Odbijeno'].forEach(h=>{ const th=el('th','',h); th.scope='col'; head.append(th); }); tb.append(head);
   const dash=v=>v===null?'–':String(v);
-  [...d.by_day].reverse().forEach(r=>{ const tr=el('tr'); const ref=r.refused?Object.values(r.refused).reduce((a,b)=>a+b,0):null; [dayLabel(r.day),dash(r.visitors),dash(r.views),r.started,r.done,r.failed,dash(r.opened),dash(r.edited),dash(r.pay_started),r.paid,dash(r.downloaded),dash(ref)].forEach(v=>tr.append(el('td','',String(v)))); tb.append(tr); });
+  [...d.by_day].reverse().forEach(r=>{ const tr=el('tr'); const ref=r.refused?Object.values(r.refused).reduce((a,b)=>a+b,0):null; [dayLabel(r.day),dash(r.visitors),dash(r.views),dash(r.guest_started),dash(r.own),r.started,r.done,r.failed,dash(r.opened),dash(r.edited),dash(r.pay_started),r.paid,dash(r.downloaded),dash(ref)].forEach(v=>tr.append(el('td','',String(v)))); tb.append(tr); });
 
   rows($('#refused'),d.refused&&Object.entries(d.refused).filter(([k,v])=>k!=='other'||v).map(([k,v])=>({k:REF[k]||k,n:v})),'');
-  rows($('#failed'),d.failed.map(f=>({k:(f.from==='form'?'Forma':f.site),n:new Date(f.at).toLocaleString('sr-Latn',{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'}),why:f.reason})),'Nijedan posao nije propao u ovom periodu.');
+  rows($('#failed'),d.failed.map(f=>({k:(WHO[f.who]||'')+(f.from==='form'?'Forma':f.site),n:new Date(f.at).toLocaleString('sr-Latn',{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'}),why:f.reason})),'Nijedan posao nije propao u ovom periodu.');
 
   const foot=$('#foot'); foot.textContent=''; const c=d.recording||{};
   foot.append(el('p','','Zapisivanje na serveru koji je odgovorio, od njegovog poslednjeg pokretanja ('+new Date(c.since||Date.now()).toLocaleString('sr-Latn',{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'})+'): upisano '+(c.recorded||0)+', neupisano zbog greške '+(c.failed||0)+', odbačeno '+(c.dropped||0)+', botova '+(c.bots||0)+'.'));
-  foot.append(el('p','','„–” i „nema podataka” znače da za to ne postoji zapis, ne nulu. Dani su po vremenu '+d.tz+'. Tvoje posete sa ovog uređaja se ne broje.'));
+  foot.append(el('p','','„–” i „nema podataka” znače da za to ne postoji zapis, ne nulu. Dani su po vremenu '+d.tz+'. Uređaj na kom je otvorena ova strana broji se kao naš, odvojeno od posetilaca.'));
 }
 if(!API){ showGate('Adresa servera nije podešena (config.js).'); } else load(false);
 })();
