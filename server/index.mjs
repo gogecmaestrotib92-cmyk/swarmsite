@@ -17,6 +17,7 @@ import { ensurePrivateBucket } from './bucket.mjs'; import { runCleanup } from '
 import { runPublish, runRepackage, editedPackage, editsHash, nameProblem } from './publish.mjs';
 import { payGate, stripeOf, checkout, webhook, withPaid, configured as payConfigured, paidBy } from './payments.mjs';
 import { AsyncLocalStorage } from 'node:async_hooks';
+import { makeTracker } from './track.mjs'; import { makeAdminGate, summarise } from './admin.mjs';
 const HERE = path.dirname(fileURLToPath(import.meta.url)); const ROOT = path.resolve(HERE, '..');
 const sb = createClient(process.env.SUPABASE_URL || 'https://placeholder.supabase.co', process.env.SUPABASE_SERVICE_KEY || 'placeholder', { auth: { persistSession: false } });
 const BUCKET = 'previews'; const OUT = path.join(ROOT, 'out');
@@ -57,6 +58,32 @@ const typicalSteps = async () => { if (Date.now() - typical.at < 600e3) return t
   try { const { data } = await sb.from('jobs').select('t:result->templates->timings_ms->steps').eq('status', 'done').order('created_at', { ascending: false }).limit(40); typical.steps = typicalOf((data || []).map(r => r.t)); } catch { /* the page has its own figures */ }
   return typical.steps; };
 app.get('/config', async (_, res) => res.json({ auth: { require: AUTH.require, free: AUTH.free }, templates: TEMPLATES, typical: await typicalSteps() }));
+// ---- who came and what they did (server/track.mjs), and the owner's page of numbers (server/admin.mjs) ----
+// A page tells us it was opened (web/js/track.js); the answer is given before anything is done with it, and nothing that
+// goes wrong in the recording reaches the visitor. The body is read as text, so a browser sends it without a preflight.
+const TRACK = makeTracker({ secret: process.env.IP_KEY_SECRET || process.env.SUPABASE_SERVICE_KEY || '', warn: t => console.warn(t),
+  insert: async rows => { const { error } = await sb.from('events').insert(rows); if (error) throw new Error(error.message); } });
+app.post('/e', express.text({ type: () => true, limit: '4kb' }), (req, res) => { res.status(204).end(); TRACK.beacon(req); });
+const ADMIN = makeAdminGate({ env: process.env }); let adminCache = new Map();
+const everyRow = async (make, max = 60000) => { const rows = []; for (let from = 0; from < max; from += 1000) { const { data, error } = await make().range(from, from + 999); if (error) throw Object.assign(new Error(error.message), { code: error.code }); rows.push(...(data || [])); if (!data || data.length < 1000) return { rows, cut: false }; } return { rows, cut: true }; };
+app.get('/admin/stats', async (req, res) => {
+  res.set({ 'cache-control': 'no-store', 'x-robots-tag': 'noindex' });
+  const gate = ADMIN({ ip: clientIp(req), authorization: req.headers.authorization }); if (gate.status !== 200) return res.status(gate.status).json({ error: gate.error });
+  const days = [1, 7, 14, 30, 90].includes(Number(req.query.days)) ? Number(req.query.days) : 14;
+  const hit = adminCache.get(days); if (hit && Date.now() - hit.at < 30e3) return res.json({ ...hit.body, recording: TRACK.counts() });
+  try {
+    const since = new Date(Date.now() - (days + 1) * 86400e3).toISOString(), notes = [];
+    // the events table may not be there yet (its migration is the owner's to run): the jobs are still counted, and the page says so
+    let events = null, firstEventAt = null;
+    try { const e = await everyRow(() => sb.from('events').select('at,name,page,visitor,ref,src,medium,campaign,job,detail').gte('at', since).order('at', { ascending: true }).order('id', { ascending: true })); events = e.rows; if (e.cut) notes.push('events_cut');
+      const { data: f, error: fe } = await sb.from('events').select('at').order('at', { ascending: true }).limit(1); if (fe) throw new Error(fe.message); firstEventAt = f?.[0]?.at || null; }
+    catch (e) { events = null; notes.push('events_unreadable'); console.warn('admin: events could not be read —', String(e?.message || e).slice(0, 120)); }
+    const j = await everyRow(() => sb.from('jobs').select('id,created_at,status,error,url,source:options->>source,engine:options->>engine').gte('created_at', since).order('created_at', { ascending: true }).order('id', { ascending: true })); if (j.cut) notes.push('jobs_cut');
+    const p = await everyRow(() => sb.from('jobs').select('id,paid:result->paid').not('result->paid', 'is', null).order('created_at', { ascending: true }).order('id', { ascending: true }), 5000);
+    const body = { ...summarise({ events, jobs: j.rows, paid: p.rows, days, firstEventAt }), notes };
+    adminCache.set(days, { at: Date.now(), body }); res.json({ ...body, recording: TRACK.counts() });
+  } catch (e) { console.warn('admin: stats failed —', String(e?.message || e).slice(0, 160)); res.status(500).json({ error: 'The numbers could not be read just now.' }); }
+});
 app.get('/me', async (req, res) => { const user = await userOf(req); if (!user) return res.status(401).json({ error: 'sign in' }); res.json({ id: user.id, email: user.email, previews: allowance({ used: await usedBy(user.id), free: AUTH.free }) }); });
 app.get('/me/jobs', async (req, res) => {
   const user = await userOf(req); if (!user) return res.status(401).json({ error: 'sign in' });
@@ -107,16 +134,16 @@ app.post('/jobs', async (req, res) => {
   if (!mode && AUTH.require && !user) return res.status(401).json({ error: 'Sign in to start a preview.', login: true });
   if (!mode && user) { const a = allowance({ used: await usedBy(user.id), free: AUTH.free }); if (AUTH.require && !a.allowed) return res.status(402).json({ error: `Your ${a.free} free preview${a.free === 1 ? ' is' : 's are'} used.`, previews: a }); }
   const ip = clientIp(req);
-  if (!user && await IP_LIMIT.limited(ip)) return res.status(429).json({ error: 'You have started several previews recently. Please wait an hour before starting another.' });
+  if (!user && await IP_LIMIT.limited(ip)) return TRACK.refused(req, 'rate_limit'), res.status(429).json({ error: 'You have started several previews recently. Please wait an hour before starting another.' });
   // the same site already queued or running → hand back that job instead of paying twice
   const key = canonicalUrl(url);
   const { data: live } = await sb.from('jobs').select('id,url,status,created_at,options').in('status', ['queued', 'running']).order('created_at', { ascending: false }).limit(200);
   const same = (live || []).find(j => canonicalUrl(j.url) === key && (j.options?.engine === 'templates' ? 'templates' : '') === mode);
   if (same) return res.json({ id: same.id, reused: true });
-  if ((live || []).length >= RATE.maxQueue) return res.status(503).json({ error: `The studio is full right now (${live.length} sites in the queue). Please try again in a few minutes.` });
+  if ((live || []).length >= RATE.maxQueue) return TRACK.refused(req, 'queue_full'), res.status(503).json({ error: `The studio is full right now (${live.length} sites in the queue). Please try again in a few minutes.` });
   const since = new Date(Date.now() - 86400e3).toISOString();
   const { count } = await sb.from('jobs').select('id', { count: 'exact', head: true }).gte('created_at', since);
-  if ((count || 0) >= RATE.perDay) return res.status(503).json({ error: 'Today\'s preview budget is used up. Please come back tomorrow.' });
+  if ((count || 0) >= RATE.perDay) return TRACK.refused(req, 'day_budget'), res.status(503).json({ error: 'Today\'s preview budget is used up. Please come back tomorrow.' });
   const options = { ...(req.body?.options || {}) }; const email = String(options.notify_email || '').trim().toLowerCase(); if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'bad email' }); if (email) options.notify_email = email; else delete options.notify_email;
   if (mode) options.engine = mode; else delete options.engine;
   if (fromForm) { options.source = 'form'; options.form = req.body.form; } else { delete options.source; delete options.form; }
@@ -249,9 +276,11 @@ app.get('/t/:id/:slug/package', async (req, res) => {
   if (req.query.link) { let s = null, why = '';
     try { const r = await within(sb.storage.from(PACKAGE_BUCKET).createSignedUrl(edited || `${row.id}/${slug}.zip`, 600, { download: downloadName(row, slug) }), 15000); s = r?.data; why = r?.error?.message || ''; } catch (e) { why = String(e?.message || e); }
     if (!s?.signedUrl) console.warn('package link', row.id, slug, why.slice(0, 160));
+    if (s?.signedUrl) TRACK.record({ name: 'download', job: row.id, visitor: TRACK.visitor(req) });
     return s?.signedUrl ? res.set('cache-control', 'no-store').json({ url: s.signedUrl, name: downloadName(row, slug) }) : res.status(/not.?found/i.test(why) ? 404 : 503).json({ error: /not.?found/i.test(why) ? 'package not found' : 'The file could not be reached just now. Try again in a moment.' }); }
   const { data, error: e2 } = await sb.storage.from(PACKAGE_BUCKET).download(edited || `${row.id}/${slug}.zip`);
   if (e2 || !data) return res.status(404).json({ error: 'package not found' });
+  TRACK.record({ name: 'download', job: row.id, visitor: TRACK.visitor(req) });
   res.set({ 'content-type': 'application/zip', 'content-disposition': `attachment; filename="${downloadName(row, slug)}"`, 'cache-control': 'no-store' });
   res.send(Buffer.from(await data.arrayBuffer()));
 });
@@ -285,7 +314,7 @@ app.post('/t/:id/:slug/describe', async (req, res) => { const row = await editRo
 app.post('/t/:id/:slug/render', async (req, res) => { const row = await editRow(req, res); if (!row) return;
   if (editLimited(clientIp(req), 'r', 600)) return res.status(429).json({ error: 'Too many edits in an hour. Please wait a little.' });
   const ops = req.body?.ops; const bad = opsProblem(ops); if (bad) return res.status(400).json({ error: bad });
-  try { res.set({ 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex' }).send(await EDITOR.render(row, req.tslug, ops)); } catch (e) { editFail(res, e); } });
+  try { res.set({ 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex' }).send(await EDITOR.render(row, req.tslug, ops)); if (ops.length) TRACK.once('edit', row.id, { visitor: TRACK.visitor(req) }); } catch (e) { editFail(res, e); } });
 app.post('/t/:id/:slug/check', async (req, res) => { const row = await editRow(req, res); if (!row) return;
   if (editLimited(clientIp(req), 'c', 120)) return res.status(429).json({ error: 'Too many checks in an hour. Please wait a little.' });
   const ops = req.body?.ops; const bad = opsProblem(ops); if (bad) return res.status(400).json({ error: bad });
@@ -297,7 +326,7 @@ app.put('/t/:id/edits', async (req, res) => { const row = await editRow(req, res
   const user = await userOf(req); const may = mayKeep({ user, row }); if (may.status !== 200) return res.status(may.status).json(may.body);
   const ops = req.body?.ops; const bad = opsProblem(ops); if (bad) return res.status(400).json({ error: bad });
   if (may.claim) await sb.from('jobs').update({ user_id: user.id, email: user.email }).eq('id', row.id).is('user_id', null);
-  try { res.json(await EDITOR.save(row, ops)); } catch (e) { editFail(res, e); } });
+  try { res.json(await EDITOR.save(row, ops)); TRACK.record({ name: 'edit_kept', job: row.id, visitor: TRACK.visitor(req) }); } catch (e) { editFail(res, e); } });
 // ---- publish on <name>.swarmsite.si, and the download with the edits (server/publish.mjs): both from the one verified package
 const keepState = (id, field) => async state => { const { data } = await sb.from('jobs').select('result').eq('id', id).maybeSingle(); await sb.from('jobs').update({ result: { ...(data?.result || {}), [field]: state } }).eq('id', id); };
 const pubDeps = (row, slug, user, field) => ({ row, slug, user, edits: () => EDITOR.saved(row), env: process.env, fetch, tmp: () => { fs.mkdirSync(OUT, { recursive: true }); return OUT; },
@@ -333,7 +362,7 @@ app.post('/pay', async (req, res) => {
   if (!row || !previewable(row, tslug)) return res.status(404).json({ error: 'not found' });
   if (row.user_id && row.user_id !== user.id) return res.status(403).json({ error: 'These designs belong to another account.' });
   if (paidBy(row, tslug, user)) return res.json({ paid: true });
-  try { res.json(await checkout({ stripe: await stripe(), env: process.env, row, slug: publicOf(row, tslug), user, from: req.body?.from === 'edit' ? 'edit' : 'app' })); }
+  try { res.json(await checkout({ stripe: await stripe(), env: process.env, row, slug: publicOf(row, tslug), user, from: req.body?.from === 'edit' ? 'edit' : 'app' })); TRACK.record({ name: 'pay_started', job: row.id, visitor: TRACK.visitor(req) }); }
   catch (e) { console.warn('pay: checkout could not be made', e.type || '', e.statusCode || ''); res.status(502).json({ error: 'Payment could not be started. Please try again.' }); }
 });
 app.post('/stripe/webhook', express.raw({ type: () => true, limit: '1mb' }), async (req, res) => {

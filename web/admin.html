@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="sr-Latn">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Swarmsite — pregled</title><meta name="robots" content="noindex, nofollow"><meta name="referrer" content="no-referrer"><link rel="icon" type="image/png" href="/favicon.png">
+<!-- The owner's page of numbers. Linked from nowhere, kept out of search, and empty without the key: every number comes
+     from GET /admin/stats (server/admin.mjs), which answers only to the deployment's ADMIN_TOKEN. Nothing here is a
+     number we did not record: what has no record says "nema podataka". Everything is written with textContent. -->
+<style>
+:root{--ground:#f4f2ec;--paper:#fffefb;--ink:#141414;--muted:#575755;--line:#dedcd6;--bar:#3b1219;--bar-soft:#d9cfcd;--bad:#8f1d14}
+*,*::before,*::after{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--ground);color:var(--ink);font:400 16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;overflow-x:hidden}
+[hidden]{display:none!important}
+.w{max-width:860px;margin:0 auto;padding:20px 16px 64px}
+h1{font-size:24px;font-weight:600;margin:0}h2{font-size:18px;font-weight:600;margin:0 0 4px}.sub{color:var(--muted);font-size:14px;margin:0 0 12px}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}.seg button,.btn{font:inherit;font-size:15px;min-height:44px;padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.btn.ink{background:var(--ink);color:var(--paper);border-color:var(--ink)}.btn.quiet{border:0;background:none;text-decoration:underline;color:var(--muted);padding:8px 0}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+section{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:14px}
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:14px}@media(min-width:640px){.tiles{grid-template-columns:repeat(4,1fr)}}
+.tile{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px}.tile b{display:block;font-size:30px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums}.tile span{color:var(--muted);font-size:14px}
+.tile b.none{font-size:17px;color:var(--muted);font-weight:400;line-height:1.95}
+.chart{margin:6px 0 2px}.chart svg{display:block;width:100%;height:120px;touch-action:manipulation}.chart rect.b{fill:var(--bar)}.chart rect.n{fill:var(--bar-soft)}.chart rect.hit{fill:transparent;cursor:pointer}.chart rect.on{fill:var(--ink)}
+.axis{display:flex;justify-content:space-between;color:var(--muted);font-size:12px}.read{min-height:22px;font-size:14px;color:var(--muted);margin-top:4px}
+.rows{list-style:none;margin:0;padding:0}.rows li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:8px 0;border-top:1px solid var(--line);font-size:15px}.rows li:first-child{border-top:0}
+.rows .k{overflow-wrap:anywhere}.rows .v{font-variant-numeric:tabular-nums;font-weight:600;text-align:right;white-space:nowrap}.rows .v small{font-weight:400;color:var(--muted)}
+.rows .meter{grid-column:1/-1;height:6px;border-radius:3px;background:var(--line);overflow:hidden}.rows .meter i{display:block;height:100%;background:var(--bar);border-radius:3px}
+.rows .why{grid-column:1/-1;color:var(--muted);font-size:14px;overflow-wrap:anywhere}
+.none{color:var(--muted)}.two{display:grid;gap:14px}@media(min-width:640px){.two{grid-template-columns:1fr 1fr}}h3{font-size:15px;font-weight:600;margin:14px 0 2px}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -16px;padding:0 16px}table{border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums;min-width:100%}
+th,td{padding:7px 10px;text-align:right;white-space:nowrap;border-top:1px solid var(--line)}th{font-weight:600;color:var(--muted);border-top:0}th:first-child,td:first-child{text-align:left;padding-left:0;position:sticky;left:0;background:var(--paper)}
+.msg{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:14px;font-size:15px}.msg.bad{border-color:var(--bad);color:var(--bad)}
+form{display:grid;gap:10px;max-width:420px}input{font:inherit;min-height:48px;padding:10px 12px;border-radius:10px;border:1px solid var(--muted);background:#fff;width:100%}label{font-size:15px}
+.foot{color:var(--muted);font-size:13px;margin-top:18px}.foot p{margin:4px 0}
+</style>
+</head>
+<body>
+<div class="w">
+  <div class="top"><h1>Pregled</h1><span class="sub" id="stamp"></span></div>
+
+  <section id="gate" hidden>
+    <h2>Ključ</h2>
+    <p class="sub">Unesi vrednost promenljive <code>ADMIN_TOKEN</code> iz Railway-a. Ostaje samo na ovom uređaju.</p>
+    <form id="keyForm"><label for="key">Ključ</label><input id="key" type="password" autocomplete="current-password" required minlength="16"><button class="btn ink" type="submit">Otvori</button></form>
+    <p class="msg bad" id="gateMsg" hidden role="alert"></p>
+  </section>
+
+  <div id="board" hidden>
+    <div class="seg" id="range" role="group" aria-label="Period"></div>
+    <p class="msg bad" id="err" hidden role="alert"></p>
+    <div id="notes"></div>
+    <div class="tiles" id="tiles"></div>
+
+    <section><h2>Da li neko dolazi?</h2><p class="sub">Posetioci po danu. Isti čovek se istog dana broji jednom; sutra je novi posetilac.</p>
+      <div class="chart" id="cVisitors"></div>
+      <div class="two"><div><h3>Stranice</h3><ul class="rows" id="pages"></ul></div><div><h3>Odakle dolaze</h3><ul class="rows" id="sources"></ul></div></div>
+      <h3>Kampanje (utm oznake)</h3><ul class="rows" id="campaigns"></ul>
+    </section>
+
+    <section><h2>Šta rade?</h2><p class="sub">Od posete do preuzimanja, za ceo period. Procenat je u odnosu na korak iznad.</p>
+      <ul class="rows" id="funnel"></ul>
+      <h3>Pokrenuti poslovi po danu</h3><div class="chart" id="cJobs"></div>
+    </section>
+
+    <section><h2>Po danima</h2><p class="sub">Isti brojevi kao tabela. Prevuci u stranu za sve kolone.</p><div class="scroll"><table id="table"></table></div></section>
+
+    <section><h2>Šta je pošlo po zlu?</h2>
+      <h3>Odbijeni zahtevi</h3><ul class="rows" id="refused"></ul>
+      <h3>Poslednji propali poslovi</h3><ul class="rows" id="failed"></ul>
+    </section>
+
+    <div class="foot" id="foot"></div>
+    <button class="btn quiet" id="forget" type="button">Zaboravi ključ na ovom uređaju</button>
+  </div>
+</div>
+<script src="/config.js"></script>
+<script>
+(function(){
+const API=window.SWARMSITE_API, $=s=>document.querySelector(s), KEY='swarmsite_admin';
+const store={get(){try{return localStorage.getItem(KEY)||''}catch(e){return ''}},set(v){try{localStorage.setItem(KEY,v)}catch(e){}},del(){try{localStorage.removeItem(KEY)}catch(e){}}};
+let key=store.get(), days=14, data=null;
+const el=(tag,cls,text)=>{const n=document.createElement(tag); if(cls) n.className=cls; if(text!==undefined) n.textContent=text; return n;};
+const NONE='nema podataka', num=v=>v===null||v===undefined?NONE:String(v);
+const dayLabel=d=>{const p=d.split('-'); return Number(p[2])+'. '+Number(p[1])+'.';};
+const PAGE={landing:'Početna',app:'Aplikacija (/app)',start:'Forma (/start)',edit:'Editor',dashboard:'Moji projekti',login:'Prijava',blog:'Blog',privacy:'Privatnost',terms:'Uslovi',other:'Ostalo'};
+const REF={rate_limit:'Limit po adresi (previše u sat vremena)',queue_full:'Pun red',day_budget:'Dnevni budžet potrošen',other:'Drugo'};
+
+function showGate(msg){ $('#board').hidden=true; $('#gate').hidden=false; const m=$('#gateMsg'); m.hidden=!msg; m.textContent=msg||''; $('#key').focus(); }
+$('#keyForm').addEventListener('submit',e=>{ e.preventDefault(); key=$('#key').value.trim(); $('#key').value=''; load(true); });
+$('#forget').onclick=()=>{ store.del(); key=''; data=null; showGate(''); };
+
+[[1,'Danas'],[7,'7 dana'],[14,'14 dana'],[30,'30 dana'],[90,'90 dana']].forEach(([n,t])=>{ const b=el('button','',t); b.type='button'; b.setAttribute('aria-pressed',String(n===days)); b.onclick=()=>{ days=n; document.querySelectorAll('#range button').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); load(false); }; $('#range').append(b); });
+
+async function load(fromForm){
+  if(!key) return showGate('');
+  let r, j; try{ r=await fetch(API+'/admin/stats?days='+days,{headers:{authorization:'Bearer '+key},cache:'no-store'}); j=await r.json().catch(()=>({})); }
+  catch(e){ if(!data) showGate('Server se ne javlja. Probaj ponovo za koji trenutak.'); else say('Server se ne javlja. Brojevi ispod su od ranije.'); return; }
+  if(r.status===401){ store.del(); key=''; return showGate('Pogrešan ključ.'); }
+  if(r.status===429) return showGate('Previše pogrešnih pokušaja. Sačekaj petnaest minuta.');
+  if(r.status===503) return showGate('Admin stranica još nije uključena: u Railway-u nije postavljena promenljiva ADMIN_TOKEN (najmanje 16 znakova).');
+  if(!r.ok){ if(!data) showGate('Brojevi trenutno ne mogu da se pročitaju.'); else say('Brojevi trenutno ne mogu da se pročitaju.'); return; }
+  store.set(key); try{ localStorage.setItem('swarmsite_notrack','1'); }catch(e){}   /* the owner's own visits are not visitors */
+  data=j; $('#gate').hidden=true; $('#board').hidden=false; say(''); draw(j);
+}
+function say(t){ const m=$('#err'); m.hidden=!t; m.textContent=t; }
+
+function rows(ul,items,empty){ ul.textContent=''; if(items===null){ ul.append(el('li','none',NONE)); return; } if(!items.length){ ul.append(el('li','none',empty)); return; }
+  const max=Math.max(...items.map(i=>i.n||0),1);
+  for(const it of items){ const li=el('li'); li.append(el('span','k',it.k)); const v=el('span','v',num(it.n)); if(it.note){ v.append(' '); v.append(el('small','',it.note)); } li.append(v);
+    if(it.meter&&it.n!==null){ const m=el('span','meter'), i=el('i'); i.style.width=Math.round((it.n/max)*100)+'%'; m.append(i); li.append(m); }
+    if(it.why) li.append(el('span','why',it.why)); ul.append(li); } }
+
+/* one series, one colour: a bar a day, a tap or the pointer reads the day's number below; a day with no record is drawn faint and says so */
+function bars(box,series,what){ box.textContent=''; const W=Math.max(series.length*14,280), H=120, max=Math.max(...series.map(s=>s.v||0),1), bw=W/series.length, NS='http://www.w3.org/2000/svg';
+  const svg=document.createElementNS(NS,'svg'); svg.setAttribute('viewBox',`0 0 ${W} ${H}`); svg.setAttribute('preserveAspectRatio','none'); svg.setAttribute('role','img');
+  svg.setAttribute('aria-label',what+' po danu; najviše '+max+'. Brojevi su u tabeli „Po danima”.');
+  const read=el('div','read'), marks=[]; read.setAttribute('aria-live','polite');
+  const gap=Math.min(2,bw*0.2);
+  series.forEach((s,i)=>{ const r=document.createElementNS(NS,'rect'), h=s.v===null?3:Math.max(s.v?3:1,(s.v/max)*(H-8)); r.setAttribute('x',i*bw+gap/2); r.setAttribute('width',Math.max(1,bw-gap)); r.setAttribute('y',H-h); r.setAttribute('height',h); r.setAttribute('class',s.v===null?'n':'b'); svg.append(r); marks.push(r);
+    const hit=document.createElementNS(NS,'rect'); hit.setAttribute('x',i*bw); hit.setAttribute('width',bw); hit.setAttribute('y',0); hit.setAttribute('height',H); hit.setAttribute('class','hit');
+    const show=()=>{ marks.forEach(m=>m.classList.remove('on')); if(s.v!==null) r.classList.add('on'); read.textContent=dayLabel(s.day)+' — '+(s.v===null?NONE:s.v+' '+what.toLowerCase()); };
+    hit.addEventListener('pointerenter',show); hit.addEventListener('click',show); svg.append(hit); });
+  svg.addEventListener('pointerleave',()=>{ marks.forEach(m=>m.classList.remove('on')); read.textContent=''; });
+  const ax=el('div','axis'); ax.append(el('span','',dayLabel(series[0].day)),el('span','','najviše '+max),el('span','',dayLabel(series[series.length-1].day)));
+  box.append(svg,ax,read); }
+
+function draw(d){
+  const t=d.total, at=new Date(d.generated_at); $('#stamp').textContent='osveženo '+at.toLocaleTimeString('sr-Latn',{hour:'2-digit',minute:'2-digit'});
+  const notes=$('#notes'); notes.textContent='';
+  const note=(text,bad)=>notes.append(el('p','msg'+(bad?' bad':''),text));
+  if(!d.events_readable) note('Tabela „events” još ne postoji u bazi ili ne može da se pročita, pa posete i koraci posle dizajna nemaju podatke. Pokreni server/migrations/20261119_events.sql u Supabase SQL editoru. Poslovi i plaćanja ispod su tačni.',true);
+  else if(!d.recording_since) note('Zapisivanje je uključeno, ali još nijedna poseta nije zabeležena.');
+  else if(d.by_day.some(r=>!r.recorded)) note('Posete se beleže od '+dayLabel(d.by_day.find(r=>r.recorded)?.day||d.recording_since.slice(0,10))+' Dani pre toga nemaju podatke o posetama; poslovi i plaćanja postoje i za njih.');
+  if((d.notes||[]).includes('events_cut')||(d.notes||[]).includes('jobs_cut')) note('Period ima više redova nego što stranica čita odjednom: brojevi su manji od stvarnih. Izaberi kraći period.',true);
+
+  const tiles=$('#tiles'); tiles.textContent='';
+  [['Posetilaca',t.visitors],['Pokrenutih poslova',t.started],['Gotovih',t.done],['Plaćenih dizajna',t.paid]].forEach(([k,v])=>{ const x=el('div','tile'); const b=el('b',v===null?'none':'',num(v)); x.append(b,el('span','',k)); tiles.append(x); });
+
+  bars($('#cVisitors'),d.by_day.map(r=>({day:r.day,v:r.visitors})),'Posetilaca');
+  bars($('#cJobs'),d.by_day.map(r=>({day:r.day,v:r.started})),'Poslova');
+  rows($('#pages'),d.pages&&d.pages.map(p=>({k:PAGE[p.key]||p.key,n:p.visitors,note:p.views+' otvaranja',meter:true})),'Nijedna poseta u ovom periodu.');
+  rows($('#sources'),d.sources&&d.sources.map(s=>({k:s.key==='(direct or unknown)'?'Direktno ili nepoznato':s.key,n:s.visitors,meter:true})),'Nijedna poseta u ovom periodu.');
+  rows($('#campaigns'),d.campaigns&&d.campaigns.map(s=>({k:s.key,n:s.visitors})),'Niko nije došao preko linka sa utm oznakama.');
+
+  const steps=[['Posetilaca',t.visitors],['Pokrenuli posao',t.started],['Posao gotov',t.done],['Otvorili dizajn preko celog ekrana',t.opened],['Menjali dizajn u editoru',t.edited],['Započeli plaćanje',t.pay_started],['Platili',t.paid],['Preuzeli',t.downloaded]];
+  let prev=null; rows($('#funnel'),steps.map(([k,n])=>{ const note=(n!==null&&prev!==null&&prev>0)?Math.round(n/prev*100)+'%':''; if(n!==null) prev=n; return {k,n,note,meter:true}; }).concat([{k:'Posao propao',n:t.failed},{k:'Sačuvali izmene',n:t.kept},{k:'Još u radu ili u redu',n:t.waiting}]),'');
+
+  const tb=$('#table'); tb.textContent=''; const head=el('tr'); ['Dan','Posetilaca','Otvaranja','Poslova','Gotovo','Propalo','Dizajn otvoren','Menjano','Plaćanje započeto','Plaćeno','Preuzeto','Odbijeno'].forEach(h=>{ const th=el('th','',h); th.scope='col'; head.append(th); }); tb.append(head);
+  const dash=v=>v===null?'–':String(v);
+  [...d.by_day].reverse().forEach(r=>{ const tr=el('tr'); const ref=r.refused?Object.values(r.refused).reduce((a,b)=>a+b,0):null; [dayLabel(r.day),dash(r.visitors),dash(r.views),r.started,r.done,r.failed,dash(r.opened),dash(r.edited),dash(r.pay_started),r.paid,dash(r.downloaded),dash(ref)].forEach(v=>tr.append(el('td','',String(v)))); tb.append(tr); });
+
+  rows($('#refused'),d.refused&&Object.entries(d.refused).filter(([k,v])=>k!=='other'||v).map(([k,v])=>({k:REF[k]||k,n:v})),'');
+  rows($('#failed'),d.failed.map(f=>({k:(f.from==='form'?'Forma':f.site),n:new Date(f.at).toLocaleString('sr-Latn',{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'}),why:f.reason})),'Nijedan posao nije propao u ovom periodu.');
+
+  const foot=$('#foot'); foot.textContent=''; const c=d.recording||{};
+  foot.append(el('p','','Zapisivanje na serveru koji je odgovorio, od njegovog poslednjeg pokretanja ('+new Date(c.since||Date.now()).toLocaleString('sr-Latn',{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'})+'): upisano '+(c.recorded||0)+', neupisano zbog greške '+(c.failed||0)+', odbačeno '+(c.dropped||0)+', botova '+(c.bots||0)+'.'));
+  foot.append(el('p','','„–” i „nema podataka” znače da za to ne postoji zapis, ne nulu. Dani su po vremenu '+d.tz+'. Tvoje posete sa ovog uređaja se ne broje.'));
+}
+if(!API){ showGate('Adresa servera nije podešena (config.js).'); } else load(false);
+})();
+</script>
+</body>
+</html>

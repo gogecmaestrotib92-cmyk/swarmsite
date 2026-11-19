@@ -131,7 +131,7 @@ CTA = f'''<section class="cta" aria-labelledby="ctah"><div class="wrap"><div cla
 <p class="small">Your site stays as it is. 79 € once, only for the design you keep.</p></div></div></section>'''
 
 FOOT = '''<footer class="ft"><div class="wrap"><div class="fcols"><ul><li><a href="/#how">How it works</a></li><li><a href="/#price">Price</a></li><li><a href="/#faq">FAQ</a></li></ul><ul><li><a href="/blog">Blog</a></li><li><a href="/blog/feed.xml">RSS</a></li></ul><ul><li><a href="/login">Log in</a></li><li><a href="/">Try it free</a></li></ul><ul><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li><li><a href="mailto:hello@swarmsite.si">Contact</a></li></ul></div><div class="big" aria-hidden="true" style="--fs:min(12.6vw,182px)">swarmsite</div><div class="legal"><span>© 2026 Swarmsite</span></div></div></footer>
-<script src="/js/blog.js" defer></script>
+<script src="/js/blog.js" defer></script><script src="/js/track.js" defer></script>
 <script src="/js/nav-account.js" defer></script>
 </body></html>
 '''
