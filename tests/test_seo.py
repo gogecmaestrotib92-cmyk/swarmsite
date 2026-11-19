@@ -100,6 +100,11 @@ def test_the_terms_state_the_offer_the_landing_states():
     assert not re.search(r'publish|name\.swarmsite\.si', terms, re.I) and 'We do not host it for you' in terms, 'hosting is not offered (owner, 2026-11-13)'
 
 
+def test_the_front_page_keeps_its_proof_of_ownership():
+    """Search Console verifies swarmsite.si by this tag (owner's account, 2026-11-19); taking it out loses the property"""
+    assert re.search(r'<meta name="google-site-verification" content="[\w-]{20,}">', read('web', 'index.html').split('</head>')[0])
+
+
 def test_llms_txt_quotes_the_landing():
     llms, words = read('web', 'llms.txt'), text(read('web', 'index.html').split('<body>', 1)[1])
     price = re.search(r'<p class="price">\s*(\d+ €)', read('web', 'index.html')).group(1)
