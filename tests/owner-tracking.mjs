@@ -22,7 +22,9 @@ const req = (body, ip = '203.0.113.7', ua = UA) => ({ headers: { 'x-forwarded-fo
   assert.deepEqual(cleanBeacon(JSON.stringify({ n: 'visit', p: '/app?job=' + J1 + '&email=a@b.c', r: 'https://t.co/abc?u=me', s: 'Newsletter', m: 'email', c: 'launch 1', x: 'extra' })), { name: 'visit', page: 'app', ref: 't.co', src: 'newsletter', medium: 'email', campaign: 'launch 1', job: null });
   assert.equal(cleanBeacon(JSON.stringify({ n: 'visit', p: '/', s: '<img src=x>' })).src, null);
   for (const bad of ['', 'not json', '[]', '{"n":"download","p":"/"}', '{"n":"job_refused"}', '{"n":"design_opened","p":"/app"}', '{"n":"design_opened","j":"1 or 1=1"}', JSON.stringify({ n: 'visit', p: 'x'.repeat(3000) }), null, 7]) assert.equal(cleanBeacon(bad), null, String(bad).slice(0, 30));
-  assert.equal(cleanBeacon({ n: 'design_opened', p: '/app', j: J1 }).job, J1); }
+  assert.equal(cleanBeacon({ n: 'design_opened', p: '/app', j: J1 }).job, J1);
+  // a browser that has opened the owner's page says it is one of us; nothing else it could say is kept
+  assert.equal(cleanBeacon({ n: 'visit', p: '/', o: 1 }).detail, 'own'); for (const o of [0, '1', true, 'own', { a: 1 }]) assert.equal(cleanBeacon({ n: 'visit', p: '/', o }).detail, undefined); }
 
 // 2 · recording: written a moment later in one insert, and never a visitor's problem
 { let clock = Date.parse('2026-11-19T10:00:00Z'), down = false; const written = [], warned = [];
@@ -97,10 +99,22 @@ const req = (body, ip = '203.0.113.7', ua = UA) => ({ headers: { 'x-forwarded-fo
   assert.deepEqual([d17.started, d17.failed, d17.paid], [1, 1, 0], 'jobs are counted for it all the same');
   assert.deepEqual([d18.visitors, d18.views, d18.pages.landing, d18.pages.app], [2, 3, 2, 1]); assert.deepEqual([d19.visitors, d19.views, d19.pages.other], [2, 2, 1]);
   assert.deepEqual([d19.started, d19.done, d19.failed, d19.waiting, d19.opened, d19.edited, d19.kept, d19.pay_started, d19.paid, d19.downloaded], [3, 1, 1, 1, 1, 1, 1, 1, 1, 1]); assert.deepEqual(d19.refused, { rate_limit: 1, queue_full: 1, day_budget: 0, other: 0 });
-  assert.deepEqual(s.total, { views: 5, visitors: 4, started: 4, done: 1, failed: 2, waiting: 1, opened: 1, edited: 1, kept: 1, pay_started: 1, paid: 1, downloaded: 1 });
+  assert.deepEqual(s.total, { views: 5, visitors: 4, own: 0, guest_started: 0, guest_done: 0, guest_failed: 0, own_started: 0, unseen_started: 3, started: 4, done: 1, failed: 2, waiting: 1, opened: 1, edited: 1, kept: 1, pay_started: 1, paid: 1, downloaded: 1 });
   assert.deepEqual(s.sources, [{ key: '(direct or unknown)', visitors: 3 }, { key: 'google.com', visitors: 1 }]); assert.deepEqual(s.campaigns, [{ key: 'newsletter / – / launch', visitors: 1 }]);
   assert.deepEqual(s.failed.map(f => [f.site, f.from]), [['form', 'form'], ['slow.example.org', 'address']]); assert.equal(s.failed[1].reason, 'no reason was written');
   assert.ok(s.failed[0].reason.length <= 240 && !/\n/.test(s.failed[0].reason) && !new RegExp(`\\b${slug}\\b`).test(JSON.stringify(s)), 'a reason is one short line and never names a template');
+  // us and them: a browser that has opened the owner's page is counted apart, with every job it starts and every step on
+  // those jobs; a visitor's job is a visitor's; a job nobody's page was seen opening for is neither
+  { const J3 = '33333333-3333-4333-8333-333333333333', J4 = '44444444-4444-4444-8444-444444444444', day = '2026-11-19T';
+    const ev2 = [ev(day + '08:00:00Z', 'visit', { page: 'landing', visitor: 'me', detail: 'own', ref: 'google.com', src: 'setup' }), ev(day + '08:01:00Z', 'visit', { page: 'app', visitor: 'me' }),   // the second report lost its mark: the key is still ours
+      ev(day + '08:02:00Z', 'visit', { page: 'landing', visitor: 'guest', ref: 'news.example' }), ev(day + '08:03:00Z', 'design_opened', { job: J1, visitor: 'me', detail: 'own' }), ev(day + '08:04:00Z', 'edit', { job: J1, visitor: 'elsewhere' }),
+      ev(day + '08:05:00Z', 'download', { job: J2, visitor: 'guest' }), ev(day + '08:06:00Z', 'job_refused', { detail: 'rate_limit', visitor: 'me' }), ev(day + '08:07:00Z', 'job_refused', { detail: 'rate_limit', visitor: 'guest' })];
+    const jobs2 = [{ id: J1, created_at: day + '08:10:00Z', status: 'done', vk: 'me' }, { id: J2, created_at: day + '08:11:00Z', status: 'failed', vk: 'guest', url: 'https://theirs.example' }, { id: J3, created_at: day + '08:12:00Z', status: 'done', vk: 'a-script' }, { id: J4, created_at: day + '08:13:00Z', status: 'failed', url: 'https://old.example' }];
+    const u = summarise({ events: ev2, jobs: jobs2, paid: [{ id: J1, paid: { a: { at: day + '09:00:00Z' } } }, { id: J2, paid: { a: { at: day + '09:00:00Z' } } }], days: 1, now, firstEventAt: day + '08:00:00Z' }), t = u.total;
+    assert.deepEqual([t.visitors, t.views, t.own], [1, 1, 1], 'we are not visitors'); assert.deepEqual(u.sources, [{ key: 'news.example', visitors: 1 }], 'where they came from is where visitors came from'); assert.deepEqual(u.campaigns, []);
+    assert.deepEqual([t.guest_started, t.guest_done, t.guest_failed, t.own_started, t.unseen_started, t.started], [1, 0, 1, 1, 2, 4]); assert.deepEqual([t.opened, t.edited, t.downloaded, t.paid], [0, 0, 1, 1], 'a step on our job is ours, whoever\'s browser took it');
+    assert.deepEqual(u.refused.rate_limit, 1); assert.deepEqual(u.failed.map(f => f.who).sort(), ['guest', 'unseen']);
+    assert.ok(/delete options\.vk; const vk = TRACK\.visitor\(req\); if \(vk\) options\.vk = vk;/.test(src), 'a job carries the key of who started it, never one sent in the request'); assert.ok(/vk: undefined, ip_key: undefined, url/.test(src) && /vk:options->>vk/.test(src)); }
   // the table is not there: jobs and payments are still counted, and everything an event would say is null
   const bare = summarise({ events: null, jobs, paid, days: 3, now }); assert.equal(bare.events_readable, false);
   assert.deepEqual([bare.total.visitors, bare.total.views, bare.total.opened, bare.total.downloaded, bare.sources, bare.pages, bare.campaigns, bare.refused], [null, null, null, null, null, null, null, null]); assert.deepEqual([bare.total.started, bare.total.paid, bare.total.failed], [4, 1, 2]);
@@ -110,6 +124,7 @@ const req = (body, ip = '203.0.113.7', ua = UA) => ({ headers: { 'x-forwarded-fo
 // 5 · the pages: the script is ours, on every way in; the owner's page is linked from nowhere and kept out of search
 { const track = read('web/js/track.js'); assert.ok(!/cookie|sessionStorage|setItem|googletagmanager|google-analytics|plausible|posthog/i.test(track.replace(/\/\*[\s\S]*?\*\//g, '')), 'nothing is kept in the browser and nobody else is told');
   assert.ok(/swarmsite\\\.si\$\/\.test\(location\.hostname\) \|\| navigator\.webdriver\) return/.test(track), 'silent off swarmsite.si and in an automated browser');
+  assert.ok(/if \(localStorage\.getItem\('swarmsite_notrack'\)\) own = 1;/.test(track) && /if \(own\) body\.o = 1;/.test(track), 'our own browser reports as ours, it is not dropped');
   for (const p of ['index', 'app', 'start', 'edit', 'dashboard', 'login', 'blog/index']) assert.ok(read(`web/${p}.html`).includes('<script src="/js/track.js" defer></script>'), p);
   const admin = read('web/admin.html'); assert.ok(/<meta name="robots" content="noindex, nofollow">/.test(admin)); assert.ok(!admin.includes('innerHTML'), 'a failed job\'s reason is another site\'s text: written as text');
   const walk = d => fs.readdirSync(d, { withFileTypes: true }).flatMap(e => e.isDirectory() ? (['vendor', 'fonts'].includes(e.name) ? [] : walk(path.join(d, e.name))) : /\.(html|js|txt|xml|json)$/.test(e.name) ? [path.join(d, e.name)] : []);
@@ -121,9 +136,10 @@ const req = (body, ip = '203.0.113.7', ua = UA) => ({ headers: { 'x-forwarded-fo
 { const { chromium } = createRequire(path.join(root, 'package.json'))('playwright'); const KEY = 'right-key-of-the-owner-1234', now = Date.parse('2026-11-19T12:00:00Z');
   const slug = TEMPLATE_SLUGS[0] || 'griffin', days = 14, events = [], jobs = [];
   for (let d = 0; d < 6; d++) { for (let v = 0; v < 3 + d * 7; v++) events.push({ at: new Date(now - d * 86400e3 - v * 60e3).toISOString(), name: 'visit', page: v % 3 ? 'landing' : 'app', visitor: 'v' + v, ref: v % 4 ? 'a-very-long-referring-host-name.example-domain-of-someone.co.uk' : null, src: v % 5 ? null : 'newsletter', campaign: v % 5 ? null : 'a campaign with a long name 2026' });
-    jobs.push({ id: J1, created_at: new Date(now - d * 86400e3).toISOString(), status: d % 2 ? 'failed' : 'done', error: d % 2 ? `${slug} Traceback (most recent call last): <img src=x onerror=window.__xss=1> ` + 'word '.repeat(80) : null, url: 'https://a-site-with-a-very-long-host-name-that-does-not-break.example.com/', source: null }); }
+    jobs.push({ id: J1, created_at: new Date(now - d * 86400e3).toISOString(), status: d % 2 ? 'failed' : 'done', error: d % 2 ? `${slug} Traceback (most recent call last): <img src=x onerror=window.__xss=1> ` + 'word '.repeat(80) : null, url: 'https://a-site-with-a-very-long-host-name-that-does-not-break.example.com/', source: null, vk: 'v0' }); }
+  events.push({ at: new Date(now).toISOString(), name: 'visit', page: 'landing', visitor: 'us', detail: 'own' }); jobs.push({ id: J2, created_at: new Date(now).toISOString(), status: 'done', url: 'https://ours.example', vk: 'us' }, { id: '55555555-5555-4555-8555-555555555555', created_at: new Date(now).toISOString(), status: 'done', url: 'https://script.example' });
   events.push({ at: new Date(now).toISOString(), name: 'job_refused', detail: 'rate_limit' }, { at: new Date(now).toISOString(), name: 'design_opened', job: J1 });
-  const stats = { ...summarise({ events, jobs, paid: [], days, now, firstEventAt: events[events.length - 3].at }), notes: [], recording: { recorded: 12, failed: 0, dropped: 1, bots: 4, since: now - 3600e3, waiting: 0 } };
+  const stats = { ...summarise({ events, jobs, paid: [], days, now, firstEventAt: events[events.length - 4].at }), notes: [], recording: { recorded: 12, failed: 0, dropped: 1, bots: 4, since: now - 3600e3, waiting: 0 } };
   const browser = await chromium.launch({ executablePath: process.env.CHROME_PATH || undefined, args: ['--no-sandbox'] });
   try { for (const width of [390, 1440]) {
     const asked = []; const page = await browser.newPage({ viewport: { width, height: 844 } }); const errors = []; page.on('pageerror', e => errors.push(String(e)));
@@ -140,7 +156,7 @@ const req = (body, ip = '203.0.113.7', ua = UA) => ({ headers: { 'x-forwarded-fo
     assert.match(await page.textContent('#gateMsg'), /Pogrešan ključ/); assert.ok(await page.isHidden('#board')); assert.equal(await page.evaluate(() => localStorage.getItem('swarmsite_admin')), null, 'a wrong key is not kept');
     await page.fill('#key', KEY); await page.click('#keyForm button'); await page.waitForSelector('#board:not([hidden])');
     const text = await page.evaluate(() => document.body.innerText);
-    for (const want of ['Da li neko dolazi?', 'Šta rade?', 'Šta je pošlo po zlu?', 'Posetilaca', 'Limit po adresi', 'nema podataka', 'Započeli plaćanje', 'newsletter']) assert.ok(text.includes(want), `${width}: ${want}`);
+    for (const want of ['Da li neko dolazi?', 'Šta rade?', 'Šta je pošlo po zlu?', 'Posetilaca', 'Limit po adresi', 'nema podataka', 'Započeli plaćanje', 'newsletter', 'Posetilaca (bez nas)', 'Mi: 1 poseta sa naših uređaja i 1 naših poslova', 'Bez zabeležene posete (skripte, testovi, blokiran brojač): 1 poslova', 'Posetilac · ']) assert.ok(text.includes(want), `${width}: ${want}`);
     assert.ok(!new RegExp(`\\b${slug}\\b`, 'i').test(text), 'no template is named'); assert.equal(await page.evaluate(() => window.__xss), undefined); assert.ok(text.includes('<img src=x'), 'a reason is shown as the text it is');
     const m = await page.evaluate(() => ({ sw: document.scrollingElement.scrollWidth, w: innerWidth, spill: [...document.querySelectorAll('.w *')].filter(e => !e.closest('.scroll') && e.getClientRects().length && (e.getBoundingClientRect().right > innerWidth + 0.5 || e.getBoundingClientRect().left < -0.5)).map(e => e.tagName + '.' + e.className).slice(0, 5),
       small: [...document.querySelectorAll('.w *')].filter(e => e.children.length === 0 && e.textContent.trim() && e.getClientRects().length && parseFloat(getComputedStyle(e).fontSize) < 12).length, taps: [...document.querySelectorAll('button')].filter(b => b.getClientRects().length && b.getBoundingClientRect().height < 44).length,
@@ -148,7 +164,7 @@ const req = (body, ip = '203.0.113.7', ua = UA) => ({ headers: { 'x-forwarded-fo
     assert.ok(m.sw <= m.w, `${width}: the page is ${m.sw} wide`); assert.deepEqual(m.spill, [], `${width}: outside the screen`); assert.equal(m.small, 0, 'no text under 12 px'); assert.equal(m.taps, 0, 'every button is 44 px tall');
     assert.equal(m.bars, days); assert.ok(m.faint >= 5, 'days with no record are drawn as that'); assert.deepEqual(m.tiles, [String(stats.total.visitors), '6', '3', '0']);
     await page.locator('#cVisitors rect.hit').last().click(); assert.match(await page.textContent('#cVisitors .read'), /19\. 11\. — \d+ posetilaca/);
-    assert.equal(await page.evaluate(() => localStorage.getItem('swarmsite_notrack')), '1', 'the owner is not a visitor from here on');
+    assert.equal(await page.evaluate(() => localStorage.getItem('swarmsite_notrack')), '1', 'this browser is one of ours from here on');
     await page.reload(); await page.waitForSelector('#board:not([hidden])'); await page.click('#forget'); await page.waitForSelector('#gate:not([hidden])'); assert.equal(await page.evaluate(() => localStorage.getItem('swarmsite_admin')), null);
     assert.deepEqual(errors, []); await page.close(); } }
   finally { await browser.close(); } }
