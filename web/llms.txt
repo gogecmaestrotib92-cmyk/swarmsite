@@ -1,12 +1,12 @@
 # Swarmsite
 
-> Swarmsite makes three finished website designs from an existing site's own words, pictures, logo and colours. You paste the address, compare the three, edit the one you like, pay 79 € once and download it as HTML and CSS to put on any web host.
+> Swarmsite makes three finished website designs from an existing site's own words, pictures, logo and colours. You paste the address, compare the three, edit the one you like, pay 79 € once and download it as HTML and CSS: the finished page, and the same page as parts (colours, type, sections) to build the rest of the site in. It runs on any web host.
 
 - Looking at the three designs is free. The price is 79 € once, for the design you keep. There is no subscription.
 - Your live site is only read, never changed. Swarmsite does not host the new site; you download the files.
 - Three ways to start: a site's address; the address of a first version of an app with up to six screenshots of it; or, with no site, one short form about the business with your own photographs.
 - Each design is checked on a desk screen (1440 px) and a phone (390 px) before it is shown. Designs use open-licence typefaces only.
-- The download is a zip: index.html, media, fonts, the content as data.json, and a README. The page asks the network for nothing outside that folder.
+- The download is a zip: index.html (the finished page), media, fonts, the content as data.json, a README, and a design folder — tokens.css, design.css, each section as its own file, page.html to start a new page from, and DESIGN.md, a written guide to the look for the person or the AI tool that builds further. Nothing in it asks the network for anything outside that folder.
 
 ## Pages
 - [Swarmsite](https://swarmsite.si/): what it does, how it works, the price, questions and answers. Cite this page for Swarmsite's price and process.
