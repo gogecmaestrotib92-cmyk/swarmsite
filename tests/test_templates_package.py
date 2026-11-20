@@ -88,10 +88,19 @@ def test_the_zip_holds_the_page_its_media_its_fonts_and_asks_for_nothing_outside
     assert P.outside(page) == [], 'nothing left that a browser would fetch from outside'
     assert 'href="https://' in page, 'the client\'s own links stay links'
     assert data == {k: v for k, v in client.items() if not k.startswith('_')} and client['brand']['name'] in readme and slug not in readme
-    # the note is a guide for someone who has never put a page online: look, put online, check, change later — and it
+    # the note says first what the download is — a design to build in (owner, 2026-11-19) — and then guides someone who
+    # has never put a page online: look, build in this look, or put the page online as it is, change later — and it
     # names every file of the zip's top level and nothing the product does not do (no publishing at our address)
-    for head in ('1. HAVE A LOOK', '2. PUT IT ONLINE', '3. CHECK IT ONCE IT IS ONLINE', '4. CHANGE SOMETHING LATER', 'WHAT IS IN THE FOLDER'):
+    for head in ('1. HAVE A LOOK', '2. BUILD YOUR SITE IN THIS LOOK', '3. OR PUT THE FINISHED PAGE ONLINE AS IT IS', '4. CHANGE SOMETHING LATER', 'WHAT IS IN THE FOLDER'):
         assert head in readme
+    assert readme.index('BUILD YOUR SITE') < readme.index('PUT THE FINISHED PAGE ONLINE') and 'DESIGN.md' in readme and 'tokens.css' in readme
+    # the design kit: the same page taken apart, every file of it under design/, none of it asking outside the package
+    kit = [n for n in names if n.startswith('design/')]
+    assert {'design/DESIGN.md', 'design/tokens.css', 'design/design.css', 'design/page.html'} <= set(kit) and sum(n.startswith('design/sections/') for n in kit) >= 3
+    with zipfile.ZipFile(rep['zip']) as z:
+        whole, sheet = z.read('design/page.html').decode('utf-8'), z.read('design/design.css').decode('utf-8')
+    assert P.outside(whole) == [] and 'href="design.css"' in whole and all('../' + n in whole + sheet for n in rep['media'] + rep['fonts'] if n in page)
+    assert slug not in ''.join(kit) and slug not in whole
     assert all(n.split('/')[0] in readme for n in names) and 'public_html' in readme and 'swarmsite.si' in readme
     assert not __import__('re').search(r'publish|\.swarmsite\.si|%\(', readme, __import__('re').I) and max(map(len, readme.splitlines())) <= 78
     # the same input gives the same zip
@@ -205,6 +214,13 @@ def test_a_package_that_does_not_look_like_the_preview_is_refused(tmp_path):
     assert not res['ok'] and any('outside itself' in w and 'tracker.example' in w for w in res['why']), res['why']
     res = tampered('no-picture', lambda n, x: None if n.endswith('arroz.jpg') else x)
     assert not res['ok'] and any('did not load' in w for w in res['why']), res['why']
+    # the design kit is held to the preview too: its page was compared (res0['kit']), and a kit whose parts no longer make
+    # the page the client chose refuses the package although index.html is untouched
+    assert res0['kit']['screens'] >= 4 and res0['kit']['worst'] == 0, res0.get('kit')
+    res = tampered('kit-recoloured', lambda n, x: x.replace(b'background:#111;color:#eee', b'background:#b00;color:#eee') if n == 'design/page.html' else x)
+    assert not res['ok'] and any('design kit' in w and 'differ' in w for w in res['why']), res['why']
+    res = tampered('kit-short', lambda n, x: x.replace(b'min-height:700px', b'min-height:640px') if n == 'design/design.css' else x)
+    assert not res['ok'] and any('design kit' in w and 'px high' in w for w in res['why']), res['why']
     gone = P.verify(preview, tmp_path / 'not-there.zip', tmp_path / 'w9')
     assert gone['ok'] is False and gone['why'], 'a package that cannot be opened is refused, not passed'
     # a job's packages are compared in one browser, side by side (verify_many): each pair keeps its own verdict and its own reason
@@ -235,3 +251,11 @@ def test_the_real_templates_package_looks_like_its_preview(tmp_path, slug, clien
     res = P.verify(preview, rep['zip'], tmp_path / 'work')
     assert res['ok'], res['why']
     assert res['outside'] == [] and all(w['height_preview'] == w['height_package'] and w['worst'] <= 0.005 and w['fonts_package'] for w in res['widths'])
+    # the kit's page was read beside them, and what was read of the page is written into the guide of the delivered zip —
+    # the one file that changes after the comparison; everything a page loads is byte for byte what was compared
+    assert res['kit']['screens'] >= 4 and res['kit']['worst'] <= 0.005 and res['kit']['measured']['type']
+    again = P.build(slug, d, tmp_path / 'src', tmp_path / 'again.zip')
+    with zipfile.ZipFile(rep['zip']) as z, zipfile.ZipFile(again['zip']) as z0:
+        md = z.read('design/DESIGN.md').decode('utf-8')
+        assert z.namelist() == z0.namelist() and all(z.read(n) == z0.read(n) for n in z.namelist() if n != 'design/DESIGN.md') and z.testzip() is None
+        assert 'Type as it is set' in md and 'Type as it is set' not in z0.read('design/DESIGN.md').decode('utf-8') and slug not in md

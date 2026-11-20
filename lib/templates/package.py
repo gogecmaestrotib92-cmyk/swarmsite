@@ -11,6 +11,8 @@ The zip holds
     fonts/…      the files of the Google Fonts stylesheet the page links, for the letters the page has; the stylesheet
                  itself is written into the page as @font-face rules that point at them
     data.json    the client's data the page was rendered from
+    design/…     the design kit (kit.py): the page taken apart — tokens.css, design.css, design.js, each section as a
+                 file of its own, page.html (the page put together again from those parts), DESIGN.md
     README.txt
 and no address outside itself that a browser would fetch (links to the client's own pages stay links). build()
 refuses — PackageError — when a picture the page asks for is not in `media_root`, when a font cannot be had, or
@@ -19,6 +21,10 @@ when any outside request is left in the page.
 Identical look is not assumed, it is measured: verify() unpacks the zip into an empty folder, opens it offline in
 headless Chrome at 1440 and 390 beside the preview and compares screenshots screen by screen; a package that
 differs by more than the tolerance, is of another height, loads other faces or asks for anything outside is refused.
+The kit is held to the same: design/page.html is opened beside them and compared with the preview by the same rule,
+and a kit whose page differs refuses the package. What the comparison read of the page (its type, corners, measure)
+is then written into design/DESIGN.md of the delivered zip — the only file that changes after the comparison, and a
+file no page loads.
 
 Fonts are fetched once and kept (cache: $SWARMSITE_FONT_CACHE, else a folder in the system's temp directory). This is
 the only network use of the template path, and it happens when a package is built, never when a page is rendered.
@@ -47,15 +53,17 @@ UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like 
 FONT_HOSTS = ('https://fonts.googleapis.com/', 'https://fonts.gstatic.com/')
 # What the client reads first after the download (owner, 2026-11-15): written for someone who has never put a page
 # online. Every sentence is something the product does (tests/test_templates_package.py holds it to the zip).
-README = """%(name)s — your new page
+README = """%(name)s — your design
 
-This folder is your whole design, and it is yours: the page's HTML and
-CSS, its pictures and its typefaces. Nothing is missing and nothing is
+This folder is your design, and it is yours: the finished page, and the
+same page taken apart so you can build the rest of your site in it. Its
+HTML and CSS, its pictures and its typefaces are all here. Nothing is
 kept back with us. It works on its own: no account, no subscription, and
 it loads nothing from anywhere else.
 
-Use it as you like: put it online as it is, hand it to whoever builds
-your site, or build further on it.
+Use it as you like: build your site in this look, hand it to whoever
+builds your site (a person or an AI tool), or put the finished page
+online as it is.
 
 
 1. HAVE A LOOK
@@ -65,10 +73,31 @@ your site, or build further on it.
 
    This is only you, looking at it on your own computer. Nobody else can
    see it yet. (A phone can keep the zip, but looking at the page and
-   putting it online is best done on a computer.)
+   working with it is best done on a computer.)
 
 
-2. PUT IT ONLINE
+2. BUILD YOUR SITE IN THIS LOOK
+
+   Open the folder design. It holds the page as parts:
+
+     tokens.css    the colours and other values the whole look hangs on
+     design.css    every style of the page, typefaces included
+     design.js     the page's movement
+     sections      each part of the page as a file of its own
+     page.html     the page put together from those parts: copy it to
+                   start a new page
+     DESIGN.md     the look written down, and how to build with it
+
+   Start with DESIGN.md. It says how to make a new page from the parts so
+   that it looks like this one, and it ends with a short text to paste to
+   Cursor, Claude Code or whichever AI tool writes your pages, so the tool
+   keeps to your design instead of inventing its own.
+
+   Keep the folders named as they are and beside each other: the parts
+   find the pictures and typefaces by those names.
+
+
+3. OR PUT THE FINISHED PAGE ONLINE AS IT IS
 
    A page is on the internet once its files are with a web host. Keep the
    files and folders named as they are.
@@ -92,28 +121,27 @@ your site, or build further on it.
    Someone else looks after your site:
      Send them this zip. It is all they need.
 
-
-3. CHECK IT ONCE IT IS ONLINE
-
-   Open it on your phone as well as your computer, and press every button
-   and link once: the phone number, the email, the booking, the menu.
-   They lead where they led on the page you edited.
+   Once it is online, open it on your phone as well as your computer, and
+   press every button and link once: the phone number, the email, the
+   booking, the menu. They lead where they led on the page you edited.
 
 
 4. CHANGE SOMETHING LATER
 
    The easy way: sign in at swarmsite.si, open your project, press Edit,
    make the change and download again. A design you paid for is paid for
-   once, so the next download costs nothing. Upload the new files over the
-   old ones.
+   once, so the next download costs nothing.
 
    By hand: index.html is plain HTML and opens in any text editor. To swap
-   a picture, put the new one in media under the old one's file name.
+   a picture, put the new one in media under the old one's file name. A
+   colour changed in design/tokens.css changes on every page you built
+   from the parts (index.html keeps its own copy of the styles).
 
 
 WHAT IS IN THE FOLDER
 
-   index.html   the design: the whole page, its HTML and CSS in one file
+   index.html   the finished page: its HTML and CSS in one file
+   design       the same page as parts to build with (see 2)
    media        its pictures and films
    fonts        its typefaces (open licences; they travel with the page)
    data.json    the words, links and pictures the page was made from;
@@ -252,7 +280,11 @@ def build(slug, d, media_root, out_zip, cache=None, fetch=None, root=None):
     if left:
         raise PackageError('the page still asks outside the package for: ' + ', '.join(left[:5]))
     name = (data.get('brand') or {}).get('name') or 'Your page'
-    files = {'index.html': page.encode('utf-8'), 'data.json': (json.dumps(data, ensure_ascii=False, indent=1) + '\n').encode('utf-8'),
+    try:
+        design = _kit().kit(page, None, name)                          # the same page, taken apart to build with
+    except Exception as ex:
+        raise PackageError('the design kit could not be cut from the page: %s' % str(ex)[:200])
+    files = {**design, 'index.html': page.encode('utf-8'), 'data.json': (json.dumps(data, ensure_ascii=False, indent=1) + '\n').encode('utf-8'),
              'README.txt': (README % {'name': name, 'slug': slug}).encode('utf-8'), **media, **fonts}
     out_zip = Path(out_zip)
     out_zip.parent.mkdir(parents=True, exist_ok=True)
@@ -263,6 +295,44 @@ def build(slug, d, media_root, out_zip, cache=None, fetch=None, root=None):
             info.external_attr = 0o644 << 16
             z.writestr(info, files[n])
     return {'zip': str(out_zip), 'files': sorted(files), 'media': sorted(media), 'fonts': sorted(fonts), 'bytes': out_zip.stat().st_size, 'page': page}
+
+
+def _kit():
+    here = Path(__file__).resolve().parent
+    name = 'swarmsite_templates_kit'
+    if name in sys.modules:
+        return sys.modules[name]
+    spec = importlib.util.spec_from_file_location(name, here / 'kit.py')
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[name] = mod
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def describe(out_zip, measured):
+    """Write what the comparison read of the page (its type, corners, measure) into design/DESIGN.md of the zip. Every
+    other file stays byte for byte what was compared; a zip without a kit, or a reading that is not one, is left alone."""
+    if not isinstance(measured, dict) or not measured.get('type'):
+        return False
+    out_zip = Path(out_zip)
+    with zipfile.ZipFile(out_zip) as z:
+        infos = z.infolist()
+        files = {i.filename: z.read(i) for i in infos}
+    if 'design/DESIGN.md' not in files or 'index.html' not in files:
+        return False
+    try:
+        name = ((json.loads(files['data.json']).get('brand') or {}).get('name') if 'data.json' in files else '') or 'Your page'
+        files['design/DESIGN.md'] = _kit().kit(files['index.html'].decode('utf-8'), measured, name)['design/DESIGN.md']
+    except Exception:
+        return False
+    tmp = out_zip.with_suffix(out_zip.suffix + '.part')
+    with zipfile.ZipFile(tmp, 'w', zipfile.ZIP_DEFLATED) as z:
+        for i in infos:
+            info = zipfile.ZipInfo(i.filename, date_time=i.date_time)
+            info.compress_type, info.external_attr = i.compress_type, i.external_attr
+            z.writestr(info, files[i.filename])
+    tmp.replace(out_zip)
+    return True
 
 
 def unpack(out_zip, folder):
@@ -294,6 +364,8 @@ def verify(preview, out_zip, workdir, tolerance=0.005, shots=None, timeout=600):
     except Exception as ex:
         err = locals().get('r')
         return {'ok': False, 'why': ['the comparison could not be made: %s %s' % (type(ex).__name__, (err.stderr if err is not None else str(ex))[-300:])]}
+    if res['ok']:
+        describe(out_zip, (res.get('kit') or {}).get('measured'))
     return res
 
 
@@ -326,6 +398,8 @@ def verify_many(pairs, workdir, tolerance=0.005, timeout=None):
             got = [{'ok': False, 'why': ['the comparison could not be made: %s' % (why or 'the tool answered for %d of %d' % (len(got), len(ready)))]}] * len(ready)
         for (k, _, _), x in zip(ready, got):
             res[k] = x
+            if x.get('ok'):
+                describe(pairs[k][1], (x.get('kit') or {}).get('measured'))
     return res
 
 
