@@ -90,9 +90,32 @@ def test_the_family_follows_what_the_client_does(lib):
     assert [m['family'] for m in PI.pick_three(client(niche='GPU cloud for developers', ground='#ffffff', accent='#2563eb'), lib)] == ['tech', 'space', 'ribbon']
 
 
+PHOTOS = [{'src': 'media/a.jpg', 'w': 1600, 'h': 1000}, {'src': 'media/b.jpg', 'w': 1600, 'h': 1000}]
+
+
 @pytest.mark.parametrize('kind', ['restaurant', 'hotel', 'cafe', 'bar', 'venue', 'shop', 'clinic', 'law', 'service', 'school', 'person', 'nonprofit'])
 def test_kinds_with_their_own_photographs_take_no_made_family(lib, kind):
-    assert PI.pick_three(client(kind=kind, niche='sports software'), lib) == []
+    d = client(kind=kind, niche='sports software')
+    d['media'] = {'photos': PHOTOS}
+    assert PI.pick_three(d, lib) == []
+
+
+@pytest.mark.parametrize('kind', ['clinic', 'law', 'service', 'school', 'person', 'nonprofit'])
+def test_a_kind_with_no_photographs_of_its_own_takes_made_pictures_for_its_look(lib, kind):
+    """an IT student's portfolio, a one-card profile and a school had three designs of flat colour and words (visitors'
+    jobs, 2026-11-22); the owner: pictures serve the look of the page"""
+    d = client(kind=kind, niche='sports software')
+    d['media'] = {'photos': PHOTOS[:1]}
+    assert len(PI.pick_three(d, lib)) == 3
+    d['media'] = {}
+    assert len(PI.pick_three(d, lib)) == 3
+
+
+@pytest.mark.parametrize('kind', ['restaurant', 'hotel', 'cafe', 'bar', 'venue', 'shop'])
+def test_a_place_never_takes_made_pictures_even_with_none_of_its_own(lib, kind):
+    d = client(kind=kind, niche='sports software')
+    d['media'] = {}
+    assert PI.pick_three(d, lib) == []
 
 
 def test_the_palette_is_the_nearest_of_the_same_tone_and_the_slots_are_the_contracts(lib):

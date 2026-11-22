@@ -12,8 +12,9 @@ that the engine and the research builds choose alike; `families.json` beside thi
 - The family is chosen by what the client does, not by chance: the group with the most keyword hits in the client's
   `niche` (the reader's subtype), kind, kicker, title, text and statement title — ties to the earlier group; a
   corporate client has its own order; nothing matches → the default order.
-- Places, clinics, law, services, shops, schools, people and nonprofits take no made family: they have their own
-  photographs, and a generated landscape is not their dining room.
+- Places (restaurants, hotels, shops, cafés, bars, venues) take no made family: a generated landscape is not their
+  dining room. Clinics, law, services, schools, people and nonprofits take none while they have photographs of their
+  own (two or more); with fewer they take one, so their pages are not flat colour and words (owner, 2026-11-22).
 - Within a family, the library palette nearest the client's: same tone (dark | light, from the ground), then the
   smallest "redmean" distance on the ground plus 0.6 × the distance on the accent.
 - The contract's fixed slot order: land[0] wide-lead (ridge) · land[1] mid (valley) · land[2] texture (water) ·
@@ -143,8 +144,22 @@ def niche_group(d):
     return 'default', FAM['default']
 
 
+# A kind that has its own photographs takes none of ours — but only while it has them. A person, a service, a clinic,
+# a school with no photograph of their own had three designs of flat colour slabs and words (an IT student's portfolio,
+# a one-card profile, a school — visitors' jobs, 2026-11-22), and the owner: pictures serve the look of the page, why
+# not set them there. So such a client takes made pictures when it has fewer than OWN_ENOUGH photographs of its own.
+# Places stay out whatever they have: a generated landscape is not a dining room, a hotel room or a shop's shelf.
+PLACES = {'restaurant', 'hotel', 'shop', 'cafe', 'bar', 'venue', 'place'}
+OWN_ENOUGH = 2
+
+
+def own_photos(d):
+    return len([p for p in ((d.get('media') or {}).get('photos') or []) if isinstance(p, dict) and p.get('src')])
+
+
 def families(d, rows, pals):
-    if str(d.get('kind') or '').lower() in NO_MADE:                 # by what the client is: a corporate client with an address still takes made pictures
+    kind = str(d.get('kind') or '').lower()
+    if kind in PLACES or (kind in NO_MADE and own_photos(d) >= OWN_ENOUGH):   # by what the client is: a corporate client with an address still takes made pictures
         return []
     pal = d.get('palette') or {}
     if not pal.get('ground'):
