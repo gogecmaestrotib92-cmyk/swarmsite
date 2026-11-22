@@ -41,5 +41,6 @@
   "drops (as written): plans (the reference, a bagel shop's home page, has no tiers or subscriptions; its priced things are its menu, which is shown)",
   "motif (as written): the client's own photographs (no made pictures: places)",
   "measured: {\"butarque (52 photographs: 4 large, 45 dish squares 600x600)\": \"37 pictures placed, each once: opening 1, band 1, rooms 3, menu sections 4, priced dishes 5, strip 8, pile 15. shots.mjs clean at 1440 and 390; legible.mjs ok (267 line readings); picture share 39 % (coverage.mjs) against the reference's 49 % by the same tool, 42 % when the reference's cut-outs are counted only where they are seen (ref/coverage-clipped.mjs)\", \"balamo (20 photographs, none 1600 wide, 15 small)\": \"20 pictures placed, each once: opening 1 (1242x1152, enlarged 1.16x under the veil), band 1 (1437 wide), rooms 3 (found through the page each room links to), strip 8, pile 7. shots.mjs clean; legible.mjs ok (204); picture share 36 %. No menu block (the data has only a link to the menu)\", \"butarque with 5 photographs (the earlier data, rendered and looked at)\": \"opening, band and three room pictures; no strip, no pile, no menu pictures; picture share 25 %; holds but is a green page below the third screen\", \"balamo with no photographs (the earlier data, rendered and looked at)\": \"no errors, every line legible, but gradient and type from top to bottom; picture share 1 %; not a page to offer\"}"
- ]
+ ],
+ "tablet": "desk"
 }
