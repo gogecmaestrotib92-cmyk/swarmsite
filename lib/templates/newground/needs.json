@@ -12,6 +12,12 @@
   "brand.name",
   "hero.title"
  ],
+ "needs_any": [
+  [
+   "catalogue",
+   "menu"
+  ]
+ ],
  "drops": [
   "figures",
   "trust",
@@ -48,7 +54,8 @@
   "motif (as written): the client's own photographs (no made pictures)",
   "photos_note: Measured on shop1 (17 photographs, 11 used) and butarque (52, 9 used) and on scratch copies of both with none. For the picture share to come within 5 points of the reference (65 at 1440, 60 at 390) the page needs: 4 photographs that are not `small`, short side at least 780 px, proportion between 0.55 and 1.9 (the two opening halves and the second pair); 2 at least 1600 px wide and 780 px high (the full-width bands: one under the closing words, one opening a product group that has no item pictures); and a picture for at least 3 products (square, 440 px or more; a `small` one is shown no wider than its own pixels). One small picture of the door or room (235 px wide) serves the foot. shop1 has all of this and reads 62 / 61. butarque has 5 photographs that are not small and 3 dish pictures that can be joined to a priced item: it reads 49 / 49, one step band stays on a plain ground.",
   "uses_when_present: [\"hero.kicker (announcement bar; else trust[0])\", \"hero.text\", \"hero.text2\", \"hero.primary\", \"hero.secondary\", \"statement\", \"steps.items (panels in pairs, the odd one a band)\", \"catalogue.groups[].items (name, price, prices, note, text, rows, state, img, h)\", \"place.menu.sections / lists\", \"features (rows, when it is not the menu index again)\", \"plans\", \"faq\", \"team\", \"credentials\", \"locations\", \"close\", \"place.phone / email / hours / address / booking / social / notices\", \"contact\", \"nav\", \"links\", \"cta\", \"signin\", \"foot.links\", \"foot.legal\"]",
-  "holds_without_pictures_note: With no photographs (scratch copies of both clients; shots and legible pass at 1440 and 390) the panels and bands become blocks of the ink colour 420 px high with the same words, every product is a row in type, the foot is unchanged. It is a plain, type-only page: correct and readable, not the reference's page, whose first screen is two photographs."
+  "holds_without_pictures_note: With no photographs (scratch copies of both clients; shots and legible pass at 1440 and 390) the panels and bands become blocks of the ink colour 420 px high with the same words, every product is a row in type, the foot is unchanged. It is a plain, type-only page: correct and readable, not the reference's page, whose first screen is two photographs.",
+  "needs_any catalogue or menu (2026-11-22): the body of this design is what is sold — product cards and priced rows under their headings, between the picture panels. Offered to three visitors with neither (a builder, a restaurant whose menu was not read, a cosmetics brand with two products set as plans) it was the weakest of the three each time, by the owner's reading and mine: two pictures with words at their foot, then bare type, then the phone number set very large. Without a catalogue or a menu it is not offered."
  ],
  "tone": "dark"
 }
