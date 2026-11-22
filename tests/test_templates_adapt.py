@@ -754,3 +754,27 @@ def test_a_one_page_sites_menu_stands_with_its_links_to_parts_of_the_page():
     assert [n['t'] for n in d['nav']] == ['5 Modules', '50 Features', 'Pricing'] and d['cta']['t'] == 'Book a call' and d['cta']['h'] == home + '#call'
     assert all(n['h'].startswith(home + '#') for n in d['nav']) and not any('Skip' in n['t'] for n in d['nav'])
     assert any(r.startswith('nav:') and 'lead to parts of the client' in r for r in d['_adapter']['rules'])
+
+
+def test_kicker_is_only_what_stands_over_the_headline():
+    """the words before the h1 in reading order can hold a label laid over a picture elsewhere on the page; glued on,
+    a visitor's headline read "sample image sample" (2026-11-22). With the page's blocks, only what stands right over
+    the title, in its columns, is its kicker."""
+    title = {'i': 10, 'kind': 'h', 'text': 'Focus, path, steady', 'region': 'main', 'x': 86, 'y': 297, 'w': 418, 'h': 66}
+    over = {'i': 9, 'kind': 'p', 'text': 'Sample', 'region': 'main', 'x': 458, 'y': 267, 'w': 46, 'h': 24}
+    badge = {'i': 17, 'kind': 'p', 'text': 'Sample image', 'region': 'main', 'x': 1323, 'y': 852, 'w': 77, 'h': 24}
+    rules = []
+    assert A._above_title('Sample image Sample', 'Focus, path, steady', {'blocks': [title, over, badge]}, rules) == 'Sample'
+    assert rules and '"Sample"' in rules[0]
+    assert A._above_title('Sample image', 'Focus, path, steady', [title, badge], []) == ''        # nothing stands over it
+    assert A._above_title('Sample', 'Focus, path, steady', [title, over], []) == 'Sample'
+    assert A._above_title('Sample image Sample', 'Focus, path, steady', None, []) == 'Sample image Sample'   # no blocks: as before
+    # through adapt: the product page's kicker stands far from its title → left out; right over it → kept
+    seed = product()
+    t = {'kind': 'h', 'text': 'The books of a stall, kept in an evening.', 'region': 'main', 'x': 100, 'y': 300, 'w': 600, 'h': 60}
+    far = {'kind': 'p', 'text': 'For market stalls', 'region': 'main', 'x': 900, 'y': 900, 'w': 200, 'h': 20}
+    near = dict(far, x=100, y=270)
+    d = A.adapt(dict(copy.deepcopy(seed), blocks={'blocks': [t, far]}))
+    assert 'kicker' not in d['hero'] and any(r.startswith('hero.kicker') for r in d['_adapter']['rules'])
+    d = A.adapt(dict(copy.deepcopy(seed), blocks={'blocks': [t, near]}))
+    assert d['hero']['kicker'] == 'For market stalls'
