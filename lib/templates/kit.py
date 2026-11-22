@@ -175,7 +175,7 @@ def parts(page):
             sections.append({'name': _name(kid, seen), 'html': page[kid['start']:kid['end']], 'inside': False})
     if not sections:
         raise KitError('the body holds nothing to take')
-    return {'lang': html_attrs.get('lang') or 'en', 'html_style': rest_style, 'html_class': html_attrs.get('class') or '', 'tokens': tokens, 'css': css, 'js': scripts,
+    return {'lang': html_attrs.get('lang') or 'en', 'dir': html_attrs.get('dir') or '', 'html_style': rest_style, 'html_class': html_attrs.get('class') or '', 'tokens': tokens, 'css': css, 'js': scripts,
             'outside_js': outside_js, 'links': links, 'early': early, 'body_attrs': _attrs_text(page, o.body), 'wrap': wrap, 'sections': sections}
 
 
@@ -193,7 +193,7 @@ def _doc(p, chosen, up, title):
         out.append(rebase(s['html'], back + '../'))
     if open_wrap:
         out.append('</%s>' % p['wrap']['tag'])
-    html_bits = ' lang="%s"' % p['lang'] + (' class="%s"' % p['html_class'] if p['html_class'] else '') + (' style="%s"' % p['html_style'] if p['html_style'] else '')
+    html_bits = ' lang="%s"' % p['lang'] + (' dir="%s"' % p['dir'] if p.get('dir') else '') + (' class="%s"' % p['html_class'] if p['html_class'] else '') + (' style="%s"' % p['html_style'] if p['html_style'] else '')
     return ('<!doctype html>\n<html%s>\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1">\n<title>%s</title>\n'
             '%s<link rel="stylesheet" href="%sdesign.css">\n<link rel="stylesheet" href="%stokens.css">\n</head>\n<body%s>%s\n%s\n%s</body>\n</html>\n') % (
         html_bits, title, ''.join(l + '\n' for l in p.get('links') or []), back, back, (' ' + p['body_attrs']) if p['body_attrs'] else '', ''.join(p.get('early') or []), '\n'.join(out),

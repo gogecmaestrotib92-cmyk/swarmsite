@@ -437,8 +437,46 @@ def brand_name(fs, inv, corpus):
         if host and slug(p).replace('-', '') == host.replace('-', ''):
             return p, 'capture: title'
     if parts:
-        return min(parts, key=len), 'capture: shortest part of the title'
+        short = min(parts, key=len)
+        said = _said_name(parts, short, inv, corpus)
+        if said:
+            return said, 'capture: the phrase of the title the page itself says most'
+        return short, 'capture: shortest part of the title'
     return host or 'Home', 'capture: host name'
+
+
+def _said_name(parts, short, inv, corpus):
+    """The shortest part of a title is the name on most pages ("Acme | Invoicing for teams") and a page's label on
+    others: a restaurant's title read `<what it is> <name> <branch> | Menu and booking`, and the three designs were
+    headed "Menu and booking" (a visitor's job, 2026-11-22). A name is what a page keeps saying — in its headings, its
+    gallery captions, its legal line — so: the phrase of the title (one to four words) that the most texts of the
+    capture say, when they say it at least three times and more than twice as often as the shortest part. A label
+    of the menu or of a button is not a name (nor is the shortest part, when it is one: "Home | Olmo Tools"); one
+    word alone counts only where its script shows it is a name (a capital letter)."""
+    texts = [_low(t) for t in corpus.texts]
+    def count(phrase):
+        rx = re.compile(r'(?<!\w)%s(?!\w)' % r'\s+'.join(re.escape(w) for w in _low(phrase).split()))
+        return sum(len(rx.findall(t)) for t in texts)
+    labels = {_low(strip_label(x)) for x in (inv.get('brand') or {}).get('nav') or [] if isinstance(x, str)}
+    labels |= {_low(strip_label(a.get('text'))) for a in inv.get('actions') or [] if isinstance(a, dict)}
+    base = 0 if _low(short) in labels else count(short)
+    best = None
+    for p in parts:
+        ws = p.split()
+        for n in range(min(4, len(ws)), 0, -1):
+            for i in range(len(ws) - n + 1):
+                c = ' '.join(ws[i:i + n]).strip(' ,.:;·•')
+                if not c or _low(c) in labels or len(ws[i]) < 3 or len(ws[i + n - 1]) < 3 or not re.search(r'[^\W\d_]', c):
+                    continue
+                if n == 1 and not c[0].isupper():
+                    continue
+                k = count(c)
+                if k >= 3 and k > 2 * base and (best is None or (k, n) > (best[0], best[1])):
+                    best = (k, n, c)
+    if best:
+        return best[2]
+    rest = [p for p in parts if _low(p) not in labels]
+    return min(rest, key=len) if _low(short) in labels and rest else None
 
 
 def safe_href(h):

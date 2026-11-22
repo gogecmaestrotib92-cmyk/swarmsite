@@ -166,7 +166,37 @@ def _page(slug, d, root=None, tablet=True):
     # stands in its desk composition from 768 px, drawn smaller to fit — the look the client chose (owner, 2026-11-22)
     if tablet and (needs(slug, root) or {}).get('tablet') == 'desk':
         page = part('tablet').desk(page)
-    return page
+    return _direction(page)
+
+
+# Words written from right to left are set from right to left. No template said so: a Persian restaurant's three
+# designs (a visitor's job, 2026-11-22) stood with their lines ranged left, the full stop at the wrong end of every
+# sentence and the words of a mixed line out of order ("VIP سالن و رزرو"), though the client's own page was dir="rtl".
+# It is read off the page's words, not off the language code (a page may state none, or the wrong one): when most of
+# its letters are of a right-to-left script (Hebrew, Arabic, Syriac, Thaana, N'Ko and their forms), every line takes
+# its direction from its own first letter (unicode-bidi: plaintext) — it begins at the right, its stop ends it, a
+# Latin name inside it keeps its place, and a line of Latin on the same page still runs from the left.
+# The design itself is not mirrored. Measured the same day, 48 templates on one restaurant set in Persian: with
+# <html dir="rtl"> 18 of them gained a failure at the gate (pages scrolling sideways, strips and pinned scenes built
+# on left-to-right offsets left blank, a script error) and 12 stood; with the lines alone turned, 25 stood against
+# 19 with nothing done. A template that states a direction of its own is left to it. The gate holds it (`ltr`).
+RTL_LETTER = re.compile('[\u0590-\u08ff\ufb1d-\ufdff\ufe70-\ufefc]')
+RTL_CSS = '<style data-sw-bidi>body,body *{unicode-bidi:plaintext}</style>'
+
+
+def reads_rtl(text):
+    letters = [c for c in text if c.isalpha()]
+    return bool(letters) and 2 * sum(1 for c in letters if RTL_LETTER.match(c)) > len(letters)
+
+
+def _direction(page):
+    m = re.search(r'<html\b[^>]*>', page)
+    if not m or re.search(r'\bdir\s*=', m.group(0)) or 'data-sw-bidi' in page:
+        return page
+    words = re.sub(r'(?is)<(script|style|svg)\b.*?</\1>|<[^>]+>|&[a-z#0-9]+;', ' ', page[m.end():])
+    i = page.find('<head')
+    j = page.find('>', i) if i >= 0 else -1
+    return page[:j + 1] + RTL_CSS + page[j + 1:] if j >= 0 and reads_rtl(words) else page
 
 
 # A product's screen stands whole in the frame made for it — a phone in a phone, a window in a window: its sides and

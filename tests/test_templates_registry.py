@@ -431,3 +431,16 @@ def test_the_windows_opening_keeps_the_clients_own_small_things_between_its_wind
     assert all(max(R._over((1230, 141, 104, 77), b) for b in boxes) <= .2 for _ in [0])
     src = (ROOT / 'lib' / 'templates' / 'clicky' / 'render.py').read_text()
     assert "$$('.win,.oi,.ot')" in src and '.wins{display:none}' in src      # carried like the windows; none on a phone
+
+
+def test_words_written_right_to_left_are_set_right_to_left():
+    """a Persian restaurant's three designs stood left to right (a visitor's job, 2026-11-22): the direction is read
+    off the page's own words, whatever language code it carries"""
+    fa = '<!doctype html><html lang="en"><head><style>p{color:red}</style></head><body><h1>رستوران اکبر جوجه</h1><p>سالن VIP و رزرو آنلاین شعبه مرکزی کرج</p><script>var latin = "a long script of latin letters that is not the page";</script></body></html>'
+    out = R._direction(fa)
+    assert out.count(R.RTL_CSS) == 1 and out.index(R.RTL_CSS) < out.index('<style>p{') and 'dir=' not in out and R._direction(out) == out, 'each line takes its own direction; the design is not mirrored'
+    en = fa.replace('رستوران اکبر جوجه', 'Casa Olmo').replace('سالن VIP و رزرو آنلاین شعبه مرکزی کرج', 'Arroces a la leña, y una palabra: سلام')
+    assert R._direction(en) == en, 'a Latin page with a word of Arabic stays as it is'
+    said = fa.replace('<html lang="en">', '<html lang="fa" dir="ltr">')
+    assert R._direction(said) == said, 'a template that states a direction keeps it'
+    assert R.reads_rtl('שלום עולם') and R.reads_rtl('مرحبا بالعالم') and not R.reads_rtl('Hello') and not R.reads_rtl('123 — 456')
