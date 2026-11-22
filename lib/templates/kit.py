@@ -262,9 +262,9 @@ def design_md(p, name, measured=None):
     if stacks:
         L += ['', 'Stacks the styles name, most used first:', ''] + ['- `%s`' % s for s in stacks[:4]]
     if m.get('type'):
-        L += ['', '## Type as it is set (measured at 1440 px wide)', '', '| Set on | Face | Size | Weight | Line height | Tracking | Example |', '|---|---|---|---|---|---|---|']
+        L += ['', '## Type as it is set (measured at 1440 px wide)', '', '| What it is | Set on | Face | Size | Weight | Line height | Tracking | Example |', '|---|---|---|---|---|---|---|---|']
         for t in m['type']:
-            L.append('| %s | %s | %s px | %s | %s | %s | %s |' % (t.get('role'), t.get('family'), t.get('size'), t.get('weight'), t.get('line'), t.get('tracking'), (t.get('example') or '').replace('|', ' ')[:48]))
+            L.append('| %s | `%s` | %s | %s px | %s | %s | %s | %s |' % (t.get('role'), t.get('on') or '', t.get('family'), t.get('size'), t.get('weight'), t.get('line'), t.get('tracking'), (t.get('example') or '').replace('|', ' ')[:48]))
     if m.get('radii'):
         L += ['', '## Corners', '', 'The radii the page uses, most used first: ' + ', '.join('`%s` (%d×)' % (r['value'], r['count']) for r in m['radii'][:6]) + '.']
     if (m.get('width') or {}).get('content'):
