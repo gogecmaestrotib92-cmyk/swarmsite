@@ -657,3 +657,22 @@ def test_the_screen_with_most_of_the_product_on_it_comes_first():
         x.pop('score', None)
         x.pop('fill', None)
     assert [m['src'] for m in A.adapt(copy.deepcopy(seed))['media']['screens']][:3] == ['media/screen-1.jpg', 'media/screen-2.jpg', 'media/screen-3.jpg'], 'no score: the bar\'s own order'
+
+
+def test_the_name_is_what_the_page_keeps_saying_not_the_shortest_part_of_its_title():
+    """a Persian restaurant's title read `<what> <name> <branch> | Menu and booking`; its three designs were headed
+    "Menu and booking" (a visitor's job, 2026-11-22)"""
+    def name(title, texts, url='https://akbarjoojeh.example/', nav=(), actions=()):
+        inv = {'url': url, 'title': title, 'brand': {'nav': list(nav)}, 'actions': [{'text': t, 'href': url} for t in actions]}
+        return A.brand_name({}, inv, A.Corpus([title] + list(texts)))
+    fa = ['درباره اکبر جوجه', 'خدمات رستوران اکبر جوجه', 'گالری اکبر جوجه 1', 'گالری اکبر جوجه 2', 'اکبر جوجه غذای اصلی و امضای رستوران ماست', '© ۱۴۰۵ اکبر جوجه شعبه مرکزی کرج', 'مشاهده منو و سفارش']
+    got, why = name('رستوران اکبر جوجه شعبه مرکزی کرج | منو و رزرو', fa)
+    assert got == 'اکبر جوجه' and 'says most' in why, (got, why)
+    # a label of the menu is never the name, however often the page says it
+    got, _ = name('Home | Olmo Tools', ['Home', 'Home', 'Home', 'Olmo Tools makes saws', 'About Olmo Tools', 'Olmo Tools Ltd'], url='https://x.example/', nav=['Home'])
+    assert got == 'Olmo Tools'
+    # the shortest part stands where the page says it as often as anything else of the title
+    assert name('Tallyfern — Books for market stalls', ['Tallyfern keeps the books', 'Why Tallyfern', 'Tallyfern Ltd', 'Books for market stalls'], url='https://x.example/')[0] == 'Tallyfern'
+    assert name('Casa Olmo - Arroces en Ruzafa', ['Casa Olmo cocina de arroces', 'Arroces a la leña', 'ARROCES', 'Arroz negro'], url='https://casaolmo.example/')[0] == 'Casa Olmo'
+    # one common word said often is not a name: a single word counts only with a capital letter
+    assert name('Fresh bread daily | Our bakery in town', ['bread', 'bread', 'bread and more bread', 'our bread', 'bread'], url='https://x.example/')[0] == 'Fresh bread daily'
