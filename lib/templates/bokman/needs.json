@@ -51,5 +51,6 @@
   "holds_without_pictures_note: Type-led: with no photographs the opening is the name and the second line side by side, then the header, the band with its sentence, the text columns and the foot. All gates pass (scratch copies of both clients). It is a plain page, not a rich one.",
   "share: {\"case\": \"overall share compared (our pages are under 1.5x the reference height)\", \"reference\": [57, 58], \"butarque\": [62, 55], \"balamo\": [55, 57], \"note\": \"the reference has no full-width picture on its home page; its half beside the text is in place; one closing band is ours\"}",
   "variants_tried: probe/var-*.html, results in probe/final.txt"
- ]
+ ],
+ "tablet": "desk"
 }

@@ -42,5 +42,6 @@
   "uses_if_present: [\"place.menu\", \"place.events\", \"quotes[0]\", \"hero.text2\", \"place.hours\", \"place.notices\"]",
   "without_pictures: renders and passes every check (type on the ground, deep slab first screen and close), but it is no longer this reference; not to be offered",
   "measured: {\"butarque\": {\"photos_in_data\": 52, \"photos_shown\": 25, \"picture_share\": 57, \"meets_large_min\": true}, \"balamo\": {\"photos_in_data\": 20, \"photos_shown\": 20, \"picture_share\": 53, \"meets_large_min\": false, \"note\": \"nothing >= 1600 wide: opening is 1242 wide inside a 1440 screen; no gallery (one wide large picture left)\"}, \"reference_picture_share\": 56}"
- ]
+ ],
+ "tablet": "desk"
 }

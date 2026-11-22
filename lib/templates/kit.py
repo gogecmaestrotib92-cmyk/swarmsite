@@ -152,9 +152,11 @@ def parts(page):
             tokens.append((k.strip(), v.strip()))
     rest_style = ';'.join(d.strip() for d in (html_attrs.get('style') or '').split(';') if d.strip() and not d.strip().startswith('--'))
     css = [m.group(2) for m in re.finditer(r'<style\b([^>]*)>(.*?)</style>', page, re.S | re.I)]
-    scripts, outside_js = [], []
+    scripts, outside_js, early = [], [], []
     for m in re.finditer(r'<script\b([^>]*)>(.*?)</script>', page, re.S | re.I):
-        if re.search(r'\bsrc=', m.group(1), re.I):
+        if 'data-sw-tablet' in m.group(1):                             # sets the page's size before anything is drawn (tablet.py): it stays first in <body>
+            early.append(m.group(0))
+        elif re.search(r'\bsrc=', m.group(1), re.I):
             outside_js.append(m.group(1).strip())
         elif not re.search(r'type=["\']?application/(?:ld\+)?json', m.group(1), re.I) and m.group(2).strip():
             scripts.append(m.group(2))
@@ -174,7 +176,7 @@ def parts(page):
     if not sections:
         raise KitError('the body holds nothing to take')
     return {'lang': html_attrs.get('lang') or 'en', 'dir': html_attrs.get('dir') or '', 'html_style': rest_style, 'html_class': html_attrs.get('class') or '', 'tokens': tokens, 'css': css, 'js': scripts,
-            'outside_js': outside_js, 'links': links, 'body_attrs': _attrs_text(page, o.body), 'wrap': wrap, 'sections': sections}
+            'outside_js': outside_js, 'links': links, 'early': early, 'body_attrs': _attrs_text(page, o.body), 'wrap': wrap, 'sections': sections}
 
 
 def _doc(p, chosen, up, title):
@@ -193,8 +195,8 @@ def _doc(p, chosen, up, title):
         out.append('</%s>' % p['wrap']['tag'])
     html_bits = ' lang="%s"' % p['lang'] + (' dir="%s"' % p['dir'] if p.get('dir') else '') + (' class="%s"' % p['html_class'] if p['html_class'] else '') + (' style="%s"' % p['html_style'] if p['html_style'] else '')
     return ('<!doctype html>\n<html%s>\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1">\n<title>%s</title>\n'
-            '%s<link rel="stylesheet" href="%sdesign.css">\n<link rel="stylesheet" href="%stokens.css">\n</head>\n<body%s>\n%s\n%s</body>\n</html>\n') % (
-        html_bits, title, ''.join(l + '\n' for l in p.get('links') or []), back, back, (' ' + p['body_attrs']) if p['body_attrs'] else '', '\n'.join(out),
+            '%s<link rel="stylesheet" href="%sdesign.css">\n<link rel="stylesheet" href="%stokens.css">\n</head>\n<body%s>%s\n%s\n%s</body>\n</html>\n') % (
+        html_bits, title, ''.join(l + '\n' for l in p.get('links') or []), back, back, (' ' + p['body_attrs']) if p['body_attrs'] else '', ''.join(p.get('early') or []), '\n'.join(out),
         ('<script src="%sdesign.js"></script>\n' % back) if p['js'] else '')
 
 

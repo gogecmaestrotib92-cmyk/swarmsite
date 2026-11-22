@@ -36,5 +36,6 @@
   "faq": "optional",
   "palette": "any ground/ink/accent — accent and figure ground are solved for their text"
  },
- "picture_share_case": "page within 1.5x of the reference's height (9571 vs 9774 at 1440): overall share compared, within 5 points"
+ "picture_share_case": "page within 1.5x of the reference's height (9571 vs 9774 at 1440): overall share compared, within 5 points",
+ "tablet": "desk"
 }
