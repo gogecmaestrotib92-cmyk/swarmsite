@@ -46,7 +46,7 @@ SOCIAL = (('instagram.com', 'Instagram'), ('facebook.com', 'Facebook'), ('linked
           ('tiktok.com', 'TikTok'), ('twitter.com', 'X'), ('x.com', 'X'), ('pinterest.', 'Pinterest'), ('tripadvisor.', 'Tripadvisor'), ('threads.net', 'Threads'))
 # the first of these to stand in the reader's one-sentence account of the client decides what the client is
 KINDS = (
-    ('software', r'software|\bapps?\b|platform|\btools?\b|saas|\bapi\b|simulator|scanner|workspace|browser-based|web app|plugin|extension|dashboard|generator'),
+    ('software', r'software|\bapps?\b|platform|\btools?\b|saas|\bapi\b|simulator|scanner|workspace|browser-based|web app|plugin|extension|dashboard|generator|automat\w*|autonomous|chatbot|\bai (?:agents?|assistants?|receptionists?)|\bcrm\b'),
     ('restaurant', r'restaurant\w*|ristorante|bistro|brasserie|trattoria|pizzer[ií]a|taberna|marisquer[ií]a|steakhouse|gastrobar|restoran|tavern|eatery|asador'),
     ('cafe', r'caf[eé]\b|coffee ?shop|cafeter[ií]a|bakery|panader[ií]a|patisserie|tea ?room'),
     ('bar', r'\bbar\b|\bpub\b|cocktail|winery|bodega|brewery'),
@@ -61,6 +61,7 @@ KINDS = (
     ('service', r'woodwork\w*|joiner\w*|carpent\w+|plumb\w+|electrician\w*|cleaning|gardener\w*|landscap\w+|builders?|roof\w+|repairs?|workshop|bespoke|decorat\w+|removals?|locksmith|salon|barber\w*|hairdress\w+|tailor\w*|service'),
     ('person', r'photographer|author|writer|coach|consultant|speaker|artist|musician|designer|illustrator|freelance\w*|portfolio|trainer|filmmaker|composer|architect'),
 )
+PER_PERIOD = re.compile(r'[$€£]\s?\d[\d.,]*\s?(?:/\s?|per |a )(?:mo|month|yr|year|user|seat)\b|\d[\d.,]*\s?(?:€|£|\$)\s?(?:/\s?|per )(?:mo|month)\b')
 PLACE_KINDS = {'restaurant', 'cafe', 'bar', 'hotel', 'venue', 'shop'}
 ARROWS = '→›↗➜➝⟶'
 PRICE_RX = re.compile(r'(?:[$€£]\s?\d[\d.,]*\d|[$€£]\s?\d|\d[\d.,]*\s?(?:€|£|\$|USD|EUR|GBP|RSD)\b|\d[\d.,]*\s?€)')
@@ -422,6 +423,12 @@ def kind_of(fs, inv):
             # "a service", "a consultant's tool", "school software": a word for a product anywhere in the line outweighs the loose ones
             if first in ('service', 'person', 'corporate', 'school', 'nonprofit', 'shop') and any(k == 'software' for _, k in hits):
                 first = 'software'
+            # a product sold by the month is the product, whoever it is sold to: "LadderFlow sells OmniDesk, a $397/month
+            # autonomous front desk … for clinics" was read as a clinic, and three clinic designs with no picture of the
+            # product were shown for a software product (a visitor's job, 2026-11-22). The words for its buyers come
+            # after it in such a line; the price by the period says it is a subscription.
+            elif first != 'software' and any(k == 'software' for _, k in hits) and PER_PERIOD.search(t):
+                first = 'software'
             return first, where
     return '', ''
 
@@ -606,12 +613,17 @@ def _header(inv, geo, actions, name, corpus, d, is_place, rules, gaps):
     href = {}
     for a in actions:
         href.setdefault(_low(a['t']), a['h'])
-    items, seen, dropped = [], set(), []
+    # A one-page site's menu leads to parts of its own page ("5 Modules", "Pricing", "Book a call" → #architecture,
+    # #pricing, #availability). Those links used to be left out because the new page is not cut the same way — and a
+    # one-page client's header stood empty, with no menu and no call (the owner, 2026-11-22: "we swallow their headers
+    # and menu tabs"). They stand: each keeps its label and leads where it led, to that part of the client's page.
+    items, seen, kept = [], set(), []
     for lab in labels:
         h = href.get(_low(lab))
-        if h and '#' in h and _same(h, home) and slug(lab) != slug(name) and not SKIP_RX.match(lab):
-            dropped.append(corpus.recase(lab))
-        if not h or h.startswith(('tel:', 'mailto:', 'javascript:')) or _same(h, home) or re.fullmatch(r'[\d\W]*|[A-Z]{2}', lab) or slug(lab) == slug(name):
+        part = bool(h) and _same(h, home) and bool(urlparse(h).fragment.strip('/')) and slug(lab) != slug(name) and not SKIP_RX.match(lab)
+        if part:
+            kept.append(corpus.recase(lab))
+        if not h or h.startswith(('tel:', 'mailto:', 'javascript:')) or (_same(h, home) and not part) or re.fullmatch(r'[\d\W]*|[A-Z]{2}', lab) or slug(lab) == slug(name):
             continue
         key = re.sub(r'/+$', '', h.lower())
         if key in seen:
@@ -628,8 +640,8 @@ def _header(inv, geo, actions, name, corpus, d, is_place, rules, gaps):
             continue
         else:
             nav.append(it)
-    if dropped:
-        gaps.append('nav: %d link(s) of the old top bar lead to parts of the old page (%s) and are left out — the new page is not cut the same way' % (len(dropped), ', '.join(dropped)[:120]))
+    if kept:
+        rules.append('nav: %d link(s) of the top bar lead to parts of the client\'s own page (%s); they stand, each leading where it led' % (len(kept), ', '.join(kept)[:120]))
     bar = (geo.get('nav') or {}).get('rect') or {}
     low = (bar.get('y') or 0) + (bar.get('h') or 0)
     buttons = {_key(strip_label(c.get('text'))) for c in geo.get('ctas') or [] if low and ((c.get('rect') or {}).get('y') or 0) < low}

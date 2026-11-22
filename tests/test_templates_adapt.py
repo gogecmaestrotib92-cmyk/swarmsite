@@ -219,10 +219,11 @@ def test_a_product_page_becomes_the_templates_data_in_the_clients_own_words():
     assert d['lang'] == 'en' and d['kind'] == 'software' and 'place' not in d
     # colours: the page's ground, its strongest common text colour, the colour of its buttons — never a see-through fill
     assert d['palette']['ground'] == '#fbf7ee' and d['palette']['ink'] == '#1d2a22' and d['palette']['accent'] == '#d2552b' and '#1f8a57' in d['palette']['extra']
-    # the bar: capitals by style are set as the page's running text spells the words; the button is the call; a link into the old page is dropped and said so
-    assert d['nav'] == [{'t': 'Ledger', 'h': 'https://www.tallyfern.example/ledger'}, {'t': 'Pricing', 'h': 'https://www.tallyfern.example/pricing'}]
+    # the bar: capitals by style are set as the page's running text spells the words; the button is the call; a link to a
+    # part of the client's own page stands and leads there (owner, 2026-11-22: "we swallow their menu tabs")
+    assert d['nav'] == [{'t': 'Ledger', 'h': 'https://www.tallyfern.example/ledger'}, {'t': 'Pricing', 'h': 'https://www.tallyfern.example/pricing'}, {'t': 'Guide', 'h': 'https://www.tallyfern.example/#guide'}]
     assert d['signin'] == {'t': 'Log in', 'h': 'https://www.tallyfern.example/login'} and d['cta'] == {'t': 'Start a ledger', 'h': 'https://www.tallyfern.example/signup'}
-    assert any(g.startswith('nav: 1 link') and 'Guide' in g for g in d['_adapter']['gaps'])
+    assert any(r.startswith('nav: 1 link') and 'Guide' in r for r in d['_adapter']['rules'])
     h = d['hero']
     assert h['title'] == 'The books of a stall, kept in an evening.' and h['kicker'] == 'For market stalls'
     assert h['text'] == 'Tallyfern reads your receipts and keeps the ledger.' and h['text2'] == 'You check it once a week.'
@@ -273,7 +274,7 @@ def test_a_product_gets_its_own_screens_its_price_cards_and_its_large_figures():
     seed['images'].append({'id': 'img3', 'src': home + 'img/notice.png', 'w': 900, 'h': 600, 'alt': 'Opening hours notice', 'plain': True, 'data': PX})
     d = A.adapt(copy.deepcopy(seed))
     assert A.validate(d) == [] and invented(d, seed) == []
-    assert [n['t'] for n in d['nav']] == ['Ledger', 'Pricing']
+    assert [n['t'] for n in d['nav']] == ['Ledger', 'Pricing', 'Guide']
     assert [s['src'] for s in d['media']['screens']] == ['media/screen-%d.jpg' % i for i in (1, 2, 3, 4)] and len(d['media']['phones']) == 4
     assert d['media']['screens'][0] == {'src': 'media/screen-1.jpg', 'w': 1800, 'h': 1125, 'alt': 'Month', 'page': '/month'}
     assert d['_media']['media/phone-3.jpg'] == {'from': 'product', 'kind': 'phones', 'index': 2}
@@ -727,3 +728,29 @@ def test_a_row_of_signed_cards_is_read_as_quotes_and_never_as_steps():
     assert s['quotes'] == [] and s['kids'] == ['Photograph', 'Sort', 'Close'] and s['used'] == '', 'steps stay steps'
     s = sec('Worn by ' + run, caps + ['Our promise'])
     assert s['quotes'] == [] and len(s['kids']) == 4, 'a section that is not only signed cards is left as it is'
+
+
+def test_a_product_sold_by_the_month_is_software_whoever_it_is_sold_to():
+    """an autonomous front desk at $397/month for clinics was read as a clinic: three clinic designs, no picture of the
+    product (a visitor's job, 2026-11-22)"""
+    k = lambda what, title='': A.kind_of({'what': what}, {'title': title})[0]
+    assert k('LadderFlow sells OmniDesk, a $397/month flat WhatsApp-based autonomous front desk that answers inquiries for dental clinics and medical practices.') == 'software'
+    assert k('', 'LadderFlow — OmniDesk Autonomous Front Desk ($397/mo)') == 'software'
+    assert k('Kerrisdale Dental is a dental clinic in Vancouver offering general and cosmetic dentistry.') == 'clinic', 'a clinic stays a clinic'
+    assert k('Riverside Physio is a physiotherapy clinic; book through our app.') == 'clinic', 'a word for an app without a price by the month does not turn a clinic into software'
+    assert k('Casa Olmo is a rice restaurant in Ruzafa.') == 'restaurant'
+
+
+def test_a_one_page_sites_menu_stands_with_its_links_to_parts_of_the_page():
+    """the menu of a one-page site leads to its own sections; it used to be left out and the header stood empty with no
+    call (the owner, 2026-11-22)"""
+    home = 'https://flow.example/'
+    labs = ['5 Modules', '50 Features', 'Pricing', 'Book a call']
+    inv = {'url': home, 'title': 'Flow — front desk', 'lang': 'en', 'copy': {'text': ' '.join(labs) + ' Stop losing clients', 'headings': [{'tag': 'H1', 'text': 'Stop losing clients'}]},
+           'actions': [{'text': 'Skip to main content', 'href': home + '#main'}] + [{'text': t, 'href': home + '#' + t.split()[-1].lower()} for t in labs],
+           'brand': {'nav': labs}, 'sourceCoverage': {'sections': []}, 'sourcePages': []}
+    seed = {'inventory': inv, 'geometry': {'nav': {'rect': {'y': 0, 'h': 70}, 'links': 4}, 'ctas': [{'text': 'Book a call', 'rect': {'y': 20}}]}, 'assets': {}, 'images': []}
+    d = A.adapt(seed)
+    assert [n['t'] for n in d['nav']] == ['5 Modules', '50 Features', 'Pricing'] and d['cta']['t'] == 'Book a call' and d['cta']['h'] == home + '#call'
+    assert all(n['h'].startswith(home + '#') for n in d['nav']) and not any('Skip' in n['t'] for n in d['nav'])
+    assert any(r.startswith('nav:') and 'lead to parts of the client' in r for r in d['_adapter']['rules'])
