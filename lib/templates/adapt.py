@@ -271,6 +271,31 @@ def before(text, phrase):
     return None if at == -1 else t[:keep[at]].strip()
 
 
+def _above_title(pre, title, blocks, rules):
+    """The words before the headline stand over it as its kicker only where the page sets them there. The text before the
+    h1 in reading order can hold a label laid over a picture elsewhere (a "sample image" badge in a photo's corner, 550 px
+    below and across the page) - glued on, it read "sample image sample" over a visitor's headline (2026-11-22). With the
+    page's measured blocks: only blocks whose bottom is within a line of the title's top and that share its columns count;
+    without them, as before."""
+    bl = (blocks or {}).get('blocks') if isinstance(blocks, dict) else blocks
+    if not pre or not title or not isinstance(bl, list):
+        return pre
+    key = _key(title)
+    t = next((b for b in bl if isinstance(b, dict) and b.get('kind') == 'h' and _key(b.get('text') or '') == key), None)
+    if not t or not all(isinstance(t.get(k), (int, float)) for k in ('x', 'y', 'w', 'h')):
+        return pre
+    near = [b for b in bl if isinstance(b, dict) and b is not t and b.get('region') == 'main' and norm(b.get('text'))
+            and all(isinstance(b.get(k), (int, float)) for k in ('x', 'y', 'w', 'h'))
+            and b['y'] < t['y'] and 0 <= t['y'] - (b['y'] + b['h']) <= max(t['h'], 48)
+            and b['x'] < t['x'] + t['w'] and b['x'] + b['w'] > t['x']]
+    words = ' '.join(norm(b['text']) for b in sorted(near, key=lambda b: b['y']))
+    if _key(words) == _key(pre):
+        return pre
+    keep = words if words and _key(pre).endswith(_key(words)) else ''
+    rules.append('hero.kicker: of the words before the headline, only ' + (f'"{keep}" stands over it on the page' if keep else 'none stand over it on the page') + '; the rest is set elsewhere (a label on a picture) and is left out')
+    return keep
+
+
 def cut_at(text, stops, buttons=()):
     """text up to the earliest of the stop phrases; (text, cut_by_a_button). A stop of one short word is no border
     (a plan called "Pro" also stands inside sentences)."""
@@ -1256,6 +1281,7 @@ def adapt(seed):
         (rules if first else gaps).append('hero.title: the page has no h1; ' + ('its first heading stands in' if first else 'the brand name stands in (the page\'s first heading is a label or a paragraph, not a headline)'))
     if hero_sec:
         pre = before(hero_sec['text'], hero_sec['title']) or ''
+        pre = _above_title(pre, h1, seed.get('blocks'), rules)
         if pre and len(pre) <= 48 and len(pre.split()) <= 6:
             hero['kicker'] = corpus.recase(pre)
         rest = after(hero_sec['text'], hero_sec['title']) or ''
