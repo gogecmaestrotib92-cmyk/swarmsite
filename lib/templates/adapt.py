@@ -479,6 +479,102 @@ def _said_name(parts, short, inv, corpus):
     return min(rest, key=len) if _low(short) in labels and rest else None
 
 
+# A page that signs its quotes with a dash ("— Luna, Los Angeles") says in its own text which name goes with which
+# words: the signature stands right after its quote, or right before it. A reader given that text as one run paired
+# every name with the quote that FOLLOWS it on a page that signs AFTER — three customers' words under each other's
+# names, and the last quote ran on through the next signature into the next customer's words (a cosmetics shop, a
+# visitor's job, 2026-11-22). So: a quote ends where a signature of the page begins, and a name is the signature
+# that stands beside the quote on the page — after it when more of the page's quotes are followed by a signature
+# than preceded by one, before it in the opposite case, the reader's name when the page does not say.
+SIGN = re.compile(r'^[—–]\s*(\S.{1,58})$')
+
+
+def signatures(corpus):
+    """the dash-signed lines of the capture, without their dash and as the page spells them, longest first"""
+    found = {}
+    for t in corpus.texts:
+        m = SIGN.match(t)
+        if m:
+            name = norm(m.group(1))
+            spelt = next((x for x in corpus.spans(name) if has_lower(x)), name)      # a heading set in capitals by its style is read in capitals
+            found.setdefault(_key(name), norm(spelt))
+    return sorted(found.values(), key=len, reverse=True)
+
+
+def _one_quote(q, signs):
+    """the quote up to the first signature of the page that stands inside it"""
+    cut = len(q)
+    for s in signs:
+        m = re.search(r'\s*[—–]\s*' + r'\s+'.join(re.escape(w) for w in s.split()), q, re.I)
+        if m:
+            cut = min(cut, m.start())
+    return norm(q[:cut])
+
+
+def _signed(qs, signs, corpus):
+    """sets each quote's name from the signature beside it; -> ('after' | 'before', how many names were set) or None.
+    Every standing of every quote is counted: a carousel repeats its cards, and in the repeat the first quote follows
+    the last signature — but on a page that signs after, one standing more is followed by a signature than preceded."""
+    if len(signs) < 2 or len(qs) < 2:
+        return None
+    raw, squeezed, keep = corpus._index('texts')
+    low = {_key(s): s for s in signs}
+    beside, n_after, n_before = [], 0, 0
+    for x in qs:
+        key, after_, before = _key(x['q']), None, None
+        at = squeezed.find(key) if len(key) >= 20 else -1
+        while at != -1:
+            end = at + len(key)
+            rest, lead_ = squeezed[end:end + 80], squeezed[max(0, at - 80):at]
+            a = next((low[k] for k in low if rest[:1] in ('-', '—', '–') and rest[1:].startswith(k)), None)
+            b = next((low[k] for k in low if lead_.endswith(k) and lead_[-len(k) - 1:-len(k)] in ('-', '—', '–')), None)
+            n_after, n_before = n_after + bool(a), n_before + bool(b)
+            after_, before = after_ or a, before or b
+            at = squeezed.find(key, at + 1)
+        beside.append((after_, before))
+    if n_after == n_before:
+        return None
+    side = 0 if n_after > n_before else 1
+    changed = 0
+    for x, pair in zip(qs, beside):
+        if pair[side] and _key(pair[side]) != _key((x.get('name') or '').lstrip('—– ')):
+            changed += 1
+        if pair[side]:
+            x['name'] = x['by'] = pair[side]
+    return ('after' if side == 0 else 'before', changed) if changed else None
+
+
+def _signed_cards(s):
+    """A section whose sub-headings are all signatures ("— Luna, Los Angeles") is a row of customers' words, each
+    signed — not three steps named after their customers with the next customer's words under each (what a heading
+    over the text that follows it made of them, 2026-11-22). Its quotes are read from the section's own run of text:
+    the words between two signatures, given to the signature after them — or to the one before, when the run opens
+    with a signature. A carousel's repeats are taken once."""
+    names = [m.group(1) for k in s['kids'] for m in [SIGN.match(k)] if m]
+    if s['quotes'] or len(names) < 2 or len(names) != len(s['kids']):
+        return
+    text = s['text'][len(s['title']):].strip() if _low(s['text']).startswith(_low(s['title'])) else s['text']
+    rx = re.compile(r'\s*[—–]\s*(%s)\s*' % '|'.join(r'\s+'.join(re.escape(w) for w in n.split()) for n in sorted(names, key=len, reverse=True)), re.I)
+    parts, at, order = [], 0, []
+    for m in rx.finditer(text):
+        parts.append(text[at:m.start()])
+        order.append(norm(m.group(1)))                               # as the run spells it: a heading's style may have set it in capitals
+        at = m.end()
+    parts.append(text[at:])
+    if not order:
+        return
+    before = not norm(parts[0])                                      # the run opens with a signature: each signs what follows it
+    pairs = zip(parts[1:], order) if before else zip(parts[:-1], order)
+    quotes, seen = [], set()
+    for words, name in pairs:
+        words = norm(words)
+        if len(words) >= 20 and _key(words)[:60] not in seen:
+            seen.add(_key(words)[:60])
+            quotes.append({'text': words, 'attribution': name})
+    if len(quotes) >= 2:
+        s['quotes'], s['kids'], s['used'] = quotes, [], 'quotes'
+
+
 def safe_href(h):
     """An address a page of ours may link to: the web, a phone number, a mail address. A captured `javascript:` or
     `data:` link would run in the preview of whoever opens it — it is not carried over."""
@@ -568,6 +664,8 @@ def _sections(inv):
                     'faq': [f for f in s.get('faq') or [] if norm(f.get('question')) and norm(f.get('answer')) and not f.get('answerTruncated') and not f.get('questionTruncated')],
                     'quotes': [q for q in s.get('testimonials') or [] if norm(q.get('text')) and not q.get('textTruncated')],
                     'kids': list(kids.get(_low(norm(s['title'])), [])), 'used': ''})
+    for s in out:
+        _signed_cards(s)
     for s in out:                                                    # any other heading of the page ends a section's own paragraph
         s['borders'] = [t for _, t in heads if _low(t) != _low(s['title']) and len(t.split()) >= 2]
     return out
@@ -855,16 +953,19 @@ def _reader_blocks(d, hero, fs, corpus, actions, secs, rules, gaps):
         took.append('hero.note')
     # reviews: the reader's quotes (sheet and page), each kept only when its words stand on the page
     if not d.get('quotes'):
-        qs, seen = [], set()
+        qs, seen, signs = [], set(), signatures(corpus)
         for x in list(page.get('quotes') or []) + [{'q': q.get('text'), 'name': q.get('who')} for q in fs.get('quotes') or [] if isinstance(q, dict)]:
             if not isinstance(x, dict):
                 continue
-            q = own(x.get('q'), 420)
+            q = _one_quote(own(x.get('q'), 420), signs)
             if len(q) < 20 or _key(q)[:60] in seen:
                 continue
             seen.add(_key(q)[:60])
             name, role = own(x.get('name')), own(x.get('role'))
             qs.append({'q': q, 'name': name, **({'role': role} if role else {}), 'quote': q, 'by': name})
+        signed = _signed(qs, signs, corpus)
+        if signed:
+            rules.append('quotes: the page signs each quote with a dash %s it — %d name(s) set by where they stand on the page, not by the reader\'s pairing' % signed)
         if qs:
             d['quotes'] = qs[:6]
             took.append('quotes')
@@ -1473,7 +1574,8 @@ def adapt(seed):
     # a section left over that is a heading over its own paragraph is not dropped because the schema has one statement:
     # the first stands as the statement where there is none, the next (up to six) as cards, each with the link the
     # section itself carries, where the page has no row of cards of its own
-    rest = [x for x in secs if not carried(x) and x['level'] != 'H1' and len(x['title'].split()) <= 12 and len(_body(x)) >= 60]
+    # (a section read as quotes is carried by its quotes: its heading over the first customer's words is not a card)
+    rest = [x for x in secs if not carried(x) and not x['quotes'] and x['level'] != 'H1' and len(x['title'].split()) <= 12 and len(_body(x)) >= 60]
     if rest and 'statement' not in d:
         x = rest.pop(0)
         d['statement'] = {'title': corpus.recase(x['title']), 'text': _body(x)}

@@ -676,3 +676,54 @@ def test_the_name_is_what_the_page_keeps_saying_not_the_shortest_part_of_its_tit
     assert name('Casa Olmo - Arroces en Ruzafa', ['Casa Olmo cocina de arroces', 'Arroces a la leña', 'ARROCES', 'Arroz negro'], url='https://casaolmo.example/')[0] == 'Casa Olmo'
     # one common word said often is not a name: a single word counts only with a capital letter
     assert name('Fresh bread daily | Our bakery in town', ['bread', 'bread', 'bread and more bread', 'our bread', 'bread'], url='https://x.example/')[0] == 'Fresh bread daily'
+
+
+def test_a_quote_is_signed_by_the_name_that_stands_beside_it_on_the_page():
+    """a shop signs each customer's words after them with a dash; a reader paired every name with the words that
+    follow it, and the last quote ran on through a signature into the next customer's (a visitor's job, 2026-11-22)"""
+    L = 'I have used serums from many brands. This one feels so light on the skin, and my skin has never looked more alive.'
+    V = 'The gold dissolves completely into my skin. I bought the serum for myself and now three friends want one.'
+    E = 'I bought Oro for myself, and the fragrance is so amazing — everyone compliments me. A feeling you cannot resist.'
+    names = ['— LUNA, LOS ANGELES', '— VANESSA, MIAMI', '— EMMA, NEW YORK']                 # headings, set in capitals by their style
+    def page(order):
+        run = ' '.join(order(q, n) for q, n in ((L, '— Luna, Los Angeles'), (V, '— Vanessa, Miami'), (E, '— Emma, New York')))
+        return A.Corpus(['Worn by ' + run + ' ' + run + ' Join the Ritual'] + names)          # a carousel: its cards stand twice
+    after = page(lambda q, n: q + ' ' + n)
+    signs = A.signatures(after)
+    assert signs == ['Luna, Los Angeles', 'Vanessa, Miami', 'Emma, New York'], 'as the page spells them, not as a style capitalises them'
+    read = [(V, '— Luna, Los Angeles'), (E, '— Vanessa, Miami'), (L + ' — Luna, Los Angeles ' + V[:60], '— Emma, New York')]
+    qs = [{'q': A._one_quote(q, signs), 'name': n, 'by': n} for q, n in read]
+    assert qs[2]['q'] == L, 'a quote ends where a signature of the page begins'
+    assert A._signed(qs, signs, after) == ('after', 3)
+    assert [(x['name'], x['by']) for x in qs] == [('Vanessa, Miami',) * 2, ('Emma, New York',) * 2, ('Luna, Los Angeles',) * 2]
+    # a page that signs before its quotes: the name before stands
+    before = page(lambda q, n: n + ' ' + q)
+    qs = [{'q': q, 'name': 'x', 'by': 'x'} for q in (L, V, E)]
+    assert A._signed(qs, A.signatures(before), before) == ('before', 3) and [x['name'] for x in qs] == ['Luna, Los Angeles', 'Vanessa, Miami', 'Emma, New York']
+    # a page that signs no quote with a dash: the reader's names are left alone
+    plain = A.Corpus([L + ' ' + V + ' ' + E])
+    qs = [{'q': L, 'name': 'Luna', 'by': 'Luna'}, {'q': V, 'name': 'Vanessa', 'by': 'Vanessa'}]
+    assert A.signatures(plain) == [] and A._signed(qs, [], plain) is None and qs[0]['name'] == 'Luna' and A._one_quote(E, []) == E
+
+
+def test_a_row_of_signed_cards_is_read_as_quotes_and_never_as_steps():
+    """three customers' cards, each signed under its words with a dash, were taken for three steps named after the
+    customers, each with the next customer's words (a visitor's job, 2026-11-22)"""
+    L = 'I have used serums from many brands. This one feels so light on the skin, and my skin has never looked more alive.'
+    V = 'The gold dissolves completely into my skin. I bought the serum for myself and now three friends want one.'
+    E = 'I bought Oro for myself, and the fragrance is so amazing — everyone compliments me. A feeling you cannot resist.'
+    run = '%s — Luna, Los Angeles %s — Vanessa, Miami %s — Emma, New York' % (L, V, E)
+    def sec(text, kids):
+        s = {'title': 'Worn by', 'text': text, 'kids': list(kids), 'quotes': [], 'used': ''}
+        A._signed_cards(s)
+        return s
+    caps = ['— LUNA, LOS ANGELES', '— VANESSA, MIAMI', '— EMMA, NEW YORK']
+    s = sec('Worn by ' + run + ' ' + run, caps)                       # a carousel: its cards stand twice
+    assert [(q['attribution'], q['text']) for q in s['quotes']] == [('Luna, Los Angeles', L), ('Vanessa, Miami', V), ('Emma, New York', E)]
+    assert s['kids'] == [] and s['used'] == 'quotes', 'no sub-heading is left for the steps to take'
+    s = sec('Worn by — Luna, Los Angeles %s — Vanessa, Miami %s — Emma, New York %s' % (L, V, E), caps)
+    assert [(q['attribution'], q['text']) for q in s['quotes']] == [('Luna, Los Angeles', L), ('Vanessa, Miami', V), ('Emma, New York', E)], 'signed above: each name over its own words'
+    s = sec('How it works Photograph a receipt. — and more Sort it. Close the month.', ['Photograph', 'Sort', 'Close'])
+    assert s['quotes'] == [] and s['kids'] == ['Photograph', 'Sort', 'Close'] and s['used'] == '', 'steps stay steps'
+    s = sec('Worn by ' + run, caps + ['Our promise'])
+    assert s['quotes'] == [] and len(s['kids']) == 4, 'a section that is not only signed cards is left as it is'
