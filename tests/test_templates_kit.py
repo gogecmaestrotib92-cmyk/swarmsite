@@ -57,8 +57,8 @@ def test_addresses_are_written_from_where_each_file_stands_and_a_clients_link_is
 
 
 def test_the_guide_names_the_tokens_the_faces_and_the_sections_and_never_the_template():
-    md = K.kit(PAGE, name='Tally', measured={'type': [{'role': 'h1', 'family': 'Inter', 'size': 44, 'weight': '400', 'line': 1, 'tracking': '0', 'count': 1, 'example': 'One line'}], 'radii': [{'value': '10px', 'count': 3}], 'width': {'content': 1200}})['design/DESIGN.md'].decode()
-    for must in ('`--bg`', '**Inter**', '`sections/02-hero.html` | One line', '| h1 | Inter | 44 px', '`10px` (3×)', '1200 px wide', 'For the AI tool'):
+    md = K.kit(PAGE, name='Tally', measured={'type': [{'role': 'Main heading', 'on': 'h1', 'family': 'Inter', 'size': 44, 'weight': '400', 'line': 1, 'tracking': '0', 'count': 1, 'example': 'One line'}], 'radii': [{'value': '10px', 'count': 3}], 'width': {'content': 1200}})['design/DESIGN.md'].decode()
+    for must in ('`--bg`', '**Inter**', '`sections/02-hero.html` | One line', '| Main heading | `h1` | Inter | 44 px', '`10px` (3×)', '1200 px wide', 'For the AI tool'):
         assert must in md, must
 
 
