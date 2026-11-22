@@ -80,3 +80,11 @@ def test_every_template_of_the_library_can_be_cut_and_no_file_carries_its_name(s
     names = json.loads(f['design/kit.json'])['sections']
     assert len(names) >= 2, names
     assert not any(slug in k for k in f) and slug not in f['design/DESIGN.md'].decode()
+
+
+def test_a_right_to_left_page_keeps_its_direction_in_every_file_of_the_download():
+    page = PAGE.replace('<html ', '<html dir="rtl" ', 1)
+    assert 'dir="rtl"' in page and K.parts(page)['dir'] == 'rtl' and K.parts(PAGE)['dir'] == ''
+    docs = [v.decode() for k, v in K.kit(page, name='x').items() if k.endswith('.html')]
+    assert docs and all('dir="rtl"' in t.split('<head>')[0] for t in docs), 'each page of the download opens right to left'
+    assert not any('dir=' in v.decode().split('<head>')[0] for k, v in K.kit(PAGE, name='x').items() if k.endswith('.html'))

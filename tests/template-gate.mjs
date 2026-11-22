@@ -12,6 +12,12 @@ try {
   const sound = '<section><h1>The books of a stall</h1><p>Photograph each receipt and the ledger keeps itself. Ten minutes on a Sunday closes the week.</p><img src="' + PIC + '" width="400" height="200" alt=""></section>';
   const pages = {
     sound: page(sound + '<section style="background:#111;color:#f5f5f5"><h2>On a dark band</h2><p>Light ink on a dark ground reads as well.</p><details><summary>Does it read handwriting?</summary><p style="color:#fff">A closed answer is not on screen.</p></details></section>'),
+    // a page in Persian laid out left to right, the same page laid out right to left, and one whose row runs off the left side
+    ltr: page('<section><h1>رستوران اکبر جوجه</h1><p>جوجه‌ای تازه که روی آتش زغال پخته می‌شود و با نان داغ سرو می‌شود. سالن VIP برای مهمانی‌ها.</p></section>'),
+    rtl: page('<section><h1>رستوران اکبر جوجه</h1><p>جوجه‌ای تازه که روی آتش زغال پخته می‌شود و با نان داغ سرو می‌شود. سالن VIP برای مهمانی‌ها.</p></section>').replace('<html lang="en">', '<html lang="fa" dir="rtl">'),
+    turned: page('<section><h1>رستوران اکبر جوجه</h1><p>جوجه‌ای تازه که روی آتش زغال پخته می‌شود و با نان داغ سرو می‌شود. سالن VIP برای مهمانی‌ها.</p></section>', 'body,body *{unicode-bidi:plaintext}'),
+    oneleft: page('<section><h1>رستوران اکبر جوجه</h1><p>جوجه‌ای تازه که روی آتش زغال پخته می‌شود و با نان داغ سرو می‌شود. سالن VIP برای مهمانی‌ها.</p></section>' + '<section><span style="unicode-bidi:normal">منو و سفارش</span></section>', 'body,body *{unicode-bidi:plaintext}'),
+    rtlwide: page('<section><h1>رستوران اکبر جوجه</h1><p>جوجه‌ای تازه که روی آتش زغال پخته می‌شود.</p><div style="display:flex;gap:20px;width:1700px"><div style="width:520px">منو</div><div style="width:520px">سفارش</div><div style="width:520px">تماس</div></div></section>').replace('<html lang="en">', '<html lang="fa" dir="rtl">'),
     sideways: page(sound + '<section><div style="display:flex;gap:20px;width:1700px"><div style="width:520px">Stall</div><div style="width:520px">Row</div><div style="width:520px">Market</div></div></section>'),
     unreadable: page(sound + '<section><p style="color:#f2f2f2">Pale grey words on a white ground cannot be read.</p><p style="color:#999;font-size:30px">Large pale words pass at three to one? Not these.</p></section>'),
     picture: page('<section style="position:relative;background:url(' + PIC + ') center/cover;min-height:300px"><h1 style="color:#8a8a8a">A grey heading on a grey picture</h1></section>'),
@@ -94,6 +100,9 @@ try {
   assert.ok(out.sideways.checks.sideways.some(s => s.at === 'd' && s.px > 200 && s.page_width > 1700) && out.sideways.checks.sideways.some(s => s.at === 'm'), 'it says where and by how much');
   assert.deepEqual(out.phone.failed.filter(k => k !== 'cut'), ['sideways']); assert.deepEqual(out.phone.checks.sideways.map(s => s.at), ['m'], 'wide only on the phone: named for the phone alone');
 
+  assert.deepEqual(out.ltr.failed, ['ltr'], 'right-to-left words laid out left to right: ' + JSON.stringify(out.ltr.checks)); assert.ok(out.ltr.checks.ltr[0].right_to_left > out.ltr.checks.ltr[0].letters / 2 && out.ltr.checks.ltr[0].lines === 2);
+  assert.ok(out.rtl.ok, 'the same page laid out right to left stands: ' + JSON.stringify(out.rtl.failed)); assert.ok(out.turned.ok, 'and so does one whose lines alone are turned: ' + JSON.stringify(out.turned.failed)); assert.deepEqual(out.oneleft.failed, ['ltr'], 'one line left behind is named'); assert.equal(out.oneleft.checks.ltr[0].lines, 1); assert.ok(!out.sound.checks.ltr.length, 'a Latin page is not asked');
+  assert.ok(out.rtlwide.failed.includes('sideways') && !out.rtlwide.failed.includes('ltr'), 'a right-to-left page that runs off its left side scrolls sideways too: ' + JSON.stringify(out.rtlwide.failed));
   assert.deepEqual(out.unreadable.failed, ['legible']);
   const txt = out.unreadable.checks.legible.map(l => l.text.slice(0, 10));
   assert.ok(txt.includes('Pale grey ') && txt.includes('Large pale') && out.unreadable.checks.legible.every(l => l.ratio < 4.5), 'both pale lines are named with their contrast; large text has its own limit and these fail it too');
