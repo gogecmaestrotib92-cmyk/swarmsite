@@ -45,5 +45,6 @@
     "The 390 build of the two no-picture renders was run through shots.mjs (clean) but not looked at.",
     "Not for places: nothing here shows menu, hours, address or rooms."
   ],
- "tone": "dark"
+ "tone": "dark",
+  "tablet": "desk"
 }

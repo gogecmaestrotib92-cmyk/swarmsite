@@ -50,5 +50,6 @@
   "uses_when_present: [\"hero.kicker (announcement bar; else trust[0])\", \"hero.text\", \"hero.text2\", \"hero.primary\", \"hero.secondary\", \"statement\", \"steps.items (panels in pairs, the odd one a band)\", \"catalogue.groups[].items (name, price, prices, note, text, rows, state, img, h)\", \"place.menu.sections / lists\", \"features (rows, when it is not the menu index again)\", \"plans\", \"faq\", \"team\", \"credentials\", \"locations\", \"close\", \"place.phone / email / hours / address / booking / social / notices\", \"contact\", \"nav\", \"links\", \"cta\", \"signin\", \"foot.links\", \"foot.legal\"]",
   "holds_without_pictures_note: With no photographs (scratch copies of both clients; shots and legible pass at 1440 and 390) the panels and bands become blocks of the ink colour 420 px high with the same words, every product is a row in type, the foot is unchanged. It is a plain, type-only page: correct and readable, not the reference's page, whose first screen is two photographs."
  ],
- "tone": "dark"
+ "tone": "dark",
+ "tablet": "desk"
 }

@@ -9,7 +9,7 @@ OLD pipeline's recipe table and has nothing to do with these folders.
     list_templates() -> [{'slug', 'has_needs', 'needs', 'selectable', 'why'}]   every folder with a render.py
     load(slug)       -> the template's module (cached)
     needs(slug)      -> its needs.json as a dict, or None
-    render(slug, d, media_base=None) -> str
+    render(slug, d, media_base=None) -> str      (tablet=False: without the desk composition from 768 px, tablet.py)
 
 Media. A template writes every media path of the data behind the fixed prefix '../../' (a page built into
 `<slug>/out/` reaches `media/…` two folders up). `media_base` replaces that prefix for the paths the DATA names — and
@@ -128,7 +128,7 @@ def rebase(page, d, media_base):
     return rx.sub(sub, page), list(used)
 
 
-def _page(slug, d, root=None):
+def _page(slug, d, root=None, tablet=True):
     """the template's page with what the template has no place for added under its sections (more.py): the client's
     leftover sections in their own words, and the photographs the page did not ask for"""
     d = _subject(d)
@@ -162,6 +162,10 @@ def _page(slug, d, root=None):
             page = page[:j + 1] + '<style data-sw-art>img[src*="media/library/"]{filter:%s}</style>' % f + page[j + 1:]
     page = _phones(d, page)
     page = _readable(d, page)
+    # a template measured to hold it (needs.json "tablet": "desk", written only after tablet.py --sweep passed for it)
+    # stands in its desk composition from 768 px, drawn smaller to fit — the look the client chose (owner, 2026-11-22)
+    if tablet and (needs(slug, root) or {}).get('tablet') == 'desk':
+        page = part('tablet').desk(page)
     return page
 
 
@@ -308,12 +312,12 @@ def _readable(d, page):
     return page[:k] + '<script type="application/json" id="sw-detail">%s</script>' % blob + page[k:]
 
 
-def render(slug, d, media_base=None, root=None):
+def render(slug, d, media_base=None, root=None, tablet=True):
     """One page from one template and one client's data. Pure: the same input gives the same bytes; `d` is not changed
     by the call as far as this function is concerned (the template gets the caller's dict — templates only read it)."""
     if not isinstance(d, dict):
         raise TemplateError('data must be a dict')
-    page = _page(slug, d, root)
+    page = _page(slug, d, root, tablet)
     if media_base is None or media_base == DEFAULT_MEDIA_BASE:
         return page
     return rebase(page, d, media_base)[0]
