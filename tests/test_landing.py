@@ -49,6 +49,13 @@ def test_the_facts_it_states_are_the_engines_own():
         assert not re.search(r'publish|name\.swarmsite\.si|put it online', seen, re.I), f
     assert 'SWARMSITE_PUBLISH' not in read('web', 'config.js') and 'window.SWARMSITE_PUBLISH===true' in read('web', 'edit.html')
     assert 'Download the HTML and CSS' in WORDS and '79 €' in WORDS
+    # what a coder takes away is what the package holds (lib/templates/package.py → kit.py), each file by the name it has there
+    kit = read('lib', 'templates', 'kit.py')
+    for f in ('tokens.css', 'design.css', 'DESIGN.md'):
+        assert f in kit and f in WORDS, f
+    assert 'design/sections/' in kit and 'each section of the page is a file of its own' in WORDS
+    assert 'for the AI tool they build with' in kit and 'a prompt for the AI tool you build with' in WORDS
+    assert 'design/' in read('lib', 'templates', 'package.py') and 'index.html' in WORDS
     assert 'prefers-reduced-motion:reduce' in read('web', 'css', 'landing.css') and 'Reduced motion respected' in WORDS
     assert re.search(r"SCREENS = 6\b", read('lib', 'templates', 'job.py')) and 'up to six screenshots' in WORDS
 
