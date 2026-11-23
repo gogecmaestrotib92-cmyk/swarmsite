@@ -72,6 +72,16 @@ export function extrasProblem(o) {
 // what the capture measured on the page (geometry.json: places in the page's own 1440-wide pixels), as events the
 // working screen draws where they happened: the agents frame a section, read the headline, lift a picture. Only what
 // was measured; a place without all four numbers is left out, and so is anything the capture did not find.
+// The inside of an app is not a page that presents it (2026-11-22: a school ERP's dashboard became three designs headed
+// "Dashboard"). A page with no menu, no footer and not one link to anywhere is a screen of the app: there is nothing on it to
+// redesign, and the paid reading is not started. Measured on the 28 captured sites on hand: only that dashboard answers.
+export const APP_SCREEN = 'This address shows the inside of an app — a screen behind a sign-in, with no menu, footer or links — not a page that presents it, so there is nothing on it to redesign';
+export function appScreen(inv) {
+  if (!inv || typeof inv !== 'object') return false;
+  const brand = inv.brand || {};
+  return (Number(brand.navCount) || 0) === 0 && !brand.hasFooter && Array.isArray(inv.actions) && inv.actions.length === 0 && !(inv.forms || []).length;   // a page with a form (a "coming soon" with a sign-up) is not an app's inside
+}
+
 export function pageEvents(dir) {
   const J = f => { try { return JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')); } catch { return null; } };
   const g = J('geometry.json') || {}, inv = J('inventory.json') || {}, ev = [];
@@ -157,6 +167,8 @@ export async function runTemplateJob(deps) {
     try {
       await run('node', ['lib/pipeline/capture.mjs', job.url, '--out', jobRoot, ...(deps.chrome ? ['--chrome', deps.chrome] : [])], { timeoutMs: 420000, onLine: line => { const item = lastJson(line); if (item?.event) deps.emit([item.event]); } });
     } catch (e) { const bp = path.join(dir, 'blocked.json'); if (fs.existsSync(bp)) throw new Error(JSON.parse(fs.readFileSync(bp, 'utf8')).reason + ' Try the www/non-www address, or a page that is not behind the check.'); throw e; }
+    try { if (appScreen(JSON.parse(fs.readFileSync(path.join(dir, 'inventory.json'), 'utf8')))) throw new Error(APP_SCREEN); }
+    catch (e) { if (e.message === APP_SCREEN) throw e; }   // an inventory that cannot be read is the next step's to judge
     if (fs.existsSync(path.join(dir, 'before-hero.jpg'))) result.beforeUrl = await deps.upload(path.join(dir, 'before-hero.jpg'), `${job.id}/before.jpg`, 'image/jpeg');
     // the whole page and where each thing stands on it: the working screen shows the agents going down the real page
     try { const pe = pageEvents(dir);
