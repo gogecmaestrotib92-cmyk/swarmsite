@@ -368,6 +368,24 @@ def _far(a, b, d=48):
     return sum(abs(x - y) for x, y in zip(_rgb(a), _rgb(b))) > d
 
 
+def _white_reads(h, want=4.6):
+    """a middle-tone accent (white on it 3:1 to 4.5:1 — the purples, blues and teals of software sites) deepened in its own hue,
+    by lightness alone, until white words on it read at `want`; None when white already reads, or when it is a light colour
+    (white under 3:1: a yellow) whose buttons carry dark words. Measured 2026-11-23: docsmove's #a846ee holds white at 4.40:1,
+    and four templates that set white on the accent were refused by the gate for it — the client's own buttons do the same."""
+    w = contrast(h, '#ffffff')
+    if w >= 4.5 or w < 3:
+        return None
+    r, g, b = (int(h[i:i + 2], 16) / 255 for i in (1, 3, 5))
+    hu, li, sa = colorsys.rgb_to_hls(r, g, b)
+    while li > 0:
+        li = max(0.0, li - .005)
+        c = '#%02x%02x%02x' % tuple(round(x * 255) for x in colorsys.hls_to_rgb(hu, li, sa))
+        if contrast(c, '#ffffff') >= want:
+            return c
+    return None
+
+
 def palette(inv, assets, gaps, rules):
     cols = inv.get('colors') or {}
     tally = lambda k: [(h, _px(x.get('n'))) for x in cols.get(k) or [] if isinstance(x, dict) for h in [_hex(x.get('c'))] if h]
@@ -408,6 +426,10 @@ def palette(inv, assets, gaps, rules):
     if ranked:
         out['accent'] = ranked[0]
         rules.append('palette.accent: the saturated colour most used on buttons (×3), text and fills')
+        deep = _white_reads(out['accent']) if _lum(ground) > .4 else None
+        if deep:
+            rules.append(f'palette.accent: {out["accent"]} is a middle tone white words do not read on ({contrast(out["accent"], "#ffffff"):.2f}:1) — the buttons it fills carry white words, so it is deepened in its own hue to {deep} ({contrast(deep, "#ffffff"):.2f}:1)')
+            out['accent'] = deep
     else:
         gaps.append('palette.accent: the page has no saturated colour; left out (the templates use the ink)')
     extra = []

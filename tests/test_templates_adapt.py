@@ -218,7 +218,7 @@ def test_a_product_page_becomes_the_templates_data_in_the_clients_own_words():
     assert d['brand'] == {'name': 'Tallyfern', 'logo': 'media/logo.svg', 'home': 'https://www.tallyfern.example/', 'logo_wordmark': True}
     assert d['lang'] == 'en' and d['kind'] == 'software' and 'place' not in d
     # colours: the page's ground, its strongest common text colour, the colour of its buttons — never a see-through fill
-    assert d['palette']['ground'] == '#fbf7ee' and d['palette']['ink'] == '#1d2a22' and d['palette']['accent'] == '#d2552b' and '#1f8a57' in d['palette']['extra']
+    assert d['palette']['ground'] == '#fbf7ee' and d['palette']['ink'] == '#1d2a22' and d['palette']['accent'] == A._white_reads('#d2552b') and '#1f8a57' in d['palette']['extra']
     # the bar: capitals by style are set as the page's running text spells the words; the button is the call; a link to a
     # part of the client's own page stands and leads there (owner, 2026-11-22: "we swallow their menu tabs")
     assert d['nav'] == [{'t': 'Ledger', 'h': 'https://www.tallyfern.example/ledger'}, {'t': 'Pricing', 'h': 'https://www.tallyfern.example/pricing'}, {'t': 'Guide', 'h': 'https://www.tallyfern.example/#guide'}]
@@ -778,3 +778,19 @@ def test_kicker_is_only_what_stands_over_the_headline():
     assert 'kicker' not in d['hero'] and any(r.startswith('hero.kicker') for r in d['_adapter']['rules'])
     d = A.adapt(dict(copy.deepcopy(seed), blocks={'blocks': [t, near]}))
     assert d['hero']['kicker'] == 'For market stalls'
+
+
+def test_a_middle_tone_accent_is_deepened_until_white_reads_on_it():
+    # docsmove (2026-11-23): white on its purple #a846ee is 4.40:1, and four templates that set white on the accent were refused
+    deep = A._white_reads('#a846ee')
+    assert deep and A.contrast(deep, '#ffffff') >= 4.6
+    r, g, b = (int(deep[i:i + 2], 16) for i in (1, 3, 5))
+    assert b > r > g                                              # still the same purple, only deeper
+    assert A._white_reads('#1e40af') is None                     # white already reads
+    assert A._white_reads('#ffd400') is None                     # a light colour carries dark words; left as it is
+    inv = {'colors': {'bg': [{'c': '#ffffff', 'n': 50}], 'text': [{'c': '#1b1530', 'n': 40}], 'buttons': [{'c': '#a846ee', 'n': 5}]}}
+    rules = []
+    out = A.palette(inv, {}, [], rules)
+    assert out['accent'] == deep and any('deepened' in r for r in rules)
+    dark = {'colors': {'bg': [{'c': '#0b0b10', 'n': 50}], 'text': [{'c': '#f5f5f5', 'n': 40}], 'buttons': [{'c': '#a846ee', 'n': 5}]}}
+    assert A.palette(dark, {}, [], [])['accent'] == '#a846ee'    # on a dark ground the accent is words on dark; left as it is
