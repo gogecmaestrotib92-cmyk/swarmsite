@@ -242,7 +242,21 @@ def s_hero(d, pool):
         out += '<p class="sm">%s</p>' % e(h['note'])
     out += '<div class="bs">%s%s</div></div>' % (btn(h.get('primary'), 'inv'), btn(h.get('secondary'), 'dkb'))
     out += pic(p, 'hero', 'hpic', eager=True)
+    if not p:
+        out = out.replace('<div class="ht">', _ground(d) + '<div class="ht">', 1)
     return out + '</div></section>'
+
+
+def _ground(d):
+    """the panel's own ground when the client has no photograph for it: a made picture of the library in the panel's
+    colour, behind the words — solid where the words stand, showing towards the far side (slots.py: a backdrop, never
+    a thing to look at). A firm of accountants with no photograph had a flat blue slab (a visitor's job, 2026-11-23)."""
+    land = ((d.get('media') or {}).get('made') or {}).get('land') or []
+    g = next((x for x in land if isinstance(x, dict) and x.get('src') and x.get('w') and x.get('h')), None)
+    if not g:
+        return ''
+    return ('<div class="hbg" data-slot="hero-backdrop"><img src="%s" alt="" width="%d" height="%d" decoding="async"></div>'
+            % (e(m(g['src'])), g['w'], g['h']))
 
 
 def s_trust(d):
@@ -742,6 +756,9 @@ a:not(.b):not(.ub):hover{text-decoration:underline;text-underline-offset:3px}
 .pv{position:relative;overflow:hidden}
 .pv img{width:100%;height:100%;object-fit:cover}
 .hpic{position:absolute;top:0;right:0;bottom:0;width:min(54%,var(--nw));clip-path:polygon(9% 0,100% 0,100% 100%,0 100%)}
+.hbg{position:absolute;inset:0;pointer-events:none}
+.hbg img{width:100%;height:100%;object-fit:cover;mix-blend-mode:luminosity;opacity:.5}
+.hbg::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--acc) 0,var(--acc) 34%,color-mix(in srgb,var(--acc) 35%,transparent) 100%)}
 .sh1 .hpic{width:min(64%,var(--nw))}
 h1{animation:up .6s cubic-bezier(.2,.7,.2,1) both}
 @keyframes up{from{opacity:0;transform:translateY(9px)}}
@@ -932,6 +949,7 @@ ul.fl span{font-size:14px;line-height:19.6px}
  .lg{font-size:17px}
  .hero{padding:2px 8px 0}
  .hp{min-height:0;padding:28px 17.6px 28px;gap:28px}
+ .hbg::after{background:color-mix(in srgb,var(--acc) 86%,transparent)}
  .hpc{padding-bottom:0}
  .hpc .ht,.hb,.hpc.sh1 .ht,.hpc.sh1 .hb{max-width:none}
  .ht{gap:18px}

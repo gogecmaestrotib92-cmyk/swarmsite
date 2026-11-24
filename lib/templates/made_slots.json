@@ -1,4 +1,7 @@
 {
+ "bronxarts": [
+  "hero-backdrop"
+ ],
  "butter": [
   "figures-backdrop",
   "foot-sky",
@@ -47,6 +50,9 @@
   "accordion-backdrop",
   "pairs-backdrop"
  ],
+ "iip": [
+  "hero-backdrop"
+ ],
  "linearity": [
   "sky"
  ],
@@ -58,6 +64,9 @@
   "band-picture",
   "story-backdrop",
   "tile-ground"
+ ],
+ "pcnw": [
+  "hero-backdrop"
  ],
  "serus": [
   "card-backdrop",
