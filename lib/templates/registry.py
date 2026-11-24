@@ -166,6 +166,9 @@ def _page(slug, d, root=None, tablet=True):
     # stands in its desk composition from 768 px, drawn smaller to fit — the look the client chose (owner, 2026-11-22)
     if tablet and (needs(slug, root) or {}).get('tablet') == 'desk':
         page = part('tablet').desk(page)
+    # every page answers a hand the same way: a press, an anchor below a bar that stays, solid bars when the system asks
+    # for less transparency or more contrast — each only where the template has not said it (feel.py, owner 2026-11-23)
+    page = part('feel').add(page)
     return _direction(page)
 
 
