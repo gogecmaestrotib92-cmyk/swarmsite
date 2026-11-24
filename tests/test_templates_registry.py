@@ -75,7 +75,7 @@ def test_one_h1_no_none_and_the_clients_own_words(slug, client):
 def test_the_media_prefix_is_a_parameter_and_the_default_is_the_templates_own_page(slug):
     for name, d in CLIENTS.items():
         own = R._page(slug, copy.deepcopy(d))                      # the template's page with what it has no place for under its sections (more.py)
-        assert R.render(slug, d) == own and R.render(slug, d, '../../') == own and re.sub(r'<style data-sw-(?:wrap|art)>[^<]*</style>', '', own).startswith(R.load(slug).render(copy.deepcopy(d))[:2000]) and own.count('data-sw-wrap') == 1   # the one line the registry sets first in <head>: a headline's lines of a like length
+        assert R.render(slug, d) == own and R.render(slug, d, '../../') == own and re.sub(r'<style data-sw-(?:wrap|art|feel)>[^<]*</style>|<script data-sw-feel>.*?</script>', '', own, flags=re.S).startswith(R.load(slug).render(copy.deepcopy(d))[:2000]) and own.count('data-sw-wrap') == 1   # the one line the registry sets first in <head>: a headline's lines of a like length
         paths = R.media_paths(d)
         used = R.media_used(slug, d)
         assert set(used) <= set(paths)
