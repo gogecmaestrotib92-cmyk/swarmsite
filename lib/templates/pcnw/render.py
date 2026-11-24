@@ -204,8 +204,13 @@ def render(d: dict) -> str:
     hp = ''
     if hero_ph:
         hp = '<div class="bg" data-slot="hero" style="background-image:url(\'%s\');max-width:%dpx"></div>' % (e(_m(hero_ph['src'])), hero_ph['w'])
+    if not hero_ph:   # no photograph across the opening: a made picture of the library is its ground, in the opening's own colour (slots.py: a backdrop)
+        land = ((d.get('media') or {}).get('made') or {}).get('land') or []
+        g = next((x for x in land if isinstance(x, dict) and x.get('src')), None)
+        if g:
+            hp = '<div class="bg md" data-slot="hero-backdrop" style="background-image:url(\'%s\')"></div>' % e(_m(g['src']))
     out.append('<section class="hr%s">%s<div class="hr-i">%s<h1 class="%s">%s</h1>%s</div></section>'
-               % ('' if hero_ph else ' plain', hp,
+               % ('' if hero_ph else (' plain mdg' if hp else ' plain'), hp,
                   '<p class="kk">%s</p>' % e(hero['kicker']) if hero.get('kicker') else '',
                   'big' if len(title) <= 22 else '', e(title),
                   '<p class="ld">%s</p>' % e(hero['text']) if hero.get('text') else ''))
@@ -559,6 +564,8 @@ i{font-style:normal}
 .hr{position:relative;min-height:75vh;display:flex;align-items:center;padding:60px {hrp};background:#000;color:#fff;overflow:hidden}
 .hr.plain{background:var(--i);color:var(--oi)}
 .hr .bg{margin:0 auto}
+.hr .bg.md{mix-blend-mode:luminosity;opacity:.5}
+.hr.mdg::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--i) 0,var(--i) 38%,color-mix(in srgb,var(--i) 30%,transparent) 100%)}
 .hr:not(.plain)::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.66) 0,rgba(0,0,0,.62) 62%,rgba(0,0,0,.21) 92%)}
 .hr-i{position:relative;z-index:1;width:100%}
 .kk{font:700 19.2px/24.96px var(--fc);letter-spacing:.8px;text-transform:uppercase;margin-bottom:20px}
@@ -754,7 +761,7 @@ figcaption{margin-top:35px;text-align:right;font:700 {qc}/1.4 var(--f);letter-sp
 }
 @media (max-width:767px){
 .ut{display:none}
-.hr:not(.plain)::after{background:rgba(0,0,0,.66)}
+.hr:not(.plain)::after{background:rgba(0,0,0,.66)}.hr.mdg::after{background:color-mix(in srgb,var(--i) 86%,transparent)}
 .hd{padding:15px 20px}
 .cg.c4,.cg.c2{grid-template-columns:1fr;gap:21px}
 .cd,.c2 .cd{min-height:338px;padding:30px 22px}
