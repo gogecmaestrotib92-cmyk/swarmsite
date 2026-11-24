@@ -33,7 +33,7 @@ BLOG_TITLE = 'Notes on redesigning a website'
 BLOG_DESC = 'Practical guides from Swarmsite: redesigning a website without losing what works, putting it online, and making a landing page for an app.'
 FONTS = ('<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n'
          '<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;1,400&amp;family=Figtree:wght@400;500;600;700;800&amp;family=Shrikhand&amp;display=swap" rel="stylesheet">')
-PAGES = [('/', '2026-11-23'), ('/blog', None), ('/privacy', '2026-11-06'), ('/terms', '2026-11-20')]   # the pages a search engine may list beside the articles, each with the day its words last changed (set by hand when they do)
+PAGES = [('/', '2026-11-25'), ('/blog', None), ('/privacy', '2026-11-06'), ('/terms', '2026-11-20')]   # the pages a search engine may list beside the articles, each with the day its words last changed (set by hand when they do)
 
 e = lambda s: html.escape(str(s), quote=True)
 read = lambda p: open(p, encoding='utf-8').read()

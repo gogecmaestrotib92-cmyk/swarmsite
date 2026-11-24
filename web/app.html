@@ -409,7 +409,7 @@ async function start(){ let id=qs.get('job'); const url=qs.get('url'); $('#urlLa
        The account script is deferred, so the answer is only known once the document is parsed. */
     const leave=async()=>{ const signed=window.Auth&&Auth.enabled&&await Auth.session(); location.replace(signed?'/dashboard#new':'/#top'); };
     if(document.readyState==='loading') addEventListener('DOMContentLoaded',leave); else leave(); return; }
-  const extra={}; const niche=qs.get('niche'), goal=(qs.get('goal')||'').trim().slice(0,80); if(niche) extra.niche=niche; if(goal) extra.goal=goal;
+  const extra={}; const niche=qs.get('niche'), goal=(qs.get('goal')||'').trim().slice(0,80); if(niche) extra.niche=niche; if(goal) extra.goal=goal; if(qs.get('own')==='1') extra.keep_text=true;
   if(qs.get('with')==='screens') return shotsStep(url,extra);   /* "I built a first version of my app": its screenshots first */
   return launch(url,extra); }   /* "I have a site": the designs start at once */
 /* up to six screenshots, each uploaded as it is chosen (POST /uploads, the form's own route); the job carries their names */

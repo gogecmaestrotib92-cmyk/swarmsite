@@ -228,6 +228,18 @@ def build(job_dir, out, base='', limit=3, gate_kw=None, library=None, form=None,
         if screens or kind or goal:
             d, said = visitor(d, out, screens, kind, goal)
             notes = {**notes, 'visitor': said}
+        # a thin site's design is shown complete: the sections its page lacks are filled with the examples written for it
+        # (examples.py → examples.json, only for a thin site and only when the visitor did not ask to keep their words alone)
+        try:
+            exf = Path(job_dir) / 'examples.json'
+            if exf.is_file():
+                d, filled = _mod('examples').merge(d, json.loads(exf.read_text(encoding='utf-8')).get('raw'))
+                if filled:
+                    notes = {**notes, 'examples': filled}
+                    notes.setdefault('rules', []).append('examples: a thin page (%s) — %d section(s) it lacks are filled with examples: %s' % (
+                        json.loads(exf.read_text(encoding='utf-8')).get('why') or '', len(filled), ', '.join(filled)))
+        except (OSError, ValueError):
+            pass
     dark = dim(d, out)
     if dark:
         notes.setdefault('rules', []).append('media.photos[].dim: %d photograph(s) near-black over most of themselves, kept out of the strip: %s' % (
