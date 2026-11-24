@@ -98,7 +98,7 @@ document.addEventListener('click',function(e){var a=e.target.closest('a[href="#t
   if(w!=='top')setWay(w,false);scrollTo({top:0,behavior:still?'auto':'smooth'});setTimeout(function(){(way==='none'?document.querySelector('.alt a'):field).focus({preventScroll:true})},still?0:350)});
 window.go=function(e){e.preventDefault();var v=e.target.querySelector('input').value.trim();if(!v)return;
   var q='/app?url='+encodeURIComponent(v.replace(/^https?:\/\//,'')),k=document.getElementById('kind'),g=document.getElementById('goal');
-  if(way==='app')q+='&with=screens';if(k&&k.value)q+='&niche='+encodeURIComponent(k.value);if(g&&g.value.trim())q+='&goal='+encodeURIComponent(g.value.trim().slice(0,80));
+  if(way==='app')q+='&with=screens';if(k&&k.value)q+='&niche='+encodeURIComponent(k.value);if(g&&g.value.trim())q+='&goal='+encodeURIComponent(g.value.trim().slice(0,80));var o=document.getElementById('own');if(o&&o.checked)q+='&own=1';
   location.href=q};
 /* phone bar */
 var ab=document.querySelector('.appbar');

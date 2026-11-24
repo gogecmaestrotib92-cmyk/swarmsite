@@ -184,3 +184,4 @@ html{scroll-padding-top:100px}
 .live.quiet .s2-cur,.live.quiet .s2-x,.live.quiet .s2-spot,.live.quiet .lcap{opacity:0!important;transition:opacity .3s}
 .lay.base{padding:0}
 @media (max-width:991px){.kin .k2{margin-top:20px}.vslot{height:300px}.live{inset:12px 12px 0;border-radius:10px 10px 0 0}.lcap{font-size:12px;padding:5px 10px;left:8px;bottom:8px}}
+.own{display:flex;align-items:center;gap:10px;margin-top:16px;min-height:44px;font-weight:600;font-size:15px;cursor:pointer}.own input{width:24px;height:24px;flex:none;accent-color:var(--ink,#141414)}.ownh{margin:0 0 0 34px;text-align:left;max-width:none}

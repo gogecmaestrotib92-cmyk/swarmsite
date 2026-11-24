@@ -196,6 +196,14 @@ export async function runTemplateJob(deps) {
         if (Number(m.sections) > 0) await deps.emit([{ role: 'Reader', text: `${Number(m.sections)} more section${Number(m.sections) === 1 ? '' : 's'} of your page kept` }]); }
       catch (e) { console.warn('blocks: not placed —', String(e && e.message || e).slice(0, 200)); try { fs.rmSync(path.join(dir, 'assign.json'), { force: true }); } catch {} }
     }
+    // a thin site (a sign-in page, a one-screen first version) is shown a complete design: the sections its page lacks are
+    // written as examples (lib/templates/examples.py → examples.json: one small model call, for a thin site only). Never
+    // what a job fails on. The visitor's switch (options.keep_text) or SWARM_EXAMPLES=0 leaves the page to its own words.
+    if (process.env.SWARM_EXAMPLES !== '0' && !job.options?.keep_text && job.options?.mode !== 'seo-safe') {
+      try { const x = lastJson(await run('python3', ['lib/templates/examples.py', dir], { timeoutMs: 90000 })) || {};
+        if (Number(x.examples) > 0) await deps.emit([{ role: 'Writer', text: `Your page is a short one, so ${Number(x.examples)} section${Number(x.examples) === 1 ? '' : 's'} of the design ${Number(x.examples) === 1 ? 'is' : 'are'} filled with examples — change any of it in the editor` }]); }
+      catch (e) { console.warn('examples: not written —', String(e && e.message || e).slice(0, 200)); try { fs.rmSync(path.join(dir, 'examples.json'), { force: true }); } catch {} }
+    }
   });
   const tdir = path.join(dir, 'templates'); const base = deps.publicBase(`${job.id}/t/`);
   const built = await step('choose', async () => {
