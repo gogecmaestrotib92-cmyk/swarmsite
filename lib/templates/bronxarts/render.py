@@ -261,6 +261,11 @@ def s_hero(d, R, P):
     else:
         p = P.free(1440 * .97, 820 * .97, roles=['people', 'exterior', 'room', 'landscape', 'action', 'work', 'workshop', 'bar', 'other', 'dish', 'product', 'detail'], slack=1.2)
         back = img(p, 'bk', eager=True)
+        if not back:   # no photograph for the opening: a made picture of the library is its ground, in the opening's own colour (slots.py: a backdrop)
+            land = ((d.get('media') or {}).get('made') or {}).get('land') or []
+            g = next((x for x in land if isinstance(x, dict) and x.get('src') and x.get('w') and x.get('h')), None)
+            if g:
+                back = img(dict(g, alt=''), 'bk md', eager=True).replace('<img ', '<img data-slot="hero-backdrop" ', 1)
     body = f'<h1{mw(title)}>{e(title)}</h1>' + ''.join(f'<p>{e(x)}</p>' for x in [h.get('text')] if x) + btn(h.get('primary'), 'b-bright')
     return back, f'<section class="hero{"" if (h.get("primary") or {}).get("t") else " nob"}"><div class="w">{body}</div></section>'
 
@@ -741,6 +746,8 @@ a:hover>.ar,a:hover .r .ar,a:hover .xd .ar,a:focus-visible .ar{width:88px}
 /* first screen: navigation and opening share one backdrop */
 .top{position:relative;z-index:5;isolation:isolate;background:var(--dark);color:#fff}
 .top>.bk{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2}
+.top>.bk.md{mix-blend-mode:luminosity;opacity:.5}
+.top.has-md::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,var(--dark) 0,var(--dark) 38%,color-mix(in srgb,var(--dark) 30%,transparent) 100%)}
 .top.has-bk::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(0,0,0,.48) 0,rgba(0,0,0,.48) 131px,rgba(0,0,0,0) 250px),linear-gradient(90deg,rgba(0,0,0,.62) 0,rgba(0,0,0,.62) 46%,rgba(0,0,0,.4) 100%)}
 .mnw{height:127px}.mn{height:131px;display:flex;align-items:center}.mn .w{display:flex;align-items:center;justify-content:space-between;gap:32px;width:100%}
 .brand{display:flex;align-items:center;gap:14px;min-width:0}.lgw{display:none;align-items:center;width:219px;height:78px}.lg{max-width:100%;max-height:100%;object-fit:contain;object-position:left center}
@@ -849,7 +856,7 @@ h1{font-weight:700;font-size:min(80px,calc(69vw / var(--mw,1) / .6));line-height
 @media (max-width:991px){
  .tb{display:none}.w{padding:0 32px}h1,h2,h3,h4,.t{overflow-wrap:anywhere}
  .mn .w{padding:0 12px 0 23px;gap:12px}.brand{flex:1 1 auto}.bnm{font-size:14px;line-height:17px;max-width:none}.mcta{max-width:38vw;padding:10px 16px}.mcta.long{display:none}.panel .btn{margin-top:32px}.mr{gap:4px}.lgw{width:123px;height:79px}
- .top.has-bk::after{background:rgba(0,0,0,.6)}
+ .top.has-bk::after{background:rgba(0,0,0,.6)}.top.has-md::after{background:color-mix(in srgb,var(--dark) 86%,transparent)}
  .hero .w{min-height:666px;padding-top:32px;justify-content:flex-start}.hero .btn{margin-top:auto;background:#fff;color:#000}.hero .btn::before{background:var(--bright)}
  h1,.fcd .t,.bn h2,.lc h3,.p2 .lc h3,.blk h2,.xd .t{font-size:min(50px,calc((100vw - 64px) / var(--mw,1) / .6));line-height:1.2}.st h2,.ls h2,.ct h2,.cz h2{font-size:min(42px,calc((100vw - 64px) / var(--mw,1) / .6))!important;line-height:1.2!important}.li h3,.pe h3{font-size:min(36px,calc((100vw - 64px) / var(--mw,1) / .6))!important;line-height:1.33!important}.hero p{margin-bottom:43px}
  .fcs,.fcs.n2{grid-template-columns:1fr}.fct img{width:100%;max-width:403px}.full .fct img{max-width:none}.fcd{padding:32px;min-height:0}.fcd .t{margin-bottom:16px}
@@ -911,7 +918,7 @@ def render(d: dict) -> str:
     more = s_more(d, R, P)
     cat = s_catalogue(d, R, P)
     team = s_team(d, R, P, tp)
-    body = (tb + f'<div class="top{" has-bk" if back else ""}">{back}{mn}{hero}</div>' + '<main>' + cards + steps + statement + s_pattern(d, R)
+    body = (tb + f'<div class="top{(" has-md" if 'class="bk md"' in back else " has-bk") if back else ""}">{back}{mn}{hero}</div>' + '<main>' + cards + steps + statement + s_pattern(d, R)
             + s_figures(d, R) + s_quotes(d, R) + s_credentials(d, R) + s_features(d, R) + cat + s_plans(d, R) + team + s_faq(d, R) + more
             + s_contact(d, R) + close + '</main>' + s_foot(d, R))
     b = d.get('brand') or {}

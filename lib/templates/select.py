@@ -524,6 +524,15 @@ def select(d, limit=3, promised=(), root=None):
         tone = 'dark' if sum(w * (v / 12.92 if v <= .03928 else ((v + .055) / 1.055) ** 2.4) for w, v in zip((.2126, .7152, .0722), ch)) < .2 else 'light'
     except (ValueError, IndexError):
         tone = 'light'
+    # A client with no photograph to speak of, that is not a place (pictures.py: a place takes no made picture), is shown
+    # first the templates that hold a made picture as a ground (made_slots.json). The others set a photograph where
+    # they open and stand as a flat slab of colour and words without one: a firm of accountants with no photograph
+    # had three such designs (a visitor's job, 2026-11-23; 12 of 20 visitors' jobs came with 0 or 1 picture).
+    thin = len(_pics(d)['photos']) < 2 and str(d.get('kind') or '').lower() not in ('restaurant', 'hotel', 'shop', 'cafe', 'bar', 'venue', 'place')
+    try:
+        grounds = set(__import__('json').loads((HERE / 'made_slots.json').read_text(encoding='utf-8')))
+    except (OSError, ValueError):
+        grounds = set()
     for t in R.list_templates(root):
         if not t['selectable']:
             rejected.append({'slug': t['slug'], 'why': t['why']})
@@ -547,7 +556,7 @@ def select(d, limit=3, promised=(), root=None):
                                               '; shown without what it misses: ' + ', '.join(missing) if missing else '',
                                               '; waits for ' + ', '.join(a['pending']) if a['pending'] else '')
         cands.append({'slug': t['slug'], 'approach': approach(n), 'pending': a['pending'], 'drops': drops, 'missing': missing, 'niche': niche,
-                      'fallback': fallback, 'why': why, '_tier': tier, '_key': (tier, 1 if tone == 'dark' and n.get('tone') != 'dark' else 0, rank, ld, len(missing), round(sum(m.get('short', 0) for m in a['soft']), 3), -a['met'], t['slug'])})
+                      'fallback': fallback, 'why': why, '_tier': tier, '_key': (tier, 1 if tone == 'dark' and n.get('tone') != 'dark' else 0, 1 if thin and t['slug'] not in grounds else 0, rank, ld, len(missing), round(sum(m.get('short', 0) for m in a['soft']), 3), -a['met'], t['slug'])})
     cands.sort(key=lambda x: x['_key'])
     order, seen = [], set()
     for tier in range(4):                                            # tier by tier; within one, one of each approach first
